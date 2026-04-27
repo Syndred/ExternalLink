@@ -1,0 +1,53 @@
+{
+  "version": "2026.04",
+  "description": "Anti-spam system detection patterns and bypass strategies",
+  "systems": {
+    "akismet": {
+      "detection": ["#akismet_comment_nonce", ".akismet_comment_form_privacy_notice"],
+      "bypass": "clean_gmail_email + proxy_ip + url_in_website_field + no_url_in_body",
+      "bypassRate": "100%"
+    },
+    "antispam_bee": {
+      "detection": ["#wpa2a_comment", "#wpa2a_hidden_fields"],
+      "bypass": "simulateTyping_charByChar_with_keyboardEvents",
+      "bypassRate": "90%"
+    },
+    "cleantalk": {
+      "detection": [".apbct_special_field", "#apbct_form_id", "input[name=\"ct_no_cookie_hidden_field\"]"],
+      "bypass": "impossible_403_hard_block",
+      "bypassRate": "0%",
+      "action": "skip"
+    },
+    "wpantispam": {
+      "detection": ["#was-stop-response", "#was-stop-reason"],
+      "bypass": "strict_mode_pure_text_comment + url_in_website_field",
+      "bypassRate": "80%"
+    },
+    "hcaptcha": {
+      "detection": [".h-captcha", "iframe[src*=\"hcaptcha\"]"],
+      "bypass": "manual_captcha_solve",
+      "bypassRate": "manual"
+    },
+    "jetpack_highlander": {
+      "detection": ["iframe[src*=\"jetpack\"]", ".highlander-enabled"],
+      "bypass": "impossible_cross_origin_iframe",
+      "bypassRate": "0%",
+      "action": "skip"
+    },
+    "cloudflare_challenge": {
+      "detection": [".cf-turnstile", "iframe[src*=\"challenges.cloudflare\"]"],
+      "bypass": "manual_or_skip",
+      "bypassRate": "manual"
+    }
+  },
+  "captcha_patterns": {
+    "recaptcha_v2": ".g-recaptcha, [data-sitekey]",
+    "recaptcha_v3": ".grecaptcha-badge",
+    "hcaptcha": ".h-captcha, iframe[src*=\"hcaptcha\"]",
+    "cloudflare_turnstile": ".cf-turnstile, iframe[src*=\"challenges.cloudflare\"]",
+    "image_captcha": "img[src*=\"captcha\"], img.captcha",
+    "math_captcha": "input[name*=\"math\"], input[name*=\"spam\"]",
+    "otp_code": "input[name*=\"code\"], input[name*=\"otp\"]",
+    "text_captcha": "input[name*=\"captcha\"], input[id*=\"captcha\"]"
+  }
+}

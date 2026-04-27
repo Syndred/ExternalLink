@@ -1,0 +1,19 @@
+{
+  "site_id": "site-d",
+  "brand_name": "YourBrand D",
+  "domain": "https://www.example-d.com",
+  "default_anchor": "Example D - Cloud Infrastructure Platform",
+  "banned_anchors": ["click here", "read more", "visit us", "learn more"],
+  "gmail_alias": "yourname+sited@gmail.com",
+  "github_account": "github-d",
+  "google_account": "google-d",
+  "browser": {
+    "profile_dir": "profiles/site-d",
+    "headless": false,
+    "viewport": { "width": 1280, "height": 900 },
+    "locale": "en-US",
+    "timezone_id": "Europe/London"
+  },
+  "proxy": { "server": "", "username": "", "password": "" },
+  "playwright": { "executable_path": "", "channel": "chrome" }
+}

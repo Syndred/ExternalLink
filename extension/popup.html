@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:480px;min-height:400px;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
+h1{font-size:16px;padding:12px 16px;background:#1e293b;border-bottom:1px solid #334155}
+.tabs{display:flex;background:#1e293b}
+.tab{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#94a3b8}
+.tab.active{border-bottom-color:#38bdf8;color:#e2e8f0}
+.tab:hover{background:#334155}
+.panel{display:none;padding:12px}
+.panel.active{display:block}
+textarea{width:100%;height:180px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:8px;font-size:12px;border-radius:6px;resize:vertical}
+.form-row{margin-bottom:10px}
+label{font-size:12px;color:#94a3b8;margin-bottom:4px;display:block}
+input[type="text"]{width:100%;background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:6px 8px;font-size:12px;border-radius:6px}
+input[type="text"]:focus,textarea:focus{outline:none;border-color:#38bdf8}
+.btn{display:block;width:100%;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn-primary{background:#0284c7;color:#fff}
+.btn-primary:hover{background:#0369a1}
+.btn-primary:disabled{background:#334155;color:#64748b;cursor:not-allowed}
+.btn-danger{background:#dc2626;color:#fff;margin-top:4px}
+.btn-danger:hover{background:#b91c1c}
+.btn-sm{padding:6px 12px;font-size:12px;width:auto;display:inline-block}
+.stats{display:flex;gap:8px;margin-bottom:12px}
+.stat{flex:1;background:#1e293b;padding:10px;border-radius:8px;text-align:center}
+.stat-val{font-size:24px;font-weight:700}
+.stat-lbl{font-size:10px;color:#94a3b8;margin-top:2px}
+.stat.que .stat-val{color:#38bdf8}
+.stat.done .stat-val{color:#22c55e}
+.stat.skip .stat-val{color:#eab308}
+.stat.err .stat-val{color:#ef4444}
+.task{padding:8px;background:#1e293b;border-radius:6px;margin-bottom:6px;font-size:12px;display:flex;align-items:center;gap:8px}
+.task .idx{color:#64748b;min-width:24px}
+.task .domain{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task .status{padding:2px 6px;border-radius:4px;font-size:10px}
+.status.pending{background:#334155;color:#94a3b8}
+.status.running{background:#0c4a6e;color:#38bdf8}
+.status.ok{background:#14532d;color:#22c55e}
+.status.skip{background:#713f12;color:#eab308}
+.status.err{background:#7f1d1d;color:#ef4444}
+.progress-bar{height:4px;background:#334155;border-radius:2px;margin:8px 0;overflow:hidden}
+.progress-bar .fill{height:100%;background:#38bdf8;transition:width .3s}
+.config-note{font-size:11px;color:#94a3b8;background:#1e293b;padding:8px;border-radius:6px;margin-top:8px}
+#log{max-height:120px;overflow-y:auto;font-size:10px;font-family:monospace;background:#020617;padding:8px;border-radius:6px;margin-top:8px;line-height:1.4}
+.log-line{color:#64748b}
+.log-line.ok{color:#22c55e}
+.log-line.warn{color:#eab308}
+.log-line.err{color:#ef4444}
+</style>
+</head>
+<body>
+
+<h1>🔗 ExternalLink 外链批量提交</h1>
+
+<div class="tabs">
+  <div class="tab active" data-panel="submit">📝 提交外链</div>
+  <div class="tab" data-panel="config">⚙️ 配置</div>
+  <div class="tab" data-panel="log">📊 日志</div>
+</div>
+
+<!-- 提交面板 -->
+<div class="panel active" id="panel-submit">
+  <div class="form-row">
+    <label>目标域名（你的网站，提交时作为外链）</label>
+    <input type="text" id="targetDomain" placeholder="https://www.yoursite.com" value="">
+  </div>
+  <div class="form-row">
+    <label>品牌名称</label>
+    <input type="text" id="brandName" placeholder="Your Brand" value="">
+  </div>
+  <div class="form-row">
+    <label>锚文本（可选，留空则用品牌名）</label>
+    <input type="text" id="anchorText" placeholder="Your Brand - Best Productivity Tool">
+  </div>
+  <div class="form-row">
+    <label>外链列表（每行一个 URL）</label>
+    <textarea id="urlList" placeholder="粘贴你的外链列表：
+https://example1.com/article/123
+https://example2.com/profile-setting
+https://example3.com/submit-tool
+https://example4.com/blog/how-to-code
+...
+（每行一个 URL，第2列可选：平台类型 wp_comment/profile/directory/article）
+"></textarea>
+  </div>
+
+<div class="stats">
+  <div class="stat que"><div class="stat-val" id="statQueue">0</div><div class="stat-lbl">排队</div></div>
+  <div class="stat done"><div class="stat-val" id="statDone">0</div><div class="stat-lbl">完成</div></div>
+  <div class="stat skip"><div class="stat-val" id="statSkip">0</div><div class="stat-lbl">跳过</div></div>
+  <div class="stat err"><div class="stat-val" id="statErr">0</div><div class="stat-lbl">失败</div></div>
+</div>
+
+  <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+
+  <button class="btn btn-primary" id="btnStart">🚀 开始提交</button>
+  <button class="btn btn-danger" id="btnStop" style="display:none">⏹ 停止</button>
+
+  <div id="taskList" style="max-height:150px;overflow-y:auto;margin-top:8px"></div>
+  <div class="config-note">
+    💡 <b>使用方式</b>：1) 填你的网站域名和品牌名；2) 粘贴外链列表；3) 点击"开始提交"。<br>
+    遇到验证码会自动暂停，你手动解决后点击"继续"按钮。
+  </div>
+</div>
+
+<!-- 配置面板 -->
+<div class="panel" id="panel-config">
+  <div class="form-row">
+    <label>邮箱（用于注册/评论）</label>
+    <input type="text" id="cfgEmail" placeholder="yourname+ext@gmail.com" value="">
+  </div>
+  <div class="form-row">
+    <label>用户名（随机人名，不用品牌名）</label>
+    <input type="text" id="cfgName" placeholder="Alex Johnson" value="">
+  </div>
+  <div class="form-row">
+    <label>评论模板（可选，留空则随机生成）</label>
+    <textarea id="cfgCommentTemplate" style="height:80px" placeholder="默认自动生成自然评论..."></textarea>
+  </div>
+  <div class="form-row">
+    <label>最大并发数（同时打开的标签页数）</label>
+    <input type="text" id="cfgConcurrency" value="3">
+  </div>
+  <label style="margin-top:8px"><input type="checkbox" id="cfgAutoSkipCaptcha"> 遇到验证码自动跳过（不暂停等待）</label>
+  <label><input type="checkbox" id="cfgPingIndex" checked> 提交后尝试索引通知（IndexNow）</label>
+  <button class="btn btn-primary" id="btnSaveConfig">💾 保存配置</button>
+  <button class="btn btn-danger btn-sm" id="btnClearData" style="margin-top:12px">🗑 清除所有数据</button>
+</div>
+
+<!-- 日志面板 -->
+<div class="panel" id="panel-log">
+  <button class="btn btn-sm btn-primary" id="btnClearLog">清除日志</button>
+  <div id="log"></div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "site_id": "site-b",
+  "brand_name": "GraffitiNameAI",
+  "domain": "https://graffitinameai.com",
+  "default_anchor": "GraffitiNameAI - AI Graffiti Name Generator",
+  "banned_anchors": ["click here", "read more", "visit us"],
+  "gmail_alias": "",
+  "github_account": "",
+  "google_account": "",
+  "browser": {
+    "profile_dir": "profiles/site-b",
+    "headless": false,
+    "viewport": { "width": 1280, "height": 900 },
+    "locale": "en-US",
+    "timezone_id": "America/New_York"
+  },
+  "proxy": {
+    "server": "",
+    "username": "",
+    "password": ""
+  },
+  "playwright": {
+    "executable_path": "",
+    "channel": "chrome"
+  }
+}

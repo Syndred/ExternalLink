@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "ExternalLink - 外链批量提交",
+  "version": "2.0",
+  "description": "批量自动提交外链：粘贴列表 → 自动填表 → 跳过验证码 → 继续下一个",
+  "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ExternalLink"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_end"
+  }],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

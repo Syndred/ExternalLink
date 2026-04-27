@@ -1,0 +1,136 @@
+{
+  "version": "2026.04",
+  "description": "Platform detection rules and form filling strategies by platform type",
+  "platforms": {
+    "wp_comment": {
+      "priority": 1,
+      "detection_signatures": [
+        "#commentform", "form.comment-form", "textarea#comment",
+        ".comment-respond", ".wp-block-comments",
+        "meta[name=\"generator\"][content*=\"WordPress\"]"
+      ],
+      "form_fields": {
+        "author": ["#author", "input[name=\"author\"]", "input[placeholder*=\"Name\"]"],
+        "email": ["#email", "input[name=\"email\"]", "input[type=\"email\"]"],
+        "url": ["#url", "input[name=\"url\"]", "input[name=\"website\"]"],
+        "comment": ["#comment", "textarea[name=\"comment\"]", "textarea.comment"],
+        "submit": ["#submit", "input.comment-submit", ".form-submit input[type=\"submit\"]"]
+      },
+      "strategy": "fill_url_field_only_no_url_in_body"
+    },
+    "phpbb_profile": {
+      "priority": 2,
+      "detection_signatures": [
+        "input[name=\"pf_phpbb_website\"]",
+        "meta[name=\"generator\"][content*=\"phpBB\"]",
+        ".phpbb"
+      ],
+      "form_fields": {
+        "website": ["#pf_phpbb_website", "input[name=\"pf_phpbb_website\"]"],
+        "submit": ["input[name=\"submit\"]", "button[type=\"submit\"]"]
+      },
+      "note": "pf_phpbb_website 字段默认 Dofollow，100% 成功率"
+    },
+    "discuz_profile": {
+      "priority": 2,
+      "detection_signatures": [
+        "input[name=\"site\"]",
+        ".discuz", "#discuz"
+      ],
+      "form_fields": {
+        "site": ["input[name=\"site\"]"],
+        "submit": ["input[name=\"submit\"]", "button[type=\"submit\"]"]
+      },
+      "note": "Site 字段在 op=info 页面，不是 op=base"
+    },
+    "saas_directory": {
+      "priority": 1,
+      "detection_signatures": [
+        "form[action*=\"submit\"]", "form[action*=\"add\"]",
+        "button:has-text(\"Submit tool\")", "button:has-text(\"Add product\")",
+        "form.submit-tool"
+      ],
+      "pattern_keywords": ["submit tool", "submit product", "add tool", "add startup", "submit saas", "list your"],
+      "form_fields": {
+        "url": ["input[name=\"url\"]", "input[name=\"website\"]", "input[name=\"link\"]", "input[name=\"product_url\"]", "input[placeholder*=\"https\"]"],
+        "name": ["input[name=\"name\"]", "input[name=\"title\"]", "input[name=\"tool_name\"]", "input[name=\"product_name\"]"],
+        "description": ["textarea[name=\"description\"]", "textarea[name=\"desc\"]", "textarea[name=\"summary\"]"],
+        "tags": ["input[name=\"tags\"]", "input[name=\"categories\"]"],
+        "submit": ["button[type=\"submit\"]", "input[type=\"submit\"]", "button:has-text(\"Submit\")", "button:has-text(\"Add\")"]
+      },
+      "note": "SaaS 目录站 'Visit website' 按钮默认 Dofollow，获取成本最低"
+    },
+    "generic_profile": {
+      "priority": 3,
+      "detection_signatures": [
+        "input[name=\"url\"]", "input[name=\"website\"]",
+        "input[id*=\"website\"]"
+      ],
+      "form_fields": {
+        "url": ["input[name=\"url\"]", "input[name=\"website\"]", "input[id*=\"website\"]"],
+        "submit": ["input[type=\"submit\"]", "button[type=\"submit\"]", "button:has-text(\"Save\")", "button:has-text(\"Update\")"]
+      }
+    },
+    "article_comment": {
+      "priority": 3,
+      "detection_signatures": [
+        "form[action*=\"comment\"]", "form[action*=\"post\"]",
+        ".comment-form:not(.wp-block-comments)"
+      ],
+      "form_fields": {
+        "author": ["input[name=\"author\"]", "input[name=\"name\"]", "input[placeholder*=\"Name\"]"],
+        "email": ["input[name=\"email\"]", "input[type=\"email\"]"],
+        "url": ["input[name=\"url\"]", "input[name=\"website\"]"],
+        "comment": ["textarea[name=\"comment\"]", "textarea[name=\"body\"]", "textarea.comment"],
+        "submit": ["input[type=\"submit\"]", "button[type=\"submit\"]", "button:has-text(\"Post\")", "button:has-text(\"Comment\")"]
+      }
+    },
+    "boardhost_forum": {
+      "priority": 2,
+      "detection_signatures": [
+        ".boardhost", "form[name=\"post\"]",
+        "input[name=\"link_url\"]"
+      ],
+      "form_fields": {
+        "link_url": ["input[name=\"link_url\"]"],
+        "submit": ["input[type=\"submit\"]"]
+      },
+      "note": "Boardhost Link URL 字段无需注册，秒发，默认 Dofollow"
+    },
+    "velog_io": {
+      "priority": 1,
+      "type": "developer_blog",
+      "dofollow": true,
+      "oauth": "github_or_google",
+      "note": "韩国最大开发者博客，Markdown 文章即发即过，Dofollow"
+    },
+    "dev_to": {
+      "priority": 1,
+      "type": "developer_blog",
+      "dofollow": true,
+      "oauth": "github",
+      "note": "文章内链接 Dofollow"
+    },
+    "telegra_ph": {
+      "priority": 1,
+      "type": "paste_note",
+      "dofollow": true,
+      "dr": 92,
+      "note": "API 创建，秒做"
+    },
+    "rentry_co": {
+      "priority": 1,
+      "type": "paste_note",
+      "dofollow": true,
+      "api": "curl",
+      "note": "curl API 创建，秒做"
+    }
+  },
+  "degraded_platforms": {
+    "paragraph_com": { "was": "dofollow", "now": "nofollow_ugc", "type": "paste" },
+    "hackmd_io": { "was": "dofollow", "now": "nofollow_ugc", "type": "paste" },
+    "justpaste_it": { "was": "dofollow", "now": "nofollow_ugc", "type": "paste" },
+    "codepen_io": { "was": "dofollow", "now": "nofollow_ugc", "type": "paste" },
+    "note": "2026 年 paste/note 类平台集体降级，响应 Google UGC 策略"
+  }
+}

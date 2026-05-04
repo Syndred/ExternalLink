@@ -4,7 +4,7 @@
   "version": "2.0",
   "description": "批量自动提交外链：粘贴列表 → 自动填表 → 跳过验证码 → 继续下一个",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications"],
-  "host_permissions": ["https://*/*", "http://*/*"],
+  "host_permissions": ["https://*/*", "http://*/*", "http://127.0.0.1:8787/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "ExternalLink"

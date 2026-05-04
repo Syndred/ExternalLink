@@ -8,6 +8,32 @@
 4. 选择 `extension/` 文件夹
 5. 完成！工具栏出现 🔗 图标
 
+## 本地 DeepSeek 代理
+
+拓展需要本地 Python 代理处理表单规划和提交结果判断；只重新加载或重新导入 Chrome 拓展还不够。本地代理必须在拓展提交表单期间保持运行。
+
+从仓库根目录执行：
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+在 `.env` 中设置 `DEEPSEEK_API_KEY`。默认配置为：
+
+```bash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-pro
+```
+
+然后从仓库根目录启动代理：
+
+```bash
+python3 -m local_agent.server
+```
+
+启动或修改配置后，在 `chrome://extensions/` 中重新加载或重新导入已解压的 `extension/`。拓展只有在本地代理的 `/judge` 看到 success evidence（success/thank-you/submitted 页面或明确 page confirmation）后才标记完成；success is not a fixed timer。
+
 ## 使用方式
 
 ### 1. 基础配置

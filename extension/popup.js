@@ -105,12 +105,33 @@ $('btnClearLog').addEventListener('click', () => {
   renderLog();
 });
 
+// ─── Load URL Library ───
+$('btnLoadLibrary').addEventListener('click', () => {
+  urlList.value = URL_LIBRARY.join('\n');
+  saveStorage({ urlList: urlList.value });
+  log(`已加载 ${URL_LIBRARY.length} 个外链库 URL`, 'ok');
+});
+
 // ─── Logging ───
 function log(msg, cls) {
   const time = new Date().toLocaleTimeString();
-  logLines.push({ time, msg, cls: cls || '' });
+  logLines.push({ time, msg: formatAgentLog(msg), cls: cls || '' });
   if (logLines.length > 200) logLines.shift();
   renderLog();
+}
+
+function formatAgentLog(msg) {
+  const text = String(msg || '');
+  if (/DeepSeek local agent unavailable|local agent unavailable|127\.0\.0\.1:8787|ECONNREFUSED/i.test(text)) {
+    return `${text} - 本地代理未运行：请在仓库根目录执行 python3 -m local_agent.server`;
+  }
+  if (/需要人工处理|needs_manual/i.test(text)) {
+    return `${text} - needs_manual: 请手动处理验证码、登录或页面确认`;
+  }
+  if (/提交成功|judge success|success evidence|\/judge/i.test(text)) {
+    return `${text} - /judge 已看到成功证据`;
+  }
+  return text;
 }
 
 function renderLog() {
@@ -145,7 +166,17 @@ function renderTasks() {
 }
 
 function statusLabel(s) {
-  const map = {pending:'⏳等', running:'▶中', ok:'✅完', skip:'⏭跳', err:'❌错', captcha:'🤖码'};
+  const map = {
+    pending:'⏳等',
+    running:'▶中',
+    ok:'✅证',
+    skip:'⏭跳',
+    err:'❌错',
+    captcha:'🤖人工',
+    needs_manual:'🤖人工',
+    blocked:'⛔停',
+    unavailable:'⚠️代理'
+  };
   return map[s] || s;
 }
 
@@ -227,6 +258,195 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     updateStats();
   }
 });
+
+// ─── URL Library (from data_startup_directories.md) ───
+const URL_LIBRARY = [
+'http://aitoolslink.com/',
+'http://betalist.com/',
+'http://getapp.com/',
+'http://nextbigwhat.com/',
+'http://www.allstartups.info/',
+'http://www.appvita.com/',
+'http://www.place123.net/',
+'http://www.travelful.net/',
+'https://10words.io/',
+'https://addyp.com/',
+'https://akama.com/',
+'https://allhrsoftware.com/',
+'https://appadvice.com/',
+'https://appagg.com/',
+'https://apprater.net/',
+'https://appsandwebsites.com/',
+'https://appstimes.in/',
+'https://appsumo.com/',
+'https://awesomeindie.com/',
+'https://awesomemarketingwebsites.com/',
+'https://betafy.co/',
+'https://bharathlisting.com/',
+'https://brandfetch.com/',
+'https://bsky.app/',
+'https://buildinpublic.page/',
+'https://business.trustpilot.com/',
+'https://businesstoolvault.com/',
+'https://changelog.com/',
+'https://citypages.pro/',
+'https://clutch.co/',
+'https://coindrop.to/',
+'https://companylistingnyc.com/',
+'https://crazyaboutstartups.com/',
+'https://crozdesk.com/',
+'https://dang.ai/',
+'https://dev.to/',
+'https://devhunt.org/',
+'https://devpost.com/',
+'https://devresourc.es/',
+'https://digitalmarketingdeal.com/',
+'https://e27.co/',
+'https://ebusinesspages.com/',
+'https://ecommerce-stack.com/',
+'https://enests.co/',
+'https://enrollbusiness.com/',
+'https://getmakerlog.com/',
+'https://getworm.com/',
+'https://gifyu.com/',
+'https://gitlab.com/',
+'https://gumroad.com/',
+'https://hackernoon.com/',
+'https://hackerspad.net/',
+'https://handpickedtools.com/',
+'https://hubpages.com/',
+'https://indiemaker.space/',
+'https://inventlist.com/',
+'https://issuu.com/',
+'https://ko-fi.com/',
+'https://land-book.com/',
+'https://launched.io/',
+'https://lettergrowth.com/',
+'https://list.ly/',
+'https://make.rs/',
+'https://nocodelist.co/',
+'https://once.tools/',
+'https://onepagelove.com/',
+'https://partneroptimizer.com/',
+'https://porch.com/',
+'https://postmake.io/',
+'https://primeindies.com/',
+'https://resource.fyi/',
+'https://saassurf.com/',
+'https://sidebar.io/',
+'https://softwaresupp.com/',
+'https://solo.to/',
+'https://sourceforge.net/',
+'https://startupbuffer.com/',
+'https://startupdope.com/',
+'https://startupmatcher.com/',
+'https://startupresources.io/',
+'https://startuproulette.com/',
+'https://startups.watch/',
+'https://startupstage.app/',
+'https://startuptile.com/',
+'https://startuptracker.io/',
+'https://startupxplore.com/',
+'https://steemit.com/',
+'https://techbehemoths.com/',
+'https://the-dots.com/',
+'https://theorg.com/',
+'https://toolfinder.co/',
+'https://tools.robingood.com/',
+'https://trendystartups.com/',
+'https://twelve.tools/',
+'https://under1000mrr.tools/',
+'https://uniquethis.com/',
+'https://wellfound.com/',
+'https://wip.co/',
+'https://www.addonbiz.com/',
+'https://www.affordhunt.com/',
+'https://www.appvizer.com/',
+'https://www.awwwards.com/',
+'https://www.b2bco.com/',
+'https://www.bizbangboom.com/',
+'https://www.biztobiz.org/',
+'https://www.bubblelife.com/',
+'https://www.bufferapps.com/',
+'https://www.business-software.com/',
+'https://www.buymeacoffee.com/',
+'https://www.cabinetm.com/',
+'https://www.callupcontact.com/',
+'https://www.chamberofcommerce.com/',
+'https://www.citymapia.com/',
+'https://www.crunchbase.com/',
+'https://www.csslight.com/',
+'https://www.curated.design/',
+'https://www.cuspera.com/',
+'https://www.devpages.io/',
+'https://www.f6s.com/',
+'https://www.featuredcustomers.com/',
+'https://www.findcool.tools/',
+'https://www.flickr.com/',
+'https://www.freelistingindia.in/',
+'https://www.freelistingusa.com/',
+'https://www.g2.com/',
+'https://www.gartner.com/',
+'https://www.getbyte.tech/',
+'https://www.getlisteduae.com/',
+'https://www.goodreads.com/',
+'https://www.google.com/business/',
+'https://www.gptshunter.com/',
+'https://www.hotfrog.com/',
+'https://www.ilib.com/',
+'https://www.indiehackers.com/',
+'https://www.indielogs.com/',
+'https://www.internetisbeautiful.com/',
+'https://www.joinly.xyz/',
+'https://www.locable.com/',
+'https://www.localmote.com/',
+'https://www.manta.com/',
+'https://www.merchantcircle.com/',
+'https://www.microstartups.co/',
+'https://www.myopportunity.com/',
+'https://www.nocodedevs.com/',
+'https://www.patreon.com/',
+'https://www.peerspot.com/',
+'https://www.pinterest.com/',
+'https://www.producthunt.com/',
+'https://www.saasgenius.com/',
+'https://www.saashub.com/',
+'https://www.saasprojects.com/',
+'https://www.saastr.com/',
+'https://www.saasworthy.com/',
+'https://www.selecthub.com/',
+'https://www.serchen.com/',
+'https://www.sideprojectors.com/',
+'https://www.slant.co/',
+'https://www.slideshare.net/',
+'https://www.smartmoneymatch.com/',
+'https://www.snapmunk.com/',
+'https://www.softwareadvice.com/',
+'https://www.softwareworld.co/',
+'https://www.sortlist.com/',
+'https://www.spaceleads.pro/',
+'https://www.springwise.com/',
+'https://www.startupguys.net/',
+'https://www.startupinspire.com/',
+'https://www.startups-list.com/',
+'https://www.startus.cc/',
+'https://www.superpages.com.au/',
+'https://www.techpluto.com/',
+'https://www.toolspedia.io/',
+'https://www.toools.design/',
+'https://www.trustradius.com/',
+'https://www.uneed.best/',
+'https://www.webdesignernews.com/',
+'https://www.webwiki.com/',
+'https://www.wewaat.com/',
+'https://www.whatsyourhours.com/',
+'https://www.whodoyou.com/',
+'https://www.workspaces.xyz/',
+'https://www.zipleaf.us/',
+'https://yellow.place/',
+'https://yourstory.com/companies',
+'https://zumvu.com/',
+];
 
 // ─── Helpers ───
 function extractDomain(url) {

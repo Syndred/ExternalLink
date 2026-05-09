@@ -30,6 +30,7 @@ let tasks = [];
 let running = false;
 let stats = { done: 0, skip: 0, err: 0, total: 0, dofollow: 0, nofollow: 0 };
 const logLines = [];
+const storedLogLines = 'logLines';
 
 // ─── Load/Save ───
 function loadStorage(keys, cb) {
@@ -47,7 +48,7 @@ function saveStorage(obj) {
 loadStorage([
   'targetDomain','brandName','anchorText','cfgEmail','cfgName','cfgAutoSkipCaptcha',
   'cfgConcurrency','cfgCommentTemplate','cfgPingIndex','urlList',
-  'tasks','stats','running'
+  'tasks','stats','running', storedLogLines
 ], items => {
   if (!items) return;
   if (items.targetDomain) targetDomain.value = items.targetDomain;
@@ -58,6 +59,10 @@ loadStorage([
   if (items.urlList) urlList.value = items.urlList;
   if (items.tasks) { tasks = items.tasks; renderTasks(); }
   if (items.stats) { stats = items.stats; updateStats(); }
+  if (Array.isArray(items[storedLogLines])) {
+    logLines.push(...items[storedLogLines].slice(-200));
+    renderLog();
+  }
   if (items.running) setRunning(true, false);
   $('cfgAutoSkipCaptcha').checked = !!items.cfgAutoSkipCaptcha;
   $('cfgConcurrency').value = items.cfgConcurrency || '3';
@@ -102,6 +107,7 @@ $('btnClearData').addEventListener('click', () => {
 
 $('btnClearLog').addEventListener('click', () => {
   logLines.length = 0;
+  saveStorage({ [storedLogLines]: [] });
   renderLog();
 });
 
@@ -117,6 +123,7 @@ function log(msg, cls) {
   const time = new Date().toLocaleTimeString();
   logLines.push({ time, msg: formatAgentLog(msg), cls: cls || '' });
   if (logLines.length > 200) logLines.shift();
+  saveStorage({ [storedLogLines]: logLines });
   renderLog();
 }
 
@@ -126,7 +133,7 @@ function formatAgentLog(msg) {
     return `${text} - 本地代理未运行：请在仓库根目录执行 python3 -m local_agent.server`;
   }
   if (/需要人工处理|needs_manual/i.test(text)) {
-    return `${text} - needs_manual: 请手动处理验证码、登录或页面确认`;
+    return `${text} - needs_manual: 请查看前面的具体原因；可能是必填字段、图片上传、登录/验证码，或页面需要人工判断`;
   }
   if (/提交成功|judge success|success evidence|\/judge/i.test(text)) {
     return `${text} - /judge 已看到成功证据`;

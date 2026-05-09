@@ -255,6 +255,24 @@ class LocalAgentUnitTests(unittest.TestCase):
         self.assertEqual(judgment["status"], "incomplete")
         self.assertIn("form", judgment["reason"].lower())
 
+    def test_local_judge_fillable_form_overrides_payment_marketing_text(self):
+        judgment = server.local_judge(
+            {
+                "url": "https://example.com/submit",
+                "title": "Submit your listing",
+                "bodyText": "Submit your AI tool. Payment required only for featured placement. Name Email Website Submit",
+                "fields": [
+                    {"selector": "#name", "type": "text", "label": "Name", "required": True},
+                    {"selector": "#email", "type": "email", "label": "Email", "required": True},
+                    {"selector": "#website", "type": "url", "label": "Website", "required": True},
+                ],
+                "buttons": [{"selector": "button[type=submit]", "text": "Submit"}],
+            }
+        )
+
+        self.assertEqual(judgment["status"], "incomplete")
+        self.assertIn("form", judgment["reason"].lower())
+
     def test_local_judge_visible_fields_override_success_url(self):
         judgment = server.local_judge(
             {

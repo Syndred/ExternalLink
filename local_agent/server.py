@@ -96,6 +96,10 @@ MANUAL_BLOCKED_TEXT_PATTERNS = (
     re.compile(r"\b(?:verify your email|email verification|verification code|one[- ]time code|check your email)\b"),
 )
 
+FORM_OVERRIDABLE_BLOCKED_TEXT_PATTERNS = (
+    re.compile(r"\b(?:payment (?:is )?required|credit card|checkout|subscribe to continue|paid plan)\b"),
+)
+
 FORM_FIELD_TEXT_PATTERNS = (
     re.compile(r"\b(?:name|full name|email|e-mail|website|url|link|company|title|description|message|comment|subject|phone)\b"),
 )
@@ -577,15 +581,21 @@ def local_judge(payload: dict[str, Any]) -> Optional[dict[str, Any]]:
     url = snapshot_url(payload)
     text = snapshot_text(payload)
     blocked_match = pattern_match(BLOCKED_TEXT_PATTERNS, text)
+    has_form_fields = has_visible_form_fields(payload, text)
     if blocked_match:
         matched_text = blocked_match.group(0)
         status = "needs_manual" if pattern_match(MANUAL_BLOCKED_TEXT_PATTERNS, matched_text) else "blocked"
+        if has_form_fields and pattern_match(FORM_OVERRIDABLE_BLOCKED_TEXT_PATTERNS, matched_text):
+            return {
+                "status": "incomplete",
+                "reason": "Form fields are still visible after submission",
+            }
         return {
             "status": status,
             "reason": f"Blocked page text matched: {matched_text}",
         }
 
-    if has_visible_form_fields(payload, text):
+    if has_form_fields:
         return {
             "status": "incomplete",
             "reason": "Form fields are still visible after submission",

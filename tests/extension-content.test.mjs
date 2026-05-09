@@ -128,6 +128,12 @@ assert.match(
 
 assert.match(
   background,
+  /agentPaused[\s\S]*looksReadyForManualResume[\s\S]*runAgentLoop\(tab\.id,\s*task,\s*entry,\s*\{[\s\S]*manual:\s*true/,
+  'background.js should automatically resume a paused manual task when the user navigates to a recognizable form page',
+);
+
+assert.match(
+  background,
   /action:\s*['"]getPageSnapshot['"]/,
   'background.js should request page snapshots from content.js',
 );
@@ -136,6 +142,18 @@ assert.match(
   background,
   /action:\s*['"]executeActionPlan['"]/,
   'background.js should send local-agent action plans to content.js',
+);
+
+assert.match(
+  background,
+  /summarizePlanActions/,
+  'background.js should log local-agent action summaries for debugging partial fills',
+);
+
+assert.match(
+  background,
+  /summarizeActionResults/,
+  'background.js should log action execution results when a form fill stalls',
 );
 
 assert.match(
@@ -272,6 +290,18 @@ assert.match(
   popup,
   /needs_manual|需要人工处理/,
   'popup should display or explain local-agent needs_manual status',
+);
+
+assert.match(
+  popup,
+  /storedLogLines/,
+  'popup should persist recent log lines so reopening the popup does not lose diagnostics',
+);
+
+assert.doesNotMatch(
+  popup,
+  /needs_manual:\s*请手动处理验证码、登录或页面确认/,
+  'popup should not explain every needs_manual stop as captcha/login/page confirmation',
 );
 
 assert.match(

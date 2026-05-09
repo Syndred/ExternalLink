@@ -100,9 +100,15 @@ async function handleContentReady(tab, data) {
     return;
   }
   const shouldResumeRejudge = entry.pendingRejudge;
-  if (entry.agentPaused && !shouldResumeRejudge) return;
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (!task) return;
+  if (entry.agentPaused && !shouldResumeRejudge) {
+    if (!looksReadyForManualResume(data)) return;
+    log(`页面就绪: ${task.domain} ${data.mode}，自动继续半自动填表`, "");
+    resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
+    await runAgentLoop(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
+    return;
+  }
 
   log(`页面就绪: ${task.domain} ${data.mode}`, "");
   resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
@@ -112,6 +118,11 @@ async function handleContentReady(tab, data) {
   }
   await runAgentLoop(tab.id, task, entry);
   return;
+}
+
+function looksReadyForManualResume(data) {
+  const mode = data && typeof data.mode === "string" ? data.mode : "";
+  return !!mode && mode !== "unknown";
 }
 
 function handleTimeout(tabId) {
@@ -342,8 +353,9 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         return;
       }
 
-      log(`${task.domain}: 本地代理执行第 ${loop + 1} 轮动作`, "");
-      await executeTabActions(tabId, plan.actions);
+      log(`${task.domain}: 本地代理执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`, "");
+      const actionResult = await executeTabActions(tabId, plan.actions);
+      log(`${task.domain}: 第 ${loop + 1} 轮结果 - ${summarizeActionResults(actionResult)}`, "");
       assertRunCurrent(tabId, entry, runId);
       await sleep(AGENT_ACTION_SETTLE_MS);
       assertRunCurrent(tabId, entry, runId);
@@ -360,6 +372,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       assertRunCurrent(tabId, entry, runId);
       judge = await callLocalAgent("/judge", agentPayload(task, snapshot, { ...extra, plan, loop }));
       assertRunCurrent(tabId, entry, runId);
+      log(`${task.domain}: 第 ${loop + 1} 轮判断 - ${judge.status}: ${judge.reason || judge.message || ""}`, "");
       if (judge.status === "success") {
         completeTaskFromJudge(tabId, task, judge);
         return;
@@ -380,6 +393,34 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
     entry.agentRunning = false;
     resumePendingRejudgeAfterRun(tabId, task, entry);
   }
+}
+
+function summarizePlanActions(actions) {
+  if (!Array.isArray(actions) || actions.length === 0) return "no actions";
+  return actions
+    .map((action, index) => {
+      const type = action && action.type ? action.type : "unknown";
+      const selector = action && action.selector ? shortText(action.selector, 80) : "";
+      return selector ? `${index + 1}.${type} ${selector}` : `${index + 1}.${type}`;
+    })
+    .join("; ");
+}
+
+function summarizeActionResults(result) {
+  const results = result && Array.isArray(result.results) ? result.results : [];
+  if (results.length === 0) return result && result.ok ? "ok" : "no result details";
+  return results
+    .map(item => {
+      const status = item.ok ? "ok" : `fail:${item.error || "unknown"}`;
+      const selector = item.selector ? ` ${shortText(item.selector, 80)}` : "";
+      return `${item.index + 1}.${item.type || "unknown"} ${status}${selector}`;
+    })
+    .join("; ");
+}
+
+function shortText(value, limit) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > limit ? text.slice(0, limit - 1) + "…" : text;
 }
 
 function handleTerminalJudge(task, entry, judge) {

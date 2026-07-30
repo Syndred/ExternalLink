@@ -48,8 +48,8 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
 - 已通过 Python 15 个 local_agent 单元测试。
-- Chrome 实机验收尚未完成：当前环境缺少已启用的 ChatGPT Chrome Extension，无法建立浏览器控制连接。
-- 人工验收需在 `chrome://extensions` 重新加载 `extension/`，严格复现 B/C → D/E，并验证停放恢复、扩展重载与浏览器重启。
+- Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
+- 为避免启动 214 个真实外链提交，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复、成功账本重载与浏览器重启。
 
 ## 后续边界
 

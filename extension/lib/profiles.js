@@ -24,6 +24,22 @@
     return base || "site-" + Date.now().toString(36);
   }
 
+  function canonicalProfileId(value) {
+    const token = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+    const aliases = {
+      oldphotolive: "OldPhotoLive",
+      oldphotoliveai: "OldPhotoLive",
+      textcomparison: "TextComparison",
+      comparisontext: "TextComparison",
+      graffitiname: "GraffitiName",
+      graffitinameai: "GraffitiName",
+    };
+    return aliases[token] || "";
+  }
+
   function emptySiteProfile(id, name = "") {
     return {
       id,
@@ -100,12 +116,17 @@
     const key = String(projectKey).trim();
     if (profiles[key]) return profiles[key];
     const lower = key.toLowerCase();
+    const canonicalKey = canonicalProfileId(key);
     for (const profile of Object.values(profiles)) {
       if (
         profile.id === key ||
         profile.name === key ||
         String(profile.name || "").toLowerCase() === lower ||
-        String(profile.id || "").toLowerCase() === lower
+        String(profile.id || "").toLowerCase() === lower ||
+        (canonicalKey &&
+          [profile.id, profile.name].some(
+            (value) => canonicalProfileId(value) === canonicalKey,
+          ))
       ) {
         return profile;
       }
@@ -118,6 +139,56 @@
     const alias = aliases[lower.replace(/[\s_-]/g, "")];
     if (alias && profiles[alias]) return profiles[alias];
     return null;
+  }
+
+  function stabilizeTableProfiles(tableProjects, storedProfiles) {
+    const profiles = { ...(storedProfiles || {}) };
+    const idRemap = {};
+    let changed = false;
+
+    for (const [projectKey, fields] of Object.entries(tableProjects || {})) {
+      const canonicalKey = canonicalProfileId(projectKey) || projectKey;
+      const matches = Object.entries(profiles).filter(
+        ([id, profile]) =>
+          id === projectKey ||
+          canonicalProfileId(id) === canonicalKey ||
+          canonicalProfileId(profile?.name) === canonicalKey,
+      );
+      const stableProfile = profiles[projectKey];
+      const legacyMatches = matches.filter(([id]) => id !== projectKey);
+      if (stableProfile && legacyMatches.length === 0) continue;
+      const userProfile =
+        matches
+          .map(([, profile]) => profile)
+          .find((profile) => profile?.source !== "table") || matches[0]?.[1];
+      const preferred = userProfile || stableProfile;
+      const next = preferred
+        ? {
+            ...preferred,
+            id: projectKey,
+            fields: { ...(fields || {}), ...(preferred.fields || {}) },
+          }
+        : {
+            ...emptySiteProfile(projectKey, fields?.Name || projectKey),
+            id: projectKey,
+            name: fields?.Name || projectKey,
+            url: fields?.Url || "",
+            promoUrl: fields?.Url || "",
+            fields: { ...(fields || {}) },
+            source: "table",
+          };
+
+      for (const [id] of matches) {
+        if (id === projectKey) continue;
+        idRemap[id] = projectKey;
+        delete profiles[id];
+        changed = true;
+      }
+      changed = true;
+      profiles[projectKey] = next;
+    }
+
+    return { profiles, idRemap, changed };
   }
 
   function applySavedProfilesToTasks(tasks, profiles) {
@@ -191,9 +262,11 @@
     linesToList,
     listToLines,
     slugifySiteId,
+    canonicalProfileId,
     emptySiteProfile,
     buildAgentConfigFromProfile,
     findMatchingProfile,
+    stabilizeTableProfiles,
     applySavedProfilesToTasks,
     mergeExtractedProfile,
     callLocalAgent,

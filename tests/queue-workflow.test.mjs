@@ -155,4 +155,24 @@ const Q = loadQueueModule();
   assert.equal(repeated.migratedCount, 0, "migration should be idempotent");
 }
 
+{
+  const destinationD = Q.normalizeUrlKey("https://d.example/submit");
+  const legacyKey = Q.submissionRecordKey(destinationD, "oldphotolive-ai");
+  const remapped = Q.remapSubmissionRecords(
+    {
+      [legacyKey]: {
+        status: "success",
+        destinationKey: destinationD,
+        profileId: "oldphotolive-ai",
+        submittedAt: "2026-07-30T00:00:00.000Z",
+      },
+    },
+    { "oldphotolive-ai": "OldPhotoLive" },
+  );
+  const stableKey = Q.submissionRecordKey(destinationD, "OldPhotoLive");
+  assert.equal(remapped[legacyKey], undefined);
+  assert.equal(remapped[stableKey].profileId, "OldPhotoLive");
+  assert.equal(remapped[stableKey].status, "success");
+}
+
 console.log("queue workflow tests passed");

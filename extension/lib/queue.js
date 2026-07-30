@@ -131,6 +131,18 @@
     return { records: migrated, migratedCount, schemaVersion: SUBMISSION_SCHEMA_VERSION };
   }
 
+  function remapSubmissionRecords(records, idRemap) {
+    const remapped = {};
+    for (const record of Object.values(records || {})) {
+      if (!record || typeof record !== "object") continue;
+      const profileId = idRemap?.[record.profileId] || record.profileId;
+      const destinationKey = record.destinationKey || normalizeUrlKey(record.destinationUrl || "");
+      const key = submissionRecordKey(destinationKey, profileId);
+      remapped[key] = { ...record, destinationKey, profileId };
+    }
+    return remapped;
+  }
+
   function firstNonempty(fields, keys) {
     for (const key of keys) {
       const value = String((fields && fields[key]) || "").trim();
@@ -595,6 +607,7 @@
     isSubmissionSuccessful,
     buildSuccessRecord,
     migrateSubmissionRecords,
+    remapSubmissionRecords,
     parseUrlLines,
     buildAgentConfigFromTableFields,
     mergePendingQueue,

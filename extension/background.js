@@ -961,6 +961,7 @@ async function getLibraryManagerState() {
     "submissionRecords",
     "siteProfiles",
     "activeSiteId",
+    "selectedSiteIds",
     "submissionSchemaVersion",
   ]);
   const tableData = await loadTableLibrary();
@@ -968,12 +969,14 @@ async function getLibraryManagerState() {
     tableData,
     storage.siteProfiles || {},
     storage.activeSiteId || "",
+    storage.selectedSiteIds || [],
   );
   const records = await ensureSubmissionSchema(
     tableData,
     storage.siteAnnotations || {},
     storage.submissionRecords || {},
     storage.submissionSchemaVersion,
+    seeded.idRemap,
   );
   const urls = self.ExtLinkQueue.resolvePluginUrls(
     storage.urlList || "",
@@ -1082,42 +1085,73 @@ async function loadTableLibrary() {
   return tableData;
 }
 
-async function ensureProfilesFromTable(tableData, storedProfiles, activeSiteId) {
-  const profiles = { ...(storedProfiles || {}) };
-  let changed = false;
-  for (const [projectKey, fields] of Object.entries(tableData?.projects || {})) {
-    if (self.ExtLinkProfiles.findMatchingProfile(projectKey, profiles)) continue;
-    profiles[projectKey] = {
-      ...self.ExtLinkProfiles.emptySiteProfile(projectKey, fields.Name || projectKey),
-      id: projectKey,
-      name: fields.Name || projectKey,
-      url: fields.Url || "",
-      promoUrl: fields.Url || "",
-      fields: { ...fields },
-      source: "table",
-    };
-    changed = true;
-  }
+async function ensureProfilesFromTable(
+  tableData,
+  storedProfiles,
+  activeSiteId,
+  selectedSiteIds = [],
+) {
+  const stabilized = self.ExtLinkProfiles.stabilizeTableProfiles(
+    tableData?.projects || {},
+    storedProfiles || {},
+  );
+  const { profiles, idRemap } = stabilized;
+  const remapId = (id) => idRemap[id] || id;
+  const remappedActiveSiteId = remapId(activeSiteId);
   const nextActiveSiteId =
-    activeSiteId && profiles[activeSiteId] ? activeSiteId : Object.keys(profiles)[0] || "";
-  if (changed || nextActiveSiteId !== activeSiteId) {
+    remappedActiveSiteId && profiles[remappedActiveSiteId]
+      ? remappedActiveSiteId
+      : Object.keys(profiles)[0] || "";
+  const nextSelectedSiteIds = [
+    ...new Set(
+      (selectedSiteIds || [])
+        .map(remapId)
+        .filter((id) => profiles[id]),
+    ),
+  ];
+  const selectionChanged =
+    JSON.stringify(nextSelectedSiteIds) !== JSON.stringify(selectedSiteIds || []);
+  if (
+    stabilized.changed ||
+    nextActiveSiteId !== activeSiteId ||
+    selectionChanged
+  ) {
     await chrome.storage.local.set({
       siteProfiles: profiles,
       activeSiteId: nextActiveSiteId,
+      selectedSiteIds: nextSelectedSiteIds,
     });
   }
-  return { profiles, activeSiteId: nextActiveSiteId };
+  return {
+    profiles,
+    activeSiteId: nextActiveSiteId,
+    selectedSiteIds: nextSelectedSiteIds,
+    idRemap,
+  };
 }
 
-async function ensureSubmissionSchema(tableData, annotations, existingRecords, schemaVersion) {
+async function ensureSubmissionSchema(
+  tableData,
+  annotations,
+  existingRecords,
+  schemaVersion,
+  idRemap = {},
+) {
+  const remappedRecords = self.ExtLinkQueue.remapSubmissionRecords(
+    existingRecords || {},
+    idRemap,
+  );
   const migration = self.ExtLinkQueue.migrateSubmissionRecords({
-    records: existingRecords || {},
+    records: remappedRecords,
     annotations: annotations || {},
     tableData,
   });
+  const recordsChanged =
+    JSON.stringify(remappedRecords) !== JSON.stringify(existingRecords || {});
   if (
     schemaVersion !== SUBMISSION_SCHEMA_VERSION ||
-    migration.migratedCount > 0
+    migration.migratedCount > 0 ||
+    recordsChanged
   ) {
     await chrome.storage.local.set({
       submissionRecords: migration.records,
@@ -1145,6 +1179,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     tableData,
     storage.siteProfiles || {},
     storage.activeSiteId || "",
+    storage.selectedSiteIds || [],
   );
   const annotations = storage.siteAnnotations || {};
   const submissionRecords = await ensureSubmissionSchema(
@@ -1152,6 +1187,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     annotations,
     storage.submissionRecords || {},
     storage.submissionSchemaVersion,
+    seeded.idRemap,
   );
 
   const pluginUrls = self.ExtLinkQueue.resolvePluginUrls(
@@ -1169,7 +1205,13 @@ async function loadPendingSubmissionTasks(options = {}) {
     : Array.isArray(storage.selectedSiteIds)
       ? storage.selectedSiteIds
       : [];
-  const selectedProfileIds = requestedProfileIds.filter((id) => seeded.profiles[id]);
+  const selectedProfileIds = [
+    ...new Set(
+      requestedProfileIds
+        .map((id) => seeded.idRemap[id] || id)
+        .filter((id) => seeded.profiles[id]),
+    ),
+  ];
   if (!selectedProfileIds.length && seeded.activeSiteId) {
     selectedProfileIds.push(seeded.activeSiteId);
   }

@@ -61,6 +61,21 @@ assert.match(
   /judge\.status\s*===\s*['"]needs_manual['"]/,
   "background.js should keep task tabs open when the local agent needs manual submit",
 );
+assert.match(
+  content,
+  /停放中，不会自动关闭/,
+  "manual task banners should explain that parked tabs are not closed by a timeout",
+);
+assert.match(
+  content,
+  /action:\s*["']confirmSubmissionSuccess["']/,
+  "manual task banners should let the user confirm a real submission success",
+);
+assert.match(
+  background,
+  /countProcessingSlots\(state\.activeTabs\)/,
+  "parked tabs should not consume the batch concurrency slot",
+);
 
 assert.match(
   background,
@@ -100,8 +115,13 @@ assert.match(
 
 assert.match(
   background,
-  /case\s+["']start["']:[\s\S]{0,300}?closeAllTabs\(\)[\s\S]{0,300}?state\.config\s*=\s*msg\.config/,
-  "background.js should clear existing active tabs before replacing task state on start",
+  /case\s+["']start["']:[\s\S]{0,160}?startBatchRun\(msg\)/,
+  "the start message should rebuild a fresh batch run",
+);
+assert.match(
+  background,
+  /async function\s+startBatchRun\(msg\)[\s\S]{0,160}?closeAllTabs\(\)/,
+  "a fresh batch run should clear existing active tabs before replacing task state",
 );
 
 assert.match(

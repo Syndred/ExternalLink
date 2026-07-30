@@ -1,13 +1,14 @@
 // ExternalLink Extension - Background Orchestrator
 "use strict";
 
-importScripts("lib/profiles.js", "lib/queue.js", "lib/url-library.js");
+importScripts("lib/profiles.js", "lib/queue.js", "lib/scheduler.js", "lib/url-library.js");
 
 let state = {
   running: false,
   tasks: [],
   config: null,
   queue: [],
+  groups: [],
   activeTabs: new Map(), // tabId -> { taskIndex, redirectCount }
   concurrency: 1,
   stopped: false,
@@ -119,17 +120,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "start":
-      closeAllTabs();
-      state.config = msg.config;
-      state.tasks = msg.tasks;
-      state.queue = [...msg.tasks];
-      state.concurrency = Math.max(1, parseInt(msg.config.concurrency, 10) || 1);
-      state.running = true;
-      state.stopped = false;
-      broadcastStatus();
-      log("开始处理 " + state.tasks.length + " 个任务", "ok");
-      processQueue();
-      break;
+      startBatchRun(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "stop":
       state.stopped = true;
       state.running = false;
@@ -152,20 +146,92 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     case "manualContinue":
       handleManualSubmit(msg);
       break;
+    case "confirmSubmissionSuccess":
+      confirmSubmissionSuccess(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "getState":
       sendResponse({
         running: state.running,
         tasks: state.tasks,
+        groups: state.groups,
+        parkedTasks: [...state.activeTabs.entries()]
+          .filter(([, entry]) => entry.slotActive === false)
+          .map(([tabId, entry]) => {
+            const task = state.tasks.find((item) => item.index === entry.taskIndex);
+            return task ? { ...task, tabId, parkedReason: entry.parkedReason || "" } : null;
+          })
+          .filter(Boolean),
         stats: summarizeTaskStats(state.tasks),
       });
       return false;
   }
 });
 
+async function startBatchRun(msg) {
+  closeAllTabs();
+  const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
+    ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
+    : [];
+  if (!selectedSiteIds.length) {
+    throw new Error("请至少选择一个要提交的自家网站");
+  }
+
+  await chrome.storage.local.set({ selectedSiteIds });
+  const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
+  if (!pending.tasks.length) {
+    state.running = false;
+    state.tasks = [];
+    state.groups = [];
+    state.queue = [];
+    broadcastStatus();
+    return {
+      ok: true,
+      empty: true,
+      tasks: [],
+      groups: [],
+      meta: pending.meta,
+      message: "所选网站没有待提交组合",
+    };
+  }
+
+  state.config = msg.config || {};
+  state.tasks = pending.tasks.map((task) => ({ ...task, status: "pending" }));
+  state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
+  state.queue = [...state.groups];
+  state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
+  state.running = true;
+  state.stopped = false;
+
+  await chrome.storage.local.set({
+    activeBatchRun: {
+      version: 2,
+      runId: `run-${Date.now().toString(36)}`,
+      status: "running",
+      selectedSiteIds,
+      startedAt: new Date().toISOString(),
+      tasks: state.tasks,
+    },
+  });
+  broadcastStatus();
+  log(
+    `开始处理 ${state.groups.length} 个外链站、${state.tasks.length} 个项目组合`,
+    "ok",
+  );
+  processQueue();
+  return {
+    ok: true,
+    tasks: state.tasks,
+    groups: state.groups,
+    meta: pending.meta,
+  };
+}
+
 function summarizeTaskStats(taskList) {
   const stats = { done: 0, skip: 0, err: 0, total: taskList.length, dofollow: 0, nofollow: 0 };
   for (const task of taskList) {
-    if (task.status === "ok" || task.status === "filled") stats.done++;
+    if (task.status === "ok") stats.done++;
     else if (task.status === "skip") stats.skip++;
     else if (task.status === "err") stats.err++;
     if (task.isDofollow) stats.dofollow++;
@@ -637,15 +703,29 @@ async function clearSiteAnnotation(msg) {
 
 async function advanceSubmissionQueue(msg = {}) {
   const delta = Number.isFinite(msg.delta) ? msg.delta : 1;
-  const { tasks, meta } = await loadPendingSubmissionTasks();
-  if (!tasks.length) return { ok: true, tasks: [], index: 0, total: 0, meta, advanced: false };
+  const { groups, tasks: jobs, meta } = await loadPendingSubmissionTasks();
+  if (!groups.length) {
+    return {
+      ok: true,
+      tasks: [],
+      jobs: [],
+      index: 0,
+      total: 0,
+      meta,
+      advanced: false,
+    };
+  }
 
-  const storage = await chrome.storage.local.get(["submissionQueueIndex"]);
+  const storage = await chrome.storage.local.get(["submissionQueueIndex", "submissionQueueKey"]);
   let index = Number.isFinite(storage.submissionQueueIndex) ? storage.submissionQueueIndex : 0;
-  index = (index + delta + tasks.length) % tasks.length;
-  await chrome.storage.local.set({ submissionQueueIndex: index });
+  const currentKey = msg.currentKey || storage.submissionQueueKey || "";
+  index = self.ExtLinkScheduler.resolveCursorIndex(groups, currentKey, index, delta);
 
-  const task = tasks[index];
+  const task = groups[index];
+  await chrome.storage.local.set({
+    submissionQueueIndex: index,
+    submissionQueueKey: task.key,
+  });
   const url = task.url.startsWith("http") ? task.url : `https://${task.url}`;
   let tabId = msg.tabId || null;
   if (!tabId && msg.open !== false) {
@@ -657,9 +737,10 @@ async function advanceSubmissionQueue(msg = {}) {
   }
   return {
     ok: true,
-    tasks,
+    tasks: groups,
+    jobs,
     index,
-    total: tasks.length,
+    total: groups.length,
     meta,
     advanced: true,
     task,
@@ -893,20 +974,35 @@ async function loadPendingSubmissionTasks(options = {}) {
 }
 
 async function getSubmissionQueueState(msg = {}) {
-  const { tasks, meta } = await loadPendingSubmissionTasks();
-  const storage = await chrome.storage.local.get(["submissionQueueIndex"]);
+  const { groups, tasks: jobs, meta, selectedProfileIds } = await loadPendingSubmissionTasks();
+  const storage = await chrome.storage.local.get(["submissionQueueIndex", "submissionQueueKey"]);
   let index = Number.isFinite(storage.submissionQueueIndex) ? storage.submissionQueueIndex : 0;
 
   if (msg.url) {
-    const matched = self.ExtLinkQueue.findSubmissionIndex(msg.url, tasks);
+    const matched = self.ExtLinkQueue.findSubmissionIndex(msg.url, groups);
     if (matched >= 0) {
       index = matched;
-      await chrome.storage.local.set({ submissionQueueIndex: index });
     }
+  } else if (storage.submissionQueueKey) {
+    const matched = groups.findIndex((group) => group.key === storage.submissionQueueKey);
+    if (matched >= 0) index = matched;
   }
 
-  if (index < 0 || index >= tasks.length) index = 0;
-  return { ok: true, tasks, index, total: tasks.length, meta };
+  if (index < 0 || index >= groups.length) index = 0;
+  const currentKey = groups[index]?.key || "";
+  await chrome.storage.local.set({
+    submissionQueueIndex: index,
+    submissionQueueKey: currentKey,
+  });
+  return {
+    ok: true,
+    tasks: groups,
+    jobs,
+    index,
+    total: groups.length,
+    meta,
+    selectedProfileIds,
+  };
 }
 
 function isSidepanelSender(sender, msg) {
@@ -1062,32 +1158,70 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
 async function processQueue() {
   while (state.running && state.queue.length > 0 && !state.stopped) {
     while (countProcessingTabs() < state.concurrency && state.queue.length > 0) {
-      const task = state.queue.shift();
-      await processOne(task);
+      const group = state.queue.shift();
+      await processOne(group);
     }
     await sleep(500);
   }
-  if (state.queue.length === 0 && countProcessingTabs() === 0) {
-    state.running = false;
-    broadcastStatus();
-    log("✅ 所有任务处理完毕", "ok");
-  }
+  await refreshBatchRunStatus();
 }
 
-async function processOne(task) {
+async function refreshBatchRunStatus() {
+  const hasProcessing = countProcessingTabs() > 0;
+  const hasQueuedGroups = state.queue.some((group) =>
+    (group.tasks || []).some((task) => task.status === "pending"),
+  );
+  const hasParkedTasks = [...state.activeTabs.values()].some(
+    (entry) => entry.slotActive === false,
+  );
+  if (hasProcessing || hasQueuedGroups) {
+    state.running = true;
+    return;
+  }
+
+  state.running = false;
+  const stored = await chrome.storage.local.get(["activeBatchRun"]);
+  if (stored.activeBatchRun) {
+    await chrome.storage.local.set({
+      activeBatchRun: {
+        ...stored.activeBatchRun,
+        status: hasParkedTasks ? "waiting_manual" : "finished",
+        ...(hasParkedTasks ? {} : { finishedAt: new Date().toISOString() }),
+        tasks: state.tasks,
+      },
+    });
+  }
+  broadcastStatus();
+  if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
+  else log("✅ 所有任务处理完毕", "ok");
+}
+
+async function processOne(group) {
   try {
+    const task = (group?.tasks || []).find((item) => item.status === "pending");
+    if (!task) return;
     const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
     task.status = "running";
     broadcastTaskUpdate(task);
 
     const tab = await chrome.tabs.create({ url, active: false });
-    const entry = { taskIndex: task.index, timeoutId: null, runId: 0 };
+    const entry = {
+      taskIndex: task.index,
+      groupKey: group.key,
+      timeoutId: null,
+      runId: 0,
+      slotActive: true,
+    };
     state.activeTabs.set(tab.id, entry);
     resetEntryTimeout(entry, tab.id, PAGE_LOAD_TIMEOUT_MS);
   } catch (err) {
-    log(`创建标签页失败: ${task.domain} - ${err.message}`, "err");
-    task.status = "err";
-    broadcastTaskUpdate(task);
+    log(`创建标签页失败: ${group?.domain || group?.key || "unknown"} - ${err.message}`, "err");
+    for (const task of group?.tasks || []) {
+      if (task.status !== "pending") continue;
+      task.status = "err";
+      task.skipReason = err.message;
+      broadcastTaskUpdate(task);
+    }
   }
 }
 
@@ -1143,9 +1277,7 @@ function handleTimeout(tabId) {
     bumpEntryRunId(entry);
     task.status = "err";
     task.skipReason = "timeout";
-    entry.agentPaused = true;
-    entry.pendingRejudge = false;
-    clearEntryTimeout(entry);
+    parkTaskEntry(tabId, entry, "本地代理循环超时");
     log(`${task.domain}: 本地代理循环超时，请手动检查`, "warn");
     broadcastTaskUpdate(task);
   }
@@ -1175,6 +1307,8 @@ async function handleManualSubmit(msg) {
   log(`${task.domain}: 用户确认继续，AI 接管后续步骤`, "");
   const entry = state.activeTabs.get(tabId);
   clearManualWaitTimer(entry);
+  entry.slotActive = true;
+  entry.agentDone = false;
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   const activeConfig = getTaskConfig(task, config || {});
@@ -1211,14 +1345,47 @@ function handleManualSkip(msg) {
   const entry = tabId ? state.activeTabs.get(tabId) : null;
   if (entry) clearManualWaitTimer(entry);
   task.status = "skip";
-  task.skipReason = "manual_skip";
+  task.skipReason = "manual_skip_current_run";
   if (entry) entry.agentDone = true;
   log(`${task.domain}: 用户手动跳过`, "warn");
   broadcastTaskUpdate(task);
-  if (tabId) {
+  if (tabId && entry) {
     chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
-    closeTab(tabId);
+    advanceDestinationGroup(tabId, task).catch(() => closeTab(tabId));
   }
+}
+
+async function confirmSubmissionSuccess(msg) {
+  let task =
+    state.tasks.find((item) => item.index === msg.taskIndex || item.id === msg.taskId) || null;
+  if (!task) {
+    if (!msg.url || !msg.profileId) throw new Error("缺少待确认的外链站或项目");
+    task = {
+      id: self.ExtLinkQueue.submissionRecordKey(siteKeyForUrl(msg.url), msg.profileId),
+      url: msg.url,
+      domain: self.ExtLinkQueue.extractDomain(msg.url),
+      destinationGroupKey: siteKeyForUrl(msg.url),
+      profileId: msg.profileId,
+      profileName: msg.profileName || msg.profileId,
+      projectKey: msg.profileId,
+      config: { projectKey: msg.profileId, brandName: msg.profileName || msg.profileId },
+    };
+  }
+
+  task.status = "ok";
+  task.skipReason = "";
+  task.confirmedBy = "manual";
+  task.successEvidence = msg.evidence || "user confirmed submission success";
+  await recordSubmittedProject(task);
+  broadcastTaskUpdate(task);
+
+  for (const [tabId, entry] of state.activeTabs) {
+    if (entry.taskIndex !== task.index) continue;
+    entry.agentDone = true;
+    await advanceDestinationGroup(tabId, task);
+    break;
+  }
+  return { ok: true, task };
 }
 
 async function resumeAfterCaptcha(tabId, data) {
@@ -1229,6 +1396,8 @@ async function resumeAfterCaptcha(tabId, data) {
 
   log(`${task.domain}: 验证码已处理，重新运行本地代理判断`, "");
   clearManualWaitTimer(entry);
+  entry.slotActive = true;
+  entry.agentDone = false;
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   await runAgentLoop(tabId, task, entry, { captchaResolved: true, data });
@@ -1273,29 +1442,33 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
     }
 
     if (result && result.captcha) {
-      markTaskFilled(task, entry, "验证码已出现 — 请手动完成并提交");
+      markTaskFilled(tabId, task, entry, "验证码已出现 — 请手动完成并提交");
       return;
     }
     if (result && result.waiting) {
-      markTaskFilled(task, entry, result.skipReason || "请导航到提交页面后点击「继续填表」");
+      markTaskFilled(
+        tabId,
+        task,
+        entry,
+        result.skipReason || "请导航到提交页面后点击「继续填表」",
+      );
       return;
     }
     if (result && result.error) {
-      markTaskFilled(task, entry, result.skipReason || result.error);
+      markTaskFilled(tabId, task, entry, result.skipReason || result.error);
       return;
     }
     if (result && (result.fillOnly || result.manual || result.ok)) {
-      markTaskFilled(task, entry, "表单已填写，请检查内容后手动点击提交");
+      markTaskFilled(tabId, task, entry, "表单已填写，请检查内容后手动点击提交");
       return;
     }
 
-    markTaskFilled(task, entry, "未能识别可填写表单，请手动处理");
+    markTaskFilled(tabId, task, entry, "未能识别可填写表单，请手动处理");
   } catch (err) {
     if (err && err.staleRun) return;
     task.status = "err";
     task.skipReason = err.message;
-    entry.agentPaused = true;
-    clearEntryTimeout(entry);
+    parkTaskEntry(tabId, entry, err.message);
     log(`${task.domain}: ${err.message}`, "err");
     broadcastTaskUpdate(task);
   } finally {
@@ -1316,15 +1489,23 @@ async function sendExecuteSubmit(tabId, task, config, platformType) {
   return result;
 }
 
-function markTaskFilled(task, entry, reason) {
+function markTaskFilled(tabId, task, entry, reason) {
   entry.agentDone = true;
-  entry.agentPaused = true;
-  entry.pendingRejudge = false;
-  clearEntryTimeout(entry);
+  parkTaskEntry(tabId, entry, reason);
   task.status = "filled";
   task.skipReason = reason;
   log(`${task.domain}: ${reason}`, "ok");
   broadcastTaskUpdate(task);
+  chrome.tabs
+    .sendMessage(tabId, {
+      action: "showManualWaitBanner",
+      taskIndex: task.index,
+      reason,
+      timeoutSec: 0,
+      config: getTaskConfig(task),
+      platformType: task.platformType,
+    })
+    .catch(() => {});
 }
 
 // ─── Local Agent Loop ───
@@ -1502,6 +1683,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       }
       if (plan.status === "blocked" || plan.status === "error") {
         markTaskBlocked(
+          tabId,
           task,
           entry,
           plan.reason || plan.message || "local agent blocked this page",
@@ -1614,7 +1796,12 @@ function handleTerminalJudge(tabId, task, entry, judge) {
     return true;
   }
   if (judge.status === "blocked") {
-    markTaskBlocked(task, entry, judge.reason || judge.message || "judge blocked this page");
+    markTaskBlocked(
+      tabId,
+      task,
+      entry,
+      judge.reason || judge.message || "judge blocked this page",
+    );
     return true;
   }
   if (judge.status === "needs_manual") {
@@ -1646,13 +1833,92 @@ function completeTaskFromJudge(tabId, task, judge) {
   }
   task.status = "ok";
   task.skipReason = "";
+  task.successEvidence = judge.reason || judge.message || "judge success";
+  task.confirmedBy = "agent";
   log(`${task.domain}: 提交成功 - ${judge.reason || judge.message || "judge success"}`, "ok");
-  recordSubmittedProject(task).catch(() => {});
+  recordSubmittedProject(task)
+    .then(() => advanceDestinationGroup(tabId, task))
+    .catch((err) => {
+      task.status = "err";
+      task.skipReason = `成功记录写入失败: ${err.message}`;
+      broadcastTaskUpdate(task);
+      parkTaskEntry(tabId, entry, task.skipReason);
+    });
   if (state.config && state.config.pingIndex) {
     pingIndexNow(task.url);
   }
   broadcastTaskUpdate(task);
-  delayCloseTab(tabId, POST_SUCCESS_CLOSE_DELAY_MS);
+}
+
+function findGroupForTask(task) {
+  const groupKey = task?.destinationGroupKey || task?.key;
+  return state.groups.find((group) => group.key === groupKey) || null;
+}
+
+function parkTaskEntry(tabId, entry, reason) {
+  if (!entry) return;
+  entry.agentPaused = true;
+  entry.pendingRejudge = false;
+  entry.slotActive = false;
+  clearEntryTimeout(entry);
+  clearManualWaitTimer(entry);
+  if (reason) entry.parkedReason = reason;
+  if (tabId) {
+    chrome.storage.local
+      .get(["activeBatchRun"])
+      .then((stored) => {
+        if (!stored.activeBatchRun) return;
+        return chrome.storage.local.set({
+          activeBatchRun: {
+            ...stored.activeBatchRun,
+            status: "waiting_manual",
+            tasks: state.tasks,
+          },
+        });
+      })
+      .catch(() => {});
+  }
+}
+
+async function advanceDestinationGroup(tabId, completedTask) {
+  const entry = state.activeTabs.get(tabId);
+  if (!entry) return;
+  const group = findGroupForTask(completedTask);
+  const nextTask = self.ExtLinkScheduler.nextPendingTask(group, completedTask.index);
+  if (!nextTask) {
+    entry.agentDone = true;
+    entry.slotActive = true;
+    delayCloseTab(tabId, POST_SUCCESS_CLOSE_DELAY_MS);
+    return;
+  }
+
+  entry.taskIndex = nextTask.index;
+  entry.agentDone = false;
+  entry.agentPaused = false;
+  entry.pendingRejudge = false;
+  entry.contentReadyWhileRunning = false;
+  entry.rejudgeAfterRun = false;
+  entry.slotActive = true;
+  nextTask.status = "pending";
+  nextTask.skipReason = "";
+  log(
+    `${nextTask.domain} [${nextTask.profileName || nextTask.profileId}]: 准备本站下一项目 ${nextTask.groupJobIndex}/${nextTask.groupJobCount}`,
+    "",
+  );
+  broadcastTaskUpdate(nextTask);
+
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    const targetUrl = nextTask.url.startsWith("http") ? nextTask.url : `https://${nextTask.url}`;
+    resetEntryTimeout(entry, tabId, PAGE_LOAD_TIMEOUT_MS);
+    if (tab.url === targetUrl) await chrome.tabs.reload(tabId);
+    else await chrome.tabs.update(tabId, { url: targetUrl });
+  } catch (err) {
+    nextTask.status = "needs_manual";
+    nextTask.skipReason = `无法重新进入提交入口: ${err.message}`;
+    broadcastTaskUpdate(nextTask);
+    parkTaskEntry(tabId, entry, nextTask.skipReason);
+  }
 }
 
 function getManualWaitTimeoutSec() {
@@ -1670,12 +1936,7 @@ function clearManualWaitTimer(entry) {
 
 function startManualWaitTimer(tabId, task, entry) {
   clearManualWaitTimer(entry);
-  const timeoutMs = getManualWaitTimeoutSec() * 1000;
-  entry.manualWaitTimeoutId = setTimeout(() => {
-    if (!state.activeTabs.has(tabId)) return;
-    if (entry.agentDone || !entry.agentPaused) return;
-    skipTaskDueToManualTimeout(tabId, task, entry);
-  }, timeoutMs);
+  entry.manualWaitTimeoutId = null;
 }
 
 function skipTaskDueToManualTimeout(tabId, task, entry) {
@@ -1701,15 +1962,25 @@ function skipTaskWithReason(tabId, task, entry, reason) {
   task.skipReason = reason;
   log(`${task.domain}: ${reason}`, "warn");
   broadcastTaskUpdate(task);
-  if (tabId) {
+  if (tabId && entry) {
     chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
-    closeTab(tabId);
+    advanceDestinationGroup(tabId, task).catch(() => closeTab(tabId));
   }
 }
 
 function isAgentUnavailableError(err) {
   const message = err && err.message ? err.message : "";
   return /local agent unavailable|127\.0\.0\.1:8787|ECONNREFUSED|Failed to fetch/i.test(message);
+}
+
+function cancelRemainingDestinationTasks(task, status, reason) {
+  const group = findGroupForTask(task);
+  for (const sibling of group?.tasks || []) {
+    if (sibling.index === task.index || sibling.status !== "pending") continue;
+    sibling.status = "skip";
+    sibling.skipReason = `blocked_by_destination:${status}:${reason || ""}`;
+    broadcastTaskUpdate(sibling);
+  }
 }
 
 function markTaskNeedsManual(tabId, task, entry, reason) {
@@ -1728,21 +1999,22 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
         bumpEntryRunId(entry);
         entry.agentDone = true;
         entry.agentPaused = true;
+        entry.slotActive = false;
         entry.pendingRejudge = false;
         clearManualWaitTimer(entry);
         clearEntryTimeout(entry);
         task.status = "skip";
         task.skipReason = reason || status;
+        cancelRemainingDestinationTasks(task, status, reason);
         log(`${task.domain}: 已自动分类为 ${status}，保留页签并继续下一站`, "warn");
         broadcastTaskUpdate(task);
+        if (tabId) closeTab(tabId);
         return;
       }
 
       task.status = status === "needs_login" ? "needs_manual" : "captcha";
       task.skipReason = reason;
-      entry.agentPaused = true;
-      entry.pendingRejudge = false;
-      clearEntryTimeout(entry);
+      parkTaskEntry(tabId, entry, reason);
       const projectLabel = task.projectKey ? ` [${task.projectKey}]` : "";
       log(
         `${task.domain}${projectLabel}: 等待人工（${status}）- ${reason}；保留页签继续下一站`,
@@ -1758,7 +2030,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
           action: "showManualWaitBanner",
           taskIndex: task.index,
           reason,
-          timeoutSec: getManualWaitTimeoutSec(),
+          timeoutSec: 0,
           config: getTaskConfig(task),
           platformType: task.platformType,
         })
@@ -1769,9 +2041,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
     .catch(() => {
       task.status = "captcha";
       task.skipReason = reason;
-      entry.agentPaused = true;
-      entry.pendingRejudge = false;
-      clearEntryTimeout(entry);
+      parkTaskEntry(tabId, entry, reason);
       broadcastTaskUpdate(task);
       if (tabId) {
         chrome.tabs
@@ -1779,7 +2049,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
             action: "showManualWaitBanner",
             taskIndex: task.index,
             reason,
-            timeoutSec: getManualWaitTimeoutSec(),
+            timeoutSec: 0,
             config: getTaskConfig(task),
             platformType: task.platformType,
           })
@@ -1789,7 +2059,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
     });
 }
 
-function markTaskBlocked(task, entry, reason) {
+function markTaskBlocked(tabId, task, entry, reason) {
   const url = task.url?.startsWith("http") ? task.url : `https://${task.url}`;
   entry.agentPaused = true;
   entry.pendingRejudge = false;
@@ -1799,14 +2069,24 @@ function markTaskBlocked(task, entry, reason) {
   autoClassifySite(url, reason || "无法提交", "broken")
     .then((classified) => {
       const status = classified?.status || "broken";
-      task.status = status === "paid" ? "skip" : "err";
+      const isDeadEnd = self.ExtLinkQueue.isDeadEndStatus(status);
+      task.status = status === "paid" ? "skip" : isDeadEnd ? "err" : "needs_manual";
       task.skipReason = reason;
+      if (isDeadEnd) {
+        cancelRemainingDestinationTasks(task, status, reason);
+        entry.agentDone = true;
+        entry.slotActive = false;
+        if (tabId) closeTab(tabId);
+      } else {
+        parkTaskEntry(tabId, entry, reason);
+      }
       log(`${task.domain}: 已自动分类为 ${status} - ${reason}`, "err");
       broadcastTaskUpdate(task);
     })
     .catch(() => {
       task.status = "err";
       task.skipReason = reason;
+      parkTaskEntry(tabId, entry, reason);
       log(`${task.domain}: 本地代理停止 - ${reason}`, "err");
       broadcastTaskUpdate(task);
     });
@@ -1917,26 +2197,55 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   if (entry) {
     bumpEntryRunId(entry);
     const task = state.tasks.find((t) => t.index === entry.taskIndex);
-    if (task && task.status === "running") {
+    if (task && !["ok", "skip", "err"].includes(task.status)) {
       task.status = "skip";
+      task.skipReason = "tab_closed_current_run";
       broadcastTaskUpdate(task);
+      const group = findGroupForTask(task);
+      const nextTask = self.ExtLinkScheduler.nextPendingTask(group, task.index);
+      if (nextTask) {
+        state.queue.unshift(group);
+        state.running = true;
+        state.stopped = false;
+        processQueue();
+      }
     }
     state.activeTabs.delete(tabId);
+    refreshBatchRunStatus().catch(() => {});
   }
 });
 
 function countProcessingTabs() {
-  // Count every open task tab until it is closed — includes paused/manual-wait and post-success close delay.
-  return state.activeTabs.size;
+  return self.ExtLinkScheduler.countProcessingSlots(state.activeTabs);
 }
 
 // ─── Messaging ───
 function broadcastTaskUpdate(task) {
+  chrome.storage.local
+    .get(["activeBatchRun"])
+    .then((stored) => {
+      if (!stored.activeBatchRun) return;
+      return chrome.storage.local.set({
+        activeBatchRun: {
+          ...stored.activeBatchRun,
+          tasks: state.tasks,
+        },
+      });
+    })
+    .catch(() => {});
   chrome.runtime
     .sendMessage({
       action: "taskUpdate",
       index: task.index,
+      taskId: task.id,
       status: task.status,
+      profileId: task.profileId,
+      profileName: task.profileName,
+      destinationGroupKey: task.destinationGroupKey,
+      domain: task.domain,
+      groupJobIndex: task.groupJobIndex,
+      groupJobCount: task.groupJobCount,
+      skipReason: task.skipReason,
       isDofollow: task.isDofollow,
       rel: task.relResult,
     })

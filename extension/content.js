@@ -2219,6 +2219,78 @@
     return { applied, report: collectFilledFieldsReport() };
   }
 
+  function getScreenshotValues(config) {
+    if (self.ExtLinkProfiles?.getScreenshotValuesFromConfig) {
+      return self.ExtLinkProfiles.getScreenshotValuesFromConfig(config);
+    }
+    const pf = getProfileFields(config);
+    const configured = Array.isArray(config.screenshots) ? config.screenshots : [];
+    const values = configured.length
+      ? configured
+      : [1, 2, 3, 4].map(
+          (index) => pf[`Screenshot ${index}`] || pf[`Screenshot-${index}`] || "",
+        );
+    return values.map((value) => String(value || "").trim()).filter(Boolean);
+  }
+
+  function isScreenshotFileField(element) {
+    const hint = getFieldHint(element);
+    return /\b(screenshot|screen shot|gallery|product image|app image|interface image)\b/.test(
+      hint,
+    );
+  }
+
+  function resolveFileMedia(config, element, fallbackScreenshotIndex = 0) {
+    const pf = getProfileFields(config);
+    const hint = getFieldHint(element);
+    if (self.ExtLinkProfiles?.resolveMediaField) {
+      return self.ExtLinkProfiles.resolveMediaField(
+        config,
+        hint,
+        fallbackScreenshotIndex,
+      );
+    }
+    if (isScreenshotFileField(element)) {
+      const screenshots = getScreenshotValues(config);
+      const explicit = hint.match(
+        /\b(?:screenshot|screen shot|gallery|image|photo)[^\d]{0,8}([1-4])\b/,
+      );
+      const index = explicit ? Number(explicit[1]) - 1 : fallbackScreenshotIndex;
+      return {
+        value: screenshots[index] || screenshots[fallbackScreenshotIndex] || "",
+        profileKey: `Screenshot ${index + 1}`,
+        useLogoDataUrl: false,
+        screenshot: true,
+        explicitIndex: !!explicit,
+      };
+    }
+    if (/\b(logo|icon|avatar)\b/.test(hint)) {
+      return {
+        value: pf.LOGO || config.logoUrl || pf["Featured image"] || config.featuredImage || "",
+        profileKey: "LOGO",
+        useLogoDataUrl: true,
+        screenshot: false,
+        explicitIndex: false,
+      };
+    }
+    if (/\b(featured|cover|banner|thumbnail|image|photo)\b/.test(hint)) {
+      return {
+        value: pf["Featured image"] || config.featuredImage || config.logoUrl || pf.LOGO || "",
+        profileKey: "Featured image",
+        useLogoDataUrl: false,
+        screenshot: false,
+        explicitIndex: false,
+      };
+    }
+    return {
+      value: "",
+      profileKey: "",
+      useLogoDataUrl: false,
+      screenshot: false,
+      explicitIndex: false,
+    };
+  }
+
   function resolveValueForField(config, element) {
     const pf = getProfileFields(config);
     const hint = getFieldHint(element);
@@ -2239,10 +2311,7 @@
     }
 
     if (type === "file") {
-      if (/image|logo|icon|featured|screenshot|photo|avatar/.test(hint)) {
-        return pf["Featured image"] || config.featuredImage || config.logoUrl || "";
-      }
-      return "";
+      return resolveFileMedia(config, element).value;
     }
 
     if (tag === "select") {
@@ -2341,10 +2410,10 @@
     return setSelectValue(element, value);
   }
 
-  async function tryFillFileFromUrl(input, imageUrl, baseUrl, config) {
+  async function tryFillFileFromUrl(input, imageUrl, baseUrl, config, useLogoDataUrl = false) {
     if (!input || input.type !== "file") return false;
 
-    const dataUrl = config?.logoDataUrl;
+    const dataUrl = useLogoDataUrl ? config?.logoDataUrl : "";
     if (dataUrl && String(dataUrl).startsWith("data:")) {
       return fillFileInputFromDataUrl(input, dataUrl);
     }
@@ -2412,6 +2481,7 @@
     let filledCount = 0;
     const mappings = {};
     const skippedFiles = [];
+    let screenshotCursor = 0;
 
     for (const element of elements) {
       const type = (element.type || "").toLowerCase();
@@ -2431,7 +2501,9 @@
         continue;
       }
 
-      const value = resolveValueForField(config, element);
+      const media =
+        type === "file" ? resolveFileMedia(config, element, screenshotCursor) : null;
+      const value = media ? media.value : resolveValueForField(config, element);
       if (!value && type !== "file") {
         if (fieldNeedsRefill(element)) {
           /* fall through to re-fill below */
@@ -2440,17 +2512,24 @@
 
       if (type === "file") {
         if (element.files?.length) continue;
-        const ok = await tryFillFileFromUrl(element, value, baseUrl, config);
+        const ok = await tryFillFileFromUrl(
+          element,
+          value,
+          baseUrl,
+          config,
+          media?.useLogoDataUrl === true,
+        );
         if (ok) {
           filledCount++;
           mappings[fieldMappingKey(element)] = {
-            profileKey: "Featured image",
+            profileKey: media?.profileKey || "Featured image",
             value,
             label: getSnapshotLabel(element),
           };
         } else if (value) {
           skippedFiles.push(getSnapshotLabel(element) || element.name || "image");
         }
+        if (media?.screenshot && !media.explicitIndex) screenshotCursor++;
         continue;
       }
 

@@ -31,6 +31,10 @@ assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);
 assert.match(background, /case "getLibraryManagerState"/);
+assert.match(
+  background,
+  /isSubmissionSuccessful\(records,\s*key,\s*profile\.id\)/,
+);
 assert.match(background, /self\.ExtLinkBackup\.mergeBackup/);
 assert.match(background, /restoreActiveBatchRun/);
 assert.match(background, /\["running", "waiting_manual", "paused"\]/);

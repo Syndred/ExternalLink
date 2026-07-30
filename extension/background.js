@@ -992,7 +992,7 @@ async function getLibraryManagerState() {
       return {
         profileId: profile.id,
         profileName: profile.name || profile.id,
-        success: self.ExtLinkQueue.isSubmissionSuccessful(record),
+        success: self.ExtLinkQueue.isSubmissionSuccessful(records, key, profile.id),
         submittedAt: record?.submittedAt || "",
       };
     });

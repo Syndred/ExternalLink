@@ -17,6 +17,41 @@ const P = loadProfilesModule();
 assert.equal(P.canonicalProfileId("OldPhotoLive AI"), "OldPhotoLive");
 assert.equal(P.canonicalProfileId("comparison-text"), "TextComparison");
 assert.equal(P.canonicalProfileId("graffiti_name_ai"), "GraffitiName");
+assert.equal(P.canonicalProfileId("Rainbow Pet AI"), "RainbowPetAI");
+assert.equal(P.canonicalProfileId("RSPAI"), "RspAi");
+
+const mediaConfig = {
+  logoUrl: "https://example.com/logo.png",
+  logoDataUrl: "data:image/png;base64,logo",
+  featuredImage: "https://example.com/featured.jpg",
+  screenshots: [
+    "https://example.com/screen-1.jpg",
+    "https://example.com/screen-2.jpg",
+  ],
+  projectFields: {
+    LOGO: "https://example.com/logo.png",
+    "Featured image": "https://example.com/featured.jpg",
+  },
+};
+assert.deepEqual(
+  JSON.parse(JSON.stringify(P.resolveMediaField(mediaConfig, "Product screenshot 2", 0))),
+  {
+    value: "https://example.com/screen-2.jpg",
+    profileKey: "Screenshot 2",
+    useLogoDataUrl: false,
+    screenshot: true,
+    explicitIndex: true,
+  },
+);
+assert.equal(
+  P.resolveMediaField(mediaConfig, "Gallery image", 1).value,
+  "https://example.com/screen-2.jpg",
+);
+assert.equal(P.resolveMediaField(mediaConfig, "Company logo", 0).useLogoDataUrl, true);
+assert.equal(
+  P.resolveMediaField(mediaConfig, "Featured image", 0).value,
+  "https://example.com/featured.jpg",
+);
 
 const tableProjects = {
   OldPhotoLive: {

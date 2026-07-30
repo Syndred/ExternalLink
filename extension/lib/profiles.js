@@ -32,6 +32,8 @@
     const aliases = {
       oldphotolive: "OldPhotoLive",
       oldphotoliveai: "OldPhotoLive",
+      rainbowpetai: "RainbowPetAI",
+      rspai: "RspAi",
       textcomparison: "TextComparison",
       comparisontext: "TextComparison",
       graffitiname: "GraffitiName",
@@ -95,9 +97,17 @@
       commentTemplate: globalConfig.commentTemplate || longDesc || shortDesc,
       tags: fields["Tags Keywords/Hashtags"] || "",
       pricing: fields.Pricing || "",
-      featuredImage: fields["Featured image"] || profile.logoUrl || "",
-      logoUrl: profile.logoUrl || fields["Featured image"] || "",
+      featuredImage: fields["Featured image"] || profile.logoUrl || fields.LOGO || "",
+      logoUrl: profile.logoUrl || fields.LOGO || fields["Featured image"] || "",
       logoDataUrl: profile.logoDataUrl || "",
+      screenshots:
+        profile.media?.screenshots ||
+        [1, 2, 3, 4]
+          .map(
+            (index) =>
+              fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || "",
+          )
+          .filter(Boolean),
       learnedFieldMappings: profile.learnedFieldMappings || {},
       anchorRules: profile.anchorRules || {},
       blogRules: profile.blogRules || {},
@@ -108,6 +118,76 @@
       avoidContent: profile.avoidContent || [],
       projectFields: fields,
       fillOnly: globalConfig.fillOnly !== false,
+    };
+  }
+
+  function getScreenshotValuesFromConfig(config) {
+    const fields = config?.projectFields || {};
+    const configured = Array.isArray(config?.screenshots) ? config.screenshots : [];
+    const values = configured.length
+      ? configured
+      : [1, 2, 3, 4].map(
+          (index) =>
+            fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || "",
+        );
+    return values.map((value) => String(value || "").trim()).filter(Boolean);
+  }
+
+  function resolveMediaField(config, hint, fallbackScreenshotIndex = 0) {
+    const fields = config?.projectFields || {};
+    const normalizedHint = String(hint || "").toLowerCase();
+    const screenshotField =
+      /\b(screenshot|screen shot|gallery|product image|app image|interface image)\b/.test(
+        normalizedHint,
+      );
+    if (screenshotField) {
+      const screenshots = getScreenshotValuesFromConfig(config);
+      const explicit = normalizedHint.match(
+        /\b(?:screenshot|screen shot|gallery|image|photo)[^\d]{0,8}([1-4])\b/,
+      );
+      const index = explicit ? Number(explicit[1]) - 1 : fallbackScreenshotIndex;
+      return {
+        value: screenshots[index] || screenshots[fallbackScreenshotIndex] || "",
+        profileKey: `Screenshot ${index + 1}`,
+        useLogoDataUrl: false,
+        screenshot: true,
+        explicitIndex: !!explicit,
+      };
+    }
+    if (/\b(logo|icon|avatar)\b/.test(normalizedHint)) {
+      return {
+        value:
+          fields.LOGO ||
+          config?.logoUrl ||
+          fields["Featured image"] ||
+          config?.featuredImage ||
+          "",
+        profileKey: "LOGO",
+        useLogoDataUrl: true,
+        screenshot: false,
+        explicitIndex: false,
+      };
+    }
+    if (/\b(featured|cover|banner|thumbnail|image|photo)\b/.test(normalizedHint)) {
+      return {
+        value:
+          fields["Featured image"] ||
+          config?.featuredImage ||
+          config?.logoUrl ||
+          fields.LOGO ||
+          "",
+        profileKey: "Featured image",
+        useLogoDataUrl: false,
+        screenshot: false,
+        explicitIndex: false,
+      };
+    }
+    return {
+      value: "",
+      profileKey: "",
+      useLogoDataUrl: false,
+      screenshot: false,
+      explicitIndex: false,
     };
   }
 
@@ -133,6 +213,8 @@
     }
     const aliases = {
       oldphotolive: "OldPhotoLive",
+      rainbowpetai: "RainbowPetAI",
+      rspai: "RspAi",
       textcomparison: "TextComparison",
       graffitiname: "GraffitiName",
     };
@@ -265,6 +347,8 @@
     canonicalProfileId,
     emptySiteProfile,
     buildAgentConfigFromProfile,
+    getScreenshotValuesFromConfig,
+    resolveMediaField,
     findMatchingProfile,
     stabilizeTableProfiles,
     applySavedProfilesToTasks,

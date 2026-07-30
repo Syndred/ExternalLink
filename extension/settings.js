@@ -46,13 +46,13 @@
     $("sitePromoUrl").value = profile.promoUrl || profile.url || f.Url || "";
     $("siteTitle").value = f.Title || "";
     $("siteEmail").value = f["Business mail"] || "";
-    $("siteLogoUrl").value = profile.logoUrl || f["Featured image"] || "";
+    $("siteLogoUrl").value = profile.logoUrl || f.LOGO || f["Featured image"] || "";
     $("siteScreenshots").value = P.listToLines(
       profile.media?.screenshots || [
-        f["Screenshot 1"],
-        f["Screenshot 2"],
-        f["Screenshot 3"],
-        f["Screenshot 4"],
+        f["Screenshot 1"] || f["Screenshot-1"],
+        f["Screenshot 2"] || f["Screenshot-2"],
+        f["Screenshot 3"] || f["Screenshot-3"],
+        f["Screenshot 4"] || f["Screenshot-4"],
       ],
     );
     updateLogoPreview(pendingLogoDataUrl);
@@ -95,11 +95,14 @@
       pendingLogoDataUrl !== null ? pendingLogoDataUrl : existing.logoDataUrl || "";
 
     const fields = {
+      ...(existing.fields || {}),
       Name: name,
       Url: homeUrl,
       Title: ($("siteTitle").value || "").trim(),
       "Business mail": ($("siteEmail").value || "").trim(),
-      "Featured image": logoUrl || (logoDataUrl ? "(uploaded logo)" : ""),
+      LOGO: logoUrl || (logoDataUrl ? "(uploaded logo)" : ""),
+      "Featured image":
+        existing.fields?.["Featured image"] || logoUrl || (logoDataUrl ? "(uploaded logo)" : ""),
       Note: ($("siteNote").value || "").trim(),
       "Short description(20-30 words)": ($("siteShortDesc").value || "").trim(),
       "Short Discription(100-150 words)": ($("siteMediumDesc").value || "").trim(),
@@ -112,6 +115,7 @@
     const screenshots = P.linesToList($("siteScreenshots").value).slice(0, 4);
     screenshots.forEach((url, index) => {
       fields[`Screenshot ${index + 1}`] = url;
+      fields[`Screenshot-${index + 1}`] = url;
     });
 
     return {

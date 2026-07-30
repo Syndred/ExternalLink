@@ -1,0 +1,671 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ExternalLink 设置</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      h1 {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .subtitle {
+        color: #94a3b8;
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+      }
+      .tab {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        background: #1e293b;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 13px;
+        min-height: 44px;
+      }
+      .tab.active {
+        background: #0284c7;
+        color: #fff;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+      .card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      .form-row {
+        margin-bottom: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+      }
+      input[type="text"],
+      input[type="search"],
+      select,
+      textarea {
+        width: 100%;
+        background: #0f172a;
+        border: 1px solid #475569;
+        color: #e2e8f0;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 13px;
+        min-height: 44px;
+      }
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+      textarea.tall {
+        min-height: 120px;
+      }
+      .btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        min-height: 44px;
+      }
+      .btn-primary {
+        background: #0284c7;
+        color: #fff;
+        width: 100%;
+        margin-top: 8px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .btn-row .btn {
+        flex: 1;
+        width: auto;
+        margin-top: 0;
+      }
+      .btn-secondary {
+        background: #334155;
+        color: #e2e8f0;
+      }
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+      }
+      .site-toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .site-toolbar select {
+        flex: 1;
+      }
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 16px 0 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #334155;
+      }
+      .hint {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+      }
+      .logo-upload-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .logo-upload-row input[type="file"] {
+        flex: 1;
+        font-size: 12px;
+      }
+      .btn-sm {
+        padding: 6px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .logo-preview {
+        display: block;
+        max-width: 120px;
+        max-height: 80px;
+        margin-top: 8px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        object-fit: contain;
+        background: #0f172a;
+      }
+      .notice {
+        background: #172554;
+        border: 1px solid #1d4ed8;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 12px;
+        color: #bfdbfe;
+        margin-bottom: 16px;
+      }
+      .library-toolbar {
+        display: grid;
+        grid-template-columns: 1fr 160px;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .library-list {
+        display: grid;
+        gap: 10px;
+      }
+      .library-item {
+        padding: 12px;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        background: #111827;
+      }
+      .library-item-head,
+      .library-item-actions,
+      .backup-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .library-item-head strong {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .library-meta,
+      .profile-statuses {
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+      .profile-status {
+        display: inline-block;
+        margin: 4px 6px 0 0;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: #334155;
+      }
+      .profile-status.success {
+        color: #bbf7d0;
+        background: #14532d;
+      }
+      .empty-state {
+        padding: 24px;
+        text-align: center;
+        color: #94a3b8;
+        border: 1px dashed #475569;
+        border-radius: 10px;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(56, 189, 248, 0.45);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>⚙️ ExternalLink 设置</h1>
+      <p class="subtitle">
+        网站资料与全局配置保存在本地，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
+      </p>
+
+      <div class="notice">
+        💡
+        填表请使用浏览器右侧<strong>常驻侧边栏</strong>（点击扩展图标打开）。在此配置网站资料后，侧边栏点「填入网站资料」即可。
+      </div>
+
+      <div class="tabs">
+        <button
+          class="tab active"
+          data-panel="sites"
+        >
+          网站资料
+        </button>
+        <button
+          class="tab"
+          data-panel="library"
+        >
+          外链库
+        </button>
+        <button
+          class="tab"
+          data-panel="config"
+        >
+          全局配置
+        </button>
+      </div>
+
+      <!-- 网站资料 -->
+      <div
+        class="panel active"
+        id="panel-sites"
+      >
+        <div class="card">
+          <div class="site-toolbar">
+            <select id="siteSelect"></select>
+            <button
+              class="btn btn-secondary"
+              id="btnAddSite"
+            >
+              + 添加
+            </button>
+            <button
+              class="btn btn-danger"
+              id="btnRemoveSite"
+            >
+              移除
+            </button>
+          </div>
+
+          <div class="form-row">
+            <label>网站地址（用于 AI 提取）</label>
+            <input
+              type="text"
+              id="siteExtractUrl"
+              placeholder="https://example.com"
+            />
+          </div>
+          <div class="form-row">
+            <label>资料语言</label>
+            <select id="siteLanguage">
+              <option value="auto">自动</option>
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button
+              class="btn btn-primary btn-secondary"
+              id="btnExtractSite"
+              style="background: #0284c7"
+            >
+              🔍 从网址提取资料
+            </button>
+            <button
+              class="btn btn-secondary"
+              id="btnGenerateSite"
+            >
+              ✨ 完善当前资料
+            </button>
+          </div>
+          <p class="hint">AI 提取在独立标签页进行，不会被网页弹窗打断。</p>
+        </div>
+
+        <div class="card">
+          <div class="section-title">基本信息</div>
+          <div class="form-row">
+            <label>站点名称</label>
+            <input
+              type="text"
+              id="siteName"
+            />
+          </div>
+          <div class="form-row">
+            <label>首页地址</label>
+            <input
+              type="text"
+              id="siteHomeUrl"
+            />
+          </div>
+          <div class="form-row">
+            <label>重点推广地址</label>
+            <input
+              type="text"
+              id="sitePromoUrl"
+            />
+          </div>
+          <div class="form-row">
+            <label>标题</label>
+            <input
+              type="text"
+              id="siteTitle"
+            />
+          </div>
+          <div class="form-row">
+            <label>联系邮箱</label>
+            <input
+              type="text"
+              id="siteEmail"
+            />
+          </div>
+          <div class="form-row">
+            <label>网站 Logo / 特色图</label>
+            <input
+              type="text"
+              id="siteLogoUrl"
+              placeholder="https://example.com/logo.png（可选，与上传二选一）"
+            />
+            <div class="logo-upload-row">
+              <input
+                type="file"
+                id="siteLogoFile"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              />
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                id="btnClearLogo"
+              >
+                清除图片
+              </button>
+            </div>
+            <img
+              id="siteLogoPreview"
+              class="logo-preview"
+              alt=""
+              hidden
+            />
+            <p class="hint">
+              用于目录站「Featured image」等上传字段。可上传本地图片（推荐，≤2MB）或填写 URL
+            </p>
+          </div>
+          <div class="section-title">媒体</div>
+          <div class="form-row">
+            <label>Screenshot 1–4（每行一个图片 URL）</label>
+            <textarea
+              id="siteScreenshots"
+              placeholder="https://example.com/screenshot-1.png&#10;https://example.com/screenshot-2.png"
+            ></textarea>
+            <p class="hint">按统一媒体列表保存，填表时映射到 Screenshot 1–4。</p>
+          </div>
+
+          <div class="section-title">内容描述</div>
+          <div class="form-row">
+            <label>短描述（20-30 词）</label>
+            <textarea id="siteShortDesc"></textarea>
+          </div>
+          <div class="form-row">
+            <label>中等描述（100-150 词）</label>
+            <textarea id="siteMediumDesc"></textarea>
+          </div>
+          <div class="form-row">
+            <label>详细描述（250-500 词）</label>
+            <textarea
+              id="siteLongDesc"
+              class="tall"
+            ></textarea>
+          </div>
+          <div class="form-row">
+            <label>备注</label>
+            <textarea id="siteNote"></textarea>
+          </div>
+          <div class="form-row">
+            <label>目标受众</label>
+            <textarea id="siteAudience"></textarea>
+          </div>
+          <div class="form-row">
+            <label>价值主张</label>
+            <textarea id="siteValueProp"></textarea>
+          </div>
+          <div class="form-row">
+            <label>使用场景（每行一条）</label>
+            <textarea id="siteUseCases"></textarea>
+          </div>
+          <div class="form-row">
+            <label>关键词</label>
+            <textarea id="siteTags"></textarea>
+          </div>
+          <div class="form-row">
+            <label>功能描述</label>
+            <textarea id="siteFeatures"></textarea>
+          </div>
+          <div class="form-row">
+            <label>卖点（每行一条）</label>
+            <textarea id="siteSellPoints"></textarea>
+          </div>
+          <div class="form-row">
+            <label>定价 / 定价类型</label>
+            <input
+              type="text"
+              id="sitePricing"
+              placeholder="定价"
+              style="margin-bottom: 6px"
+            />
+            <input
+              type="text"
+              id="sitePricingType"
+              placeholder="Freemium / Free"
+            />
+          </div>
+          <div class="form-row">
+            <label>不要写的内容</label>
+            <textarea id="siteAvoidContent"></textarea>
+          </div>
+
+          <div class="section-title">锚文本规则</div>
+          <div class="form-row">
+            <label>品牌词</label>
+            <textarea id="siteBrandKeywords"></textarea>
+          </div>
+          <div class="form-row">
+            <label>网址链接词</label>
+            <textarea id="siteUrlKeywords"></textarea>
+          </div>
+          <div class="form-row">
+            <label>自然表达</label>
+            <textarea id="siteNaturalExprs"></textarea>
+          </div>
+          <div class="form-row">
+            <label>关键词表达</label>
+            <textarea id="siteKeywordExprs"></textarea>
+          </div>
+          <div class="form-row">
+            <label>避免使用的词</label>
+            <textarea id="siteAvoidWords"></textarea>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              id="siteAllowExactAnchor"
+            />
+            允许精确匹配锚文本</label
+          >
+
+          <div class="section-title">博客规则</div>
+          <div class="form-row">
+            <label>语气</label>
+            <select id="siteBlogTone">
+              <option value="helpful">有帮助</option>
+              <option value="professional">专业</option>
+              <option value="casual">轻松</option>
+              <option value="enthusiastic">热情</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>每篇最多链接数</label>
+            <input
+              type="text"
+              id="siteMaxLinks"
+              value="1"
+            />
+          </div>
+          <div class="form-row">
+            <label>优先锚文本</label>
+            <select id="sitePreferredAnchor">
+              <option value="natural">自然</option>
+              <option value="brand">品牌</option>
+              <option value="keyword">关键词</option>
+              <option value="url">网址</option>
+            </select>
+          </div>
+
+          <button
+            class="btn btn-primary"
+            id="btnSaveSite"
+          >
+            💾 保存当前站点资料
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="panel"
+        id="panel-library"
+      >
+        <div class="card">
+          <div class="section-title">外链库管理</div>
+          <div class="library-toolbar">
+            <input
+              type="search"
+              id="librarySearch"
+              placeholder="筛选域名、分类或项目"
+            />
+            <select id="libraryStatusFilter">
+              <option value="">全部分类</option>
+              <option value="can_submit">可提交</option>
+              <option value="needs_login">需登录</option>
+              <option value="needs_captcha">验证码</option>
+              <option value="paid">付费</option>
+              <option value="broken">无法提交</option>
+              <option value="skip">跳过</option>
+              <option value="deleted">已删除</option>
+            </select>
+          </div>
+          <div
+            class="library-list"
+            id="libraryList"
+          >
+            <div class="empty-state">正在加载外链库…</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">提交账本备份</div>
+          <p class="hint">导出包含提交账本、分类、Profile ID 和自定义外链，可用于扩展重装后的恢复。</p>
+          <div class="backup-actions">
+            <button
+              class="btn btn-secondary"
+              id="btnExportLedger"
+            >
+              导出 JSON
+            </button>
+            <button
+              class="btn btn-secondary"
+              id="btnImportLedger"
+            >
+              导入 JSON
+            </button>
+            <input
+              type="file"
+              id="ledgerImportFile"
+              accept="application/json,.json"
+              hidden
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 全局配置 -->
+      <div
+        class="panel"
+        id="panel-config"
+      >
+        <div class="card">
+          <div class="form-row">
+            <label>邮箱（注册/评论用）</label>
+            <input
+              type="text"
+              id="cfgEmail"
+            />
+          </div>
+          <div class="form-row">
+            <label>用户名（表单里的 Your name，填真实人名）</label>
+            <input
+              type="text"
+              id="cfgName"
+              placeholder="Alex Johnson"
+            />
+          </div>
+          <div class="form-row">
+            <label>评论模板（可选）</label>
+            <textarea id="cfgCommentTemplate"></textarea>
+          </div>
+          <div class="form-row">
+            <label>批量并发数</label>
+            <input
+              type="text"
+              id="cfgConcurrency"
+              value="1"
+            />
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              id="autoOpenSidePanel"
+            />
+            进入网页时自动打开侧边栏（默认关闭，避免遮挡其他插件）</label
+          >
+          <br />
+          <label
+            ><input
+              type="checkbox"
+              id="autoFillOnVisit"
+              checked
+            />
+            侧边栏打开时，访问待提交列表中的站点自动检测并填写</label
+          >
+          <br /><br />
+          <label
+            ><input
+              type="checkbox"
+              id="cfgPingIndex"
+              checked
+            />
+            提交后 IndexNow 通知</label
+          >
+          <button
+            class="btn btn-primary"
+            id="btnSaveConfig"
+          >
+            💾 保存全局配置
+          </button>
+          <button
+            class="btn btn-danger"
+            id="btnClearData"
+            style="margin-top: 12px; width: 100%"
+          >
+            🗑 清除所有数据
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="lib/profiles.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

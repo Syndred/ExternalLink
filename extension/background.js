@@ -1,7 +1,13 @@
 // ExternalLink Extension - Background Orchestrator
 "use strict";
 
-importScripts("lib/profiles.js", "lib/queue.js", "lib/scheduler.js", "lib/url-library.js");
+importScripts(
+  "lib/profiles.js",
+  "lib/queue.js",
+  "lib/scheduler.js",
+  "lib/backup.js",
+  "lib/url-library.js",
+);
 
 let state = {
   running: false,
@@ -111,6 +117,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "clearSiteAnnotation":
       clearSiteAnnotation(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "getLibraryManagerState":
+      getLibraryManagerState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message, items: [] }));
+      return true;
+    case "pinLibraryUrl":
+      pinLibraryUrl(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "exportSubmissionData":
+      exportSubmissionData()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "importSubmissionData":
+      importSubmissionData(msg.data)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -832,6 +858,119 @@ async function removeFromSubmissionQueue(msg) {
   return markSubmissionSite({ url: msg.url, status: "deleted", note: msg.note || "" });
 }
 
+async function getLibraryManagerState() {
+  const storage = await chrome.storage.local.get([
+    "urlList",
+    "siteAnnotations",
+    "submissionRecords",
+    "siteProfiles",
+    "activeSiteId",
+    "submissionSchemaVersion",
+  ]);
+  const tableData = await loadTableLibrary();
+  const seeded = await ensureProfilesFromTable(
+    tableData,
+    storage.siteProfiles || {},
+    storage.activeSiteId || "",
+  );
+  const records = await ensureSubmissionSchema(
+    tableData,
+    storage.siteAnnotations || {},
+    storage.submissionRecords || {},
+    storage.submissionSchemaVersion,
+  );
+  const urls = self.ExtLinkQueue.resolvePluginUrls(
+    storage.urlList || "",
+    self.ExtLinkUrlLibrary || [],
+  );
+  const annotations = storage.siteAnnotations || {};
+  const items = urls.map((entry, index) => {
+    const key = siteKeyForUrl(entry.url);
+    const annotation = annotations[key] || annotations[entry.domain] || null;
+    const profileStatuses = Object.values(seeded.profiles).map((profile) => {
+      const recordKey = self.ExtLinkQueue.submissionRecordKey(key, profile.id);
+      const record = records[recordKey] || null;
+      return {
+        profileId: profile.id,
+        profileName: profile.name || profile.id,
+        success: self.ExtLinkQueue.isSubmissionSuccessful(record),
+        submittedAt: record?.submittedAt || "",
+      };
+    });
+    return {
+      key,
+      url: entry.url,
+      domain: entry.domain || self.ExtLinkQueue.extractDomain(entry.url),
+      source: entry.source || "library",
+      platformType: entry.platformType || "directory",
+      position: index,
+      annotation,
+      profileStatuses,
+    };
+  });
+  return { ok: true, items, profiles: seeded.profiles };
+}
+
+async function pinLibraryUrl(msg) {
+  const url = String(msg.url || "").trim();
+  if (!url) throw new Error("缺少 URL");
+  const storage = await chrome.storage.local.get(["urlList"]);
+  const lines = String(storage.urlList || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const key = siteKeyForUrl(url);
+  const existing = lines.find((line) => siteKeyForUrl(line.split("|")[0].trim()) === key);
+  const next = lines.filter((line) => siteKeyForUrl(line.split("|")[0].trim()) !== key);
+  next.unshift(existing || `${url}|directory`);
+  await chrome.storage.local.set({ urlList: next.join("\n") });
+  return { ok: true };
+}
+
+async function exportSubmissionData() {
+  const storage = await chrome.storage.local.get([
+    "submissionRecords",
+    "submissionSchemaVersion",
+    "siteAnnotations",
+    "siteProfiles",
+    "activeSiteId",
+    "selectedSiteIds",
+    "urlList",
+  ]);
+  return {
+    ok: true,
+    data: {
+      format: self.ExtLinkBackup.FORMAT,
+      version: SUBMISSION_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      submissionRecords: storage.submissionRecords || {},
+      siteAnnotations: storage.siteAnnotations || {},
+      siteProfiles: storage.siteProfiles || {},
+      activeSiteId: storage.activeSiteId || "",
+      selectedSiteIds: storage.selectedSiteIds || [],
+      urlList: storage.urlList || "",
+    },
+  };
+}
+
+async function importSubmissionData(data) {
+  const storage = await chrome.storage.local.get([
+    "submissionRecords",
+    "siteAnnotations",
+    "siteProfiles",
+    "urlList",
+  ]);
+  const importedProfiles =
+    data?.siteProfiles && typeof data.siteProfiles === "object" ? data.siteProfiles : {};
+  const merged = self.ExtLinkBackup.mergeBackup(storage, data, SUBMISSION_SCHEMA_VERSION);
+  await chrome.storage.local.set(merged);
+  return {
+    ok: true,
+    recordsImported: Object.keys(data.submissionRecords).length,
+    profilesImported: Object.keys(importedProfiles).length,
+  };
+}
+
 function broadcastAutoFillUpdate(payload) {
   chrome.runtime.sendMessage({ action: "autoFillUpdate", ...payload }).catch(() => {});
 }
@@ -969,12 +1108,18 @@ async function loadPendingSubmissionTasks(options = {}) {
       total: filtered.length,
       destinationTotal: groups.length,
       selectedProfileTotal: selectedProfileIds.length,
+      successfulSkipped: Object.values(submissionRecords).filter(
+        (record) =>
+          record?.status === "success" && selectedProfileIds.includes(record.profileId),
+      ).length,
     },
   };
 }
 
 async function getSubmissionQueueState(msg = {}) {
-  const { groups, tasks: jobs, meta, selectedProfileIds } = await loadPendingSubmissionTasks();
+  const { groups, tasks: jobs, meta, selectedProfileIds } = await loadPendingSubmissionTasks({
+    selectedProfileIds: msg.selectedSiteIds,
+  });
   const storage = await chrome.storage.local.get(["submissionQueueIndex", "submissionQueueKey"]);
   let index = Number.isFinite(storage.submissionQueueIndex) ? storage.submissionQueueIndex : 0;
 

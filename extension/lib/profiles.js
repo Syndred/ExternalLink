@@ -1,0 +1,203 @@
+// Shared site profile helpers for settings, side panel, and background.
+(function (global) {
+  "use strict";
+
+  const LOCAL_AGENT_URL = "http://127.0.0.1:8787";
+
+  function linesToList(text) {
+    return String(text || "")
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
+  function listToLines(items) {
+    return Array.isArray(items) ? items.join("\n") : "";
+  }
+
+  function slugifySiteId(name) {
+    const base = String(name || "site")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .slice(0, 40);
+    return base || "site-" + Date.now().toString(36);
+  }
+
+  function emptySiteProfile(id, name = "") {
+    return {
+      id,
+      name: name || id,
+      url: "",
+      promoUrl: "",
+      language: "auto",
+      fields: {},
+      anchorRules: {
+        brandKeywords: [],
+        urlKeywords: [],
+        naturalExpressions: [],
+        keywordExpressions: [],
+        avoidWords: [],
+        allowExactMatch: false,
+      },
+      blogRules: {
+        tone: "helpful",
+        maxLinksPerDraft: 1,
+        preferredAnchor: "natural",
+      },
+      targetAudience: "",
+      valueProposition: "",
+      useCases: [],
+      sellablePoints: [],
+      avoidContent: [],
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function buildAgentConfigFromProfile(profile, globalConfig = {}) {
+    const fields = profile.fields || {};
+    const name = fields.Name || profile.name || "";
+    const url = profile.promoUrl || profile.url || fields.Url || "";
+    const email = fields["Business mail"] || globalConfig.email || "";
+    const title = fields.Title || name;
+    const shortDesc =
+      fields["Short description(20-30 words)"] || fields.Note || profile.valueProposition || "";
+    const longDesc =
+      fields["Long description (250-500 words)"] ||
+      fields["Short Discription(100-150 words)"] ||
+      shortDesc;
+    const natural = profile.anchorRules?.naturalExpressions || [];
+    const anchorText = natural[0] || title || name;
+
+    return {
+      projectKey: profile.id,
+      targetDomain: url,
+      brandName: name,
+      anchorText,
+      email,
+      username: globalConfig.username || name,
+      commentTemplate: globalConfig.commentTemplate || longDesc || shortDesc,
+      tags: fields["Tags Keywords/Hashtags"] || "",
+      pricing: fields.Pricing || "",
+      featuredImage: fields["Featured image"] || profile.logoUrl || "",
+      logoUrl: profile.logoUrl || fields["Featured image"] || "",
+      logoDataUrl: profile.logoDataUrl || "",
+      learnedFieldMappings: profile.learnedFieldMappings || {},
+      anchorRules: profile.anchorRules || {},
+      blogRules: profile.blogRules || {},
+      targetAudience: profile.targetAudience || "",
+      valueProposition: profile.valueProposition || "",
+      useCases: profile.useCases || [],
+      sellablePoints: profile.sellablePoints || [],
+      avoidContent: profile.avoidContent || [],
+      projectFields: fields,
+      fillOnly: globalConfig.fillOnly !== false,
+    };
+  }
+
+  function findMatchingProfile(projectKey, profiles) {
+    if (!projectKey || !profiles) return null;
+    const key = String(projectKey).trim();
+    if (profiles[key]) return profiles[key];
+    const lower = key.toLowerCase();
+    for (const profile of Object.values(profiles)) {
+      if (
+        profile.id === key ||
+        profile.name === key ||
+        String(profile.name || "").toLowerCase() === lower ||
+        String(profile.id || "").toLowerCase() === lower
+      ) {
+        return profile;
+      }
+    }
+    const aliases = {
+      oldphotolive: "OldPhotoLive",
+      textcomparison: "TextComparison",
+      graffitiname: "GraffitiName",
+    };
+    const alias = aliases[lower.replace(/[\s_-]/g, "")];
+    if (alias && profiles[alias]) return profiles[alias];
+    return null;
+  }
+
+  function applySavedProfilesToTasks(tasks, profiles) {
+    if (!profiles || !Object.keys(profiles).length) return tasks;
+    return tasks.map((task) => {
+      const profile = findMatchingProfile(task.projectKey, profiles);
+      if (!profile) return task;
+      const config = buildAgentConfigFromProfile(profile);
+      return {
+        ...task,
+        config: {
+          ...(task.config || {}),
+          ...config,
+          projectFields: {
+            ...((task.config && task.config.projectFields) || {}),
+            ...config.projectFields,
+          },
+        },
+      };
+    });
+  }
+
+  function mergeExtractedProfile(current, extracted) {
+    const merged = { ...current, ...extracted };
+    merged.fields = { ...(current.fields || {}), ...(extracted.fields || {}) };
+    merged.anchorRules = { ...(current.anchorRules || {}), ...(extracted.anchorRules || {}) };
+    merged.blogRules = { ...(current.blogRules || {}), ...(extracted.blogRules || {}) };
+    merged.useCases = extracted.useCases?.length ? extracted.useCases : current.useCases;
+    merged.sellablePoints = extracted.sellablePoints?.length
+      ? extracted.sellablePoints
+      : current.sellablePoints;
+    merged.avoidContent = extracted.avoidContent?.length
+      ? extracted.avoidContent
+      : current.avoidContent;
+    if (extracted.fields?.Name) merged.name = extracted.fields.Name;
+    if (extracted.fields?.Url) {
+      merged.url = extracted.fields.Url;
+      if (!merged.promoUrl) merged.promoUrl = extracted.fields.Url;
+    }
+    if (current.logoDataUrl && !extracted.logoDataUrl) merged.logoDataUrl = current.logoDataUrl;
+    merged.id = current.id;
+    merged.updatedAt = new Date().toISOString();
+    return merged;
+  }
+
+  async function callLocalAgent(path, body) {
+    const res = await fetch(`${LOCAL_AGENT_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+    return data;
+  }
+
+  function getActiveProfile(storage) {
+    const profiles = storage.siteProfiles || {};
+    const activeId = storage.activeSiteId || Object.keys(profiles)[0] || "";
+    return activeId && profiles[activeId] ? profiles[activeId] : null;
+  }
+
+  function profileConfigured(profile) {
+    if (!profile) return false;
+    const f = profile.fields || {};
+    return !!(profile.name || f.Name || profile.url || f.Url);
+  }
+
+  global.ExtLinkProfiles = {
+    LOCAL_AGENT_URL,
+    linesToList,
+    listToLines,
+    slugifySiteId,
+    emptySiteProfile,
+    buildAgentConfigFromProfile,
+    findMatchingProfile,
+    applySavedProfilesToTasks,
+    mergeExtractedProfile,
+    callLocalAgent,
+    getActiveProfile,
+    profileConfigured,
+  };
+})(typeof self !== "undefined" ? self : window);

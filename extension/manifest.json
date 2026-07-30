@@ -1,22 +1,30 @@
 {
   "manifest_version": 3,
   "name": "ExternalLink - 外链批量提交",
-  "version": "2.0",
-  "description": "批量自动提交外链：粘贴列表 → 自动填表 → 跳过验证码 → 继续下一个",
-  "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications"],
+  "version": "2.4.0",
+  "description": "常驻侧边栏自动填表：配置网站资料 → 检测当前页 → 一键填入表单；付费/无法提交自动分类，验证码留签续下一站",
+  "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications", "sidePanel"],
   "host_permissions": ["https://*/*", "http://*/*", "http://127.0.0.1:8787/*"],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "ExternalLink"
+    "default_title": "ExternalLink - 打开侧边栏"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_ui": {
+    "page": "settings.html",
+    "open_in_tab": true
   },
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["content.js"],
-    "run_at": "document_end"
-  }],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

@@ -8,15 +8,16 @@
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
 - Table.xlsx 只作为外链库和 Profile 初始种子；运行记录以 `chrome.storage.local` 为准。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
-- 旧 `siteAnnotations[].submittedProjects` 与 Table 中唯一历史记录会幂等迁移。
-- 当前 Table 历史种子：`OldPhotoLive × SourceForge = success`。
+- 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
+- 当前 Table 同步结果：5 个 Profile、57 条外链、5 个已提交行展开为 9 个成功组合。
 - 每次批量开始从 Profile、账本、分类和外链库重新构建队列，不读取旧 `tasks`。
 - 外链站分组，组内按用户勾选顺序提交多个 Profile；已有成功组合自动跳过。
 - 同一外链站只开一个页签；成功后重新进入该站入口处理下一 Profile。
 - 登录、验证码、无法重置表单会停放并释放并发位；人工可继续或确认成功。
 - `paid / broken / skip / deleted` 排除整个外链站；单项目失败不误伤兄弟任务。
 - Side Panel 分为“执行 / 批量 / 待人工”；Settings 提供外链库和账本导入导出。
-- Screenshot 1–4 使用统一媒体列表；动态名称、域名、备注和日志均安全文本渲染。
+- RainbowPetAI、RspAi、OldPhotoLive 已同步完整资料、Logo 和 Screenshot 1–4；本地 Logo 随备份恢复。
+- Screenshot 1–4 使用统一媒体列表并按文件字段顺序映射；动态名称、域名、备注和日志均安全文本渲染。
 - UI 基础规则见 [`DESIGN.md`](DESIGN.md)。
 
 ## 关键存储
@@ -40,6 +41,7 @@ extension/lib/backup.js      # 账本备份校验与合并
 extension/background.js      # 调度和恢复
 extension/sidepanel.*        # 执行 / 批量 / 待人工
 extension/settings.*         # Profile / 外链库 / 备份 / 配置
+tools/import_table_xlsx.py   # 按工作表解析 Profile、媒体、外链和历史记录
 DESIGN.md                    # UI 基础规则
 tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 ```
@@ -49,7 +51,8 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
 - 已通过 Python 15 个 local_agent 单元测试。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
-- 为避免启动 214 个真实外链提交，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复、成功账本重载与浏览器重启。
+- Google Sheet、仓库 Table 和 Chrome 扩展已同步；扩展重新加载后 9 个成功组合、3 个主要网站的 Logo / 截图和外链库状态均正常。
+- 为避免启动 227 个真实外链项，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复与浏览器重启。
 
 ## 后续边界
 

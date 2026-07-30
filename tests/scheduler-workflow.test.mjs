@@ -29,6 +29,17 @@ const S = loadSchedulerModule();
 }
 
 {
+  const parkedOnly = new Map([[1, { slotActive: false, agentPaused: true }]]);
+  const queue = [{ key: "next-destination", tasks: [{ status: "pending" }] }];
+  assert.equal(S.countProcessingSlots(parkedOnly), 0);
+  assert.equal(
+    S.countProcessingSlots(parkedOnly) < 1 && queue.length > 0,
+    true,
+    "with concurrency 1, a parked login/captcha tab must allow the next destination to launch",
+  );
+}
+
+{
   const entries = new Map([
     [1, { slotActive: true }],
     [2, { slotActive: false, agentPaused: true }],
@@ -62,6 +73,27 @@ const S = loadSchedulerModule();
     S.resolveCursorIndex(afterRemovingB, "b", 1, 1),
     1,
     "when the current destination disappeared, the item that slid into its index is next",
+  );
+}
+
+{
+  const restored = S.buildRestoredQueue(
+    [
+      {
+        key: "d",
+        tasks: [
+          { id: "d::B", status: "needs_manual" },
+          { id: "d::C", status: "pending" },
+        ],
+      },
+      { key: "e", tasks: [{ id: "e::B", status: "pending" }] },
+    ],
+    ["d::B"],
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(restored.map((group) => group.key))),
+    ["e"],
+    "restoring a parked destination must not reopen its sibling before manual recovery",
   );
 }
 

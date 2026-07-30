@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ExternalLink - 外链批量提交",
-  "version": "2.4.0",
-  "description": "常驻侧边栏自动填表：配置网站资料 → 检测当前页 → 一键填入表单；付费/无法提交自动分类，验证码留签续下一站",
+  "version": "2.5.0",
+  "description": "按外链站分组的多网站提交工作台：成功账本、人工停放、分类过滤和断点恢复",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications", "sidePanel"],
   "host_permissions": ["https://*/*", "http://*/*", "http://127.0.0.1:8787/*"],
   "action": {

@@ -38,7 +38,18 @@ PLAN_ACTION_OUTPUT_KEYS = {
     "wait": {"type", "timeout_ms"},
 }
 
-PLAN_PROMPT = """You plan browser actions for a local browser extension that fills public submission forms.
+PLAN_PROMPT = """You plan browser actions for a local browser extension that automatically fills and submits backlink/directory/product listing forms.
+
+Goal: analyze the page snapshot, fill all relevant fields using config, then submit the form.
+Each website has different field names and layout — infer the correct mapping from labels, placeholders, names, and nearby visible text.
+
+Config includes:
+- targetDomain, brandName, anchorText, email, username, commentTemplate, tags, pricing, note
+- anchorRules: brandKeywords, urlKeywords, naturalExpressions, keywordExpressions — prefer naturalExpressions for comment/blog anchor text rotation
+- blogRules: tone, maxLinksPerDraft, preferredAnchor
+- projectFields: a dictionary of ALL product copy from the user's spreadsheet (Name, Url, Title, descriptions, tags, pricing, social links, etc.). Match form labels to the closest projectFields key and use that value. Prefer shorter fields for short inputs and longer fields for description/bio textareas.
+- CRITICAL: Respect each field's maxlength, minlength, and word/character limits from the snapshot constraints. Never exceed maxLength. For question-style fields ("What made you choose", "Why did you pick", shoutout/review/testimonial), write 1-3 concise sentences answering the question — do NOT paste the full long product description.
+- For <select> fields, the snapshot includes an "options" array — use type "select" with the option value or visible label. For category/industry dropdowns pick the closest match to config tags or "SaaS"/"AI"/"Software". For pricing pick Freemium/Free/Paid based on config.
 
 Return only one strict JSON object with this shape:
 {
@@ -57,8 +68,37 @@ Return only one strict JSON object with this shape:
 Allowed action types are exactly: fill, click, select, check, submit, wait.
 Use selectors that appear in the supplied snapshot or stable selectors directly derived from a specific snapshot element.
 Do not invent page state. Do not bypass CAPTCHA, login, email verification, payment, or other human-only gates.
-Use "needs_manual" when a human must decide or provide missing information.
+Use "needs_manual" when login/sign-in is required, CAPTCHA/human verification is visible, email OTP is required, or the user must choose between ambiguous options.
 Use "blocked" when the page cannot be handled safely.
+When the form is ready and no human gate is present, include a submit action (type "submit" or click the submit button) to complete the submission automatically.
+If the landing page has no form, click the best "Submit", "Add product", "List your tool", or similar link first, then fill on the next page.
+"""
+
+VALIDATE_FILL_PROMPT = """You review filled form field values on backlink/directory/product listing sites BEFORE the user submits.
+
+You receive:
+- filledFields: array of fields with label, value, length, wordCount, constraints (maxLength, maxWords, etc.), and any detected issues
+- config: brandName, targetDomain, projectFields with short/long descriptions
+- snapshot: page context
+
+For EACH field that violates limits or mismatches intent, return a corrected value in "fields".
+Rules:
+- NEVER exceed maxLength or maxWords from constraints
+- Question fields ("What made you choose", "Why did you pick", shoutout/review/testimonial, "alternatives you considered") need a direct 1-3 sentence answer about why the user chose this product — NOT the full long description
+- Short inputs (title, tagline) use Title or brandName
+- Description textareas use the appropriately sized description from projectFields
+- Trim gracefully at word boundaries; end with proper punctuation
+- If all fields are valid, return status "ok" with empty fields array
+
+Return only strict JSON:
+{
+  "status": "ok" | "revise",
+  "submitReady": true | false,
+  "fields": [
+    {"selector": "exact selector from filledFields", "value": "corrected text", "reason": "brief reason"}
+  ],
+  "issues": ["remaining blocker if submitReady is false"]
+}
 """
 
 SUCCESS_URL_PATTERNS = (
@@ -105,6 +145,72 @@ FORM_FIELD_TEXT_PATTERNS = (
 )
 
 SUBMIT_TEXT_PATTERN = re.compile(r"\b(?:submit|send|save|apply|post|publish|continue|next)\b")
+
+EXTRACT_SITE_PROMPT = """You analyze a website from fetched page content and extract structured marketing/submission metadata.
+
+Return only one strict JSON object with this shape:
+{
+  "fields": {
+    "Name": "brand or product name",
+    "Url": "canonical homepage URL with https://",
+    "Title": "SEO title or tagline",
+    "Business mail": "support or contact email if visible, else empty string",
+    "Note": "one-sentence product summary",
+    "Short description(20-30 words)": "concise elevator pitch",
+    "Short Discription(100-150 words)": "medium marketing description",
+    "Long description (250-500 words)": "detailed product description for directory listings",
+    "Tags Keywords/Hashtags": "comma-separated SEO keywords and optional hashtags",
+    "Feature description": "bullet-style feature list as a single string",
+    "Featured image": "absolute or relative URL to logo/featured image",
+    "Pricing": "pricing summary if visible",
+    "PRICING TYPE": "e.g. Free, Freemium, Subscription, Paid"
+  },
+  "anchorRules": {
+    "brandKeywords": ["brand name variants, one per concept"],
+    "urlKeywords": ["https URL and bare domain"],
+    "naturalExpressions": ["natural phrases for contextual mentions in comments/blogs"],
+    "keywordExpressions": ["SEO keyword phrases related to the product"],
+    "avoidWords": ["spammy phrases to avoid, e.g. click here"]
+  },
+  "blogRules": {
+    "tone": "helpful | professional | casual | enthusiastic",
+    "maxLinksPerDraft": 1,
+    "preferredAnchor": "natural | brand | keyword | url"
+  },
+  "targetAudience": "who the product is for",
+  "valueProposition": "core value in one paragraph",
+  "useCases": ["specific use case 1", "use case 2"],
+  "sellablePoints": ["key selling point 1", "key selling point 2"],
+  "avoidContent": ["topics or claims to avoid in generated copy"]
+}
+
+Rules:
+- Infer from page title, meta tags, headings, and body text only; do not invent features not supported by the content.
+- Write marketing copy in the requested language (payload.language). Use "auto" to match the page's primary language.
+- naturalExpressions should be varied phrases suitable for blog comments, not repetitive brand spam.
+- keywordExpressions should be realistic SEO phrases for this product category.
+- If information is missing, use empty string for text fields or empty arrays for lists.
+"""
+
+GENERATE_SITE_PROMPT = """You refine and expand partial website submission metadata for backlink/directory automation.
+
+The user already has some fields filled in. Improve completeness, consistency, and marketing quality while staying truthful to supplied data.
+
+Return the same JSON shape as extract-site:
+{
+  "fields": { ... same keys as extract ... },
+  "anchorRules": { ... },
+  "blogRules": { ... },
+  "targetAudience": "...",
+  "valueProposition": "...",
+  "useCases": [...],
+  "sellablePoints": [...],
+  "avoidContent": [...]
+}
+
+Keep existing accurate values; expand thin sections; align tone with payload.language.
+Do not invent pricing, emails, or features absent from the input unless clearly implied.
+"""
 
 JUDGE_PROMPT = """Judge whether a browser form submission has succeeded from the supplied post-action page snapshot.
 
@@ -364,6 +470,53 @@ def normalize_plan(plan: dict[str, Any]) -> dict[str, Any]:
         "status": status,
         "actions": actions if status == "act" else [],
         "reason": reason,
+    }
+
+
+def normalize_validate_fill(result: dict[str, Any]) -> dict[str, Any]:
+    """Return a safe validate-fill response."""
+    if not isinstance(result, dict):
+        raise AgentError("Validate-fill response was not a JSON object", http_status=502)
+
+    status = str(result.get("status") or "revise").strip().lower()
+    if status not in {"ok", "revise"}:
+        status = "revise"
+
+    raw_fields = result.get("fields", [])
+    if not isinstance(raw_fields, list):
+        raw_fields = []
+
+    fields = []
+    for item in raw_fields:
+        if not isinstance(item, dict):
+            continue
+        selector = normalize_selector(item.get("selector"))
+        if not selector or "value" not in item:
+            continue
+        fields.append(
+            {
+                "selector": selector,
+                "value": str(item.get("value") or ""),
+                "reason": str(item.get("reason") or "")[:200],
+            }
+        )
+
+    issues = result.get("issues", [])
+    if not isinstance(issues, list):
+        issues = []
+    issues = [str(i)[:300] for i in issues if i]
+
+    submit_ready = bool(result.get("submitReady", status == "ok" and not fields))
+    if fields:
+        status = "revise"
+    elif status != "ok":
+        submit_ready = False
+
+    return {
+        "status": status,
+        "submitReady": submit_ready,
+        "fields": fields,
+        "issues": issues,
     }
 
 
@@ -665,6 +818,252 @@ async def handle_plan(request):
         )
 
 
+FETCH_TIMEOUT_SECONDS = 20
+FETCH_MAX_BYTES = 500_000
+FETCH_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+)
+
+
+def strip_html(html: str) -> str:
+    """Return rough visible text from HTML, capped for LLM context."""
+    if not html:
+        return ""
+    text = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", html)
+    text = re.sub(r"(?is)<!--.*?-->", " ", text)
+    text = re.sub(r"(?i)<title[^>]*>(.*?)</title>", r" TITLE: \1 ", text)
+    for tag in ("h1", "h2", "h3", "meta", "link"):
+        text = re.sub(rf"(?is)<{tag}[^>]*>(.*?)</{tag}>", rf" {tag.upper()}: \1 ", text)
+    text = re.sub(r"(?is)<meta[^>]+>", " ", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:12000]
+
+
+def fetch_page_text(url: str) -> dict[str, str]:
+    """Fetch a URL and return title plus flattened visible text."""
+    if not isinstance(url, str) or not url.strip():
+        raise AgentError("url is required", http_status=400, plan_status="error")
+
+    normalized = url.strip()
+    if not normalized.startswith(("http://", "https://")):
+        normalized = f"https://{normalized.lstrip('/')}"
+
+    try:
+        response = requests.get(
+            normalized,
+            headers={"User-Agent": FETCH_USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
+            timeout=FETCH_TIMEOUT_SECONDS,
+            allow_redirects=True,
+        )
+    except requests.RequestException as exc:
+        raise AgentError(f"Failed to fetch URL: {exc}", http_status=502, plan_status="error") from exc
+
+    if not 200 <= response.status_code < 400:
+        raise AgentError(
+            f"URL fetch returned HTTP {response.status_code}",
+            http_status=502,
+            plan_status="error",
+        )
+
+    content_type = (response.headers.get("Content-Type") or "").lower()
+    if "html" not in content_type and "text/" not in content_type:
+        raise AgentError(
+            f"Unsupported content type: {content_type or 'unknown'}",
+            http_status=400,
+            plan_status="error",
+        )
+
+    raw = response.content[:FETCH_MAX_BYTES]
+    encoding = response.encoding or "utf-8"
+    try:
+        html = raw.decode(encoding, errors="replace")
+    except LookupError:
+        html = raw.decode("utf-8", errors="replace")
+
+    final_url = (response.url or normalized).strip()
+    title_match = re.search(r"(?is)<title[^>]*>(.*?)</title>", html)
+    title = re.sub(r"\s+", " ", title_match.group(1)).strip() if title_match else ""
+    return {
+        "requestedUrl": normalized,
+        "finalUrl": final_url,
+        "title": title,
+        "text": strip_html(html),
+    }
+
+
+def normalize_string_list(value: Any, *, limit: int = 12) -> list[str]:
+    """Return a trimmed list of non-empty strings."""
+    if isinstance(value, str):
+        items = [part.strip() for part in re.split(r"[\n,;]+", value) if part.strip()]
+    elif isinstance(value, list):
+        items = [str(item).strip() for item in value if str(item).strip()]
+    else:
+        items = []
+    deduped = []
+    seen = set()
+    for item in items:
+        key = item.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+        if len(deduped) >= limit:
+            break
+    return deduped
+
+
+def normalize_site_profile(raw: dict[str, Any], *, source_url: str = "") -> dict[str, Any]:
+    """Normalize extract/generate output into a stable site profile object."""
+    fields_raw = raw.get("fields") if isinstance(raw.get("fields"), dict) else raw
+    if not isinstance(fields_raw, dict):
+        fields_raw = {}
+
+    field_keys = (
+        "Name",
+        "Url",
+        "Title",
+        "Business mail",
+        "Note",
+        "Short description(20-30 words)",
+        "Short Discription(100-150 words)",
+        "Long description (250-500 words)",
+        "Tags Keywords/Hashtags",
+        "Feature description",
+        "Featured image",
+        "Pricing",
+        "PRICING TYPE",
+    )
+    fields = {key: str(fields_raw.get(key) or "").strip() for key in field_keys}
+
+    url = fields.get("Url") or source_url
+    if url and not url.startswith("http"):
+        url = f"https://{url.lstrip('/')}"
+    if url:
+        fields["Url"] = url
+
+    anchor_raw = raw.get("anchorRules") if isinstance(raw.get("anchorRules"), dict) else {}
+    blog_raw = raw.get("blogRules") if isinstance(raw.get("blogRules"), dict) else {}
+
+    tone = str(blog_raw.get("tone") or "helpful").strip().lower()
+    if tone not in {"helpful", "professional", "casual", "enthusiastic"}:
+        tone = "helpful"
+
+    preferred = str(blog_raw.get("preferredAnchor") or "natural").strip().lower()
+    if preferred not in {"natural", "brand", "keyword", "url"}:
+        preferred = "natural"
+
+    try:
+        max_links = int(blog_raw.get("maxLinksPerDraft", 1))
+    except (TypeError, ValueError):
+        max_links = 1
+    max_links = max(1, min(max_links, 5))
+
+    return {
+        "fields": fields,
+        "anchorRules": {
+            "brandKeywords": normalize_string_list(anchor_raw.get("brandKeywords")),
+            "urlKeywords": normalize_string_list(anchor_raw.get("urlKeywords")),
+            "naturalExpressions": normalize_string_list(anchor_raw.get("naturalExpressions"), limit=8),
+            "keywordExpressions": normalize_string_list(anchor_raw.get("keywordExpressions"), limit=10),
+            "avoidWords": normalize_string_list(anchor_raw.get("avoidWords"), limit=8),
+            "allowExactMatch": bool(anchor_raw.get("allowExactMatch")),
+        },
+        "blogRules": {
+            "tone": tone,
+            "maxLinksPerDraft": max_links,
+            "preferredAnchor": preferred,
+        },
+        "targetAudience": str(raw.get("targetAudience") or "").strip(),
+        "valueProposition": str(raw.get("valueProposition") or "").strip(),
+        "useCases": normalize_string_list(raw.get("useCases"), limit=8),
+        "sellablePoints": normalize_string_list(raw.get("sellablePoints"), limit=10),
+        "avoidContent": normalize_string_list(raw.get("avoidContent"), limit=8),
+    }
+
+
+async def handle_extract_site(request):
+    """Fetch a URL and extract structured site metadata with DeepSeek."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    url = payload.get("url")
+    language = str(payload.get("language") or "auto").strip() or "auto"
+
+    try:
+        page = await asyncio.to_thread(fetch_page_text, url)
+        llm_payload = {
+            "language": language,
+            "requestedUrl": page["requestedUrl"],
+            "finalUrl": page["finalUrl"],
+            "pageTitle": page["title"],
+            "pageText": page["text"],
+        }
+        extracted = await asyncio.to_thread(deepseek_chat_json, EXTRACT_SITE_PROMPT, llm_payload)
+        profile = normalize_site_profile(extracted, source_url=page["finalUrl"])
+        return web.json_response({"status": "ok", "profile": profile, "source": page})
+    except AgentError as exc:
+        return web.json_response(
+            {"status": "error", "message": exc.message},
+            status=exc.http_status,
+        )
+
+
+async def handle_generate_site(request):
+    """Expand/refine partial site metadata with DeepSeek."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    profile = payload.get("profile")
+    if not isinstance(profile, dict):
+        return web.json_response(
+            {"status": "error", "message": "profile object is required"},
+            status=400,
+        )
+
+    language = str(payload.get("language") or "auto").strip() or "auto"
+
+    try:
+        generated = await asyncio.to_thread(
+            deepseek_chat_json,
+            GENERATE_SITE_PROMPT,
+            {"language": language, "profile": profile},
+        )
+        normalized = normalize_site_profile(
+            generated,
+            source_url=str(profile.get("fields", {}).get("Url") or profile.get("url") or ""),
+        )
+        return web.json_response({"status": "ok", "profile": normalized})
+    except AgentError as exc:
+        return web.json_response(
+            {"status": "error", "message": exc.message},
+            status=exc.http_status,
+        )
+
+
 async def handle_judge(request):
     """Return a local or DeepSeek-backed success judgment for a browser snapshot."""
     try:
@@ -709,13 +1108,47 @@ async def handle_judge(request):
         )
 
 
+async def handle_validate_fill(request):
+    """Review filled form values and return corrections that respect field constraints."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return web.json_response(
+            {"status": "error", "submitReady": False, "fields": [], "issues": ["Invalid JSON body"]},
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return web.json_response(
+            {"status": "error", "submitReady": False, "fields": [], "issues": ["Payload must be object"]},
+            status=400,
+        )
+
+    try:
+        result = await asyncio.to_thread(deepseek_chat_json, VALIDATE_FILL_PROMPT, payload)
+        return web.json_response(normalize_validate_fill(result))
+    except AgentError as exc:
+        return web.json_response(
+            {
+                "status": "error",
+                "submitReady": False,
+                "fields": [],
+                "issues": [exc.message],
+            },
+            status=exc.http_status,
+        )
+
+
 def create_app():
     """Create and configure the aiohttp application."""
     app = web.Application()
     router = app.router
     router.add_get("/health", handle_health)
     router.add_post("/plan", handle_plan)
+    router.add_post("/validate-fill", handle_validate_fill)
     router.add_post("/judge", handle_judge)
+    router.add_post("/extract-site", handle_extract_site)
+    router.add_post("/generate-site", handle_generate_site)
     return app
 
 

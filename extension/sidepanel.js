@@ -56,8 +56,6 @@
         "cfgName",
         "cfgCommentTemplate",
         "cfgFillOnly",
-        "stats",
-        "running",
         "activeBatchRun",
         "selectedSiteIds",
         "urlList",
@@ -67,7 +65,6 @@
         activeSiteId = items.activeSiteId || Object.keys(siteProfiles)[0] || "";
         selectedSiteIds = (items.selectedSiteIds || []).filter((id) => siteProfiles[id]);
         if (!selectedSiteIds.length && activeSiteId) selectedSiteIds = [activeSiteId];
-        if (items.stats) stats = items.stats;
         const activeRun = items.activeBatchRun;
         if (
           activeRun?.tasks?.length &&
@@ -76,7 +73,7 @@
           tasks = activeRun.tasks;
           renderTasks();
         }
-        if (activeRun?.status === "running" || items.running) {
+        if (activeRun?.status === "running") {
           setRunning(true, false);
           syncTasksFromBackground();
         }
@@ -841,7 +838,8 @@
       const resume = document.createElement("button");
       resume.type = "button";
       resume.className = "btn btn-ghost";
-      resume.textContent = "继续处理";
+      resume.textContent = task.tabId ? "继续处理" : "页签已关闭";
+      resume.disabled = !task.tabId;
       resume.addEventListener("click", async () => {
         if (task.tabId) await chrome.tabs.update(task.tabId, { active: true }).catch(() => {});
         await chrome.runtime.sendMessage({

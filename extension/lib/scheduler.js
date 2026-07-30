@@ -48,10 +48,24 @@
     return null;
   }
 
+  function buildRestoredQueue(groups, parkedTaskIds) {
+    const parked = new Set(parkedTaskIds || []);
+    const parkedGroups = new Set();
+    for (const group of groups || []) {
+      if ((group.tasks || []).some((task) => parked.has(task.id))) parkedGroups.add(group.key);
+    }
+    return (groups || []).filter(
+      (group) =>
+        !parkedGroups.has(group.key) &&
+        (group.tasks || []).some((task) => task.status === "pending"),
+    );
+  }
+
   global.ExtLinkScheduler = {
     groupTasksByDestination,
     countProcessingSlots,
     resolveCursorIndex,
     nextPendingTask,
+    buildRestoredQueue,
   };
 })(typeof self !== "undefined" ? self : window);

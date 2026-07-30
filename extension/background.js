@@ -16,6 +16,7 @@ let state = {
   queue: [],
   groups: [],
   activeTabs: new Map(), // tabId -> { taskIndex, redirectCount }
+  parkedTaskIds: new Set(),
   concurrency: 1,
   stopped: false,
 };
@@ -36,6 +37,9 @@ const SUBMISSION_SCHEMA_VERSION = self.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION ||
 const autoFillTimers = new Map();
 const autoFillInProgress = new Set();
 let sidePanelOpen = false;
+let initializationPromise = restoreActiveBatchRun().catch((err) => {
+  log(`恢复上次批次失败: ${err.message}`, "warn");
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   if (chrome.sidePanel?.setPanelBehavior) {
@@ -154,6 +158,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       state.stopped = true;
       state.running = false;
       closeAllTabs();
+      state.parkedTaskIds.clear();
+      markActiveBatchStopped();
       broadcastStatus();
       log("任务已停止", "warn");
       break;
@@ -178,24 +184,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "getState":
-      sendResponse({
-        running: state.running,
-        tasks: state.tasks,
-        groups: state.groups,
-        parkedTasks: [...state.activeTabs.entries()]
-          .filter(([, entry]) => entry.slotActive === false)
-          .map(([tabId, entry]) => {
-            const task = state.tasks.find((item) => item.index === entry.taskIndex);
-            return task ? { ...task, tabId, parkedReason: entry.parkedReason || "" } : null;
-          })
-          .filter(Boolean),
-        stats: summarizeTaskStats(state.tasks),
-      });
-      return false;
+      getRuntimeState().then(sendResponse);
+      return true;
   }
 });
 
 async function startBatchRun(msg) {
+  await initializationPromise;
   closeAllTabs();
   const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
     ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
@@ -226,6 +221,7 @@ async function startBatchRun(msg) {
   state.tasks = pending.tasks.map((task) => ({ ...task, status: "pending" }));
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
   state.queue = [...state.groups];
+  state.parkedTaskIds.clear();
   state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.running = true;
   state.stopped = false;
@@ -236,6 +232,8 @@ async function startBatchRun(msg) {
       runId: `run-${Date.now().toString(36)}`,
       status: "running",
       selectedSiteIds,
+      config: state.config,
+      parkedTaskIds: [],
       startedAt: new Date().toISOString(),
       tasks: state.tasks,
     },
@@ -252,6 +250,104 @@ async function startBatchRun(msg) {
     groups: state.groups,
     meta: pending.meta,
   };
+}
+
+function markActiveBatchStopped() {
+  chrome.storage.local
+    .get(["activeBatchRun"])
+    .then((stored) => {
+      if (!stored.activeBatchRun) return;
+      return chrome.storage.local.set({
+        activeBatchRun: {
+          ...stored.activeBatchRun,
+          status: "stopped",
+          stoppedAt: new Date().toISOString(),
+          tasks: state.tasks,
+          parkedTaskIds: [],
+        },
+      });
+    })
+    .catch(() => {});
+}
+
+async function getRuntimeState() {
+  await initializationPromise;
+  const activeByTaskId = new Map();
+  for (const [tabId, entry] of state.activeTabs) {
+    const task = state.tasks.find((item) => item.index === entry.taskIndex);
+    if (task && entry.slotActive === false) {
+      activeByTaskId.set(task.id, { tabId, parkedReason: entry.parkedReason || "" });
+    }
+  }
+  return {
+    running: state.running,
+    tasks: state.tasks,
+    groups: state.groups,
+    parkedTasks: [...state.parkedTaskIds]
+      .map((taskId) => {
+        const task = state.tasks.find((item) => item.id === taskId);
+        const active = activeByTaskId.get(taskId);
+        return task
+          ? {
+              ...task,
+              ...(active || {}),
+              parkedReason:
+                active?.parkedReason ||
+                task.skipReason ||
+                "页签已关闭；可确认成功，或在新一轮中重试",
+            }
+          : null;
+      })
+      .filter(Boolean),
+    stats: summarizeTaskStats(state.tasks),
+  };
+}
+
+async function restoreActiveBatchRun() {
+  const storage = await chrome.storage.local.get(["activeBatchRun"]);
+  const batch = storage.activeBatchRun;
+  if (!batch || !["running", "waiting_manual", "paused"].includes(batch.status)) return;
+  if (!Array.isArray(batch.tasks) || !batch.tasks.length) return;
+
+  state.config = batch.config || {};
+  state.tasks = batch.tasks.map((task) => ({
+    ...task,
+    status: task.status === "running" ? "pending" : task.status,
+  }));
+  state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
+  state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
+  state.stopped = false;
+  state.parkedTaskIds = new Set(batch.parkedTaskIds || []);
+
+  const tabs = await chrome.tabs.query({});
+  for (const taskId of state.parkedTaskIds) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    if (!task) continue;
+    const tab = tabs.find((item) => {
+      try {
+        return self.ExtLinkQueue.extractDomain(item.url || "") === task.domain;
+      } catch {
+        return false;
+      }
+    });
+    if (!tab?.id) continue;
+    state.activeTabs.set(tab.id, {
+      taskIndex: task.index,
+      groupKey: task.destinationGroupKey,
+      timeoutId: null,
+      runId: 0,
+      slotActive: false,
+      agentPaused: true,
+      parkedReason: task.skipReason || "恢复的待人工任务",
+    });
+  }
+
+  state.queue = self.ExtLinkScheduler.buildRestoredQueue(
+    state.groups,
+    state.parkedTaskIds,
+  );
+  state.running = state.queue.length > 0;
+  if (state.running) processQueue();
 }
 
 function summarizeTaskStats(taskList) {
@@ -1316,9 +1412,9 @@ async function refreshBatchRunStatus() {
   const hasQueuedGroups = state.queue.some((group) =>
     (group.tasks || []).some((task) => task.status === "pending"),
   );
-  const hasParkedTasks = [...state.activeTabs.values()].some(
-    (entry) => entry.slotActive === false,
-  );
+  const hasParkedTasks =
+    state.parkedTaskIds.size > 0 ||
+    [...state.activeTabs.values()].some((entry) => entry.slotActive === false);
   if (hasProcessing || hasQueuedGroups) {
     state.running = true;
     return;
@@ -1333,6 +1429,7 @@ async function refreshBatchRunStatus() {
         status: hasParkedTasks ? "waiting_manual" : "finished",
         ...(hasParkedTasks ? {} : { finishedAt: new Date().toISOString() }),
         tasks: state.tasks,
+        parkedTaskIds: [...state.parkedTaskIds],
       },
     });
   }
@@ -1443,8 +1540,8 @@ async function handleManualSubmit(msg) {
     }
   }
   if (!tabId) {
-    task.status = "skip";
-    task.skipReason = "tab_closed";
+    task.status = "needs_manual";
+    task.skipReason = "页签已关闭，请在新一轮中重试该组合";
     broadcastTaskUpdate(task);
     return;
   }
@@ -1454,6 +1551,8 @@ async function handleManualSubmit(msg) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  state.parkedTaskIds.delete(task.id);
+  persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   const activeConfig = getTaskConfig(task, config || {});
@@ -1543,6 +1642,8 @@ async function resumeAfterCaptcha(tabId, data) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  state.parkedTaskIds.delete(task.id);
+  persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   await runAgentLoop(tabId, task, entry, { captchaResolved: true, data });
@@ -2008,6 +2109,8 @@ function parkTaskEntry(tabId, entry, reason) {
   clearEntryTimeout(entry);
   clearManualWaitTimer(entry);
   if (reason) entry.parkedReason = reason;
+  const task = state.tasks.find((item) => item.index === entry.taskIndex);
+  if (task?.id) state.parkedTaskIds.add(task.id);
   if (tabId) {
     chrome.storage.local
       .get(["activeBatchRun"])
@@ -2018,6 +2121,7 @@ function parkTaskEntry(tabId, entry, reason) {
             ...stored.activeBatchRun,
             status: "waiting_manual",
             tasks: state.tasks,
+            parkedTaskIds: [...state.parkedTaskIds],
           },
         });
       })
@@ -2025,10 +2129,28 @@ function parkTaskEntry(tabId, entry, reason) {
   }
 }
 
+function persistParkedTaskIds() {
+  chrome.storage.local
+    .get(["activeBatchRun"])
+    .then((stored) => {
+      if (!stored.activeBatchRun) return;
+      return chrome.storage.local.set({
+        activeBatchRun: {
+          ...stored.activeBatchRun,
+          parkedTaskIds: [...state.parkedTaskIds],
+          tasks: state.tasks,
+        },
+      });
+    })
+    .catch(() => {});
+}
+
 async function advanceDestinationGroup(tabId, completedTask) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
   const group = findGroupForTask(completedTask);
+  if (completedTask?.id) state.parkedTaskIds.delete(completedTask.id);
+  persistParkedTaskIds();
   const nextTask = self.ExtLinkScheduler.nextPendingTask(group, completedTask.index);
   if (!nextTask) {
     entry.agentDone = true;
@@ -2356,6 +2478,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
       }
     }
     state.activeTabs.delete(tabId);
+    persistParkedTaskIds();
     refreshBatchRunStatus().catch(() => {});
   }
 });

@@ -404,6 +404,15 @@
     const result = await chrome.runtime.sendMessage({ action: "getLibraryManagerState" });
     if (!result?.ok) throw new Error(result?.error || "加载外链库失败");
     libraryItems = result.items || [];
+    if (result.profiles && Object.keys(result.profiles).length) {
+      const hadProfiles = Object.keys(siteProfiles).length > 0;
+      siteProfiles = result.profiles;
+      if (!activeSiteId || !siteProfiles[activeSiteId]) {
+        activeSiteId = Object.keys(siteProfiles)[0] || "";
+      }
+      renderSiteSelector();
+      if (!hadProfiles) loadActiveToForm();
+    }
     renderLibrary();
   }
 

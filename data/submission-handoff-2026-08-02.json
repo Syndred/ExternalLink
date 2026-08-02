@@ -1,7 +1,7 @@
 {
   "format": "externallink-submission-backup",
   "version": 2,
-  "exportedAt": "2026-08-02T23:30:00+08:00",
+  "exportedAt": "2026-08-02T23:30:57+08:00",
   "submissionRecords": {
     "thejoai.com/aitools/submissions::RainbowPetAI": {
       "status": "success",
@@ -67,6 +67,28 @@
       "submittedAt": "2026-08-02",
       "confirmedBy": "manual",
       "evidence": "User manually confirmed FutureTools submission completed on 2026-08-02",
+      "schemaVersion": 2
+    },
+    "sideprojectors.com/submit::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "sideprojectors.com/submit",
+      "destinationUrl": "https://www.sideprojectors.com/submit",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Submission confirmation states the project is under review; project ID 87446; approval usually takes 2-3 business days",
+      "schemaVersion": 2
+    },
+    "pitchwall.co::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "pitchwall.co",
+      "destinationUrl": "https://pitchwall.co/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Account shows Product Status: Under Review; free publication estimate exceeds 30 days",
       "schemaVersion": 2
     }
   },

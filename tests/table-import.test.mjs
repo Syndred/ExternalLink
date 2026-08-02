@@ -21,7 +21,7 @@ assert.deepEqual(
 );
 
 const submitted = table.entries.filter((entry) => entry.submitted);
-assert.equal(submitted.length, 7);
+assert.equal(submitted.length, 6);
 assert.deepEqual(
   submitted.map((entry) => entry.indexPage || entry.link),
   [
@@ -30,9 +30,18 @@ assert.deepEqual(
     "https://moge.ai/zh",
     "https://neeed.directory/submit",
     "https://sourceforge.net/",
-    "https://www.sideprojectors.com/",
     "https://pitchwall.co/",
   ],
+);
+
+const sideProjectors = table.entries.find(
+  (entry) => entry.link === "https://www.sideprojectors.com/submit",
+);
+assert.deepEqual(sideProjectors?.projects, ["OldPhotoLive", "RspAi", "RainbowPetAI"]);
+assert.equal(
+  table.entries.some((entry) => entry.link === "https://www.sideprojectors.com/"),
+  false,
+  "canonical submit entry must replace the duplicate root alias",
 );
 
 for (const projectId of ["OldPhotoLive", "RainbowPetAI", "RspAi"]) {

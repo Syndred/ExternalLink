@@ -9,7 +9,7 @@
 - Table.xlsx 只作为外链库和 Profile 初始种子；运行记录以 `chrome.storage.local` 为准。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
-- 当前 Table 同步结果：5 个 Profile、57 条外链、5 个已提交行展开为 9 个成功组合。
+- 当前 Table 同步结果：5 个 Profile、56 条 canonical 外链、6 个已提交行展开为 11 个历史成功组合。
 - 每次批量开始从 Profile、账本、分类和外链库重新构建队列，不读取旧 `tasks`。
 - 外链站分组，组内按用户勾选顺序提交多个 Profile；已有成功组合自动跳过。
 - 同一外链站只开一个页签；成功后重新进入该站入口处理下一 Profile。
@@ -20,8 +20,9 @@
 - Screenshot 1–4 使用统一媒体列表并按文件字段顺序映射；动态名称、域名、备注和日志均安全文本渲染。
 - UI 基础规则见 [`DESIGN.md`](DESIGN.md)。
 - TheJOAI 兼容性修复已覆盖富文本描述、受限主图上传、发布日期和必选分类；站点最终提交仍保持人工确认边界。
-- 2026-08-02 RainbowPetAI 已确认完成 6 个免费提交：TheJOAI、Launching Next、StartupBase、AITools.inc、Uneed、FutureTools；FutureTools 按用户人工确认入账。
+- 2026-08-02 RainbowPetAI 已确认完成 8 个免费提交：TheJOAI、Launching Next、StartupBase、AITools.inc、Uneed、FutureTools、SideProjectors、PitchWall；FutureTools 按用户人工确认入账。
 - 新增 `data/submission-handoff-2026-08-02.json` 增量账本和专用外链提交交接表，后续 AI 可先查历史成功、免费队列和人工闸门再继续。
+- 新增可全局安装的 `external-link-operator` Skill，固化 Luna 分工、自动媒体发现、登录/CAPTCHA/付费闸门、成功证据和多数据源对账流程。
 
 ## 关键存储
 
@@ -54,7 +55,7 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
 - 已通过 Python 15 个 local_agent 单元测试。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
-- Google Sheet、仓库 Table 和 Chrome 扩展已同步；扩展重新加载后 9 个成功组合、3 个主要网站的 Logo / 截图和外链库状态均正常。
+- 仓库 Table、插件种子、增量账本和交接表已对齐；Google Sheet 沿用同一 canonical 记录规则，后续提交完成后按 Skill 流程同步。RainbowPetAI 增量账本现有 8 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`。
 - TheJOAI 已在真实文件上传、描述、日期和分类复核后完成提交，账户显示 `Submitted for Review`。
 - Launching Next、StartupBase、AITools.inc、Uneed 已看到明确成功/排队证据；FutureTools 由用户人工确认完成。
 - FiveTaco 因无可靠回执继续保持未确认；ToolDirectory.ai 的 $9.99 页面已标记付费，Webwiki / Submission Web Directory / Alternative.me / SaaSAITools 进入待人工。

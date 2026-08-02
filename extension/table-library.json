@@ -477,15 +477,6 @@
       "indexPage": ""
     },
     {
-      "link": "https://www.sideprojectors.com/",
-      "projects": [
-        "RainbowPetAI"
-      ],
-      "submitted": true,
-      "note": "SideProjectors; Free; DR 67; side project marketplace/listing.；2026-08-02 RainbowPetAI：提交成功，项目 ID 87446，等待 2-3 个工作日审核",
-      "indexPage": ""
-    },
-    {
       "link": "https://www.startupranking.com/",
       "projects": [],
       "submitted": false,
@@ -1147,7 +1138,7 @@
       "url": "https://aitools.neilpatel.com/",
       "platformType": "directory",
       "projectKey": "TextComparison",
-      "note": "AI Tools Neil Patel; Free; DR 91; AI tool listing.",
+      "note": "AI Tools Neil Patel; Free; DR 91; AI tool listing.；2026-08-02 已重定向 Ubersuggest Apps & Integrations，无工具提交入口",
       "status": "pending",
       "config": {
         "projectKey": "TextComparison",
@@ -2753,76 +2744,6 @@
     },
     {
       "index": 31,
-      "domain": "sideprojectors.com",
-      "url": "https://www.sideprojectors.com/",
-      "platformType": "directory",
-      "projectKey": "TextComparison",
-      "note": "SideProjectors; Free; DR 67; side project marketplace/listing.",
-      "status": "pending",
-      "config": {
-        "projectKey": "TextComparison",
-        "targetDomain": "https://comparison-text.site",
-        "brandName": "Comparison Text",
-        "anchorText": "Comparison Text | Compare Text, PDFs, URLs, XML, Word, Excel, Images, PPT, and Markdown",
-        "email": "support@comparison-text.site",
-        "username": "Comparison Text",
-        "commentTemplate": "Comparison Text is an online comparison hub for people who need to review changes across many everyday content formats from one consistent workspace. Instead of using one tool for text, another for PDFs, another for spreadsheets, and another for URLs, Comparison Text brings dedicated compare modes together under a single browser-based interface. Users can paste raw text, URLs, XML, or Markdown, or upload files such as PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX.\n\nThe product is built around a simple three-step workflow: choose a tool, add the original and revised versions, and review the differences. Results include inline highlights, separate left and right views, and summary statistics for added, removed, unchanged, and total characters. Text Compare is useful for copy changes, prompts, snippets, templates, and plain-text files, with controls to ignore spaces, commas, tabs, or line breaks before diffing. PDF Compare and Word Compare focus on extracted text differences, making them practical for contracts, reports, drafts, and exported documents. Excel Compare handles XLSX and CSV content so users can spot changed rows or cell text faster. URL Compare normalizes query parameters to remove ordering noise, while XML Compare formats structured markup for clearer review. Markdown Compare supports pasted content or .md and .mdx uploads. Image Compare and PPT Compare add workflows for image files and PowerPoint presentations, including file-level checks and extracted slide text.\n\nCore comparison tools are positioned as free and lightweight. Accounts are not required for the first-release core compare workflow, while AI-enhanced summaries are gated behind sign-in and an active subscription because they trigger billable AI usage. Paid plans provide credits for AI summaries and explanations, with monthly, annual, and one-time add-on options. Comparison Text is best for writers, marketers, developers, analysts, educators, operations teams, and anyone who regularly checks revisions before publishing, sharing, or approving content.",
-        "tags": "text compare, string compare, textdiff, side by side comparison, PDF compare, DOCX compare, Word compare, Excel compare, CSV compare, URL compare, XML compare, image compare, PPT compare, Markdown compare, file comparison, document diff, spreadsheet diff, #TextCompare, #DiffTool, #FileCompare, #DocumentCompare",
-        "pricing": "Core compare tools are free. AI-enhanced compare requires a subscription or add-on credits. One-time add-ons: AI Add-on 100 for $9, AI Add-on 200 for $16, AI Add-on 300 for $24. Monthly subscriptions: Starter $8/month, Pro $12/month, Scale $18/month. Annual subscriptions show effective monthly prices: Starter $6/month, Pro $9/month, Scale $14/month.",
-        "featuredImage": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-        "logoUrl": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-        "screenshots": [
-          "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "https://comparison-text.site/imgs/features/compare-result-excel-light.svg"
-        ],
-        "projectFields": {
-          "Name": "Comparison Text",
-          "Business mail": "support@comparison-text.site",
-          "Feedback mail": "support@comparison-text.site",
-          "Affiliate link": "Not specified in the project.",
-          "Extra Link:X/Twitter/YouTube/Instagram/..": "X: https://x.com/comparisontext\nGitHub: https://github.com/comparisontext\nYouTube/Instagram: Not specified in the project.",
-          "Note": "Browser-based comparison hub for text, documents, URLs, XML, images, spreadsheets, presentations, and Markdown. Core compare tools are free; AI summaries require sign-in and an active subscription.",
-          "Url": "https://comparison-text.site",
-          "Title": "Comparison Text | Compare Text, PDFs, URLs, XML, Word, Excel, Images, PPT, and Markdown",
-          "Short description(20-30 words)": "Comparison Text lets you compare text, PDFs, URLs, XML, Word, Excel, images, PPT, and Markdown online in one fast browser workspace.",
-          "Short Discription(100-150 words)": "Comparison Text is an online comparison hub built for quick side-by-side review across common content formats. Paste text, URLs, XML, or Markdown, or upload PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX files to inspect what changed between two versions. The workspace highlights added and removed content inline, shows left and right diff views, and provides summary stats for changed and unchanged characters. Text mode can ignore spaces, commas, tabs, and line breaks before diffing, while URL and XML modes normalize structured input for cleaner results. Core comparison tools are free to use, with optional AI summaries available for subscribed users who need a plain-language explanation of important changes.",
-          "Short Discription(150-250 words)": "Comparison Text is a focused online workspace for comparing text, documents, links, markup, images, spreadsheets, presentations, and Markdown without switching between separate tools. It supports raw text comparison, PDF text extraction, DOCX document review, XLSX and CSV spreadsheet comparison, URL query normalization, XML formatting, image metadata comparison, PPTX slide text extraction, and Markdown normalization. Each tool follows the same simple workflow: choose the right mode, add the original and revised versions, run the compare, then review inline highlights, side-by-side panes, and summary stats. Text compare includes delimiter controls so users can ignore spaces, commas, tabs, or line breaks when those differences are not meaningful. The first release is designed as a lightweight browser-based workspace, so core comparison tasks can be completed quickly without a required account. For users who need more context, Comparison Text also offers subscription-gated AI summaries that explain what changed, surface key differences, and suggest areas that deserve review. It is useful for copy edits, contracts, reports, spreadsheets, URLs, XML payloads, slide decks, Markdown files, and everyday version checks.",
-          "Long description (250-500 words)": "Comparison Text is an online comparison hub for people who need to review changes across many everyday content formats from one consistent workspace. Instead of using one tool for text, another for PDFs, another for spreadsheets, and another for URLs, Comparison Text brings dedicated compare modes together under a single browser-based interface. Users can paste raw text, URLs, XML, or Markdown, or upload files such as PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX.\n\nThe product is built around a simple three-step workflow: choose a tool, add the original and revised versions, and review the differences. Results include inline highlights, separate left and right views, and summary statistics for added, removed, unchanged, and total characters. Text Compare is useful for copy changes, prompts, snippets, templates, and plain-text files, with controls to ignore spaces, commas, tabs, or line breaks before diffing. PDF Compare and Word Compare focus on extracted text differences, making them practical for contracts, reports, drafts, and exported documents. Excel Compare handles XLSX and CSV content so users can spot changed rows or cell text faster. URL Compare normalizes query parameters to remove ordering noise, while XML Compare formats structured markup for clearer review. Markdown Compare supports pasted content or .md and .mdx uploads. Image Compare and PPT Compare add workflows for image files and PowerPoint presentations, including file-level checks and extracted slide text.\n\nCore comparison tools are positioned as free and lightweight. Accounts are not required for the first-release core compare workflow, while AI-enhanced summaries are gated behind sign-in and an active subscription because they trigger billable AI usage. Paid plans provide credits for AI summaries and explanations, with monthly, annual, and one-time add-on options. Comparison Text is best for writers, marketers, developers, analysts, educators, operations teams, and anyone who regularly checks revisions before publishing, sharing, or approving content.",
-          "Tags Keywords/Hashtags": "text compare, string compare, textdiff, side by side comparison, PDF compare, DOCX compare, Word compare, Excel compare, CSV compare, URL compare, XML compare, image compare, PPT compare, Markdown compare, file comparison, document diff, spreadsheet diff, #TextCompare, #DiffTool, #FileCompare, #DocumentCompare",
-          "Feature description": "Nine comparison modes: Text, PDF, URL, XML, Word DOCX, Excel/CSV, Image, PPTX, and Markdown. Features include paste or upload input, delimiter ignoring for text, URL query normalization, XML formatting, extracted text comparison for PDF/Word/PPT, spreadsheet text comparison, image metadata checks, inline highlights, side-by-side diff views, summary stats, related tool switching, and optional AI summaries for subscribed users.",
-          "Youtube": "Not specified in the project.",
-          "Pricing": "Core compare tools are free. AI-enhanced compare requires a subscription or add-on credits. One-time add-ons: AI Add-on 100 for $9, AI Add-on 200 for $16, AI Add-on 300 for $24. Monthly subscriptions: Starter $8/month, Pro $12/month, Scale $18/month. Annual subscriptions show effective monthly prices: Starter $6/month, Pro $9/month, Scale $14/month.",
-          "PRICING TYPE": "Freemium with paid AI-enhanced features, subscription plans, and one-time credit add-ons.",
-          "Subscription Model": "Monthly and annual subscriptions for AI Compare Starter, AI Compare Pro, and AI Compare Scale. Subscriptions unlock AI-enhanced compare summaries and include credits.",
-          "Starting Price": "$0 for core compare tools; paid AI plans start at $8/month monthly, $6/month effective annual price, or $9 for a one-time 100-credit add-on.",
-          "Promos": "Project pricing includes crossed-out original prices and Stripe promotion-code mapping support, but no public promo code is specified.",
-          "Cost & Subscription": "Free core comparison across all tools. Billable AI usage is subscription-gated. Monthly plans include 100, 200, or 300 credits valid for one month. Annual plans include 1,200, 2,400, or 3,600 credits valid for one year. One-time add-ons provide 100 credits valid 30 days, 200 credits valid 90 days, or 300 credits valid 365 days.",
-          "Credits System": "Credits are used for AI-enhanced compare features such as AI result summaries and image compare explanations. Credit balances are shown in user navigation and settings. Admin tools can grant credits.",
-          "OS Compatibility": "Web-based. Works on modern desktop and mobile operating systems through a browser, including Windows, macOS, Linux, iOS, Android, and ChromeOS.",
-          "Platform Accessibility": "Browser-based SaaS built with Next.js. Accessible through the web with responsive pages, light/dark theme support, English and Chinese locales, and no desktop installation required.",
-          "Offline Mode": "Not positioned as an offline product. The compare workspace runs in the browser, but the site, authentication, payments, and AI summaries require network access.",
-          "Ease of Use": "Simple three-step workflow: choose a comparison tool, paste or upload both versions, and review highlighted changes with inline view, left/right panes, and summary stats.",
-          "Payment Methods": "Payment integrations present in the project: Stripe, PayPal, and Creem. Exact live methods depend on deployment configuration.",
-          "Media Support": "Text, URL, XML, Markdown text, .md, .mdx, PDF, DOCX, XLSX, XLS, CSV, PNG, JPEG, WEBP, and PPTX.",
-          "Export Formats": "No dedicated export or download format is specified in the current compare workspace. Results are displayed in-browser.",
-          "Data Storage Policy": "Core compare workflows are described as running in the browser workspace in the first release. The privacy policy template covers account data, usage details, device information, cookies, and payment/billing data for signed-in or paid users.",
-          "User Anonvmitv": "Core compare tools do not require an account in the first release, so anonymous use is supported for basic comparison. AI summaries require sign-in and an active subscription.",
-          "Featured image": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-          "Screenshot-1": "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "Screenshot-2": "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "Screenshot-3": "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "Screenshot-4": "https://comparison-text.site/imgs/features/compare-result-excel-light.svg",
-          "Screenshot 1": "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "Screenshot 2": "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "Screenshot 3": "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "Screenshot 4": "https://comparison-text.site/imgs/features/compare-result-excel-light.svg"
-        }
-      }
-    },
-    {
-      "index": 32,
       "domain": "startupranking.com",
       "url": "https://www.startupranking.com/",
       "platformType": "directory",
@@ -2892,7 +2813,7 @@
       }
     },
     {
-      "index": 33,
+      "index": 32,
       "domain": "grabon.in",
       "url": "https://www.grabon.in/",
       "platformType": "directory",
@@ -2962,7 +2883,7 @@
       }
     },
     {
-      "index": 34,
+      "index": 33,
       "domain": "bunity.com",
       "url": "https://www.bunity.com/",
       "platformType": "directory",
@@ -3032,7 +2953,7 @@
       }
     },
     {
-      "index": 35,
+      "index": 34,
       "domain": "submissionwebdirectory.com",
       "url": "https://www.submissionwebdirectory.com/",
       "platformType": "directory",
@@ -3102,7 +3023,7 @@
       }
     },
     {
-      "index": 36,
+      "index": 35,
       "domain": "somuch.com",
       "url": "https://somuch.com/",
       "platformType": "directory",
@@ -3172,77 +3093,7 @@
       }
     },
     {
-      "index": 37,
-      "domain": "pitchwall.co",
-      "url": "https://pitchwall.co/",
-      "platformType": "directory",
-      "projectKey": "TextComparison",
-      "note": "PitchWall; Free; DR 64; product/startup launch listing.",
-      "status": "pending",
-      "config": {
-        "projectKey": "TextComparison",
-        "targetDomain": "https://comparison-text.site",
-        "brandName": "Comparison Text",
-        "anchorText": "Comparison Text | Compare Text, PDFs, URLs, XML, Word, Excel, Images, PPT, and Markdown",
-        "email": "support@comparison-text.site",
-        "username": "Comparison Text",
-        "commentTemplate": "Comparison Text is an online comparison hub for people who need to review changes across many everyday content formats from one consistent workspace. Instead of using one tool for text, another for PDFs, another for spreadsheets, and another for URLs, Comparison Text brings dedicated compare modes together under a single browser-based interface. Users can paste raw text, URLs, XML, or Markdown, or upload files such as PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX.\n\nThe product is built around a simple three-step workflow: choose a tool, add the original and revised versions, and review the differences. Results include inline highlights, separate left and right views, and summary statistics for added, removed, unchanged, and total characters. Text Compare is useful for copy changes, prompts, snippets, templates, and plain-text files, with controls to ignore spaces, commas, tabs, or line breaks before diffing. PDF Compare and Word Compare focus on extracted text differences, making them practical for contracts, reports, drafts, and exported documents. Excel Compare handles XLSX and CSV content so users can spot changed rows or cell text faster. URL Compare normalizes query parameters to remove ordering noise, while XML Compare formats structured markup for clearer review. Markdown Compare supports pasted content or .md and .mdx uploads. Image Compare and PPT Compare add workflows for image files and PowerPoint presentations, including file-level checks and extracted slide text.\n\nCore comparison tools are positioned as free and lightweight. Accounts are not required for the first-release core compare workflow, while AI-enhanced summaries are gated behind sign-in and an active subscription because they trigger billable AI usage. Paid plans provide credits for AI summaries and explanations, with monthly, annual, and one-time add-on options. Comparison Text is best for writers, marketers, developers, analysts, educators, operations teams, and anyone who regularly checks revisions before publishing, sharing, or approving content.",
-        "tags": "text compare, string compare, textdiff, side by side comparison, PDF compare, DOCX compare, Word compare, Excel compare, CSV compare, URL compare, XML compare, image compare, PPT compare, Markdown compare, file comparison, document diff, spreadsheet diff, #TextCompare, #DiffTool, #FileCompare, #DocumentCompare",
-        "pricing": "Core compare tools are free. AI-enhanced compare requires a subscription or add-on credits. One-time add-ons: AI Add-on 100 for $9, AI Add-on 200 for $16, AI Add-on 300 for $24. Monthly subscriptions: Starter $8/month, Pro $12/month, Scale $18/month. Annual subscriptions show effective monthly prices: Starter $6/month, Pro $9/month, Scale $14/month.",
-        "featuredImage": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-        "logoUrl": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-        "screenshots": [
-          "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "https://comparison-text.site/imgs/features/compare-result-excel-light.svg"
-        ],
-        "projectFields": {
-          "Name": "Comparison Text",
-          "Business mail": "support@comparison-text.site",
-          "Feedback mail": "support@comparison-text.site",
-          "Affiliate link": "Not specified in the project.",
-          "Extra Link:X/Twitter/YouTube/Instagram/..": "X: https://x.com/comparisontext\nGitHub: https://github.com/comparisontext\nYouTube/Instagram: Not specified in the project.",
-          "Note": "Browser-based comparison hub for text, documents, URLs, XML, images, spreadsheets, presentations, and Markdown. Core compare tools are free; AI summaries require sign-in and an active subscription.",
-          "Url": "https://comparison-text.site",
-          "Title": "Comparison Text | Compare Text, PDFs, URLs, XML, Word, Excel, Images, PPT, and Markdown",
-          "Short description(20-30 words)": "Comparison Text lets you compare text, PDFs, URLs, XML, Word, Excel, images, PPT, and Markdown online in one fast browser workspace.",
-          "Short Discription(100-150 words)": "Comparison Text is an online comparison hub built for quick side-by-side review across common content formats. Paste text, URLs, XML, or Markdown, or upload PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX files to inspect what changed between two versions. The workspace highlights added and removed content inline, shows left and right diff views, and provides summary stats for changed and unchanged characters. Text mode can ignore spaces, commas, tabs, and line breaks before diffing, while URL and XML modes normalize structured input for cleaner results. Core comparison tools are free to use, with optional AI summaries available for subscribed users who need a plain-language explanation of important changes.",
-          "Short Discription(150-250 words)": "Comparison Text is a focused online workspace for comparing text, documents, links, markup, images, spreadsheets, presentations, and Markdown without switching between separate tools. It supports raw text comparison, PDF text extraction, DOCX document review, XLSX and CSV spreadsheet comparison, URL query normalization, XML formatting, image metadata comparison, PPTX slide text extraction, and Markdown normalization. Each tool follows the same simple workflow: choose the right mode, add the original and revised versions, run the compare, then review inline highlights, side-by-side panes, and summary stats. Text compare includes delimiter controls so users can ignore spaces, commas, tabs, or line breaks when those differences are not meaningful. The first release is designed as a lightweight browser-based workspace, so core comparison tasks can be completed quickly without a required account. For users who need more context, Comparison Text also offers subscription-gated AI summaries that explain what changed, surface key differences, and suggest areas that deserve review. It is useful for copy edits, contracts, reports, spreadsheets, URLs, XML payloads, slide decks, Markdown files, and everyday version checks.",
-          "Long description (250-500 words)": "Comparison Text is an online comparison hub for people who need to review changes across many everyday content formats from one consistent workspace. Instead of using one tool for text, another for PDFs, another for spreadsheets, and another for URLs, Comparison Text brings dedicated compare modes together under a single browser-based interface. Users can paste raw text, URLs, XML, or Markdown, or upload files such as PDF, DOCX, XLSX, CSV, PNG, JPEG, WEBP, and PPTX.\n\nThe product is built around a simple three-step workflow: choose a tool, add the original and revised versions, and review the differences. Results include inline highlights, separate left and right views, and summary statistics for added, removed, unchanged, and total characters. Text Compare is useful for copy changes, prompts, snippets, templates, and plain-text files, with controls to ignore spaces, commas, tabs, or line breaks before diffing. PDF Compare and Word Compare focus on extracted text differences, making them practical for contracts, reports, drafts, and exported documents. Excel Compare handles XLSX and CSV content so users can spot changed rows or cell text faster. URL Compare normalizes query parameters to remove ordering noise, while XML Compare formats structured markup for clearer review. Markdown Compare supports pasted content or .md and .mdx uploads. Image Compare and PPT Compare add workflows for image files and PowerPoint presentations, including file-level checks and extracted slide text.\n\nCore comparison tools are positioned as free and lightweight. Accounts are not required for the first-release core compare workflow, while AI-enhanced summaries are gated behind sign-in and an active subscription because they trigger billable AI usage. Paid plans provide credits for AI summaries and explanations, with monthly, annual, and one-time add-on options. Comparison Text is best for writers, marketers, developers, analysts, educators, operations teams, and anyone who regularly checks revisions before publishing, sharing, or approving content.",
-          "Tags Keywords/Hashtags": "text compare, string compare, textdiff, side by side comparison, PDF compare, DOCX compare, Word compare, Excel compare, CSV compare, URL compare, XML compare, image compare, PPT compare, Markdown compare, file comparison, document diff, spreadsheet diff, #TextCompare, #DiffTool, #FileCompare, #DocumentCompare",
-          "Feature description": "Nine comparison modes: Text, PDF, URL, XML, Word DOCX, Excel/CSV, Image, PPTX, and Markdown. Features include paste or upload input, delimiter ignoring for text, URL query normalization, XML formatting, extracted text comparison for PDF/Word/PPT, spreadsheet text comparison, image metadata checks, inline highlights, side-by-side diff views, summary stats, related tool switching, and optional AI summaries for subscribed users.",
-          "Youtube": "Not specified in the project.",
-          "Pricing": "Core compare tools are free. AI-enhanced compare requires a subscription or add-on credits. One-time add-ons: AI Add-on 100 for $9, AI Add-on 200 for $16, AI Add-on 300 for $24. Monthly subscriptions: Starter $8/month, Pro $12/month, Scale $18/month. Annual subscriptions show effective monthly prices: Starter $6/month, Pro $9/month, Scale $14/month.",
-          "PRICING TYPE": "Freemium with paid AI-enhanced features, subscription plans, and one-time credit add-ons.",
-          "Subscription Model": "Monthly and annual subscriptions for AI Compare Starter, AI Compare Pro, and AI Compare Scale. Subscriptions unlock AI-enhanced compare summaries and include credits.",
-          "Starting Price": "$0 for core compare tools; paid AI plans start at $8/month monthly, $6/month effective annual price, or $9 for a one-time 100-credit add-on.",
-          "Promos": "Project pricing includes crossed-out original prices and Stripe promotion-code mapping support, but no public promo code is specified.",
-          "Cost & Subscription": "Free core comparison across all tools. Billable AI usage is subscription-gated. Monthly plans include 100, 200, or 300 credits valid for one month. Annual plans include 1,200, 2,400, or 3,600 credits valid for one year. One-time add-ons provide 100 credits valid 30 days, 200 credits valid 90 days, or 300 credits valid 365 days.",
-          "Credits System": "Credits are used for AI-enhanced compare features such as AI result summaries and image compare explanations. Credit balances are shown in user navigation and settings. Admin tools can grant credits.",
-          "OS Compatibility": "Web-based. Works on modern desktop and mobile operating systems through a browser, including Windows, macOS, Linux, iOS, Android, and ChromeOS.",
-          "Platform Accessibility": "Browser-based SaaS built with Next.js. Accessible through the web with responsive pages, light/dark theme support, English and Chinese locales, and no desktop installation required.",
-          "Offline Mode": "Not positioned as an offline product. The compare workspace runs in the browser, but the site, authentication, payments, and AI summaries require network access.",
-          "Ease of Use": "Simple three-step workflow: choose a comparison tool, paste or upload both versions, and review highlighted changes with inline view, left/right panes, and summary stats.",
-          "Payment Methods": "Payment integrations present in the project: Stripe, PayPal, and Creem. Exact live methods depend on deployment configuration.",
-          "Media Support": "Text, URL, XML, Markdown text, .md, .mdx, PDF, DOCX, XLSX, XLS, CSV, PNG, JPEG, WEBP, and PPTX.",
-          "Export Formats": "No dedicated export or download format is specified in the current compare workspace. Results are displayed in-browser.",
-          "Data Storage Policy": "Core compare workflows are described as running in the browser workspace in the first release. The privacy policy template covers account data, usage details, device information, cookies, and payment/billing data for signed-in or paid users.",
-          "User Anonvmitv": "Core compare tools do not require an account in the first release, so anonymous use is supported for basic comparison. AI summaries require sign-in and an active subscription.",
-          "Featured image": "https://comparison-text.site/imgs/brand/compare-workspace-light.png?v=20260408b",
-          "Screenshot-1": "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "Screenshot-2": "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "Screenshot-3": "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "Screenshot-4": "https://comparison-text.site/imgs/features/compare-result-excel-light.svg",
-          "Screenshot 1": "https://comparison-text.site/imgs/brand/compare-workspace-light.png",
-          "Screenshot 2": "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
-          "Screenshot 3": "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
-          "Screenshot 4": "https://comparison-text.site/imgs/features/compare-result-excel-light.svg"
-        }
-      }
-    },
-    {
-      "index": 38,
+      "index": 36,
       "domain": "americaninno.com",
       "url": "https://americaninno.com/",
       "platformType": "directory",
@@ -3312,7 +3163,7 @@
       }
     },
     {
-      "index": 39,
+      "index": 37,
       "domain": "futuretools.io",
       "url": "https://www.futuretools.io/",
       "platformType": "directory",
@@ -3382,7 +3233,7 @@
       }
     },
     {
-      "index": 40,
+      "index": 38,
       "domain": "growthhackers.com",
       "url": "https://growthhackers.com/",
       "platformType": "directory",
@@ -3452,12 +3303,12 @@
       }
     },
     {
-      "index": 41,
+      "index": 39,
       "domain": "gptshunter.com",
       "url": "https://www.gptshunter.com/",
       "platformType": "directory",
       "projectKey": "TextComparison",
-      "note": "GPTsHunter; Free; DR 59 / DA 60; GPT/AI directory.",
+      "note": "GPTsHunter; Free; DR 59 / DA 60; GPT/AI directory.；2026-08-02 Cloudflare 安全验证，待人工",
       "status": "pending",
       "config": {
         "projectKey": "TextComparison",
@@ -3522,7 +3373,7 @@
       }
     },
     {
-      "index": 42,
+      "index": 40,
       "domain": "saasaitools.com",
       "url": "https://saasaitools.com/",
       "platformType": "directory",
@@ -3592,7 +3443,7 @@
       }
     },
     {
-      "index": 43,
+      "index": 41,
       "domain": "kitploit.com",
       "url": "https://www.kitploit.com/",
       "platformType": "directory",
@@ -3662,7 +3513,7 @@
       }
     },
     {
-      "index": 44,
+      "index": 42,
       "domain": "affordhunt.com",
       "url": "https://www.affordhunt.com/",
       "platformType": "directory",
@@ -3732,7 +3583,7 @@
       }
     },
     {
-      "index": 45,
+      "index": 43,
       "domain": "business-software.com",
       "url": "https://www.business-software.com/",
       "platformType": "directory",
@@ -3802,12 +3653,12 @@
       }
     },
     {
-      "index": 46,
+      "index": 44,
       "domain": "supertools.therundown.ai",
       "url": "https://supertools.therundown.ai/",
       "platformType": "directory",
       "projectKey": "TextComparison",
-      "note": "The Rundown Supertools; Free; DA 53; AI tools directory.",
+      "note": "The Rundown Supertools; Free; DA 53; AI tools directory.；2026-08-02 已重定向 rundown.ai，未见工具提交入口",
       "status": "pending",
       "config": {
         "projectKey": "TextComparison",
@@ -3872,7 +3723,7 @@
       }
     },
     {
-      "index": 47,
+      "index": 45,
       "domain": "aitools.inc",
       "url": "https://aitools.inc/",
       "platformType": "directory",
@@ -3942,7 +3793,7 @@
       }
     },
     {
-      "index": 48,
+      "index": 46,
       "domain": "fivetaco.com",
       "url": "https://fivetaco.com/",
       "platformType": "directory",
@@ -4012,7 +3863,7 @@
       }
     },
     {
-      "index": 49,
+      "index": 47,
       "domain": "uneed.best",
       "url": "https://www.uneed.best/",
       "platformType": "directory",
@@ -4082,7 +3933,7 @@
       }
     },
     {
-      "index": 50,
+      "index": 48,
       "domain": "startupbase.io",
       "url": "https://startupbase.io/",
       "platformType": "directory",
@@ -4152,7 +4003,7 @@
       }
     },
     {
-      "index": 51,
+      "index": 49,
       "domain": "tooldirectory.ai",
       "url": "https://tooldirectory.ai/",
       "platformType": "directory",
@@ -4222,7 +4073,7 @@
       }
     },
     {
-      "index": 52,
+      "index": 50,
       "domain": "geekwire.com",
       "url": "https://www.geekwire.com/",
       "platformType": "directory",
@@ -4292,7 +4143,7 @@
       }
     },
     {
-      "index": 53,
+      "index": 51,
       "domain": "starterstory.com",
       "url": "https://www.starterstory.com/",
       "platformType": "directory",
@@ -4362,7 +4213,7 @@
       }
     },
     {
-      "index": 54,
+      "index": 52,
       "domain": "launchingnext.com",
       "url": "https://www.launchingnext.com/",
       "platformType": "directory",

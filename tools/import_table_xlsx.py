@@ -88,7 +88,12 @@ def read_workbook(path: Path) -> dict[str, list[list[str]]]:
             target = relationships.get(relationship_id, "")
             if not target:
                 continue
-            sheet_path = posixpath.normpath(posixpath.join("xl", target))
+            normalized_target = target.lstrip("/")
+            sheet_path = posixpath.normpath(
+                normalized_target
+                if normalized_target.startswith("xl/")
+                else posixpath.join("xl", normalized_target)
+            )
             if sheet_path not in zf.namelist():
                 continue
 

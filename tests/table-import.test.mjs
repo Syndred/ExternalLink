@@ -21,7 +21,7 @@ assert.deepEqual(
 );
 
 const submitted = table.entries.filter((entry) => entry.submitted);
-assert.equal(submitted.length, 5);
+assert.equal(submitted.length, 6);
 assert.deepEqual(
   submitted.map((entry) => entry.indexPage || entry.link),
   [
@@ -30,6 +30,7 @@ assert.deepEqual(
     "https://moge.ai/zh",
     "https://neeed.directory/submit",
     "https://sourceforge.net/",
+    "https://www.sideprojectors.com/",
   ],
 );
 

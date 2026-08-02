@@ -54,6 +54,7 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
 - Google Sheet、仓库 Table 和 Chrome 扩展已同步；扩展重新加载后 9 个成功组合、3 个主要网站的 Logo / 截图和外链库状态均正常。
 - TheJOAI 页面 DOM 已通过 Chrome 连接检查，确认主图、描述、Launch Date、Categories 的实际字段约束；未点击最终提交。
+- TheJOAI 预提交复核发现受控 Chrome 页面两个文件输入的 `files` 为空；已阻止提交。当前受控窗口未注入 ExternalLink 内容脚本，不能把页面上的文件控件当作已上传。
 - 为避免启动 227 个真实外链项，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复与浏览器重启。
 
 ## 后续边界

@@ -522,9 +522,11 @@
     },
     {
       "link": "https://pitchwall.co/",
-      "projects": [],
-      "submitted": false,
-      "note": "PitchWall; Free; DR 64; product/startup launch listing.；2026-08-02 RainbowPetAI：Google 登录和资料草稿已完成，图片上传被 Chrome 扩展文件权限阻止，待开启“允许访问文件网址”后提交",
+      "projects": [
+        "RainbowPetAI"
+      ],
+      "submitted": true,
+      "note": "PitchWall; Free; DR 64; product/startup launch listing.；2026-08-02 RainbowPetAI：提交成功，Product Status: Under Review，免费方案预计超过 30 天发布",
       "indexPage": ""
     },
     {

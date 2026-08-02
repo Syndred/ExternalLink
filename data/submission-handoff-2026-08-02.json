@@ -1,0 +1,124 @@
+{
+  "format": "externallink-submission-backup",
+  "version": 2,
+  "exportedAt": "2026-08-02T23:30:00+08:00",
+  "submissionRecords": {
+    "thejoai.com/aitools/submissions::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "thejoai.com/aitools/submissions",
+      "destinationUrl": "https://thejoai.com/aitools/submissions/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02T09:17:07+08:00",
+      "confirmedBy": "agent",
+      "evidence": "Excellent submission; account shows RainbowPetAI Submitted for Review",
+      "schemaVersion": 2
+    },
+    "launchingnext.com::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "launchingnext.com",
+      "destinationUrl": "https://www.launchingnext.com/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Step 1 completed; SUBMITTED; Status In Queue; receipt i=143041",
+      "schemaVersion": 2
+    },
+    "startupbase.io::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "startupbase.io",
+      "destinationUrl": "https://startupbase.io/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Product page /products/rainbowpetai shows Pending Review in standard free queue",
+      "schemaVersion": 2
+    },
+    "aitools.inc::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "aitools.inc",
+      "destinationUrl": "https://aitools.inc/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Typeform end screen: Thanks! We'll be in touch over the next few days to proceed with your listing.",
+      "schemaVersion": 2
+    },
+    "uneed.best::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "uneed.best",
+      "destinationUrl": "https://www.uneed.best/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "agent",
+      "evidence": "Launch Scheduled; free waiting line scheduled for 2027-01-14; /tool/rainbowpetai",
+      "schemaVersion": 2
+    },
+    "futuretools.io::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "futuretools.io",
+      "destinationUrl": "https://www.futuretools.io/",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-02",
+      "confirmedBy": "manual",
+      "evidence": "User manually confirmed FutureTools submission completed on 2026-08-02",
+      "schemaVersion": 2
+    }
+  },
+  "siteAnnotations": {
+    "tooldirectory.ai": {
+      "url": "https://tooldirectory.ai/submit-tool",
+      "domain": "tooldirectory.ai",
+      "status": "paid",
+      "note": "Live page requires Premium Tool Submission Subscription at $9.99; no purchase made.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-02",
+      "auto": false
+    },
+    "webwiki.com": {
+      "url": "https://www.webwiki.com/",
+      "domain": "webwiki.com",
+      "status": "needs_captcha",
+      "note": "Cloudflare security verification; requires manual handling.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-02",
+      "auto": false
+    },
+    "submissionwebdirectory.com": {
+      "url": "https://www.submissionwebdirectory.com/",
+      "domain": "submissionwebdirectory.com",
+      "status": "needs_captcha",
+      "note": "Visual security code required; no submission made.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-02",
+      "auto": false
+    },
+    "alternative.me": {
+      "url": "https://alternative.me/how-to/submit-software/",
+      "domain": "alternative.me",
+      "status": "needs_login",
+      "note": "Account password required; leave for manual handoff.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-02",
+      "auto": false
+    },
+    "saasaitools.com": {
+      "url": "https://saasaitools.com/join/",
+      "domain": "saasaitools.com",
+      "status": "needs_login",
+      "note": "Account signup required; leave for manual handoff.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-02",
+      "auto": false
+    }
+  },
+  "siteProfiles": {},
+  "activeSiteId": "",
+  "selectedSiteIds": [],
+  "urlList": ""
+}

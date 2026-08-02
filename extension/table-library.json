@@ -233,7 +233,7 @@
         "RspAi"
       ],
       "submitted": true,
-      "note": "您的项目正在审核中，通常需要 2-3 个工作日才能获批。当您的项目获批时，我们将通过电子邮件通知您。",
+      "note": "您的项目正在审核中，通常需要 2-3 个工作日才能获批。当您的项目获批时，我们将通过电子邮件通知您。；2026-08-02 RainbowPetAI：需登录，待人工",
       "indexPage": ""
     },
     {
@@ -282,7 +282,7 @@
         "GraffitiName"
       ],
       "submitted": true,
-      "note": "已提交 不用填信息 只要网站即可 说48小时后去站内搜索验证",
+      "note": "已提交 不用填信息 只要网站即可 说48小时后去站内搜索验证；2026-08-02 RainbowPetAI：首页未见提交入口，待复核",
       "indexPage": ""
     },
     {
@@ -291,7 +291,7 @@
         "OldPhotoLive"
       ],
       "submitted": true,
-      "note": "交换badge验证通过已提交",
+      "note": "交换badge验证通过已提交；2026-08-02 RainbowPetAI：需登录，待人工",
       "indexPage": ""
     },
     {
@@ -311,14 +311,14 @@
         "OldPhotoLive"
       ],
       "submitted": true,
-      "note": "SourceForge; Free; DR 92; strong software directory, best for web/software tools.",
+      "note": "SourceForge; Free; DR 92; strong software directory, best for web/software tools.；2026-08-02 RainbowPetAI：Cloudflare 安全验证，待人工",
       "indexPage": ""
     },
     {
       "link": "https://aitools.neilpatel.com/",
       "projects": [],
       "submitted": false,
-      "note": "AI Tools Neil Patel; Free; DR 91; AI tool listing.",
+      "note": "AI Tools Neil Patel; Free; DR 91; AI tool listing.；2026-08-02 已重定向 Ubersuggest Apps & Integrations，无工具提交入口",
       "indexPage": ""
     },
     {
@@ -479,7 +479,7 @@
       "link": "https://www.sideprojectors.com/",
       "projects": [],
       "submitted": false,
-      "note": "SideProjectors; Free; DR 67; side project marketplace/listing.",
+      "note": "SideProjectors; Free; DR 67; side project marketplace/listing.；2026-08-02 RainbowPetAI：/submit 跳转登录，待人工",
       "indexPage": ""
     },
     {
@@ -521,7 +521,7 @@
       "link": "https://pitchwall.co/",
       "projects": [],
       "submitted": false,
-      "note": "PitchWall; Free; DR 64; product/startup launch listing.",
+      "note": "PitchWall; Free; DR 64; product/startup launch listing.；2026-08-02 免费方案存在但提交前需登录，待人工",
       "indexPage": ""
     },
     {
@@ -549,7 +549,7 @@
       "link": "https://www.gptshunter.com/",
       "projects": [],
       "submitted": false,
-      "note": "GPTsHunter; Free; DR 59 / DA 60; GPT/AI directory.",
+      "note": "GPTsHunter; Free; DR 59 / DA 60; GPT/AI directory.；2026-08-02 Cloudflare 安全验证，待人工",
       "indexPage": ""
     },
     {
@@ -584,7 +584,7 @@
       "link": "https://supertools.therundown.ai/",
       "projects": [],
       "submitted": false,
-      "note": "The Rundown Supertools; Free; DA 53; AI tools directory.",
+      "note": "The Rundown Supertools; Free; DA 53; AI tools directory.；2026-08-02 已重定向 rundown.ai，未见工具提交入口",
       "indexPage": ""
     },
     {

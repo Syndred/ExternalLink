@@ -32,6 +32,7 @@ const SNAPSHOT_RETRY_ATTEMPTS = 5;
 const SNAPSHOT_RETRY_MS = 700;
 const MAX_FILL_ROUNDS = 6;
 const AUTO_FILL_DEBOUNCE_MS = 900;
+const MAX_SUBMISSION_MEDIA_BYTES = 6 * 1024 * 1024;
 const SUBMISSION_SCHEMA_VERSION = self.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION || 2;
 
 const autoFillTimers = new Map();
@@ -73,6 +74,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "sidepanelFill":
       handleSidepanelFill(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "fetchSubmissionMedia":
+      fetchSubmissionMedia(msg.url)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -188,6 +194,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
   }
 });
+
+async function fetchSubmissionMedia(rawUrl) {
+  const url = new URL(String(rawUrl || ""));
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error("只允许下载 HTTP(S) 图片");
+  }
+
+  const response = await fetch(url.href, {
+    cache: "force-cache",
+    credentials: "omit",
+    redirect: "follow",
+  });
+  if (!response.ok) throw new Error(`图片下载失败: HTTP ${response.status}`);
+
+  const contentLength = Number(response.headers.get("content-length") || 0);
+  if (contentLength > MAX_SUBMISSION_MEDIA_BYTES) {
+    throw new Error("图片超过 6MB，无法自动上传");
+  }
+
+  const blob = await response.blob();
+  if (blob.size > MAX_SUBMISSION_MEDIA_BYTES) {
+    throw new Error("图片超过 6MB，无法自动上传");
+  }
+  const contentType = String(blob.type || response.headers.get("content-type") || "");
+  if (!contentType.toLowerCase().startsWith("image/")) {
+    throw new Error("目标地址返回的不是图片");
+  }
+
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return {
+    ok: true,
+    dataUrl: `data:${contentType};base64,${btoa(binary)}`,
+    contentType,
+    byteLength: bytes.length,
+  };
+}
 
 async function startBatchRun(msg) {
   await initializationPromise;
@@ -487,6 +533,7 @@ async function handleSidepanelFill(msg) {
 
   let smartTotal = 0;
   let skippedFiles = [];
+  let inferredFields = [];
   let agentResult = {};
   let lastEmpty = { emptyCount: 0, totalCount: 0 };
   let validation = { submitReady: true, issues: [] };
@@ -508,6 +555,9 @@ async function handleSidepanelFill(msg) {
         const smartResult = await sendTabMessage(tabId, { action: "smartFill", config });
         smartTotal += smartResult.filledCount || 0;
         if (smartResult.skippedFiles?.length) skippedFiles = smartResult.skippedFiles;
+        if (smartResult.inferredFields?.length) {
+          inferredFields = [...new Set([...inferredFields, ...smartResult.inferredFields])];
+        }
       } catch (err) {
         log(`智能填表: ${err.message}`, "warn");
       }
@@ -661,6 +711,7 @@ async function handleSidepanelFill(msg) {
     invalidCount: lastEmpty.invalidCount || 0,
     totalCount: lastEmpty.totalCount,
     skippedFiles,
+    inferredFields,
     platform: platformType,
     submitReady:
       validation?.submitReady !== false && lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount,

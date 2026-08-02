@@ -1227,6 +1227,7 @@
     const tag = element.tagName.toLowerCase();
     if (tag === "form") return true;
     if (tag === "textarea" || tag === "select" || tag === "button") return true;
+    if (isContentEditableField(element)) return true;
     if (tag === "a") {
       const href = element.getAttribute("href") || "";
       return (
@@ -1447,6 +1448,13 @@
   }
 
   function setFieldValue(element, value) {
+    if (isContentEditableField(element)) {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = String(value);
+      element.replaceChildren(paragraph);
+      element.classList?.remove("ql-blank");
+      return;
+    }
     const nativeSetter = getNativeValueSetter(element);
     if (nativeSetter) {
       nativeSetter.call(element, value);
@@ -1456,6 +1464,7 @@
   }
 
   function getNativeValueSetter(element) {
+    if (isContentEditableField(element)) return null;
     let prototype = HTMLInputElement.prototype;
     if (element instanceof HTMLTextAreaElement) {
       prototype = HTMLTextAreaElement.prototype;
@@ -1543,10 +1552,18 @@
 
     if (actionType === "fill") {
       return (
-        (tag === "input" || tag === "textarea") &&
-        !["hidden", "file", "image", "submit", "button", "reset", "checkbox", "radio"].includes(
-          (element.type || "").toLowerCase(),
-        )
+        isContentEditableField(element) ||
+        ((tag === "input" || tag === "textarea") &&
+          ![
+            "hidden",
+            "file",
+            "image",
+            "submit",
+            "button",
+            "reset",
+            "checkbox",
+            "radio",
+          ].includes((element.type || "").toLowerCase()))
       );
     }
     if (actionType === "select") {
@@ -1624,6 +1641,7 @@
     labels.push(
       element.getAttribute("aria-label"),
       element.getAttribute("placeholder"),
+      element.getAttribute("data-placeholder"),
       element.getAttribute("title"),
       element.textContent,
     );
@@ -1649,10 +1667,11 @@
         ),
       };
     }
+    const value = getElementFillValue(element);
     return {
-      present: !!element.value,
+      present: !!value,
       kind: type || "text",
-      length: element.value ? String(element.value).length : 0,
+      length: value ? String(value).length : 0,
     };
   }
 
@@ -1688,6 +1707,7 @@
       element.type,
       element.getAttribute("aria-label"),
       element.getAttribute("placeholder"),
+      element.getAttribute("data-placeholder"),
       element.getAttribute("autocomplete"),
     ]
       .filter(Boolean)
@@ -1909,7 +1929,9 @@
         const candidates = document.querySelectorAll(sel);
         for (const el of candidates) {
           if (!isVisible(el)) continue;
-          const inputs = el.querySelectorAll("input, textarea, select");
+          const inputs = el.querySelectorAll(
+            'input, textarea, select, [contenteditable="true"], [role="textbox"][contenteditable]',
+          );
           const fillable = Array.from(inputs).filter((node) => {
             if (!isFillableField(node)) return false;
             const t = (node.type || "").toLowerCase();
@@ -1937,13 +1959,27 @@
 
   function queryFillableElements(scope) {
     const root = scope || getActiveFillScope();
-    return Array.from(root.querySelectorAll("input, textarea, select")).filter((element) => {
+    return Array.from(
+      root.querySelectorAll(
+        'input, textarea, select, [contenteditable="true"], [role="textbox"][contenteditable]',
+      ),
+    ).filter((element) => {
       if (!isFillableField(element)) return false;
+      if (isContentEditableField(element) && element.parentElement?.isContentEditable) return false;
       const type = (element.type || "").toLowerCase();
       if (type === "hidden" || type === "submit" || type === "button" || type === "reset")
         return false;
       return true;
     });
+  }
+
+  function isContentEditableField(element) {
+    if (!element || !element.getAttribute) return false;
+    return (
+      element.isContentEditable === true ||
+      element.getAttribute("contenteditable") === "true" ||
+      (element.getAttribute("role") === "textbox" && element.hasAttribute("contenteditable"))
+    );
   }
 
   function fieldNeedsRefill(element) {
@@ -2136,7 +2172,11 @@
   function getElementFillValue(element) {
     const type = (element.type || "").toLowerCase();
     if (type === "file") return element.files?.length ? element.files[0].name : "";
+    if (type === "checkbox" || type === "radio") {
+      return element.checked ? element.value || "on" : "";
+    }
     if (element.tagName.toLowerCase() === "select") return element.value || "";
+    if (isContentEditableField(element)) return element.innerText || element.textContent || "";
     return element.value || "";
   }
 
@@ -2291,6 +2331,142 @@
     };
   }
 
+  function normalizeDateValue(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const direct = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (direct) return direct[0];
+    const parsed = new Date(raw);
+    if (!Number.isFinite(parsed.getTime())) return "";
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  function resolveDateValue(config) {
+    const pf = getProfileFields(config);
+    const configured =
+      config.launchDate || pf["Launch Date"] || pf["Launch date"] || pf["Release Date"] || "";
+    return normalizeDateValue(configured) || new Date().toISOString().slice(0, 10);
+  }
+
+  function choiceGroupKey(element, index) {
+    const type = (element.type || "checkbox").toLowerCase();
+    return `${type}:${element.name || element.getAttribute("data-name") || `choice-${index}`}`;
+  }
+
+  function collectChoiceGroups(elements) {
+    const groups = new Map();
+    elements.forEach((element, index) => {
+      const type = (element.type || "").toLowerCase();
+      if (type !== "checkbox" && type !== "radio") return;
+      const key = choiceGroupKey(element, index);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(element);
+    });
+    return groups;
+  }
+
+  function choiceGroupRequired(key, elements) {
+    const hint = `${key} ${elements.map((element) => getFieldHint(element)).join(" ")}`;
+    return (
+      elements.some(
+        (element) => element.required || element.getAttribute("aria-required") === "true",
+      ) || /categor|topic|industry|radio/.test(hint)
+    );
+  }
+
+  function profileChoiceCorpus(config) {
+    const pf = getProfileFields(config);
+    return [
+      config.tags,
+      config.brandName,
+      config.targetAudience,
+      config.valueProposition,
+      ...(config.useCases || []),
+      pf["Feature description"],
+      pf["Short description(20-30 words)"],
+      pf["Short Discription(100-150 words)"],
+      pf["Long description (250-500 words)"],
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function scoreChoiceLabel(label, corpus, tags) {
+    const normalized = compactText(label, 120)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, " ");
+    if (!normalized) return 0;
+    let score = corpus.includes(normalized) ? 30 : 0;
+    if (tags.includes(normalized)) score += 40;
+    const stop = new Set([
+      "ai",
+      "and",
+      "the",
+      "tool",
+      "tools",
+      "online",
+      "app",
+      "application",
+      "assistance",
+      "generation",
+    ]);
+    for (const token of normalized.split(/[\s-]+/).filter(Boolean)) {
+      if (token.length < 3 || stop.has(token)) continue;
+      if (new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(corpus)) {
+        score += token.length;
+      }
+      if (new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(tags)) {
+        score += 15;
+      }
+    }
+    return score;
+  }
+
+  function fillChoiceGroups(elements, config) {
+    const groups = collectChoiceGroups(elements);
+    const corpus = profileChoiceCorpus(config);
+    const tags = String(config.tags || "").toLowerCase();
+    const handled = new Set();
+    const mappings = {};
+    let filledCount = 0;
+
+    for (const [key, options] of groups) {
+      options.forEach((element) => handled.add(element));
+      if (options.some((element) => element.checked)) continue;
+      if (!choiceGroupRequired(key, options)) continue;
+
+      const ranked = options
+        .map((element) => ({
+          element,
+          label: getSnapshotLabel(element) || element.value || "",
+          score: scoreChoiceLabel(
+            getSnapshotLabel(element) || element.value || "",
+            corpus,
+            tags,
+          ),
+        }))
+        .sort((a, b) => b.score - a.score);
+      let selected = ranked[0];
+      if (!selected || selected.score <= 0) {
+        selected = ranked.find((item) => /miscellaneous|other/.test(item.label.toLowerCase()));
+      }
+      if (!selected) continue;
+
+      setCheckedValue(selected.element, true);
+      selected.element.dispatchEvent(new Event("input", { bubbles: true }));
+      selected.element.dispatchEvent(new Event("change", { bubbles: true }));
+      filledCount++;
+      mappings[fieldMappingKey(selected.element)] = {
+        profileKey: "category",
+        value: selected.element.value || selected.label,
+        label: selected.label,
+      };
+    }
+
+    return { filledCount, handled, mappings };
+  }
+
   function resolveValueForField(config, element) {
     const pf = getProfileFields(config);
     const hint = getFieldHint(element);
@@ -2312,6 +2488,10 @@
 
     if (type === "file") {
       return resolveFileMedia(config, element).value;
+    }
+
+    if (type === "date") {
+      return resolveDateValue(config);
     }
 
     if (tag === "select") {
@@ -2414,22 +2594,29 @@
     if (!input || input.type !== "file") return false;
 
     const dataUrl = useLogoDataUrl ? config?.logoDataUrl : "";
-    if (dataUrl && String(dataUrl).startsWith("data:")) {
-      return fillFileInputFromDataUrl(input, dataUrl);
-    }
-
-    if (!imageUrl) return false;
-    let absolute = imageUrl;
     try {
-      absolute = new URL(imageUrl, baseUrl || location.href).href;
-      const resp = await fetch(absolute);
-      if (!resp.ok) return false;
-      const blob = await resp.blob();
-      const name = absolute.split("/").pop()?.split("?")[0] || "logo.png";
-      const file = new File([blob], name, { type: blob.type || "image/png" });
+      let blob = null;
+      let sourceName = "image";
+      if (dataUrl && String(dataUrl).startsWith("data:")) {
+        blob = await (await fetch(dataUrl)).blob();
+        sourceName = "logo";
+      } else {
+        if (!imageUrl) return false;
+        const absolute = new URL(imageUrl, baseUrl || location.href).href;
+        sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
+        blob = await fetchSubmissionMediaBlob(absolute);
+      }
+      if (!blob || !String(blob.type || "").startsWith("image/")) return false;
+
+      const normalized = await normalizeImageForFileInput(blob, input);
+      const mime = normalized.type || blob.type || "image/png";
+      const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1]?.split("+")[0] || "png";
+      const cleanBase = sourceName.replace(/\.[a-z0-9]+$/i, "") || "image";
+      const file = new File([normalized], `${cleanBase}.${ext}`, { type: mime });
       const dt = new DataTransfer();
       dt.items.add(file);
       input.files = dt.files;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
       return true;
     } catch {
@@ -2437,21 +2624,144 @@
     }
   }
 
-  async function fillFileInputFromDataUrl(input, dataUrl) {
+  async function fetchSubmissionMediaBlob(absoluteUrl) {
     try {
-      const resp = await fetch(dataUrl);
-      const blob = await resp.blob();
-      const mime = blob.type || "image/png";
-      const ext = mime.split("/")[1]?.split("+")[0] || "png";
-      const file = new File([blob], `logo.${ext}`, { type: mime });
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      return true;
+      const response = await fetch(absoluteUrl, { credentials: "omit" });
+      if (response.ok) return response.blob();
     } catch {
-      return false;
+      /* Cross-origin images are fetched by the extension service worker below. */
     }
+
+    const proxied = await chrome.runtime.sendMessage({
+      action: "fetchSubmissionMedia",
+      url: absoluteUrl,
+    });
+    if (!proxied?.ok || !proxied.dataUrl) {
+      throw new Error(proxied?.error || "图片下载失败");
+    }
+    return (await fetch(proxied.dataUrl)).blob();
+  }
+
+  function getUploadFieldContext(input) {
+    const chunks = [getSnapshotLabel(input), input.accept || ""];
+    let current = input.parentElement;
+    for (let depth = 0; current && depth < 3; depth++, current = current.parentElement) {
+      const text = compactText(current.textContent || "", 800);
+      if (text) chunks.push(text);
+      if (/format|ratio|max(?:imum)? dimension|upload/i.test(text)) break;
+    }
+    return chunks.join(" ");
+  }
+
+  function parseImageUploadConstraints(input) {
+    const context = getUploadFieldContext(input);
+    const maxMatch = context.match(
+      /max(?:imum)?(?:\s+dimensions?|\s+dimension\s+is)?[^\d]{0,20}(\d+)\s*px?\s*(?:by|x|×)\s*(\d+)\s*px?/i,
+    );
+    const ratioMatch = context.match(/(?:ratio\s*(?:is|:)?\s*)?(\d+)\s*:\s*(\d+)/i);
+    const accept = String(input.accept || "").toLowerCase();
+    const acceptedTypes = new Set();
+    if (!accept || accept.includes("image/*")) {
+      acceptedTypes.add("image/jpeg");
+      acceptedTypes.add("image/png");
+      acceptedTypes.add("image/webp");
+    }
+    if (/image\/jpeg|\.jpe?g|\bjpeg?\b/.test(accept + " " + context)) {
+      acceptedTypes.add("image/jpeg");
+    }
+    if (/image\/png|\.png|\bpng\b/.test(accept + " " + context)) {
+      acceptedTypes.add("image/png");
+    }
+    if (/image\/webp|\.webp|\bwebp\b/.test(accept + " " + context)) {
+      acceptedTypes.add("image/webp");
+    }
+    return {
+      maxWidth: maxMatch ? Number(maxMatch[1]) : null,
+      maxHeight: maxMatch ? Number(maxMatch[2]) : null,
+      aspectRatio:
+        ratioMatch && Number(ratioMatch[2]) > 0
+          ? Number(ratioMatch[1]) / Number(ratioMatch[2])
+          : null,
+      acceptedTypes,
+    };
+  }
+
+  async function normalizeImageForFileInput(blob, input) {
+    const constraints = parseImageUploadConstraints(input);
+    const bitmap = await createImageBitmap(blob);
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceWidth = bitmap.width;
+    let sourceHeight = bitmap.height;
+
+    if (constraints.aspectRatio) {
+      const currentRatio = sourceWidth / sourceHeight;
+      if (Math.abs(currentRatio - constraints.aspectRatio) > 0.01) {
+        if (currentRatio > constraints.aspectRatio) {
+          sourceWidth = Math.round(sourceHeight * constraints.aspectRatio);
+          sourceX = Math.round((bitmap.width - sourceWidth) / 2);
+        } else {
+          sourceHeight = Math.round(sourceWidth / constraints.aspectRatio);
+          sourceY = Math.round((bitmap.height - sourceHeight) / 2);
+        }
+      }
+    }
+
+    const scale = Math.min(
+      1,
+      constraints.maxWidth ? constraints.maxWidth / sourceWidth : 1,
+      constraints.maxHeight ? constraints.maxHeight / sourceHeight : 1,
+    );
+    const targetWidth = Math.max(1, Math.floor(sourceWidth * scale));
+    const targetHeight = Math.max(1, Math.floor(sourceHeight * scale));
+    const formatAccepted =
+      constraints.acceptedTypes.size === 0 || constraints.acceptedTypes.has(blob.type);
+    const needsTransform =
+      !formatAccepted ||
+      sourceX !== 0 ||
+      sourceY !== 0 ||
+      sourceWidth !== bitmap.width ||
+      sourceHeight !== bitmap.height ||
+      targetWidth !== bitmap.width ||
+      targetHeight !== bitmap.height;
+
+    if (!needsTransform) {
+      bitmap.close();
+      return blob;
+    }
+
+    const outputType = constraints.acceptedTypes.has("image/png")
+      ? "image/png"
+      : "image/jpeg";
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext("2d", { alpha: outputType === "image/png" });
+    if (!context) throw new Error("浏览器无法转换图片");
+    if (outputType === "image/jpeg") {
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, targetWidth, targetHeight);
+    }
+    context.drawImage(
+      bitmap,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      targetWidth,
+      targetHeight,
+    );
+    bitmap.close();
+    const output = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (result) => (result ? resolve(result) : reject(new Error("图片转换失败"))),
+        outputType,
+        0.9,
+      );
+    });
+    return output;
   }
 
   function fieldMappingKey(element) {
@@ -2478,14 +2788,18 @@
     const pf = getProfileFields(config);
     const baseUrl = config.targetDomain || pf.Url || location.href;
     const elements = queryFillableElements();
-    let filledCount = 0;
-    const mappings = {};
+    const choiceResult = fillChoiceGroups(elements, config);
+    let filledCount = choiceResult.filledCount;
+    const mappings = { ...choiceResult.mappings };
     const skippedFiles = [];
+    const inferredFields = new Set();
     let screenshotCursor = 0;
 
     for (const element of elements) {
       const type = (element.type || "").toLowerCase();
       const tag = element.tagName.toLowerCase();
+
+      if (choiceResult.handled.has(element)) continue;
 
       if (tag === "select") {
         if (!isSelectEmpty(element) && !fieldNeedsRefill(element)) continue;
@@ -2533,11 +2847,25 @@
         continue;
       }
 
-      const existing = element.value && String(element.value).trim();
+      const existingValue = getElementFillValue(element);
+      const existing = existingValue && String(existingValue).trim();
       if (existing && !fieldNeedsRefill(element)) continue;
 
       const resolved = value || resolveValueForField(config, element);
       if (!resolved) continue;
+
+      if (
+        type === "date" &&
+        !normalizeDateValue(
+          config.launchDate ||
+            pf["Launch Date"] ||
+            pf["Launch date"] ||
+            pf["Release Date"] ||
+            "",
+        )
+      ) {
+        inferredFields.add(getSnapshotLabel(element) || element.name || "Launch Date");
+      }
 
       logStep(
         `✏️ ${getSnapshotLabel(element) || element.name || type} → ${String(resolved).slice(0, 40)}…`,
@@ -2565,7 +2893,7 @@
       }
     }
 
-    return { filledCount, mappings, skippedFiles };
+    return { filledCount, mappings, skippedFiles, inferredFields: [...inferredFields] };
   }
 
   function isCustomDropdownEmpty(trigger) {
@@ -2581,31 +2909,43 @@
   function countEmptyFillableFields() {
     const elements = queryFillableElements();
     const customDropdowns = queryCustomDropdowns();
+    const choiceGroups = collectChoiceGroups(elements);
+    const choiceElements = new Set([...choiceGroups.values()].flat());
     let emptyCount = 0;
     let invalidCount = 0;
-    const totalCount = elements.length + customDropdowns.length;
+    const totalCount =
+      elements.length - choiceElements.size + choiceGroups.size + customDropdowns.length;
 
     for (const element of elements) {
+      if (choiceElements.has(element)) continue;
       const type = (element.type || "").toLowerCase();
       if (type === "file") {
-        if (!element.files || element.files.length === 0) emptyCount++;
+        if ((!element.files || element.files.length === 0) && fieldIsRequired(element)) {
+          emptyCount++;
+        }
         continue;
       }
       const tag = element.tagName.toLowerCase();
       if (tag === "select" && isSelectEmpty(element)) {
-        emptyCount++;
+        if (fieldIsRequired(element)) emptyCount++;
         continue;
       }
       const value = getElementFillValue(element);
       if (!value || !String(value).trim()) {
-        emptyCount++;
+        if (fieldIsRequired(element)) emptyCount++;
         continue;
       }
       if (fieldNeedsRefill(element)) invalidCount++;
     }
 
+    for (const [key, options] of choiceGroups) {
+      if (choiceGroupRequired(key, options) && !options.some((element) => element.checked)) {
+        emptyCount++;
+      }
+    }
+
     for (const trigger of customDropdowns) {
-      if (isCustomDropdownEmpty(trigger)) emptyCount++;
+      if (isCustomDropdownEmpty(trigger) && fieldIsRequired(trigger)) emptyCount++;
     }
 
     return {
@@ -2614,6 +2954,12 @@
       totalCount,
       allValid: emptyCount === 0 && invalidCount === 0,
     };
+  }
+
+  function fieldIsRequired(element) {
+    if (!element) return false;
+    if (element.required || element.getAttribute("aria-required") === "true") return true;
+    return /(^|\s)\*($|\s)|\brequired\b/i.test(getSnapshotLabel(element));
   }
 
   function collectFillLearnings(config) {
@@ -2626,7 +2972,7 @@
       let val = "";
       if (element.tagName.toLowerCase() === "select") val = element.value;
       else if (type === "file") val = element.files?.length ? element.files[0].name : "";
-      else val = element.value;
+      else val = getElementFillValue(element);
       if (!val || !String(val).trim()) continue;
       const key = fieldMappingKey(element);
       mappings[key] = {

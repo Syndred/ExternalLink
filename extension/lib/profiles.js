@@ -97,6 +97,7 @@
       commentTemplate: globalConfig.commentTemplate || longDesc || shortDesc,
       tags: fields["Tags Keywords/Hashtags"] || "",
       pricing: fields.Pricing || "",
+      launchDate: fields["Launch Date"] || fields["Launch date"] || "",
       featuredImage: fields["Featured image"] || profile.logoUrl || fields.LOGO || "",
       logoUrl: profile.logoUrl || fields.LOGO || fields["Featured image"] || "",
       logoDataUrl: profile.logoDataUrl || "",

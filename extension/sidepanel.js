@@ -318,6 +318,13 @@
       setAutoFillStatus(`已填写；图片需手动上传: ${result.skippedFiles.join(", ")}`, "warn");
       return;
     }
+    if (result?.inferredFields?.length && result.emptyCount === 0) {
+      setAutoFillStatus(
+        `已填完；${result.inferredFields.join(", ")} 使用今天日期，请提交前核对`,
+        "warn",
+      );
+      return;
+    }
     if (result?.ok || result?.fillOnly) {
       let msg;
       if (mode === "comment") {

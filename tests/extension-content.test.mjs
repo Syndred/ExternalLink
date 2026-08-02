@@ -46,6 +46,54 @@ assert.match(content, /input\[type="email"\]/, "generic form filling should incl
 
 assert.match(
   content,
+  /\[contenteditable=["']true["']\]/,
+  "generic form filling should discover rich-text contenteditable editors",
+);
+
+assert.match(
+  content,
+  /function\s+isContentEditableField\s*\(/,
+  "contenteditable fields should use explicit editor handling",
+);
+
+assert.match(
+  content,
+  /classList\?\.remove\(["']ql-blank["']\)/,
+  "Quill editors should leave their blank state after a programmatic fill",
+);
+
+assert.match(
+  background,
+  /case\s+["']fetchSubmissionMedia["']:/,
+  "the background should proxy cross-origin submission media downloads",
+);
+
+assert.match(
+  content,
+  /action:\s*["']fetchSubmissionMedia["']/,
+  "file filling should fall back to the background media proxy",
+);
+
+assert.match(
+  content,
+  /canvas\.toBlob/,
+  "file filling should normalize unsupported image formats and dimensions",
+);
+
+assert.match(
+  content,
+  /function\s+fillChoiceGroups\s*\(/,
+  "required checkbox groups should be treated as one logical field",
+);
+
+assert.match(
+  content,
+  /function\s+resolveDateValue\s*\(/,
+  "launch-date fields should have an explicit resolver",
+);
+
+assert.match(
+  content,
   /getNativeValueSetter/,
   "form filling should use native value setters so React/Vue controlled inputs receive changes",
 );

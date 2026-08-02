@@ -52,6 +52,10 @@ assert.equal(
   P.resolveMediaField(mediaConfig, "Featured image", 0).value,
   "https://example.com/featured.jpg",
 );
+assert.equal(
+  P.resolveMediaField(mediaConfig, "Main Image *", 0).value,
+  "https://example.com/featured.jpg",
+);
 
 const tableProjects = {
   OldPhotoLive: {

@@ -1,0 +1,4 @@
+interface:
+  display_name: "External Link Operator"
+  short_description: "Submit and reconcile multi-site external links safely"
+  default_prompt: "Use $external-link-operator to submit selected sites, verify evidence, and synchronize the ExternalLink ledger."

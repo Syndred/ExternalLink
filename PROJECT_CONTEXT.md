@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-07-30｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-02｜扩展 2.5.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -19,6 +19,7 @@
 - RainbowPetAI、RspAi、OldPhotoLive 已同步完整资料、Logo 和 Screenshot 1–4；本地 Logo 随备份恢复。
 - Screenshot 1–4 使用统一媒体列表并按文件字段顺序映射；动态名称、域名、备注和日志均安全文本渲染。
 - UI 基础规则见 [`DESIGN.md`](DESIGN.md)。
+- TheJOAI 兼容性修复已覆盖富文本描述、受限主图上传、发布日期和必选分类；站点最终提交仍保持人工确认边界。
 
 ## 关键存储
 
@@ -52,6 +53,7 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - 已通过 Python 15 个 local_agent 单元测试。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
 - Google Sheet、仓库 Table 和 Chrome 扩展已同步；扩展重新加载后 9 个成功组合、3 个主要网站的 Logo / 截图和外链库状态均正常。
+- TheJOAI 页面 DOM 已通过 Chrome 连接检查，确认主图、描述、Launch Date、Categories 的实际字段约束；未点击最终提交。
 - 为避免启动 227 个真实外链项，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复与浏览器重启。
 
 ## 后续边界

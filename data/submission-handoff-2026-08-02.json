@@ -162,8 +162,8 @@
     "news.ycombinator.com": {
       "url": "https://news.ycombinator.com/",
       "domain": "news.ycombinator.com",
-      "status": "skip",
-      "note": "User cancelled Hacker News submission on 2026-08-06 because no account is available.",
+      "status": "needs_manual",
+      "note": "Logged in as syndred. Authentic community participation started on 2026-08-06; do not submit RainbowPetAI until the account has sufficient history and the post is contextually appropriate.",
       "submittedProjects": [],
       "updatedAt": "2026-08-06",
       "auto": false

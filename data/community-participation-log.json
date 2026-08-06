@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-06T12:56:48+08:00",
+  "updatedAt": "2026-08-06T13:06:00+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -17,10 +17,10 @@
       "platform": "Indie Hackers",
       "account": "Syndred",
       "discussionUrl": "https://www.indiehackers.com/post/were-debating-the-next-feature-for-stateguard-would-you-trust-this-6b0b1a091a",
-      "commentUrl": null,
-      "status": "skipped",
-      "summary": "候选讨论与 AI 工作流安全边界高度匹配，但未发布。",
-      "skipReason": "页面的 Say something nice、Post Comment 和 Reply 均跳转 /sign-up，当前浏览器会话没有实际评论权限。"
+      "commentUrl": "https://www.indiehackers.com/post/were-debating-the-next-feature-for-stateguard-would-you-trust-this-6b0b1a091a?commentId=-OzKSLXOfRwBN3JXQJFm",
+      "status": "posted",
+      "summary": "给出 AI 工作流语义修复的安全边界：仅自动执行封闭、可枚举、无损且可审计的转换，高风险状态保持 fail-closed，并建议先使用 shadow mode。",
+      "evidence": "公开讨论页显示 @Syndred 评论、a few seconds ago、Edit/Delete 控件，并提供独立 commentId。"
     }
   ]
 }

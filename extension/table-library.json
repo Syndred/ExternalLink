@@ -638,6 +638,33 @@
       "submitted": false,
       "note": "LaunchingNext; Free; DA 48; startup launch directory.",
       "indexPage": ""
+    },
+    {
+      "link": "https://github.com/Syndred/pet-memorial-resources",
+      "projects": [
+        "RainbowPetAI"
+      ],
+      "submitted": true,
+      "note": "公开资源仓库已创建；README 含真实宠物离世支持资源、纪念清单、隐私建议、RainbowPetAI 链接和展示图；公开页面与链接已验收。",
+      "indexPage": "https://github.com/Syndred/pet-memorial-resources"
+    },
+    {
+      "link": "https://www.indiehackers.com/new-post",
+      "projects": [
+        "RainbowPetAI"
+      ],
+      "submitted": false,
+      "note": "@Syndred 已登录，但平台显示 You can't create posts yet；需真实社区互动并获管理员解锁，或付费 IH Plus。本轮不付费、不制造互动。",
+      "indexPage": ""
+    },
+    {
+      "link": "https://news.ycombinator.com/",
+      "projects": [
+        "RainbowPetAI"
+      ],
+      "submitted": false,
+      "note": "用户于 2026-08-06 取消 Hacker News 提交：没有账号，不再处理。",
+      "indexPage": ""
     }
   ],
   "tasks": [
@@ -4279,6 +4306,144 @@
           "Screenshot 2": "https://comparison-text.site/imgs/brand/compare-workspace-dark.png",
           "Screenshot 3": "https://comparison-text.site/imgs/features/compare-result-text-light.svg",
           "Screenshot 4": "https://comparison-text.site/imgs/features/compare-result-excel-light.svg"
+        }
+      }
+    },
+    {
+      "index": 53,
+      "domain": "indiehackers.com",
+      "url": "https://www.indiehackers.com/new-post",
+      "platformType": "directory",
+      "projectKey": "RainbowPetAI",
+      "note": "@Syndred 已登录，但平台显示 You can't create posts yet；需真实社区互动并获管理员解锁，或付费 IH Plus。本轮不付费、不制造互动。",
+      "status": "pending",
+      "config": {
+        "projectKey": "RainbowPetAI",
+        "targetDomain": "https://rainbowpetai.com",
+        "brandName": "RainbowPetAI",
+        "anchorText": "RainbowPetAI —— Free Online Pet Memorials for Your Beloved Pet",
+        "email": "",
+        "username": "RainbowPetAI",
+        "commentTemplate": "RainbowPetAI is an online pet memorial and remembrance platform designed for families who want a lasting beautiful place for a beloved companion's story. Users can begin creating a memorial before signing in save a local draft then publish after authentication. A memorial can include a pet name birth and memorial dates photographs a rich-text story a chosen storytelling template a visual theme and a timeline of important moments. Owners may choose a constellation area or let the service assign a stable star position. Published public memorials appear in an interactive night sky where visitors can search for pets focus their stars open memorial pages and share direct links. Private memorials remain unlisted and inaccessible to visitors. Public pages support moderated guest messages and virtual tributes such as candles flowers badges keepsakes and extended shine. Owners can review messages edit memorial information hide or restore a page and move a memorial into a 30-day recoverable area before permanent cleanup. The platform includes memorial discovery an account dashboard a tribute wallet and shop multilingual public pages SEO metadata and dedicated guidance pages for pet photo restoration obituary writing memorial videos portraits and songs. RainbowPetAI uses a freemium model with Free Starter Pro and Lifetime plans plus optional Credits packs. New accounts receive five Credits while paid plans add higher memorial and photo limits together with recurring or lifetime Credits. The current production-ready core focuses on memorial creation star-map discovery owner management sharing and tributes some AI generation workspaces are still being connected and should not be described as fully automated production tools.",
+        "tags": "online pet memorial pet memorial website virtual pet cemetery pet remembrance page memorial star map pet tribute dog memorial cat memorial pet loss support pet obituary pet photo restoration virtual candles memorial flowers #PetMemorial #RainbowPetAI #PetRemembrance #MemorialStar #PetTribute",
+        "pricing": "Free 0. Starter 3.99/month or 39.99/year. Pro 6.99/month or 59.99/year. Lifetime 199.99 one time. Credit packs 4.99 for 20 9.99 for 50 or 19.99 for 120 Credits. Virtual tribute items are sold separately in dollars or Credits.",
+        "featuredImage": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+        "logoUrl": "https://rainbowpetai.com/logo.png",
+        "screenshots": [
+          "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp"
+        ],
+        "projectFields": {
+          "Name": "RainbowPetAI",
+          "Affiliate link": "Not specified in the project.",
+          "Extra Link:X/Twitter/YouTube/Instagram/..": "Blog: https://rainbowpetai.com/blog | Star Map: https://rainbowpetai.com/star-map",
+          "Note": "RainbowPetAI is an online pet memorial platform where families create lasting memorial pages and stars preserve photos and stories explore a shared star map receive moderated messages and offer virtual tributes.",
+          "Url": "https://rainbowpetai.com",
+          "Title": "RainbowPetAI —— Free Online Pet Memorials for Your Beloved Pet",
+          "Short description(20-30 words)": "Create a lasting online pet memorial with photos stories a memorial star moderated messages and gentle virtual tributes for a beloved companion.",
+          "Short Discription(100-150 words)": "RainbowPetAI is a browser-based pet memorial platform for preserving the life and story of a beloved companion. Families can create a memorial page upload favorite photos write a rich story add timeline moments choose a visual theme and place a memorial star in an interactive night sky. Public memorials can be shared with friends and family while private memorials remain unlisted. Visitors can leave moderated messages and offer virtual candles flowers and other tributes. Owners can edit hide restore or place memorials in a 30-day recoverable area. The service also includes memorial discovery a tribute shop account management multilingual pages and dedicated guidance for AI pet restoration portraits videos and obituary writing.",
+          "Short Discription(150-250 words)": "RainbowPetAI gives pet families a gentle online place to preserve memories and return to them over time. A memorial can include the pet's name and life dates multiple photographs a rich-text story a visual theme and a timeline of meaningful moments. Each published memorial can appear as a star in an interactive night sky where visitors can search focus the star open the memorial and leave a message for owner approval. Owners control visibility can update memorial content hide or restore a page and have a 30-day recovery window after soft deletion. Public pages support sharing candles flowers and other virtual tributes while private pages remain inaccessible to visitors and search engines. RainbowPetAI also provides memorial browsing a tribute shop account tools multilingual content and dedicated AI-tool pages for photo restoration pet portraits memorial videos and obituary writing. The core memorial workflow is available on the web without desktop software.",
+          "Long description (250-500 words)": "RainbowPetAI is an online pet memorial and remembrance platform designed for families who want a lasting beautiful place for a beloved companion's story. Users can begin creating a memorial before signing in save a local draft then publish after authentication. A memorial can include a pet name birth and memorial dates photographs a rich-text story a chosen storytelling template a visual theme and a timeline of important moments. Owners may choose a constellation area or let the service assign a stable star position. Published public memorials appear in an interactive night sky where visitors can search for pets focus their stars open memorial pages and share direct links. Private memorials remain unlisted and inaccessible to visitors. Public pages support moderated guest messages and virtual tributes such as candles flowers badges keepsakes and extended shine. Owners can review messages edit memorial information hide or restore a page and move a memorial into a 30-day recoverable area before permanent cleanup. The platform includes memorial discovery an account dashboard a tribute wallet and shop multilingual public pages SEO metadata and dedicated guidance pages for pet photo restoration obituary writing memorial videos portraits and songs. RainbowPetAI uses a freemium model with Free Starter Pro and Lifetime plans plus optional Credits packs. New accounts receive five Credits while paid plans add higher memorial and photo limits together with recurring or lifetime Credits. The current production-ready core focuses on memorial creation star-map discovery owner management sharing and tributes some AI generation workspaces are still being connected and should not be described as fully automated production tools.",
+          "Tags Keywords/Hashtags": "online pet memorial pet memorial website virtual pet cemetery pet remembrance page memorial star map pet tribute dog memorial cat memorial pet loss support pet obituary pet photo restoration virtual candles memorial flowers #PetMemorial #RainbowPetAI #PetRemembrance #MemorialStar #PetTribute",
+          "Feature description": "Create and manage online pet memorials upload multiple photos up to plan limits rich-text stories with templates life timeline public or private visibility interactive searchable memorial star map shareable memorial links moderated visitor messages owner editing hide restore and 30-day soft-delete recovery virtual candles flowers keepsakes badges and shine extensions tribute inventory and shop multilingual public pages responsive web experience SEO and social-sharing metadata dedicated AI pet-tool guidance pages.",
+          "Youtube": "Not specified in the project.",
+          "Pricing": "Free 0. Starter 3.99/month or 39.99/year. Pro 6.99/month or 59.99/year. Lifetime 199.99 one time. Credit packs 4.99 for 20 9.99 for 50 or 19.99 for 120 Credits. Virtual tribute items are sold separately in dollars or Credits.",
+          "PRICING TYPE": "Freemium with monthly and annual subscriptions a one-time Lifetime plan optional Credits packs and one-time virtual tribute purchases.",
+          "Subscription Model": "Starter and Pro are available monthly or annually. Lifetime is a one-time account upgrade. Membership Credits follow the matching billing period Lifetime and top-up Credits do not expire.",
+          "Starting Price": "0 Free plan paid membership starts at 3.99/month and optional Credits packs start at 4.99.",
+          "Promos": "No public promo code is specified. Annual Starter and Pro plans provide lower effective pricing than monthly billing.",
+          "Cost & Subscription": "Free supports a basic memorial with up to 5 photos. Starter supports up to 3 memorials and 30 photos per memorial while Pro and Lifetime support unlimited memorials with up to 100 photos per memorial. Paid tiers include Credits optional Credits packs and tribute items can be purchased separately.",
+          "Credits System": "New accounts receive 5 Credits. Starter grants 15 monthly or 180 yearly Credits Pro grants 50 monthly or 600 yearly Credits Lifetime grants 1200 non-expiring Credits. Top-up packs provide 20 50 or 120 non-expiring Credits. Credits are used for eligible AI tools and tribute purchases.",
+          "OS Compatibility": "Web-based and compatible with modern browsers on Windows macOS Linux iOS Android and ChromeOS.",
+          "Platform Accessibility": "Responsive web application with English and Chinese public content email authentication mobile navigation keyboard-accessible controls and no desktop installation required.",
+          "Offline Mode": "No offline mode. Account access publishing media uploads payments star-map data messages and tribute actions require an internet connection.",
+          "Ease of Use": "Guided memorial creation with a saved draft clear required fields photo upload editable story templates theme selection timeline validation a final review step and owner management after publishing.",
+          "Payment Methods": "Stripe Checkout is configured for subscriptions and one-time purchases. Additional payment-provider adapters exist in the codebase but live availability depends on deployment settings.",
+          "Media Support": "Common safe bitmap uploads including JPEG PNG and WebP up to 10 MB per image. Memorials support photo galleries and rich stories generated AI images and videos are planned or partially connected depending on the tool.",
+          "Export Formats": "Shareable public memorial pages and downloadable or viewable uploaded media. Dedicated AI tool pages describe image and video outputs but production generation and download flows are not complete for every tool.",
+          "Data Storage Policy": "Account details memorial content photos settings approved messages orders and operational records are stored in the service database and object storage. Private memorials are not public or indexed. Owners can edit hide restore or soft-delete memorials deleted memorial content has a 30-day recovery window before controlled cleanup. The privacy policy states that personal information is not sold.",
+          "User Anonvmitv": "Users sign in to publish and manage memorials. Anonymous visitors can browse public memorials and submit messages that remain pending until owner approval. Private memorials cannot be viewed or indexed publicly.",
+          "LOGO": "https://rainbowpetai.com/logo.png",
+          "Featured image": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot-1": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot-2": "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "Screenshot-3": "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "Screenshot-4": "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp",
+          "Screenshot 1": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot 2": "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "Screenshot 3": "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "Screenshot 4": "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp"
+        }
+      }
+    },
+    {
+      "index": 54,
+      "domain": "news.ycombinator.com",
+      "url": "https://news.ycombinator.com/",
+      "platformType": "directory",
+      "projectKey": "RainbowPetAI",
+      "note": "用户于 2026-08-06 取消 Hacker News 提交：没有账号，不再处理。",
+      "status": "pending",
+      "config": {
+        "projectKey": "RainbowPetAI",
+        "targetDomain": "https://rainbowpetai.com",
+        "brandName": "RainbowPetAI",
+        "anchorText": "RainbowPetAI —— Free Online Pet Memorials for Your Beloved Pet",
+        "email": "",
+        "username": "RainbowPetAI",
+        "commentTemplate": "RainbowPetAI is an online pet memorial and remembrance platform designed for families who want a lasting beautiful place for a beloved companion's story. Users can begin creating a memorial before signing in save a local draft then publish after authentication. A memorial can include a pet name birth and memorial dates photographs a rich-text story a chosen storytelling template a visual theme and a timeline of important moments. Owners may choose a constellation area or let the service assign a stable star position. Published public memorials appear in an interactive night sky where visitors can search for pets focus their stars open memorial pages and share direct links. Private memorials remain unlisted and inaccessible to visitors. Public pages support moderated guest messages and virtual tributes such as candles flowers badges keepsakes and extended shine. Owners can review messages edit memorial information hide or restore a page and move a memorial into a 30-day recoverable area before permanent cleanup. The platform includes memorial discovery an account dashboard a tribute wallet and shop multilingual public pages SEO metadata and dedicated guidance pages for pet photo restoration obituary writing memorial videos portraits and songs. RainbowPetAI uses a freemium model with Free Starter Pro and Lifetime plans plus optional Credits packs. New accounts receive five Credits while paid plans add higher memorial and photo limits together with recurring or lifetime Credits. The current production-ready core focuses on memorial creation star-map discovery owner management sharing and tributes some AI generation workspaces are still being connected and should not be described as fully automated production tools.",
+        "tags": "online pet memorial pet memorial website virtual pet cemetery pet remembrance page memorial star map pet tribute dog memorial cat memorial pet loss support pet obituary pet photo restoration virtual candles memorial flowers #PetMemorial #RainbowPetAI #PetRemembrance #MemorialStar #PetTribute",
+        "pricing": "Free 0. Starter 3.99/month or 39.99/year. Pro 6.99/month or 59.99/year. Lifetime 199.99 one time. Credit packs 4.99 for 20 9.99 for 50 or 19.99 for 120 Credits. Virtual tribute items are sold separately in dollars or Credits.",
+        "featuredImage": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+        "logoUrl": "https://rainbowpetai.com/logo.png",
+        "screenshots": [
+          "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp"
+        ],
+        "projectFields": {
+          "Name": "RainbowPetAI",
+          "Affiliate link": "Not specified in the project.",
+          "Extra Link:X/Twitter/YouTube/Instagram/..": "Blog: https://rainbowpetai.com/blog | Star Map: https://rainbowpetai.com/star-map",
+          "Note": "RainbowPetAI is an online pet memorial platform where families create lasting memorial pages and stars preserve photos and stories explore a shared star map receive moderated messages and offer virtual tributes.",
+          "Url": "https://rainbowpetai.com",
+          "Title": "RainbowPetAI —— Free Online Pet Memorials for Your Beloved Pet",
+          "Short description(20-30 words)": "Create a lasting online pet memorial with photos stories a memorial star moderated messages and gentle virtual tributes for a beloved companion.",
+          "Short Discription(100-150 words)": "RainbowPetAI is a browser-based pet memorial platform for preserving the life and story of a beloved companion. Families can create a memorial page upload favorite photos write a rich story add timeline moments choose a visual theme and place a memorial star in an interactive night sky. Public memorials can be shared with friends and family while private memorials remain unlisted. Visitors can leave moderated messages and offer virtual candles flowers and other tributes. Owners can edit hide restore or place memorials in a 30-day recoverable area. The service also includes memorial discovery a tribute shop account management multilingual pages and dedicated guidance for AI pet restoration portraits videos and obituary writing.",
+          "Short Discription(150-250 words)": "RainbowPetAI gives pet families a gentle online place to preserve memories and return to them over time. A memorial can include the pet's name and life dates multiple photographs a rich-text story a visual theme and a timeline of meaningful moments. Each published memorial can appear as a star in an interactive night sky where visitors can search focus the star open the memorial and leave a message for owner approval. Owners control visibility can update memorial content hide or restore a page and have a 30-day recovery window after soft deletion. Public pages support sharing candles flowers and other virtual tributes while private pages remain inaccessible to visitors and search engines. RainbowPetAI also provides memorial browsing a tribute shop account tools multilingual content and dedicated AI-tool pages for photo restoration pet portraits memorial videos and obituary writing. The core memorial workflow is available on the web without desktop software.",
+          "Long description (250-500 words)": "RainbowPetAI is an online pet memorial and remembrance platform designed for families who want a lasting beautiful place for a beloved companion's story. Users can begin creating a memorial before signing in save a local draft then publish after authentication. A memorial can include a pet name birth and memorial dates photographs a rich-text story a chosen storytelling template a visual theme and a timeline of important moments. Owners may choose a constellation area or let the service assign a stable star position. Published public memorials appear in an interactive night sky where visitors can search for pets focus their stars open memorial pages and share direct links. Private memorials remain unlisted and inaccessible to visitors. Public pages support moderated guest messages and virtual tributes such as candles flowers badges keepsakes and extended shine. Owners can review messages edit memorial information hide or restore a page and move a memorial into a 30-day recoverable area before permanent cleanup. The platform includes memorial discovery an account dashboard a tribute wallet and shop multilingual public pages SEO metadata and dedicated guidance pages for pet photo restoration obituary writing memorial videos portraits and songs. RainbowPetAI uses a freemium model with Free Starter Pro and Lifetime plans plus optional Credits packs. New accounts receive five Credits while paid plans add higher memorial and photo limits together with recurring or lifetime Credits. The current production-ready core focuses on memorial creation star-map discovery owner management sharing and tributes some AI generation workspaces are still being connected and should not be described as fully automated production tools.",
+          "Tags Keywords/Hashtags": "online pet memorial pet memorial website virtual pet cemetery pet remembrance page memorial star map pet tribute dog memorial cat memorial pet loss support pet obituary pet photo restoration virtual candles memorial flowers #PetMemorial #RainbowPetAI #PetRemembrance #MemorialStar #PetTribute",
+          "Feature description": "Create and manage online pet memorials upload multiple photos up to plan limits rich-text stories with templates life timeline public or private visibility interactive searchable memorial star map shareable memorial links moderated visitor messages owner editing hide restore and 30-day soft-delete recovery virtual candles flowers keepsakes badges and shine extensions tribute inventory and shop multilingual public pages responsive web experience SEO and social-sharing metadata dedicated AI pet-tool guidance pages.",
+          "Youtube": "Not specified in the project.",
+          "Pricing": "Free 0. Starter 3.99/month or 39.99/year. Pro 6.99/month or 59.99/year. Lifetime 199.99 one time. Credit packs 4.99 for 20 9.99 for 50 or 19.99 for 120 Credits. Virtual tribute items are sold separately in dollars or Credits.",
+          "PRICING TYPE": "Freemium with monthly and annual subscriptions a one-time Lifetime plan optional Credits packs and one-time virtual tribute purchases.",
+          "Subscription Model": "Starter and Pro are available monthly or annually. Lifetime is a one-time account upgrade. Membership Credits follow the matching billing period Lifetime and top-up Credits do not expire.",
+          "Starting Price": "0 Free plan paid membership starts at 3.99/month and optional Credits packs start at 4.99.",
+          "Promos": "No public promo code is specified. Annual Starter and Pro plans provide lower effective pricing than monthly billing.",
+          "Cost & Subscription": "Free supports a basic memorial with up to 5 photos. Starter supports up to 3 memorials and 30 photos per memorial while Pro and Lifetime support unlimited memorials with up to 100 photos per memorial. Paid tiers include Credits optional Credits packs and tribute items can be purchased separately.",
+          "Credits System": "New accounts receive 5 Credits. Starter grants 15 monthly or 180 yearly Credits Pro grants 50 monthly or 600 yearly Credits Lifetime grants 1200 non-expiring Credits. Top-up packs provide 20 50 or 120 non-expiring Credits. Credits are used for eligible AI tools and tribute purchases.",
+          "OS Compatibility": "Web-based and compatible with modern browsers on Windows macOS Linux iOS Android and ChromeOS.",
+          "Platform Accessibility": "Responsive web application with English and Chinese public content email authentication mobile navigation keyboard-accessible controls and no desktop installation required.",
+          "Offline Mode": "No offline mode. Account access publishing media uploads payments star-map data messages and tribute actions require an internet connection.",
+          "Ease of Use": "Guided memorial creation with a saved draft clear required fields photo upload editable story templates theme selection timeline validation a final review step and owner management after publishing.",
+          "Payment Methods": "Stripe Checkout is configured for subscriptions and one-time purchases. Additional payment-provider adapters exist in the codebase but live availability depends on deployment settings.",
+          "Media Support": "Common safe bitmap uploads including JPEG PNG and WebP up to 10 MB per image. Memorials support photo galleries and rich stories generated AI images and videos are planned or partially connected depending on the tool.",
+          "Export Formats": "Shareable public memorial pages and downloadable or viewable uploaded media. Dedicated AI tool pages describe image and video outputs but production generation and download flows are not complete for every tool.",
+          "Data Storage Policy": "Account details memorial content photos settings approved messages orders and operational records are stored in the service database and object storage. Private memorials are not public or indexed. Owners can edit hide restore or soft-delete memorials deleted memorial content has a 30-day recovery window before controlled cleanup. The privacy policy states that personal information is not sold.",
+          "User Anonvmitv": "Users sign in to publish and manage memorials. Anonymous visitors can browse public memorials and submit messages that remain pending until owner approval. Private memorials cannot be viewed or indexed publicly.",
+          "LOGO": "https://rainbowpetai.com/logo.png",
+          "Featured image": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot-1": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot-2": "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "Screenshot-3": "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "Screenshot-4": "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp",
+          "Screenshot 1": "https://rainbowpetai.com/imgs/generated/home-hero-gpt-image-2.webp",
+          "Screenshot 2": "https://rainbowpetai.com/imgs/generated/home-create-scene-gpt-image-2.webp",
+          "Screenshot 3": "https://rainbowpetai.com/imgs/generated/rainbow-pet-hero-1784868263698.webp",
+          "Screenshot 4": "https://rainbowpetai.com/imgs/generated/tools-hero-gpt-image-2.webp"
         }
       }
     }

@@ -71,6 +71,8 @@ Use purpose-built access first:
 
 Treat Product Hunt and similar high-value launches as custom destinations. Let Luna prepare copy, categories, assets, and a field map; let the main agent inspect the live form and execute sequentially. Reuse automatically discovered assets for drafts, but allow optional user-provided overrides for launch-specific creative.
 
+Community platforms may distinguish a logged-in account from a post-enabled account. Record a verified account restriction as `needs_manual` and do not buy paid access or manufacture engagement to bypass it.
+
 ## Finish
 
 - Update `PROJECT_CONTEXT.md`, `docs/进度.md`, and the dated handoff report when state changes.

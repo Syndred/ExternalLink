@@ -10,5 +10,14 @@
   "futuretools.io": [
     "futuretools.io",
     "futuretools.io/submit-a-tool"
+  ],
+  "github.com/syndred/pet-memorial-resources": [
+    "github.com/Syndred/pet-memorial-resources",
+    "https://github.com/Syndred/pet-memorial-resources"
+  ],
+  "indiehackers.com": [
+    "indiehackers.com",
+    "indiehackers.com/new-post",
+    "indiehackers.com/post"
   ]
 }

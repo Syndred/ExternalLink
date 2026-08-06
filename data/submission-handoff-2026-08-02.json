@@ -1,7 +1,7 @@
 {
   "format": "externallink-submission-backup",
   "version": 2,
-  "exportedAt": "2026-08-02T23:30:57+08:00",
+  "exportedAt": "2026-08-06T12:10:00+08:00",
   "submissionRecords": {
     "thejoai.com/aitools/submissions::RainbowPetAI": {
       "status": "success",
@@ -90,6 +90,18 @@
       "confirmedBy": "agent",
       "evidence": "Account shows Product Status: Under Review; free publication estimate exceeds 30 days",
       "schemaVersion": 2
+    },
+    "github.com/syndred/pet-memorial-resources::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "github.com/syndred/pet-memorial-resources",
+      "destinationUrl": "https://github.com/Syndred/pet-memorial-resources",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-06",
+      "confirmedBy": "agent",
+      "evidence": "Public repository page shows README rendered, RainbowPetAI link, Website metadata, and public URL; repository commit c0bab52 initialized the public README.",
+      "evidenceUrl": "https://github.com/Syndred/pet-memorial-resources",
+      "schemaVersion": 2
     }
   },
   "siteAnnotations": {
@@ -136,6 +148,24 @@
       "note": "Account signup required; leave for manual handoff.",
       "submittedProjects": [],
       "updatedAt": "2026-08-02",
+      "auto": false
+    },
+    "indiehackers.com": {
+      "url": "https://www.indiehackers.com/new-post",
+      "domain": "indiehackers.com",
+      "status": "needs_manual",
+      "note": "Account @Syndred is logged in, but Indie Hackers shows 'You can't create posts yet.' Posting unlocks only after authentic community participation/moderator approval or paid IH Plus; no paid bypass or manufactured engagement used.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-06",
+      "auto": false
+    },
+    "news.ycombinator.com": {
+      "url": "https://news.ycombinator.com/",
+      "domain": "news.ycombinator.com",
+      "status": "skip",
+      "note": "User cancelled Hacker News submission on 2026-08-06 because no account is available.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-06",
       "auto": false
     }
   },

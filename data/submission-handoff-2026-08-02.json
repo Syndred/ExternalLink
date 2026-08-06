@@ -105,6 +105,15 @@
     }
   },
   "siteAnnotations": {
+    "producthunt.com": {
+      "url": "https://www.producthunt.com/products/rainbowpetai",
+      "domain": "producthunt.com",
+      "status": "needs_manual",
+      "note": "RainbowPetAI launch draft created under @syndred on 2026-08-06. Required checklist reached 100%; draft is not scheduled or launched. Final tags are Pets and Social Impact. Product page: https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-06",
+      "auto": false
+    },
     "tooldirectory.ai": {
       "url": "https://tooldirectory.ai/submit-tool",
       "domain": "tooldirectory.ai",

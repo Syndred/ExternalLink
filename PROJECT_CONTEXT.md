@@ -24,7 +24,8 @@
 - 新增 `data/submission-handoff-2026-08-02.json` 增量账本和专用外链提交交接表，后续 AI 可先查历史成功、免费队列和人工闸门再继续。
 - 新增可全局安装的 `external-link-operator` Skill，固化 Luna 分工、自动媒体发现、登录/CAPTCHA/付费闸门、成功证据和多数据源对账流程。
 - 2026-08-06 已创建公开 GitHub 资源库 `Syndred/pet-memorial-resources`，README 提供宠物离世支持资源、纪念清单、隐私建议并链接 RainbowPetAI；公开页已核验。
-- Hacker News 按用户明确要求跳过；Indie Hackers 账号已登录但尚未获得发帖权限，保留 `needs_manual`，不购买 Plus、不制造互动绕过。
+- Hacker News 与 Indie Hackers 已完成首条真实社区评论；普通社区互动单独记录，不计入外链成功账本。
+- Product Hunt 已在 `@syndred` 下创建 RainbowPetAI 草稿，必填检查为 100%，产品页为 `https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai`；当前未排期、未上线，不计入提交成功。
 
 ## 关键存储
 

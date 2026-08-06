@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-06T13:06:00+08:00",
+  "updatedAt": "2026-08-06T13:47:00+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -21,6 +21,17 @@
       "status": "posted",
       "summary": "给出 AI 工作流语义修复的安全边界：仅自动执行封闭、可枚举、无损且可审计的转换，高风险状态保持 fail-closed，并建议先使用 shadow mode。",
       "evidence": "公开讨论页显示 @Syndred 评论、a few seconds ago、Edit/Delete 控件，并提供独立 commentId。"
+    },
+    {
+      "date": "2026-08-06",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/products/kiro",
+      "commentUrl": "https://www.producthunt.com/products/kiro",
+      "status": "posted",
+      "summary": "围绕 Kiro Crew 的持久记忆、检查点任务和定时作业，询问生产变更前人工批准、断点恢复，以及跨 Slack/Discord 的记忆与密钥隔离。",
+      "upvoted": false,
+      "evidence": "Kiro Crew 产品页显示 Syndred 评论和 1m ago；评论内容已公开回读。"
     }
   ]
 }

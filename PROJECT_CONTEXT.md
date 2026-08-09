@@ -25,7 +25,8 @@
 - 新增可全局安装的 `external-link-operator` Skill，固化 Luna 分工、自动媒体发现、登录/CAPTCHA/付费闸门、成功证据和多数据源对账流程。
 - 2026-08-06 已创建公开 GitHub 资源库 `Syndred/pet-memorial-resources`，README 提供宠物离世支持资源、纪念清单、隐私建议并链接 RainbowPetAI；公开页已核验。
 - Hacker News、Indie Hackers 与 Product Hunt 已完成首条真实社区评论；普通社区互动单独记录，不计入外链成功账本。
-- Product Hunt 已在 `@syndred` 下创建 RainbowPetAI 草稿，必填检查为 100%，产品页为 `https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai`；当前未排期、未上线，不计入提交成功。
+- Product Hunt 已在 `@syndred` 下创建 RainbowPetAI 草稿，必填检查为 100%，产品页为 `https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai`；**2026-08-07 用户确认当日在 PH Launch Day**（养号不碰自家 launch）。
+- 2026-08-07 养号：`HN` 评 AI agent 审批帖（`item?id=49207465`）但 **[flagged]**，旧评亦 flagged；`PH` 评 Firecrawl MCP（无自链、未点赞）；`IH` 发帖权限仍锁，评论因站点 **502** 跳过；详情见 `data/community-participation-log.json`。
 
 ## 关键存储
 

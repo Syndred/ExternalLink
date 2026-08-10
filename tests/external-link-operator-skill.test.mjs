@@ -9,7 +9,7 @@ import { recordSuccess } from "../skills/external-link-operator/scripts/record-s
 
 const audit = await auditState({ profile: "RainbowPetAI" });
 assert.equal(audit.ok, true);
-assert.equal(audit.ledgerSuccessPairs, 9);
+assert.equal(audit.ledgerSuccessPairs, 10);
 assert.deepEqual(audit.missingInLedger, []);
 assert.deepEqual(audit.duplicateTableAliases, []);
 

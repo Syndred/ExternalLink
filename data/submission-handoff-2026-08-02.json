@@ -1,7 +1,7 @@
 {
   "format": "externallink-submission-backup",
   "version": 2,
-  "exportedAt": "2026-08-06T12:10:00+08:00",
+  "exportedAt": "2026-08-10T01:06:48.269Z",
   "submissionRecords": {
     "thejoai.com/aitools/submissions::RainbowPetAI": {
       "status": "success",
@@ -102,16 +102,30 @@
       "evidence": "Public repository page shows README rendered, RainbowPetAI link, Website metadata, and public URL; repository commit c0bab52 initialized the public README.",
       "evidenceUrl": "https://github.com/Syndred/pet-memorial-resources",
       "schemaVersion": 2
+    },
+    "producthunt.com/products/rainbowpetai::RainbowPetAI": {
+      "status": "success",
+      "destinationKey": "producthunt.com/products/rainbowpetai",
+      "destinationUrl": "https://www.producthunt.com/products/rainbowpetai",
+      "profileId": "RainbowPetAI",
+      "profileName": "RainbowPetAI",
+      "submittedAt": "2026-08-07",
+      "confirmedBy": "agent",
+      "evidence": "Public Product Hunt page shows RainbowPetAI, Launched this week, live Visit website link, public gallery, launch tags, maker comment, and Launched in 2026.",
+      "evidenceUrl": "https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai",
+      "schemaVersion": 2
     }
   },
   "siteAnnotations": {
     "producthunt.com": {
       "url": "https://www.producthunt.com/products/rainbowpetai",
       "domain": "producthunt.com",
-      "status": "needs_manual",
-      "note": "RainbowPetAI launch draft created under @syndred on 2026-08-06. Required checklist reached 100%; draft is not scheduled or launched. Final tags are Pets and Social Impact. Product page: https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai",
-      "submittedProjects": [],
-      "updatedAt": "2026-08-06",
+      "status": "published",
+      "note": "RainbowPetAI is publicly launched under @syndred. On 2026-08-10 the live product page showed Launched this week, a working website link, public gallery, launch tags, maker comment, and Launched in 2026. Product page: https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai",
+      "submittedProjects": [
+        "RainbowPetAI"
+      ],
+      "updatedAt": "2026-08-10",
       "auto": false
     },
     "tooldirectory.ai": {

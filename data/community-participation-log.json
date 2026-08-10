@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-09T15:39:52+08:00",
+  "updatedAt": "2026-08-10T09:01:41+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -102,6 +102,42 @@
       "permissionStatus": "因安全验证无法核验正式发布权限；未发现权限变化证据。",
       "skipReason": "出现 Cloudflare 正在进行安全验证页面；按规则立即停止，未自动点击验证。",
       "evidence": "https://www.producthunt.com/@syndred 显示 Cloudflare 安全验证，Ray ID a2851db34a49a709。"
+    },
+    {
+      "date": "2026-08-10",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "账号已登录，但最近两条真实评论仍显示 [flagged]，继续整个平台暂停，不筛选或发布新评论。",
+      "permissionStatus": "页头显示 syndred、submit 和 logout；普通入口存在，但 flagged 风险未解除。",
+      "skipReason": "连续两条评论被 flagged，低频养号规则要求暂停而非更换措辞重试。",
+      "evidence": "https://news.ycombinator.com/threads?id=syndred 显示账号已登录，item?id=49207465 与 item?id=49192618 均为 [flagged]。"
+    },
+    {
+      "date": "2026-08-10",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/i-found-47-backlink-opportunities-my-saas-was-missing-c5346c243d",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "阅读全文和 11 条现有回复；候选与外链运营高度相关，但评论入口仍指向 /sign-up，未强行互动。",
+      "permissionStatus": "首页显示用户头像，但候选帖的点赞、评论和回复入口均指向 /sign-up；正式发帖权限无新证据。",
+      "skipReason": "页面会话状态不一致，无法形成可验证的正常评论入口。",
+      "evidence": "候选帖公开可读，Say something nice、Post Comment 与 Reply 均链接到 /sign-up。"
+    },
+    {
+      "date": "2026-08-10",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/products/argos-2",
+      "commentUrl": "https://www.producthunt.com/products/argos-2",
+      "status": "posted",
+      "summary": "针对 Argos 的本地运行与 Telegram/WhatsApp 远程触发，询问中继传输的数据边界、页面内容或结果是否离开设备，以及机器休眠时的行为，并建议提供威胁模型图。",
+      "upvoted": false,
+      "permissionStatus": "账号已登录；RainbowPetAI 正式产品页已公开显示 Launched this week。",
+      "evidence": "Argos 产品页公开显示 Syndred 评论和 1m ago；评论正文已回读。RainbowPetAI 产品页同时显示 Launched this week 与 Launched in 2026。"
     }
   ]
 }

@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-06｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-10｜扩展 2.5.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -25,7 +25,7 @@
 - 新增可全局安装的 `external-link-operator` Skill，固化 Luna 分工、自动媒体发现、登录/CAPTCHA/付费闸门、成功证据和多数据源对账流程。
 - 2026-08-06 已创建公开 GitHub 资源库 `Syndred/pet-memorial-resources`，README 提供宠物离世支持资源、纪念清单、隐私建议并链接 RainbowPetAI；公开页已核验。
 - Hacker News、Indie Hackers 与 Product Hunt 已完成首条真实社区评论；普通社区互动单独记录，不计入外链成功账本。
-- Product Hunt 已在 `@syndred` 下创建 RainbowPetAI 草稿，必填检查为 100%，产品页为 `https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai`；**2026-08-07 用户确认当日在 PH Launch Day**（养号不碰自家 launch）。
+- Product Hunt 已在 `@syndred` 下公开上线 RainbowPetAI；2026-08-10 实机回读产品页显示 `Launched this week`、公开图库、网站链接、Maker 首评和 `Launched in 2026`，已按 `producthunt.com/products/rainbowpetai::RainbowPetAI` 写入成功账本。
 - 2026-08-07 养号：`HN` 评 AI agent 审批帖（`item?id=49207465`）但 **[flagged]**，旧评亦 flagged；`PH` 评 Firecrawl MCP（无自链、未点赞）；`IH` 发帖权限仍锁，评论因站点 **502** 跳过；详情见 `data/community-participation-log.json`。
 
 ## 关键存储
@@ -59,7 +59,7 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
 - 已通过 Python 15 个 local_agent 单元测试。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
-- 仓库 Table、插件种子、增量账本和交接表已对齐；Google Sheet 沿用同一 canonical 记录规则，后续提交完成后按 Skill 流程同步。RainbowPetAI 增量账本现有 9 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`。
+- 仓库 Table、插件种子、增量账本和交接表沿用同一 canonical 记录规则。RainbowPetAI 增量账本现有 10 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`；Product Hunt 已写入本地账本，但 Google Sheet 因当前没有连接的表格会话而待同步。
 - TheJOAI 已在真实文件上传、描述、日期和分类复核后完成提交，账户显示 `Submitted for Review`。
 - Launching Next、StartupBase、AITools.inc、Uneed 已看到明确成功/排队证据；FutureTools 由用户人工确认完成。
 - FiveTaco 因无可靠回执继续保持未确认；ToolDirectory.ai 的 $9.99 页面已标记付费，Webwiki / Submission Web Directory / Alternative.me / SaaSAITools 进入待人工。

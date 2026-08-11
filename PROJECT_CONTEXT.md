@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-10｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-11｜扩展 2.5.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -27,6 +27,7 @@
 - Hacker News、Indie Hackers 与 Product Hunt 已完成首条真实社区评论；普通社区互动单独记录，不计入外链成功账本。
 - Product Hunt 已在 `@syndred` 下公开上线 RainbowPetAI；2026-08-10 实机回读产品页显示 `Launched this week`、公开图库、网站链接、Maker 首评和 `Launched in 2026`，已按 `producthunt.com/products/rainbowpetai::RainbowPetAI` 写入成功账本。
 - 2026-08-07 养号：`HN` 评 AI agent 审批帖（`item?id=49207465`）但 **[flagged]**，旧评亦 flagged；`PH` 评 Firecrawl MCP（无自链、未点赞）；`IH` 发帖权限仍锁，评论因站点 **502** 跳过；详情见 `data/community-participation-log.json`。
+- 2026-08-11 巡检：HN 最近 24 小时已有一条用户侧评论，旧两评仍 `[flagged]`，当天不再互动；Indie Hackers 正式发帖编辑器已解锁，但普通评论入口仍异常指向 `/sign-up`；Product Hunt 已在 oqoqo 讨论页发布一条关于远端状态 readback oracle 的真实评论，未点赞、未带自链。
 
 ## 关键存储
 

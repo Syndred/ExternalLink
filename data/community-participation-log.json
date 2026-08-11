@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-10T09:01:41+08:00",
+  "updatedAt": "2026-08-11T09:10:05+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -138,6 +138,42 @@
       "upvoted": false,
       "permissionStatus": "账号已登录；RainbowPetAI 正式产品页已公开显示 Launched this week。",
       "evidence": "Argos 产品页公开显示 Syndred 评论和 1m ago；评论正文已回读。RainbowPetAI 产品页同时显示 Launched this week 与 Launched in 2026。"
+    },
+    {
+      "date": "2026-08-11",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "未发布新评论。账号已登录，23 小时前已有一条用户侧评论公开可见且未显示 flagged；更早两条评论仍为 [flagged]。",
+      "permissionStatus": "基础 submit 表单可打开，但未测试 rainbowpetai.com 的域名级提交限制，不能据此确认正式提交权限已恢复。",
+      "skipReason": "最近 24 小时已有互动，且两条历史评论的 flagged 风险仍在；按低频规则继续暂停。",
+      "evidence": "threads?id=syndred 显示 item?id=49238159 为 0 points、无 flagged；item?id=49207465 与 item?id=49192618 仍显示 [flagged]；/submit 显示基础提交表单。"
+    },
+    {
+      "date": "2026-08-11",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/i-tested-whether-agents-leak-secrets-without-being-asked-and-whether-my-scanner-catches-it-when-they-do-1e00749cef",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "阅读全文和现有回复；候选与代理安全和成功证据经验相关，但评论、回复入口仍指向 /sign-up，未强行互动。",
+      "permissionStatus": "正式发帖权限出现变化：/new-post 已显示编辑器、SUBMIT POST、SAVE AS DRAFT 和 PREVIEW；仅记录解锁，不自动发布 RainbowPetAI 正式帖子。",
+      "skipReason": "首页显示用户头像，但候选帖 Say something nice、Post Comment 与 Reply 仍指向 /sign-up，评论会话状态不一致。",
+      "evidence": "/new-post 公开显示 Syndred 编辑器及发帖控件；候选帖评论控件仍链接 /sign-up。"
+    },
+    {
+      "date": "2026-08-11",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/p/oqoqo/oqoqo",
+      "commentUrl": "https://www.producthunt.com/p/oqoqo/oqoqo#comments",
+      "status": "posted",
+      "summary": "针对 oqoqo 的真实任务代理评测，建议把远端权威 before/after 状态与代理自报成功分开计分，并把 unable to verify 作为独立结果；询问 sandbox 是否支持声明这种 readback oracle。",
+      "upvoted": false,
+      "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和评论页可正常访问，未出现 CAPTCHA。",
+      "evidence": "oqoqo 讨论页公开显示 Syndred 评论、1m ago 和完整正文；未点赞、未带自链。"
     }
   ]
 }

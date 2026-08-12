@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-11T09:10:05+08:00",
+  "updatedAt": "2026-08-12T09:06:36+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -174,6 +174,43 @@
       "upvoted": false,
       "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和评论页可正常访问，未出现 CAPTCHA。",
       "evidence": "oqoqo 讨论页公开显示 Syndred 评论、1m ago 和完整正文；未点赞、未带自链。"
+    },
+    {
+      "date": "2026-08-12",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "未筛选或发布新评论；账号已登录，8 月 10 日用户侧评论仍公开，但更早两条评论继续显示 [flagged]。",
+      "permissionStatus": "页头显示 syndred、submit 和 logout；没有新的正式提交权限恢复证据。",
+      "skipReason": "两条历史评论的 flagged/dead 风险仍未解除，继续整个平台低频暂停。",
+      "evidence": "threads?id=syndred 显示 item?id=49238159 无 flagged；item?id=49207465 与 item?id=49192618 仍为 [flagged]。"
+    },
+    {
+      "date": "2026-08-12",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/ed54dd2a20",
+      "commentUrl": null,
+      "status": "skipped_no_suitable_content",
+      "summary": "未发布评论。唯一较相关的 AI agent 作为 API 买家候选无法稳定打开全文并核验现有回复；Newest 页面同时被大量 IPTV 推广帖占据。",
+      "permissionStatus": "首页显示用户头像；/new-post 本次仅停在加载占位，未形成新的发帖权限变化证据。",
+      "skipReason": "无法完成全文、回复去重和正常评论入口核验，按准确性规则选择不发。",
+      "evidence": "Chrome 首页显示已登录头像；Newest 页面可见大量短时批量 IPTV 帖；候选详情无法可靠完成页面核验。"
+    },
+    {
+      "date": "2026-08-12",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/products/tines",
+      "commentUrl": null,
+      "status": "skipped_no_suitable_content",
+      "summary": "未发布评论、未点赞。Tines 3B 是当天最相关候选，但已有 48 条讨论覆盖凭据代理、权限范围、审计、重跑和副作用等角度，与前一日 oqoqo 讨论也相邻。",
+      "upvoted": false,
+      "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页正常打开，无 CAPTCHA，正式发布权限无变化。",
+      "skipReason": "无法可靠完成全部分页回复去重，且没有明显新增价值的独立角度。",
+      "evidence": "8 月 11 日榜单显示 Tines 3B 为 #1、366 points；账号页显示 Syndred 登录状态和 6 day streak。"
     }
   ]
 }

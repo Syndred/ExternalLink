@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-12T09:06:36+08:00",
+  "updatedAt": "2026-08-13T09:07:37+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -211,6 +211,42 @@
       "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页正常打开，无 CAPTCHA，正式发布权限无变化。",
       "skipReason": "无法可靠完成全部分页回复去重，且没有明显新增价值的独立角度。",
       "evidence": "8 月 11 日榜单显示 Tines 3B 为 #1、366 points；账号页显示 Syndred 登录状态和 6 day streak。"
+    },
+    {
+      "date": "2026-08-13",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "未筛选或发布新评论；账号已登录，8 月 10 日评论仍公开，但更早两条评论继续显示 [flagged]。",
+      "permissionStatus": "页头显示 syndred、submit 和 logout；没有新的正式提交权限恢复证据。",
+      "skipReason": "item?id=49207465 与 item?id=49192618 的 flagged/dead 风险仍未解除，继续整个平台暂停。",
+      "evidence": "Chrome 的 threads?id=syndred 页面显示两条历史评论仍为 [flagged]；8 月 10 日 item?id=49238159 未标记 flagged。"
+    },
+    {
+      "date": "2026-08-13",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/building-in-the-ai-reliability-space-looking-for-feedback-6becf9d18d",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "未发布评论。AI 客服质量评估候选与用户经验相关且全文可读，但候选页普通评论入口仍无法核验为当前登录会话的正常入口。",
+      "permissionStatus": "/new-post 已显示 Syndred 编辑器、Submit Post、Save as Draft 和 Preview；正式发帖权限无新增变化。",
+      "skipReason": "候选页的 Say something nice / Post Comment 仍指向 /sign-up，登录状态与互动入口不一致。",
+      "evidence": "Chrome /new-post 显示 Syndred 发帖编辑器；候选公开页的评论控件仍落到 /sign-up。"
+    },
+    {
+      "date": "2026-08-13",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/products/unsloth",
+      "commentUrl": "https://www.producthunt.com/products/unsloth?comment=5782086",
+      "status": "posted",
+      "summary": "针对 Unsloth Desktop 的一键本地 agent 路径，询问 8GB GPU 的下载前内存估算是否覆盖模型权重、KV cache、上下文和后端开销，并建议给出安全上下文长度与量化回退。",
+      "upvoted": false,
+      "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和评论编辑器正常，无 CAPTCHA，正式发布权限无变化。",
+      "evidence": "Unsloth 产品页公开回读到 Syndred 完整评论，DOM 节点为 comment-5782086；未点赞、未带自链。"
     }
   ]
 }

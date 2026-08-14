@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-13T09:07:37+08:00",
+  "updatedAt": "2026-08-14T09:12:36+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -247,6 +247,43 @@
       "upvoted": false,
       "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和评论编辑器正常，无 CAPTCHA，正式发布权限无变化。",
       "evidence": "Unsloth 产品页公开回读到 Syndred 完整评论，DOM 节点为 comment-5782086；未点赞、未带自链。"
+    },
+    {
+      "date": "2026-08-14",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "未筛选或发布新评论；账号已登录，8 月 10 日评论仍公开，但更早两条评论继续显示 [flagged]。",
+      "permissionStatus": "页头显示 syndred、submit 和 logout；没有新的正式提交权限恢复证据。",
+      "skipReason": "item?id=49207465 与 item?id=49192618 的 flagged/dead 风险仍未解除，继续整个平台暂停。",
+      "evidence": "Chrome 的 threads?id=syndred 页面显示两条历史评论仍为 [flagged]；8 月 10 日 item?id=49238159 未标记 flagged。"
+    },
+    {
+      "date": "2026-08-14",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/327-on-google-ads-99-clicks-and-1-tracked-signup-01412e67f3",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "未发布评论。Google Ads 复盘候选全文及 6 条回复已核验，现有回复已覆盖样本量、落地页、意图、波兰市场和归因等主要角度。",
+      "permissionStatus": "/new-post 已显示 Syndred 编辑器、Submit Post、Save as Draft 和 Preview；正式发帖权限无新增变化。",
+      "skipReason": "具体候选页的 Say something nice、Post Comment、点赞和回复入口仍指向 /sign-up，登录状态与评论入口不一致。",
+      "evidence": "Chrome 候选页显示完整正文与 6 Comments，但所有普通互动入口均链接 /sign-up。"
+    },
+    {
+      "date": "2026-08-14",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/leaderboard/daily/2026/8/13",
+      "commentUrl": null,
+      "status": "skipped_no_suitable_content",
+      "summary": "未发布评论、未点赞。前一日刚完成 Unsloth Desktop 真实评论；今日榜单虽有浏览器测试、代码审查和 agent 工具，但没有已核验且明显非重复的强角度。",
+      "upvoted": false,
+      "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和当日榜单正常访问，无 CAPTCHA，正式发布权限无变化。",
+      "skipReason": "按低频原则不为维持 streak 制造互动；没有足够新增价值的候选。",
+      "evidence": "8 月 13 日榜单可正常回读；昨日评论页面附带的非必要 Unsloth 自动关注已恢复为 Follow 状态，不计为互动成果。"
     }
   ]
 }

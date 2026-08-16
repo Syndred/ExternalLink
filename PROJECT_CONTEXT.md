@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-14｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-16｜扩展 2.5.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -31,6 +31,7 @@
 - 2026-08-12 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 无法完整核验唯一相关候选，Product Hunt 最相关候选与前一日主题相邻且回复去重不完整，因此三站均未新增评论或点赞。
 - 2026-08-13 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 正式发帖编辑器可用但普通评论入口仍异常；Product Hunt 已在 Unsloth Desktop 发布一条关于 8GB GPU 内存估算、上下文长度和量化回退的真实评论，未点赞、未带自链。
 - 2026-08-14 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 相关候选的互动入口仍指向 `/sign-up`；Product Hunt 因前一日刚互动且无强非重复角度，当天未评论、未点赞，并恢复了昨日页面附带的非必要自动关注。
+- 2026-08-16 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 的 Pickle 候选已有 17 条相近讨论且互动入口仍指向 `/sign-up`；Product Hunt 触发 Cloudflare 安全验证并立即停止，三站均未互动。8 月 15 日无执行证据，未补写日志。
 
 ## 关键存储
 

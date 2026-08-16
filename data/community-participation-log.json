@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-14T09:12:36+08:00",
+  "updatedAt": "2026-08-16T09:18:35+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -284,6 +284,43 @@
       "permissionStatus": "Chrome 现有会话已登录 @syndred；账号页和当日榜单正常访问，无 CAPTCHA，正式发布权限无变化。",
       "skipReason": "按低频原则不为维持 streak 制造互动；没有足够新增价值的候选。",
       "evidence": "8 月 13 日榜单可正常回读；昨日评论页面附带的非必要 Unsloth 自动关注已恢复为 Follow 状态，不计为互动成果。"
+    },
+    {
+      "date": "2026-08-16",
+      "platform": "Hacker News",
+      "account": "syndred",
+      "discussionUrl": null,
+      "commentUrl": null,
+      "status": "skipped_account_risk",
+      "summary": "未筛选或发布新评论；账号已登录，8 月 10 日评论仍公开，但更早两条评论继续显示 [flagged]。",
+      "permissionStatus": "页头显示 syndred、submit 和 logout；没有新的正式提交权限恢复证据。",
+      "skipReason": "item?id=49207465 与 item?id=49192618 的 flagged/dead 风险仍未解除，继续整个平台暂停。",
+      "evidence": "Chrome 的 threads?id=syndred 页面显示两条历史评论仍为 [flagged]；8 月 10 日 item?id=49238159 未标记 flagged。"
+    },
+    {
+      "date": "2026-08-16",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/most-ai-browsers-hide-what-the-agent-is-doing-i-wanted-to-see-it-happen-live-and-run-it-locally-so-i-built-one-b637803640",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "未发布评论。Pickle 本地可视化浏览器 agent 帖的正文与 17 条回复已核验，已有讨论覆盖透明度、审批、权限、审计、隐私和 token benchmark 等主要角度。",
+      "permissionStatus": "/new-post 已显示 Syndred 编辑器、Submit Post、Save as Draft 和 Preview；正式发帖权限无新增变化。",
+      "skipReason": "具体候选页的 Say something nice、Post Comment、点赞和所有 Reply 仍指向 /sign-up，登录状态与评论入口不一致。",
+      "evidence": "Chrome 候选页显示完整正文与 17 Comments，但所有普通互动入口均链接 /sign-up。"
+    },
+    {
+      "date": "2026-08-16",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/@syndred",
+      "commentUrl": null,
+      "status": "blocked_captcha",
+      "summary": "未发布评论、未点赞；账号页在读取登录状态时进入 Cloudflare 安全验证。",
+      "upvoted": false,
+      "permissionStatus": "无法在不完成 Cloudflare 验证的情况下核验当前登录与正式发布权限；权限变化未确认。",
+      "skipReason": "遇到 Cloudflare 正在进行安全验证，按闸门立即停止，不点击、不绕过、不继续筛选。",
+      "evidence": "Chrome 显示 Product Hunt Cloudflare 安全验证页，Ray ID a2bc8f0959fc9429。"
     }
   ]
 }

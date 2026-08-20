@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-16T09:18:35+08:00",
+  "updatedAt": "2026-08-20T15:18:00+08:00",
   "entries": [
     {
       "date": "2026-08-06",
@@ -321,6 +321,30 @@
       "permissionStatus": "无法在不完成 Cloudflare 验证的情况下核验当前登录与正式发布权限；权限变化未确认。",
       "skipReason": "遇到 Cloudflare 正在进行安全验证，按闸门立即停止，不点击、不绕过、不继续筛选。",
       "evidence": "Chrome 显示 Product Hunt Cloudflare 安全验证页，Ray ID a2bc8f0959fc9429。"
+    },
+    {
+      "date": "2026-08-20",
+      "platform": "Indie Hackers",
+      "account": "Syndred",
+      "discussionUrl": "https://www.indiehackers.com/post/nerves-kicking-in-before-launch-8292a53ece",
+      "commentUrl": null,
+      "status": "skipped_interaction_gate",
+      "summary": "未发布评论。Chrome 页头显示已登录头像，但候选帖的 Say something nice 与 Post Comment 仍真实跳转 /sign-up。",
+      "permissionStatus": "账号外观为已登录，但评论组件未获得当前会话；/new-post 本次只显示空白占位，无法确认发帖编辑器状态。",
+      "skipReason": "站点登录状态与具体互动组件不一致，点击评论入口后实际进入 /sign-up；未重复登录或绕过。",
+      "evidence": "Chrome 候选页页头显示 User Avatar；Post Comment href=/sign-up；点击 Say something nice 后 URL 变为 https://www.indiehackers.com/sign-up。"
+    },
+    {
+      "date": "2026-08-20",
+      "platform": "Product Hunt",
+      "account": "syndred",
+      "discussionUrl": "https://www.producthunt.com/p/self-promotion/what-are-you-building-drop-your-ai-product-below",
+      "commentUrl": "https://www.producthunt.com/p/self-promotion/what-are-you-building-drop-your-ai-product-below?comment=5799679",
+      "status": "posted",
+      "summary": "按原帖要求介绍 RainbowPetAI、目标用户和当前最难问题，附 Product Hunt 产品页；同时补全 @syndred About 与 RainbowPetAI 官网链接。",
+      "upvoted": false,
+      "permissionStatus": "Chrome 现有会话已登录 @syndred；评论编辑器与个人资料编辑器正常，无 CAPTCHA。",
+      "evidence": "公开讨论直达链接显示 Syndred 完整评论，DOM 节点 comment-5799679，发布时间约 1m ago；公开个人页回读到 About 和 https://rainbowpetai.com/。"
     }
   ]
 }

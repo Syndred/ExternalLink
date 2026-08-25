@@ -39,6 +39,7 @@
 - 2026-08-25 从 Chrome 收藏夹中的 Notion `100+ DIR / FREE` 聚合表提取并按现有 Sheet 主机名去重，筛出 78 条带明确提交入口的 HTTPS 免费候选；已写入 Google Sheet `Link Submit` 第 59–136 行并逐行回读一致。候选统一标记 `Submit=FALSE`，只表示待提交，不作为成功证据。因本机 Google OAuth 客户端尚未配置、浏览器安全策略不允许 Agent 操作 `chrome-extension://`，另生成合并式插件导入包 `outputs/external-link-import-2026-08-25/免费外链候选导入.json`，等待在 Settings 手动导入。
 - 2026-08-25 外链库 Settings 视觉已优化：状态使用语义化彩色 pill，卡片、Profile tag、按钮组和 Google 操作区补足间距、focus/hover 与窄屏布局；提交 `9ac24a8`、`236c71c`。
 - 2026-08-25 纠正首轮只统计 78 条提交入口的范围遗漏：已全量遍历“大罗 SEO”21 个子表（3,224 行）、ViggoZ GitHub 18 个 CSV/Markdown 文件（2,555 行）、Web.Cafe 与 Notion FREE 清单，并把首轮 78 条作为正式输入合并。跨源 canonical 去重后得到 2,881 个聚合源标记免费的候选，其中 Profile 1,480、社区/论坛 861、目录 452、文章/文件 88；1,895 条由源表标记即时通过。Google Sheet `Link Submit` 现有 2,902 条数据记录，最终对账 `missingCandidates=0`。社区/论坛候选在插件导入包中标记 `needs_manual`，不进入普通目录自动提交。
+- 2026-08-25 修正全量导入把 `SubmitProject` 写死为 `VideoToArticleAI` 的问题：新增候选默认项目为空，Google Sheet 第 59–2,903 行误填值已清除且保留项目下拉验证，实际提交时再选择对应 Profile。
 
 ## 关键存储
 

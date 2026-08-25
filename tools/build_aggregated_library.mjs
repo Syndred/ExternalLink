@@ -209,7 +209,7 @@ const backup = {
 
 const sheetRows = missingItems.map((item) => [
   item.url,
-  "VideoToArticleAI",
+  "",
   "FALSE",
   "",
   [

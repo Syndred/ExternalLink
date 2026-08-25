@@ -395,6 +395,20 @@
     );
   }
 
+  function annotationTone(status) {
+    return new Set([
+      "can_submit",
+      "needs_login",
+      "needs_captcha",
+      "paid",
+      "broken",
+      "skip",
+      "deleted",
+    ]).has(status)
+      ? status
+      : "neutral";
+  }
+
   function renderLibrary() {
     const el = $("libraryList");
     if (!el) return;
@@ -429,7 +443,10 @@
       title.textContent = item.domain || item.url;
       title.title = item.url;
       const category = document.createElement("span");
+      const status = item.annotation?.status || "";
+      category.className = `library-status ${annotationTone(status)}`;
       category.textContent = annotationLabel(item.annotation?.status);
+      category.setAttribute("aria-label", `站点状态：${annotationLabel(status)}`);
       head.append(title, category);
 
       const meta = document.createElement("div");
@@ -451,6 +468,7 @@
       pin.type = "button";
       pin.className = "btn btn-secondary btn-sm";
       pin.textContent = "置顶";
+      pin.setAttribute("aria-label", `置顶 ${item.domain || item.url}`);
       pin.addEventListener("click", async () => {
         const result = await chrome.runtime.sendMessage({ action: "pinLibraryUrl", url: item.url });
         if (!result?.ok) return alert(result?.error || "置顶失败");
@@ -460,6 +478,7 @@
       remove.type = "button";
       remove.className = "btn btn-danger btn-sm";
       remove.textContent = "删除";
+      remove.setAttribute("aria-label", `删除 ${item.domain || item.url}`);
       remove.addEventListener("click", async () => {
         if (!confirm(`确认从队列删除 ${item.domain || item.url}？`)) return;
         const result = await chrome.runtime.sendMessage({

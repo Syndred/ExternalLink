@@ -5,6 +5,7 @@ const sidepanelHtml = readFileSync("extension/sidepanel.html", "utf8");
 const sidepanelJs = readFileSync("extension/sidepanel.js", "utf8");
 const settingsHtml = readFileSync("extension/settings.html", "utf8");
 const settingsJs = readFileSync("extension/settings.js", "utf8");
+const settingsCss = readFileSync("extension/settings.css", "utf8");
 const css = readFileSync("extension/sidepanel.css", "utf8");
 const background = readFileSync("extension/background.js", "utf8");
 
@@ -23,6 +24,7 @@ assert.match(settingsHtml, /id="panel-library"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
 assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
+assert.match(settingsHtml, /href="settings\.css"/);
 for (const id of [
   "googleSheetId",
   "btnGoogleConnect",
@@ -42,7 +44,13 @@ assert.match(settingsJs, /action:\s*"googleAuthStart"/);
 assert.match(settingsJs, /action:\s*"googleSyncPreview"/);
 assert.match(settingsJs, /action:\s*"googleSyncApply"/);
 assert.match(settingsJs, /action:\s*"googlePushLedger"/);
+assert.match(settingsJs, /library-status/);
+assert.match(settingsJs, /annotationTone/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
+
+assert.match(settingsCss, /library-status\.can_submit/);
+assert.match(settingsCss, /library-item:hover/);
+assert.match(settingsCss, /prefers-reduced-motion/);
 
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);

@@ -38,6 +38,7 @@
 - 2026-08-24 新增 Profile `VideoToArticleAI`（`https://videotoarticleai.com`）。当天免费成功 7 条：Launching Next、StartupBase、TheJOAI、SideProjectors（90519）、PitchWall、StartupStash、AITools.inc。付费档（Uneed 等）不算成功。SoMuch 卡在验证码。日报：`docs/外链提交报告-2026-08-24.md`。本轮未操作插件 Side Panel，需从 `data/submission-handoff-2026-08-02.json` 导入合并。
 - 2026-08-25 从 Chrome 收藏夹中的 Notion `100+ DIR / FREE` 聚合表提取并按现有 Sheet 主机名去重，筛出 78 条带明确提交入口的 HTTPS 免费候选；已写入 Google Sheet `Link Submit` 第 59–136 行并逐行回读一致。候选统一标记 `Submit=FALSE`，只表示待提交，不作为成功证据。因本机 Google OAuth 客户端尚未配置、浏览器安全策略不允许 Agent 操作 `chrome-extension://`，另生成合并式插件导入包 `outputs/external-link-import-2026-08-25/免费外链候选导入.json`，等待在 Settings 手动导入。
 - 2026-08-25 外链库 Settings 视觉已优化：状态使用语义化彩色 pill，卡片、Profile tag、按钮组和 Google 操作区补足间距、focus/hover 与窄屏布局；提交 `9ac24a8`、`236c71c`。
+- 2026-08-25 纠正首轮只统计 78 条提交入口的范围遗漏：已全量遍历“大罗 SEO”21 个子表（3,224 行）、ViggoZ GitHub 18 个 CSV/Markdown 文件（2,555 行）、Web.Cafe 与 Notion FREE 清单。跨源 canonical 去重后得到 2,880 个聚合源标记免费的候选，其中 Profile 1,480、社区/论坛 861、目录 451、文章/文件 88；1,895 条由源表标记即时通过。Google Sheet `Link Submit` 现有 2,902 条数据记录，最终对账 `missingCandidates=0`。社区/论坛候选在插件导入包中标记 `needs_manual`，不进入普通目录自动提交。
 
 ## 关键存储
 

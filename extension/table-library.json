@@ -223,28 +223,44 @@
       "Screenshot 2": "https://graffitinameai.com/images/graffiti-examples/tag-rogue.png",
       "Screenshot 3": "https://graffitinameai.com/images/graffiti-examples/bubble-luna.png",
       "Screenshot 4": "https://graffitinameai.com/images/graffiti-examples/wildstyle-lite-onyx.png"
+    },
+    "VideoToArticleAI": {
+      "Name": "VideoToArticleAI",
+      "Business mail": "syndredyoung@gmail.com",
+      "Feedback mail": "syndredyoung@gmail.com",
+      "Affiliate link": "Not specified in the project.",
+      "Extra Link:X/Twitter/YouTube/Instagram/..": "Not specified in the project.",
+      "Note": "English-first video/audio/transcript to editable article SaaS. Source-grounded drafts, Writing Profile, relevant screenshots, Markdown/DOCX/TXT export. URL import is not available yet. Articles stay private until the owner publishes them.",
+      "Url": "https://videotoarticleai.com",
+      "Title": "VideoToArticleAI — Turn Video into an Article in Your Style",
+      "Short description(20-30 words)": "Turn your own video into a source-grounded, editable article in your writing style, with relevant screenshots and Markdown, Word, or TXT export.",
+      "Short Discription(100-150 words)": "VideoToArticleAI turns a video or audio file you own into a source-grounded, editable article. Upload MP4, MOV, WebM, or M4V up to 100 MB, or MP3, WAV, or M4A up to 20 MB, with a 10-minute limit. The workspace transcribes with timestamps, drafts structured sections, suggests relevant video frames, and keeps the article private until you publish. Export the saved version as Markdown, DOCX, or TXT. A Writing Profile can guide tone without changing source facts. URL import is labeled coming soon and is not available.",
+      "Tags Keywords/Hashtags": "video to article, video to text, transcription, AI writing, writing profile, screenshots, markdown export, content creation, #VideoToArticleAI #VideoToText #AIWriting",
+      "Pricing": "Free: $0, 3 starter articles each month, private drafts, Markdown/DOCX/TXT export. Creator: $9.99/month or $99/year. Pro: $19.99/month or $199/year. Studio: $39.99/month or $399/year. Credits are processing minutes reserved per job.",
+      "PRICING TYPE": "Freemium with monthly and yearly Creator, Pro, and Studio plans.",
+      "Starting Price": "$0 free plan; paid plans start at $9.99/month.",
+      "OS Compatibility": "Web-based. Works through modern browsers on Windows, macOS, Linux, iOS, Android, and ChromeOS.",
+      "LOGO": "https://videotoarticleai.com/logo.svg",
+      "Featured image": "https://videotoarticleai.com/",
+      "Screenshot 1": "https://videotoarticleai.com/",
+      "Screenshot 2": "https://videotoarticleai.com/video-to-text",
+      "Screenshot 3": "https://videotoarticleai.com/pricing",
+      "Screenshot 4": "https://videotoarticleai.com/about"
     }
   },
   "entries": [
     {
       "link": "https://www.sideprojectors.com/submit",
-      "projects": [
-        "OldPhotoLive",
-        "RspAi",
-        "RainbowPetAI"
-      ],
+      "projects": ["OldPhotoLive", "RspAi", "RainbowPetAI", "VideoToArticleAI"],
       "submitted": true,
-      "note": "您的项目正在审核中，通常需要 2-3 个工作日才能获批。当您的项目获批时，我们将通过电子邮件通知您。；2026-08-02 RainbowPetAI：提交成功，项目 ID 87446，等待 2-3 个工作日审核",
+      "note": "您的项目正在审核中，通常需要 2-3 个工作日才能获批。当您的项目获批时，我们将通过电子邮件通知您。；2026-08-02 RainbowPetAI：提交成功，项目 ID 87446，等待 2-3 个工作日审核；2026-08-24 VideoToArticleAI：showcase 提交成功，项目 ID 90519，确认页 under review，未勾选 ComingUp，未开放出售",
       "indexPage": ""
     },
     {
       "link": "https://thejoai.com/aitools/submissions/",
-      "projects": [
-        "OldPhotoLive",
-        "RspAi"
-      ],
+      "projects": ["OldPhotoLive", "RspAi", "VideoToArticleAI"],
       "submitted": true,
-      "note": "已提交",
+      "note": "已提交；2026-08-24 VideoToArticleAI：Excellent submission +100 points；账户 AI Tools 显示 Submitted for Review，Updated 2026-08-24 11:35:05",
       "indexPage": ""
     },
     {
@@ -277,40 +293,28 @@
     },
     {
       "link": "https://moge.ai/zh",
-      "projects": [
-        "RspAi",
-        "OldPhotoLive",
-        "GraffitiName"
-      ],
+      "projects": ["RspAi", "OldPhotoLive", "GraffitiName"],
       "submitted": true,
       "note": "已提交 不用填信息 只要网站即可 说48小时后去站内搜索验证；2026-08-02 RainbowPetAI：首页未见提交入口，待复核",
       "indexPage": ""
     },
     {
       "link": "https://neeed.directory/submit",
-      "projects": [
-        "OldPhotoLive"
-      ],
+      "projects": ["OldPhotoLive"],
       "submitted": true,
       "note": "交换badge验证通过已提交；2026-08-02 RainbowPetAI：需登录，待人工",
       "indexPage": ""
     },
     {
       "link": "https://www.g2.com/",
-      "projects": [
-        "OldPhotoLive",
-        "TextComparison",
-        "GraffitiName"
-      ],
+      "projects": ["OldPhotoLive", "TextComparison", "GraffitiName"],
       "submitted": false,
       "note": "注册完套娃了，无法提交",
       "indexPage": ""
     },
     {
       "link": "https://sourceforge.net/",
-      "projects": [
-        "OldPhotoLive"
-      ],
+      "projects": ["OldPhotoLive"],
       "submitted": true,
       "note": "SourceForge; Free; DR 92; strong software directory, best for web/software tools.；2026-08-02 RainbowPetAI：Cloudflare 安全验证，待人工",
       "indexPage": ""
@@ -471,9 +475,9 @@
     },
     {
       "link": "https://startupstash.com/",
-      "projects": [],
-      "submitted": false,
-      "note": "StartupStash; Free; DA 67; startup tools/resources directory.",
+      "projects": ["VideoToArticleAI"],
+      "submitted": true,
+      "note": "StartupStash; Free; DA 67; startup tools/resources directory.；2026-08-24 VideoToArticleAI：Typeform 结束页 Thank you for applying to get listed on StartupStash，未选择广告",
       "indexPage": ""
     },
     {
@@ -513,11 +517,9 @@
     },
     {
       "link": "https://pitchwall.co/",
-      "projects": [
-        "RainbowPetAI"
-      ],
+      "projects": ["RainbowPetAI", "VideoToArticleAI"],
       "submitted": true,
-      "note": "PitchWall; Free; DR 64; product/startup launch listing.；2026-08-02 RainbowPetAI：提交成功，Product Status: Under Review，免费方案预计超过 30 天发布",
+      "note": "PitchWall; Free; DR 64; product/startup launch listing.；2026-08-02 RainbowPetAI：提交成功，Product Status: Under Review，免费方案预计超过 30 天发布；2026-08-24 VideoToArticleAI：My Products 显示 Under Review，免费 plan，未购买 Premium $99 / Pro $49",
       "indexPage": ""
     },
     {
@@ -585,9 +587,9 @@
     },
     {
       "link": "https://aitools.inc/",
-      "projects": [],
-      "submitted": false,
-      "note": "AITools; Free; DR 53; AI tools directory.",
+      "projects": ["VideoToArticleAI"],
+      "submitted": true,
+      "note": "AITools; Free; DR 53; AI tools directory.；2026-08-24 VideoToArticleAI：免费 Typeform Thanks we'll be in touch，未走 Fast Lane",
       "indexPage": ""
     },
     {
@@ -601,14 +603,14 @@
       "link": "https://www.uneed.best/",
       "projects": [],
       "submitted": false,
-      "note": "Uneed; Free; DR 52; tool discovery directory.",
+      "note": "Uneed; 2026-08-24 免费 waiting line 已关闭。提交产品仍免费，但获得上线日需 Fast-track $14.99 或 Skip the waiting line $29.99。未购买。",
       "indexPage": ""
     },
     {
       "link": "https://startupbase.io/",
-      "projects": [],
-      "submitted": false,
-      "note": "StartupBase; Free; DA 52; startup listing.",
+      "projects": ["VideoToArticleAI"],
+      "submitted": true,
+      "note": "StartupBase; Free; DA 52; startup listing.；2026-08-24 VideoToArticleAI：免费标准队列，产品页 Pending Review https://startupbase.io/products/videotoarticleai ，未购买 Launch now $39",
       "indexPage": ""
     },
     {
@@ -634,34 +636,28 @@
     },
     {
       "link": "https://www.launchingnext.com/",
-      "projects": [],
-      "submitted": false,
-      "note": "LaunchingNext; Free; DA 48; startup launch directory.",
+      "projects": ["VideoToArticleAI"],
+      "submitted": true,
+      "note": "LaunchingNext; Free; DA 48; startup launch directory.；2026-08-24 VideoToArticleAI：SUBMITTED In Queue 约 4 个月，回执 i=146539，未购买 $99 Fast-Track",
       "indexPage": ""
     },
     {
       "link": "https://github.com/Syndred/pet-memorial-resources",
-      "projects": [
-        "RainbowPetAI"
-      ],
+      "projects": ["RainbowPetAI"],
       "submitted": true,
       "note": "公开资源仓库已创建；README 含真实宠物离世支持资源、纪念清单、隐私建议、RainbowPetAI 链接和展示图；公开页面与链接已验收。",
       "indexPage": "https://github.com/Syndred/pet-memorial-resources"
     },
     {
       "link": "https://www.indiehackers.com/new-post",
-      "projects": [
-        "RainbowPetAI"
-      ],
+      "projects": ["RainbowPetAI"],
       "submitted": false,
       "note": "@Syndred 已登录，但平台显示 You can't create posts yet；需真实社区互动并获管理员解锁，或付费 IH Plus。本轮不付费、不制造互动。",
       "indexPage": ""
     },
     {
       "link": "https://news.ycombinator.com/",
-      "projects": [
-        "RainbowPetAI"
-      ],
+      "projects": ["RainbowPetAI"],
       "submitted": false,
       "note": "用户于 2026-08-06 取消 Hacker News 提交：没有账号，不再处理。",
       "indexPage": ""

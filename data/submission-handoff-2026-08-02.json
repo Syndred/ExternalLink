@@ -1,7 +1,7 @@
 {
   "format": "externallink-submission-backup",
   "version": 2,
-  "exportedAt": "2026-08-10T01:06:48.269Z",
+  "exportedAt": "2026-08-24T13:13:21.191Z",
   "submissionRecords": {
     "thejoai.com/aitools/submissions::RainbowPetAI": {
       "status": "success",
@@ -114,6 +114,90 @@
       "evidence": "Public Product Hunt page shows RainbowPetAI, Launched this week, live Visit website link, public gallery, launch tags, maker comment, and Launched in 2026.",
       "evidenceUrl": "https://www.producthunt.com/products/rainbowpetai?launch=rainbowpetai",
       "schemaVersion": 2
+    },
+    "launchingnext.com::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "launchingnext.com",
+      "destinationUrl": "https://www.launchingnext.com/submit/",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Submission Received; SUBMITTED; Status: In Queue (Estimated Wait: 4 Months); receipt i=146539; declined $99 Fast-Track",
+      "evidenceUrl": "https://www.launchingnext.com/thanks/?i=146539",
+      "schemaVersion": 2
+    },
+    "startupbase.io::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "startupbase.io",
+      "destinationUrl": "https://startupbase.io/submit",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Public product page shows Pending Review: This product is pending review. Joined standard free queue without paid Launch now $39. Listing https://startupbase.io/products/videotoarticleai",
+      "evidenceUrl": "https://startupbase.io/products/videotoarticleai",
+      "schemaVersion": 2
+    },
+    "thejoai.com/aitools/submissions::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "thejoai.com/aitools/submissions",
+      "destinationUrl": "https://thejoai.com/aitools/submissions/",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Excellent submission! You earned 100 points. Profile AI Tools tab shows VideoToArticleAI Submitted for Review Updated 2026-08-24 11:35:05",
+      "evidenceUrl": "https://thejoai.com/accounts/profile/?section=requests&tab=ai-tools&page=1#ai-tools-tab",
+      "schemaVersion": 2
+    },
+    "sideprojectors.com/submit::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "sideprojectors.com/submit",
+      "destinationUrl": "https://www.sideprojectors.com/submit",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Project submitted successfully; under review, typically 2-3 business days; project ID 90519; showcase not listed for sale; ComingUp extra listing left unchecked",
+      "evidenceUrl": "https://www.sideprojectors.com/submit/done/90519",
+      "schemaVersion": 2
+    },
+    "pitchwall.co::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "pitchwall.co",
+      "destinationUrl": "https://pitchwall.co/",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "My Products shows VideoToArticleAI Under Review on free plan; declined Upgrade to Premium",
+      "evidenceUrl": "https://pitchwall.co/profile/products",
+      "schemaVersion": 2
+    },
+    "startupstash.com::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "startupstash.com",
+      "destinationUrl": "https://startupstash.com/add-listing/",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Typeform end screen: Thank you for applying to get listed on StartupStash! We will get back to you as early as possible. Declined advertising. Category Videos.",
+      "evidenceUrl": "https://form.typeform.com/to/b8EyDE",
+      "schemaVersion": 2
+    },
+    "aitools.inc::VideoToArticleAI": {
+      "status": "success",
+      "destinationKey": "aitools.inc",
+      "destinationUrl": "https://aitools.inc/",
+      "profileId": "VideoToArticleAI",
+      "profileName": "VideoToArticleAI",
+      "submittedAt": "2026-08-24",
+      "confirmedBy": "agent",
+      "evidence": "Free Typeform end screen: Thanks! We'll be in touch over the next few days to proceed with your listing. Used free listing form not Fast Lane $129.",
+      "evidenceUrl": "https://loxr142exnq.typeform.com/to/RB6ZnEf2",
+      "schemaVersion": 2
     }
   },
   "siteAnnotations": {
@@ -126,6 +210,17 @@
         "RainbowPetAI"
       ],
       "updatedAt": "2026-08-10",
+      "auto": false
+    },
+    "uneed.best": {
+      "url": "https://www.uneed.best/",
+      "domain": "uneed.best",
+      "status": "paid",
+      "note": "2026-08-24: free waiting line closed to new products (announced 2026-08-17). Submitting a product stays free, but getting a launch date requires Fast-track $14.99 or Skip the waiting line $29.99. Parked; no purchase.",
+      "submittedProjects": [
+        "RainbowPetAI"
+      ],
+      "updatedAt": "2026-08-24",
       "auto": false
     },
     "tooldirectory.ai": {
@@ -189,6 +284,26 @@
       "note": "Logged in as syndred. Authentic community participation started on 2026-08-06; do not submit RainbowPetAI until the account has sufficient history and the post is contextually appropriate.",
       "submittedProjects": [],
       "updatedAt": "2026-08-06",
+      "auto": false
+    },
+    "sideprojectors.com": {
+      "url": "https://www.sideprojectors.com/submit/project/90519/general",
+      "domain": "sideprojectors.com",
+      "status": "needs_manual",
+      "note": "2026-08-24 VideoToArticleAI: logged in as SyndredYoung, showcase draft created at /submit/project/90519/general. Name/pitch/description filled; markets widget not completed. Not recorded as success.",
+      "submittedProjects": [
+        "RainbowPetAI"
+      ],
+      "updatedAt": "2026-08-24",
+      "auto": false
+    },
+    "moge.ai": {
+      "url": "https://moge.ai/zh",
+      "domain": "moge.ai",
+      "status": "needs_manual",
+      "note": "2026-08-24 homepage still has no visible submit entry (login required). Same as RainbowPetAI 2026-08-02 note.",
+      "submittedProjects": [],
+      "updatedAt": "2026-08-24",
       "auto": false
     }
   },

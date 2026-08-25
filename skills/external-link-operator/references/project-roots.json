@@ -3,5 +3,6 @@
   "RainbowPetAI": "../rainbowPetAi",
   "RspAi": "../RspAi",
   "TextComparison": "../text-comparision",
-  "GraffitiName": "../graffitinameai"
+  "GraffitiName": "../graffitinameai",
+  "VideoToArticleAI": "../videoToArticleAI"
 }

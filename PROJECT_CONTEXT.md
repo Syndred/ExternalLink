@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-20｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-25｜扩展 2.5.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -9,7 +9,7 @@
 - Table.xlsx 只作为外链库和 Profile 初始种子；运行记录以 `chrome.storage.local` 为准。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
-- 当前 Table 同步结果：5 个 Profile、59 条 canonical 外链、7 个已提交行展开为 12 个历史成功组合。
+- 当前 Table 同步结果：6 个 Profile（含 VideoToArticleAI）、59 条 canonical 外链；RainbowPetAI 历史成功 10 条；VideoToArticleAI 2026-08-24 已确认免费成功 7 条。
 - 每次批量开始从 Profile、账本、分类和外链库重新构建队列，不读取旧 `tasks`。
 - 外链站分组，组内按用户勾选顺序提交多个 Profile；已有成功组合自动跳过。
 - 同一外链站只开一个页签；成功后重新进入该站入口处理下一 Profile。
@@ -33,18 +33,19 @@
 - 2026-08-14 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 相关候选的互动入口仍指向 `/sign-up`；Product Hunt 因前一日刚互动且无强非重复角度，当天未评论、未点赞，并恢复了昨日页面附带的非必要自动关注。
 - 2026-08-16 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 的 Pickle 候选已有 17 条相近讨论且互动入口仍指向 `/sign-up`；Product Hunt 触发 Cloudflare 安全验证并立即停止，三站均未互动。8 月 15 日无执行证据，未补写日志。
 - 2026-08-20 巡检：Product Hunt 已在官方 Self-Promotion 讨论发布 RainbowPetAI 真实介绍（`comment-5799679`），并补全 `@syndred` About 与官网链接；Indie Hackers 虽显示已登录头像，但评论入口实际跳转 `/sign-up`，未互动；HN 最近一条评论仍公开，新候选完成事实核验，等待发布前确认。
+- 2026-08-24 新增 Profile `VideoToArticleAI`（`https://videotoarticleai.com`）。当天免费成功 7 条：Launching Next、StartupBase、TheJOAI、SideProjectors（90519）、PitchWall、StartupStash、AITools.inc。付费档（Uneed 等）不算成功。SoMuch 卡在验证码。日报：`docs/外链提交报告-2026-08-24.md`。本轮未操作插件 Side Panel，需从 `data/submission-handoff-2026-08-02.json` 导入合并。
 
 ## 关键存储
 
-| Key | 用途 |
-| --- | --- |
-| `siteProfiles` | 稳定 Profile ID 的自家网站资料 |
-| `activeSiteId` | 当前手动填表网站 |
-| `selectedSiteIds` | 最近一次批量多选 |
-| `submissionRecords` | v2 永久成功账本 |
-| `siteAnnotations` | 外链站级分类与临时闸门 |
-| `activeBatchRun` | 仅恢复 running / waiting_manual / paused 的批次 |
-| `urlList` | 自定义外链，新增/置顶项排在最前 |
+| Key                 | 用途                                            |
+| ------------------- | ----------------------------------------------- |
+| `siteProfiles`      | 稳定 Profile ID 的自家网站资料                  |
+| `activeSiteId`      | 当前手动填表网站                                |
+| `selectedSiteIds`   | 最近一次批量多选                                |
+| `submissionRecords` | v2 永久成功账本                                 |
+| `siteAnnotations`   | 外链站级分类与临时闸门                          |
+| `activeBatchRun`    | 仅恢复 running / waiting_manual / paused 的批次 |
+| `urlList`           | 自定义外链，新增/置顶项排在最前                 |
 
 ## 关键文件
 
@@ -65,7 +66,7 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
 - 已通过 Python 15 个 local_agent 单元测试。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
-- 仓库 Table、插件种子、增量账本和交接表沿用同一 canonical 记录规则。RainbowPetAI 增量账本现有 10 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`；Product Hunt 已写入本地账本，但 Google Sheet 因当前没有连接的表格会话而待同步。
+- 仓库 Table、插件种子、增量账本和交接表沿用同一 canonical 记录规则。RainbowPetAI 增量账本现有 10 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`。2026-08-25 已把 VideoToArticleAI 的 7 条免费成功按原 6 列格式写入 Google Sheet `Link Submit`；同工作簿新增子表写入 Profile（Field / Content / Notes）。未覆盖 RainbowPetAI 原有证据，未把 Pending Review 页写成 IndexPage。子表标签目前是 `工作表3`，需改名为 `VideoToArticleAI`。
 - TheJOAI 已在真实文件上传、描述、日期和分类复核后完成提交，账户显示 `Submitted for Review`。
 - Launching Next、StartupBase、AITools.inc、Uneed 已看到明确成功/排队证据；FutureTools 由用户人工确认完成。
 - FiveTaco 因无可靠回执继续保持未确认；ToolDirectory.ai 的 $9.99 页面已标记付费，Webwiki / Submission Web Directory / Alternative.me / SaaSAITools 进入待人工。

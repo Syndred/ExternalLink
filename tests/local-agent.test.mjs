@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const serverPath = resolve("local_agent/server.py");
 const source = readFileSync(serverPath, "utf8");
+const googleSyncSource = readFileSync(resolve("local_agent/google_sync.py"), "utf8");
 
 assert.match(source, /DEEPSEEK_API_KEY/);
 assert.match(source, /https:\/\/api\.deepseek\.com/);
@@ -41,6 +42,19 @@ assert.match(source, /router\.add_post\(["']\/plan["'],\s*handle_plan\)/);
 assert.match(source, /router\.add_post\(["']\/judge["'],\s*handle_judge\)/);
 assert.match(source, /router\.add_post\(["']\/extract-site["'],\s*handle_extract_site\)/);
 assert.match(source, /router\.add_post\(["']\/generate-site["'],\s*handle_generate_site\)/);
+assert.match(source, /google_sync/);
+assert.match(googleSyncSource, /class\s+OAuthManager/);
+assert.match(googleSyncSource, /GOOGLE_SHEETS_SCOPE/);
+assert.match(googleSyncSource, /GOOGLE_OAUTH_CLIENT_FILE/);
+assert.match(googleSyncSource, /GOOGLE_SHEET_ID/);
+assert.match(source, /authUrl/);
+assert.match(source, /pushedKeys/);
+assert.match(source, /router\.add_(?:get|post)\(["']\/google\/status["'],\s*handle_google_status\)/);
+assert.match(source, /router\.add_(?:get|post)\(["']\/google\/auth\/start["'],\s*handle_google_auth_start\)/);
+assert.match(source, /router\.add_get\(["']\/google\/auth\/callback["'],\s*handle_google_auth_callback\)/);
+assert.match(source, /router\.add_post\(["']\/google\/sync\/preview["'],\s*handle_google_sync_preview\)/);
+assert.match(source, /router\.add_post\(["']\/google\/ledger\/push["'],\s*handle_google_ledger_push\)/);
+assert.match(source, /router\.add_post\(["']\/google\/disconnect["'],\s*handle_google_disconnect\)/);
 assert.match(source, /EXTRACT_SITE_PROMPT/);
 assert.match(source, /def\s+fetch_page_text/);
 assert.match(source, /def\s+normalize_site_profile/);

@@ -12,9 +12,28 @@ from aiohttp import web
 from dotenv import load_dotenv
 import requests
 
+try:
+    from .google_sync import (
+        GoogleSyncError,
+        OAuthManager,
+        build_sync_diff,
+        push_ledger_for_oauth,
+        read_snapshot_for_oauth,
+        validate_sheet_id,
+    )
+except ImportError:  # pragma: no cover - supports `python local_agent/server.py`
+    from google_sync import (  # type: ignore
+        GoogleSyncError,
+        OAuthManager,
+        build_sync_diff,
+        push_ledger_for_oauth,
+        read_snapshot_for_oauth,
+        validate_sheet_id,
+    )
+
 
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 8787
+DEFAULT_PORT = int(os.getenv("LOCAL_AGENT_PORT", "8790"))
 CHAT_COMPLETIONS_PATH = "/chat/completions"
 DEEPSEEK_TIMEOUT_SECONDS = 45
 
@@ -241,6 +260,22 @@ class AgentError(Exception):
 def get_deepseek_api_key() -> Optional[str]:
     """Return the configured DeepSeek API key from the live environment or startup snapshot."""
     return os.getenv("DEEPSEEK_API_KEY") or DEEPSEEK_API_KEY
+
+
+_GOOGLE_OAUTH_MANAGER: Optional[OAuthManager] = None
+
+
+def get_google_oauth_manager() -> OAuthManager:
+    """Return the process-local Google OAuth manager.
+
+    The manager keeps only short-lived OAuth state in memory.  Authorized
+    credentials are persisted by its keyring-first token store, never in the
+    extension or in the repository.
+    """
+    global _GOOGLE_OAUTH_MANAGER
+    if _GOOGLE_OAUTH_MANAGER is None:
+        _GOOGLE_OAUTH_MANAGER = OAuthManager()
+    return _GOOGLE_OAUTH_MANAGER
 
 
 def extract_json_object(text: str) -> dict[str, Any]:
@@ -1139,6 +1174,158 @@ async def handle_validate_fill(request):
         )
 
 
+async def _read_request_object(request, *, error_message: str = "Request body must be a JSON object"):
+    """Parse a JSON request body for the Google endpoints."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return None, web.json_response({"status": "error", "message": error_message}, status=400)
+    if not isinstance(payload, dict):
+        return None, web.json_response({"status": "error", "message": error_message}, status=400)
+    return payload, None
+
+
+def _google_error_response(error: GoogleSyncError):
+    return web.json_response(
+        {"status": "error", "message": error.message},
+        status=error.http_status,
+    )
+
+
+async def handle_google_status(request):
+    """Return local Google configuration/auth status without exposing tokens."""
+    try:
+        status = get_google_oauth_manager().status()
+        return web.json_response({"status": "ok", **status})
+    except GoogleSyncError as exc:
+        return _google_error_response(exc)
+
+
+async def handle_google_auth_start(request):
+    """Create a loopback Google OAuth URL for the user to approve."""
+    try:
+        result = await asyncio.to_thread(get_google_oauth_manager().start)
+        if result.get("authorizationUrl") and not result.get("authUrl"):
+            result["authUrl"] = result["authorizationUrl"]
+        return web.json_response({"status": "ok", **result})
+    except GoogleSyncError as exc:
+        return _google_error_response(exc)
+
+
+async def handle_google_auth_callback(request):
+    """Finish OAuth in the local browser tab without returning credentials."""
+    query = getattr(request, "query", {})
+    error = str(query.get("error", "") or "").strip()
+    if error:
+        message = "Google OAuth 被取消或拒绝授权"
+        return web.Response(
+            text=(
+                "<!doctype html><meta charset='utf-8'><title>ExternalLink OAuth</title>"
+                f"<p>{message}</p><p>可以关闭此标签页并回到 ExternalLink。</p>"
+            ),
+            content_type="text/html",
+            status=400,
+        )
+
+    state = str(query.get("state", "") or "").strip()
+    code = str(query.get("code", "") or "").strip()
+    try:
+        await asyncio.to_thread(get_google_oauth_manager().complete, state=state, code=code)
+    except GoogleSyncError as exc:
+        return web.Response(
+            text=(
+                "<!doctype html><meta charset='utf-8'><title>ExternalLink OAuth</title>"
+                f"<p>授权失败：{exc.message}</p><p>可以关闭此标签页后重新连接。</p>"
+            ),
+            content_type="text/html",
+            status=exc.http_status,
+        )
+    return web.Response(
+        text=(
+            "<!doctype html><meta charset='utf-8'><title>ExternalLink OAuth</title>"
+            "<p>ExternalLink 已完成 Google 授权。</p>"
+            "<p>可以关闭此标签页并回到扩展设置。</p>"
+        ),
+        content_type="text/html",
+    )
+
+
+async def handle_google_sync_preview(request):
+    """Read the configured sheet and return a pull diff for the extension."""
+    payload, response = await _read_request_object(request)
+    if response is not None:
+        return response
+    try:
+        spreadsheet_id = payload.get("spreadsheetId")
+        validate_sheet_id(spreadsheet_id)
+        remote = await asyncio.to_thread(
+            read_snapshot_for_oauth,
+            get_google_oauth_manager(),
+            spreadsheet_id=spreadsheet_id,
+        )
+        return web.json_response(
+            {
+                "status": "ok",
+                "spreadsheetId": remote.get("spreadsheetId"),
+                "snapshot": remote,
+                "snapshotHash": remote.get("hash", ""),
+                "diff": build_sync_diff(payload.get("localSnapshot"), remote),
+            }
+        )
+    except GoogleSyncError as exc:
+        return _google_error_response(exc)
+    except Exception as exc:  # noqa: BLE001 - keep the local API JSON-shaped
+        return web.json_response(
+            {"status": "error", "message": f"Google Sheet 预览失败: {exc}"},
+            status=502,
+        )
+
+
+async def handle_google_ledger_push(request):
+    """Append/update only explicit success records in the Sheet records tab."""
+    payload, response = await _read_request_object(request)
+    if response is not None:
+        return response
+    records = payload.get("records")
+    if not isinstance(records, list):
+        return web.json_response(
+            {"status": "error", "message": "records must be an array"},
+            status=400,
+        )
+    try:
+        spreadsheet_id = payload.get("spreadsheetId")
+        validate_sheet_id(spreadsheet_id)
+        result = await asyncio.to_thread(
+            push_ledger_for_oauth,
+            get_google_oauth_manager(),
+            records=records,
+            spreadsheet_id=spreadsheet_id,
+            base_hash=str(payload.get("baseHash") or ""),
+        )
+        if "pushedKeys" not in result:
+            result["pushedKeys"] = [
+                *(result.get("applied") or []),
+                *(result.get("alreadyApplied") or []),
+            ]
+        return web.json_response({"status": "ok", **result})
+    except GoogleSyncError as exc:
+        return _google_error_response(exc)
+    except Exception as exc:  # noqa: BLE001 - keep the local API JSON-shaped
+        return web.json_response(
+            {"status": "error", "message": f"Google Sheet 回写失败: {exc}"},
+            status=502,
+        )
+
+
+async def handle_google_disconnect(request):
+    """Forget local Google credentials and pending OAuth state."""
+    try:
+        result = await asyncio.to_thread(get_google_oauth_manager().disconnect)
+        return web.json_response({"status": "ok", **result})
+    except GoogleSyncError as exc:
+        return _google_error_response(exc)
+
+
 def create_app():
     """Create and configure the aiohttp application."""
     app = web.Application()
@@ -1149,6 +1336,15 @@ def create_app():
     router.add_post("/judge", handle_judge)
     router.add_post("/extract-site", handle_extract_site)
     router.add_post("/generate-site", handle_generate_site)
+    router.add_get("/google/status", handle_google_status)
+    router.add_post("/google/status", handle_google_status)
+    router.add_get("/google/auth/start", handle_google_auth_start)
+    router.add_post("/google/auth/start", handle_google_auth_start)
+    router.add_get("/google/auth/callback", handle_google_auth_callback)
+    router.add_get("/google/callback", handle_google_auth_callback)
+    router.add_post("/google/sync/preview", handle_google_sync_preview)
+    router.add_post("/google/ledger/push", handle_google_ledger_push)
+    router.add_post("/google/disconnect", handle_google_disconnect)
     return app
 
 

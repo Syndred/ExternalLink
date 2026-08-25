@@ -6,6 +6,7 @@ import types
 import unittest
 from pathlib import Path
 from unittest import mock
+from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -57,6 +58,7 @@ except ModuleNotFoundError:
     sys.modules["requests"] = requests_stub
 
 from local_agent import server
+from local_agent import google_sync
 
 
 class StubResponse:
@@ -71,6 +73,274 @@ class StubResponse:
 
 
 class LocalAgentUnitTests(unittest.TestCase):
+    def test_google_profile_aliases_keep_video_to_article_stable(self):
+        self.assertEqual(
+            google_sync.canonical_profile_id("VideoToArticle"),
+            "VideoToArticleAI",
+        )
+
+    def test_google_profile_parser_tolerates_missing_known_headers(self):
+        rainbow = google_sync.parse_profile_rows(
+            [["Field", "", "Notes"], ["Name", "RainbowPetAI", ""]],
+            sheet_name="RainbowPetAI",
+        )
+        graffiti = google_sync.parse_profile_rows(
+            [["", "Content", "Notes"], ["Name", "Graffiti Name AI", ""]],
+            sheet_name="Graffiti Name AI",
+        )
+        self.assertEqual(rainbow["id"], "RainbowPetAI")
+        self.assertEqual(graffiti["id"], "GraffitiName")
+        self.assertIsNone(
+            google_sync.parse_profile_rows(
+                [["Date", "Site"], ["2026-08-25", "example.com"]],
+                sheet_name="Action Log",
+            )
+        )
+
+    def test_google_token_store_prefers_keyring_and_does_not_write_fallback(self):
+        class FakeKeyring:
+            values = {}
+
+            @classmethod
+            def get_password(cls, service, account):
+                return cls.values.get((service, account))
+
+            @classmethod
+            def set_password(cls, service, account, value):
+                cls.values[(service, account)] = value
+
+            @classmethod
+            def delete_password(cls, service, account):
+                cls.values.pop((service, account), None)
+
+        with TemporaryDirectory() as temp_dir:
+            fallback = Path(temp_dir) / "google-token.json"
+            store = google_sync.TokenStore(keyring_module=FakeKeyring, token_path=fallback)
+            payload = {"refresh_token": "test-refresh", "client_id": "client"}
+            store.save(payload)
+
+            self.assertFalse(fallback.exists())
+            self.assertEqual(store.load(), payload)
+            store.delete()
+            self.assertIsNone(store.load())
+
+    def test_google_sheet_id_is_allowlisted(self):
+        with mock.patch.dict(os.environ, {"GOOGLE_SHEET_ID": "allowed-sheet-id"}, clear=False):
+            self.assertEqual(google_sync.validate_sheet_id("allowed-sheet-id"), "allowed-sheet-id")
+            with self.assertRaisesRegex(google_sync.GoogleSyncError, "只允许访问配置"):
+                google_sync.validate_sheet_id("other-sheet-id")
+
+    def test_google_snapshot_contract_uses_ledger_for_legacy_submit_and_parses_annotations(self):
+        class FakeRequest:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def execute(self):
+                return self.payload
+
+        class FakeValues:
+            def __init__(self, rows_by_title):
+                self.rows_by_title = rows_by_title
+
+            def get(self, *, spreadsheetId, range):
+                title = range.split("'!", 1)[0].strip("'").replace("''", "'")
+                return FakeRequest({"values": self.rows_by_title.get(title, [])})
+
+        class FakeSpreadsheets:
+            def __init__(self, rows_by_title):
+                self.rows_by_title = rows_by_title
+
+            def get(self, *, spreadsheetId, fields):
+                return FakeRequest(
+                    {
+                        "spreadsheetId": spreadsheetId,
+                        "properties": {"title": "ExternalLink"},
+                        "sheets": [
+                            {"properties": {"title": title}}
+                            for title in self.rows_by_title
+                        ],
+                    }
+                )
+
+            def values(self):
+                return FakeValues(self.rows_by_title)
+
+        class FakeService:
+            def __init__(self, rows_by_title):
+                self._spreadsheets = FakeSpreadsheets(rows_by_title)
+
+            def spreadsheets(self):
+                return self._spreadsheets
+
+        rows_by_title = {
+            "Link Submit": [
+                [
+                    "Link",
+                    "SubmitProject",
+                    "Submit",
+                    "Time",
+                    "Note",
+                    "IndexPage",
+                    "Status",
+                    "CategoryStatus",
+                    "UpdatedAt",
+                ],
+                [
+                    "https://legacy.example/submit",
+                    "B, C",
+                    "1",
+                    "2026-08-01",
+                    "legacy site flag",
+                    "",
+                    "",
+                    "",
+                    "",
+                ],
+                [
+                    "https://paid.example",
+                    "B",
+                    "0",
+                    "",
+                    "paid directory",
+                    "",
+                    "paid",
+                    "",
+                    "2026-08-24T12:00:00Z",
+                ],
+                [
+                    "https://login.example",
+                    "C",
+                    "0",
+                    "",
+                    "login gate",
+                    "",
+                    "unsupported value",
+                    "needs login",
+                    "2026-08-25T12:00:00Z",
+                ],
+                ["https://unclassified.example", "B", "1", "", "", "", "", "", ""],
+            ],
+            "Submission Records": [["RecordKey", "Status"]],
+            "B": [["Field", "Content"], ["Name", "Project B"], ["Url", "https://b.example"]],
+            "C": [["Field", "Content"], ["Name", "Project C"], ["Url", "https://c.example"]],
+        }
+
+        with mock.patch.dict(os.environ, {"GOOGLE_SHEET_ID": "allowed-sheet-id"}, clear=False):
+            snapshot = google_sync.read_snapshot(
+                FakeService(rows_by_title), spreadsheet_id="allowed-sheet-id"
+            )
+
+        self.assertEqual(snapshot["format"], "externallink-google-sheet-snapshot")
+        self.assertTrue(snapshot["revision"])
+        self.assertTrue(snapshot["fetchedAt"])
+        self.assertIn("projects", snapshot["tableData"])
+        self.assertIn("entries", snapshot["tableData"])
+        self.assertIn("tasks", snapshot["tableData"])
+        self.assertIn("siteAnnotations", snapshot)
+
+        legacy = snapshot["tableData"]["entries"][0]
+        self.assertFalse(legacy["submitted"])
+        self.assertTrue(legacy["legacySubmitted"])
+        self.assertEqual(
+            len([task for task in snapshot["tableData"]["tasks"] if task["domain"] == "legacy.example"]),
+            2,
+        )
+        self.assertEqual(
+            snapshot["siteAnnotations"]["paid.example"],
+            {
+                "status": "paid",
+                "url": "https://paid.example",
+                "note": "paid directory",
+                "updatedAt": "2026-08-24T12:00:00Z",
+            },
+        )
+        self.assertEqual(snapshot["siteAnnotations"]["login.example"]["status"], "needs_login")
+        self.assertNotIn("unclassified.example", snapshot["siteAnnotations"])
+
+    def test_handle_google_auth_start_returns_auth_url_alias_without_token(self):
+        async def run_test():
+            class FakeManager:
+                def start(self):
+                    return {
+                        "authorizationUrl": "https://accounts.google.com/o/oauth2/auth?state=x",
+                        "authUrl": "https://accounts.google.com/o/oauth2/auth?state=x",
+                    }
+
+            with mock.patch.object(server, "get_google_oauth_manager", return_value=FakeManager()):
+                response = await server.handle_google_auth_start(object())
+
+            payload = json.loads(response.text)
+            self.assertEqual(payload["status"], "ok")
+            self.assertTrue(payload["authUrl"].startswith("https://accounts.google.com/"))
+            self.assertNotIn("refresh_token", payload)
+
+        asyncio.run(run_test())
+
+    def test_handle_google_preview_returns_expected_snapshot_contract(self):
+        async def run_test():
+            class StubRequest:
+                async def json(self):
+                    return {"spreadsheetId": "allowed-sheet-id", "localSnapshot": {}}
+
+            snapshot = {
+                "format": "externallink-google-sheet-snapshot",
+                "spreadsheetId": "allowed-sheet-id",
+                "revision": "rev-1",
+                "fetchedAt": "2026-08-25T00:00:00+00:00",
+                "tableData": {"entries": [], "projects": {}, "tasks": []},
+                "submissionRecords": {},
+                "siteAnnotations": {},
+            }
+
+            async def fake_to_thread(func, *args, **kwargs):
+                self.assertIs(func, server.read_snapshot_for_oauth)
+                return snapshot
+
+            with mock.patch.dict(os.environ, {"GOOGLE_SHEET_ID": "allowed-sheet-id"}, clear=False):
+                with mock.patch.object(server, "get_google_oauth_manager", return_value=object()):
+                    with mock.patch.object(server.asyncio, "to_thread", side_effect=fake_to_thread):
+                        response = await server.handle_google_sync_preview(StubRequest())
+
+            payload = json.loads(response.text)
+            self.assertEqual(response.status, 200)
+            self.assertEqual(payload["snapshot"]["format"], "externallink-google-sheet-snapshot")
+            self.assertEqual(payload["snapshot"]["revision"], "rev-1")
+            self.assertIn("tableData", payload["snapshot"])
+            self.assertIn("siteAnnotations", payload["snapshot"])
+
+        asyncio.run(run_test())
+
+    def test_handle_google_ledger_push_returns_pushed_keys(self):
+        async def run_test():
+            class StubRequest:
+                async def json(self):
+                    return {
+                        "spreadsheetId": "allowed-sheet-id",
+                        "records": [
+                            {
+                                "recordKey": "example.com::RainbowPetAI",
+                                "destinationKey": "example.com",
+                                "profileId": "RainbowPetAI",
+                                "status": "success",
+                            }
+                        ],
+                    }
+
+            async def fake_to_thread(func, *args, **kwargs):
+                self.assertIs(func, server.push_ledger_for_oauth)
+                return {"pushedKeys": ["example.com::RainbowPetAI"], "applied": [], "alreadyApplied": []}
+
+            with mock.patch.dict(os.environ, {"GOOGLE_SHEET_ID": "allowed-sheet-id"}, clear=False):
+                with mock.patch.object(server, "get_google_oauth_manager", return_value=object()):
+                    with mock.patch.object(server.asyncio, "to_thread", side_effect=fake_to_thread):
+                        response = await server.handle_google_ledger_push(StubRequest())
+
+            payload = json.loads(response.text)
+            self.assertEqual(response.status, 200)
+            self.assertEqual(payload["pushedKeys"], ["example.com::RainbowPetAI"])
+
+        asyncio.run(run_test())
+
     def test_extract_json_object_handles_text_around_object(self):
         extracted = server.extract_json_object(
             'Planner said:\n{"status":"blocked","actions":[],"reason":"captcha"}\nDone.'

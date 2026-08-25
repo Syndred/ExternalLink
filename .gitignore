@@ -1,0 +1,13 @@
+# Local credentials and OAuth material
+.env
+*client_secret*.json
+*oauth*token*.json
+google-token.json
+
+# Browser session state may contain cookies and local storage
+profiles/*/state.json
+
+# Local runtime artifacts
+__pycache__/
+*.pyc
+.DS_Store

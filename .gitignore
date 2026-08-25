@@ -11,3 +11,5 @@ profiles/*/state.json
 __pycache__/
 *.pyc
 .DS_Store
+*.db-shm
+*.db-wal

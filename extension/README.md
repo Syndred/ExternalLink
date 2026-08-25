@@ -20,6 +20,19 @@ python3 -m local_agent.server
 
 在 `.env` 中设置 `DEEPSEEK_API_KEY`。密钥只保存在本地代理，不放入扩展包。
 
+### Google Sheet 单一维护源
+
+在仓库外保存 Google OAuth 客户端 JSON，并在 `.env` 配置：
+
+```bash
+GOOGLE_SHEET_ID=你的私有工作簿ID
+GOOGLE_OAUTH_CLIENT_FILE=/仓库外/google-client.json
+```
+
+启动本机 Agent 后，到 Settings → 外链库依次点击“连接 Google”“预览同步”“应用同步”。网站资料、外链入口和人工分类以后只维护 Google Sheet；扩展保留运行缓存，成功记录先本地落盘，再自动回写 `Submission Records`。Google 暂时不可用时记录留在 outbox，可点击“回写待同步记录”重试。
+
+Google token 优先保存在系统钥匙串；只有钥匙串不可用时才写入仓库外的用户私有文件。扩展自身不会获得 refresh token。
+
 ## 使用
 
 1. 在 Settings 的“网站资料”添加或确认稳定 Profile。
@@ -37,7 +50,8 @@ python3 -m local_agent.server
 - `submissionRecords`：v2 成功账本，唯一键为 `destinationKey + profileId`。
 - `siteAnnotations`：外链站级分类；`paid/broken/skip/deleted` 排除全站，登录和验证码是临时闸门。
 - `activeBatchRun`：仅用于恢复明确运行中或待人工的批次。
-- `Table.xlsx` / `table-library.json`：外链库和 Profile 初始种子，不是运行记录真相源。
+- 私有 Google Sheet：日常唯一人工维护源。
+- `Table.xlsx` / `table-library.json`：首次安装和离线回滚种子，不再日常双处更新。
 
 Settings 的“外链库”可查看、删除、置顶和筛选站点，并查看各 Profile 的提交状态。“导出 JSON / 导入 JSON”用于扩展重装和备份恢复。
 
@@ -63,6 +77,8 @@ node tests/backup-workflow.test.mjs
 node tests/ui-workflow.test.mjs
 node tests/extension-content.test.mjs
 node tests/local-agent.test.mjs
+node tests/google-sync-workflow.test.mjs
+node tests/table-import.test.mjs
 python3 tests/local-agent-unit.test.py
 ```
 

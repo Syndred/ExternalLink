@@ -1,12 +1,14 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-25｜扩展 2.5.0｜路线：混合 C
+> 最后更新：2026-08-25｜扩展 2.6.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
 
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
-- Table.xlsx 只作为外链库和 Profile 初始种子；运行记录以 `chrome.storage.local` 为准。
+- 私有 Google Sheet 是网站资料、外链库和人工分类的唯一维护入口；`chrome.storage.local` 是运行缓存与本地成功账本，成功后通过 outbox 自动回写 Sheet。
+- `Table.xlsx` / `table-library.json` 只保留为首次安装与离线回滚种子，不再要求日常双处更新。
+- Settings 已提供 Google 连接、只读预览、应用同步、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
 - 当前 Table 同步结果：6 个 Profile（含 VideoToArticleAI）、59 条 canonical 外链；RainbowPetAI 历史成功 10 条；VideoToArticleAI 2026-08-24 已确认免费成功 7 条。
@@ -53,10 +55,12 @@
 extension/lib/queue.js       # 成功账本、迁移、分组队列
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
 extension/lib/backup.js      # 账本备份校验与合并
+extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
 extension/background.js      # 调度和恢复
 extension/sidepanel.*        # 执行 / 批量 / 待人工
 extension/settings.*         # Profile / 外链库 / 备份 / 配置
 tools/import_table_xlsx.py   # 按工作表解析 Profile、媒体、外链和历史记录
+local_agent/google_sync.py   # Google OAuth、单表白名单、Sheets 读写
 DESIGN.md                    # UI 基础规则
 tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 ```
@@ -64,7 +68,8 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 ## 验证状态
 
 - 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
-- 已通过 Python 15 个 local_agent 单元测试。
+- 已通过 Python 21 个 local_agent 单元测试。
+- 2026-08-25 已在真实私有工作簿确认 `VideoToArticle` 子表存在，并新增 `Submission Records`、`SyncMeta` 子表；Google OAuth 客户端仍需用户在最终创建凭据前确认。
 - Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
 - 仓库 Table、插件种子、增量账本和交接表沿用同一 canonical 记录规则。RainbowPetAI 增量账本现有 10 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`。2026-08-25 已把 VideoToArticleAI 的 7 条免费成功按原 6 列格式写入 Google Sheet `Link Submit`；同工作簿新增子表写入 Profile（Field / Content / Notes）。未覆盖 RainbowPetAI 原有证据，未把 Pending Review 页写成 IndexPage。子表标签目前是 `工作表3`，需改名为 `VideoToArticleAI`。
 - TheJOAI 已在真实文件上传、描述、日期和分类复核后完成提交，账户显示 `Submitted for Review`。
@@ -75,5 +80,5 @@ tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 ## 后续边界
 
 - P2 视觉 Agent 与博客评论仿写继续暂停，直到上述真实 Chrome 验收通过。
-- Table 不做提交状态双向回写；账本 JSON 是扩展重装/备份通道。
+- Google Sheet 是人工维护源；插件本地成功先落盘，再由 outbox 幂等回写 `Submission Records`。JSON 继续作为灾备通道。
 - 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认写入永久成功。

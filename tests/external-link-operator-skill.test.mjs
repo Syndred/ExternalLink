@@ -7,6 +7,22 @@ import { auditState } from "../skills/external-link-operator/scripts/audit-state
 import { discoverMedia } from "../skills/external-link-operator/scripts/discover-media.mjs";
 import { recordSuccess } from "../skills/external-link-operator/scripts/record-success.mjs";
 
+const skillText = await fs.readFile(
+  path.resolve("skills/external-link-operator/SKILL.md"),
+  "utf8",
+);
+const dataModelText = await fs.readFile(
+  path.resolve("skills/external-link-operator/references/data-model.md"),
+  "utf8",
+);
+assert.match(skillText, /private Google Sheet as the only human-maintained source/);
+assert.match(skillText, /queued in the outbox.*Sheet `Submission Records`/);
+assert.match(skillText, /legacy `Link Submit\.Submit` column as permanent success truth/);
+assert.match(dataModelText, /私有 Google Sheet（唯一人工维护源）/);
+assert.match(dataModelText, /chrome\.storage\.local/);
+assert.match(dataModelText, /not a per-submission maintenance target/);
+assert.match(dataModelText, /legacy `Submit` column.*permanent success source/);
+
 const audit = await auditState({ profile: "RainbowPetAI" });
 assert.equal(audit.ok, true);
 assert.equal(audit.ledgerSuccessPairs, 10);

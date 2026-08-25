@@ -25,14 +25,27 @@ PROJECT_SHEET_ALIASES = {
     "RspAi": {"rspai"},
     "TextComparison": {"textcomparison", "comparisontext"},
     "GraffitiName": {"graffitiname", "graffitinameai"},
+    "VideoToArticleAI": {"videotoarticleai", "videotoarticle"},
 }
 LINK_SHEET_ALIASES = {"linksubmit", "links"}
 DEFAULT_PROJECT = "TextComparison"
-SYNC_PROFILE_IDS = ("OldPhotoLive", "RainbowPetAI", "RspAi")
+SYNC_PROFILE_IDS = (
+    "OldPhotoLive",
+    "RainbowPetAI",
+    "RspAi",
+    "TextComparison",
+    "GraffitiName",
+    "VideoToArticleAI",
+)
+PROFILE_FALLBACK_FILES = {
+    # Transitional seed until the source Google workbook contains this sub-sheet.
+    "VideoToArticleAI": ROOT / "data" / "videotoarticleai-profile.json",
+}
 LOCAL_LOGOS = {
     "OldPhotoLive": ROOT.parent / "oldphotoliveai" / "public" / "brand-icon.png",
     "RainbowPetAI": ROOT.parent / "rainbowPetAi" / "public" / "logo.png",
     "RspAi": ROOT.parent / "RspAi" / "public" / "logo.png",
+    "VideoToArticleAI": ROOT.parent / "videoToArticleAI" / "public" / "logo.svg",
 }
 
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -437,6 +450,14 @@ def main() -> None:
             projects[project_id] = canonicalize_project_fields(
                 parse_project_fields(rows)
             )
+        elif project_id in PROFILE_FALLBACK_FILES:
+            fallback_path = PROFILE_FALLBACK_FILES[project_id]
+            if fallback_path.is_file():
+                fallback = json.loads(fallback_path.read_text(encoding="utf-8"))
+                if isinstance(fallback, dict):
+                    projects[project_id] = canonicalize_project_fields(
+                        {str(key): str(value) for key, value in fallback.items()}
+                    )
 
     entries = parse_entries(find_sheet(sheets, LINK_SHEET_ALIASES))
     tasks = build_tasks(entries, projects)

@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
 
-  const LOCAL_AGENT_URL = "http://127.0.0.1:8787";
+  const LOCAL_AGENT_URL = "http://127.0.0.1:8790";
 
   function linesToList(text) {
     return String(text || "")

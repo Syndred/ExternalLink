@@ -6,6 +6,7 @@ importScripts(
   "lib/queue.js",
   "lib/scheduler.js",
   "lib/backup.js",
+  "lib/sheet-sync.js",
   "lib/url-library.js",
 );
 
@@ -25,7 +26,8 @@ const PAGE_LOAD_TIMEOUT_MS = 45000;
 const EXECUTION_TIMEOUT_MS = 180000;
 const POST_SUCCESS_CLOSE_DELAY_MS = 2000;
 const DEFAULT_MANUAL_WAIT_SEC = 120;
-const LOCAL_AGENT_URL = "http://127.0.0.1:8787";
+const LOCAL_AGENT_URL = "http://127.0.0.1:8790";
+const DEFAULT_GOOGLE_SPREADSHEET_ID = "17xqgpPDGQZozG9mBMOLRjnqy2LPiZJ6xkoYaC-HuoD0";
 const MAX_AGENT_LOOPS = 8;
 const AGENT_ACTION_SETTLE_MS = 600;
 const SNAPSHOT_RETRY_ATTEMPTS = 5;
@@ -147,6 +149,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "importSubmissionData":
       importSubmissionData(msg.data)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleSyncStatus":
+      getGoogleSyncStatus()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleAuthStart":
+      startGoogleAuth(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleSyncPreview":
+      previewGoogleSheetSync(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleSyncApply":
+      applyGoogleSheetSync(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googlePushLedger":
+      flushSheetSyncOutbox()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleDisconnect":
+      disconnectGoogleSync()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -954,7 +986,7 @@ async function recordSubmittedProject(task) {
   const storage = await chrome.storage.local.get(["submissionRecords"]);
   const records = storage.submissionRecords || {};
   const key = self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId);
-  records[key] = self.ExtLinkQueue.buildSuccessRecord({
+  const record = self.ExtLinkQueue.buildSuccessRecord({
     destinationKey,
     destinationUrl: url,
     profileId,
@@ -962,10 +994,12 @@ async function recordSubmittedProject(task) {
     confirmedBy: task.confirmedBy || "agent",
     evidence: task.successEvidence || "judge confirmed submission success",
   });
+  records[key] = record;
   await chrome.storage.local.set({
     submissionRecords: records,
     submissionSchemaVersion: SUBMISSION_SCHEMA_VERSION,
   });
+  await enqueueSheetSyncRecord(record);
 }
 
 async function addToUrlList(msg) {
@@ -1121,6 +1155,173 @@ async function importSubmissionData(data) {
   };
 }
 
+function resolveGoogleSpreadsheetId(value, storedValue = "") {
+  const raw = String(value || storedValue || DEFAULT_GOOGLE_SPREADSHEET_ID).trim();
+  const match = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  const id = match ? match[1] : raw;
+  if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) throw new Error("Google Sheet ID 或链接无效");
+  return id;
+}
+
+async function getGoogleSyncStatus() {
+  const storage = await chrome.storage.local.get([
+    "googleSpreadsheetId",
+    "googleSheetSyncEnabled",
+    "sheetSyncMeta",
+    "sheetSyncOutbox",
+  ]);
+  let agent = { connected: false, configured: false };
+  let agentError = "";
+  try {
+    agent = await callLocalAgent("/google/status", {});
+  } catch (err) {
+    agentError = err.message;
+  }
+  return {
+    ok: true,
+    spreadsheetId: storage.googleSpreadsheetId || DEFAULT_GOOGLE_SPREADSHEET_ID,
+    enabled: storage.googleSheetSyncEnabled === true,
+    meta: storage.sheetSyncMeta || null,
+    pendingRecords: Object.keys(storage.sheetSyncOutbox || {}).length,
+    agent,
+    agentError,
+  };
+}
+
+async function startGoogleAuth(msg = {}) {
+  const storage = await chrome.storage.local.get(["googleSpreadsheetId"]);
+  const spreadsheetId = resolveGoogleSpreadsheetId(
+    msg.spreadsheetId,
+    storage.googleSpreadsheetId,
+  );
+  const result = await callLocalAgent("/google/auth/start", { spreadsheetId });
+  if (!result.authUrl || !String(result.authUrl).startsWith("https://accounts.google.com/")) {
+    throw new Error("本地 Agent 未返回有效的 Google 授权地址");
+  }
+  await chrome.storage.local.set({ googleSpreadsheetId: spreadsheetId });
+  await chrome.tabs.create({ url: result.authUrl, active: true });
+  return { ok: true, spreadsheetId };
+}
+
+async function fetchGoogleSheetSnapshot(spreadsheetId) {
+  const result = await callLocalAgent("/google/sync/preview", { spreadsheetId });
+  return self.ExtLinkSheetSync.validateSnapshot(result.snapshot || result);
+}
+
+async function previewGoogleSheetSync(msg = {}) {
+  const storage = await chrome.storage.local.get([
+    "googleSpreadsheetId",
+    "siteProfiles",
+    "submissionRecords",
+    "siteAnnotations",
+    "sheetSyncMeta",
+  ]);
+  const spreadsheetId = resolveGoogleSpreadsheetId(
+    msg.spreadsheetId,
+    storage.googleSpreadsheetId,
+  );
+  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
+  const preview = self.ExtLinkSheetSync.computePreview(storage, snapshot);
+  await chrome.storage.local.set({ googleSpreadsheetId: spreadsheetId });
+  return { ok: true, preview };
+}
+
+async function applyGoogleSheetSync(msg = {}) {
+  const storage = await chrome.storage.local.get([
+    "googleSpreadsheetId",
+    "siteProfiles",
+    "submissionRecords",
+    "siteAnnotations",
+    "selectedSiteIds",
+    "activeSiteId",
+    "sheetSyncOutbox",
+    "sheetSyncMeta",
+  ]);
+  const spreadsheetId = resolveGoogleSpreadsheetId(
+    msg.spreadsheetId,
+    storage.googleSpreadsheetId,
+  );
+  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
+  if (msg.revision && msg.revision !== snapshot.revision) {
+    throw new Error("Google Sheet 在预览后发生变化，请重新预览");
+  }
+  const merged = self.ExtLinkSheetSync.applySnapshot(
+    storage,
+    snapshot,
+    SUBMISSION_SCHEMA_VERSION,
+  );
+  let outbox = { ...(storage.sheetSyncOutbox || {}) };
+  for (const [key, record] of Object.entries(merged.submissionRecords)) {
+    const remote = snapshot.submissionRecords[key];
+    if (record?.status !== "success") continue;
+    if (
+      remote?.status !== "success" ||
+      self.ExtLinkSheetSync.recordStrength(record) > self.ExtLinkSheetSync.recordStrength(remote)
+    ) {
+      outbox = self.ExtLinkSheetSync.enqueueRecord(outbox, record);
+    }
+  }
+  await chrome.storage.local.set({
+    ...merged,
+    googleSpreadsheetId: spreadsheetId,
+    googleSheetSyncEnabled: true,
+    sheetSyncOutbox: outbox,
+  });
+  const pushResult = await flushSheetSyncOutbox().catch((err) => ({
+    ok: false,
+    error: err.message,
+    pendingRecords: Object.keys(outbox).length,
+  }));
+  return {
+    ok: true,
+    preview: self.ExtLinkSheetSync.computePreview(storage, snapshot),
+    meta: merged.sheetSyncMeta,
+    push: pushResult,
+  };
+}
+
+async function enqueueSheetSyncRecord(record) {
+  const storage = await chrome.storage.local.get([
+    "googleSheetSyncEnabled",
+    "googleSpreadsheetId",
+    "sheetSyncOutbox",
+  ]);
+  if (storage.googleSheetSyncEnabled !== true || !storage.googleSpreadsheetId) return;
+  const outbox = self.ExtLinkSheetSync.enqueueRecord(storage.sheetSyncOutbox || {}, record);
+  await chrome.storage.local.set({ sheetSyncOutbox: outbox });
+  flushSheetSyncOutbox().catch((err) => {
+    log(`Google Sheet 待回写：${err.message}`, "warn");
+  });
+}
+
+async function flushSheetSyncOutbox() {
+  const storage = await chrome.storage.local.get([
+    "googleSpreadsheetId",
+    "googleSheetSyncEnabled",
+    "sheetSyncOutbox",
+  ]);
+  const outbox = storage.sheetSyncOutbox || {};
+  const records = Object.values(outbox);
+  if (!records.length) return { ok: true, pushed: 0, pendingRecords: 0 };
+  if (storage.googleSheetSyncEnabled !== true || !storage.googleSpreadsheetId) {
+    return { ok: false, pushed: 0, pendingRecords: records.length, error: "尚未启用 Google Sheet 同步" };
+  }
+  const result = await callLocalAgent("/google/ledger/push", {
+    spreadsheetId: storage.googleSpreadsheetId,
+    records,
+  });
+  const pushedKeys = Array.isArray(result.pushedKeys) ? result.pushedKeys : [];
+  const next = self.ExtLinkSheetSync.removePushed(outbox, pushedKeys);
+  await chrome.storage.local.set({ sheetSyncOutbox: next });
+  return { ok: true, pushed: pushedKeys.length, pendingRecords: Object.keys(next).length };
+}
+
+async function disconnectGoogleSync() {
+  await callLocalAgent("/google/disconnect", {});
+  await chrome.storage.local.set({ googleSheetSyncEnabled: false });
+  return { ok: true };
+}
+
 function broadcastAutoFillUpdate(payload) {
   chrome.runtime.sendMessage({ action: "autoFillUpdate", ...payload }).catch(() => {});
 }
@@ -1132,6 +1333,17 @@ async function loadTableLibrary() {
     if (res.ok) tableData = await res.json();
   } catch {
     /* table library optional */
+  }
+  const synced = await chrome.storage.local.get(["sheetTableData", "googleSheetSyncEnabled"]);
+  if (
+    synced.googleSheetSyncEnabled === true &&
+    synced.sheetTableData?.projects &&
+    Array.isArray(synced.sheetTableData?.entries)
+  ) {
+    tableData = {
+      source: "google-sheet",
+      ...synced.sheetTableData,
+    };
   }
   return tableData;
 }
@@ -2330,7 +2542,7 @@ function skipTaskWithReason(tabId, task, entry, reason) {
 
 function isAgentUnavailableError(err) {
   const message = err && err.message ? err.message : "";
-  return /local agent unavailable|127\.0\.0\.1:8787|ECONNREFUSED|Failed to fetch/i.test(message);
+  return /local agent unavailable|127\.0\.0\.1:8790|ECONNREFUSED|Failed to fetch/i.test(message);
 }
 
 function cancelRemainingDestinationTasks(task, status, reason) {

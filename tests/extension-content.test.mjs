@@ -145,7 +145,7 @@ assert.match(
 
 assert.match(
   background,
-  /LOCAL_AGENT_URL\s*=\s*['"]http:\/\/127\.0\.0\.1:8787['"]/,
+  /LOCAL_AGENT_URL\s*=\s*['"]http:\/\/127\.0\.0\.1:8790['"]/,
   "background.js should point LOCAL_AGENT_URL at the local agent service",
 );
 
@@ -240,7 +240,7 @@ assert.doesNotMatch(
 
 assert.ok(
   Array.isArray(manifest.host_permissions) &&
-    manifest.host_permissions.includes("http://127.0.0.1:8787/*"),
+    manifest.host_permissions.includes("http://127.0.0.1:8790/*"),
   "manifest.json should allow the extension service worker to fetch the local agent",
 );
 

@@ -23,9 +23,25 @@ assert.match(settingsHtml, /id="panel-library"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
 assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
+for (const id of [
+  "googleSheetId",
+  "btnGoogleConnect",
+  "btnGooglePreview",
+  "btnGoogleApply",
+  "btnGooglePush",
+  "btnGoogleDisconnect",
+  "googleSyncStatus",
+  "googleSyncPreview",
+]) {
+  assert.match(settingsHtml, new RegExp(`id="${id}"`));
+}
 assert.match(settingsJs, /action:\s*"getLibraryManagerState"/);
 assert.match(settingsJs, /action:\s*"exportSubmissionData"/);
 assert.match(settingsJs, /action:\s*"importSubmissionData"/);
+assert.match(settingsJs, /action:\s*"googleAuthStart"/);
+assert.match(settingsJs, /action:\s*"googleSyncPreview"/);
+assert.match(settingsJs, /action:\s*"googleSyncApply"/);
+assert.match(settingsJs, /action:\s*"googlePushLedger"/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 
 assert.match(css, /min-height:\s*44px/);

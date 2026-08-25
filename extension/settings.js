@@ -9,6 +9,77 @@
   let activeSiteId = "";
   let pendingLogoDataUrl = null;
   let libraryItems = [];
+  let googlePreviewRevision = "";
+
+  function setGoogleStatus(message, tone = "") {
+    const el = $("googleSyncStatus");
+    if (!el) return;
+    el.className = `sync-status${tone ? ` ${tone}` : ""}`;
+    el.textContent = message;
+  }
+
+  function setGooglePreview(preview = null) {
+    const el = $("googleSyncPreview");
+    const apply = $("btnGoogleApply");
+    googlePreviewRevision = preview?.revision || "";
+    if (apply) apply.disabled = !googlePreviewRevision || !!preview?.conflicts?.length;
+    if (!el) return;
+    if (!preview) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    const parts = [
+      `外链站 ${preview.destinations || 0} 个`,
+      `新增资料 ${preview.profilesAdded || 0} 个`,
+      `更新资料 ${preview.profilesUpdated || 0} 个`,
+      `移除资料 ${preview.profilesRemoved || 0} 个`,
+      `新增成功记录 ${preview.recordsAdded || 0} 条`,
+      `升级记录 ${preview.recordsUpgraded || 0} 条`,
+      `保护本地强证据 ${preview.recordsProtected || 0} 条`,
+      `分类变化 ${preview.annotationChanges || 0} 条`,
+      `清除分类 ${preview.annotationsRemoved || 0} 条`,
+    ];
+    if (preview.conflicts?.length) {
+      parts.push(`发现 ${preview.conflicts.length} 个冲突，请先在表格中处理后重新预览`);
+    }
+    el.textContent = parts.join(" · ");
+    el.hidden = false;
+  }
+
+  async function loadGoogleSyncStatus() {
+    setGoogleStatus("正在检查本机 Agent 和 Google 授权…");
+    const result = await chrome.runtime.sendMessage({ action: "googleSyncStatus" });
+    if (!result?.ok) throw new Error(result?.error || "读取 Google 同步状态失败");
+    if ($("googleSheetId") && result.spreadsheetId) {
+      $("googleSheetId").value = result.spreadsheetId;
+    }
+    const agent = result.agent || {};
+    if (result.agentError) {
+      setGoogleStatus(`本机 Agent 未就绪：${result.agentError}`, "warning");
+      return result;
+    }
+    const authenticated = agent.authenticated === true || agent.connected === true;
+    const configured = agent.configured === true;
+    const pending = Number(result.pendingRecords || 0);
+    const syncedAt = result.meta?.appliedAt || result.meta?.fetchedAt || "";
+    if (authenticated) {
+      const details = [
+        result.enabled ? "自动同步已启用" : "已授权，尚未应用同步",
+        pending ? `待回写 ${pending} 条` : "无待回写记录",
+        syncedAt ? `最近同步 ${new Date(syncedAt).toLocaleString()}` : "尚未同步",
+      ];
+      setGoogleStatus(details.join(" · "), result.enabled ? "success" : "warning");
+    } else if (configured) {
+      setGoogleStatus("本机配置已就绪，请点击“连接 Google”完成授权。", "warning");
+    } else {
+      setGoogleStatus(
+        "本机 Agent 尚未配置 GOOGLE_SHEET_ID 和 GOOGLE_OAUTH_CLIENT_FILE。",
+        "warning",
+      );
+    }
+    return result;
+  }
 
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -423,6 +494,114 @@
   $("librarySearch")?.addEventListener("input", renderLibrary);
   $("libraryStatusFilter")?.addEventListener("change", renderLibrary);
 
+  function googleSheetValue() {
+    return ($("googleSheetId")?.value || "").trim();
+  }
+
+  $("btnGoogleRefresh")?.addEventListener("click", async () => {
+    setGooglePreview();
+    try {
+      await loadGoogleSyncStatus();
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    }
+  });
+
+  $("btnGoogleConnect")?.addEventListener("click", async () => {
+    const btn = $("btnGoogleConnect");
+    btn.disabled = true;
+    setGooglePreview();
+    setGoogleStatus("正在打开 Google 授权页…");
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "googleAuthStart",
+        spreadsheetId: googleSheetValue(),
+      });
+      if (!result?.ok) throw new Error(result?.error || "无法开始 Google 授权");
+      setGoogleStatus("授权页已打开。完成授权后回到这里点击“刷新状态”。", "warning");
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnGooglePreview")?.addEventListener("click", async () => {
+    const btn = $("btnGooglePreview");
+    btn.disabled = true;
+    setGooglePreview();
+    setGoogleStatus("正在读取 Google Sheet，仅生成变更预览…");
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "googleSyncPreview",
+        spreadsheetId: googleSheetValue(),
+      });
+      if (!result?.ok) throw new Error(result?.error || "同步预览失败");
+      setGooglePreview(result.preview);
+      setGoogleStatus(
+        result.preview?.conflicts?.length
+          ? "预览完成，但存在冲突，未改动扩展数据。"
+          : "预览完成。确认统计无误后再应用同步。",
+        result.preview?.conflicts?.length ? "warning" : "success",
+      );
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnGoogleApply")?.addEventListener("click", async () => {
+    if (!googlePreviewRevision) return;
+    const btn = $("btnGoogleApply");
+    btn.disabled = true;
+    setGoogleStatus("正在应用已预览的数据并回写待同步成功记录…");
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "googleSyncApply",
+        spreadsheetId: googleSheetValue(),
+        revision: googlePreviewRevision,
+      });
+      if (!result?.ok) throw new Error(result?.error || "应用同步失败");
+      googlePreviewRevision = "";
+      setGooglePreview();
+      await loadLibrary();
+      await loadGoogleSyncStatus();
+      if (result.push?.ok === false) {
+        setGoogleStatus(`资料已同步；账本暂存待重试：${result.push.error}`, "warning");
+      }
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    }
+  });
+
+  $("btnGooglePush")?.addEventListener("click", async () => {
+    const btn = $("btnGooglePush");
+    btn.disabled = true;
+    setGoogleStatus("正在回写待同步成功记录…");
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "googlePushLedger" });
+      if (!result?.ok) throw new Error(result?.error || "回写失败");
+      await loadGoogleSyncStatus();
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnGoogleDisconnect")?.addEventListener("click", async () => {
+    if (!confirm("断开本机 Google 授权？扩展内现有资料和提交账本不会删除。")) return;
+    setGooglePreview();
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "googleDisconnect" });
+      if (!result?.ok) throw new Error(result?.error || "断开失败");
+      await loadGoogleSyncStatus();
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    }
+  });
+
   $("btnExportLedger")?.addEventListener("click", async () => {
     const result = await chrome.runtime.sendMessage({ action: "exportSubmissionData" });
     if (!result?.ok) return alert(result?.error || "导出失败");
@@ -500,6 +679,7 @@
           el.append(empty);
         }
       });
+      loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
     },
   );
 })();

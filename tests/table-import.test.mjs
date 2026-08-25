@@ -1,13 +1,25 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 
-const table = JSON.parse(readFileSync("extension/table-library.json", "utf8"));
+const tempDir = mkdtempSync(join(tmpdir(), "externallink-table-import-"));
+const outputPath = join(tempDir, "table-library.json");
+const imported = spawnSync(
+  "python3",
+  ["tools/import_table_xlsx.py", "--input", "Table.xlsx", "--output", outputPath],
+  { encoding: "utf8" },
+);
+assert.equal(imported.status, 0, imported.stderr || imported.stdout);
+const table = JSON.parse(readFileSync(outputPath, "utf8"));
 assert.deepEqual(Object.keys(table.projects), [
   "OldPhotoLive",
   "RainbowPetAI",
   "RspAi",
   "TextComparison",
   "GraffitiName",
+  "VideoToArticleAI",
 ]);
 const g2 = table.entries.find((entry) => entry.link === "https://www.g2.com/");
 assert.deepEqual(g2?.projects, ["OldPhotoLive", "TextComparison", "GraffitiName"]);
@@ -53,4 +65,11 @@ for (const projectId of ["OldPhotoLive", "RainbowPetAI", "RspAi"]) {
   }
 }
 
+assert.equal(
+  table.projects.VideoToArticleAI?.Url,
+  "https://videotoarticleai.com",
+  "re-running the legacy XLSX importer must preserve the transitional VideoToArticleAI profile",
+);
+
 console.log("Table import tests passed");
+rmSync(tempDir, { recursive: true, force: true });

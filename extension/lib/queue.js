@@ -367,7 +367,7 @@
   /** Dead-end statuses: permanently excluded from pending queue (until revoked). */
   const DEAD_END_STATUSES = new Set(["deleted", "skip", "broken", "paid"]);
   /** Gate statuses: keep tab for human, do not permanently exclude from queue. */
-  const GATE_STATUSES = new Set(["needs_login", "needs_captcha"]);
+  const GATE_STATUSES = new Set(["needs_login", "needs_captcha", "needs_manual"]);
 
   function classifyStatusFromReason(reason, fallback = "broken") {
     const text = String(reason || "").toLowerCase();

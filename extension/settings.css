@@ -80,6 +80,12 @@
   color: #fde68a;
 }
 
+#panel-library .library-status.needs_manual {
+  border-color: #a16207;
+  background: rgba(161, 98, 7, 0.26);
+  color: #fef08a;
+}
+
 #panel-library .library-status.needs_captcha,
 #panel-library .library-status.paid,
 #panel-library .library-status.broken {

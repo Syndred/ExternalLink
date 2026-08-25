@@ -385,6 +385,7 @@
     return (
       {
         can_submit: "可提交",
+        needs_manual: "需人工",
         needs_login: "需登录",
         needs_captcha: "验证码",
         paid: "付费",
@@ -398,6 +399,7 @@
   function annotationTone(status) {
     return new Set([
       "can_submit",
+      "needs_manual",
       "needs_login",
       "needs_captcha",
       "paid",

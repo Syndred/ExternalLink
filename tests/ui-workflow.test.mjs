@@ -49,6 +49,7 @@ assert.match(settingsJs, /annotationTone/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 
 assert.match(settingsCss, /library-status\.can_submit/);
+assert.match(settingsCss, /library-status\.needs_manual/);
 assert.match(settingsCss, /library-item:hover/);
 assert.match(settingsCss, /profile-statuses:empty/);
 assert.match(settingsCss, /library-item-actions[\s\S]*gap:\s*10px/);

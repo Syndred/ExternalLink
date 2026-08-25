@@ -175,4 +175,6 @@ const Q = loadQueueModule();
   assert.equal(remapped[stableKey].status, "success");
 }
 
+assert.equal(Q.isGateStatus("needs_manual"), true);
+
 console.log("queue workflow tests passed");

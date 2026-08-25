@@ -50,6 +50,9 @@ assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 
 assert.match(settingsCss, /library-status\.can_submit/);
 assert.match(settingsCss, /library-item:hover/);
+assert.match(settingsCss, /profile-statuses:empty/);
+assert.match(settingsCss, /library-item-actions[\s\S]*gap:\s*10px/);
+assert.match(settingsCss, /library-item-actions \.btn:focus-visible/);
 assert.match(settingsCss, /prefers-reduced-motion/);
 
 assert.match(css, /min-height:\s*44px/);

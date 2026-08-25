@@ -95,6 +95,30 @@
   color: #cbd5e1;
 }
 
+#panel-library .library-status.neutral {
+  border-color: #0369a1;
+  background: rgba(3, 105, 161, 0.24);
+  color: #bae6fd;
+}
+
+#panel-library .library-status.needs_captcha {
+  border-color: #c2410c;
+  background: rgba(194, 65, 12, 0.28);
+  color: #fed7aa;
+}
+
+#panel-library .library-status.paid {
+  border-color: #6d28d9;
+  background: rgba(109, 40, 217, 0.28);
+  color: #ddd6fe;
+}
+
+#panel-library .library-status.broken {
+  border-color: #b91c1c;
+  background: rgba(185, 28, 28, 0.28);
+  color: #fecaca;
+}
+
 #panel-library .library-meta {
   display: inline-flex;
   align-items: center;
@@ -118,6 +142,10 @@
   border-top: 1px solid rgba(51, 65, 85, 0.72);
 }
 
+#panel-library .profile-statuses:empty {
+  display: none;
+}
+
 #panel-library .profile-status {
   margin: 0;
   border: 1px solid #475569;
@@ -132,6 +160,7 @@
 #panel-library .library-item-actions {
   justify-content: flex-end;
   flex-wrap: wrap;
+  gap: 10px;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(51, 65, 85, 0.72);
@@ -158,6 +187,19 @@
 #panel-library .library-item-actions .btn-danger:hover:not([disabled]) {
   border-color: #f87171;
   background: #b91c1c;
+}
+
+#panel-library .library-item-actions .btn:focus-visible {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.24);
+}
+
+#panel-library .btn-row {
+  gap: 12px;
+}
+
+#panel-library .backup-actions {
+  gap: 10px;
 }
 
 #panel-library .empty-state {

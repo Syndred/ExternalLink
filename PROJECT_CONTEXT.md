@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-25｜扩展 2.6.0｜路线：混合 C
+> 最后更新：2026-08-26｜扩展 2.6.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 
 ## 当前已完成
@@ -40,6 +40,7 @@
 - 2026-08-25 外链库 Settings 视觉已优化：状态使用语义化彩色 pill，卡片、Profile tag、按钮组和 Google 操作区补足间距、focus/hover 与窄屏布局；提交 `9ac24a8`、`236c71c`。
 - 2026-08-25 纠正首轮只统计 78 条提交入口的范围遗漏：已全量遍历“大罗 SEO”21 个子表（3,224 行）、ViggoZ GitHub 18 个 CSV/Markdown 文件（2,555 行）、Web.Cafe 与 Notion FREE 清单，并把首轮 78 条作为正式输入合并。跨源 canonical 去重后得到 2,881 个聚合源标记免费的候选，其中 Profile 1,480、社区/论坛 861、目录 452、文章/文件 88；1,895 条由源表标记即时通过。Google Sheet `Link Submit` 现有 2,902 条数据记录，最终对账 `missingCandidates=0`。社区/论坛候选在插件导入包中标记 `needs_manual`，不进入普通目录自动提交。
 - 2026-08-25 修正全量导入把 `SubmitProject` 写死为 `VideoToArticleAI` 的问题：新增候选默认项目为空，Google Sheet 第 59–2,903 行误填值已清除且保留项目下拉验证，实际提交时再选择对应 Profile。
+- 2026-08-26 已在 Google Cloud 项目 `comparison-492900` 创建专用 `ExternalLink Desktop` OAuth 客户端、启用 Google Sheets API，并把客户端 JSON 以 0600 权限保存在仓库外。修复 OAuth 合并既有 scope 导致回调拒绝的问题后，本机 Agent 状态为 `configured=true / authenticated=true`；真实白名单工作簿预览成功读回 2,902 个 destination、6 个 Profile 和有效 revision。受 Chrome 安全策略限制，扩展 Settings 内的“预览同步 / 应用同步”仍需用户手动点击完成运行缓存更新。
 
 ## 关键存储
 

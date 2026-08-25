@@ -73,6 +73,46 @@ class StubResponse:
 
 
 class LocalAgentUnitTests(unittest.TestCase):
+    def test_google_oauth_start_does_not_merge_existing_grants(self):
+        captured = {}
+
+        class FakeFlow:
+            redirect_uri = ""
+
+            @classmethod
+            def from_client_secrets_file(cls, path, scopes):
+                captured["path"] = path
+                captured["scopes"] = scopes
+                return cls()
+
+            def authorization_url(self, **kwargs):
+                captured["authorization_kwargs"] = kwargs
+                return "https://accounts.google.com/o/oauth2/auth", "state"
+
+        flow_module = types.ModuleType("google_auth_oauthlib.flow")
+        flow_module.Flow = FakeFlow
+        package_module = types.ModuleType("google_auth_oauthlib")
+        package_module.flow = flow_module
+
+        with TemporaryDirectory() as temp_dir:
+            client_file = Path(temp_dir) / "client.json"
+            client_file.write_text("{}", encoding="utf-8")
+            with mock.patch.dict(
+                os.environ,
+                {"GOOGLE_OAUTH_CLIENT_FILE": str(client_file)},
+                clear=False,
+            ), mock.patch.dict(
+                sys.modules,
+                {
+                    "google_auth_oauthlib": package_module,
+                    "google_auth_oauthlib.flow": flow_module,
+                },
+            ):
+                result = google_sync.OAuthManager(token_store=mock.Mock()).start()
+
+        self.assertEqual(result["authUrl"], "https://accounts.google.com/o/oauth2/auth")
+        self.assertNotIn("include_granted_scopes", captured["authorization_kwargs"])
+
     def test_google_profile_aliases_keep_video_to_article_stable(self):
         self.assertEqual(
             google_sync.canonical_profile_id("VideoToArticle"),

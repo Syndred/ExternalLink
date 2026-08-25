@@ -255,7 +255,6 @@ class OAuthManager:
             flow.redirect_uri = redirect_uri
             authorization_url, state = flow.authorization_url(
                 access_type="offline",
-                include_granted_scopes="true",
                 prompt="consent",
             )
         except Exception as exc:  # noqa: BLE001 - provider config errors

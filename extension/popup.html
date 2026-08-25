@@ -1,142 +1,885 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="UTF-8">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{width:480px;min-height:400px;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
-h1{font-size:16px;padding:12px 16px;background:#1e293b;border-bottom:1px solid #334155}
-.tabs{display:flex;background:#1e293b}
-.tab{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#94a3b8}
-.tab.active{border-bottom-color:#38bdf8;color:#e2e8f0}
-.tab:hover{background:#334155}
-.panel{display:none;padding:12px}
-.panel.active{display:block}
-textarea{width:100%;height:180px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:8px;font-size:12px;border-radius:6px;resize:vertical}
-.form-row{margin-bottom:10px}
-label{font-size:12px;color:#94a3b8;margin-bottom:4px;display:block}
-input[type="text"]{width:100%;background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:6px 8px;font-size:12px;border-radius:6px}
-input[type="text"]:focus,textarea:focus{outline:none;border-color:#38bdf8}
-.btn{display:block;width:100%;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
-.btn-primary{background:#0284c7;color:#fff}
-.btn-primary:hover{background:#0369a1}
-.btn-primary:disabled{background:#334155;color:#64748b;cursor:not-allowed}
-.btn-danger{background:#dc2626;color:#fff;margin-top:4px}
-.btn-danger:hover{background:#b91c1c}
-.btn-sm{padding:6px 12px;font-size:12px;width:auto;display:inline-block}
-.stats{display:flex;gap:8px;margin-bottom:12px}
-.stat{flex:1;background:#1e293b;padding:10px;border-radius:8px;text-align:center}
-.stat-val{font-size:24px;font-weight:700}
-.stat-lbl{font-size:10px;color:#94a3b8;margin-top:2px}
-.stat.que .stat-val{color:#38bdf8}
-.stat.done .stat-val{color:#22c55e}
-.stat.skip .stat-val{color:#eab308}
-.stat.err .stat-val{color:#ef4444}
-.task{padding:8px;background:#1e293b;border-radius:6px;margin-bottom:6px;font-size:12px;display:flex;align-items:center;gap:8px}
-.task .idx{color:#64748b;min-width:24px}
-.task .domain{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.task .status{padding:2px 6px;border-radius:4px;font-size:10px}
-.status.pending{background:#334155;color:#94a3b8}
-.status.running{background:#0c4a6e;color:#38bdf8}
-.status.ok{background:#14532d;color:#22c55e}
-.status.skip{background:#713f12;color:#eab308}
-.status.err{background:#7f1d1d;color:#ef4444}
-.progress-bar{height:4px;background:#334155;border-radius:2px;margin:8px 0;overflow:hidden}
-.progress-bar .fill{height:100%;background:#38bdf8;transition:width .3s}
-.config-note{font-size:11px;color:#94a3b8;background:#1e293b;padding:8px;border-radius:6px;margin-top:8px}
-#log{max-height:120px;overflow-y:auto;font-size:10px;font-family:monospace;background:#020617;padding:8px;border-radius:6px;margin-top:8px;line-height:1.4}
-.log-line{color:#64748b}
-.log-line.ok{color:#22c55e}
-.log-line.warn{color:#eab308}
-.log-line.err{color:#ef4444}
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 520px;
+        min-height: 400px;
+        max-height: 600px;
+        overflow: hidden;
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      h1 {
+        font-size: 16px;
+        padding: 12px 16px;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+      }
+      .tabs {
+        display: flex;
+        background: #1e293b;
+      }
+      .tab {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 12px;
+        border-bottom: 2px solid transparent;
+        color: #94a3b8;
+      }
+      .tab.active {
+        border-bottom-color: #38bdf8;
+        color: #e2e8f0;
+      }
+      .tab:hover {
+        background: #334155;
+      }
+      .panel {
+        display: none;
+        padding: 12px;
+        max-height: 520px;
+        overflow-y: auto;
+      }
+      .panel.active {
+        display: block;
+      }
+      textarea {
+        width: 100%;
+        height: 180px;
+        background: #1e293b;
+        border: 1px solid #475569;
+        color: #e2e8f0;
+        padding: 8px;
+        font-size: 12px;
+        border-radius: 6px;
+        resize: vertical;
+      }
+      .form-row {
+        margin-bottom: 10px;
+      }
+      label {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+        display: block;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        background: #1e293b;
+        border: 1px solid #475569;
+        color: #e2e8f0;
+        padding: 6px 8px;
+        font-size: 12px;
+        border-radius: 6px;
+      }
+      select {
+        cursor: pointer;
+      }
+      input[type="text"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #38bdf8;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      .btn-primary {
+        background: #0284c7;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #0369a1;
+      }
+      .btn-primary:disabled {
+        background: #334155;
+        color: #64748b;
+        cursor: not-allowed;
+      }
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+        margin-top: 4px;
+      }
+      .btn-danger:hover {
+        background: #b91c1c;
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        width: auto;
+        display: inline-block;
+      }
+      .stats {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .stat {
+        flex: 1;
+        background: #1e293b;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat-val {
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .stat-lbl {
+        font-size: 10px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+      .stat.que .stat-val {
+        color: #38bdf8;
+      }
+      .stat.done .stat-val {
+        color: #22c55e;
+      }
+      .stat.skip .stat-val {
+        color: #eab308;
+      }
+      .stat.err .stat-val {
+        color: #ef4444;
+      }
+      .task {
+        padding: 8px;
+        background: #1e293b;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .task .idx {
+        color: #64748b;
+        min-width: 24px;
+      }
+      .task .domain {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .task .status {
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .task.current {
+        outline: 2px solid #38bdf8;
+        background: #0c4a6e;
+      }
+      .task.prev-done {
+        opacity: 0.85;
+      }
+      .queue-header {
+        font-size: 11px;
+        color: #94a3b8;
+        background: #1e293b;
+        padding: 8px;
+        border-radius: 6px;
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+      .queue-header b {
+        color: #e2e8f0;
+      }
+      .queue-now {
+        font-size: 12px;
+        color: #38bdf8;
+        margin: 6px 0 4px;
+      }
+      .queue-prev {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 6px;
+      }
+      .status.pending {
+        background: #334155;
+        color: #94a3b8;
+      }
+      .status.running {
+        background: #0c4a6e;
+        color: #38bdf8;
+      }
+      .status.ok {
+        background: #14532d;
+        color: #22c55e;
+      }
+      .status.skip {
+        background: #713f12;
+        color: #eab308;
+      }
+      .status.err {
+        background: #7f1d1d;
+        color: #ef4444;
+      }
+      .progress-bar {
+        height: 4px;
+        background: #334155;
+        border-radius: 2px;
+        margin: 8px 0;
+        overflow: hidden;
+      }
+      .progress-bar .fill {
+        height: 100%;
+        background: #38bdf8;
+        transition: width 0.3s;
+      }
+      .config-note {
+        font-size: 11px;
+        color: #94a3b8;
+        background: #1e293b;
+        padding: 8px;
+        border-radius: 6px;
+        margin-top: 8px;
+      }
+      #log {
+        max-height: 120px;
+        overflow-y: auto;
+        font-size: 10px;
+        font-family: monospace;
+        background: #020617;
+        padding: 8px;
+        border-radius: 6px;
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+      .log-line {
+        color: #64748b;
+      }
+      .log-line.ok {
+        color: #22c55e;
+      }
+      .log-line.warn {
+        color: #eab308;
+      }
+      .log-line.err {
+        color: #ef4444;
+      }
+      .site-toolbar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .site-toolbar select {
+        flex: 1;
+      }
+      .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #cbd5e1;
+        margin: 14px 0 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #334155;
+      }
+      .field-hint {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 2px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .btn-row .btn {
+        flex: 1;
+        margin-top: 0;
+      }
+      .btn-secondary {
+        background: #334155;
+        color: #e2e8f0;
+      }
+      .btn-secondary:hover {
+        background: #475569;
+      }
+      textarea.compact {
+        height: 64px;
+      }
+      textarea.medium {
+        height: 96px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔗 ExternalLink 外链批量提交</h1>
 
-<h1>🔗 ExternalLink 外链批量提交</h1>
+    <div class="tabs">
+      <div
+        class="tab active"
+        data-panel="submit"
+      >
+        📝 提交外链
+      </div>
+      <div
+        class="tab"
+        data-panel="sites"
+      >
+        🌐 网站资料
+      </div>
+      <div
+        class="tab"
+        data-panel="config"
+      >
+        ⚙️ 配置
+      </div>
+      <div
+        class="tab"
+        data-panel="log"
+      >
+        📊 日志
+      </div>
+    </div>
 
-<div class="tabs">
-  <div class="tab active" data-panel="submit">📝 提交外链</div>
-  <div class="tab" data-panel="config">⚙️ 配置</div>
-  <div class="tab" data-panel="log">📊 日志</div>
-</div>
+    <!-- 提交面板 -->
+    <div
+      class="panel active"
+      id="panel-submit"
+    >
+      <div
+        class="config-note"
+        style="margin-bottom: 12px"
+      >
+        侧边栏待提交 = <b>表格未提交</b> +
+        <b>插件外链库（185）</b> 合并去重，减去标记删除/跳过的站点（约一百多个可切换）。<br />
+        用侧边栏 ◀▶ 切换站点，标记后自动从队列排除。
+      </div>
+      <details style="margin-bottom: 10px; font-size: 12px; color: #94a3b8">
+        <summary style="cursor: pointer; margin-bottom: 8px">外链库 / 手动补充地址</summary>
+        <div class="form-row">
+          <textarea
+            id="urlList"
+            style="height: 100px"
+            placeholder="每行一个 URL，可选 |directory 指定平台类型"
+          ></textarea>
+          <button
+            class="btn btn-sm btn-primary"
+            id="btnLoadLibrary"
+            style="margin-top: 6px"
+          >
+            📋 加载外链库（185个）
+          </button>
+        </div>
+        <input
+          type="hidden"
+          id="targetDomain"
+          value=""
+        />
+        <input
+          type="hidden"
+          id="brandName"
+          value=""
+        />
+        <input
+          type="hidden"
+          id="anchorText"
+          value=""
+        />
+        <input
+          type="hidden"
+          id="projectSelect"
+          value="custom"
+        />
+      </details>
+      <label style="margin-top: 4px; display: block; font-size: 12px; color: #94a3b8"
+        ><input
+          type="checkbox"
+          id="cfgFillOnly"
+        />
+        仅填表模式（关闭 AI 自动提交）</label
+      >
 
-<!-- 提交面板 -->
-<div class="panel active" id="panel-submit">
-  <div class="form-row">
-    <label>目标域名（你的网站，提交时作为外链）</label>
-    <input type="text" id="targetDomain" placeholder="https://www.yoursite.com" value="">
-  </div>
-  <div class="form-row">
-    <label>品牌名称</label>
-    <input type="text" id="brandName" placeholder="Your Brand" value="">
-  </div>
-  <div class="form-row">
-    <label>锚文本（可选，留空则用品牌名）</label>
-    <input type="text" id="anchorText" placeholder="Your Brand - Best Productivity Tool">
-  </div>
-  <div class="form-row">
-    <label>外链列表（每行一个 URL）</label>
-    <textarea id="urlList" placeholder="粘贴你的外链列表：
-https://example1.com/article/123
-https://example2.com/profile-setting
-https://example3.com/submit-tool
-https://example4.com/blog/how-to-code
-...
-（每行一个 URL，第2列可选：平台类型 wp_comment/profile/directory/article）
-"></textarea>
-    <button class="btn btn-sm btn-primary" id="btnLoadLibrary" style="margin-top:6px">📋 加载外链库（185个）</button>
-  </div>
+      <div class="stats">
+        <div class="stat que">
+          <div
+            class="stat-val"
+            id="statQueue"
+          >
+            0
+          </div>
+          <div class="stat-lbl">排队</div>
+        </div>
+        <div class="stat done">
+          <div
+            class="stat-val"
+            id="statDone"
+          >
+            0
+          </div>
+          <div class="stat-lbl">完成</div>
+        </div>
+        <div class="stat skip">
+          <div
+            class="stat-val"
+            id="statSkip"
+          >
+            0
+          </div>
+          <div class="stat-lbl">跳过</div>
+        </div>
+        <div class="stat err">
+          <div
+            class="stat-val"
+            id="statErr"
+          >
+            0
+          </div>
+          <div class="stat-lbl">失败</div>
+        </div>
+      </div>
 
-<div class="stats">
-  <div class="stat que"><div class="stat-val" id="statQueue">0</div><div class="stat-lbl">排队</div></div>
-  <div class="stat done"><div class="stat-val" id="statDone">0</div><div class="stat-lbl">完成</div></div>
-  <div class="stat skip"><div class="stat-val" id="statSkip">0</div><div class="stat-lbl">跳过</div></div>
-  <div class="stat err"><div class="stat-val" id="statErr">0</div><div class="stat-lbl">失败</div></div>
-</div>
+      <div class="progress-bar">
+        <div
+          class="fill"
+          id="progressFill"
+          style="width: 0%"
+        ></div>
+      </div>
 
-  <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+      <button
+        class="btn btn-sm btn-secondary"
+        id="btnRefreshMerge"
+        style="margin-top: 4px"
+      >
+        🔄 刷新合并队列
+      </button>
 
-  <button class="btn btn-primary" id="btnStart">🚀 开始提交</button>
-  <button class="btn btn-danger" id="btnStop" style="display:none">⏹ 停止</button>
+      <div
+        class="queue-now"
+        id="queueNow"
+      >
+        当前：尚未开始
+      </div>
+      <div
+        class="queue-prev"
+        id="queuePrev"
+      ></div>
 
-  <div id="taskList" style="max-height:150px;overflow-y:auto;margin-top:8px"></div>
-  <div class="config-note">
-    💡 <b>使用方式</b>：1) 填你的网站域名和品牌名；2) 粘贴外链列表；3) 点击"开始提交"。<br>
-    遇到验证码会自动暂停，你手动解决后点击"继续"按钮。
-  </div>
-</div>
+      <button
+        class="btn btn-primary"
+        id="btnStart"
+      >
+        🚀 开始提交
+      </button>
+      <button
+        class="btn btn-primary btn-sm"
+        id="btnContinue"
+        style="display: none; margin-top: 8px"
+      >
+        ▶ 继续当前等待中的任务
+      </button>
+      <button
+        class="btn btn-danger"
+        id="btnStop"
+        style="display: none"
+      >
+        ⏹ 停止
+      </button>
 
-<!-- 配置面板 -->
-<div class="panel" id="panel-config">
-  <div class="form-row">
-    <label>邮箱（用于注册/评论）</label>
-    <input type="text" id="cfgEmail" placeholder="yourname+ext@gmail.com" value="">
-  </div>
-  <div class="form-row">
-    <label>用户名（随机人名，不用品牌名）</label>
-    <input type="text" id="cfgName" placeholder="Alex Johnson" value="">
-  </div>
-  <div class="form-row">
-    <label>评论模板（可选，留空则随机生成）</label>
-    <textarea id="cfgCommentTemplate" style="height:80px" placeholder="默认自动生成自然评论..."></textarea>
-  </div>
-  <div class="form-row">
-    <label>最大并发数（同时打开的标签页数）</label>
-    <input type="text" id="cfgConcurrency" value="3">
-  </div>
-  <label style="margin-top:8px"><input type="checkbox" id="cfgAutoSkipCaptcha"> 遇到验证码自动跳过（不暂停等待）</label>
-  <label><input type="checkbox" id="cfgPingIndex" checked> 提交后尝试索引通知（IndexNow）</label>
-  <button class="btn btn-primary" id="btnSaveConfig">💾 保存配置</button>
-  <button class="btn btn-danger btn-sm" id="btnClearData" style="margin-top:12px">🗑 清除所有数据</button>
-</div>
+      <div
+        class="queue-header"
+        id="queueMeta"
+      >
+        任务栏：表格 <b>0</b> + 外链库 <b>0</b> = 合并 <b>0</b>
+      </div>
+      <div
+        id="taskList"
+        style="max-height: 220px; overflow-y: auto; margin-top: 8px"
+      ></div>
+      <div class="config-note">
+        任务栏会高亮<b>正在提交</b>的站点，并显示<b>上一个</b>是否成功。登录或验证码会暂停等你点「继续」。需本地代理：<code
+          >python3 -m local_agent.server</code
+        >
+      </div>
+    </div>
 
-<!-- 日志面板 -->
-<div class="panel" id="panel-log">
-  <button class="btn btn-sm btn-primary" id="btnClearLog">清除日志</button>
-  <div id="log"></div>
-</div>
+    <!-- 网站资料面板 -->
+    <div
+      class="panel"
+      id="panel-sites"
+    >
+      <div class="site-toolbar">
+        <select id="siteSelect"></select>
+        <button
+          class="btn btn-sm btn-secondary"
+          id="btnAddSite"
+          title="添加站点"
+        >
+          + 添加
+        </button>
+        <button
+          class="btn btn-sm btn-danger"
+          id="btnRemoveSite"
+          title="移除当前站点"
+        >
+          移除
+        </button>
+      </div>
 
-<script src="popup.js"></script>
-</body>
+      <div class="form-row">
+        <label>网站地址（用于 AI 提取）</label>
+        <input
+          type="text"
+          id="siteExtractUrl"
+          placeholder="https://example.com"
+        />
+      </div>
+      <div class="form-row">
+        <label>资料语言</label>
+        <select id="siteLanguage">
+          <option value="auto">自动</option>
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button
+          class="btn btn-primary btn-sm"
+          id="btnExtractSite"
+        >
+          🔍 从网址提取资料
+        </button>
+        <button
+          class="btn btn-secondary btn-sm"
+          id="btnGenerateSite"
+        >
+          ✨ 基于当前资料生成
+        </button>
+      </div>
+
+      <div class="section-title">基本信息</div>
+      <div class="form-row">
+        <label>站点名称</label>
+        <input
+          type="text"
+          id="siteName"
+          placeholder="OldPhotoLive AI"
+        />
+      </div>
+      <div class="form-row">
+        <label>首页地址</label>
+        <input
+          type="text"
+          id="siteHomeUrl"
+          placeholder="https://example.com"
+        />
+      </div>
+      <div class="form-row">
+        <label>重点推广地址</label>
+        <input
+          type="text"
+          id="sitePromoUrl"
+          placeholder="https://example.com/en"
+        />
+      </div>
+      <div class="form-row">
+        <label>标题 / Title</label>
+        <input
+          type="text"
+          id="siteTitle"
+        />
+      </div>
+      <div class="form-row">
+        <label>联系邮箱</label>
+        <input
+          type="text"
+          id="siteEmail"
+          placeholder="support@example.com"
+        />
+      </div>
+
+      <div class="section-title">内容描述</div>
+      <div class="form-row">
+        <label>短描述（20-30 词）</label>
+        <textarea
+          id="siteShortDesc"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>中等描述（100-150 词）</label>
+        <textarea
+          id="siteMediumDesc"
+          class="medium"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>详细描述（250-500 词）</label>
+        <textarea id="siteLongDesc"></textarea>
+      </div>
+      <div class="form-row">
+        <label>备注 / Note</label>
+        <textarea
+          id="siteNote"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>目标受众</label>
+        <textarea
+          id="siteAudience"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>价值主张</label>
+        <textarea
+          id="siteValueProp"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>使用场景（每行一条）</label>
+        <textarea
+          id="siteUseCases"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>关键词 / Tags</label>
+        <textarea
+          id="siteTags"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>功能描述</label>
+        <textarea
+          id="siteFeatures"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>卖点（每行一条）</label>
+        <textarea
+          id="siteSellPoints"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>定价</label>
+        <input
+          type="text"
+          id="sitePricing"
+        />
+      </div>
+      <div class="form-row">
+        <label>定价类型</label>
+        <input
+          type="text"
+          id="sitePricingType"
+          placeholder="Freemium / Free / Subscription"
+        />
+      </div>
+      <div class="form-row">
+        <label>不要写的内容（每行一条）</label>
+        <textarea
+          id="siteAvoidContent"
+          class="compact"
+        ></textarea>
+      </div>
+
+      <div class="section-title">锚文本规则</div>
+      <div class="form-row">
+        <label>品牌词（每行一条）</label>
+        <textarea
+          id="siteBrandKeywords"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>网址链接词（每行一条）</label>
+        <textarea
+          id="siteUrlKeywords"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>自然表达（每行一条）</label>
+        <textarea
+          id="siteNaturalExprs"
+          class="compact"
+        ></textarea>
+        <div class="field-hint">评论/博客中轮换使用的自然提及方式</div>
+      </div>
+      <div class="form-row">
+        <label>关键词相关表达（每行一条）</label>
+        <textarea
+          id="siteKeywordExprs"
+          class="compact"
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>避免使用的词（每行一条）</label>
+        <textarea
+          id="siteAvoidWords"
+          class="compact"
+        ></textarea>
+      </div>
+      <label
+        ><input
+          type="checkbox"
+          id="siteAllowExactAnchor"
+        />
+        允许精确匹配锚文本</label
+      >
+
+      <div class="section-title">博客规则</div>
+      <div class="form-row">
+        <label>语气</label>
+        <select id="siteBlogTone">
+          <option value="helpful">有帮助</option>
+          <option value="professional">专业</option>
+          <option value="casual">轻松</option>
+          <option value="enthusiastic">热情</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>每篇草稿最多链接数</label>
+        <input
+          type="text"
+          id="siteMaxLinks"
+          value="1"
+        />
+      </div>
+      <div class="form-row">
+        <label>优先使用的锚文本</label>
+        <select id="sitePreferredAnchor">
+          <option value="natural">自然</option>
+          <option value="brand">品牌</option>
+          <option value="keyword">关键词</option>
+          <option value="url">网址</option>
+        </select>
+      </div>
+
+      <button
+        class="btn btn-primary"
+        id="btnSaveSite"
+      >
+        💾 保存当前站点资料
+      </button>
+      <div class="config-note">
+        保存后，从表格提交时会自动用这里的资料覆盖同名项目（按站点名称或 ID 匹配）。需本地代理：
+        <code>python3 -m local_agent.server</code>
+      </div>
+    </div>
+
+    <!-- 配置面板 -->
+    <div
+      class="panel"
+      id="panel-config"
+    >
+      <div class="form-row">
+        <label>邮箱（用于注册/评论）</label>
+        <input
+          type="text"
+          id="cfgEmail"
+          placeholder="yourname+ext@gmail.com"
+          value=""
+        />
+      </div>
+      <div class="form-row">
+        <label>用户名（随机人名，不用品牌名）</label>
+        <input
+          type="text"
+          id="cfgName"
+          placeholder="Alex Johnson"
+          value=""
+        />
+      </div>
+      <div class="form-row">
+        <label>评论模板（可选，留空则随机生成）</label>
+        <textarea
+          id="cfgCommentTemplate"
+          style="height: 80px"
+          placeholder="默认自动生成自然评论..."
+        ></textarea>
+      </div>
+      <div class="form-row">
+        <label>最大并发数（同时打开的标签页数）</label>
+        <input
+          type="text"
+          id="cfgConcurrency"
+          value="1"
+        />
+      </div>
+      <div class="form-row">
+        <label>人工等待超时（秒）— 登录/验证码时未点继续则自动跳过</label>
+        <input
+          type="text"
+          id="cfgManualWaitSec"
+          value="120"
+        />
+      </div>
+      <label style="margin-top: 8px"
+        ><input
+          type="checkbox"
+          id="cfgAutoSkipCaptcha"
+        />
+        遇到验证码不等待，直接跳过（不推荐）</label
+      >
+      <label
+        ><input
+          type="checkbox"
+          id="cfgPingIndex"
+          checked
+        />
+        提交后尝试索引通知（IndexNow）</label
+      >
+      <button
+        class="btn btn-primary"
+        id="btnSaveConfig"
+      >
+        💾 保存配置
+      </button>
+      <button
+        class="btn btn-danger btn-sm"
+        id="btnClearData"
+        style="margin-top: 12px"
+      >
+        🗑 清除所有数据
+      </button>
+    </div>
+
+    <!-- 日志面板 -->
+    <div
+      class="panel"
+      id="panel-log"
+    >
+      <button
+        class="btn btn-sm btn-primary"
+        id="btnClearLog"
+      >
+        清除日志
+      </button>
+      <div id="log"></div>
+    </div>
+
+    <script src="lib/queue.js"></script>
+    <script src="lib/url-library.js"></script>
+    <script src="popup.js"></script>
+  </body>
 </html>

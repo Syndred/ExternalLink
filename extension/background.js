@@ -324,8 +324,24 @@ async function startBatchRun(msg) {
   processQueue();
   return {
     ok: true,
-    tasks: state.tasks,
-    groups: state.groups,
+    tasks: state.tasks.map((task) => ({
+      id: task.id,
+      key: task.key,
+      destinationKey: task.destinationKey,
+      destinationGroupKey: task.destinationGroupKey,
+      url: task.url,
+      domain: task.domain,
+      platformType: task.platformType,
+      source: task.source,
+      profileId: task.profileId,
+      profileName: task.profileName,
+      projectKey: task.projectKey,
+      status: task.status,
+      index: task.index,
+      groupJobIndex: task.groupJobIndex,
+      groupJobCount: task.groupJobCount,
+    })),
+    groups: state.groups.map(toSubmissionGroupSummary),
     meta: pending.meta,
   };
 }
@@ -1542,12 +1558,28 @@ async function getSubmissionQueueState(msg = {}) {
   });
   return {
     ok: true,
-    tasks: groups,
-    jobs,
+    tasks: groups.map(toSubmissionGroupSummary),
     index,
     total: groups.length,
     meta,
     selectedProfileIds,
+  };
+}
+
+function toSubmissionGroupSummary(group) {
+  return {
+    id: group.id,
+    key: group.key,
+    destinationKey: group.destinationKey,
+    url: group.url,
+    domain: group.domain,
+    platformType: group.platformType,
+    source: group.source,
+    note: group.note,
+    status: group.status,
+    index: group.index,
+    profileIds: (group.jobs || []).map((job) => job.profileId),
+    profileTotal: (group.jobs || []).length,
   };
 }
 

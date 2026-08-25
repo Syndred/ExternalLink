@@ -8,6 +8,8 @@ const settingsJs = readFileSync("extension/settings.js", "utf8");
 const settingsCss = readFileSync("extension/settings.css", "utf8");
 const css = readFileSync("extension/sidepanel.css", "utf8");
 const background = readFileSync("extension/background.js", "utf8");
+const popupHtml = readFileSync("extension/popup.html", "utf8");
+const popupJs = readFileSync("extension/popup.js", "utf8");
 
 for (const panel of ["home", "batch", "manual"]) {
   assert.match(sidepanelHtml, new RegExp(`id="panel-${panel}"`));
@@ -75,5 +77,16 @@ assert.match(advanceGroup, /nextTask\.status = "needs_manual"/);
 assert.match(advanceGroup, /无法重新进入提交入口/);
 assert.match(advanceGroup, /parkTaskEntry/);
 assert.doesNotMatch(advanceGroup, /recordSubmittedProject/);
+
+for (const panel of ["submit", "sites", "config", "log"]) {
+  assert.match(popupHtml, new RegExp(`id="panel-${panel}"`));
+}
+assert.match(popupJs, /action:\s*"getSubmissionQueue",\s*selectedSiteIds/);
+assert.match(popupJs, /action:\s*"start",\s*selectedSiteIds/);
+assert.match(background, /tasks:\s*groups\.map\(toSubmissionGroupSummary\)/);
+assert.doesNotMatch(
+  background.match(/async function getSubmissionQueueState[\s\S]*?\n}\n\nfunction toSubmissionGroupSummary/)?.[0] || "",
+  /\bjobs,\s*\n/,
+);
 
 console.log("UI workflow tests passed");

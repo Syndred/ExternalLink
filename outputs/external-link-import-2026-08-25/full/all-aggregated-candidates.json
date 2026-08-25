@@ -46,15 +46,18 @@
       "url": "https://10015.io/product-finder/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "100L5；Free；Pricing=Free"
       ]
     },
@@ -1711,10 +1714,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -1722,6 +1727,7 @@
       "freeClaimed": true,
       "notes": [
         "ai-hunter.io/sub…-tool/",
+        "已写入 Google Sheet 的首轮候选",
         "AI Tools Hunter；Free；Pricing=Free"
       ]
     },
@@ -1784,10 +1790,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -1795,6 +1803,7 @@
       "freeClaimed": true,
       "notes": [
         "aidirectory.org/use…ubmit/",
+        "已写入 Google Sheet 的首轮候选",
         "AIDirectory；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2077,15 +2086,18 @@
       "url": "https://aimarketing.directory/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AIMarketing；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2094,15 +2106,18 @@
       "url": "https://aimojo.io/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AI Mojo；Free；Pricing=Free"
       ]
     },
@@ -2342,15 +2357,18 @@
       "url": "https://aitoolguru.com/submit-ai-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AIToolGuru；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2448,10 +2466,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -2459,6 +2479,7 @@
       "freeClaimed": true,
       "notes": [
         "aitoolnet.com/submit",
+        "已写入 Google Sheet 的首轮候选",
         "AIToolNet；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2593,10 +2614,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -2604,6 +2627,7 @@
       "freeClaimed": true,
       "notes": [
         "aitoolsdirectory.com/submit-tool",
+        "已写入 Google Sheet 的首轮候选",
         "AIToolsDirectory；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2701,10 +2725,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -2712,6 +2738,7 @@
       "freeClaimed": true,
       "notes": [
         "aitoolsup.com/sub…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "AIToolsUp；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -2791,15 +2818,18 @@
       "url": "https://aivalley.ai/submit-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AIValley；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -3076,10 +3106,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Web.Cafe 海外产品发布渠道",
+        "首轮明确免费提交入口",
         "GitHub/csv/06-startup-launch-ways.csv+csv/09-general-directories.csv+md/06-startup-launch-ways.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -3087,6 +3119,7 @@
       "freeClaimed": true,
       "notes": [
         "http://www.allstartups.info/Startups/Submit",
+        "已写入 Google Sheet 的首轮候选",
         "All Startups；Free；Pricing=Free"
       ]
     },
@@ -3288,15 +3321,18 @@
       "url": "https://alteropen.com/submit/pack",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AlterOpen；Free；Pricing=Free"
       ]
     },
@@ -3785,17 +3821,20 @@
     {
       "key": "anyfp.com/contact",
       "url": "https://anyfp.com/contact",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Anyfp；Free；Pricing=Free"
       ]
     },
@@ -3979,10 +4018,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Web.Cafe 海外产品发布渠道",
+        "首轮明确免费提交入口",
         "GitHub/csv/05-backlinks.csv+csv/09-general-directories.csv+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -3990,6 +4031,7 @@
       "freeClaimed": true,
       "notes": [
         "https://apprater.net/add/",
+        "已写入 Google Sheet 的首轮候选",
         "AppRater；Free；Pricing=Free"
       ]
     },
@@ -5971,17 +6013,20 @@
     {
       "key": "bestofai.com/tool/add",
       "url": "https://bestofai.com/tool/add",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "BestOfAI；Free；Pricing=Free"
       ]
     },
@@ -5990,15 +6035,18 @@
       "url": "https://bestwebsites.info/en/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Bestwebsites；Free；Pricing=Free"
       ]
     },
@@ -7948,15 +7996,18 @@
       "url": "https://blpdirectory.info/submit.php?LINK_TYPE=2",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "BPLDIRECTORY.info；Free；Pricing=Free"
       ]
     },
@@ -9502,17 +9553,20 @@
     {
       "key": "brouseai.com/submission/ai",
       "url": "https://brouseai.com/submission/ai",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "BroUseAI；Free；Pricing=Free"
       ]
     },
@@ -10624,15 +10678,18 @@
       "url": "https://chatgate.ai/submit-your-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "ChatGate AI；Free；Pricing=Free"
       ]
     },
@@ -10658,15 +10715,18 @@
       "url": "https://chatgptdemo.com/submit-new-ai-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "ChatGPTDemo；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -12926,15 +12986,18 @@
       "url": "https://crazyaboutstartups.com/share-your-startup-2",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Crazy About Startups；Free；Pricing=Free"
       ]
     },
@@ -13089,15 +13152,18 @@
       "url": "https://critiqs.ai/submit-new-ai-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Critiqs AI；Free；Pricing=Free"
       ]
     },
@@ -15045,15 +15111,18 @@
       "url": "https://devpages.io/submit-a-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "DevPages；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -16418,15 +16487,18 @@
       "url": "https://dokeyai.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Dockey AI；Free；Pricing=Free"
       ]
     },
@@ -16948,15 +17020,18 @@
       "url": "https://early.tools/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Early Tools；Free；Pricing=Free"
       ]
     },
@@ -17997,10 +18072,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -18008,6 +18085,7 @@
       "freeClaimed": true,
       "notes": [
         "every-ai.com/sub…-tool/",
+        "已写入 Google Sheet 的首轮候选",
         "Every AI；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -18448,10 +18526,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -18459,6 +18539,7 @@
       "freeClaimed": true,
       "notes": [
         "faind.ai/sub…-tool/",
+        "已写入 Google Sheet 的首轮候选",
         "Faind；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -23145,10 +23226,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -23156,6 +23239,7 @@
       "freeClaimed": true,
       "notes": [
         "futureagitools.com/sub…a-site",
+        "已写入 Google Sheet 的首轮候选",
         "Future Agi Tools；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -23514,15 +23598,18 @@
       "url": "https://gate2ai.com/submit-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Gate2AI；Free；Pricing=Free"
       ]
     },
@@ -24991,17 +25078,20 @@
     {
       "key": "gptdemo.net/gpt/add-tool",
       "url": "https://gptdemo.net/gpt/add-tool",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "GPT Demo；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -27362,10 +27452,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -27373,6 +27465,7 @@
       "freeClaimed": true,
       "notes": [
         "humanornot.co/submit-tool",
+        "已写入 Google Sheet 的首轮候选",
         "https://www.humanornot.co/；Free；Pricing=Free"
       ]
     },
@@ -28549,15 +28642,18 @@
       "url": "https://insidr.ai/submit-tools",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Insidr；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -28704,10 +28800,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -28716,6 +28814,7 @@
       "notes": [
         "ntersys",
         "intersys.ai/sub…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "https://intersys.ai/submit；Free；Pricing=Free"
       ]
     },
@@ -28745,10 +28844,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -28756,6 +28857,7 @@
       "freeClaimed": true,
       "notes": [
         "inventlist.com/sites/new",
+        "已写入 Google Sheet 的首轮候选",
         "Invent List；Free；Pricing=Free"
       ]
     },
@@ -28880,15 +28982,18 @@
       "url": "https://ismailblogger.com/submit-tools",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Ismailblogger；Free；Pricing=Free"
       ]
     },
@@ -30822,15 +30927,18 @@
       "url": "https://landing.mycloudmedia.co.uk/apps-and-websites-submit-ai-or-saas-tool/new-submission.html",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "AppsAndWebsites；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -30951,10 +31059,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Web.Cafe 海外产品发布渠道",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -30962,6 +31072,7 @@
       "freeClaimed": true,
       "notes": [
         "https://launched.io/SubmitStartup",
+        "已写入 Google Sheet 的首轮候选",
         "Launched；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -31373,17 +31484,20 @@
     {
       "key": "library.phygital.plus/tool-submission",
       "url": "https://library.phygital.plus/tool-submission",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Phygital；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -31714,17 +31828,20 @@
     {
       "key": "liveapps.ai/become-a-partner",
       "url": "https://liveapps.ai/become-a-partner",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "LiveApps；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -32096,10 +32213,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -32107,6 +32226,7 @@
       "freeClaimed": true,
       "notes": [
         "lookaitools.com/sub…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "Look AI Tools；Free；Pricing=Free"
       ]
     },
@@ -32552,15 +32672,18 @@
       "url": "https://marketinginternetdirectory.com/submit.php",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Marketing Internet Directory；Free；Pricing=Free"
       ]
     },
@@ -33423,10 +33546,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -33434,6 +33559,7 @@
       "freeClaimed": true,
       "notes": [
         "microstartups.co/lis…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "MicroStartups；Free；Pricing=Free"
       ]
     },
@@ -35248,15 +35374,18 @@
       "url": "https://news.bensbites.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Ben's Bites News；Free；Pricing=Free"
       ]
     },
@@ -35476,15 +35605,18 @@
       "url": "https://nextgentool.io/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "NextGenTool；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -35527,15 +35659,18 @@
       "url": "https://nextgentools.me/submit-your-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "NextGenTools；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -35561,15 +35696,18 @@
       "url": "https://nextpedia.io/submit-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Nextpedia；Free；Pricing=Free"
       ]
     },
@@ -36296,15 +36434,18 @@
       "url": "https://openfuture.ai/submit-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "OpenFuture；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -36474,10 +36615,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -36485,6 +36628,7 @@
       "freeClaimed": true,
       "notes": [
         "orbic.ai/log…Ftools",
+        "已写入 Google Sheet 的首轮候选",
         "Orbic AI；Free；Pricing=Free"
       ]
     },
@@ -36849,10 +36993,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Web.Cafe 海外产品发布渠道",
+        "首轮明确免费提交入口",
         "GitHub/csv/06-startup-launch-ways.csv+csv/09-general-directories.csv+md/06-startup-launch-ways.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -36860,6 +37006,7 @@
       "freeClaimed": true,
       "notes": [
         "http://www.paggu.com/submit-your-startup/",
+        "已写入 Google Sheet 的首轮候选",
         "Paggu；Free；Pricing=Free"
       ]
     },
@@ -37102,32 +37249,38 @@
       "url": "https://payoncealternatives.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Pay Once Alternatives；Free；Pricing=Free"
       ]
     },
     {
       "key": "payonceapps.com/add-your-app",
       "url": "https://payonceapps.com/add-your-app",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "PayOnceApps；Free；Pricing=Free"
       ]
     },
@@ -39284,17 +39437,20 @@
     {
       "key": "promptzone.com/new",
       "url": "https://promptzone.com/new",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Promptzone；Free；Pricing=Free"
       ]
     },
@@ -39954,15 +40110,18 @@
       "url": "https://raiday.ai/submit-ai-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "RayDay；Free；Pricing=Free"
       ]
     },
@@ -40774,15 +40933,18 @@
       "url": "https://resource.fyi/account/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Resource fyi；Free；Pricing=Free"
       ]
     },
@@ -41267,10 +41429,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -41278,6 +41442,7 @@
       "freeClaimed": true,
       "notes": [
         "saasbaba.com/add…-tool/",
+        "已写入 Google Sheet 的首轮候选",
         "SaasBaba；Free；Pricing=Free"
       ]
     },
@@ -41405,15 +41570,18 @@
       "url": "https://saaspo.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "SAASpo；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -42613,15 +42781,18 @@
       "url": "https://simplelister.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Simple Lister；Free；Pricing=Free"
       ]
     },
@@ -42837,15 +43008,18 @@
       "url": "https://sites-plus.com/submit?c=96&LINK_TYPE=9",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Site-Plus；Free；Pricing=Free"
       ]
     },
@@ -44691,10 +44865,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -44702,6 +44878,7 @@
       "freeClaimed": true,
       "notes": [
         "startupaitools.com/sub…tools/",
+        "已写入 Google Sheet 的首轮候选",
         "Startup AI Tools；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -44847,15 +45024,18 @@
       "url": "https://startupbuffer.com/site/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "StartupBuffer；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -44910,15 +45090,18 @@
       "url": "https://startupcollections.com/submit-product",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Startup Collections；Free；Pricing=Free"
       ]
     },
@@ -45164,15 +45347,18 @@
       "url": "https://startuproulette.com/promote-my-startup",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Startup Roulette；Free；Pricing=Free"
       ]
     },
@@ -45290,15 +45476,18 @@
       "url": "https://startupstage.app/startups/new",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Startup Stage；Free；Pricing=Free"
       ]
     },
@@ -45353,15 +45542,18 @@
       "url": "https://startuptracker.io/crowdsourcing",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/03-new-startup-directories.csv+csv/06-startup-launch-ways.csv+csv/09-general-directories.csv+md/03-new-startup-directories.md+md/06-startup-launch-ways.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Startup Tracker；Free；Pricing=Free"
       ]
     },
@@ -46572,15 +46764,18 @@
       "url": "https://techpluto.com/submit-startup",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "TechPluto；Free；Pricing=Free"
       ]
     },
@@ -46821,15 +47016,18 @@
       "url": "https://thataicollection.com/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "That AI Collection；Free；Pricing=Free"
       ]
     },
@@ -46874,17 +47072,20 @@
     {
       "key": "theaigeneration.com/add",
       "url": "https://theaigeneration.com/add",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "TheAIGeneration；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -46908,17 +47109,20 @@
     {
       "key": "theailibrary.co/account/tools/new",
       "url": "https://theailibrary.co/account/tools/new",
-      "platformType": "profile",
+      "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "The AI Library；Free；Pricing=Free"
       ]
     },
@@ -47847,15 +48051,18 @@
       "url": "https://tipseason.com/ai-tools/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "TipSeason；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -47963,10 +48170,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -47974,7 +48183,25 @@
       "freeClaimed": true,
       "notes": [
         "toolai.io/Log…tories",
+        "已写入 Google Sheet 的首轮候选",
         "Tool AI；Free；Pricing=Free"
+      ]
+    },
+    {
+      "key": "toolbattles.com/submit-product",
+      "url": "https://toolbattles.com/submit-product",
+      "platformType": "directory",
+      "categories": [
+        "Directory"
+      ],
+      "sources": [
+        "首轮明确免费提交入口"
+      ],
+      "linkTypes": [],
+      "instantApproval": false,
+      "freeClaimed": true,
+      "notes": [
+        "已写入 Google Sheet 的首轮候选"
       ]
     },
     {
@@ -48056,15 +48283,18 @@
       "url": "https://toolpilot.ai/pages/submit-your-ai-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/07-ai-creators-directory.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/07-ai-creators-directory.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "ToolPilot；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -48091,10 +48321,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -48102,6 +48334,7 @@
       "freeClaimed": true,
       "notes": [
         "tools-ai.online/too…tories",
+        "已写入 Google Sheet 的首轮候选",
         "Tools AI Online；Free；Pricing=Free"
       ]
     },
@@ -48152,15 +48385,18 @@
       "url": "https://tools.so/submit",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "Tools.so；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -48190,10 +48426,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/05-backlinks.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/05-backlinks.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -48201,6 +48439,7 @@
       "freeClaimed": true,
       "notes": [
         "toolscout.ai/submit",
+        "已写入 Google Sheet 的首轮候选",
         "ToolScout；Free；Price=Free；Pricing=Free"
       ]
     },
@@ -48264,10 +48503,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -48275,6 +48516,7 @@
       "freeClaimed": true,
       "notes": [
         "toolsummary.com/sub…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "Tool Summary；Free；Pricing=Free"
       ]
     },
@@ -48508,10 +48750,12 @@
       "platformType": "directory",
       "categories": [
         "Product Launch",
+        "Directory",
         "submission"
       ],
       "sources": [
         "Notion 100+ DIR/FREE",
+        "首轮明确免费提交入口",
         "GitHub/csv/09-general-directories.csv+md/09-general-directories.md"
       ],
       "linkTypes": [],
@@ -48519,6 +48763,7 @@
       "freeClaimed": true,
       "notes": [
         "trackbes.com/sub…ori.es",
+        "已写入 Google Sheet 的首轮候选",
         "https://trackbes.com/；Free；Pricing=Free"
       ]
     },
@@ -53282,15 +53527,18 @@
       "url": "https://whattheai.tech/submit-a-tool",
       "platformType": "directory",
       "categories": [
+        "Directory",
         "submission"
       ],
       "sources": [
+        "首轮明确免费提交入口",
         "GitHub/csv/04-launch-websites.csv+csv/09-general-directories.csv+md/04-launch-websites.md+md/09-general-directories.md"
       ],
       "linkTypes": [],
       "instantApproval": false,
       "freeClaimed": true,
       "notes": [
+        "已写入 Google Sheet 的首轮候选",
         "WhatTheAI；Free；Price=Free；Pricing=Free"
       ]
     },

@@ -1,15 +1,15 @@
 {
   "rawRows": 3224,
-  "uniqueCandidates": 2880,
+  "uniqueCandidates": 2881,
   "existingCandidates": 0,
-  "missingCandidates": 2880,
-  "freeClaimed": 2880,
+  "missingCandidates": 2881,
+  "freeClaimed": 2881,
   "instantApproval": 1895,
   "manualCommunity": 861,
   "byPlatformType": {
     "community": 861,
-    "profile": 1480,
-    "directory": 451,
+    "profile": 1470,
+    "directory": 462,
     "article": 88
   }
 }

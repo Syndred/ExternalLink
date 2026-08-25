@@ -141,6 +141,21 @@ for (const [file, sourceName] of [
   }
 }
 
+const initialImportPath = resolve(sourceDir, "免费外链候选导入.json");
+if (existsSync(initialImportPath)) {
+  const initialImport = JSON.parse(readFileSync(initialImportPath, "utf8"));
+  for (const line of String(initialImport.urlList || "").split(/\r?\n/)) {
+    const [url, type = "directory"] = line.split("|");
+    add(url, {
+      source: "首轮明确免费提交入口",
+      category: "Directory",
+      freeClaimed: true,
+      platformType: type || "directory",
+      note: "已写入 Google Sheet 的首轮候选",
+    });
+  }
+}
+
 const githubPath = resolve(sourceDir, "github-candidates.json");
 if (existsSync(githubPath)) {
   const github = JSON.parse(readFileSync(githubPath, "utf8"));
@@ -205,7 +220,6 @@ const sheetRows = missingItems.map((item) => [
     item.instantApproval ? "聚合源标记可即时通过" : "",
     "导入日期 2026-08-25；执行前复核当前规则",
   ].filter(Boolean).join("；"),
-  "",
 ].join("\t"));
 
 mkdirSync(outputDir, { recursive: true });

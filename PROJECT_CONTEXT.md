@@ -42,6 +42,7 @@
 - 2026-08-25 修正全量导入把 `SubmitProject` 写死为 `VideoToArticleAI` 的问题：新增候选默认项目为空，Google Sheet 第 59–2,903 行误填值已清除且保留项目下拉验证，实际提交时再选择对应 Profile。
 - 2026-08-26 已在 Google Cloud 项目 `comparison-492900` 创建专用 `ExternalLink Desktop` OAuth 客户端、启用 Google Sheets API，并把客户端 JSON 以 0600 权限保存在仓库外。修复 OAuth 合并既有 scope 导致回调拒绝的问题后，本机 Agent 状态为 `configured=true / authenticated=true`。随后通过 Computer Use 重载 Chrome 扩展至 2.6.0，并在真实 Settings 完成预览与应用：读回并落盘 2,902 个 destination、更新 6 个 Profile、无移除、无待回写记录、无分类冲突或本地强证据覆盖；界面确认“自动同步已启用”，最近同步时间为 2026-08-26 07:25:23。
 - 2026-08-26 合并并验收 8 月 5 日遗留的 Popup 工作台改版：补齐网站资料、配置、日志和合并队列 UI；修复 2,902 条 Sheet 数据下队列消息因重复携带完整 Profile 配置而无法序列化的问题，并让 Popup 按 `selectedSiteIds` 调用当前批量接口。Computer Use 实机确认刷新后显示 2,985 个可切换目标（表 2,844 + 库 141），四个标签正常；未启动真实提交。
+- 2026-08-26 建立 `media/submission-assets/` 本地提交媒体库：6 个 Profile 各含源码 Logo 与 4 张 1440×900 线上功能截图，VideoToArticleAI 同时保留 SVG 和透明 PNG Logo；共 33 个文件、约 9.5MB。Google Sheet 六个 Profile 子表已补齐经验证的公开媒体直链与 `Local media folder / Local LOGO / Local Screenshot 1–4` 相对路径；5 个 Profile 公开媒体 6/6，VideoToArticleAI 因当前仅两张已部署图片保留 4/6、不用假链接补齐。本次同步在真实 Settings 预览并应用，更新 6 个 Profile、无删除或证据覆盖，最近同步 2026-08-26 08:39:09。
 
 ## 关键存储
 

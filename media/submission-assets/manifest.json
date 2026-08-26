@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "capturedAt": "2026-08-26",
+  "viewport": "1440x900",
+  "profiles": {
+    "RainbowPetAI": {
+      "logo": "RainbowPetAI/logo.png",
+      "screenshots": [
+        { "file": "RainbowPetAI/01-home.png", "url": "https://rainbowpetai.com/" },
+        { "file": "RainbowPetAI/02-memorials.png", "url": "https://rainbowpetai.com/memorials" },
+        { "file": "RainbowPetAI/03-star-map.png", "url": "https://rainbowpetai.com/star-map" },
+        { "file": "RainbowPetAI/04-tools.png", "url": "https://rainbowpetai.com/tools" }
+      ]
+    },
+    "RspAi": {
+      "logo": "RspAi/logo.png",
+      "screenshots": [
+        { "file": "RspAi/01-home.png", "url": "https://rspai.org/" },
+        { "file": "RspAi/02-generator.png", "url": "https://rspai.org/ai-image-generator" },
+        { "file": "RspAi/03-showcases.png", "url": "https://rspai.org/showcases" },
+        { "file": "RspAi/04-pricing.png", "url": "https://rspai.org/pricing" }
+      ]
+    },
+    "GraffitiName": {
+      "logo": "GraffitiName/logo.png",
+      "screenshots": [
+        { "file": "GraffitiName/01-home.png", "url": "https://graffitinameai.com/" },
+        { "file": "GraffitiName/02-showcases.png", "url": "https://graffitinameai.com/showcases" },
+        { "file": "GraffitiName/03-pricing.png", "url": "https://graffitinameai.com/pricing" },
+        { "file": "GraffitiName/04-guide.png", "url": "https://graffitinameai.com/blog/graffiti-name-art-ideas" }
+      ]
+    },
+    "OldPhotoLive": {
+      "logo": "OldPhotoLive/logo.png",
+      "screenshots": [
+        { "file": "OldPhotoLive/01-home.png", "url": "https://oldphotoliveai.com/en" },
+        { "file": "OldPhotoLive/02-restore.png", "url": "https://oldphotoliveai.com/en/restore" },
+        { "file": "OldPhotoLive/03-colorize.png", "url": "https://oldphotoliveai.com/en/colorize" },
+        { "file": "OldPhotoLive/04-repair.png", "url": "https://oldphotoliveai.com/en/repair-damaged-old-photos" }
+      ]
+    },
+    "VideoToArticleAI": {
+      "logo": "VideoToArticleAI/logo.png",
+      "logoSource": "VideoToArticleAI/logo.svg",
+      "screenshots": [
+        { "file": "VideoToArticleAI/01-home.png", "url": "https://videotoarticleai.com/" },
+        { "file": "VideoToArticleAI/02-video-to-text.png", "url": "https://videotoarticleai.com/video-to-text" },
+        { "file": "VideoToArticleAI/03-video-to-article.png", "url": "https://videotoarticleai.com/video-to-article" },
+        { "file": "VideoToArticleAI/04-frames.png", "url": "https://videotoarticleai.com/video-to-frames-png" }
+      ]
+    },
+    "TextComparison": {
+      "logo": "TextComparison/logo.png",
+      "screenshots": [
+        { "file": "TextComparison/01-home.png", "url": "https://comparison-text.site/" },
+        { "file": "TextComparison/02-text-compare.png", "url": "https://comparison-text.site/tools/text-compare" },
+        { "file": "TextComparison/03-pdf-compare.png", "url": "https://comparison-text.site/tools/pdf-compare" },
+        { "file": "TextComparison/04-image-compare.png", "url": "https://comparison-text.site/tools/image-compare" }
+      ]
+    }
+  }
+}

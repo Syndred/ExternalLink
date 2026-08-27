@@ -2694,6 +2694,15 @@
     return true;
   }
 
+  function reportMediaUpload(status, details = {}) {
+    chrome.runtime.sendMessage({
+      action: "mediaUploadStatus",
+      status,
+      pageUrl: location.href,
+      ...details,
+    }).catch(() => {});
+  }
+
   async function tryFillFileFromUrl(input, imageUrl, baseUrl, config, media = null) {
     if (!input || input.type !== "file") return false;
 
@@ -2704,13 +2713,19 @@
     try {
       if (dataUrl && String(dataUrl).startsWith("data:")) {
         const blob = await (await fetch(dataUrl)).blob();
-        if (await attachBlobToFileInput(input, blob, "logo")) return true;
+        if (await attachBlobToFileInput(input, blob, "logo")) {
+          reportMediaUpload("success", { name: "logo", source: "embedded", bytes: blob.size, mime: blob.type });
+          return true;
+        }
       }
       if (imageUrl) {
         const absolute = new URL(imageUrl, baseUrl || location.href).href;
         const sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
         const blob = await fetchSubmissionMediaBlob(absolute);
-        if (await attachBlobToFileInput(input, blob, sourceName)) return true;
+        if (await attachBlobToFileInput(input, blob, sourceName)) {
+          reportMediaUpload("success", { name: sourceName, source: "remote", bytes: blob.size, mime: blob.type });
+          return true;
+        }
       }
     } catch {
       /* Remote media failed — fall through to the local media library. */
@@ -2725,12 +2740,14 @@
         const local = await fetchLocalMediaBlob({ ...request, kind });
         if (await attachBlobToFileInput(input, local.blob, local.name)) {
           logStep(`📁 已用本地图库上传 ${request.profile}/${local.name}`);
+          reportMediaUpload("success", { name: local.name, source: "local", profile: request.profile, bytes: local.blob.size, mime: local.blob.type });
           return true;
         }
       } catch (err) {
         if (kind === request.kind) logStep(`⚠️ 本地图库上传失败: ${err.message}`);
       }
     }
+    reportMediaUpload("failed", { profile: request?.profile || config?.projectKey || "", reason: "没有可用或符合要求的媒体文件" });
     return false;
   }
 
@@ -3275,6 +3292,16 @@
     if (commentExternal >= 3) dofollowLikely = commentNofollow / commentExternal < 0.5;
     else if (external >= 5) dofollowLikely = nofollowRatio < 0.5;
 
+    const commentField = queryFillableElements().find((element) => {
+      if (!(element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement)) return false;
+      return /comment|reply|message|review|正文|评论|回复/i.test(getSnapshotLabel(element));
+    });
+    const commentMaxLength = commentField
+      ? Number(commentField.getAttribute("maxlength") || commentField.maxLength || 0)
+      : 0;
+    const robots = String(document.querySelector('meta[name="robots"]')?.getAttribute("content") || "").toLowerCase();
+    const indexable = !/\bnoindex\b/.test(robots);
+
     return {
       url: location.href,
       hostname: location.hostname,
@@ -3296,6 +3323,10 @@
       hasCaptcha: detectCaptcha(),
       formFieldCount: queryFillableElements().length,
       articleChars: extractArticleText(12000).length,
+      commentMaxLength: commentMaxLength > 0 ? commentMaxLength : null,
+      commentFieldLabel: commentField ? compactText(getSnapshotLabel(commentField), 160) : "",
+      indexable,
+      robots: compactText(robots, 160),
     };
   }
 

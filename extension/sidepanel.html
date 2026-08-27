@@ -53,8 +53,14 @@
         <div class="insight-tdk" id="pageTdk" hidden>
           <div class="tdk-title" id="pageTitle"></div>
           <div class="tdk-desc" id="pageDescription"></div>
+          <div class="tdk-keywords" id="pageKeywords"></div>
         </div>
         <div class="metric-row" id="pageMetrics" aria-label="页面质量信号"></div>
+        <div class="queue-quality" id="queueQuality" hidden aria-live="polite">
+          <span class="queue-quality-score" id="queueQualityScore"></span>
+          <span class="queue-quality-tier" id="queueQualityTier"></span>
+          <span class="queue-project-status" id="queueProjectStatus"></span>
+        </div>
       </section>
 
       <section class="workflow-card">
@@ -68,7 +74,7 @@
         <div class="toolbar" role="toolbar" aria-label="页面操作">
           <button type="button" class="tool-btn" id="btnDetect">检测</button>
           <button type="button" class="tool-btn tool-primary" id="btnFillForm">填表</button>
-          <button type="button" class="tool-btn" id="btnFillComment">AI 评论</button>
+          <button type="button" class="tool-btn" id="btnFillComment">填入评论</button>
           <button type="button" class="tool-btn tool-accent" id="btnLaunchNext" title="打开队列中的下一站">下一站</button>
         </div>
       </section>
@@ -83,12 +89,44 @@
               <option value="casual">轻松</option>
               <option value="enthusiastic">热情</option>
             </select>
-            <button type="button" class="btn-link" id="btnRegenComment">重新生成</button>
+            <button type="button" class="btn-link" id="btnRegenComment">生成 3 条</button>
           </div>
         </div>
-        <p class="card-desc">读取当前文章正文生成切题评论；可在填入前编辑。</p>
-        <textarea id="spCommentText" rows="4" placeholder="点击「AI 评论」或「重新生成」…"></textarea>
-        <div class="comment-meta"><span id="commentCharCount">0 字</span></div>
+        <p class="card-desc">先生成候选，再选择并编辑；确认后点击「填入评论」。</p>
+        <div class="comment-draft-list" id="commentDraftList" role="listbox" aria-label="评论候选">
+          <div class="empty-state compact-empty">点击「生成 3 条」获取候选评论</div>
+        </div>
+        <textarea id="spCommentText" rows="4" placeholder="选择候选或直接编辑评论…"></textarea>
+        <div class="comment-meta" aria-live="polite">
+          <span id="commentCharCount">0 字</span>
+          <span id="commentCharLimit">上限未检测</span>
+          <span id="commentRemaining">剩余 —</span>
+        </div>
+        <p class="comment-length-hint" id="commentLengthHint" role="status">正在读取评论字段限制…</p>
+        <div class="comment-history-head">
+          <span>历史版本</span>
+          <button type="button" class="btn-link" id="btnRestoreComment" disabled>恢复上一版</button>
+        </div>
+        <div class="comment-history" id="commentHistory" role="list" aria-label="评论历史">
+          <div class="empty-state compact-empty">生成或编辑后，这里会保留上一版</div>
+        </div>
+      </section>
+
+      <section class="card media-preflight">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">媒体预检</h2>
+            <p class="card-desc">当前 Profile 的本地 Logo 和截图；填写表单后回显实际上传结果。</p>
+          </div>
+          <button type="button" class="btn-link" id="btnRefreshMedia">刷新</button>
+        </div>
+        <div class="media-library-status" id="mediaLibraryStatus" role="status">正在读取本地图库…</div>
+        <div class="media-preflight-list" id="mediaPreflightList">
+          <div class="empty-state compact-empty">尚未读取媒体清单</div>
+        </div>
+        <div class="media-upload-result" id="mediaUploadResult" role="status" aria-live="polite">
+          填写表单后，这里会显示文件字段的实际上传结果。
+        </div>
       </section>
 
       <details class="card collapsible" open>

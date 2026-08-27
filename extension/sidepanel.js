@@ -22,6 +22,23 @@
   let parkedTasks = [];
   let pagePrescan = null;
   let workflowStep = "detect";
+  let commentDrafts = [];
+  let selectedCommentDraft = -1;
+  let commentHistory = [];
+  let commentFieldInfo = {
+    maxLength: null,
+    minLength: null,
+    label: "",
+    source: "unknown",
+  };
+  let localMediaLibrary = null;
+  let mediaUploadState = {
+    status: "idle",
+    uploaded: [],
+    skipped: [],
+    fields: [],
+  };
+  let mediaLoadToken = 0;
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -90,6 +107,7 @@
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     if (changes.siteProfiles || changes.activeSiteId) {
+      const previousActiveSiteId = activeSiteId;
       chrome.storage.local.get(["siteProfiles", "activeSiteId"], (items) => {
         siteProfiles = items.siteProfiles || {};
         activeSiteId = items.activeSiteId || Object.keys(siteProfiles)[0] || "";
@@ -98,6 +116,11 @@
         renderSiteSelect();
         renderBatchSiteChoices();
         updateProfileStatus();
+        if (previousActiveSiteId !== activeSiteId) {
+          resetCommentStudio({ clearHistory: true });
+          resetMediaUploadState();
+        }
+        loadMediaPreflight().catch(() => {});
       });
     }
     if (changes.deletedSubmissionKeys || changes.siteAnnotations || changes.urlList) {
@@ -186,8 +209,11 @@
   $("spSiteSelect")?.addEventListener("change", () => {
     activeSiteId = $("spSiteSelect").value;
     chrome.storage.local.set({ activeSiteId });
+    resetCommentStudio({ clearHistory: true });
+    resetMediaUploadState();
     updateProfileStatus();
     loadCommentTemplate();
+    loadMediaPreflight().catch(() => {});
   });
 
   async function loadSubmissionQueue(syncUrl) {
@@ -208,6 +234,58 @@
     }
   }
 
+  function renderQueueQuality(task) {
+    const wrap = $("queueQuality");
+    const scoreEl = $("queueQualityScore");
+    const tierEl = $("queueQualityTier");
+    const statusEl = $("queueProjectStatus");
+    if (!wrap || !scoreEl || !tierEl || !statusEl) return;
+    if (!task) {
+      wrap.setAttribute("hidden", "");
+      return;
+    }
+
+    const quality = task.quality || {};
+    const score = Number(quality.score);
+    const hasScore = Number.isFinite(score) && score >= 0;
+    scoreEl.textContent = hasScore ? `质量 ${score}/100` : "质量待检测";
+    tierEl.textContent = quality.tier ? `· ${quality.tier}` : "· 未分级";
+    const tierClass =
+      quality.tier === "优先"
+        ? "priority"
+        : quality.tier === "可做"
+          ? "workable"
+          : quality.tier === "低质"
+            ? "low"
+            : quality.tier === "观察"
+              ? "watch"
+              : "";
+    tierEl.className = "queue-quality-tier" + (tierClass ? ` ${tierClass}` : "");
+    tierEl.title = (quality.reasons || []).join(" · ") || "当前队列质量评分";
+
+    const statuses = Array.isArray(task.profiles) ? task.profiles : [];
+    const statusText = {
+      pending: "待提交",
+      running: "进行中",
+      ok: "已验证",
+      success: "已成功",
+      filled: "已填表",
+      needs_manual: "待人工",
+      captcha: "验证码",
+      skip: "已跳过",
+      err: "失败",
+    };
+    const profileSummary = statuses
+      .map((profile) => {
+        const name = profile.profileName || profile.profileId || "项目";
+        return `${name}·${statusText[profile.status] || profile.status || "待提交"}`;
+      })
+      .join("  ");
+    statusEl.textContent = profileSummary || `项目 ${task.profileTotal || task.profileIds?.length || 0} 个`;
+    statusEl.title = profileSummary;
+    wrap.removeAttribute("hidden");
+  }
+
   function renderSubmissionNav() {
     const el = $("submissionNavInfo");
     const metaEl = $("submissionNavMeta");
@@ -226,16 +304,19 @@
     if (!el) return;
     if (!submissionTasks.length) {
       el.textContent = "无待提交站点";
+      renderQueueQuality(null);
       return;
     }
     const task = submissionTasks[submissionIndex];
     if (!task) {
       el.textContent = `${submissionIndex + 1} / ${submissionTasks.length}`;
+      renderQueueQuality(null);
       return;
     }
     const src = task.source === "table" ? "表" : task.source === "library" ? "库" : "";
     el.textContent = `${submissionIndex + 1} / ${submissionTasks.length} · ${task.domain || task.url}${src ? ` · ${src}` : ""}`;
     el.title = task.url || "";
+    renderQueueQuality(task);
   }
 
   async function cycleSubmission(delta, options = {}) {
@@ -283,15 +364,610 @@
     }
   }
 
+  function formatCommentHistoryTime(timestamp) {
+    try {
+      return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "刚才";
+    }
+  }
+
+  function copyCommentDraft(draft) {
+    if (!draft || typeof draft !== "object") return null;
+    return {
+      text: String(draft.text || ""),
+      angle: String(draft.angle || ""),
+      anchorText: String(draft.anchorText || ""),
+      placement: String(draft.placement || ""),
+      chars: Number.isFinite(Number(draft.chars)) ? Number(draft.chars) : undefined,
+    };
+  }
+
+  function makeCommentSnapshot(label) {
+    const text = $("spCommentText")?.value || "";
+    const drafts = commentDrafts.map(copyCommentDraft).filter(Boolean);
+    if (!text.trim() && !drafts.length) return null;
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      label: label || "上一版",
+      at: Date.now(),
+      tone: $("commentTone")?.value || "helpful",
+      selected: selectedCommentDraft,
+      text,
+      drafts,
+    };
+  }
+
+  function commentSnapshotKey(snapshot) {
+    if (!snapshot) return "";
+    return [
+      snapshot.text || "",
+      snapshot.tone || "",
+      ...(snapshot.drafts || []).map((draft) => draft?.text || ""),
+    ].join("\u0001");
+  }
+
+  function captureCommentState(label) {
+    const snapshot = makeCommentSnapshot(label);
+    if (!snapshot) return;
+    if (commentSnapshotKey(commentHistory[0]) === commentSnapshotKey(snapshot)) return;
+    commentHistory = [snapshot, ...commentHistory].slice(0, 8);
+    renderCommentHistory();
+  }
+
+  function renderCommentDrafts() {
+    const list = $("commentDraftList");
+    if (!list) return;
+    list.replaceChildren();
+    if (!commentDrafts.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state compact-empty";
+      empty.textContent = "点击「生成 3 条」获取候选评论";
+      list.append(empty);
+      return;
+    }
+
+    commentDrafts.forEach((draft, index) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className =
+        "comment-draft-option" + (index === selectedCommentDraft ? " selected" : "");
+      option.dataset.commentDraftIndex = String(index);
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", index === selectedCommentDraft ? "true" : "false");
+
+      const label = document.createElement("span");
+      label.className = "comment-draft-label";
+      const labelText = document.createElement("span");
+      labelText.textContent = `候选 ${index + 1}${draft.angle ? ` · ${draft.angle}` : ""}`;
+      const meta = document.createElement("span");
+      meta.className = "comment-draft-meta";
+      meta.textContent = `${String(draft.text || "").length} 字`;
+      label.append(labelText, meta);
+
+      const preview = document.createElement("span");
+      preview.className = "comment-draft-preview";
+      preview.textContent = draft.text || "（空候选）";
+      option.append(label, preview);
+      list.append(option);
+    });
+  }
+
+  function renderCommentHistory() {
+    const list = $("commentHistory");
+    const restore = $("btnRestoreComment");
+    if (restore) restore.disabled = !commentHistory.length;
+    if (!list) return;
+    list.replaceChildren();
+    if (!commentHistory.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state compact-empty";
+      empty.textContent = "生成或编辑后，这里会保留上一版";
+      list.append(empty);
+      return;
+    }
+
+    commentHistory.forEach((snapshot, index) => {
+      const row = document.createElement("div");
+      row.className = "comment-history-item";
+      const summary = document.createElement("span");
+      summary.className = "comment-history-summary";
+      const preview = String(snapshot.text || snapshot.drafts?.[snapshot.selected]?.text || "");
+      summary.textContent = `${snapshot.label || "上一版"} · ${formatCommentHistoryTime(snapshot.at)} · ${preview || "候选集"}`;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "comment-history-restore";
+      button.dataset.commentHistoryIndex = String(index);
+      button.textContent = "恢复";
+      button.title = `恢复 ${snapshot.label || "上一版"}`;
+      row.append(summary, button);
+      list.append(row);
+    });
+  }
+
+  function selectCommentDraft(index, options = {}) {
+    const draft = commentDrafts[index];
+    const ta = $("spCommentText");
+    if (!draft || !ta) return;
+    if (options.capture !== false && selectedCommentDraft !== index && ta.value.trim()) {
+      captureCommentState("切换候选前");
+    }
+    selectedCommentDraft = index;
+    ta.value = String(draft.text || "");
+    updateCommentCharCount();
+    renderCommentDrafts();
+    showToast(`已选择候选 ${index + 1}，可编辑后填入`);
+  }
+
+  function restoreCommentHistory(index = 0) {
+    const snapshot = commentHistory[index];
+    if (!snapshot) return;
+    const current = makeCommentSnapshot("恢复前");
+    if (current && commentSnapshotKey(current) !== commentSnapshotKey(snapshot)) {
+      commentHistory = [current, ...commentHistory.filter((item) => item.id !== snapshot.id)].slice(0, 8);
+    }
+    commentDrafts = (snapshot.drafts || []).map(copyCommentDraft).filter(Boolean);
+    selectedCommentDraft = Number.isInteger(snapshot.selected) ? snapshot.selected : -1;
+    const ta = $("spCommentText");
+    if (ta) {
+      const selected = commentDrafts[selectedCommentDraft];
+      ta.value = snapshot.text || selected?.text || "";
+    }
+    if ($("commentTone") && snapshot.tone) $("commentTone").value = snapshot.tone;
+    updateCommentCharCount();
+    renderCommentDrafts();
+    renderCommentHistory();
+    showToast("已恢复历史版本，可继续编辑");
+  }
+
+  function resetCommentFieldInfo() {
+    commentFieldInfo = { maxLength: null, minLength: null, label: "", source: "unknown" };
+    updateCommentCharCount();
+  }
+
+  function resetCommentStudio(options = {}) {
+    commentDrafts = [];
+    selectedCommentDraft = -1;
+    if (options.clearHistory !== false) commentHistory = [];
+    const ta = $("spCommentText");
+    if (ta) ta.value = "";
+    resetCommentFieldInfo();
+    renderCommentDrafts();
+    renderCommentHistory();
+  }
+
   function updateCommentCharCount() {
     const ta = $("spCommentText");
     const counter = $("commentCharCount");
+    const limit = $("commentCharLimit");
+    const remaining = $("commentRemaining");
+    const hint = $("commentLengthHint");
     if (!ta || !counter) return;
-    const len = (ta.value || "").trim().length;
+    const len = String(ta.value || "").length;
+    const max = Number(commentFieldInfo.maxLength);
+    const hasMax = Number.isFinite(max) && max > 0;
+    const meta = counter.closest(".comment-meta");
+    const over = hasMax && len > max;
+
     counter.textContent = `${len} 字`;
+    if (limit) limit.textContent = hasMax ? `上限 ${max} 字` : "上限未检测";
+    if (remaining) remaining.textContent = hasMax ? `剩余 ${Math.max(0, max - len)} 字` : "剩余 —";
+    if (meta) meta.classList.toggle("over-limit", over);
+
+    if (hint) {
+      hint.className = "comment-length-hint";
+      if (over) {
+        hint.classList.add("err");
+        hint.textContent = `已超出 ${len - max} 字，请编辑后再填入。`;
+      } else if (hasMax && commentFieldInfo.minLength && len > 0 && len < commentFieldInfo.minLength) {
+        hint.classList.add("warn");
+        hint.textContent = `当前页面要求至少 ${commentFieldInfo.minLength} 字。`;
+      } else if (hasMax) {
+        hint.textContent = `${commentFieldInfo.label ? `${commentFieldInfo.label} · ` : ""}已读取当前页面评论字段限制。`;
+      } else {
+        hint.textContent = "未读取到评论字段 maxlength；可继续编辑，提交前请以页面提示为准。";
+      }
+    }
   }
 
-  $("spCommentText")?.addEventListener("input", updateCommentCharCount);
+  function chooseCommentField(snapshot) {
+    const fields = Array.isArray(snapshot?.fields) ? snapshot.fields : [];
+    const candidates = fields.filter((field) => {
+      const hint = [field?.label, field?.name, field?.id, field?.placeholder, field?.aria]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const type = String(field?.type || field?.tag || "").toLowerCase();
+      return type === "textarea" || /comment|reply|message|feedback|body|评论|回复/.test(hint);
+    });
+    candidates.sort((a, b) => {
+      const score = (field) => {
+        const hint = [field?.label, field?.name, field?.id, field?.placeholder, field?.aria]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return (/(comment|reply|评论|回复)/.test(hint) ? 100 : 0) +
+          (String(field?.type || field?.tag || "").toLowerCase() === "textarea" ? 20 : 0) +
+          (field?.required ? 5 : 0);
+      };
+      return score(b) - score(a);
+    });
+    return candidates[0] || null;
+  }
+
+  async function getActivePageSnapshot() {
+    if (!activeTabId || !currentPageUrl?.startsWith("http")) return null;
+    try {
+      const snapshot = await chrome.tabs.sendMessage(activeTabId, { action: "getPageSnapshot" });
+      return snapshot?.error ? null : snapshot;
+    } catch {
+      return null;
+    }
+  }
+
+  async function refreshCommentFieldInfo() {
+    const requestedTabId = activeTabId;
+    const requestedUrl = currentPageUrl;
+    const prescanMax = Number(pagePrescan?.commentMaxLength);
+    if (Number.isFinite(prescanMax) && prescanMax > 0) {
+      commentFieldInfo = {
+        maxLength: prescanMax,
+        minLength: null,
+        label: String(pagePrescan?.commentFieldLabel || "").trim(),
+        source: "page prescan",
+      };
+      updateCommentCharCount();
+    }
+    const snapshot = await getActivePageSnapshot();
+    if (requestedTabId !== activeTabId || requestedUrl !== currentPageUrl) return snapshot;
+    const field = chooseCommentField(snapshot);
+    const constraints = field?.constraints || {};
+    const maxLength = Number(constraints.maxLength);
+    const minLength = Number(constraints.minLength);
+    const effectiveMax =
+      Number.isFinite(maxLength) && maxLength > 0
+        ? maxLength
+        : Number.isFinite(prescanMax) && prescanMax > 0
+          ? prescanMax
+          : null;
+    if (!field && effectiveMax != null) return snapshot;
+    commentFieldInfo = {
+      maxLength: effectiveMax,
+      minLength: Number.isFinite(minLength) && minLength > 0 ? minLength : null,
+      label: String(field?.label || field?.name || pagePrescan?.commentFieldLabel || "").trim(),
+      source: field ? "page snapshot" : "unknown",
+    };
+    updateCommentCharCount();
+    return snapshot;
+  }
+
+  function handleCommentTextInput() {
+    const ta = $("spCommentText");
+    if (ta && commentDrafts[selectedCommentDraft]) {
+      commentDrafts[selectedCommentDraft].text = ta.value;
+      commentDrafts[selectedCommentDraft].chars = ta.value.length;
+    }
+    updateCommentCharCount();
+  }
+
+  function formatMediaBytes(bytes) {
+    const value = Number(bytes);
+    if (!Number.isFinite(value) || value < 0) return "大小未知";
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function mediaKindLabel(kind) {
+    return { logo: "Logo", screenshot: "截图", other: "其他" }[kind] || "图片";
+  }
+
+  function setMediaLibraryStatus(text, cls = "") {
+    const status = $("mediaLibraryStatus");
+    if (!status) return;
+    status.textContent = text;
+    status.className = "media-library-status" + (cls ? ` ${cls}` : "");
+  }
+
+  function renderMediaUploadResult() {
+    const result = $("mediaUploadResult");
+    if (!result) return;
+    result.replaceChildren();
+    result.className = "media-upload-result";
+
+    const { uploaded = [], skipped = [], fields = [], status = "idle" } = mediaUploadState;
+    if (status === "idle" && !uploaded.length && !skipped.length) {
+      result.textContent = "填写表单后，这里会显示文件字段的实际上传结果。";
+      return;
+    }
+
+    const title = document.createElement("div");
+    title.className = "media-upload-result-title";
+    if (uploaded.length && skipped.length) {
+      title.textContent = `已上传 ${uploaded.length} 个，${skipped.length} 个需要处理`;
+      result.classList.add("warn");
+    } else if (uploaded.length) {
+      title.textContent = `实际上传成功 ${uploaded.length} 个`;
+      result.classList.add("ok");
+    } else if (skipped.length) {
+      title.textContent = "媒体上传未完成";
+      result.classList.add("warn");
+    } else if (fields.length) {
+      title.textContent = "已检测到文件字段，尚未确认上传结果";
+      result.classList.add("warn");
+    } else {
+      title.textContent = "当前页面没有可回显的文件字段";
+      result.classList.add("err");
+    }
+    result.append(title);
+
+    const rows = document.createElement("div");
+    rows.className = "media-upload-result-list";
+    for (const item of uploaded) {
+      const row = document.createElement("div");
+      row.className = "media-upload-result-row";
+      const source = item.source ? ` · ${item.source}` : "";
+      const label = item.label || "文件字段";
+      const fileName = item.name && item.name !== label ? ` → ${item.name}` : "";
+      row.textContent = `✅ ${label}${fileName}${source}`;
+      rows.append(row);
+    }
+    for (const item of skipped) {
+      const row = document.createElement("div");
+      row.className = "media-upload-result-row";
+      row.textContent = `⚠️ ${item.label || item.name || "文件字段"}${item.reason ? `：${item.reason}` : "：未能自动上传"}`;
+      rows.append(row);
+    }
+    if (!uploaded.length && !skipped.length && fields.length) {
+      for (const field of fields.slice(0, 5)) {
+        const row = document.createElement("div");
+        row.className = "media-upload-result-row";
+        row.textContent = `⏳ ${field.label || field.name || "文件字段"}`;
+        rows.append(row);
+      }
+    }
+    result.append(rows);
+  }
+
+  function resetMediaUploadState() {
+    mediaUploadState = { status: "idle", uploaded: [], skipped: [], fields: [] };
+    renderMediaUploadResult();
+  }
+
+  function resolveLocalMediaProfile(profiles) {
+    const entries = Array.isArray(profiles) ? profiles : [];
+    const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
+    const candidates = [activeSiteId, profile?.id, profile?.name]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean);
+    return (
+      candidates.map((value) => entries.find((entry) => String(entry?.profile || "") === value)).find(Boolean) ||
+      candidates
+        .map((value) => value.toLowerCase())
+        .map((value) => entries.find((entry) => String(entry?.profile || "").toLowerCase() === value))
+        .find(Boolean) ||
+      null
+    );
+  }
+
+  function createMediaFileRow(profileName, file) {
+    const row = document.createElement("div");
+    row.className = "media-file-item";
+    row.dataset.mediaName = String(file?.name || "");
+
+    const preview = document.createElement("div");
+    preview.className = "media-file-placeholder";
+    preview.textContent = file?.kind === "logo" ? "◉" : "▧";
+    if (String(file?.mime || "").startsWith("image/")) {
+      const image = document.createElement("img");
+      image.className = "media-file-thumb";
+      image.alt = `${file.name || "媒体"} 缩略图`;
+      image.setAttribute("aria-hidden", "true");
+      preview.replaceChildren(image);
+    }
+
+    const info = document.createElement("div");
+    info.className = "media-file-info";
+    const head = document.createElement("div");
+    head.className = "media-file-head";
+    const name = document.createElement("span");
+    name.className = "media-file-name";
+    name.textContent = file?.name || "未命名文件";
+    name.title = file?.name || "";
+    const availability = document.createElement("span");
+    availability.className = "media-file-availability warn";
+    availability.textContent = "读取中…";
+    head.append(name, availability);
+
+    const meta = document.createElement("div");
+    meta.className = "media-file-meta";
+    const kind = document.createElement("span");
+    kind.className = "media-file-tag";
+    kind.textContent = mediaKindLabel(file?.kind);
+    const mime = document.createElement("span");
+    mime.textContent = file?.mime || "类型未知";
+    const size = document.createElement("span");
+    size.textContent = formatMediaBytes(file?.bytes);
+    meta.append(kind, mime, size);
+    info.append(head, meta);
+    row.append(preview, info);
+    row.__mediaProfile = profileName;
+    row.__mediaFile = file;
+    return row;
+  }
+
+  async function enrichMediaFilePreview(row, token) {
+    const profile = row?.__mediaProfile;
+    const file = row?.__mediaFile;
+    if (!profile || !file || token !== mediaLoadToken) return;
+    const availability = row.querySelector(".media-file-availability");
+    const image = row.querySelector(".media-file-thumb");
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "fetchLocalSubmissionMedia",
+        profile,
+        name: file.name,
+      });
+      if (!response?.ok || !response.dataUrl) throw new Error(response?.error || "无法读取");
+      if (image) image.src = response.dataUrl;
+      if (availability) {
+        availability.className = "media-file-availability";
+        availability.textContent = "可用";
+      }
+    } catch (err) {
+      if (availability) {
+        availability.className = "media-file-availability err";
+        availability.textContent = "不可用";
+        availability.title = err.message || "读取失败";
+      }
+    }
+  }
+
+  async function loadMediaPreflight() {
+    const token = ++mediaLoadToken;
+    const list = $("mediaPreflightList");
+    if (list) {
+      list.replaceChildren();
+      const loading = document.createElement("div");
+      loading.className = "empty-state compact-empty";
+      loading.textContent = "正在读取本地媒体清单…";
+      list.append(loading);
+    }
+    setMediaLibraryStatus("正在读取本地图库…");
+    try {
+      const response = await chrome.runtime.sendMessage({ action: "listLocalSubmissionMedia" });
+      if (token !== mediaLoadToken) return;
+      localMediaLibrary = response || null;
+      if (!response?.ok) throw new Error(response?.error || "读取本地图库失败");
+      if (!response.mediaRootExists) {
+        setMediaLibraryStatus("本地图库目录不存在，请启动媒体代理或检查配置。", "warn");
+        if (list) {
+          list.replaceChildren();
+          const empty = document.createElement("div");
+          empty.className = "empty-state compact-empty";
+          empty.textContent = "图库目录不可用";
+          list.append(empty);
+        }
+        return;
+      }
+
+      const entry = resolveLocalMediaProfile(response.profiles);
+      if (!entry || !entry.files?.length) {
+        setMediaLibraryStatus(`${siteProfiles[activeSiteId]?.name || activeSiteId || "当前 Profile"} 暂无本地媒体`, "warn");
+        if (list) {
+          list.replaceChildren();
+          const empty = document.createElement("div");
+          empty.className = "empty-state compact-empty";
+          empty.textContent = "当前 Profile 没有可用的 Logo 或截图";
+          list.append(empty);
+        }
+        return;
+      }
+
+      setMediaLibraryStatus(`已找到 ${entry.files.length} 个媒体文件 · ${entry.profile}`, "ok");
+      if (!list) return;
+      list.replaceChildren();
+      const rows = entry.files.map((file) => createMediaFileRow(entry.profile, file));
+      rows.forEach((row) => list.append(row));
+      await Promise.all(rows.map((row) => enrichMediaFilePreview(row, token)));
+    } catch (err) {
+      if (token !== mediaLoadToken) return;
+      localMediaLibrary = null;
+      setMediaLibraryStatus(err.message || "读取本地图库失败", "err");
+      if (list) {
+        list.replaceChildren();
+        const empty = document.createElement("div");
+        empty.className = "empty-state compact-empty";
+        empty.textContent = "暂时无法读取媒体清单";
+        list.append(empty);
+      }
+    }
+  }
+
+  async function refreshMediaUploadResult(fillResult = {}) {
+    const eventUploaded = mediaUploadState.uploaded || [];
+    const eventSkipped = mediaUploadState.skipped || [];
+    let report = null;
+    let snapshot = null;
+    if (activeTabId) {
+      try {
+        report = await chrome.tabs.sendMessage(activeTabId, { action: "getFilledFieldsReport" });
+      } catch {
+        /* A page may navigate immediately after the upload. Runtime events still remain useful. */
+      }
+      if (!report) snapshot = await getActivePageSnapshot();
+    }
+    const uploadedFromReport = (report?.fields || [])
+      .filter((field) => String(field?.type || "").toLowerCase() === "file" && field.value)
+      .map((field) => ({
+        label: field.label || field.name || "文件字段",
+        name: String(field.value || ""),
+        source: "页面已确认",
+      }));
+    const fileFields = (report?.fields || snapshot?.fields || [])
+      .filter((field) => String(field?.type || field?.tag || "").toLowerCase() === "file")
+      .map((field) => ({ label: field.label || field.name || "文件字段", name: field.name || "" }));
+    const skippedFromResult = (fillResult.skippedFiles || []).map((item) =>
+      typeof item === "string" ? { label: item } : item,
+    );
+    const mergeByKey = (items) => {
+      const seen = new Set();
+      return items.filter((item) => {
+        const key = `${item.label || ""}|${item.name || ""}|${item.source || ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
+    const uploaded = mergeByKey([...eventUploaded, ...uploadedFromReport]);
+    const skipped = mergeByKey([...eventSkipped, ...skippedFromResult]);
+    mediaUploadState = {
+      status: uploaded.length && !skipped.length ? "ok" : skipped.length ? "warn" : "idle",
+      uploaded,
+      skipped,
+      fields: fileFields,
+    };
+    renderMediaUploadResult();
+  }
+
+  function handleMediaUploadStatus(message) {
+    if (message?.pageUrl && currentPageUrl && message.pageUrl !== currentPageUrl) return;
+    const item = {
+      label: message?.fieldLabel || message?.label || message?.name || "文件字段",
+      name: message?.name || "",
+      source: { local: "本地图库", remote: "远程图片", embedded: "Profile 内置" }[message?.source] || message?.source || "页面",
+      reason: message?.reason || "",
+    };
+    if (message?.status === "success") {
+      const exists = (mediaUploadState.uploaded || []).some(
+        (entry) => entry.label === item.label && entry.name === item.name && entry.source === item.source,
+      );
+      if (!exists) mediaUploadState.uploaded = [...(mediaUploadState.uploaded || []), item];
+      mediaUploadState.status = "ok";
+    } else if (message?.status === "failed") {
+      const exists = (mediaUploadState.skipped || []).some(
+        (entry) => entry.label === item.label && entry.name === item.name && entry.reason === item.reason,
+      );
+      if (!exists) mediaUploadState.skipped = [...(mediaUploadState.skipped || []), item];
+      mediaUploadState.status = "warn";
+    }
+    renderMediaUploadResult();
+  }
+
+  $("btnRefreshMedia")?.addEventListener("click", () => loadMediaPreflight());
+
+  $("spCommentText")?.addEventListener("input", handleCommentTextInput);
+  $("commentDraftList")?.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-comment-draft-index]");
+    if (!target) return;
+    selectCommentDraft(Number(target.dataset.commentDraftIndex));
+  });
+  $("commentHistory")?.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-comment-history-index]");
+    if (!target) return;
+    restoreCommentHistory(Number(target.dataset.commentHistoryIndex));
+  });
+  $("btnRestoreComment")?.addEventListener("click", () => restoreCommentHistory(0));
 
   function renderMetricChip(label, cls) {
     const chip = document.createElement("span");
@@ -315,6 +991,8 @@
 
     if (prescan?.hasCommentForm) row.append(renderMetricChip("有评论表单", "good"));
     if (prescan?.hasCaptcha) row.append(renderMetricChip("含验证码", "bad"));
+    if (prescan?.indexable === true) row.append(renderMetricChip("可索引", "good"));
+    if (prescan?.indexable === false) row.append(renderMetricChip("Noindex", "bad"));
     if (prescan?.formFieldCount > 0) {
       row.append(renderMetricChip(`${prescan.formFieldCount} 个字段`, "good"));
     }
@@ -346,15 +1024,18 @@
     const wrap = $("pageTdk");
     const titleEl = $("pageTitle");
     const descEl = $("pageDescription");
-    if (!wrap || !titleEl || !descEl) return;
+    const keywordsEl = $("pageKeywords");
+    if (!wrap || !titleEl || !descEl || !keywordsEl) return;
     const title = prescan?.title || prescan?.h1 || "";
     const desc = prescan?.description || "";
-    if (!title && !desc) {
+    const keywords = prescan?.keywords || "";
+    if (!title && !desc && !keywords) {
       wrap.setAttribute("hidden", "");
       return;
     }
     titleEl.textContent = title || "—";
     descEl.textContent = desc || "无 meta description";
+    keywordsEl.textContent = keywords ? `关键词：${keywords}` : "";
     wrap.removeAttribute("hidden");
   }
 
@@ -374,7 +1055,12 @@
     }
   }
 
-  async function regenerateCommentDraft() {
+  function getCommentGenerationMaxChars() {
+    const max = Number(commentFieldInfo.maxLength);
+    return Number.isFinite(max) && max > 0 ? Math.max(40, Math.min(max, 2000)) : 700;
+  }
+
+  async function generateCommentCandidates() {
     if (!activeTabId || !currentPageUrl?.startsWith("http")) {
       showToast("请先打开目标文章页", true);
       return;
@@ -391,40 +1077,85 @@
       btn.textContent = "生成中…";
     }
     try {
+      const snapshot = await refreshCommentFieldInfo();
       const cfg = P.buildAgentConfigFromProfile(profile, {});
       cfg.blogRules = { ...(cfg.blogRules || {}), tone };
-      const result = await chrome.runtime.sendMessage({
-        action: "generateCommentPreview",
-        tabId: activeTabId,
-        config: cfg,
-        refresh: true,
-        count: 1,
-      });
-      if (!result?.ok || !result.text) {
+
+      const pageText = String(snapshot?.text || "").trim();
+      let result;
+      if (pageText.length >= 120) {
+        result = await chrome.runtime.sendMessage({
+          action: "generateCommentDrafts",
+          pageUrl: currentPageUrl,
+          pageTitle: [snapshot?.title, pagePrescan?.title, pagePrescan?.description]
+            .filter(Boolean)
+            .join(" — "),
+          pageText,
+          config: cfg,
+          refresh: true,
+          count: 3,
+          maxChars: getCommentGenerationMaxChars(),
+          allowLink: true,
+        });
+      } else {
+        // The existing content-script preview is a graceful fallback when a page
+        // blocks the snapshot request; it can still extract article text in-page.
+        const fallback = await chrome.runtime.sendMessage({
+          action: "generateCommentPreview",
+          tabId: activeTabId,
+          config: cfg,
+          refresh: true,
+          count: 1,
+        });
+        result = fallback?.ok && fallback.text
+          ? { ok: true, drafts: [{ text: fallback.text, angle: "页面兜底" }] }
+          : fallback;
+      }
+
+      const drafts = (result?.drafts || [])
+        .map(copyCommentDraft)
+        .filter((draft) => draft?.text?.trim())
+        .slice(0, 3);
+      if (!result?.ok || !drafts.length) {
         throw new Error(result?.error || "AI 评论生成失败，请确认文章正文足够长");
       }
-      if ($("spCommentText")) {
-        $("spCommentText").value = result.text;
-        updateCommentCharCount();
-      }
+
+      captureCommentState("重新生成前");
+      commentDrafts = drafts;
+      selectedCommentDraft = 0;
+      if ($("spCommentText")) $("spCommentText").value = drafts[0].text;
+      renderCommentDrafts();
+      updateCommentCharCount();
       setWorkflowStep("fill");
-      showToast("评论草稿已生成");
+      showToast(
+        drafts.length === 3
+          ? "已生成 3 条评论候选，选择并编辑后再填入"
+          : `已生成 ${drafts.length} 条评论候选，选择并编辑后再填入`,
+      );
     } catch (err) {
       showToast(err.message, true);
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "重新生成";
+        btn.textContent = "生成 3 条";
       }
     }
   }
 
-  $("btnRegenComment")?.addEventListener("click", regenerateCommentDraft);
-  $("btnFillComment")?.addEventListener("click", async () => {
+  function commentIsOverLimit() {
+    const max = Number(commentFieldInfo.maxLength);
+    return Number.isFinite(max) && max > 0 && String($("spCommentText")?.value || "").length > max;
+  }
+
+  $("btnRegenComment")?.addEventListener("click", generateCommentCandidates);
+  $("btnFillComment")?.addEventListener("click", () => {
     const ta = $("spCommentText");
     if (ta && !ta.value.trim()) {
-      await regenerateCommentDraft();
-      if (ta.value.trim()) fillPage("comment");
+      showToast("请先生成或编辑评论，再点击填入评论", true);
+      return;
+    }
+    if (commentIsOverLimit()) {
+      showToast("评论超过当前页面字数上限，请先编辑", true);
       return;
     }
     fillPage("comment");
@@ -446,6 +1177,7 @@
     if (!activeTabId) return;
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
     if (!P.profileConfigured(profile)) return;
+    resetMediaUploadState();
     setAutoFillStatus("正在填写…");
     try {
       const result = await chrome.runtime.sendMessage({
@@ -461,6 +1193,7 @@
   }
 
   async function handleFillResult(result, mode) {
+    if (mode === "form") refreshMediaUploadResult(result).catch(() => {});
     if (result?.needs_manual || result?.captcha || result?.blocked || result?.advance) {
       const label =
         SITE_STATUS_MAP[result.classified]?.label ||
@@ -697,6 +1430,8 @@
     pagePrescan = null;
     renderPageMetrics(null, {});
     $("pageTdk")?.setAttribute("hidden", "");
+    resetCommentStudio({ clearHistory: true });
+    resetMediaUploadState();
     setWorkflowStep("detect");
   }
 
@@ -753,6 +1488,7 @@
       detection = detectResult;
       renderDetection(detectResult);
       renderPageMetrics(pagePrescan, metrics);
+      await refreshCommentFieldInfo();
       await refreshSiteAnnotation(currentPageUrl);
       setWorkflowStep(detectResult.operable ? "fill" : "detect");
       showToast("检测完成");
@@ -814,6 +1550,7 @@
     const origText = btn.textContent;
     btn.disabled = true;
     btn.textContent = "填写中…";
+    if (mode === "form") resetMediaUploadState();
     setAutoFillStatus("正在填写…");
 
     try {
@@ -1071,6 +1808,10 @@
   }
 
   chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.action === "mediaUploadStatus") {
+      handleMediaUploadStatus(msg);
+      return;
+    }
     if (msg.action === "autoFillUpdate") {
       if (msg.status === "classified") {
         const label = SITE_STATUS_MAP[msg.classifyStatus]?.label || msg.classifyStatus;
@@ -1158,6 +1899,7 @@
     });
     loadCommentTemplate();
     updateCommentCharCount();
+    loadMediaPreflight().catch(() => {});
     setWorkflowStep("detect");
   });
 

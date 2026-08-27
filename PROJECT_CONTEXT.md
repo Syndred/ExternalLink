@@ -1,13 +1,19 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-27 12:20｜扩展 2.7.0｜路线：混合 C
+> 最后更新：2026-08-28｜扩展 2.8.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
 
 ## 当前已完成
 
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
-- **2.7.0 对标 BacklinkHelper / AutoCommentAI 补齐四块能力**（已落地，需在 Chrome 重载扩展并重启本机 Agent）：
+- **2.8.0 补齐外链运营闭环**（代码、本机 Agent 与 Google Sheet 已验收；Chrome 运行缓存待重载后应用）：
+  1. **机会质量分**：结合 DR/DA、流量、Spam、dofollow、indexable、相关性、域名年龄和复核时间生成 0–100 分；外链库可筛选/排序，队列可设置最低分闸门。
+  2. **发布链接监控**：只复查成功账本里的 `Public URL / Evidence URL`，识别 live/missing/unreachable 和 rel；不撤销历史成功，只在“曾存活 → 异常”时提醒。
+  3. **评论工作室**：一次生成 3 条候选，选择后可编辑，显示字段上限/剩余字数并可恢复上一版；“生成”和“填入评论”彻底分离。
+  4. **媒体预检**：按当前 Profile 展示 Logo/截图的文件名、类型、大小和缩略图；填表后回显每个文件字段的实际上传结果。
+  5. **Sheet 变化提醒**：定时只读预览并提醒，仍由人工确认“应用同步”；不会后台静默覆盖本地强证据。
+- **2.7.0 对标 BacklinkHelper / AutoCommentAI 补齐四块能力**：
   1. **AI 评论生成**：`POST /comment`；读页面正文 → DeepSeek 写切题评论；拒绝套话开场；链接默认放 URL 字段；失败时用标题兜底，不再用 10 条硬编码英文模板。
   2. **本地图库上传注入**：`GET /media/list` + `/media/file` 读 `/Users/syndred/Desktop/projects/media/{Profile}/`；`File` + `DataTransfer` 赋给 `input[type=file]`，绕开系统文件选择器与 CORS。
   3. **提交前目标闸门**：域名黑名单（支持 `.suffix` / `*`）、RDAP 域名年龄缓存、`prescanPage` 的 dofollow 预估（优先看既有评论外链）；Settings「全局配置」可改阈值并一键预取队列年龄。
@@ -42,7 +48,7 @@
 - 2026-08-07～08-20 养号巡检见历史记录与 `data/community-participation-log.json`。
 - 2026-08-24 新增 Profile `VideoToArticleAI`（`https://videotoarticleai.com`）。当天免费成功 7 条。日报：`docs/外链提交报告-2026-08-24.md`。
 - 2026-08-25 全量聚合免费外链候选写入 Sheet；外链库 Settings 视觉优化；社区/论坛候选标记 `needs_manual`。
-- 2026-08-26 Google OAuth + Sheet 同步落地（2,902 destinations）；Popup 工作台改版；媒体统一在仓库外 `media/`；晚间约 81 页签卡死 Chrome——之后同一时间只开 1 个提交页。
+- 2026-08-28 Google Sheet 实时回读为 6 个 Profile、2,905 条外链、29 条提交记录、0 冲突；36 个本地媒体路径单元格已改为 `/Users/syndred/Desktop/projects/media/{Profile}/...` 并回读确认。
 
 ## 关键存储
 
@@ -58,11 +64,14 @@
 | `domainBlacklist`    | 域名黑名单（`.suffix` 含子域）                  |
 | `targetFilters`      | 年龄阈值、AI 评论/图标开关等                    |
 | `domainMetricsCache` | RDAP 年龄查询缓存                               |
+| `linkMonitorResults` | 已发布外链的最近复查结果                       |
+| `sheetPendingPreview`| Sheet 定时检查发现的待人工应用预览             |
 
 ## 关键文件
 
 ```text
-extension/lib/queue.js       # 成功账本、迁移、分组队列、黑名单/年龄闸门
+extension/lib/queue.js       # 成功账本、迁移、分组队列、黑名单/年龄/质量闸门
+extension/lib/opportunity-score.js # 0–100 外链机会质量评分
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
 extension/lib/backup.js      # 账本备份校验与合并
 extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
@@ -79,19 +88,19 @@ tests/local-agent-unit.test.py
 
 ## 验证状态
 
-- 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试（含 2.7.0 闸门/评论/媒体断言）。
-- 已通过 Python 41 个 local_agent 单元测试（含评论校验、媒体路径穿越、RDAP 分数秒日期）。
-- 本机 Agent 实机：`/media/list` 读到 6 个 Profile；`/media/file` 可出 dataUrl；路径穿越返回 400；`uneed.best` RDAP 年龄 76 个月；`/comment` 对 CDN 延迟文生成两篇切题无套话草稿。
-- Computer Use 曾确认 2.5.0/2.6.0；**2.7.0 需用户在 chrome://extensions 重新加载后验收手动图标与本地上传。**
+- 已通过全部 Node 测试、四个扩展脚本语法检查、`git diff --check` 和 Python 42 个 local_agent 单元测试。
+- Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
+- 本机 Agent 已用新代码重启：`/media/list` 回读 6 个 Profile、31 个文件；Google OAuth 已授权，快照为 6 / 2,905 / 29 / 0。
+- **Chrome 仍需重载 2.8.0，并在 Settings 执行“预览同步 → 应用同步”，才能把 2026-08-28 的 Sheet 更新写入 `chrome.storage.local`。**
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 后续边界
 
-- **2.7.0 已内置 AI 评论**，社区/论坛候选可小流量试投，但仍人工确认成功。
+- **2.8.0 已内置三候选 AI 评论**，社区/论坛候选可小流量试投，但仍人工确认成功。
 - `Link Submit` 仍是 Google 表格对象 `表格_1`（深绿表头）。不要再改成普通筛选。`SubmitProject` 下拉：**VideoToArticleAI / RainbowPet / OldPhotoLive / RSPAI / GraffitiName / TextComparison**。
 - 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认打勾。
 - 提交时同一时间只保留 1 个工作页签；验证码最多留 1–2 个。
 - 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。
 - 打开过的行都要写 **Time**；验证码/付费写 `Note` 后继续，不要停等。
 - 本地图库：`/Users/syndred/Desktop/projects/media/{Profile}/`。必填上传走 Agent `/media/file` + DataTransfer；iframe 内上传仍进不去。可用 `EXTERNALLINK_MEDIA_ROOT` 改根目录。
-- **使用前**：重启 `python3 local_agent/server.py`，chrome://extensions 重载 **2.7.0**；Settings → 全局配置可「检查本地图库」「预取当前队列域名年龄」。
+- **使用前**：本机 Agent 已运行；chrome://extensions 重载 **2.8.0**，Settings → 外链库执行“预览同步 → 应用同步”，再检查本地图库和队列质量闸门。

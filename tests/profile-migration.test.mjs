@@ -41,6 +41,7 @@ assert.deepEqual(
     useLogoDataUrl: false,
     screenshot: true,
     explicitIndex: true,
+    index: 1,
   },
 );
 assert.equal(

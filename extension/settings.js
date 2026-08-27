@@ -65,9 +65,10 @@
     const syncedAt = result.meta?.appliedAt || result.meta?.fetchedAt || "";
     if (authenticated) {
       const details = [
-        result.enabled ? "自动同步已启用" : "已授权，尚未应用同步",
+        result.enabled ? "账本自动回写已启用" : "已授权，尚未应用同步",
         pending ? `待回写 ${pending} 条` : "无待回写记录",
         syncedAt ? `最近同步 ${new Date(syncedAt).toLocaleString()}` : "尚未同步",
+        result.pendingPreview?.revision ? "表格有待应用更新" : "表格版本已对齐",
       ];
       setGoogleStatus(details.join(" · "), result.enabled ? "success" : "warning");
     } else if (configured) {
@@ -78,6 +79,13 @@
         "warning",
       );
     }
+    if ($("googleAutoPreviewEnabled")) {
+      $("googleAutoPreviewEnabled").checked = result.autoPreviewEnabled !== false;
+    }
+    if ($("googleAutoPreviewMinutes")) {
+      $("googleAutoPreviewMinutes").value = String(result.autoPreviewMinutes || 60);
+    }
+    if (result.pendingPreview?.preview) setGooglePreview(result.pendingPreview.preview);
     return result;
   }
 
@@ -416,6 +424,8 @@
     if (!el) return;
     const query = ($("librarySearch")?.value || "").trim().toLowerCase();
     const statusFilter = $("libraryStatusFilter")?.value || "";
+    const qualityFilter = Number($("libraryQualityFilter")?.value || 0);
+    const sortMode = $("librarySort")?.value || "quality";
     const filtered = libraryItems.filter((item) => {
       const status = item.annotation?.status || "";
       const haystack = [
@@ -426,7 +436,16 @@
       ]
         .join(" ")
         .toLowerCase();
-      return (!query || haystack.includes(query)) && (!statusFilter || status === statusFilter);
+      return (
+        (!query || haystack.includes(query)) &&
+        (!statusFilter || status === statusFilter) &&
+        Number(item.quality?.score || 0) >= qualityFilter
+      );
+    });
+    filtered.sort((a, b) => {
+      if (sortMode === "domain") return String(a.domain || "").localeCompare(String(b.domain || ""));
+      if (sortMode === "position") return Number(a.position || 0) - Number(b.position || 0);
+      return Number(b.quality?.score || 0) - Number(a.quality?.score || 0);
     });
     el.replaceChildren();
     if (!filtered.length) {
@@ -453,7 +472,37 @@
 
       const meta = document.createElement("div");
       meta.className = "library-meta";
-      meta.textContent = `${item.source === "saved" ? "自定义" : "内置"} · ${item.platformType || "directory"}`;
+      const sourceLabel = { saved: "自定义", table: "Google 表格", library: "内置" }[item.source] || "内置";
+      meta.textContent = `${sourceLabel} · ${item.platformType || "directory"}`;
+
+      const qualityRow = document.createElement("div");
+      qualityRow.className = "quality-row";
+      const qualityScore = document.createElement("span");
+      const score = Number(item.quality?.score || 0);
+      const scoreClass = score >= 75 ? "priority" : score >= 55 ? "workable" : score >= 35 ? "watch" : "low";
+      qualityScore.className = `quality-score ${scoreClass}`;
+      qualityScore.textContent = `${item.quality?.tier || "观察"} ${score}`;
+      qualityScore.title = (item.quality?.reasons || []).join(" · ");
+      qualityRow.append(qualityScore);
+      const metricPairs = [
+        ["DR", item.metrics?.dr],
+        ["DA", item.metrics?.da],
+        ["流量", item.metrics?.traffic],
+        ["Spam", item.metrics?.spamScore],
+      ];
+      for (const [label, value] of metricPairs) {
+        if (value === null || value === undefined || value === "") continue;
+        const tag = document.createElement("span");
+        tag.className = "metric-tag";
+        tag.textContent = `${label} ${value}`;
+        qualityRow.append(tag);
+      }
+      if (item.monitorStatus) {
+        const monitor = document.createElement("span");
+        monitor.className = `monitor-tag ${item.monitorStatus}`;
+        monitor.textContent = { live: "外链存活", missing: "疑似丢链", unreachable: "无法访问" }[item.monitorStatus] || item.monitorStatus;
+        qualityRow.append(monitor);
+      }
 
       const statuses = document.createElement("div");
       statuses.className = "profile-statuses";
@@ -491,7 +540,7 @@
         await loadLibrary();
       });
       actions.append(pin, remove);
-      card.append(head, meta, statuses, actions);
+      card.append(head, meta, qualityRow, statuses, actions);
       el.append(card);
     }
   }
@@ -514,6 +563,8 @@
 
   $("librarySearch")?.addEventListener("input", renderLibrary);
   $("libraryStatusFilter")?.addEventListener("change", renderLibrary);
+  $("libraryQualityFilter")?.addEventListener("change", renderLibrary);
+  $("librarySort")?.addEventListener("change", renderLibrary);
 
   function googleSheetValue() {
     return ($("googleSheetId")?.value || "").trim();
@@ -572,6 +623,37 @@
     }
   });
 
+  $("btnGoogleCheckChanges")?.addEventListener("click", async () => {
+    const btn = $("btnGoogleCheckChanges");
+    btn.disabled = true;
+    setGoogleStatus("正在检查表格版本变化…");
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "googleCheckChanges" });
+      if (!result?.ok) throw new Error(result?.error || "检查失败");
+      if (result.changed) {
+        setGooglePreview(result.preview);
+        setGoogleStatus("检测到表格更新，请确认预览后应用。", "warning");
+      } else {
+        setGooglePreview();
+        setGoogleStatus("表格与插件运行缓存版本一致。", "success");
+      }
+    } catch (err) {
+      setGoogleStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnGoogleSaveSchedule")?.addEventListener("click", async () => {
+    const result = await chrome.runtime.sendMessage({
+      action: "googleSyncSchedule",
+      enabled: $("googleAutoPreviewEnabled").checked,
+      minutes: Number($("googleAutoPreviewMinutes").value || 60),
+    });
+    if (!result?.ok) return setGoogleStatus(result?.error || "保存检查频率失败", "warning");
+    setGoogleStatus(`表格变化检查已保存：${result.autoPreviewEnabled ? `每 ${result.autoPreviewMinutes} 分钟` : "已关闭"}`, "success");
+  });
+
   $("btnGoogleApply")?.addEventListener("click", async () => {
     if (!googlePreviewRevision) return;
     const btn = $("btnGoogleApply");
@@ -621,6 +703,56 @@
     } catch (err) {
       setGoogleStatus(err.message, "warning");
     }
+  });
+
+  function monitorSummary(result) {
+    const counts = result.counts || Object.values(result.results || {}).reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+    }, {});
+    return [
+      `成功账本 ${result.totalSuccesses ?? "—"} 条`,
+      `可复查 ${result.checkable ?? result.checked ?? 0} 条`,
+      `存活 ${counts.live || 0}`,
+      `疑似丢失 ${counts.missing || 0}`,
+      `无法访问 ${counts.unreachable || 0}`,
+      result.lastRunAt ? `最近 ${new Date(result.lastRunAt).toLocaleString()}` : "尚未运行",
+    ].join(" · ");
+  }
+
+  async function loadLinkMonitorState() {
+    const result = await chrome.runtime.sendMessage({ action: "getLinkMonitorState" });
+    if (!result?.ok) throw new Error(result?.error || "读取外链监控失败");
+    if ($("linkMonitorEnabled")) $("linkMonitorEnabled").checked = result.enabled !== false;
+    if ($("linkMonitorMinutes")) $("linkMonitorMinutes").value = String(result.minutes || 1440);
+    setStatusLine("linkMonitorStatus", monitorSummary(result), "success");
+    return result;
+  }
+
+  $("btnRunLinkMonitor")?.addEventListener("click", async () => {
+    const btn = $("btnRunLinkMonitor");
+    btn.disabled = true;
+    setStatusLine("linkMonitorStatus", "正在复查带公开结果页的成功外链…");
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "runLinkMonitor" });
+      if (!result?.ok) throw new Error(result?.error || "复查失败");
+      setStatusLine("linkMonitorStatus", monitorSummary(result), (result.counts?.missing || result.counts?.unreachable) ? "warning" : "success");
+      await loadLibrary();
+    } catch (err) {
+      setStatusLine("linkMonitorStatus", err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnSaveLinkMonitor")?.addEventListener("click", async () => {
+    const result = await chrome.runtime.sendMessage({
+      action: "saveLinkMonitorSchedule",
+      enabled: $("linkMonitorEnabled").checked,
+      minutes: Number($("linkMonitorMinutes").value || 1440),
+    });
+    if (!result?.ok) return setStatusLine("linkMonitorStatus", result?.error || "保存失败", "warning");
+    await loadLinkMonitorState();
   });
 
   $("btnExportLedger")?.addEventListener("click", async () => {
@@ -673,6 +805,9 @@
     if ($("filterRequireKnownAge")) {
       $("filterRequireKnownAge").checked = filters.requireKnownDomainAge === true;
     }
+    if ($("filterMinOpportunityScore")) {
+      $("filterMinOpportunityScore").value = String(filters.minOpportunityScore || 0);
+    }
     if ($("filterAiComments")) $("filterAiComments").checked = filters.aiComments !== false;
     if ($("filterAiCommentAllowLink")) {
       $("filterAiCommentAllowLink").checked = filters.aiCommentAllowLink !== false;
@@ -690,6 +825,9 @@
         filters.minDomainAgeMonths
           ? `最小域名年龄 ${filters.minDomainAgeMonths} 个月`
           : "未启用年龄闸门",
+        filters.minOpportunityScore
+          ? `最低质量分 ${filters.minOpportunityScore}`
+          : "未启用质量分闸门",
         `已缓存年龄数据 ${state.metricsCached || 0} 个域名`,
       ].join(" · "),
       "success",
@@ -724,6 +862,7 @@
           blacklistEnabled: $("filterBlacklistEnabled").checked,
           minDomainAgeMonths: Number($("filterMinDomainAge").value || 0),
           requireKnownDomainAge: $("filterRequireKnownAge").checked,
+          minOpportunityScore: Number($("filterMinOpportunityScore").value || 0),
         },
       });
       if (!filterResult?.ok) throw new Error(filterResult?.error || "保存闸门设置失败");
@@ -875,6 +1014,7 @@
         }
       });
       loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
+      loadLinkMonitorState().catch((err) => setStatusLine("linkMonitorStatus", err.message, "warning"));
       loadTargetGateState().catch((err) => setStatusLine("targetGateStatus", err.message, "warning"));
     },
   );

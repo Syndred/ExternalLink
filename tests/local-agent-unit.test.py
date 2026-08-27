@@ -170,6 +170,19 @@ class LocalAgentUnitTests(unittest.TestCase):
             with self.assertRaisesRegex(google_sync.GoogleSyncError, "只允许访问配置"):
                 google_sync.validate_sheet_id("other-sheet-id")
 
+    def test_google_link_parser_preserves_quality_metrics(self):
+        rows = [
+            ["Link", "DR", "Traffic", "Spam Score", "Dofollow", "Last Verified", "Link Type"],
+            ["https://example.com/submit", "72", "12,300", "4", "yes", "2026-08-27", "directory"],
+        ]
+        entry = google_sync.parse_link_rows(rows)[0]
+        self.assertEqual(entry["metrics"]["dr"], "72")
+        self.assertEqual(entry["metrics"]["traffic"], "12,300")
+        self.assertEqual(entry["metrics"]["spamScore"], "4")
+        self.assertEqual(entry["metrics"]["dofollow"], "yes")
+        self.assertEqual(entry["metrics"]["verifiedAt"], "2026-08-27")
+        self.assertEqual(entry["metrics"]["linkType"], "directory")
+
     def test_google_snapshot_contract_uses_ledger_for_legacy_submit_and_parses_annotations(self):
         class FakeRequest:
             def __init__(self, payload):

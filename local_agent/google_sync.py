@@ -453,6 +453,22 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
                 "note": _cell(row, headers, "note"),
                 "indexPage": _cell(row, headers, "indexpage"),
                 "siteAnnotation": site_annotation,
+                "metrics": {
+                    key: value
+                    for key, value in {
+                        "dr": _cell(row, headers, "dr", "domainrating"),
+                        "da": _cell(row, headers, "da", "domainauthority"),
+                        "traffic": _cell(row, headers, "traffic", "organictraffic"),
+                        "spamScore": _cell(row, headers, "spamscore", "spam"),
+                        "dofollow": _cell(row, headers, "dofollow", "follow"),
+                        "indexable": _cell(row, headers, "indexable", "indexed"),
+                        "difficulty": _cell(row, headers, "difficulty", "submissiondifficulty"),
+                        "verifiedAt": _cell(row, headers, "verifiedat", "lastverified"),
+                        "linkType": _cell(row, headers, "linktype", "type"),
+                        "relevance": _cell(row, headers, "relevance", "relevancescore"),
+                    }.items()
+                    if value
+                },
             }
         )
     return entries
@@ -582,6 +598,7 @@ def read_snapshot(service, *, spreadsheet_id: Optional[str] = None) -> dict[str,
                 "legacySubmitted": bool(entry.get("legacySubmitted")),
                 "note": entry.get("note", ""),
                 "indexPage": entry.get("indexPage", ""),
+                "metrics": entry.get("metrics", {}),
             }
         )
     tasks: list[dict[str, Any]] = []

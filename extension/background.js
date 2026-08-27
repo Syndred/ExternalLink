@@ -8,6 +8,7 @@ importScripts(
   "lib/backup.js",
   "lib/sheet-sync.js",
   "lib/url-library.js",
+  "lib/opportunity-score.js",
 );
 
 let state = {
@@ -41,6 +42,10 @@ const DOMAIN_METRICS_BATCH = 20;
 const DOMAIN_METRICS_CACHE_LIMIT = 5000;
 const COMMENT_CACHE_TTL_MS = 30 * 60 * 1000;
 const COMMENT_CACHE_LIMIT = 60;
+const SHEET_PREVIEW_ALARM = "externallink-sheet-preview";
+const LINK_MONITOR_ALARM = "externallink-link-monitor";
+const DEFAULT_SHEET_CHECK_MINUTES = 60;
+const DEFAULT_LINK_MONITOR_MINUTES = 24 * 60;
 
 const commentDraftCache = new Map();
 
@@ -60,6 +65,20 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.local.set({ autoOpenSidePanel: false });
     }
   });
+  configureScheduledChecks().catch(() => {});
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  configureScheduledChecks().catch(() => {});
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === SHEET_PREVIEW_ALARM) {
+    checkGoogleSheetChanges({ notify: true }).catch(() => {});
+  }
+  if (alarm.name === LINK_MONITOR_ALARM) {
+    runLinkMonitor({ notify: true }).catch(() => {});
+  }
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -214,6 +233,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
+    case "googleSyncSchedule":
+      saveGoogleSyncSchedule(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "googleCheckChanges":
+      checkGoogleSheetChanges({ notify: false, force: true })
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "googleAuthStart":
       startGoogleAuth(msg)
         .then(sendResponse)
@@ -236,6 +265,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "googleDisconnect":
       disconnectGoogleSync()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "getLinkMonitorState":
+      getLinkMonitorState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "runLinkMonitor":
+      runLinkMonitor({ notify: false, force: true })
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "saveLinkMonitorSchedule":
+      saveLinkMonitorSchedule(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -328,10 +372,12 @@ async function fetchSubmissionMedia(rawUrl) {
 function normalizeTargetFilters(raw) {
   const source = raw && typeof raw === "object" ? raw : {};
   const minMonths = Number(source.minDomainAgeMonths);
+  const minScore = Number(source.minOpportunityScore);
   return {
     blacklistEnabled: source.blacklistEnabled !== false,
     minDomainAgeMonths: Number.isFinite(minMonths) ? Math.max(0, Math.min(minMonths, 600)) : 0,
     requireKnownDomainAge: source.requireKnownDomainAge === true,
+    minOpportunityScore: Number.isFinite(minScore) ? Math.max(0, Math.min(minScore, 100)) : 0,
     showManualFillIcons: source.showManualFillIcons !== false,
     aiComments: source.aiComments !== false,
     aiCommentAllowLink: source.aiCommentAllowLink !== false,
@@ -1415,6 +1461,8 @@ async function getLibraryManagerState() {
     "activeSiteId",
     "selectedSiteIds",
     "submissionSchemaVersion",
+    "domainMetricsCache",
+    "linkMonitorResults",
   ]);
   const tableData = await loadTableLibrary();
   const seeded = await ensureProfilesFromTable(
@@ -1430,14 +1478,52 @@ async function getLibraryManagerState() {
     storage.submissionSchemaVersion,
     seeded.idRemap,
   );
-  const urls = self.ExtLinkQueue.resolvePluginUrls(
+  const pluginUrls = self.ExtLinkQueue.resolvePluginUrls(
     storage.urlList || "",
     self.ExtLinkUrlLibrary || [],
   );
+  const candidates = [
+    ...pluginUrls.filter((entry) => entry.source === "saved"),
+    ...(tableData.entries || []).map((entry) => ({
+      url: entry.indexPage || entry.link,
+      domain: self.ExtLinkQueue.extractDomain(entry.indexPage || entry.link),
+      source: "table",
+      platformType: "directory",
+      entry,
+    })),
+    ...pluginUrls.filter((entry) => entry.source !== "saved"),
+  ];
+  const seen = new Set();
+  const urls = candidates.filter((entry) => {
+    const key = siteKeyForUrl(entry.url || "");
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   const annotations = storage.siteAnnotations || {};
   const items = urls.map((entry, index) => {
     const key = siteKeyForUrl(entry.url);
     const annotation = annotations[key] || annotations[entry.domain] || null;
+    const domain = entry.domain || self.ExtLinkQueue.extractDomain(entry.url);
+    const monitorStatuses = Object.entries(records)
+      .filter(([, record]) => record?.destinationKey === key)
+      .map(([recordKey]) => storage.linkMonitorResults?.[recordKey]?.status)
+      .filter(Boolean);
+    const monitorStatus = monitorStatuses.includes("missing")
+      ? "missing"
+      : monitorStatuses.includes("unreachable")
+        ? "unreachable"
+        : monitorStatuses.includes("live")
+          ? "live"
+          : "";
+    const quality = self.ExtLinkOpportunityScore.scoreOpportunity({
+      metrics: {
+        ...(entry.entry?.metrics || {}),
+        ...((storage.domainMetricsCache || {})[domain] || {}),
+      },
+      annotation,
+      monitorStatus,
+    });
     const profileStatuses = Object.values(seeded.profiles).map((profile) => {
       const recordKey = self.ExtLinkQueue.submissionRecordKey(key, profile.id);
       const record = records[recordKey] || null;
@@ -1451,14 +1537,18 @@ async function getLibraryManagerState() {
     return {
       key,
       url: entry.url,
-      domain: entry.domain || self.ExtLinkQueue.extractDomain(entry.url),
+      domain,
       source: entry.source || "library",
       platformType: entry.platformType || "directory",
       position: index,
       annotation,
+      quality,
+      monitorStatus,
+      metrics: quality.metrics,
       profileStatuses,
     };
   });
+  items.sort(self.ExtLinkOpportunityScore.compareOpportunities);
   return { ok: true, items, profiles: seeded.profiles };
 }
 
@@ -1536,6 +1626,9 @@ async function getGoogleSyncStatus() {
     "googleSheetSyncEnabled",
     "sheetSyncMeta",
     "sheetSyncOutbox",
+    "googleAutoPreviewEnabled",
+    "googleAutoPreviewMinutes",
+    "sheetPendingPreview",
   ]);
   let agent = { connected: false, configured: false };
   let agentError = "";
@@ -1550,9 +1643,73 @@ async function getGoogleSyncStatus() {
     enabled: storage.googleSheetSyncEnabled === true,
     meta: storage.sheetSyncMeta || null,
     pendingRecords: Object.keys(storage.sheetSyncOutbox || {}).length,
+    autoPreviewEnabled: storage.googleAutoPreviewEnabled !== false,
+    autoPreviewMinutes: Number(storage.googleAutoPreviewMinutes || DEFAULT_SHEET_CHECK_MINUTES),
+    pendingPreview: storage.sheetPendingPreview || null,
     agent,
     agentError,
   };
+}
+
+function clampScheduleMinutes(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(7 * 24 * 60, Math.max(15, Math.round(parsed))) : fallback;
+}
+
+async function configureScheduledChecks() {
+  const storage = await chrome.storage.local.get([
+    "googleAutoPreviewEnabled",
+    "googleAutoPreviewMinutes",
+    "linkMonitorEnabled",
+    "linkMonitorMinutes",
+  ]);
+  const defaults = {};
+  if (storage.googleAutoPreviewEnabled === undefined) defaults.googleAutoPreviewEnabled = true;
+  if (storage.googleAutoPreviewMinutes === undefined) {
+    defaults.googleAutoPreviewMinutes = DEFAULT_SHEET_CHECK_MINUTES;
+  }
+  if (storage.linkMonitorEnabled === undefined) defaults.linkMonitorEnabled = true;
+  if (storage.linkMonitorMinutes === undefined) {
+    defaults.linkMonitorMinutes = DEFAULT_LINK_MONITOR_MINUTES;
+  }
+  if (Object.keys(defaults).length) await chrome.storage.local.set(defaults);
+
+  const autoPreviewEnabled = storage.googleAutoPreviewEnabled !== false;
+  const previewMinutes = clampScheduleMinutes(
+    storage.googleAutoPreviewMinutes,
+    DEFAULT_SHEET_CHECK_MINUTES,
+  );
+  await chrome.alarms.clear(SHEET_PREVIEW_ALARM);
+  if (autoPreviewEnabled) {
+    chrome.alarms.create(SHEET_PREVIEW_ALARM, {
+      delayInMinutes: 1,
+      periodInMinutes: previewMinutes,
+    });
+  }
+
+  const monitorEnabled = storage.linkMonitorEnabled !== false;
+  const monitorMinutes = clampScheduleMinutes(
+    storage.linkMonitorMinutes,
+    DEFAULT_LINK_MONITOR_MINUTES,
+  );
+  await chrome.alarms.clear(LINK_MONITOR_ALARM);
+  if (monitorEnabled) {
+    chrome.alarms.create(LINK_MONITOR_ALARM, {
+      delayInMinutes: 5,
+      periodInMinutes: monitorMinutes,
+    });
+  }
+}
+
+async function saveGoogleSyncSchedule(msg = {}) {
+  const autoPreviewEnabled = msg.enabled !== false;
+  const autoPreviewMinutes = clampScheduleMinutes(
+    msg.minutes,
+    DEFAULT_SHEET_CHECK_MINUTES,
+  );
+  await chrome.storage.local.set({ googleAutoPreviewEnabled: autoPreviewEnabled, googleAutoPreviewMinutes: autoPreviewMinutes });
+  await configureScheduledChecks();
+  return { ok: true, autoPreviewEnabled, autoPreviewMinutes };
 }
 
 async function startGoogleAuth(msg = {}) {
@@ -1589,8 +1746,53 @@ async function previewGoogleSheetSync(msg = {}) {
   );
   const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
   const preview = self.ExtLinkSheetSync.computePreview(storage, snapshot);
-  await chrome.storage.local.set({ googleSpreadsheetId: spreadsheetId });
+  await chrome.storage.local.set({
+    googleSpreadsheetId: spreadsheetId,
+    sheetPendingPreview: {
+      revision: snapshot.revision,
+      fetchedAt: snapshot.fetchedAt || new Date().toISOString(),
+      preview,
+    },
+  });
   return { ok: true, preview };
+}
+
+async function checkGoogleSheetChanges({ notify = false, force = false } = {}) {
+  const storage = await chrome.storage.local.get([
+    "googleSpreadsheetId",
+    "googleSheetSyncEnabled",
+    "googleAutoPreviewEnabled",
+    "siteProfiles",
+    "submissionRecords",
+    "siteAnnotations",
+    "sheetSyncMeta",
+    "sheetPendingPreview",
+  ]);
+  if (storage.googleAutoPreviewEnabled === false && !force) {
+    return { ok: true, changed: false, disabled: true };
+  }
+  const spreadsheetId = resolveGoogleSpreadsheetId(storage.googleSpreadsheetId);
+  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
+  const preview = self.ExtLinkSheetSync.computePreview(storage, snapshot);
+  const changed = snapshot.revision !== storage.sheetSyncMeta?.revision;
+  const isNewPendingRevision = changed && snapshot.revision !== storage.sheetPendingPreview?.revision;
+  const pendingPreview = changed
+    ? { revision: snapshot.revision, fetchedAt: snapshot.fetchedAt || new Date().toISOString(), preview }
+    : null;
+  await chrome.storage.local.set({
+    googleSpreadsheetId: spreadsheetId,
+    sheetPendingPreview: pendingPreview,
+    googleLastCheckedAt: new Date().toISOString(),
+  });
+  if (isNewPendingRevision && notify) {
+    chrome.notifications.create("externallink-sheet-changed", {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: "ExternalLink 表格有更新",
+      message: `检测到 ${preview.destinations || 0} 个外链站的数据版本变化，请到设置页预览后应用。`,
+    });
+  }
+  return { ok: true, changed, preview, pendingPreview };
 }
 
 async function applyGoogleSheetSync(msg = {}) {
@@ -1633,6 +1835,7 @@ async function applyGoogleSheetSync(msg = {}) {
     googleSpreadsheetId: spreadsheetId,
     googleSheetSyncEnabled: true,
     sheetSyncOutbox: outbox,
+    sheetPendingPreview: null,
   });
   const pushResult = await flushSheetSyncOutbox().catch((err) => ({
     ok: false,
@@ -1681,6 +1884,146 @@ async function flushSheetSyncOutbox() {
   const next = self.ExtLinkSheetSync.removePushed(outbox, pushedKeys);
   await chrome.storage.local.set({ sheetSyncOutbox: next });
   return { ok: true, pushed: pushedKeys.length, pendingRecords: Object.keys(next).length };
+}
+
+function checkablePublicUrl(record) {
+  for (const value of [record?.publicUrl, record?.evidenceUrl]) {
+    const url = String(value || "").trim();
+    if (/^https?:\/\//i.test(url)) return url;
+  }
+  return "";
+}
+
+function targetHostForProfile(profile) {
+  const value = profile?.url || profile?.promoUrl || profile?.fields?.Url || "";
+  try {
+    return new URL(value).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function detectLinkRel(html, targetHost) {
+  if (!targetHost) return { found: false, rel: "" };
+  const escaped = targetHost.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const anchorPattern = new RegExp(`<a\\b[^>]*href=["'][^"']*${escaped}[^"']*["'][^>]*>`, "i");
+  const anchor = String(html || "").match(anchorPattern)?.[0] || "";
+  if (!anchor) return { found: false, rel: "" };
+  const rel = anchor.match(/\brel=["']([^"']*)["']/i)?.[1]?.toLowerCase() || "";
+  if (/\bnofollow\b/.test(rel)) return { found: true, rel: "nofollow" };
+  if (/\bsponsored\b/.test(rel)) return { found: true, rel: "sponsored" };
+  if (/\bugc\b/.test(rel)) return { found: true, rel: "ugc" };
+  return { found: true, rel: "dofollow" };
+}
+
+async function inspectPublishedLink(record, profile) {
+  const url = checkablePublicUrl(record);
+  const targetHost = targetHostForProfile(profile);
+  const checkedAt = new Date().toISOString();
+  if (!url || !targetHost) {
+    return { status: "uncheckable", checkedAt, url, targetHost, targetFound: false, rel: "" };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      credentials: "omit",
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return { status: "unreachable", checkedAt, url, targetHost, httpStatus: response.status, targetFound: false, rel: "" };
+    }
+    const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("text/html")) {
+      return { status: "uncheckable", checkedAt, url, targetHost, httpStatus: response.status, targetFound: false, rel: "" };
+    }
+    const html = (await response.text()).slice(0, 2_000_000);
+    const link = detectLinkRel(html, targetHost);
+    return {
+      status: link.found ? "live" : "missing",
+      checkedAt,
+      url: response.url || url,
+      targetHost,
+      httpStatus: response.status,
+      targetFound: link.found,
+      rel: link.rel,
+    };
+  } catch (err) {
+    return { status: "unreachable", checkedAt, url, targetHost, error: err.name === "AbortError" ? "timeout" : err.message, targetFound: false, rel: "" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function getLinkMonitorState() {
+  const storage = await chrome.storage.local.get([
+    "linkMonitorEnabled",
+    "linkMonitorMinutes",
+    "linkMonitorResults",
+    "linkMonitorLastRunAt",
+    "submissionRecords",
+  ]);
+  const records = Object.values(storage.submissionRecords || {}).filter((record) => record?.status === "success");
+  return {
+    ok: true,
+    enabled: storage.linkMonitorEnabled !== false,
+    minutes: Number(storage.linkMonitorMinutes || DEFAULT_LINK_MONITOR_MINUTES),
+    lastRunAt: storage.linkMonitorLastRunAt || "",
+    totalSuccesses: records.length,
+    checkable: records.filter(checkablePublicUrl).length,
+    results: storage.linkMonitorResults || {},
+  };
+}
+
+async function saveLinkMonitorSchedule(msg = {}) {
+  const enabled = msg.enabled !== false;
+  const minutes = clampScheduleMinutes(msg.minutes, DEFAULT_LINK_MONITOR_MINUTES);
+  await chrome.storage.local.set({ linkMonitorEnabled: enabled, linkMonitorMinutes: minutes });
+  await configureScheduledChecks();
+  return { ok: true, enabled, minutes };
+}
+
+async function runLinkMonitor({ notify = false, force = false } = {}) {
+  const storage = await chrome.storage.local.get([
+    "linkMonitorEnabled",
+    "submissionRecords",
+    "siteProfiles",
+    "linkMonitorResults",
+  ]);
+  if (storage.linkMonitorEnabled === false && !force) return { ok: true, disabled: true, checked: 0, results: storage.linkMonitorResults || {} };
+  const previous = storage.linkMonitorResults || {};
+  const candidates = Object.entries(storage.submissionRecords || {}).filter(
+    ([, record]) => record?.status === "success" && checkablePublicUrl(record),
+  );
+  const candidateKeys = new Set(candidates.map(([key]) => key));
+  const results = Object.fromEntries(
+    Object.entries(previous).filter(([key]) => candidateKeys.has(key)),
+  );
+  const changedToProblem = [];
+  for (const [key, record] of candidates) {
+    const result = await inspectPublishedLink(record, (storage.siteProfiles || {})[record.profileId]);
+    if (previous[key]?.status === "live" && ["missing", "unreachable"].includes(result.status)) {
+      changedToProblem.push({ key, record, result });
+    }
+    results[key] = result;
+  }
+  const lastRunAt = new Date().toISOString();
+  await chrome.storage.local.set({ linkMonitorResults: results, linkMonitorLastRunAt: lastRunAt });
+  if (notify && changedToProblem.length) {
+    chrome.notifications.create("externallink-links-changed", {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: "ExternalLink 检测到链接变化",
+      message: `${changedToProblem.length} 条曾经存活的外链当前缺失或无法访问，请人工复查。`,
+    });
+  }
+  const counts = Object.values(results).reduce((acc, item) => {
+    acc[item.status] = (acc[item.status] || 0) + 1;
+    return acc;
+  }, {});
+  return { ok: true, checked: candidates.length, changedToProblem: changedToProblem.length, counts, results, lastRunAt };
 }
 
 async function disconnectGoogleSync() {
@@ -1858,12 +2201,19 @@ async function loadPendingSubmissionTasks(options = {}) {
     annotations,
     findMatchingProfile: self.ExtLinkProfiles.findMatchingProfile,
     buildAgentConfigFromProfile: buildFromProfile,
-  });
+  }).map((group) => {
+    const ageMetric = (storage.domainMetricsCache || {})[group.domain] || {};
+    const quality = self.ExtLinkOpportunityScore.scoreOpportunity({
+      metrics: { ...(group.entry?.metrics || {}), ...ageMetric },
+      annotation: annotations[group.destinationKey] || annotations[group.domain] || null,
+    });
+    return { ...group, quality };
+  }).sort(self.ExtLinkOpportunityScore.compareOpportunities);
 
   const deletedKeys = storage.deletedSubmissionKeys || [];
   const filters = normalizeTargetFilters(storage.targetFilters);
   const flattened = self.ExtLinkQueue.flattenDestinationGroups(groups);
-  const filtered = self.ExtLinkQueue.filterSubmissionTasks(flattened, {
+  const gated = self.ExtLinkQueue.filterSubmissionTasks(flattened, {
     deletedKeys,
     annotations,
     blacklist: filters.blacklistEnabled ? storage.domainBlacklist || [] : [],
@@ -1872,7 +2222,13 @@ async function loadPendingSubmissionTasks(options = {}) {
     domainMetrics: storage.domainMetricsCache || {},
     collectExclusions: true,
   });
-  const gateExclusions = filtered.gateExclusions || [];
+  const gateExclusions = gated.gateExclusions || [];
+  const filtered = gated.filter((task) => {
+    if (!(filters.minOpportunityScore > 0)) return true;
+    if (Number(task.quality?.score || 0) >= filters.minOpportunityScore) return true;
+    gateExclusions.push({ key: task.key, domain: task.domain, reason: "low_opportunity_score" });
+    return false;
+  });
 
   return {
     tasks: filtered,
@@ -1881,7 +2237,10 @@ async function loadPendingSubmissionTasks(options = {}) {
     gateExclusions,
     meta: {
       gatedByBlacklist: gateExclusions.filter((item) => item.reason === "blacklist").length,
-      gatedByDomainAge: gateExclusions.filter((item) => item.reason !== "blacklist").length,
+      gatedByDomainAge: gateExclusions.filter((item) =>
+        ["domain_age", "domain_age_unknown"].includes(item.reason),
+      ).length,
+      gatedByQuality: gateExclusions.filter((item) => item.reason === "low_opportunity_score").length,
       fromTable: groups.filter((group) => group.source === "table").length,
       fromPlugin: groups.filter((group) => group.source !== "table").length,
       beforeFilter: flattened.length,
@@ -1940,10 +2299,16 @@ function toSubmissionGroupSummary(group) {
     platformType: group.platformType,
     source: group.source,
     note: group.note,
+    quality: group.quality || null,
     status: group.status,
     index: group.index,
     profileIds: (group.jobs || []).map((job) => job.profileId),
     profileTotal: (group.jobs || []).length,
+    profiles: (group.jobs || []).map((job) => ({
+      profileId: job.profileId,
+      profileName: job.profileName,
+      status: job.status || "pending",
+    })),
   };
 }
 

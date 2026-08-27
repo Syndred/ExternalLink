@@ -658,6 +658,7 @@
           platformType: group.platformType,
           source: group.source,
           note: group.note,
+          quality: group.quality || null,
           destinationGroupKey: group.key,
           destinationGroupIndex: group.index,
           groupJobIndex: job.index,

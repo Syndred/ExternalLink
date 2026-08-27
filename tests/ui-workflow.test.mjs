@@ -36,6 +36,12 @@ for (const id of [
   "btnGoogleDisconnect",
   "googleSyncStatus",
   "googleSyncPreview",
+  "googleAutoPreviewEnabled",
+  "btnGoogleCheckChanges",
+  "linkMonitorStatus",
+  "btnRunLinkMonitor",
+  "libraryQualityFilter",
+  "librarySort",
 ]) {
   assert.match(settingsHtml, new RegExp(`id="${id}"`));
 }
@@ -46,6 +52,8 @@ assert.match(settingsJs, /action:\s*"googleAuthStart"/);
 assert.match(settingsJs, /action:\s*"googleSyncPreview"/);
 assert.match(settingsJs, /action:\s*"googleSyncApply"/);
 assert.match(settingsJs, /action:\s*"googlePushLedger"/);
+assert.match(settingsJs, /action:\s*"googleCheckChanges"/);
+assert.match(settingsJs, /action:\s*"runLinkMonitor"/);
 assert.match(settingsJs, /library-status/);
 assert.match(settingsJs, /annotationTone/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
@@ -57,10 +65,21 @@ assert.match(settingsCss, /profile-statuses:empty/);
 assert.match(settingsCss, /library-item-actions[\s\S]*gap:\s*10px/);
 assert.match(settingsCss, /library-item-actions \.btn:focus-visible/);
 assert.match(settingsCss, /prefers-reduced-motion/);
+assert.match(settingsCss, /quality-score\.priority/);
+assert.match(settingsCss, /monitor-tag\.missing/);
 
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);
 assert.match(background, /case "getLibraryManagerState"/);
+assert.match(background, /case "googleCheckChanges"/);
+assert.match(background, /case "runLinkMonitor"/);
+assert.match(background, /gatedByQuality/);
+assert.match(sidepanelJs, /renderMetricChip\("可索引"/);
+assert.match(sidepanelJs, /renderMetricChip\("Noindex"/);
+assert.match(background, /SHEET_PREVIEW_ALARM/);
+assert.match(background, /LINK_MONITOR_ALARM/);
+assert.match(background, /isNewPendingRevision/);
+assert.match(background, /candidateKeys\.has\(key\)/);
 assert.match(
   background,
   /isSubmissionSuccessful\(records,\s*key,\s*profile\.id\)/,

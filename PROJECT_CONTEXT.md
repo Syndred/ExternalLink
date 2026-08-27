@@ -1,11 +1,17 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-26｜扩展 2.6.0｜路线：混合 C
+> 最后更新：2026-08-27 11:55｜扩展 2.7.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
+> 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
 
 ## 当前已完成
 
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
+- **2.7.0 对标 BacklinkHelper / AutoCommentAI 补齐四块能力**（已落地，需在 Chrome 重载扩展并重启本机 Agent）：
+  1. **AI 评论生成**：`POST /comment`；读页面正文 → DeepSeek 写切题评论；拒绝套话开场；链接默认放 URL 字段；失败时用标题兜底，不再用 10 条硬编码英文模板。
+  2. **本地图库上传注入**：`GET /media/list` + `/media/file` 读 `/Users/syndred/Desktop/projects/media/{Profile}/`；`File` + `DataTransfer` 赋给 `input[type=file]`，绕开系统文件选择器与 CORS。
+  3. **提交前目标闸门**：域名黑名单（支持 `.suffix` / `*`）、RDAP 域名年龄缓存、`prescanPage` 的 dofollow 预估（优先看既有评论外链）；Settings「全局配置」可改阈值并一键预取队列年龄。
+  4. **手动填充图标**：疑似提交/评论页在输入框旁显示 `EL`；一点即用当前 Profile 填该字段（含评论与本地上传）。
 - 私有 Google Sheet 是网站资料、外链库和人工分类的唯一维护入口；`chrome.storage.local` 是运行缓存与本地成功账本，成功后通过 outbox 自动回写 Sheet。
 - `Table.xlsx` / `table-library.json` 只保留为首次安装与离线回滚种子，不再要求日常双处更新。
 - Settings 已提供 Google 连接、只读预览、应用同步、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
@@ -28,64 +34,59 @@
 - 2026-08-06 已创建公开 GitHub 资源库 `Syndred/pet-memorial-resources`，README 提供宠物离世支持资源、纪念清单、隐私建议并链接 RainbowPetAI；公开页已核验。
 - Hacker News、Indie Hackers 与 Product Hunt 已完成首条真实社区评论；普通社区互动单独记录，不计入外链成功账本。
 - Product Hunt 已在 `@syndred` 下公开上线 RainbowPetAI；2026-08-10 实机回读产品页显示 `Launched this week`、公开图库、网站链接、Maker 首评和 `Launched in 2026`，已按 `producthunt.com/products/rainbowpetai::RainbowPetAI` 写入成功账本。
-- 2026-08-07 养号：`HN` 评 AI agent 审批帖（`item?id=49207465`）但 **[flagged]**，旧评亦 flagged；`PH` 评 Firecrawl MCP（无自链、未点赞）；`IH` 发帖权限仍锁，评论因站点 **502** 跳过；详情见 `data/community-participation-log.json`。
-- 2026-08-11 巡检：HN 最近 24 小时已有一条用户侧评论，旧两评仍 `[flagged]`，当天不再互动；Indie Hackers 正式发帖编辑器已解锁，但普通评论入口仍异常指向 `/sign-up`；Product Hunt 已在 oqoqo 讨论页发布一条关于远端状态 readback oracle 的真实评论，未点赞、未带自链。
-- 2026-08-12 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 无法完整核验唯一相关候选，Product Hunt 最相关候选与前一日主题相邻且回复去重不完整，因此三站均未新增评论或点赞。
-- 2026-08-13 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 正式发帖编辑器可用但普通评论入口仍异常；Product Hunt 已在 Unsloth Desktop 发布一条关于 8GB GPU 内存估算、上下文长度和量化回退的真实评论，未点赞、未带自链。
-- 2026-08-14 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 相关候选的互动入口仍指向 `/sign-up`；Product Hunt 因前一日刚互动且无强非重复角度，当天未评论、未点赞，并恢复了昨日页面附带的非必要自动关注。
-- 2026-08-16 巡检：HN 旧两评仍 `[flagged]`，继续暂停；Indie Hackers 的 Pickle 候选已有 17 条相近讨论且互动入口仍指向 `/sign-up`；Product Hunt 触发 Cloudflare 安全验证并立即停止，三站均未互动。8 月 15 日无执行证据，未补写日志。
-- 2026-08-20 巡检：Product Hunt 已在官方 Self-Promotion 讨论发布 RainbowPetAI 真实介绍（`comment-5799679`），并补全 `@syndred` About 与官网链接；Indie Hackers 虽显示已登录头像，但评论入口实际跳转 `/sign-up`，未互动；HN 最近一条评论仍公开，新候选完成事实核验，等待发布前确认。
-- 2026-08-24 新增 Profile `VideoToArticleAI`（`https://videotoarticleai.com`）。当天免费成功 7 条：Launching Next、StartupBase、TheJOAI、SideProjectors（90519）、PitchWall、StartupStash、AITools.inc。付费档（Uneed 等）不算成功。SoMuch 卡在验证码。日报：`docs/外链提交报告-2026-08-24.md`。本轮未操作插件 Side Panel，需从 `data/submission-handoff-2026-08-02.json` 导入合并。
-- 2026-08-25 从 Chrome 收藏夹中的 Notion `100+ DIR / FREE` 聚合表提取并按现有 Sheet 主机名去重，筛出 78 条带明确提交入口的 HTTPS 免费候选；已写入 Google Sheet `Link Submit` 第 59–136 行并逐行回读一致。候选统一标记 `Submit=FALSE`，只表示待提交，不作为成功证据。因本机 Google OAuth 客户端尚未配置、浏览器安全策略不允许 Agent 操作 `chrome-extension://`，另生成合并式插件导入包 `outputs/external-link-import-2026-08-25/免费外链候选导入.json`，等待在 Settings 手动导入。
-- 2026-08-25 外链库 Settings 视觉已优化：状态使用语义化彩色 pill，卡片、Profile tag、按钮组和 Google 操作区补足间距、focus/hover 与窄屏布局；提交 `9ac24a8`、`236c71c`。
-- 2026-08-25 纠正首轮只统计 78 条提交入口的范围遗漏：已全量遍历“大罗 SEO”21 个子表（3,224 行）、ViggoZ GitHub 18 个 CSV/Markdown 文件（2,555 行）、Web.Cafe 与 Notion FREE 清单，并把首轮 78 条作为正式输入合并。跨源 canonical 去重后得到 2,881 个聚合源标记免费的候选，其中 Profile 1,480、社区/论坛 861、目录 452、文章/文件 88；1,895 条由源表标记即时通过。Google Sheet `Link Submit` 现有 2,902 条数据记录，最终对账 `missingCandidates=0`。社区/论坛候选在插件导入包中标记 `needs_manual`，不进入普通目录自动提交。
-- 2026-08-25 修正全量导入把 `SubmitProject` 写死为 `VideoToArticleAI` 的问题：新增候选默认项目为空，Google Sheet 第 59–2,903 行误填值已清除且保留项目下拉验证，实际提交时再选择对应 Profile。
-- 2026-08-26 已在 Google Cloud 项目 `comparison-492900` 创建专用 `ExternalLink Desktop` OAuth 客户端、启用 Google Sheets API，并把客户端 JSON 以 0600 权限保存在仓库外。修复 OAuth 合并既有 scope 导致回调拒绝的问题后，本机 Agent 状态为 `configured=true / authenticated=true`。随后通过 Computer Use 重载 Chrome 扩展至 2.6.0，并在真实 Settings 完成预览与应用：读回并落盘 2,902 个 destination、更新 6 个 Profile、无移除、无待回写记录、无分类冲突或本地强证据覆盖；界面确认“自动同步已启用”，最近同步时间为 2026-08-26 07:25:23。
-- 2026-08-26 合并并验收 8 月 5 日遗留的 Popup 工作台改版：补齐网站资料、配置、日志和合并队列 UI；修复 2,902 条 Sheet 数据下队列消息因重复携带完整 Profile 配置而无法序列化的问题，并让 Popup 按 `selectedSiteIds` 调用当前批量接口。Computer Use 实机确认刷新后显示 2,985 个可切换目标（表 2,844 + 库 141），四个标签正常；未启动真实提交。
-- 2026-08-26 建立 `media/submission-assets/` 本地提交媒体库：6 个 Profile 各含源码 Logo 与 4 张 1440×900 线上功能截图，VideoToArticleAI 同时保留 SVG 和透明 PNG Logo；共 33 个文件、约 9.5MB。Google Sheet 六个 Profile 子表已补齐经验证的公开媒体直链与 `Local media folder / Local LOGO / Local Screenshot 1–4` 相对路径；5 个 Profile 公开媒体 6/6，VideoToArticleAI 因当前仅两张已部署图片保留 4/6、不用假链接补齐。本次同步在真实 Settings 预览并应用，更新 6 个 Profile、无删除或证据覆盖，最近同步 2026-08-26 08:39:09。
+- 2026-08-07～08-20 养号巡检见历史记录与 `data/community-participation-log.json`。
+- 2026-08-24 新增 Profile `VideoToArticleAI`（`https://videotoarticleai.com`）。当天免费成功 7 条。日报：`docs/外链提交报告-2026-08-24.md`。
+- 2026-08-25 全量聚合免费外链候选写入 Sheet；外链库 Settings 视觉优化；社区/论坛候选标记 `needs_manual`。
+- 2026-08-26 Google OAuth + Sheet 同步落地（2,902 destinations）；Popup 工作台改版；媒体统一在仓库外 `media/`；晚间约 81 页签卡死 Chrome——之后同一时间只开 1 个提交页。
 
 ## 关键存储
 
-| Key                 | 用途                                            |
-| ------------------- | ----------------------------------------------- |
-| `siteProfiles`      | 稳定 Profile ID 的自家网站资料                  |
-| `activeSiteId`      | 当前手动填表网站                                |
-| `selectedSiteIds`   | 最近一次批量多选                                |
-| `submissionRecords` | v2 永久成功账本                                 |
-| `siteAnnotations`   | 外链站级分类与临时闸门                          |
-| `activeBatchRun`    | 仅恢复 running / waiting_manual / paused 的批次 |
-| `urlList`           | 自定义外链，新增/置顶项排在最前                 |
+| Key                  | 用途                                            |
+| -------------------- | ----------------------------------------------- |
+| `siteProfiles`       | 稳定 Profile ID 的自家网站资料                  |
+| `activeSiteId`       | 当前手动填表网站                                |
+| `selectedSiteIds`    | 最近一次批量多选                                |
+| `submissionRecords`  | v2 永久成功账本                                 |
+| `siteAnnotations`    | 外链站级分类与临时闸门                          |
+| `activeBatchRun`     | 仅恢复 running / waiting_manual / paused 的批次 |
+| `urlList`            | 自定义外链，新增/置顶项排在最前                 |
+| `domainBlacklist`    | 域名黑名单（`.suffix` 含子域）                  |
+| `targetFilters`      | 年龄阈值、AI 评论/图标开关等                    |
+| `domainMetricsCache` | RDAP 年龄查询缓存                               |
 
 ## 关键文件
 
 ```text
-extension/lib/queue.js       # 成功账本、迁移、分组队列
+extension/lib/queue.js       # 成功账本、迁移、分组队列、黑名单/年龄闸门
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
 extension/lib/backup.js      # 账本备份校验与合并
 extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
-extension/background.js      # 调度和恢复
+extension/background.js      # 调度、评论草稿、本地媒体、域名指标代理
+extension/content.js         # 填表、AI 评论、DataTransfer 上传、手动图标、prescan
 extension/sidepanel.*        # 执行 / 批量 / 待人工
-extension/settings.*         # Profile / 外链库 / 备份 / 配置
+extension/settings.*         # Profile / 外链库 / 备份 / 闸门与助手配置
+local_agent/server.py        # /plan /comment /media/* /domain/metrics /google/*
 tools/import_table_xlsx.py   # 按工作表解析 Profile、媒体、外链和历史记录
-local_agent/google_sync.py   # Google OAuth、单表白名单、Sheets 读写
 DESIGN.md                    # UI 基础规则
 tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
+tests/local-agent-unit.test.py
 ```
 
 ## 验证状态
 
-- 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试。
-- 已通过 Python 21 个 local_agent 单元测试。
-- 2026-08-25 已在真实私有工作簿确认 `VideoToArticle` 子表存在，并新增 `Submission Records`、`SyncMeta` 子表；Google OAuth 客户端仍需用户在最终创建凭据前确认。
-- Computer Use 已确认 Chrome 中安装并启用 ExternalLink 2.5.0，三工作区正常，旧 Profile 去重后仅保留稳定 ID 对应资料，最近批量勾选保持不变。
-- 仓库 Table、插件种子、增量账本和交接表沿用同一 canonical 记录规则。RainbowPetAI 增量账本现有 10 条明确成功记录，SideProjectors 根入口别名已归并到 `/submit`。2026-08-25 已把 VideoToArticleAI 的 7 条免费成功按原 6 列格式写入 Google Sheet `Link Submit`；同工作簿新增子表写入 Profile（Field / Content / Notes）。未覆盖 RainbowPetAI 原有证据，未把 Pending Review 页写成 IndexPage。子表标签目前是 `工作表3`，需改名为 `VideoToArticleAI`。
-- TheJOAI 已在真实文件上传、描述、日期和分类复核后完成提交，账户显示 `Submitted for Review`。
-- Launching Next、StartupBase、AITools.inc、Uneed 已看到明确成功/排队证据；FutureTools 由用户人工确认完成。
-- FiveTaco 因无可靠回执继续保持未确认；ToolDirectory.ai 的 $9.99 页面已标记付费，Webwiki / Submission Web Directory / Alternative.me / SaaSAITools 进入待人工。
-- 为避免启动 227 个真实外链项，本轮未点击“开始提交”；仍需用隔离测试目标严格复现 B/C → D/E，并验证停放恢复与浏览器重启。
+- 已通过 Node 队列、调度、备份、UI 和扩展静态/行为测试（含 2.7.0 闸门/评论/媒体断言）。
+- 已通过 Python 41 个 local_agent 单元测试（含评论校验、媒体路径穿越、RDAP 分数秒日期）。
+- 本机 Agent 实机：`/media/list` 读到 6 个 Profile；`/media/file` 可出 dataUrl；路径穿越返回 400；`uneed.best` RDAP 年龄 76 个月；`/comment` 对 CDN 延迟文生成两篇切题无套话草稿。
+- Computer Use 曾确认 2.5.0/2.6.0；**2.7.0 需用户在 chrome://extensions 重新加载后验收手动图标与本地上传。**
+- 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 后续边界
 
-- P2 视觉 Agent 与博客评论仿写继续暂停，直到上述真实 Chrome 验收通过。
-- Google Sheet 是人工维护源；插件本地成功先落盘，再由 outbox 幂等回写 `Submission Records`。JSON 继续作为灾备通道。
-- 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认写入永久成功。
+- **2.7.0 已内置 AI 评论**，社区/论坛候选可小流量试投，但仍人工确认成功。
+- `Link Submit` 仍是 Google 表格对象 `表格_1`（深绿表头）。不要再改成普通筛选。`SubmitProject` 下拉：**VideoToArticleAI / RainbowPet / OldPhotoLive / RSPAI / GraffitiName / TextComparison**。
+- 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认打勾。
+- 提交时同一时间只保留 1 个工作页签；验证码最多留 1–2 个。
+- 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。
+- 打开过的行都要写 **Time**；验证码/付费写 `Note` 后继续，不要停等。
+- 本地图库：`/Users/syndred/Desktop/projects/media/{Profile}/`。必填上传走 Agent `/media/file` + DataTransfer；iframe 内上传仍进不去。可用 `EXTERNALLINK_MEDIA_ROOT` 改根目录。
+- **使用前**：重启 `python3 local_agent/server.py`，chrome://extensions 重载 **2.7.0**；Settings → 全局配置可「检查本地图库」「预取当前队列域名年龄」。

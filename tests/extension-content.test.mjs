@@ -503,3 +503,173 @@ assert.match(
   /clearSiteAnnotation/,
   "background should support revoking classification",
 );
+
+// ─── AI comment generation replaces the hardcoded template pool ───
+assert.doesNotMatch(
+  content,
+  /Great insights on this topic|Thanks for putting this together|Excellent breakdown\./,
+  "content.js must not ship the old canned English comment templates",
+);
+assert.match(
+  content,
+  /async function generateComment\s*\(/,
+  "generateComment should be async so it can request an AI draft",
+);
+assert.match(
+  content,
+  /action:\s*["']generateCommentDrafts["']/,
+  "content.js should request comment drafts through the background service worker",
+);
+assert.match(
+  content,
+  /function extractArticleText\s*\(/,
+  "content.js should extract article body text as comment context",
+);
+assert.match(
+  content,
+  /clone\.querySelectorAll\(ARTICLE_NOISE_SELECTORS\)/,
+  "article extraction must strip nav/footer/comment noise from a clone, not the live page",
+);
+assert.match(
+  background,
+  /case\s+["']generateCommentDrafts["']:/,
+  "background should expose a comment draft endpoint to content scripts",
+);
+assert.match(
+  background,
+  /callLocalAgent\("\/comment"/,
+  "background should call the local agent /comment endpoint",
+);
+for (const site of ["wp_comment", "article"]) {
+  assert.match(
+    content,
+    new RegExp(`reason:\\s*["']no_comment_text["'][\\s\\S]{0,80}|platform:\\s*["']${site}["']`),
+    `${site} submission should bail out instead of posting an empty comment`,
+  );
+}
+assert.match(
+  content,
+  /await generateComment\(config,\s*\{/,
+  "comment call sites must await the async draft",
+);
+
+// ─── Local media library upload injection ───
+assert.match(
+  content,
+  /function localMediaRequestFor\s*\(/,
+  "content.js should map media slots onto the local media library layout",
+);
+assert.match(
+  content,
+  /action:\s*["']fetchLocalSubmissionMedia["']/,
+  "content.js should request local media bytes from the background",
+);
+assert.match(
+  content,
+  /new DataTransfer\(\)[\s\S]{0,120}input\.files = dt\.files/,
+  "uploads must be injected with File + DataTransfer instead of a file picker",
+);
+assert.match(
+  background,
+  /case\s+["']fetchLocalSubmissionMedia["']:/,
+  "background should proxy local media reads",
+);
+assert.match(
+  background,
+  /\/media\/file\?/,
+  "background should read local media over the local agent media endpoint",
+);
+
+// ─── Target quality prescan and gating ───
+assert.match(content, /function prescanPage\s*\(/, "content.js should expose a target prescan");
+assert.match(
+  content,
+  /dofollowLikely/,
+  "prescan should estimate whether the site grants dofollow links",
+);
+assert.match(
+  content,
+  /commentExternal >= 3/,
+  "prescan should prefer existing comment links over editorial links as the dofollow signal",
+);
+assert.match(
+  background,
+  /case\s+["']getDomainMetrics["']:/,
+  "background should expose domain age lookups",
+);
+assert.match(
+  background,
+  /callLocalAgent\("\/domain\/metrics"/,
+  "background should resolve domain age through the local agent",
+);
+assert.match(
+  background,
+  /function normalizeTargetFilters\s*\(/,
+  "background should normalize the target filter settings",
+);
+assert.match(
+  background,
+  /minDomainAgeMonths:\s*filters\.minDomainAgeMonths/,
+  "queue building should pass the age threshold into the shared filter",
+);
+assert.match(
+  background,
+  /domainMetrics:\s*storage\.domainMetricsCache/,
+  "queue building must read cached ages instead of blocking on network lookups",
+);
+assert.doesNotMatch(
+  background,
+  /await getDomainMetrics\([\s\S]{0,200}loadPendingSubmissionTasks/,
+  "queue building must not trigger RDAP lookups inline",
+);
+
+// ─── Manual fill icons ───
+assert.match(
+  content,
+  /function syncManualIcons\s*\(/,
+  "content.js should install per-field manual fill icons",
+);
+assert.match(
+  content,
+  /filters\.showManualFillIcons === false/,
+  "manual fill icons must respect the settings toggle",
+);
+assert.match(
+  content,
+  /if \(!identifyPlatform\(\) && !hasLikelySubmissionFields\(\)\) return;/,
+  "manual fill icons should only decorate plausible submission pages",
+);
+assert.match(
+  content,
+  /function teardownManualIcons\s*\(/,
+  "manual fill icons should be removable when disabled",
+);
+assert.match(
+  background,
+  /case\s+["']getActiveFillConfig["']:/,
+  "background should hand the active profile config to in-page icons",
+);
+
+const settingsHtml = readFileSync(resolve(root, "extension/settings.html"), "utf8");
+const settingsJs = readFileSync(resolve(root, "extension/settings.js"), "utf8");
+for (const id of [
+  "filterBlacklistEnabled",
+  "filterMinDomainAge",
+  "filterRequireKnownAge",
+  "domainBlacklistText",
+  "filterAiComments",
+  "filterAiCommentAllowLink",
+  "filterManualFillIcons",
+  "btnSaveTargetGate",
+  "btnPrefetchDomainAge",
+  "btnSaveAssistant",
+  "btnRefreshMediaLibrary",
+]) {
+  assert.match(settingsHtml, new RegExp(`id="${id}"`), `settings.html should expose #${id}`);
+  assert.match(settingsJs, new RegExp(`"${id}"`), `settings.js should bind #${id}`);
+}
+assert.match(
+  settingsJs,
+  /action:\s*["']updateDomainBlacklist["'][\s\S]{0,160}replace:\s*true/,
+  "saving the blacklist textarea should replace the stored list, not append forever",
+);

@@ -153,6 +153,7 @@
         useLogoDataUrl: false,
         screenshot: true,
         explicitIndex: !!explicit,
+        index,
       };
     }
     if (/\b(logo|icon|avatar)\b/.test(normalizedHint)) {

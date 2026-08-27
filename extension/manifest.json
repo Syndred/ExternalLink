@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ExternalLink - 外链批量提交",
-  "version": "2.6.0",
-  "description": "按外链站分组的多网站提交工作台：Google Sheet 同步、成功账本、人工停放和断点恢复",
+  "version": "2.7.0",
+  "description": "按外链站分组的多网站提交工作台：AI 评论、本地图库上传、目标闸门、Google Sheet 同步与成功账本",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications", "sidePanel"],
   "host_permissions": ["https://*/*", "http://*/*", "http://127.0.0.1:8790/*"],
   "action": {

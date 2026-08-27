@@ -1,11 +1,15 @@
 """Local HTTP agent skeleton for browser-extension form automation."""
 
 import asyncio
+import base64
 import json
 import math
 import os
 import re
+import time
+from datetime import datetime, timezone
 from json import JSONDecodeError
+from pathlib import Path
 from typing import Any, Optional
 
 from aiohttp import web
@@ -42,6 +46,28 @@ load_dotenv()
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+MEDIA_ROOT = Path(
+    os.getenv("EXTERNALLINK_MEDIA_ROOT", "/Users/syndred/Desktop/projects/media")
+).expanduser()
+MEDIA_EXTENSIONS = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+}
+MEDIA_MAX_BYTES = 8 * 1024 * 1024
+
+COMMENT_MAX_DRAFTS = 5
+COMMENT_DEFAULT_MAX_CHARS = 700
+COMMENT_HARD_MAX_CHARS = 2000
+
+RDAP_ENDPOINT = os.getenv("RDAP_ENDPOINT", "https://rdap.org/domain")
+RDAP_TIMEOUT_SECONDS = 12
+DOMAIN_METRICS_CACHE_TTL_SECONDS = 7 * 24 * 3600
+_DOMAIN_METRICS_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+
 ALLOWED_PLAN_ACTIONS = {"fill", "click", "select", "check", "submit", "wait"}
 PLAN_STATUSES = {"act", "needs_manual", "blocked"}
 JUDGE_STATUSES = {"success", "incomplete", "blocked", "needs_manual"}
@@ -244,6 +270,45 @@ Use "incomplete" when the form is still present, required fields remain visible,
 Use "blocked" when the page reports a hard failure, access denial, rate limit, server error, or other condition automation cannot resolve.
 Use "needs_manual" when CAPTCHA, login, payment, email verification, or a human decision is required.
 Do not infer success from timers, navigation/footer marketing text, or generic words without submission evidence.
+"""
+
+COMMENT_PROMPT = """You write blog/forum comments that a real, knowledgeable reader would leave on the supplied page.
+
+You receive:
+- pageTitle, pageUrl, pageText: the article or thread the comment replies to
+- config: brandName, targetDomain, anchorRules (naturalExpressions, keywordExpressions, avoidWords), blogRules (tone, preferredAnchor), targetAudience, valueProposition, useCases, sellablePoints, avoidContent
+- count: how many distinct drafts to return
+- maxChars: hard character cap per draft
+- allowLink: whether a promotional link may appear at all
+- language: "auto" to match the page language, otherwise the requested language
+
+Hard rules:
+- React to something SPECIFIC in pageText: a claim, number, example, tool, or trade-off the author actually mentioned. Quote or paraphrase it. A comment that would fit any article is a failure.
+- Never open with "Great post", "Nice article", "Thanks for sharing", "Interesting read", or any other generic compliment.
+- Add something the article did not say: a caveat, a counter-example, your own numbers, a failure mode, or a follow-up question that shows you read it.
+- Write like a practitioner, not a marketer. No hype adjectives, no exclamation chains, no emoji unless the page itself uses them.
+- Vary sentence length. Two to five sentences per draft is usually right.
+- Each draft must be materially different from the others: a different angle, not a reworded version of the same point.
+- Match blogRules.tone. Match the page's language when language is "auto".
+- Respect maxChars strictly. Respect avoidWords and avoidContent absolutely.
+
+Link rules:
+- If allowLink is false, produce NO link and NO brand mention. Set anchorText and anchorUrl to "".
+- If allowLink is true, mention the product only when it is genuinely relevant to the specific point you are making. Otherwise still return an empty anchorText — a linkless on-topic comment is far better than a forced plug.
+- When you do link: keep it to ONE link, use targetDomain as anchorUrl, and pick anchorText from anchorRules.naturalExpressions or write a similarly natural phrase. Never use "click here", "check this out", bare URLs, or exact-match keyword spam.
+- Put the mention inside a sentence that carries real information ("we hit the same problem and ended up building X to batch it"), never as a trailing advertisement.
+- Set "placement" to "body" when the link sits inside the text, or "url_field" when the link belongs in the comment form's separate website/URL field instead of the body. Prefer "url_field" when the form has one, because comment bodies with links are more likely to be flagged as spam.
+
+Return only one strict JSON object:
+{
+  "status": "ok" | "skip",
+  "drafts": [
+    {"text": "comment body", "anchorText": "", "anchorUrl": "", "placement": "body" | "url_field", "angle": "short label for this draft's angle"}
+  ],
+  "reason": "short explanation"
+}
+
+Use "skip" with an empty drafts array when pageText is too thin, unreadable, or off-topic to comment on honestly, or when the page is a login wall, error page, or pure navigation.
 """
 
 
@@ -814,6 +879,8 @@ async def handle_health(request):
             "deepseek_configured": bool(get_deepseek_api_key()),
             "deepseek_base_url": DEEPSEEK_BASE_URL,
             "deepseek_model": DEEPSEEK_MODEL,
+            "media_root": str(MEDIA_ROOT),
+            "media_root_exists": MEDIA_ROOT.is_dir(),
         }
     )
 
@@ -1326,6 +1393,569 @@ async def handle_google_disconnect(request):
         return _google_error_response(exc)
 
 
+GENERIC_COMMENT_OPENERS = (
+    re.compile(r"^\s*(?:great|nice|good|excellent|awesome|amazing|wonderful|solid|interesting)\b[^.!?]{0,40}(?:post|article|write[- ]?up|read|insight|content|breakdown|analysis)", re.I),
+    re.compile(r"^\s*thanks?\s+(?:so much\s+)?for\s+(?:sharing|this|posting|putting)", re.I),
+    re.compile(r"^\s*(?:this is )?(?:exactly|just)\s+what\s+i\s+(?:was|needed)", re.I),
+    re.compile(r"^\s*(?:very|really)\s+(?:informative|helpful|useful)\b", re.I),
+    re.compile(r"^\s*(?:i )?(?:really )?(?:love|loved|enjoyed)\s+(?:this|your)\b", re.I),
+)
+
+SPAM_ANCHOR_PATTERNS = (
+    re.compile(r"^\s*click\s+here\s*$", re.I),
+    re.compile(r"^\s*(?:check|read)\s+(?:this|it)\s+out\s*$", re.I),
+    re.compile(r"^\s*here\s*$", re.I),
+    re.compile(r"^\s*https?://", re.I),
+    re.compile(r"^\s*www\.", re.I),
+)
+
+
+def trim_to_chars(text: str, limit: int) -> str:
+    """Trim text to a character budget at a sentence or word boundary."""
+    clean = re.sub(r"\s+", " ", str(text or "")).strip()
+    if limit <= 0 or len(clean) <= limit:
+        return clean
+
+    window = clean[:limit]
+    sentence_end = max(window.rfind(". "), window.rfind("! "), window.rfind("? "))
+    if sentence_end >= limit * 0.5:
+        return window[: sentence_end + 1].strip()
+
+    word_end = window.rfind(" ")
+    trimmed = window[:word_end] if word_end >= limit * 0.5 else window
+    return trimmed.rstrip(" ,;:-") + "."
+
+
+def looks_generic_comment(text: str) -> bool:
+    """Return True when a draft opens with a template-style generic compliment."""
+    return any(pattern.search(text) for pattern in GENERIC_COMMENT_OPENERS)
+
+
+def normalize_comment_drafts(
+    raw: dict[str, Any],
+    *,
+    max_chars: int,
+    allow_link: bool,
+    count: int,
+    avoid_words: Optional[list[str]] = None,
+) -> dict[str, Any]:
+    """Validate and clean DeepSeek comment drafts before the extension uses them."""
+    status = str(raw.get("status") or "ok").strip().lower()
+    if status not in {"ok", "skip"}:
+        status = "ok"
+
+    reason = str(raw.get("reason") or "").strip()[:400]
+    raw_drafts = raw.get("drafts")
+    if not isinstance(raw_drafts, list):
+        raw_drafts = []
+
+    banned = [word.strip().lower() for word in (avoid_words or []) if str(word).strip()]
+    drafts: list[dict[str, Any]] = []
+    rejected: list[str] = []
+    seen: set[str] = set()
+
+    for item in raw_drafts:
+        if not isinstance(item, dict):
+            continue
+        text = trim_to_chars(item.get("text"), max_chars)
+        if len(text) < 40:
+            rejected.append("too short")
+            continue
+        if looks_generic_comment(text):
+            rejected.append("generic opener")
+            continue
+
+        lowered = text.lower()
+        hit = next((word for word in banned if word in lowered), None)
+        if hit:
+            rejected.append(f"contains avoided word: {hit}")
+            continue
+
+        dedupe_key = re.sub(r"[^a-z0-9]+", "", lowered)[:120]
+        if dedupe_key in seen:
+            rejected.append("duplicate draft")
+            continue
+        seen.add(dedupe_key)
+
+        anchor_text = re.sub(r"\s+", " ", str(item.get("anchorText") or "")).strip()[:120]
+        anchor_url = str(item.get("anchorUrl") or "").strip()[:300]
+        placement = str(item.get("placement") or "url_field").strip().lower()
+        if placement not in {"body", "url_field"}:
+            placement = "url_field"
+
+        if not allow_link:
+            anchor_text = ""
+            anchor_url = ""
+            placement = "url_field"
+        else:
+            if anchor_text and any(p.search(anchor_text) for p in SPAM_ANCHOR_PATTERNS):
+                anchor_text = ""
+            if anchor_url and not anchor_url.startswith(("http://", "https://")):
+                anchor_url = f"https://{anchor_url.lstrip('/')}"
+            if not anchor_text:
+                anchor_url = ""
+
+        drafts.append(
+            {
+                "text": text,
+                "anchorText": anchor_text,
+                "anchorUrl": anchor_url if anchor_text else "",
+                "placement": placement,
+                "angle": re.sub(r"\s+", " ", str(item.get("angle") or "")).strip()[:80],
+                "chars": len(text),
+            }
+        )
+        if len(drafts) >= count:
+            break
+
+    if not drafts:
+        status = "skip"
+        if not reason:
+            reason = "No draft survived validation: " + (
+                ", ".join(dict.fromkeys(rejected)) if rejected else "model returned no drafts"
+            )
+
+    return {
+        "status": status,
+        "drafts": drafts,
+        "reason": reason,
+        "rejected": list(dict.fromkeys(rejected))[:8],
+    }
+
+
+async def handle_comment(request):
+    """Return page-aware comment drafts for blog/forum backlink placement."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return web.json_response(
+            {"status": "error", "drafts": [], "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return web.json_response(
+            {"status": "error", "drafts": [], "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    page_text = normalize_text(payload.get("pageText"))
+    if len(page_text) < 120:
+        return web.json_response(
+            {
+                "status": "skip",
+                "drafts": [],
+                "reason": "Page text too thin to write an on-topic comment",
+            }
+        )
+
+    config = payload.get("config") if isinstance(payload.get("config"), dict) else {}
+    anchor_rules = config.get("anchorRules") if isinstance(config.get("anchorRules"), dict) else {}
+    avoid_words = [
+        *normalize_string_list(anchor_rules.get("avoidWords")),
+        *normalize_string_list(config.get("avoidContent")),
+    ]
+
+    try:
+        count = max(1, min(int(payload.get("count", 1)), COMMENT_MAX_DRAFTS))
+    except (TypeError, ValueError):
+        count = 1
+    try:
+        max_chars = int(payload.get("maxChars") or COMMENT_DEFAULT_MAX_CHARS)
+    except (TypeError, ValueError):
+        max_chars = COMMENT_DEFAULT_MAX_CHARS
+    max_chars = max(120, min(max_chars, COMMENT_HARD_MAX_CHARS))
+    allow_link = payload.get("allowLink") is not False
+
+    llm_payload = {
+        "language": str(payload.get("language") or "auto").strip() or "auto",
+        "pageTitle": normalize_text(payload.get("pageTitle"))[:300],
+        "pageUrl": str(payload.get("pageUrl") or "")[:500],
+        "pageText": page_text[:9000],
+        "count": count,
+        "maxChars": max_chars,
+        "allowLink": allow_link,
+        "config": {
+            "brandName": str(config.get("brandName") or ""),
+            "targetDomain": str(config.get("targetDomain") or ""),
+            "anchorRules": anchor_rules,
+            "blogRules": config.get("blogRules") if isinstance(config.get("blogRules"), dict) else {},
+            "targetAudience": str(config.get("targetAudience") or ""),
+            "valueProposition": str(config.get("valueProposition") or ""),
+            "useCases": normalize_string_list(config.get("useCases")),
+            "sellablePoints": normalize_string_list(config.get("sellablePoints")),
+            "avoidContent": normalize_string_list(config.get("avoidContent")),
+        },
+    }
+
+    try:
+        result = await asyncio.to_thread(deepseek_chat_json, COMMENT_PROMPT, llm_payload)
+        return web.json_response(
+            normalize_comment_drafts(
+                result,
+                max_chars=max_chars,
+                allow_link=allow_link,
+                count=count,
+                avoid_words=avoid_words,
+            )
+        )
+    except AgentError as exc:
+        return web.json_response(
+            {"status": "error", "drafts": [], "message": exc.message},
+            status=exc.http_status,
+        )
+
+
+def media_profile_dir(profile: str) -> Path:
+    """Resolve a profile media directory, refusing anything outside MEDIA_ROOT."""
+    token = str(profile or "").strip()
+    if not token or token in {".", ".."} or "/" in token or "\\" in token:
+        raise AgentError("profile is invalid", http_status=400, plan_status="error")
+
+    root = MEDIA_ROOT.resolve()
+    candidate = (root / token).resolve()
+    if candidate != root and root not in candidate.parents:
+        raise AgentError("profile escapes the media root", http_status=400, plan_status="error")
+    return candidate
+
+
+def classify_media_name(name: str) -> str:
+    """Label a media filename as logo, screenshot, or other."""
+    stem = Path(name).stem.lower()
+    if "logo" in stem or "icon" in stem or "avatar" in stem:
+        return "logo"
+    # Screenshots are stored as an ordered `NN` prefix, optionally with a label: 01-home.png
+    if re.match(r"^\d{1,2}(?:[-_.\s]|$)", stem) or "screenshot" in stem or "screen" in stem:
+        return "screenshot"
+    return "other"
+
+
+def list_media_profiles() -> list[dict[str, Any]]:
+    """Return the local media library grouped by profile directory."""
+    root = MEDIA_ROOT.resolve()
+    if not root.is_dir():
+        return []
+
+    profiles = []
+    for entry in sorted(root.iterdir()):
+        if not entry.is_dir() or entry.name.startswith("."):
+            continue
+        files = []
+        for item in sorted(entry.iterdir()):
+            if not item.is_file() or item.name.startswith("."):
+                continue
+            suffix = item.suffix.lower()
+            if suffix not in MEDIA_EXTENSIONS:
+                continue
+            try:
+                size = item.stat().st_size
+            except OSError:
+                continue
+            files.append(
+                {
+                    "name": item.name,
+                    "kind": classify_media_name(item.name),
+                    "mime": MEDIA_EXTENSIONS[suffix],
+                    "bytes": size,
+                }
+            )
+        if files:
+            profiles.append({"profile": entry.name, "files": files})
+    return profiles
+
+
+async def handle_media_list(request):
+    """List locally available submission media without exposing absolute paths."""
+    try:
+        profiles = await asyncio.to_thread(list_media_profiles)
+    except OSError as exc:
+        return web.json_response(
+            {"status": "error", "message": f"Failed to read media root: {exc}"},
+            status=500,
+        )
+    return web.json_response(
+        {
+            "status": "ok",
+            "mediaRoot": str(MEDIA_ROOT),
+            "mediaRootExists": MEDIA_ROOT.is_dir(),
+            "profiles": profiles,
+        }
+    )
+
+
+def read_media_file(profile: str, name: str, kind: str, index: int) -> dict[str, Any]:
+    """Return one media file as base64 bytes, resolved by name or by kind+index."""
+    directory = media_profile_dir(profile)
+    if not directory.is_dir():
+        raise AgentError(f"No local media for profile {profile}", http_status=404, plan_status="error")
+
+    requested = str(name or "").strip()
+    if requested:
+        if "/" in requested or "\\" in requested or requested.startswith("."):
+            raise AgentError("name is invalid", http_status=400, plan_status="error")
+        target = (directory / requested).resolve()
+        if target.parent != directory or not target.is_file():
+            raise AgentError(f"Media file not found: {requested}", http_status=404, plan_status="error")
+    else:
+        wanted = str(kind or "logo").strip().lower()
+        candidates = [
+            item
+            for item in sorted(directory.iterdir())
+            if item.is_file()
+            and item.suffix.lower() in MEDIA_EXTENSIONS
+            and classify_media_name(item.name) == wanted
+        ]
+        if wanted == "logo":
+            # Raster logos upload more reliably than SVG on directory forms.
+            candidates.sort(key=lambda item: item.suffix.lower() == ".svg")
+        if not candidates:
+            raise AgentError(
+                f"No {wanted} media for profile {profile}", http_status=404, plan_status="error"
+            )
+        position = max(0, index)
+        target = candidates[position] if position < len(candidates) else candidates[0]
+
+    suffix = target.suffix.lower()
+    if suffix not in MEDIA_EXTENSIONS:
+        raise AgentError("Unsupported media type", http_status=400, plan_status="error")
+
+    size = target.stat().st_size
+    if size > MEDIA_MAX_BYTES:
+        raise AgentError(
+            f"Media file exceeds {MEDIA_MAX_BYTES // (1024 * 1024)}MB", http_status=413, plan_status="error"
+        )
+
+    mime = MEDIA_EXTENSIONS[suffix]
+    encoded = base64.b64encode(target.read_bytes()).decode("ascii")
+    return {
+        "status": "ok",
+        "profile": profile,
+        "name": target.name,
+        "kind": classify_media_name(target.name),
+        "mime": mime,
+        "bytes": size,
+        "dataUrl": f"data:{mime};base64,{encoded}",
+    }
+
+
+async def handle_media_file(request):
+    """Return one local media file as a data URL for DataTransfer upload injection."""
+    query = getattr(request, "query", {})
+    try:
+        index = int(query.get("index", 0) or 0)
+    except (TypeError, ValueError):
+        index = 0
+
+    try:
+        result = await asyncio.to_thread(
+            read_media_file,
+            str(query.get("profile", "") or ""),
+            str(query.get("name", "") or ""),
+            str(query.get("kind", "logo") or "logo"),
+            index,
+        )
+        return web.json_response(result)
+    except AgentError as exc:
+        return web.json_response({"status": "error", "message": exc.message}, status=exc.http_status)
+    except OSError as exc:
+        return web.json_response(
+            {"status": "error", "message": f"Failed to read media file: {exc}"},
+            status=500,
+        )
+
+
+def normalize_domain(value: str) -> str:
+    """Reduce a URL or hostname to a bare registrable-looking domain."""
+    raw = str(value or "").strip().lower()
+    if not raw:
+        raise AgentError("domain is required", http_status=400, plan_status="error")
+    raw = re.sub(r"^[a-z][a-z0-9+.-]*://", "", raw)
+    raw = raw.split("/")[0].split("?")[0].split("#")[0]
+    raw = raw.split("@")[-1].split(":")[0]
+    raw = raw.strip(".")
+    if raw.startswith("www."):
+        raw = raw[4:]
+    if not re.fullmatch(r"[a-z0-9-]+(?:\.[a-z0-9-]+)+", raw):
+        raise AgentError(f"domain is invalid: {value}", http_status=400, plan_status="error")
+    return raw
+
+
+def registrable_domain(domain: str) -> str:
+    """Return a best-effort registrable domain for RDAP lookups."""
+    parts = domain.split(".")
+    if len(parts) <= 2:
+        return domain
+    # Handle common two-label public suffixes (co.uk, com.cn, com.au, ...).
+    if len(parts[-2]) <= 3 and parts[-2] in {"co", "com", "net", "org", "gov", "edu", "ac"}:
+        return ".".join(parts[-3:])
+    return ".".join(parts[-2:])
+
+
+def parse_rdap_events(payload: dict[str, Any]) -> dict[str, str]:
+    """Extract registration/expiry dates from an RDAP domain response."""
+    events = payload.get("events")
+    found: dict[str, str] = {}
+    if not isinstance(events, list):
+        return found
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        action = str(event.get("eventAction") or "").strip().lower()
+        date = str(event.get("eventDate") or "").strip()
+        if action and date and action not in found:
+            found[action] = date
+    return found
+
+
+def parse_rdap_datetime(value: str) -> Optional[datetime]:
+    """Parse an RDAP event date, tolerating registry-specific timestamp shapes.
+
+    Registries emit variations `datetime.fromisoformat` rejects on older Python,
+    notably a trailing `Z` and fractional seconds with 1, 2, or 7+ digits.
+    """
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+
+    normalized = re.sub(r"[Zz]$", "+00:00", raw)
+    fractional = re.search(r"\.(\d+)", normalized)
+    if fractional:
+        digits = fractional.group(1)[:6].ljust(6, "0")
+        normalized = f"{normalized[: fractional.start()]}.{digits}{normalized[fractional.end() :]}"
+
+    for candidate in (normalized, normalized.split(".")[0], raw[:10]):
+        try:
+            parsed = datetime.fromisoformat(candidate)
+        except ValueError:
+            continue
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    return None
+
+
+def months_between(then: datetime, now: datetime) -> int:
+    """Return whole months elapsed between two datetimes."""
+    return max(0, (now.year - then.year) * 12 + (now.month - then.month) - (1 if now.day < then.day else 0))
+
+
+def fetch_domain_metrics(domain: str) -> dict[str, Any]:
+    """Look up domain registration age over RDAP, with a process-local cache."""
+    normalized = normalize_domain(domain)
+    lookup = registrable_domain(normalized)
+
+    cached = _DOMAIN_METRICS_CACHE.get(lookup)
+    if cached and time.time() - cached[0] < DOMAIN_METRICS_CACHE_TTL_SECONDS:
+        return {**cached[1], "domain": normalized, "cached": True}
+
+    result: dict[str, Any] = {
+        "status": "ok",
+        "domain": normalized,
+        "lookupDomain": lookup,
+        "createdAt": "",
+        "expiresAt": "",
+        "ageMonths": None,
+        "ageDays": None,
+        "source": "rdap",
+        "cached": False,
+    }
+
+    try:
+        response = requests.get(
+            f"{RDAP_ENDPOINT.rstrip('/')}/{lookup}",
+            headers={"Accept": "application/rdap+json, application/json", "User-Agent": FETCH_USER_AGENT},
+            timeout=RDAP_TIMEOUT_SECONDS,
+            allow_redirects=True,
+        )
+    except requests.RequestException as exc:
+        result.update({"status": "unknown", "message": f"RDAP request failed: {exc}"})
+        return result
+
+    if response.status_code == 404:
+        result.update({"status": "unknown", "message": "RDAP has no record for this domain"})
+        return result
+    if not 200 <= response.status_code < 300:
+        result.update({"status": "unknown", "message": f"RDAP HTTP {response.status_code}"})
+        return result
+
+    try:
+        payload = response.json()
+    except ValueError:
+        result.update({"status": "unknown", "message": "RDAP response was not JSON"})
+        return result
+
+    if not isinstance(payload, dict):
+        result.update({"status": "unknown", "message": "RDAP response shape was unexpected"})
+        return result
+
+    events = parse_rdap_events(payload)
+    created_raw = events.get("registration") or events.get("created") or events.get("last changed")
+    expires_raw = events.get("expiration")
+
+    if created_raw:
+        created = parse_rdap_datetime(created_raw)
+        if created is None:
+            result.update(
+                {
+                    "status": "unknown",
+                    "message": f"Unparsable registration date: {created_raw}",
+                }
+            )
+        else:
+            now = datetime.now(timezone.utc)
+            result["createdAt"] = created.isoformat()
+            result["ageMonths"] = months_between(created, now)
+            result["ageDays"] = max(0, (now - created).days)
+    else:
+        result.update({"status": "unknown", "message": "RDAP record had no registration event"})
+
+    if expires_raw:
+        expires = parse_rdap_datetime(expires_raw)
+        result["expiresAt"] = expires.isoformat() if expires else expires_raw
+
+    if result["status"] == "ok" and result["ageMonths"] is not None:
+        _DOMAIN_METRICS_CACHE[lookup] = (time.time(), {**result, "cached": False})
+    return result
+
+
+async def handle_domain_metrics(request):
+    """Return registration age for one or more domains so targets can be pre-filtered."""
+    try:
+        payload = await request.json()
+    except (JSONDecodeError, ValueError):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return web.json_response(
+            {"status": "error", "message": "Request body must be a JSON object"},
+            status=400,
+        )
+
+    requested = payload.get("domains")
+    if isinstance(requested, str):
+        requested = [requested]
+    if not isinstance(requested, list):
+        single = payload.get("domain")
+        requested = [single] if single else []
+
+    targets = [str(item).strip() for item in requested if str(item or "").strip()][:25]
+    if not targets:
+        return web.json_response(
+            {"status": "error", "message": "domain or domains is required"},
+            status=400,
+        )
+
+    async def lookup(value: str) -> dict[str, Any]:
+        try:
+            return await asyncio.to_thread(fetch_domain_metrics, value)
+        except AgentError as exc:
+            return {"status": "error", "domain": value, "message": exc.message}
+
+    results = await asyncio.gather(*(lookup(target) for target in targets))
+    return web.json_response({"status": "ok", "results": list(results)})
+
+
 def create_app():
     """Create and configure the aiohttp application."""
     app = web.Application()
@@ -1336,6 +1966,10 @@ def create_app():
     router.add_post("/judge", handle_judge)
     router.add_post("/extract-site", handle_extract_site)
     router.add_post("/generate-site", handle_generate_site)
+    router.add_post("/comment", handle_comment)
+    router.add_get("/media/list", handle_media_list)
+    router.add_get("/media/file", handle_media_file)
+    router.add_post("/domain/metrics", handle_domain_metrics)
     router.add_get("/google/status", handle_google_status)
     router.add_post("/google/status", handle_google_status)
     router.add_get("/google/auth/start", handle_google_auth_start)

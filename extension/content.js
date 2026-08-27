@@ -146,6 +146,30 @@
       executeSubmit(msg.config, msg.platformType, msg.taskIndex).then(sendResponse);
       return true;
     }
+    if (msg.action === "prescanPage") {
+      try {
+        sendResponse({ ok: true, ...prescanPage() });
+      } catch (err) {
+        sendResponse({ ok: false, error: err.message });
+      }
+      return true;
+    }
+    if (msg.action === "generateCommentPreview") {
+      generateComment(msg.config || {}, {
+        preferTemplate: false,
+        count: msg.count || 1,
+        refresh: msg.refresh === true,
+      })
+        .then((text) => sendResponse({ ok: !!text, text }))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    }
+    if (msg.action === "setManualFillIcons") {
+      if (msg.enabled === false) teardownManualIcons();
+      else initManualIcons();
+      sendResponse({ ok: true });
+      return true;
+    }
     if (msg.action === "showManualWaitBanner") {
       showManualWaitBanner(msg.config, msg.taskIndex, msg.reason, msg.timeoutSec, msg.platformType);
       sendResponse({ ok: true });
@@ -177,6 +201,8 @@
 
   function onPageNavigation() {
     setTimeout(() => {
+      if (manualIconsEnabled) scheduleManualIconSync();
+      else initManualIcons().catch(() => {});
       const mode = identifyPlatform();
       chrome.runtime
         .sendMessage({
@@ -190,6 +216,9 @@
   if (!window.__extLinkBootstrapped) {
     window.__extLinkBootstrapped = true;
     onPageNavigation();
+    setTimeout(() => {
+      initManualIcons().catch(() => {});
+    }, 800);
 
     const pushState = history.pushState;
     history.pushState = function (...args) {
@@ -775,14 +804,20 @@
       await simulateTyping(urlField, config.targetDomain);
     }
 
-    // Step 4: Generate comment text (no URL in body!)
-    const commentText = generateComment(config);
+    // Step 4: Generate comment text (link stays in the URL field above, not the body)
     const commentField = document.querySelector(
       '#comment, textarea[name="comment"], textarea.comment, ' +
         'textarea[aria-label*="Comment"], textarea[placeholder*="comment" i]',
     );
     if (commentField) {
       logStep("✏️ 填写评论文本…");
+      const commentText = await generateComment(config, {
+        allowLink: !urlField,
+        maxChars: getCommentCharBudget(commentField),
+      });
+      if (!commentText) {
+        return { manual: true, platform: "wp_comment", reason: "no_comment_text" };
+      }
       await simulateTyping(commentField, commentText);
     }
 
@@ -931,7 +966,14 @@
     );
     if (commentField) {
       logStep("✏️ 填写评论文本…");
-      await simulateTyping(commentField, generateComment(config));
+      const commentText = await generateComment(config, {
+        allowLink: !urlField,
+        maxChars: getCommentCharBudget(commentField),
+      });
+      if (!commentText) {
+        return { manual: true, platform: "article", reason: "no_comment_text" };
+      }
+      await simulateTyping(commentField, commentText);
     }
 
     if (detectCaptcha()) {
@@ -996,8 +1038,13 @@
       if (!isFillableField(ta)) continue;
       const name = getFieldHint(ta);
       if (name.includes("comment") || name.includes("body") || name.includes("message")) {
-        await simulateTyping(ta, generateComment(config));
-        filledCount++;
+        const commentText = await generateComment(config, {
+          maxChars: getCommentCharBudget(ta),
+        });
+        if (commentText) {
+          await simulateTyping(ta, commentText);
+          filledCount++;
+        }
       } else if (name.includes("desc") || name.includes("summary")) {
         await simulateTyping(ta, config.commentTemplate || generateDescription(config));
         filledCount++;
@@ -2302,6 +2349,7 @@
         useLogoDataUrl: false,
         screenshot: true,
         explicitIndex: !!explicit,
+        index,
       };
     }
     if (/\b(logo|icon|avatar)\b/.test(hint)) {
@@ -2590,38 +2638,100 @@
     return setSelectValue(element, value);
   }
 
-  async function tryFillFileFromUrl(input, imageUrl, baseUrl, config, useLogoDataUrl = false) {
+  // Maps a resolved media slot onto the local media library layout served by the
+  // local agent: {Profile}/logo.png and {Profile}/01..04-*.png.
+  function localMediaRequestFor(config, media) {
+    const profile = config?.projectKey || "";
+    if (!profile) return null;
+
+    const profileKey = String(media?.profileKey || "").trim();
+    const screenshotMatch = profileKey.match(/screenshot\s*([1-4])/i);
+    if (screenshotMatch) {
+      return { profile, kind: "screenshot", index: Number(screenshotMatch[1]) - 1 };
+    }
+    if (/^logo$/i.test(profileKey) || media?.useLogoDataUrl) {
+      return { profile, kind: "logo", index: 0 };
+    }
+    if (media?.screenshot) {
+      return { profile, kind: "screenshot", index: Math.max(0, Number(media.index) || 0) };
+    }
+    if (/featured|cover|banner|thumbnail|image|photo/i.test(profileKey)) {
+      return { profile, kind: "screenshot", index: 0, fallbackKind: "logo" };
+    }
+    return null;
+  }
+
+  async function fetchLocalMediaBlob(request) {
+    const response = await chrome.runtime.sendMessage({
+      action: "fetchLocalSubmissionMedia",
+      profile: request.profile,
+      kind: request.kind,
+      index: request.index,
+      name: request.name || "",
+    });
+    if (!response?.ok || !response.dataUrl) {
+      throw new Error(response?.error || "本地媒体读取失败");
+    }
+    return {
+      blob: await (await fetch(response.dataUrl)).blob(),
+      name: response.name || "image",
+    };
+  }
+
+  async function attachBlobToFileInput(input, blob, sourceName) {
+    if (!blob || !String(blob.type || "").startsWith("image/")) return false;
+    const normalized = await normalizeImageForFileInput(blob, input);
+    const mime = normalized.type || blob.type || "image/png";
+    const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1]?.split("+")[0] || "png";
+    const cleanBase = String(sourceName || "image").replace(/\.[a-z0-9]+$/i, "") || "image";
+    const file = new File([normalized], `${cleanBase}.${ext}`, { type: mime });
+    // DataTransfer assignment avoids the OS file picker, which automation cannot drive.
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+
+  async function tryFillFileFromUrl(input, imageUrl, baseUrl, config, media = null) {
     if (!input || input.type !== "file") return false;
 
+    const useLogoDataUrl = media === true || media?.useLogoDataUrl === true;
+    const descriptor = media && typeof media === "object" ? media : null;
     const dataUrl = useLogoDataUrl ? config?.logoDataUrl : "";
-    try {
-      let blob = null;
-      let sourceName = "image";
-      if (dataUrl && String(dataUrl).startsWith("data:")) {
-        blob = await (await fetch(dataUrl)).blob();
-        sourceName = "logo";
-      } else {
-        if (!imageUrl) return false;
-        const absolute = new URL(imageUrl, baseUrl || location.href).href;
-        sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
-        blob = await fetchSubmissionMediaBlob(absolute);
-      }
-      if (!blob || !String(blob.type || "").startsWith("image/")) return false;
 
-      const normalized = await normalizeImageForFileInput(blob, input);
-      const mime = normalized.type || blob.type || "image/png";
-      const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1]?.split("+")[0] || "png";
-      const cleanBase = sourceName.replace(/\.[a-z0-9]+$/i, "") || "image";
-      const file = new File([normalized], `${cleanBase}.${ext}`, { type: mime });
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      return true;
+    try {
+      if (dataUrl && String(dataUrl).startsWith("data:")) {
+        const blob = await (await fetch(dataUrl)).blob();
+        if (await attachBlobToFileInput(input, blob, "logo")) return true;
+      }
+      if (imageUrl) {
+        const absolute = new URL(imageUrl, baseUrl || location.href).href;
+        const sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
+        const blob = await fetchSubmissionMediaBlob(absolute);
+        if (await attachBlobToFileInput(input, blob, sourceName)) return true;
+      }
     } catch {
-      return false;
+      /* Remote media failed — fall through to the local media library. */
     }
+
+    // Local library fallback: works when the profile has no public image URL, or
+    // when the remote host blocks cross-origin fetches.
+    const request = localMediaRequestFor(config, descriptor);
+    if (!request) return false;
+    for (const kind of [request.kind, request.fallbackKind].filter(Boolean)) {
+      try {
+        const local = await fetchLocalMediaBlob({ ...request, kind });
+        if (await attachBlobToFileInput(input, local.blob, local.name)) {
+          logStep(`📁 已用本地图库上传 ${request.profile}/${local.name}`);
+          return true;
+        }
+      } catch (err) {
+        if (kind === request.kind) logStep(`⚠️ 本地图库上传失败: ${err.message}`);
+      }
+    }
+    return false;
   }
 
   async function fetchSubmissionMediaBlob(absoluteUrl) {
@@ -2826,13 +2936,10 @@
 
       if (type === "file") {
         if (element.files?.length) continue;
-        const ok = await tryFillFileFromUrl(
-          element,
-          value,
-          baseUrl,
-          config,
-          media?.useLogoDataUrl === true,
-        );
+        const ok = await tryFillFileFromUrl(element, value, baseUrl, config, {
+          ...(media || {}),
+          index: media?.explicitIndex ? media.index : screenshotCursor,
+        });
         if (ok) {
           filledCount++;
           mappings[fieldMappingKey(element)] = {
@@ -2840,7 +2947,7 @@
             value,
             label: getSnapshotLabel(element),
           };
-        } else if (value) {
+        } else if (value || localMediaRequestFor(config, media)) {
           skippedFiles.push(getSnapshotLabel(element) || element.name || "image");
         }
         if (media?.screenshot && !media.explicitIndex) screenshotCursor++;
@@ -3120,23 +3227,404 @@
   }
 
   // ─── Comment Generation ───
-  function generateComment(config) {
-    if (config.commentTemplate) return config.commentTemplate;
+  // ─── Page Prescan (target quality signals before spending a submission) ───
+  function prescanPage() {
+    const anchors = Array.from(document.querySelectorAll("a[href]"));
+    const host = location.hostname.replace(/^www\./, "");
+    let external = 0;
+    let externalNofollow = 0;
+    let userContentNofollow = 0;
 
-    const templates = [
-      `Great insights on this topic. I've been researching similar approaches for my own work and found this really helpful. Thanks for sharing!`,
-      `This is exactly what I was looking for. The explanation is clear and practical. I appreciate you taking the time to write this up.`,
-      `Interesting perspective! I've been working in this space for a while and your analysis resonates with what I've seen. Looking forward to more content like this.`,
-      `Solid write-up. I especially appreciate the practical examples you included - they make the concepts much easier to understand and apply.`,
-      `Thanks for putting this together. It's rare to find such well-organized information on this subject. Bookmarking this for reference.`,
-      `Really valuable content here. I've shared this with my team as we're working on something similar. The methodology you outlined is particularly useful.`,
-      `Excellent breakdown. The step-by-step approach makes it really accessible. I've been looking for a resource like this for a while now.`,
-      `This is a thoughtful analysis. I particularly agree with the point about practical implementation being more important than theory. Well done.`,
-      `Great resource! I found the technical details especially helpful. It's clear you have deep experience with this topic. Keep up the great work.`,
-      `Very informative read. I learned several new things from this article. The examples helped clarify the more complex concepts really well.`,
-    ];
+    for (const anchor of anchors) {
+      let anchorHost = "";
+      try {
+        anchorHost = new URL(anchor.href, location.href).hostname.replace(/^www\./, "");
+      } catch {
+        continue;
+      }
+      if (!anchorHost || anchorHost === host || anchorHost.endsWith(`.${host}`)) continue;
+      external++;
+      const rel = (anchor.getAttribute("rel") || "").toLowerCase();
+      if (/\bnofollow\b/.test(rel)) externalNofollow++;
+      if (/\b(?:ugc|sponsored)\b/.test(rel)) userContentNofollow++;
+    }
 
-    return templates[Math.floor(Math.random() * templates.length)];
+    const nofollowRatio = external ? externalNofollow / external : null;
+    const commentAnchors = Array.from(
+      document.querySelectorAll(
+        ".comment a[href], .comments a[href], #comments a[href], .comment-list a[href]",
+      ),
+    );
+    let commentExternal = 0;
+    let commentNofollow = 0;
+    for (const anchor of commentAnchors) {
+      let anchorHost = "";
+      try {
+        anchorHost = new URL(anchor.href, location.href).hostname.replace(/^www\./, "");
+      } catch {
+        continue;
+      }
+      if (!anchorHost || anchorHost === host || anchorHost.endsWith(`.${host}`)) continue;
+      commentExternal++;
+      if (/\bnofollow\b/.test((anchor.getAttribute("rel") || "").toLowerCase())) commentNofollow++;
+    }
+
+    // Existing comment links are the strongest signal: they show what this site
+    // actually grants to submitted links, not what it grants to its own editorial ones.
+    let dofollowLikely = null;
+    if (commentExternal >= 3) dofollowLikely = commentNofollow / commentExternal < 0.5;
+    else if (external >= 5) dofollowLikely = nofollowRatio < 0.5;
+
+    return {
+      url: location.href,
+      hostname: location.hostname,
+      title: compactText(document.title || "", 300),
+      description: getPageMetaDescription(),
+      keywords: compactText(
+        document.querySelector('meta[name="keywords"]')?.getAttribute("content") || "",
+        300,
+      ),
+      h1: compactText(document.querySelector("h1")?.innerText || "", 200),
+      externalLinks: external,
+      externalNofollow,
+      userContentNofollow,
+      nofollowRatio: nofollowRatio == null ? null : Number(nofollowRatio.toFixed(3)),
+      commentExternalLinks: commentExternal,
+      commentNofollow,
+      dofollowLikely,
+      hasCommentForm: detectWPComment() || detectArticleComment(),
+      hasCaptcha: detectCaptcha(),
+      formFieldCount: queryFillableElements().length,
+      articleChars: extractArticleText(12000).length,
+    };
+  }
+
+  // ─── Manual Fill Icons (fallback when auto-detection misses a field) ───
+  const MANUAL_ICON_ATTR = "data-extlink-manual-icon";
+  const MANUAL_ICON_STYLE_ID = "extlink-manual-fill-style";
+  let manualIconConfig = null;
+  let manualIconsEnabled = false;
+  let manualIconTimer = null;
+  let manualIconObserver = null;
+
+  function ensureManualIconStyles() {
+    if (document.getElementById(MANUAL_ICON_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = MANUAL_ICON_STYLE_ID;
+    style.textContent = `
+      .extlink-manual-icon {
+        position: absolute; z-index: 2147483000; width: 20px; height: 20px;
+        padding: 0; margin: 0; border: none; border-radius: 6px; cursor: pointer;
+        background: rgba(37, 99, 235, 0.92); color: #fff; font: 600 11px/20px
+        -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: center;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3); opacity: 0.45;
+        transition: opacity 120ms ease, transform 120ms ease;
+      }
+      .extlink-manual-icon:hover { opacity: 1; transform: scale(1.08); }
+      .extlink-manual-icon[data-state="done"] { background: rgba(22, 163, 74, 0.95); opacity: 0.9; }
+      .extlink-manual-icon[data-state="empty"] { background: rgba(217, 119, 6, 0.95); opacity: 0.9; }
+      @media (max-width: 640px) { .extlink-manual-icon { width: 24px; height: 24px; line-height: 24px; } }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function positionManualIcon(icon, field) {
+    const rect = field.getBoundingClientRect();
+    if (!rect.width && !rect.height) {
+      icon.style.display = "none";
+      return;
+    }
+    icon.style.display = "block";
+    icon.style.top = `${window.scrollY + rect.top + 4}px`;
+    icon.style.left = `${window.scrollX + rect.right - 24}px`;
+  }
+
+  function manualIconTargets() {
+    return queryFillableElements().filter((element) => {
+      const type = (element.type || "").toLowerCase();
+      if (["hidden", "submit", "button", "reset", "image"].includes(type)) return false;
+      if (["checkbox", "radio"].includes(type)) return false;
+      if (element.disabled || element.readOnly) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width >= 80 && rect.height >= 18;
+    });
+  }
+
+  async function loadManualIconConfig() {
+    if (manualIconConfig) return manualIconConfig;
+    try {
+      const response = await chrome.runtime.sendMessage({ action: "getActiveFillConfig" });
+      if (response?.ok && response.config) manualIconConfig = response.config;
+    } catch {
+      /* background unavailable */
+    }
+    return manualIconConfig;
+  }
+
+  async function handleManualIconClick(event, field) {
+    event.preventDefault();
+    event.stopPropagation();
+    const icon = event.currentTarget;
+    const config = await loadManualIconConfig();
+    if (!config) {
+      icon.dataset.state = "empty";
+      icon.title = "未配置网站资料，请先在设置页填写";
+      return;
+    }
+
+    const type = (field.type || "").toLowerCase();
+    let value = "";
+    if (field.tagName.toLowerCase() === "select") {
+      const selectValue = resolveSelectValueForField(field, config);
+      if (selectValue && setSelectValue(field, selectValue)) {
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+        icon.dataset.state = "done";
+        icon.title = `已填：${selectValue}`;
+        return;
+      }
+    } else if (type === "file") {
+      const media = resolveFileMedia(config, field, 0);
+      const ok = await tryFillFileFromUrl(field, media?.value, config.targetDomain, config, media);
+      icon.dataset.state = ok ? "done" : "empty";
+      icon.title = ok ? "已从图库上传" : "图库中没有匹配的图片";
+      return;
+    } else if (isCommentLikeField(field)) {
+      value = await generateComment(config, {
+        preferTemplate: false,
+        maxChars: getCommentCharBudget(field),
+      });
+    } else {
+      value = resolveValueForField(config, field) || "";
+    }
+
+    if (!value) {
+      icon.dataset.state = "empty";
+      icon.title = "资料里没有匹配这个字段的内容";
+      return;
+    }
+
+    const fitted = fitValueToConstraints(String(value), getFieldConstraints(field));
+    await simulateTyping(field, fitted);
+    icon.dataset.state = "done";
+    icon.title = `已填：${fitted.slice(0, 60)}`;
+  }
+
+  function isCommentLikeField(field) {
+    const hint = `${getFieldHint(field)} ${getSnapshotLabel(field)}`.toLowerCase();
+    return (
+      field.tagName.toLowerCase() === "textarea" &&
+      /comment|reply|message|body|thoughts|feedback/.test(hint)
+    );
+  }
+
+  function syncManualIcons() {
+    if (!manualIconsEnabled) return;
+    ensureManualIconStyles();
+
+    const seen = new Set();
+    for (const field of manualIconTargets()) {
+      let icon = field.__extLinkManualIcon;
+      if (!icon || !icon.isConnected) {
+        icon = document.createElement("button");
+        icon.type = "button";
+        icon.className = "extlink-manual-icon";
+        icon.setAttribute(MANUAL_ICON_ATTR, "1");
+        icon.setAttribute("aria-label", "ExternalLink 手动填充此字段");
+        icon.textContent = "EL";
+        icon.title = "点击用当前网站资料填充这个字段";
+        icon.addEventListener("click", (event) => handleManualIconClick(event, field));
+        document.body.appendChild(icon);
+        field.__extLinkManualIcon = icon;
+      }
+      positionManualIcon(icon, field);
+      seen.add(icon);
+    }
+
+    for (const icon of document.querySelectorAll(`[${MANUAL_ICON_ATTR}]`)) {
+      if (!seen.has(icon)) icon.remove();
+    }
+  }
+
+  function scheduleManualIconSync() {
+    if (!manualIconsEnabled) return;
+    clearTimeout(manualIconTimer);
+    manualIconTimer = setTimeout(syncManualIcons, 250);
+  }
+
+  function teardownManualIcons() {
+    manualIconsEnabled = false;
+    clearTimeout(manualIconTimer);
+    manualIconObserver?.disconnect();
+    manualIconObserver = null;
+    for (const icon of document.querySelectorAll(`[${MANUAL_ICON_ATTR}]`)) icon.remove();
+  }
+
+  async function initManualIcons() {
+    if (manualIconsEnabled || !document.body) return;
+    // Only decorate pages that plausibly host a submission or comment form.
+    if (!identifyPlatform() && !hasLikelySubmissionFields()) return;
+
+    let filters = null;
+    try {
+      const response = await chrome.runtime.sendMessage({ action: "getActiveFillConfig" });
+      filters = response?.filters || null;
+      if (response?.ok && response.config) manualIconConfig = response.config;
+    } catch {
+      return;
+    }
+    if (!filters || filters.showManualFillIcons === false) return;
+
+    manualIconsEnabled = true;
+    syncManualIcons();
+    window.addEventListener("scroll", scheduleManualIconSync, { passive: true });
+    window.addEventListener("resize", scheduleManualIconSync, { passive: true });
+    manualIconObserver = new MutationObserver(scheduleManualIconSync);
+    manualIconObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ─── Comment Generation (AI-first, page-aware) ───
+
+  // Cache per page so a multi-round fill does not re-bill the same draft request.
+  let commentDraftCacheKey = "";
+  let commentDraftCacheValue = null;
+
+  const ARTICLE_CONTENT_SELECTORS = [
+    "article",
+    '[itemprop="articleBody"]',
+    ".post-content",
+    ".entry-content",
+    ".article-content",
+    ".post-body",
+    ".markdown-body",
+    "main",
+    '[role="main"]',
+  ];
+
+  const ARTICLE_NOISE_SELECTORS =
+    "nav, header, footer, aside, script, style, noscript, form, " +
+    ".comments, #comments, .comment-list, .wp-block-comments, .sidebar, " +
+    ".related, .share, .advertisement, .ad, [aria-hidden='true']";
+
+  function extractArticleText(limit = 9000) {
+    let best = null;
+    let bestLength = 0;
+    for (const selector of ARTICLE_CONTENT_SELECTORS) {
+      for (const node of document.querySelectorAll(selector)) {
+        if (!isVisible(node)) continue;
+        const length = (node.innerText || "").trim().length;
+        if (length > bestLength) {
+          best = node;
+          bestLength = length;
+        }
+      }
+      if (bestLength > 600) break;
+    }
+
+    const source = best || document.body;
+    if (!source) return "";
+
+    // Clone so removing chrome/navigation noise never mutates the live page.
+    let text = "";
+    try {
+      const clone = source.cloneNode(true);
+      clone.querySelectorAll(ARTICLE_NOISE_SELECTORS).forEach((node) => node.remove());
+      text = clone.innerText || clone.textContent || "";
+    } catch {
+      text = source.innerText || "";
+    }
+    return compactText(text, limit);
+  }
+
+  function getCommentCharBudget(field) {
+    const constraints = getFieldConstraints(field) || {};
+    const maxLength = Number(constraints.maxLength);
+    if (Number.isFinite(maxLength) && maxLength > 60) return Math.min(maxLength, 2000);
+    return 700;
+  }
+
+  function getPageMetaDescription() {
+    const meta = document.querySelector(
+      'meta[name="description"], meta[property="og:description"]',
+    );
+    return compactText(meta?.getAttribute("content") || "", 400);
+  }
+
+  async function requestCommentDrafts(config, options = {}) {
+    const cacheKey = `${config?.projectKey || ""}|${location.href}`;
+    if (!options.refresh && commentDraftCacheKey === cacheKey && commentDraftCacheValue) {
+      return commentDraftCacheValue;
+    }
+
+    const pageText = extractArticleText();
+    if (pageText.length < 120) return null;
+
+    let response;
+    try {
+      response = await chrome.runtime.sendMessage({
+        action: "generateCommentDrafts",
+        pageUrl: location.href,
+        pageTitle: [document.title, getPageMetaDescription()].filter(Boolean).join(" — "),
+        pageText,
+        config,
+        count: options.count || 1,
+        maxChars: options.maxChars || 700,
+        allowLink: options.allowLink !== false,
+        refresh: options.refresh === true,
+      });
+    } catch {
+      return null;
+    }
+
+    if (!response?.ok || !response.drafts?.length) {
+      if (response?.reason) logStep(`ℹ️ AI 评论未采用: ${response.reason}`);
+      else if (response?.error) logStep(`⚠️ AI 评论生成失败: ${response.error}`);
+      return null;
+    }
+
+    commentDraftCacheKey = cacheKey;
+    commentDraftCacheValue = response;
+    return response;
+  }
+
+  function fallbackComment(config) {
+    // Last resort only: a page-anchored line beats a canned compliment, but both
+    // are weaker than an AI draft, so this path is logged as degraded.
+    const heading = compactText(
+      document.querySelector("h1")?.innerText || document.title || "",
+      110,
+    );
+    const meta = getPageMetaDescription();
+    if (heading) {
+      return meta
+        ? `Reading through "${heading}" — the part about ${meta.split(/[.;]/)[0].trim().slice(0, 90)} matches what we ran into, though our numbers came out somewhat different. Curious how this holds up at larger scale.`
+        : `Reading through "${heading}" — this lines up with what we ran into on a similar setup, though a few of the details played out differently for us. Curious how it holds up at larger scale.`;
+    }
+    return "";
+  }
+
+  async function generateComment(config, options = {}) {
+    if (config?.commentTemplate && options.preferTemplate !== false) {
+      return config.commentTemplate;
+    }
+
+    const drafts = await requestCommentDrafts(config, options);
+    if (drafts?.drafts?.length) {
+      const draft = drafts.drafts[0];
+      const anchor = draft.anchorText && draft.placement === "body" ? draft.anchorText : "";
+      logStep(
+        `🧠 AI 评论已生成${draft.angle ? ` (${draft.angle})` : ""}${anchor ? "，正文含锚文本" : "，正文无链接"}`,
+      );
+      return draft.text;
+    }
+
+    const fallback = fallbackComment(config);
+    if (fallback) {
+      logStep("⚠️ AI 评论不可用，已改用页面标题兜底文案");
+      return fallback;
+    }
+    logStep("⚠️ 无法生成切题评论，已跳过评论正文");
+    return "";
   }
 
   function generateDescription(config) {

@@ -413,13 +413,68 @@
     return GATE_STATUSES.has(status);
   }
 
+  function normalizeBlacklistEntry(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
+      .replace(/^[*.]+/, "")
+      .replace(/^www\./, "")
+      .split("/")[0]
+      .split(":")[0]
+      .replace(/\.+$/, "");
+  }
+
+  function buildBlacklistMatcher(entries) {
+    const exact = new Set();
+    const suffixes = [];
+    for (const raw of entries || []) {
+      const entry = normalizeBlacklistEntry(raw);
+      if (!entry) continue;
+      // A leading dot or wildcard blocks the domain and every subdomain under it.
+      if (/^[*.]/.test(String(raw).trim())) suffixes.push(entry);
+      else exact.add(entry);
+    }
+    if (!exact.size && !suffixes.length) return null;
+
+    return function matches(domain) {
+      const host = normalizeBlacklistEntry(domain);
+      if (!host) return false;
+      if (exact.has(host)) return true;
+      for (const suffix of suffixes) {
+        if (host === suffix || host.endsWith(`.${suffix}`)) return true;
+      }
+      for (const entry of exact) {
+        if (host.endsWith(`.${entry}`)) return true;
+      }
+      return false;
+    };
+  }
+
+  function domainAgeGate(domain, options = {}) {
+    const minMonths = Number(options.minDomainAgeMonths || 0);
+    if (!(minMonths > 0)) return null;
+
+    const metrics = (options.domainMetrics || {})[normalizeBlacklistEntry(domain)];
+    if (!metrics) {
+      return options.requireKnownDomainAge ? "domain_age_unknown" : null;
+    }
+    const age = Number(metrics.ageMonths);
+    if (!Number.isFinite(age)) {
+      return options.requireKnownDomainAge ? "domain_age_unknown" : null;
+    }
+    return age < minMonths ? "domain_too_young" : null;
+  }
+
   function filterSubmissionTasks(tasks, options = {}) {
     const deletedKeys = new Set(options.deletedKeys || []);
     const annotations = options.annotations || {};
     const skipStatuses = new Set(options.excludeStatuses || [...DEAD_END_STATUSES]);
     const activeProject = options.activeProjectKey || "";
+    const isBlacklisted = buildBlacklistMatcher(options.blacklist);
+    const excluded = [];
 
-    return (tasks || []).filter((task) => {
+    const kept = (tasks || []).filter((task) => {
       if (deletedKeys.has(task.key)) return false;
       const ann = annotations[task.key] || annotations[task.domain];
       if (ann && skipStatuses.has(ann.status)) return false;
@@ -430,8 +485,22 @@
       ) {
         return false;
       }
+      if (isBlacklisted && isBlacklisted(task.domain)) {
+        excluded.push({ key: task.key, domain: task.domain, reason: "blacklist" });
+        return false;
+      }
+      const ageReason = domainAgeGate(task.domain, options);
+      if (ageReason) {
+        excluded.push({ key: task.key, domain: task.domain, reason: ageReason });
+        return false;
+      }
       return true;
     });
+
+    if (options.collectExclusions) {
+      kept.gateExclusions = excluded;
+    }
+    return kept;
   }
 
   function resolveProfileForSelection(profileId, siteProfiles, tableProjects, findMatchingProfile) {
@@ -613,6 +682,8 @@
     mergePendingQueue,
     resolvePluginUrls,
     filterSubmissionTasks,
+    normalizeBlacklistEntry,
+    buildBlacklistMatcher,
     buildDestinationGroups,
     flattenDestinationGroups,
     matchSubmissionTarget,

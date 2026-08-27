@@ -654,6 +654,180 @@
     }
   });
 
+  // ─── Target gate + assistant settings ───
+  function setStatusLine(id, message, tone = "") {
+    const el = $(id);
+    if (!el) return;
+    el.className = `sync-status${tone ? ` ${tone}` : ""}`;
+    el.textContent = message;
+  }
+
+  function applyGateStateToForm(state) {
+    const filters = state.filters || {};
+    if ($("filterBlacklistEnabled")) {
+      $("filterBlacklistEnabled").checked = filters.blacklistEnabled !== false;
+    }
+    if ($("filterMinDomainAge")) {
+      $("filterMinDomainAge").value = String(filters.minDomainAgeMonths || 0);
+    }
+    if ($("filterRequireKnownAge")) {
+      $("filterRequireKnownAge").checked = filters.requireKnownDomainAge === true;
+    }
+    if ($("filterAiComments")) $("filterAiComments").checked = filters.aiComments !== false;
+    if ($("filterAiCommentAllowLink")) {
+      $("filterAiCommentAllowLink").checked = filters.aiCommentAllowLink !== false;
+    }
+    if ($("filterManualFillIcons")) {
+      $("filterManualFillIcons").checked = filters.showManualFillIcons !== false;
+    }
+    if ($("domainBlacklistText")) {
+      $("domainBlacklistText").value = (state.domainBlacklist || []).join("\n");
+    }
+    setStatusLine(
+      "targetGateStatus",
+      [
+        `黑名单 ${(state.domainBlacklist || []).length} 条`,
+        filters.minDomainAgeMonths
+          ? `最小域名年龄 ${filters.minDomainAgeMonths} 个月`
+          : "未启用年龄闸门",
+        `已缓存年龄数据 ${state.metricsCached || 0} 个域名`,
+      ].join(" · "),
+      "success",
+    );
+  }
+
+  async function loadTargetGateState() {
+    const state = await chrome.runtime.sendMessage({ action: "getTargetGateState" });
+    if (!state?.ok) throw new Error(state?.error || "读取闸门设置失败");
+    applyGateStateToForm(state);
+    return state;
+  }
+
+  $("btnSaveTargetGate")?.addEventListener("click", async () => {
+    const btn = $("btnSaveTargetGate");
+    btn.disabled = true;
+    try {
+      const entries = String($("domainBlacklistText").value || "")
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const listResult = await chrome.runtime.sendMessage({
+        action: "updateDomainBlacklist",
+        add: entries,
+        replace: true,
+      });
+      if (!listResult?.ok) throw new Error(listResult?.error || "保存黑名单失败");
+
+      const filterResult = await chrome.runtime.sendMessage({
+        action: "saveTargetFilters",
+        filters: {
+          blacklistEnabled: $("filterBlacklistEnabled").checked,
+          minDomainAgeMonths: Number($("filterMinDomainAge").value || 0),
+          requireKnownDomainAge: $("filterRequireKnownAge").checked,
+        },
+      });
+      if (!filterResult?.ok) throw new Error(filterResult?.error || "保存闸门设置失败");
+      await loadTargetGateState();
+      setStatusLine("targetGateStatus", "闸门设置已保存，下一次构建队列生效。", "success");
+    } catch (err) {
+      setStatusLine("targetGateStatus", err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnPrefetchDomainAge")?.addEventListener("click", async () => {
+    const btn = $("btnPrefetchDomainAge");
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = "查询中…";
+    try {
+      const queue = await chrome.runtime.sendMessage({ action: "getSubmissionQueue" });
+      const domains = [
+        ...new Set(
+          (queue?.groups || queue?.tasks || [])
+            .map((item) => item.domain || "")
+            .filter(Boolean),
+        ),
+      ].slice(0, 200);
+      if (!domains.length) throw new Error("当前队列没有可查询的域名");
+
+      setStatusLine("targetGateStatus", `正在查询 ${domains.length} 个域名的注册年龄…`);
+      const result = await chrome.runtime.sendMessage({ action: "getDomainMetrics", domains });
+      const state = await loadTargetGateState();
+      const known = Object.values(result?.results || {}).filter((item) =>
+        Number.isFinite(item.ageMonths),
+      ).length;
+      setStatusLine(
+        "targetGateStatus",
+        [
+          `查询 ${domains.length} 个域名`,
+          `拿到注册日期 ${known} 个`,
+          `缓存共 ${state.metricsCached || 0} 个`,
+          result?.error ? `Agent 报错：${result.error}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        result?.error ? "warning" : "success",
+      );
+    } catch (err) {
+      setStatusLine("targetGateStatus", err.message, "warning");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
+  $("btnSaveAssistant")?.addEventListener("click", async () => {
+    const btn = $("btnSaveAssistant");
+    btn.disabled = true;
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "saveTargetFilters",
+        filters: {
+          aiComments: $("filterAiComments").checked,
+          aiCommentAllowLink: $("filterAiCommentAllowLink").checked,
+          showManualFillIcons: $("filterManualFillIcons").checked,
+        },
+      });
+      if (!result?.ok) throw new Error(result?.error || "保存助手设置失败");
+      setStatusLine("mediaLibraryStatus", "助手设置已保存，新打开的页面生效。", "success");
+    } catch (err) {
+      setStatusLine("mediaLibraryStatus", err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnRefreshMediaLibrary")?.addEventListener("click", async () => {
+    const btn = $("btnRefreshMediaLibrary");
+    btn.disabled = true;
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "listLocalSubmissionMedia" });
+      if (!result?.ok) throw new Error(result?.error || "读取本地图库失败");
+      if (!result.mediaRootExists) {
+        setStatusLine("mediaLibraryStatus", `图库目录不存在：${result.mediaRoot}`, "warning");
+        return;
+      }
+      const summary = (result.profiles || [])
+        .map((entry) => {
+          const logos = entry.files.filter((file) => file.kind === "logo").length;
+          const shots = entry.files.filter((file) => file.kind === "screenshot").length;
+          return `${entry.profile}（Logo ${logos} / 截图 ${shots}）`;
+        })
+        .join("，");
+      setStatusLine(
+        "mediaLibraryStatus",
+        summary ? `${result.mediaRoot} → ${summary}` : `${result.mediaRoot} 下没有可用图片`,
+        summary ? "success" : "warning",
+      );
+    } catch (err) {
+      setStatusLine("mediaLibraryStatus", err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   $("btnClearData")?.addEventListener("click", () => {
     if (!confirm("确认清除所有扩展数据？")) return;
     chrome.storage.local.clear(() => {
@@ -701,6 +875,7 @@
         }
       });
       loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
+      loadTargetGateState().catch((err) => setStatusLine("targetGateStatus", err.message, "warning"));
     },
   );
 })();

@@ -719,6 +719,100 @@
             🗑 清除所有数据
           </button>
         </div>
+
+        <div class="card">
+          <div class="section-title">目标质量闸门</div>
+          <p class="hint">
+            在打开外链站之前先过滤：黑名单域名直接排除，域名年龄用本机 Agent 的 RDAP 查询结果判断。年龄数据只用缓存，不会在构建队列时联网。
+          </p>
+          <label
+            ><input
+              type="checkbox"
+              id="filterBlacklistEnabled"
+              checked
+            />
+            启用域名黑名单</label
+          >
+          <div class="form-row">
+            <label for="filterMinDomainAge">最小域名年龄（月，0 表示不限制）</label>
+            <input
+              type="number"
+              id="filterMinDomainAge"
+              min="0"
+              max="600"
+              step="1"
+              value="0"
+            />
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              id="filterRequireKnownAge"
+            />
+            年龄未知也排除（查不到注册日期的域名不提交）</label
+          >
+          <div class="form-row">
+            <label for="domainBlacklistText">
+              黑名单域名（每行一个；以 <code>.</code> 开头表示连同子域一起排除）
+            </label>
+            <textarea
+              id="domainBlacklistText"
+              rows="6"
+              placeholder="spam-directory.com&#10;.example-network.net"
+            ></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnSaveTargetGate">保存闸门设置</button>
+            <button class="btn btn-secondary" id="btnPrefetchDomainAge">
+              预取当前队列域名年龄
+            </button>
+          </div>
+          <div class="sync-status" id="targetGateStatus" role="status" aria-live="polite">
+            正在读取闸门设置…
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">AI 评论与本地图库</div>
+          <p class="hint">
+            AI 评论由本机 Agent 读取页面正文后生成，只有切题的草稿才会被采用；通用套话会被拒绝。本地图库用于必填上传字段，绕开系统文件选择器。
+          </p>
+          <label
+            ><input
+              type="checkbox"
+              id="filterAiComments"
+              checked
+            />
+            博客/论坛评论使用 AI 生成（关闭后仅用评论模板）</label
+          >
+          <br />
+          <label
+            ><input
+              type="checkbox"
+              id="filterAiCommentAllowLink"
+              checked
+            />
+            允许 AI 在评论中自然嵌入推广链接（关闭则只写无链接评论）</label
+          >
+          <br /><br />
+          <label
+            ><input
+              type="checkbox"
+              id="filterManualFillIcons"
+              checked
+            />
+            在网页输入框旁显示手动填充图标（自动填表失败时兜底）</label
+          >
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnSaveAssistant">保存助手设置</button>
+            <button class="btn btn-secondary" id="btnRefreshMediaLibrary">
+              检查本地图库
+            </button>
+          </div>
+          <div class="sync-status" id="mediaLibraryStatus" role="status" aria-live="polite">
+            尚未检查本地图库。
+          </div>
+        </div>
       </div>
     </div>
     <script src="lib/profiles.js"></script>

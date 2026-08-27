@@ -177,4 +177,106 @@ const Q = loadQueueModule();
 
 assert.equal(Q.isGateStatus("needs_manual"), true);
 
+// ─── Domain blacklist normalization and matching ───
+{
+  assert.equal(Q.normalizeBlacklistEntry("HTTPS://WWW.Spam.com/submit?a=1"), "spam.com");
+  assert.equal(Q.normalizeBlacklistEntry(".example-network.net"), "example-network.net");
+  assert.equal(Q.normalizeBlacklistEntry("host.com:8443"), "host.com");
+  assert.equal(Q.normalizeBlacklistEntry(""), "");
+
+  assert.equal(Q.buildBlacklistMatcher([]), null, "an empty list should not build a matcher");
+  assert.equal(Q.buildBlacklistMatcher(["  ", ""]), null, "blank entries should not build a matcher");
+
+  const matches = Q.buildBlacklistMatcher(["spam.com", ".ring.net", "*.farm.io"]);
+  assert.equal(matches("spam.com"), true);
+  assert.equal(matches("https://www.spam.com/submit"), true);
+  assert.equal(matches("sub.spam.com"), true, "an exact entry should still cover its subdomains");
+  assert.equal(matches("ring.net"), true);
+  assert.equal(matches("a.b.ring.net"), true);
+  assert.equal(matches("deep.farm.io"), true);
+  assert.equal(matches("notspam.com"), false);
+  assert.equal(matches("spam.com.evil.org"), false, "suffix matching must respect label boundaries");
+  assert.equal(matches(""), false);
+}
+
+// ─── Target gating inside filterSubmissionTasks ───
+{
+  const tasks = [
+    { key: "young.example/submit", domain: "young.example" },
+    { key: "old.example/submit", domain: "old.example" },
+    { key: "unknown.example/submit", domain: "unknown.example" },
+    { key: "spam.example/submit", domain: "spam.example" },
+  ];
+  const domainMetrics = {
+    "young.example": { ageMonths: 2 },
+    "old.example": { ageMonths: 120 },
+  };
+
+  const noGate = Q.filterSubmissionTasks(tasks, { deletedKeys: [], annotations: {} });
+  assert.equal(noGate.length, 4, "no filters configured should keep every task");
+
+  const blacklisted = Q.filterSubmissionTasks(tasks, {
+    blacklist: ["spam.example"],
+    collectExclusions: true,
+  });
+  assert.deepEqual(
+    blacklisted.map((task) => task.domain),
+    ["young.example", "old.example", "unknown.example"],
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(blacklisted.gateExclusions)), [
+    { key: "spam.example/submit", domain: "spam.example", reason: "blacklist" },
+  ]);
+
+  const aged = Q.filterSubmissionTasks(tasks, {
+    minDomainAgeMonths: 12,
+    domainMetrics,
+    collectExclusions: true,
+  });
+  assert.deepEqual(
+    aged.map((task) => task.domain),
+    ["old.example", "unknown.example", "spam.example"],
+    "unknown ages should pass unless explicitly required",
+  );
+  assert.deepEqual(
+    [...aged.gateExclusions].map((item) => item.reason),
+    ["domain_too_young"],
+  );
+
+  const strict = Q.filterSubmissionTasks(tasks, {
+    minDomainAgeMonths: 12,
+    requireKnownDomainAge: true,
+    domainMetrics,
+    collectExclusions: true,
+  });
+  assert.deepEqual(
+    strict.map((task) => task.domain),
+    ["old.example"],
+  );
+  assert.deepEqual(
+    [...strict.gateExclusions].map((item) => item.reason).sort(),
+    ["domain_age_unknown", "domain_age_unknown", "domain_too_young"],
+  );
+
+  const zeroThreshold = Q.filterSubmissionTasks(tasks, {
+    minDomainAgeMonths: 0,
+    requireKnownDomainAge: true,
+    domainMetrics: {},
+  });
+  assert.equal(
+    zeroThreshold.length,
+    4,
+    "requireKnownDomainAge must be inert while the age threshold is zero",
+  );
+
+  const nullAge = Q.filterSubmissionTasks([{ key: "k", domain: "n.example" }], {
+    minDomainAgeMonths: 6,
+    requireKnownDomainAge: true,
+    domainMetrics: { "n.example": { ageMonths: null } },
+  });
+  assert.equal(nullAge.length, 0, "a cached record without an age counts as unknown");
+
+  const withoutCollect = Q.filterSubmissionTasks(tasks, { blacklist: ["spam.example"] });
+  assert.equal(withoutCollect.gateExclusions, undefined);
+}
+
 console.log("queue workflow tests passed");

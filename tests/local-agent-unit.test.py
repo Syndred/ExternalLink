@@ -664,5 +664,295 @@ class LocalAgentUnitTests(unittest.TestCase):
         asyncio.run(run_test())
 
 
+class CommentDraftTests(unittest.TestCase):
+    def test_generic_openers_are_rejected(self):
+        generic = [
+            "Great post, thanks for sharing this with us all today for real.",
+            "Thanks for sharing this, it was a very useful read for me today.",
+            "This is exactly what I was looking for, really appreciate the effort here.",
+            "Very informative read, I learned a lot from this article today honestly.",
+            "Excellent article about caching that I really enjoyed reading this morning.",
+        ]
+        result = server.normalize_comment_drafts(
+            {"status": "ok", "drafts": [{"text": text} for text in generic]},
+            max_chars=700,
+            allow_link=False,
+            count=5,
+        )
+        self.assertEqual(result["status"], "skip")
+        self.assertEqual(result["drafts"], [])
+        self.assertIn("generic opener", result["rejected"])
+
+    def test_specific_draft_is_kept_and_trimmed(self):
+        long_text = (
+            "The 40ms cold-path number surprised me because we measured closer to 300ms "
+            "once the CDN miss was included. In our case the origin was doing a synchronous "
+            "registry lookup per request, which never showed up in the local benchmark at all. "
+            "Curious whether you saw the same thing under concurrency."
+        )
+        result = server.normalize_comment_drafts(
+            {
+                "status": "ok",
+                "drafts": [
+                    {
+                        "text": long_text,
+                        "anchorText": "the batching tool we built",
+                        "anchorUrl": "example.com",
+                        "placement": "body",
+                        "angle": "measurement mismatch",
+                    }
+                ],
+            },
+            max_chars=200,
+            allow_link=True,
+            count=1,
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(len(result["drafts"]), 1)
+        draft = result["drafts"][0]
+        self.assertLessEqual(draft["chars"], 200)
+        self.assertEqual(draft["anchorUrl"], "https://example.com")
+        self.assertEqual(draft["placement"], "body")
+
+    def test_spam_anchors_and_disallowed_links_are_stripped(self):
+        text = (
+            "Your point about idempotent retries only holds when the downstream write is "
+            "actually keyed on the request id, which most queue examples quietly skip."
+        )
+        spam = server.normalize_comment_drafts(
+            {"status": "ok", "drafts": [{"text": text, "anchorText": "click here", "anchorUrl": "https://x.io"}]},
+            max_chars=700,
+            allow_link=True,
+            count=1,
+        )
+        self.assertEqual(spam["drafts"][0]["anchorText"], "")
+        self.assertEqual(spam["drafts"][0]["anchorUrl"], "")
+
+        blocked = server.normalize_comment_drafts(
+            {"status": "ok", "drafts": [{"text": text, "anchorText": "our tool", "anchorUrl": "https://x.io"}]},
+            max_chars=700,
+            allow_link=False,
+            count=1,
+        )
+        self.assertEqual(blocked["drafts"][0]["anchorText"], "")
+        self.assertEqual(blocked["drafts"][0]["anchorUrl"], "")
+
+    def test_avoided_words_and_duplicates_are_dropped(self):
+        text = (
+            "The retry budget section skips the case where the downstream write is not keyed "
+            "on a request id, which is where we actually lost data last quarter."
+        )
+        result = server.normalize_comment_drafts(
+            {
+                "status": "ok",
+                "drafts": [
+                    {"text": text},
+                    {"text": text},
+                    {"text": text + " Also this is a revolutionary game-changer for teams."},
+                ],
+            },
+            max_chars=700,
+            allow_link=False,
+            count=3,
+            avoid_words=["game-changer"],
+        )
+        self.assertEqual(len(result["drafts"]), 1)
+        self.assertIn("duplicate draft", result["rejected"])
+        self.assertTrue(any("game-changer" in item for item in result["rejected"]))
+
+    def test_thin_pages_skip_without_calling_deepseek(self):
+        class StubRequest:
+            async def json(self):
+                return {"pageText": "too short", "config": {}}
+
+        async def run_test():
+            with mock.patch.object(server, "deepseek_chat_json") as chat:
+                response = await server.handle_comment(StubRequest())
+            chat.assert_not_called()
+            self.assertEqual(json.loads(response.text)["status"], "skip")
+
+        asyncio.run(run_test())
+
+
+class MediaLibraryTests(unittest.TestCase):
+    def _library(self, temp_dir):
+        profile_dir = Path(temp_dir) / "DemoProfile"
+        profile_dir.mkdir()
+        (profile_dir / "logo.png").write_bytes(b"\x89PNG-logo")
+        (profile_dir / "logo.svg").write_bytes(b"<svg/>")
+        (profile_dir / "01-home.png").write_bytes(b"\x89PNG-one")
+        (profile_dir / "02-detail.png").write_bytes(b"\x89PNG-two")
+        (profile_dir / "notes.txt").write_text("ignored", encoding="utf-8")
+        return profile_dir
+
+    def test_numbered_prefix_files_classify_as_screenshots(self):
+        self.assertEqual(server.classify_media_name("01-home.png"), "screenshot")
+        self.assertEqual(server.classify_media_name("04.png"), "screenshot")
+        self.assertEqual(server.classify_media_name("logo.svg"), "logo")
+        self.assertEqual(server.classify_media_name("brand-icon.png"), "logo")
+        self.assertEqual(server.classify_media_name("banner.png"), "other")
+
+    def test_listing_skips_non_image_files(self):
+        with TemporaryDirectory() as temp_dir:
+            self._library(temp_dir)
+            with mock.patch.object(server, "MEDIA_ROOT", Path(temp_dir)):
+                profiles = server.list_media_profiles()
+        self.assertEqual(len(profiles), 1)
+        names = [item["name"] for item in profiles[0]["files"]]
+        self.assertNotIn("notes.txt", names)
+        self.assertEqual(len(names), 4)
+
+    def test_kind_and_index_resolution_prefers_raster_logo(self):
+        with TemporaryDirectory() as temp_dir:
+            self._library(temp_dir)
+            with mock.patch.object(server, "MEDIA_ROOT", Path(temp_dir)):
+                logo = server.read_media_file("DemoProfile", "", "logo", 0)
+                second = server.read_media_file("DemoProfile", "", "screenshot", 1)
+                overflow = server.read_media_file("DemoProfile", "", "screenshot", 9)
+        self.assertEqual(logo["name"], "logo.png")
+        self.assertTrue(logo["dataUrl"].startswith("data:image/png;base64,"))
+        self.assertEqual(second["name"], "02-detail.png")
+        self.assertEqual(overflow["name"], "01-home.png")
+
+    def test_path_traversal_is_refused(self):
+        with TemporaryDirectory() as temp_dir:
+            self._library(temp_dir)
+            (Path(temp_dir).parent / "outside-secret.png").write_bytes(b"\x89PNG-secret")
+            with mock.patch.object(server, "MEDIA_ROOT", Path(temp_dir)):
+                for profile, name in [
+                    ("../", "outside-secret.png"),
+                    ("..", "outside-secret.png"),
+                    ("DemoProfile", "../outside-secret.png"),
+                    ("DemoProfile", "../../etc/passwd"),
+                    ("", "logo.png"),
+                ]:
+                    with self.assertRaises(server.AgentError):
+                        server.read_media_file(profile, name, "logo", 0)
+
+    def test_oversized_media_is_refused(self):
+        with TemporaryDirectory() as temp_dir:
+            profile_dir = Path(temp_dir) / "Big"
+            profile_dir.mkdir()
+            (profile_dir / "logo.png").write_bytes(b"0" * 64)
+            with mock.patch.object(server, "MEDIA_ROOT", Path(temp_dir)), mock.patch.object(
+                server, "MEDIA_MAX_BYTES", 32
+            ):
+                with self.assertRaises(server.AgentError) as ctx:
+                    server.read_media_file("Big", "logo.png", "logo", 0)
+        self.assertEqual(ctx.exception.http_status, 413)
+
+
+class DomainMetricsTests(unittest.TestCase):
+    def setUp(self):
+        server._DOMAIN_METRICS_CACHE.clear()
+
+    def test_domain_normalization_strips_scheme_path_and_www(self):
+        self.assertEqual(server.normalize_domain("https://WWW.Example.com/submit?a=1"), "example.com")
+        self.assertEqual(server.normalize_domain("user@Blog.Example.co.uk:443"), "blog.example.co.uk")
+        for bad in ["", "not a domain", "localhost", "http:///"]:
+            with self.assertRaises(server.AgentError):
+                server.normalize_domain(bad)
+
+    def test_registrable_domain_handles_two_label_suffixes(self):
+        self.assertEqual(server.registrable_domain("blog.example.co.uk"), "example.co.uk")
+        self.assertEqual(server.registrable_domain("a.b.example.com"), "example.com")
+        self.assertEqual(server.registrable_domain("example.com"), "example.com")
+
+    def test_registration_event_becomes_age_and_is_cached(self):
+        payload = {
+            "events": [
+                {"eventAction": "registration", "eventDate": "2020-01-15T00:00:00Z"},
+                {"eventAction": "expiration", "eventDate": "2030-01-15T00:00:00Z"},
+            ]
+        }
+        with mock.patch.object(
+            server.requests, "get", return_value=StubResponse(200, payload)
+        ) as get:
+            first = server.fetch_domain_metrics("https://www.example.com/x")
+            second = server.fetch_domain_metrics("example.com")
+
+        self.assertEqual(get.call_count, 1, "the second lookup must be served from cache")
+        self.assertEqual(first["status"], "ok")
+        self.assertTrue(first["createdAt"].startswith("2020-01-15"))
+        self.assertGreater(first["ageMonths"], 60)
+        self.assertTrue(second["cached"])
+
+    def test_fractional_second_rdap_dates_are_parsed(self):
+        for value in (
+            "2020-04-24T09:26:28.0Z",
+            "2020-04-24T09:26:28.123Z",
+            "2020-04-24T09:26:28.1234567Z",
+            "2020-04-24T09:26:28+00:00",
+        ):
+            parsed = server.parse_rdap_datetime(value)
+            self.assertIsNotNone(parsed, value)
+            self.assertEqual(parsed.year, 2020)
+            self.assertEqual(parsed.month, 4)
+            self.assertEqual(parsed.day, 24)
+
+        payload = {
+            "events": [
+                {"eventAction": "registration", "eventDate": "2020-04-24T09:26:28.0Z"},
+            ]
+        }
+        with mock.patch.object(server.requests, "get", return_value=StubResponse(200, payload)):
+            result = server.fetch_domain_metrics("uneed.best")
+        self.assertEqual(result["status"], "ok")
+        self.assertGreater(result["ageMonths"], 50)
+        self.assertTrue(result["createdAt"].startswith("2020-04-24"))
+
+    def test_missing_or_failing_rdap_returns_unknown_not_error(self):
+        with mock.patch.object(server.requests, "get", return_value=StubResponse(404, {})):
+            missing = server.fetch_domain_metrics("nope.example")
+        self.assertEqual(missing["status"], "unknown")
+        self.assertIsNone(missing["ageMonths"])
+
+        with mock.patch.object(server.requests, "get", return_value=StubResponse(200, {"events": []})):
+            no_events = server.fetch_domain_metrics("empty.example")
+        self.assertEqual(no_events["status"], "unknown")
+
+        class Boom(server.requests.RequestException):
+            pass
+
+        with mock.patch.object(server.requests, "get", side_effect=Boom("network down")):
+            failed = server.fetch_domain_metrics("down.example")
+        self.assertEqual(failed["status"], "unknown")
+        self.assertIn("network down", failed["message"])
+
+    def test_metrics_endpoint_rejects_empty_input(self):
+        class StubRequest:
+            async def json(self):
+                return {"domains": []}
+
+        async def run_test():
+            response = await server.handle_domain_metrics(StubRequest())
+            self.assertEqual(response.status, 400)
+
+        asyncio.run(run_test())
+
+
+class RouteRegistrationTests(unittest.TestCase):
+    def test_new_endpoints_are_registered(self):
+        recorded = {"get": [], "post": []}
+
+        class FakeRouter:
+            def add_get(self, path, handler):
+                recorded["get"].append(path)
+
+            def add_post(self, path, handler):
+                recorded["post"].append(path)
+
+        class FakeApp:
+            router = FakeRouter()
+
+        with mock.patch.object(server.web, "Application", FakeApp):
+            server.create_app()
+
+        self.assertIn("/comment", recorded["post"])
+        self.assertIn("/domain/metrics", recorded["post"])
+        self.assertIn("/media/list", recorded["get"])
+        self.assertIn("/media/file", recorded["get"])
+
+
 if __name__ == "__main__":
     unittest.main()

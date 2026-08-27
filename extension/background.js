@@ -36,6 +36,13 @@ const MAX_FILL_ROUNDS = 6;
 const AUTO_FILL_DEBOUNCE_MS = 900;
 const MAX_SUBMISSION_MEDIA_BYTES = 6 * 1024 * 1024;
 const SUBMISSION_SCHEMA_VERSION = self.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION || 2;
+const DOMAIN_METRICS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const DOMAIN_METRICS_BATCH = 20;
+const DOMAIN_METRICS_CACHE_LIMIT = 5000;
+const COMMENT_CACHE_TTL_MS = 30 * 60 * 1000;
+const COMMENT_CACHE_LIMIT = 60;
+
+const commentDraftCache = new Map();
 
 const autoFillTimers = new Map();
 const autoFillInProgress = new Set();
@@ -83,6 +90,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       fetchSubmissionMedia(msg.url)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "fetchLocalSubmissionMedia":
+      fetchLocalSubmissionMedia(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "listLocalSubmissionMedia":
+      listLocalSubmissionMedia()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message, profiles: [] }));
+      return true;
+    case "generateCommentDrafts":
+      generateCommentDrafts(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, drafts: [], error: err.message }));
+      return true;
+    case "getActiveFillConfig":
+      getActiveFillConfig()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "getTargetGateState":
+      getTargetGateState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "saveTargetFilters":
+      saveTargetFilters(msg.filters)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "updateDomainBlacklist":
+      updateDomainBlacklist(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "getDomainMetrics":
+      getDomainMetrics(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message, results: {} }));
       return true;
     case "sidepanelOpened":
       sidePanelOpen = true;
@@ -265,6 +312,273 @@ async function fetchSubmissionMedia(rawUrl) {
     contentType,
     byteLength: bytes.length,
   };
+}
+
+// ─── Target gating: domain blacklist + registration age ───
+function normalizeTargetFilters(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  const minMonths = Number(source.minDomainAgeMonths);
+  return {
+    blacklistEnabled: source.blacklistEnabled !== false,
+    minDomainAgeMonths: Number.isFinite(minMonths) ? Math.max(0, Math.min(minMonths, 600)) : 0,
+    requireKnownDomainAge: source.requireKnownDomainAge === true,
+    showManualFillIcons: source.showManualFillIcons !== false,
+    aiComments: source.aiComments !== false,
+    aiCommentAllowLink: source.aiCommentAllowLink !== false,
+  };
+}
+
+async function getTargetFilters() {
+  const { targetFilters } = await chrome.storage.local.get("targetFilters");
+  return normalizeTargetFilters(targetFilters);
+}
+
+async function saveTargetFilters(patch) {
+  const current = await getTargetFilters();
+  const next = normalizeTargetFilters({ ...current, ...(patch || {}) });
+  await chrome.storage.local.set({ targetFilters: next });
+  return { ok: true, filters: next };
+}
+
+async function updateDomainBlacklist(msg = {}) {
+  const stored = await chrome.storage.local.get("domainBlacklist");
+  const current = new Set(
+    (stored.domainBlacklist || []).map((item) =>
+      self.ExtLinkQueue.normalizeBlacklistEntry(item),
+    ),
+  );
+
+  if (msg.replace) current.clear();
+  for (const item of msg.add || []) {
+    const entry = String(item || "").trim();
+    if (!entry) continue;
+    // Preserve the leading dot/wildcard so subdomain rules survive a round trip.
+    current.add(
+      /^[*.]/.test(entry)
+        ? `.${self.ExtLinkQueue.normalizeBlacklistEntry(entry)}`
+        : self.ExtLinkQueue.normalizeBlacklistEntry(entry),
+    );
+  }
+  for (const item of msg.remove || []) {
+    const normalized = self.ExtLinkQueue.normalizeBlacklistEntry(item);
+    current.delete(normalized);
+    current.delete(`.${normalized}`);
+  }
+
+  const domainBlacklist = [...current].filter(Boolean).sort();
+  await chrome.storage.local.set({ domainBlacklist });
+  return { ok: true, domainBlacklist };
+}
+
+async function getDomainMetrics(msg = {}) {
+  const requested = (Array.isArray(msg.domains) ? msg.domains : [msg.domain])
+    .map((value) => self.ExtLinkQueue.normalizeBlacklistEntry(value))
+    .filter(Boolean);
+  const unique = [...new Set(requested)];
+  if (!unique.length) return { ok: false, error: "没有可查询的域名", results: {} };
+
+  const { domainMetricsCache } = await chrome.storage.local.get("domainMetricsCache");
+  const cache = domainMetricsCache && typeof domainMetricsCache === "object" ? domainMetricsCache : {};
+  const now = Date.now();
+  const results = {};
+  const missing = [];
+
+  for (const domain of unique) {
+    const hit = cache[domain];
+    if (!msg.refresh && hit && now - (hit.fetchedAt || 0) < DOMAIN_METRICS_TTL_MS) {
+      results[domain] = hit;
+    } else {
+      missing.push(domain);
+    }
+  }
+
+  let agentError = "";
+  for (let offset = 0; offset < missing.length; offset += DOMAIN_METRICS_BATCH) {
+    const batch = missing.slice(offset, offset + DOMAIN_METRICS_BATCH);
+    try {
+      const data = await callLocalAgent("/domain/metrics", { domains: batch });
+      for (const entry of data.results || []) {
+        const domain = self.ExtLinkQueue.normalizeBlacklistEntry(entry.domain);
+        if (!domain) continue;
+        const record = {
+          domain,
+          status: entry.status || "unknown",
+          createdAt: entry.createdAt || "",
+          expiresAt: entry.expiresAt || "",
+          ageMonths: Number.isFinite(Number(entry.ageMonths)) ? Number(entry.ageMonths) : null,
+          ageDays: Number.isFinite(Number(entry.ageDays)) ? Number(entry.ageDays) : null,
+          message: entry.message || "",
+          fetchedAt: now,
+        };
+        cache[domain] = record;
+        results[domain] = record;
+      }
+    } catch (err) {
+      agentError = err.message;
+      break;
+    }
+  }
+
+  await chrome.storage.local.set({ domainMetricsCache: pruneDomainMetricsCache(cache) });
+  return {
+    ok: !agentError,
+    error: agentError,
+    results,
+    cachedCount: unique.length - missing.length,
+    lookedUp: Object.keys(results).length - (unique.length - missing.length),
+  };
+}
+
+function pruneDomainMetricsCache(cache) {
+  const entries = Object.entries(cache || {});
+  if (entries.length <= DOMAIN_METRICS_CACHE_LIMIT) return cache;
+  entries.sort((a, b) => (b[1]?.fetchedAt || 0) - (a[1]?.fetchedAt || 0));
+  return Object.fromEntries(entries.slice(0, DOMAIN_METRICS_CACHE_LIMIT));
+}
+
+async function getTargetGateState() {
+  const storage = await chrome.storage.local.get([
+    "domainBlacklist",
+    "targetFilters",
+    "domainMetricsCache",
+  ]);
+  return {
+    ok: true,
+    filters: normalizeTargetFilters(storage.targetFilters),
+    domainBlacklist: storage.domainBlacklist || [],
+    metricsCached: Object.keys(storage.domainMetricsCache || {}).length,
+  };
+}
+
+// ─── Local submission media (DataTransfer upload injection source) ───
+async function fetchLocalSubmissionMedia(msg = {}) {
+  const params = new URLSearchParams();
+  params.set("profile", String(msg.profile || "").trim());
+  if (msg.name) params.set("name", String(msg.name).trim());
+  if (msg.kind) params.set("kind", String(msg.kind).trim());
+  params.set("index", String(Number.isFinite(Number(msg.index)) ? Number(msg.index) : 0));
+
+  let response;
+  try {
+    response = await fetch(`${LOCAL_AGENT_URL}/media/file?${params.toString()}`);
+  } catch (err) {
+    throw new Error(`本地媒体代理不可用 (${LOCAL_AGENT_URL}): ${err.message}`);
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.dataUrl) {
+    throw new Error(data.message || `本地媒体读取失败: HTTP ${response.status}`);
+  }
+  if (data.bytes > MAX_SUBMISSION_MEDIA_BYTES) {
+    throw new Error("本地图片超过 6MB，无法自动上传");
+  }
+  return {
+    ok: true,
+    dataUrl: data.dataUrl,
+    contentType: data.mime,
+    name: data.name,
+    kind: data.kind,
+    byteLength: data.bytes,
+  };
+}
+
+async function listLocalSubmissionMedia() {
+  let response;
+  try {
+    response = await fetch(`${LOCAL_AGENT_URL}/media/list`);
+  } catch (err) {
+    return { ok: false, error: `本地媒体代理不可用: ${err.message}`, profiles: [] };
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { ok: false, error: data.message || `HTTP ${response.status}`, profiles: [] };
+  }
+  return {
+    ok: true,
+    mediaRoot: data.mediaRoot || "",
+    mediaRootExists: data.mediaRootExists === true,
+    profiles: data.profiles || [],
+  };
+}
+
+// ─── AI comment drafts ───
+async function generateCommentDrafts(msg = {}) {
+  const filters = await getTargetFilters();
+  if (filters.aiComments === false) {
+    return { ok: false, status: "disabled", drafts: [], error: "AI 评论生成已在设置中关闭" };
+  }
+
+  const pageUrl = String(msg.pageUrl || "");
+  const config = msg.config && typeof msg.config === "object" ? msg.config : {};
+  const cacheKey = `${config.projectKey || ""}|${pageUrl}|${msg.count || 1}`;
+  const cached = commentDraftCache.get(cacheKey);
+  if (cached && !msg.refresh && Date.now() - cached.at < COMMENT_CACHE_TTL_MS) {
+    return { ...cached.value, cached: true };
+  }
+
+  let data;
+  try {
+    data = await callLocalAgent("/comment", {
+      pageUrl,
+      pageTitle: String(msg.pageTitle || ""),
+      pageText: String(msg.pageText || ""),
+      language: msg.language || config.language || "auto",
+      count: Math.max(1, Math.min(Number(msg.count) || 1, 5)),
+      maxChars: Number(msg.maxChars) || 700,
+      allowLink: msg.allowLink !== false && filters.aiCommentAllowLink !== false,
+      config: {
+        brandName: config.brandName || "",
+        targetDomain: config.targetDomain || "",
+        anchorRules: config.anchorRules || {},
+        blogRules: config.blogRules || {},
+        targetAudience: config.targetAudience || "",
+        valueProposition: config.valueProposition || "",
+        useCases: config.useCases || [],
+        sellablePoints: config.sellablePoints || [],
+        avoidContent: config.avoidContent || [],
+      },
+    });
+  } catch (err) {
+    return { ok: false, status: "error", drafts: [], error: err.message };
+  }
+
+  const value = {
+    ok: data.status === "ok" && (data.drafts || []).length > 0,
+    status: data.status || "error",
+    drafts: data.drafts || [],
+    reason: data.reason || "",
+    rejected: data.rejected || [],
+  };
+  if (value.ok) commentDraftCache.set(cacheKey, { at: Date.now(), value });
+  if (commentDraftCache.size > COMMENT_CACHE_LIMIT) {
+    commentDraftCache.delete(commentDraftCache.keys().next().value);
+  }
+  return value;
+}
+
+// ─── Config for in-page manual fill icons ───
+async function getActiveFillConfig() {
+  const storage = await chrome.storage.local.get([
+    "siteProfiles",
+    "activeSiteId",
+    "cfgEmail",
+    "cfgName",
+    "cfgCommentTemplate",
+    "targetFilters",
+  ]);
+  const profile = self.ExtLinkProfiles.getActiveProfile(storage);
+  const filters = normalizeTargetFilters(storage.targetFilters);
+  if (!self.ExtLinkProfiles.profileConfigured(profile)) {
+    return { ok: false, error: "未配置网站资料", filters };
+  }
+  const config = self.ExtLinkProfiles.buildAgentConfigFromProfile(profile, {
+    email: storage.cfgEmail,
+    username: storage.cfgName,
+    commentTemplate: storage.cfgCommentTemplate,
+    fillOnly: true,
+  });
+  config.learnedFieldMappings = profile.learnedFieldMappings || {};
+  return { ok: true, config, profileId: profile.id, profileName: profile.name || profile.id, filters };
 }
 
 async function startBatchRun(msg) {
@@ -1452,6 +1766,9 @@ async function loadPendingSubmissionTasks(options = {}) {
     "siteAnnotations",
     "submissionRecords",
     "submissionSchemaVersion",
+    "domainBlacklist",
+    "targetFilters",
+    "domainMetricsCache",
   ]);
   const tableData = await loadTableLibrary();
   const seeded = await ensureProfilesFromTable(
@@ -1507,17 +1824,27 @@ async function loadPendingSubmissionTasks(options = {}) {
   });
 
   const deletedKeys = storage.deletedSubmissionKeys || [];
+  const filters = normalizeTargetFilters(storage.targetFilters);
   const flattened = self.ExtLinkQueue.flattenDestinationGroups(groups);
   const filtered = self.ExtLinkQueue.filterSubmissionTasks(flattened, {
     deletedKeys,
     annotations,
+    blacklist: filters.blacklistEnabled ? storage.domainBlacklist || [] : [],
+    minDomainAgeMonths: filters.minDomainAgeMonths,
+    requireKnownDomainAge: filters.requireKnownDomainAge,
+    domainMetrics: storage.domainMetricsCache || {},
+    collectExclusions: true,
   });
+  const gateExclusions = filtered.gateExclusions || [];
 
   return {
     tasks: filtered,
     groups,
     selectedProfileIds,
+    gateExclusions,
     meta: {
+      gatedByBlacklist: gateExclusions.filter((item) => item.reason === "blacklist").length,
+      gatedByDomainAge: gateExclusions.filter((item) => item.reason !== "blacklist").length,
       fromTable: groups.filter((group) => group.source === "table").length,
       fromPlugin: groups.filter((group) => group.source !== "table").length,
       beforeFilter: flattened.length,

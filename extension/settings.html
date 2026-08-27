@@ -20,7 +20,16 @@
         margin: 0 auto;
         padding: 24px 16px 48px;
       }
-      h1 {
+      .page-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .page-head img {
+        border-radius: 10px;
+      }
+      .page-head-text h1 {
         font-size: 22px;
         margin-bottom: 4px;
       }
@@ -266,10 +275,15 @@
   </head>
   <body>
     <div class="wrap">
-      <h1>⚙️ ExternalLink 设置</h1>
-      <p class="subtitle">
-        网站资料与全局配置保存在本地，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
-      </p>
+      <div class="page-head">
+        <img src="icons/icon48.png" width="40" height="40" alt="" />
+        <div class="page-head-text">
+          <h1>ExternalLink 设置</h1>
+          <p class="subtitle">
+            网站资料与全局配置保存在本地，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
+          </p>
+        </div>
+      </div>
 
       <div class="notice">
         💡

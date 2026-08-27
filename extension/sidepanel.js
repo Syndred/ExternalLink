@@ -20,6 +20,8 @@
   let currentPageUrl = "";
   let selectedSiteIds = [];
   let parkedTasks = [];
+  let pagePrescan = null;
+  let workflowStep = "detect";
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -264,6 +266,169 @@
 
   $("btnPrevSite")?.addEventListener("click", () => cycleSubmission(-1));
   $("btnNextSite")?.addEventListener("click", () => cycleSubmission(1));
+  $("btnLaunchNext")?.addEventListener("click", () => cycleSubmission(1));
+
+  function setWorkflowStep(step) {
+    workflowStep = step;
+    const map = { detect: "stepDetect", fill: "stepFill", submit: "stepSubmit" };
+    const order = ["detect", "fill", "submit"];
+    const idx = order.indexOf(step);
+    for (const [key, id] of Object.entries(map)) {
+      const el = $(id);
+      if (!el) continue;
+      el.classList.remove("active", "done");
+      const i = order.indexOf(key);
+      if (i < idx) el.classList.add("done");
+      else if (i === idx) el.classList.add("active");
+    }
+  }
+
+  function updateCommentCharCount() {
+    const ta = $("spCommentText");
+    const counter = $("commentCharCount");
+    if (!ta || !counter) return;
+    const len = (ta.value || "").trim().length;
+    counter.textContent = `${len} 字`;
+  }
+
+  $("spCommentText")?.addEventListener("input", updateCommentCharCount);
+
+  function renderMetricChip(label, cls) {
+    const chip = document.createElement("span");
+    chip.className = "metric-chip" + (cls ? " " + cls : "");
+    chip.textContent = label;
+    return chip;
+  }
+
+  function renderPageMetrics(prescan, metrics) {
+    const row = $("pageMetrics");
+    if (!row) return;
+    row.replaceChildren();
+
+    if (prescan?.dofollowLikely === true) {
+      row.append(renderMetricChip("Dofollow 倾向", "good"));
+    } else if (prescan?.dofollowLikely === false) {
+      row.append(renderMetricChip("Nofollow 倾向", "bad"));
+    } else if (prescan) {
+      row.append(renderMetricChip("链接属性未知", "neutral"));
+    }
+
+    if (prescan?.hasCommentForm) row.append(renderMetricChip("有评论表单", "good"));
+    if (prescan?.hasCaptcha) row.append(renderMetricChip("含验证码", "bad"));
+    if (prescan?.formFieldCount > 0) {
+      row.append(renderMetricChip(`${prescan.formFieldCount} 个字段`, "good"));
+    }
+    if (prescan?.commentExternalLinks >= 3) {
+      const ratio = prescan.commentNofollow / prescan.commentExternalLinks;
+      row.append(
+        renderMetricChip(
+          `评论外链 ${prescan.commentExternalLinks}（nofollow ${Math.round(ratio * 100)}%）`,
+          ratio < 0.5 ? "good" : "bad",
+        ),
+      );
+    }
+
+    const host = prescan?.hostname?.replace(/^www\./, "") || "";
+    const domainMetric = host && metrics?.[host];
+    if (domainMetric?.ageMonths != null) {
+      const cls = domainMetric.ageMonths >= 12 ? "good" : domainMetric.ageMonths >= 6 ? "neutral" : "bad";
+      row.append(renderMetricChip(`域名 ${domainMetric.ageMonths} 月`, cls));
+    } else if (domainMetric?.status === "unknown") {
+      row.append(renderMetricChip("域名年龄未知", "neutral"));
+    }
+
+    if (!row.childElementCount) {
+      row.append(renderMetricChip("点击「检测」获取页面信号", ""));
+    }
+  }
+
+  function renderPageTdk(prescan) {
+    const wrap = $("pageTdk");
+    const titleEl = $("pageTitle");
+    const descEl = $("pageDescription");
+    if (!wrap || !titleEl || !descEl) return;
+    const title = prescan?.title || prescan?.h1 || "";
+    const desc = prescan?.description || "";
+    if (!title && !desc) {
+      wrap.setAttribute("hidden", "");
+      return;
+    }
+    titleEl.textContent = title || "—";
+    descEl.textContent = desc || "无 meta description";
+    wrap.removeAttribute("hidden");
+  }
+
+  async function fetchDomainMetricsForHost(hostname) {
+    const host = String(hostname || "")
+      .replace(/^www\./, "")
+      .trim();
+    if (!host) return {};
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "getDomainMetrics",
+        domains: [host],
+      });
+      return result?.results || {};
+    } catch {
+      return {};
+    }
+  }
+
+  async function regenerateCommentDraft() {
+    if (!activeTabId || !currentPageUrl?.startsWith("http")) {
+      showToast("请先打开目标文章页", true);
+      return;
+    }
+    const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
+    if (!P.profileConfigured(profile)) {
+      showToast("请先在设置页配置网站资料", true);
+      return;
+    }
+    const btn = $("btnRegenComment");
+    const tone = $("commentTone")?.value || "helpful";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "生成中…";
+    }
+    try {
+      const cfg = P.buildAgentConfigFromProfile(profile, {});
+      cfg.blogRules = { ...(cfg.blogRules || {}), tone };
+      const result = await chrome.runtime.sendMessage({
+        action: "generateCommentPreview",
+        tabId: activeTabId,
+        config: cfg,
+        refresh: true,
+        count: 1,
+      });
+      if (!result?.ok || !result.text) {
+        throw new Error(result?.error || "AI 评论生成失败，请确认文章正文足够长");
+      }
+      if ($("spCommentText")) {
+        $("spCommentText").value = result.text;
+        updateCommentCharCount();
+      }
+      setWorkflowStep("fill");
+      showToast("评论草稿已生成");
+    } catch (err) {
+      showToast(err.message, true);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "重新生成";
+      }
+    }
+  }
+
+  $("btnRegenComment")?.addEventListener("click", regenerateCommentDraft);
+  $("btnFillComment")?.addEventListener("click", async () => {
+    const ta = $("spCommentText");
+    if (ta && !ta.value.trim()) {
+      await regenerateCommentDraft();
+      if (ta.value.trim()) fillPage("comment");
+      return;
+    }
+    fillPage("comment");
+  });
 
   function setAutoFillStatus(text, cls) {
     const el = $("autoFillStatus");
@@ -373,7 +538,7 @@
         };
         if (badge) {
           badge.textContent = meta.label;
-          badge.className = "site-status-badge " + (meta.cls || "");
+          badge.className = "status-pill " + (meta.cls || "");
           badge.removeAttribute("hidden");
         }
         const activeBtn = document.querySelector(
@@ -382,7 +547,7 @@
         activeBtn?.classList.add("active");
       } else if (badge) {
         badge.textContent = info?.inQueue ? "📋 在外链队列中" : "未标记";
-        badge.className = "site-status-badge";
+        badge.className = "status-pill";
         badge.removeAttribute("hidden");
       }
 
@@ -472,6 +637,7 @@
       });
       if ($("spCommentText") && !$("spCommentText").value.trim()) {
         $("spCommentText").value = cfg.commentTemplate || "";
+        updateCommentCharCount();
       }
     });
   }
@@ -528,6 +694,10 @@
       }
     });
     $("detectResult")?.setAttribute("hidden", "");
+    pagePrescan = null;
+    renderPageMetrics(null, {});
+    $("pageTdk")?.setAttribute("hidden", "");
+    setWorkflowStep("detect");
   }
 
   function showToast(msg, isErr) {
@@ -552,23 +722,46 @@
       btn.disabled = true;
       btn.textContent = "检测中…";
     }
+    setWorkflowStep("detect");
     try {
-      const result = await chrome.runtime.sendMessage({
-        action: "sidepanelDetect",
-        tabId: activeTabId,
-      });
-      if (!result?.ok) throw new Error(result?.error || "检测失败");
-      if (result.tabId) activeTabId = result.tabId;
-      detection = result;
-      renderDetection(result);
+      let hostname = "";
+      try {
+        hostname = new URL(currentPageUrl).hostname;
+      } catch {
+        /* ignore */
+      }
+
+      const [detectResult, prescanResult, metrics] = await Promise.all([
+        chrome.runtime.sendMessage({ action: "sidepanelDetect", tabId: activeTabId }),
+        chrome.runtime.sendMessage({ action: "prescanPage", tabId: activeTabId }).catch(() => null),
+        fetchDomainMetricsForHost(hostname),
+      ]);
+
+      if (!detectResult?.ok) throw new Error(detectResult?.error || "检测失败");
+      if (detectResult.tabId) activeTabId = detectResult.tabId;
+
+      if (prescanResult?.ok) {
+        pagePrescan = prescanResult;
+        renderPageTdk(prescanResult);
+        setStatusItem(
+          "stComment",
+          prescanResult.hasCommentForm ? "找到了" : "未找到",
+          prescanResult.hasCommentForm ? "ok" : "",
+        );
+      }
+
+      detection = detectResult;
+      renderDetection(detectResult);
+      renderPageMetrics(pagePrescan, metrics);
       await refreshSiteAnnotation(currentPageUrl);
+      setWorkflowStep(detectResult.operable ? "fill" : "detect");
       showToast("检测完成");
     } catch (err) {
       showToast(err.message, true);
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "✨ 检测当前页";
+        btn.textContent = "检测";
       }
     }
   }
@@ -602,7 +795,6 @@
   }
 
   $("btnDetect")?.addEventListener("click", detectCurrentPage);
-  $("btnDetect2")?.addEventListener("click", detectCurrentPage);
 
   // ─── Fill ───
   async function fillPage(mode) {
@@ -635,6 +827,8 @@
       });
 
       handleFillResult(result, mode);
+      if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
+      else if (mode === "comment" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
     } catch (err) {
       setAutoFillStatus(err.message, "err");
       showToast(err.message, true);
@@ -645,7 +839,6 @@
   }
 
   $("btnFillForm")?.addEventListener("click", () => fillPage("form"));
-  $("btnFillComment")?.addEventListener("click", () => fillPage("comment"));
 
   // ─── Batch (from popup) ───
   function log(msg, cls) {
@@ -964,6 +1157,8 @@
       }
     });
     loadCommentTemplate();
+    updateCommentCharCount();
+    setWorkflowStep("detect");
   });
 
   function requestAutoFillForTab(tabId, url) {

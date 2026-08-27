@@ -1,340 +1,161 @@
 <!doctype html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ExternalLink</title>
-    <link
-      rel="stylesheet"
-      href="sidepanel.css"
-    />
+    <link rel="stylesheet" href="sidepanel.css" />
   </head>
   <body>
-    <header class="header">
-      <div class="header-top">
-        <span class="logo">🔗 ExternalLink</span>
-        <button
-          class="icon-btn"
-          id="btnOpenSettings"
-          title="打开设置页"
-        >
-          ⚙️
-        </button>
-      </div>
-      <div class="site-picker">
-        <div class="picker-label">我的网站资料</div>
-        <select id="spSiteSelect"></select>
-      </div>
-      <div class="submission-nav">
-        <div class="picker-label">
-          待提交站点
-          <span
-            id="submissionNavMeta"
-            class="submission-nav-meta"
-          ></span>
-        </div>
-        <div class="site-nav">
-          <button
-            type="button"
-            class="site-nav-btn"
-            id="btnPrevSite"
-            title="上一个待提交站"
-          >
-            ◀
-          </button>
-          <span
-            class="submission-nav-info"
-            id="submissionNavInfo"
-            >加载中…</span
-          >
-          <button
-            type="button"
-            class="site-nav-btn"
-            id="btnNextSite"
-            title="下一个待提交站"
-          >
-            ▶
-          </button>
-        </div>
-        <div
-          class="auto-fill-status"
-          id="autoFillStatus"
-          hidden
-        >
-          等待自动填写…
+    <header class="app-header">
+      <div class="brand">
+        <img src="icons/icon48.png" width="28" height="28" alt="" class="brand-icon" />
+        <div class="brand-text">
+          <div class="brand-title">ExternalLink</div>
+          <div class="brand-sub">外链执行工作台</div>
         </div>
       </div>
+      <button class="icon-btn" id="btnOpenSettings" type="button" title="打开设置页" aria-label="打开设置页">
+        ⚙
+      </button>
     </header>
 
-    <nav class="tabs">
-      <button
-        class="tab active"
-        data-panel="home"
-      >
-        执行
-      </button>
-      <button
-        class="tab"
-        data-panel="batch"
-      >
-        批量
-      </button>
-      <button
-        class="tab"
-        data-panel="manual"
-      >
-        待人工 <span id="manualTabCount"></span>
+    <section class="context-bar">
+      <label class="field-label" for="spSiteSelect">当前 Profile</label>
+      <select id="spSiteSelect"></select>
+      <div class="queue-row">
+        <button type="button" class="nav-chip" id="btnPrevSite" title="上一个待提交站">◀</button>
+        <span class="queue-info" id="submissionNavInfo">加载中…</span>
+        <button type="button" class="nav-chip" id="btnNextSite" title="下一个待提交站">▶</button>
+      </div>
+      <div class="queue-meta" id="submissionNavMeta"></div>
+      <div class="auto-fill-status" id="autoFillStatus" hidden role="status"></div>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="工作区">
+      <button class="tab active" type="button" data-panel="home" role="tab" aria-selected="true">执行</button>
+      <button class="tab" type="button" data-panel="batch" role="tab">批量</button>
+      <button class="tab" type="button" data-panel="manual" role="tab">
+        待人工 <span class="tab-badge" id="manualTabCount"></span>
       </button>
     </nav>
 
-    <!-- 主页 -->
-    <main
-      class="panel active"
-      id="panel-home"
-    >
-      <div class="card page-card">
-        <div class="card-label">当前页面</div>
-        <div
-          class="page-host"
-          id="spHostname"
-        >
-          —
+    <!-- 执行 -->
+    <main class="panel active" id="panel-home" role="tabpanel">
+      <section class="insight-card">
+        <div class="insight-head">
+          <div class="insight-url">
+            <div class="page-host" id="spHostname">—</div>
+            <div class="page-url" id="spPageUrl">请在普通网页上使用</div>
+          </div>
+          <span class="status-pill" id="siteStatusBadge" hidden></span>
         </div>
-        <div
-          class="page-url"
-          id="spPageUrl"
-        >
-          等待检测…
+        <div class="insight-tdk" id="pageTdk" hidden>
+          <div class="tdk-title" id="pageTitle"></div>
+          <div class="tdk-desc" id="pageDescription"></div>
         </div>
-        <div
-          class="site-status-badge"
-          id="siteStatusBadge"
-          hidden
-        ></div>
-      </div>
+        <div class="metric-row" id="pageMetrics" aria-label="页面质量信号"></div>
+      </section>
 
-      <div class="card">
-        <div class="card-title">站点标记</div>
-        <div class="card-desc">标记当前待提交站的状态，或加入/移除外链列表。</div>
+      <section class="workflow-card">
+        <div class="workflow-steps" aria-hidden="true">
+          <span class="step" id="stepDetect">1 检测</span>
+          <span class="step-sep"></span>
+          <span class="step" id="stepFill">2 填写</span>
+          <span class="step-sep"></span>
+          <span class="step" id="stepSubmit">3 提交</span>
+        </div>
+        <div class="toolbar" role="toolbar" aria-label="页面操作">
+          <button type="button" class="tool-btn" id="btnDetect">检测</button>
+          <button type="button" class="tool-btn tool-primary" id="btnFillForm">填表</button>
+          <button type="button" class="tool-btn" id="btnFillComment">AI 评论</button>
+          <button type="button" class="tool-btn tool-accent" id="btnLaunchNext" title="打开队列中的下一站">下一站</button>
+        </div>
+      </section>
+
+      <section class="card comment-studio">
+        <div class="card-head-row">
+          <h2 class="card-title">评论草稿</h2>
+          <div class="comment-controls">
+            <select id="commentTone" class="compact-select" title="评论语气">
+              <option value="helpful">务实</option>
+              <option value="professional">专业</option>
+              <option value="casual">轻松</option>
+              <option value="enthusiastic">热情</option>
+            </select>
+            <button type="button" class="btn-link" id="btnRegenComment">重新生成</button>
+          </div>
+        </div>
+        <p class="card-desc">读取当前文章正文生成切题评论；可在填入前编辑。</p>
+        <textarea id="spCommentText" rows="4" placeholder="点击「AI 评论」或「重新生成」…"></textarea>
+        <div class="comment-meta"><span id="commentCharCount">0 字</span></div>
+      </section>
+
+      <details class="card collapsible" open>
+        <summary class="collapsible-summary">站点标记</summary>
+        <p class="card-desc">标记当前外链站状态；全量库管理请去设置页。</p>
         <div class="mark-btns">
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="can_submit"
-          >
-            ✅ 可提交
-          </button>
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="needs_login"
-          >
-            🔐 需登录
-          </button>
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="needs_captcha"
-          >
-            🤖 验证码
-          </button>
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="paid"
-          >
-            💳 付费
-          </button>
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="broken"
-          >
-            ❌ 无法提交
-          </button>
-          <button
-            type="button"
-            class="mark-btn"
-            data-status="skip"
-          >
-            ⏭ 跳过
-          </button>
-          <button
-            type="button"
-            class="mark-btn mark-danger"
-            data-status="deleted"
-          >
-            🗑 删除
-          </button>
+          <button type="button" class="mark-btn" data-status="can_submit">可提交</button>
+          <button type="button" class="mark-btn" data-status="needs_login">需登录</button>
+          <button type="button" class="mark-btn" data-status="needs_captcha">验证码</button>
+          <button type="button" class="mark-btn" data-status="paid">付费</button>
+          <button type="button" class="mark-btn" data-status="broken">无法提交</button>
+          <button type="button" class="mark-btn" data-status="skip">跳过</button>
+          <button type="button" class="mark-btn mark-danger" data-status="deleted">删除</button>
         </div>
-        <button
-          type="button"
-          class="btn btn-ghost btn-block"
-          id="btnAddToUrlList"
-          hidden
-        >
-          ➕ 加入外链列表（置顶）
-        </button>
-        <p class="card-desc library-hint">全量分类和各项目提交状态请到设置页的“外链库”查看。</p>
-      </div>
+        <button type="button" class="btn btn-ghost btn-block" id="btnAddToUrlList" hidden>加入外链列表（置顶）</button>
+      </details>
 
-      <div class="card">
-        <div class="card-title">当前页操作</div>
-        <div class="card-desc">
-          进入待提交列表中的站点会自动填写；填完后 AI 会检查字数与字段要求。提交前请自行检查。
+      <details class="card collapsible">
+        <summary class="collapsible-summary">检测详情</summary>
+        <ul class="status-list" id="spStatusList">
+          <li><span class="dot pending"></span>网站资料 <em id="stProfile">未配置</em></li>
+          <li><span class="dot pending"></span>页面状态 <em id="stPage">未检测</em></li>
+          <li><span class="dot pending"></span>评论区 <em id="stComment">未检测</em></li>
+          <li><span class="dot pending"></span>提交表单 <em id="stForm">未检测</em></li>
+        </ul>
+        <div class="result-card" id="detectResult" hidden>
+          <p class="card-desc" id="detectSummary"></p>
+          <ul class="field-preview" id="fieldPreview"></ul>
         </div>
-        <button
-          class="btn btn-primary"
-          id="btnDetect"
-        >
-          ✨ 检测当前页
-        </button>
-      </div>
+      </details>
 
-      <ul
-        class="status-list"
-        id="spStatusList"
-      >
-        <li><span class="dot pending"></span>网站资料 <em id="stProfile">未配置</em></li>
-        <li><span class="dot pending"></span>页面状态 <em id="stPage">未检测</em></li>
-        <li><span class="dot pending"></span>评论区 <em id="stComment">未检测</em></li>
-        <li><span class="dot pending"></span>提交表单 <em id="stForm">未检测</em></li>
-      </ul>
-
-      <div
-        class="card result-card"
-        id="detectResult"
-        hidden
-      >
-        <div class="card-title">检测结果</div>
-        <p
-          class="card-desc"
-          id="detectSummary"
-        ></p>
-        <ul
-          class="field-preview"
-          id="fieldPreview"
-        ></ul>
-      </div>
-
-      <div class="card">
-        <label class="card-title">评论内容（可选编辑）</label>
-        <textarea
-          id="spCommentText"
-          rows="4"
-          placeholder="填写表单后可用于评论区的文案…"
-        ></textarea>
-      </div>
-
-      <div class="action-bar">
-        <button
-          class="btn btn-ghost"
-          id="btnDetect2"
-        >
-          检测
-        </button>
-        <button
-          class="btn btn-primary"
-          id="btnFillComment"
-        >
-          💬 帮我评论
-        </button>
-        <button
-          class="btn btn-accent"
-          id="btnFillForm"
-        >
-          📝 填入网站资料
-        </button>
-      </div>
-
-      <div
-        class="toast"
-        id="spToast"
-        hidden
-      ></div>
+      <div class="toast" id="spToast" hidden role="status"></div>
     </main>
 
     <!-- 批量 -->
-    <main
-      class="panel"
-      id="panel-batch"
-    >
+    <main class="panel" id="panel-batch" role="tabpanel">
       <div class="card">
-        <div class="card-title">本轮提交哪些网站</div>
-        <div
-          class="batch-site-choices"
-          id="batchSiteChoices"
-        ></div>
-        <p
-          class="batch-summary"
-          id="batchSelectionSummary"
-        >
-          请至少选择一个自家网站
-        </p>
-        <label class="check-row"
-          ><input
-            type="checkbox"
-            id="cfgFillOnly"
-          />
-          仅填表（不自动提交）</label
-        >
+        <h2 class="card-title">本轮提交哪些网站</h2>
+        <div class="batch-site-choices" id="batchSiteChoices"></div>
+        <p class="batch-summary" id="batchSelectionSummary">请至少选择一个自家网站</p>
+        <label class="check-row">
+          <input type="checkbox" id="cfgFillOnly" />
+          仅填表（不自动提交）
+        </label>
         <div class="stats">
           <div class="stat"><b id="statQueue">0</b><span>排队</span></div>
           <div class="stat ok"><b id="statDone">0</b><span>完成</span></div>
           <div class="stat skip"><b id="statSkip">0</b><span>跳过</span></div>
           <div class="stat err"><b id="statErr">0</b><span>失败</span></div>
         </div>
-        <div class="progress">
-          <div
-            class="progress-fill"
-            id="progressFill"
-          ></div>
-        </div>
-        <button
-          class="btn btn-primary"
-          id="btnStart"
-        >
-          🚀 开始提交
-        </button>
-        <button
-          class="btn btn-ghost"
-          id="btnContinue"
-          hidden
-        >
-          ▶ 继续等待中的任务
-        </button>
-        <button
-          class="btn btn-danger"
-          id="btnStop"
-          hidden
-        >
-          ⏹ 停止
-        </button>
+        <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        <button type="button" class="btn btn-primary" id="btnStart">开始提交</button>
+        <button type="button" class="btn btn-ghost" id="btnContinue" hidden>继续等待中的任务</button>
+        <button type="button" class="btn btn-danger" id="btnStop" hidden>停止</button>
       </div>
-      <div
-        id="taskList"
-        class="task-list"
-      ></div>
-      <div
-        id="log"
-        class="log"
-      ></div>
+      <div id="taskList" class="task-list"></div>
+      <div id="log" class="log" aria-live="polite"></div>
     </main>
 
-    <main
-      class="panel"
-      id="panel-manual"
-    >
+    <!-- 待人工 -->
+    <main class="panel" id="panel-manual" role="tabpanel">
       <div class="card">
-        <div class="card-title">停放中的任务</div>
-        <p class="card-desc">
-          登录、验证码和无法重置表单的页签会停放在这里，不占用批量并发位。
-        </p>
+        <h2 class="card-title">停放中的任务</h2>
+        <p class="card-desc">登录、验证码和无法重置表单的页签会停放在这里，不占用批量并发位。</p>
       </div>
-      <div
-        id="manualTaskList"
-        class="manual-task-list"
-      >
-        <div class="empty-state">暂无待人工任务。你可以返回“批量”开始新一轮。</div>
+      <div id="manualTaskList" class="manual-task-list">
+        <div class="empty-state">暂无待人工任务。你可以返回「批量」开始新一轮。</div>
       </div>
     </main>
 

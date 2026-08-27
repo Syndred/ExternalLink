@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-27 11:55｜扩展 2.7.0｜路线：混合 C
+> 最后更新：2026-08-27 12:20｜扩展 2.7.0｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
 
@@ -24,6 +24,11 @@
 - 登录、验证码、无法重置表单会停放并释放并发位；人工可继续或确认成功。
 - `paid / broken / skip / deleted` 排除整个外链站；单项目失败不误伤兄弟任务。
 - Side Panel 分为“执行 / 批量 / 待人工”；Settings 提供外链库和账本导入导出。
+- **Side Panel 2.7 UI 改版**（对标 BacklinkHelper / AutoCommentAI / Backlink Service 取长补短）：
+  - **页面洞察卡**：hostname、TDK、质量芯片（dofollow 倾向、评论表单、验证码、域名年龄 RDAP）。
+  - **工作流工具栏**：检测 → 填表 → AI 评论 → 下一站；步骤指示器；去掉底部重复操作栏。
+  - **评论工作室**：语气选择（务实/专业/轻松/热情）+ 重新生成；字数统计；空草稿时 AI 评论先自动生成再填入。
+  - **折叠区块**：站点标记、检测详情；品牌头图 + 设置页同步图标。
 - RainbowPetAI、RspAi、OldPhotoLive 已同步完整资料、Logo 和 Screenshot 1–4；本地 Logo 随备份恢复。
 - Screenshot 1–4 使用统一媒体列表并按文件字段顺序映射；动态名称、域名、备注和日志均安全文本渲染。
 - UI 基础规则见 [`DESIGN.md`](DESIGN.md)。
@@ -61,9 +66,9 @@ extension/lib/queue.js       # 成功账本、迁移、分组队列、黑名单/
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
 extension/lib/backup.js      # 账本备份校验与合并
 extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
-extension/background.js      # 调度、评论草稿、本地媒体、域名指标代理
+extension/background.js      # 调度、评论草稿、本地媒体、域名指标、prescan/评论预览代理
 extension/content.js         # 填表、AI 评论、DataTransfer 上传、手动图标、prescan
-extension/sidepanel.*        # 执行 / 批量 / 待人工
+extension/sidepanel.*        # 执行工作台（洞察卡 + 工具栏 + 评论工作室）/ 批量 / 待人工
 extension/settings.*         # Profile / 外链库 / 备份 / 闸门与助手配置
 local_agent/server.py        # /plan /comment /media/* /domain/metrics /google/*
 tools/import_table_xlsx.py   # 按工作表解析 Profile、媒体、外链和历史记录

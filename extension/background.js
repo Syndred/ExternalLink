@@ -81,6 +81,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
+    case "prescanPage":
+      handlePrescanPage(msg.tabId)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "generateCommentPreview":
+      handleGenerateCommentPreview(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "sidepanelFill":
       handleSidepanelFill(msg)
         .then(sendResponse)
@@ -829,6 +839,33 @@ async function handleSidepanelDetect(tabId) {
     const result = await sendTabMessage(targetTabId, { action: "detectPage" });
     if (result?.error) return { ok: false, error: result.error };
     return { ok: true, tabId: targetTabId, ...result };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function handlePrescanPage(tabId) {
+  const targetTabId = await resolveTargetTabId(tabId);
+  if (!targetTabId) return { ok: false, error: "没有可检测的网页标签" };
+  try {
+    const result = await sendTabMessage(targetTabId, { action: "prescanPage" });
+    if (result?.error) return { ok: false, error: result.error };
+    return { ok: true, tabId: targetTabId, ...result };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function handleGenerateCommentPreview(msg) {
+  const tabId = await resolveTargetTabId(msg.tabId);
+  if (!tabId) return { ok: false, error: "没有可生成评论的网页标签" };
+  try {
+    return await sendTabMessage(tabId, {
+      action: "generateCommentPreview",
+      config: msg.config || {},
+      count: msg.count || 1,
+      refresh: msg.refresh === true,
+    });
   } catch (err) {
     return { ok: false, error: err.message };
   }

@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-09-05｜扩展 2.8.2｜路线：混合 C
+> 最后更新：2026-09-05｜扩展 2.9.0｜路线：混合 C
 > `Link Submit` 现表头 Link / SubmitProject / Submit / Time / Record / Detail；同步已按此读取。
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
@@ -8,6 +8,7 @@
 
 ## 当前已完成
 
+- **2.9.0 表格全字段与外链动态时间线**：`Link Submit` 每行全部原始列、Record、Detail、行号均进入卡片；每个 Profile 子表的全部 Field / Content / Notes 均保留并可编辑。每张外链卡片按 Profile 展示追加式时间线，可记录精确提交时间、待审核、上线、拒绝、需跟进、链接失效和笔记；旧成功账本与表格历史会幂等迁移。备份已包含时间线与 Sheet 快照，无需另建远程数据库。
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
 - **2.8.2 Settings 外链库**：只有外链库页左右分栏（列表 + 同步）；网站资料/全局配置仍是顶部菜单。卡片一行两条，质量分写清楚，只显示已提交记录。
 - **2.8.0 补齐外链运营闭环**（代码、本机 Agent 与 Google Sheet 已验收；Chrome 运行缓存待重载后应用）：
@@ -61,6 +62,8 @@
 | `activeSiteId`       | 当前手动填表网站                                |
 | `selectedSiteIds`    | 最近一次批量多选                                |
 | `submissionRecords`  | v2 永久成功账本                                 |
+| `submissionTimeline` | 外链站 × Profile 的追加式提交、审核与跟进动态  |
+| `sheetTableData`     | 全字段 Sheet 运行快照与原始行数据               |
 | `siteAnnotations`    | 外链站级分类与临时闸门                          |
 | `activeBatchRun`     | 仅恢复 running / waiting_manual / paused 的批次 |
 | `urlList`            | 自定义外链，新增/置顶项排在最前                 |
@@ -76,7 +79,8 @@
 extension/lib/queue.js       # 成功账本、迁移、分组队列、黑名单/年龄/质量闸门
 extension/lib/opportunity-score.js # 0–100 外链机会质量评分
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
-extension/lib/backup.js      # 账本备份校验与合并
+extension/lib/backup.js      # 账本、时间线与 Sheet 快照备份校验与合并
+extension/lib/submission-timeline.js # 追加式时间线、迁移、当前状态派生
 extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
 extension/background.js      # 调度、评论草稿、本地媒体、域名指标、prescan/评论预览代理
 extension/content.js         # 填表、AI 评论、DataTransfer 上传、手动图标、prescan

@@ -29,6 +29,9 @@ assert.match(settingsHtml, /id="libraryCount"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
 assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
+assert.match(settingsHtml, /id="profileFieldList"/);
+assert.match(settingsHtml, /id="btnLibraryLoadMore"/);
+assert.match(settingsHtml, /lib\/submission-timeline\.js/);
 assert.match(settingsHtml, /href="settings\.css"/);
 for (const id of [
   "googleSheetId",
@@ -61,7 +64,10 @@ assert.match(settingsJs, /action:\s*"runLinkMonitor"/);
 assert.match(settingsJs, /library-status/);
 assert.match(settingsJs, /annotationTone/);
 assert.match(settingsJs, /setActivePanel/);
-assert.match(settingsJs, /if \(!profile\.success\) continue;/);
+assert.match(settingsJs, /profile\.latestEvent/);
+assert.match(settingsJs, /action:\s*"addSubmissionTimelineEvent"/);
+assert.match(settingsJs, /createSheetFieldsDetails/);
+assert.match(settingsJs, /renderProfileFields/);
 assert.match(settingsJs, /质量分 \$\{score\}/);
 assert.doesNotMatch(settingsJs, /未提交/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
@@ -78,10 +84,14 @@ assert.match(settingsCss, /library-split/);
 assert.match(settingsCss, /#panel-library \.library-tools[\s\S]*overflow-y:\s*auto/);
 assert.match(settingsCss, /repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 assert.match(settingsCss, /monitor-tag\.missing/);
+assert.match(settingsCss, /timeline-event/);
+assert.match(settingsCss, /profile-field-row/);
 
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);
 assert.match(background, /case "getLibraryManagerState"/);
+assert.match(background, /case "addSubmissionTimelineEvent"/);
+assert.match(background, /submissionTimeline/);
 assert.match(background, /case "googleCheckChanges"/);
 assert.match(background, /case "runLinkMonitor"/);
 assert.match(background, /gatedByQuality/);

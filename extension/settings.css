@@ -313,6 +313,195 @@
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.24);
 }
 
+.profile-fields {
+  margin: 20px 0 16px;
+  padding: 14px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #111827;
+}
+
+.profile-fields summary {
+  cursor: pointer;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.profile-field-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profile-field-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(220px, 1.5fr) minmax(150px, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 8px;
+  border: 1px solid #293548;
+  border-radius: 8px;
+  background: #0f172a;
+}
+
+.profile-field-name {
+  padding-top: 10px;
+  color: #bae6fd;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.profile-field-content,
+.profile-field-note {
+  min-height: 44px;
+  margin: 0;
+}
+
+.profile-field-content {
+  resize: vertical;
+}
+
+#panel-library .library-activity-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#panel-library .activity-fact {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+#panel-library .activity-fact-label {
+  display: block;
+  margin-bottom: 3px;
+  color: #64748b;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#panel-library .activity-fact-value {
+  display: block;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+#panel-library .timeline-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
+}
+
+#panel-library .sheet-fields {
+  margin-top: 10px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+#panel-library .sheet-fields summary {
+  cursor: pointer;
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+#panel-library .sheet-fields dl {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.35fr) minmax(0, 1fr);
+  gap: 6px 10px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0f172a;
+}
+
+#panel-library .sheet-fields dt {
+  color: #64748b;
+}
+
+#panel-library .sheet-fields dd {
+  margin: 0;
+  color: #cbd5e1;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+#panel-library .timeline-list {
+  display: grid;
+  gap: 8px;
+}
+
+#panel-library .timeline-event {
+  position: relative;
+  padding: 9px 10px 9px 28px;
+  border-left: 2px solid #475569;
+  border-radius: 0 8px 8px 0;
+  background: #0f172a;
+}
+
+#panel-library .timeline-event::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+}
+
+#panel-library .timeline-event-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#panel-library .timeline-event-note {
+  margin-top: 4px;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+#panel-library .timeline-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+#panel-library .timeline-form textarea,
+#panel-library .timeline-form .timeline-form-wide {
+  grid-column: 1 / -1;
+}
+
+#panel-library .library-load-more {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+
+#panel-library .library-load-more[hidden] {
+  display: none;
+}
+
 #panel-library .btn-row {
   gap: 12px;
 }
@@ -349,6 +538,14 @@
 }
 
 @media (max-width: 560px) {
+  .profile-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-field-name {
+    padding-top: 0;
+  }
+
   #panel-library .library-toolbar {
     grid-template-columns: 1fr;
   }
@@ -363,6 +560,11 @@
 
   #panel-library .library-item-actions .btn {
     flex: 1 1 120px;
+  }
+
+  #panel-library .library-activity-summary,
+  #panel-library .timeline-form {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -9,7 +9,52 @@
   let activeSiteId = "";
   let pendingLogoDataUrl = null;
   let libraryItems = [];
+  let libraryVisibleLimit = 200;
+  const LIBRARY_PAGE_SIZE = 200;
   let googlePreviewRevision = "";
+
+  function renderProfileFields(profile) {
+    const list = $("profileFieldList");
+    if (!list) return;
+    list.replaceChildren();
+    const fields = profile?.fields || {};
+    const notes = profile?.fieldNotes || {};
+    const entries = Object.entries(fields);
+    if ($("profileFieldCount")) $("profileFieldCount").textContent = `（${entries.length} 项）`;
+    for (const [field, value] of entries) {
+      const row = document.createElement("div");
+      row.className = "profile-field-row";
+      const name = document.createElement("div");
+      name.className = "profile-field-name";
+      name.textContent = field;
+      const content = document.createElement("textarea");
+      content.className = "profile-field-content";
+      content.dataset.profileField = field;
+      content.value = value == null ? "" : String(value);
+      content.setAttribute("aria-label", `${field} 内容`);
+      const note = document.createElement("input");
+      note.type = "text";
+      note.className = "profile-field-note";
+      note.dataset.profileFieldNote = field;
+      note.value = notes[field] == null ? "" : String(notes[field]);
+      note.placeholder = "Notes（可选）";
+      note.setAttribute("aria-label", `${field} 备注`);
+      row.append(name, content, note);
+      list.append(row);
+    }
+  }
+
+  function readProfileFieldEditor() {
+    const fields = {};
+    const fieldNotes = {};
+    document.querySelectorAll("[data-profile-field]").forEach((input) => {
+      fields[input.dataset.profileField] = input.value;
+    });
+    document.querySelectorAll("[data-profile-field-note]").forEach((input) => {
+      if (input.value.trim()) fieldNotes[input.dataset.profileFieldNote] = input.value.trim();
+    });
+    return { fields, fieldNotes };
+  }
 
   function setGoogleStatus(message, tone = "") {
     const el = $("googleSyncStatus");
@@ -164,6 +209,7 @@
     $("siteBlogTone").value = blog.tone || "helpful";
     $("siteMaxLinks").value = String(blog.maxLinksPerDraft || 1);
     $("sitePreferredAnchor").value = blog.preferredAnchor || "natural";
+    renderProfileFields(profile);
   }
 
   function formToProfile(existingId) {
@@ -177,8 +223,10 @@
     const logoDataUrl =
       pendingLogoDataUrl !== null ? pendingLogoDataUrl : existing.logoDataUrl || "";
 
+    const rawEditor = readProfileFieldEditor();
     const fields = {
       ...(existing.fields || {}),
+      ...rawEditor.fields,
       Name: name,
       Url: homeUrl,
       Title: ($("siteTitle").value || "").trim(),
@@ -211,6 +259,10 @@
       media: { screenshots },
       language: $("siteLanguage").value || "auto",
       fields,
+      fieldNotes: {
+        ...(existing.fieldNotes || {}),
+        ...rawEditor.fieldNotes,
+      },
       anchorRules: {
         brandKeywords: P.linesToList($("siteBrandKeywords").value),
         urlKeywords: P.linesToList($("siteUrlKeywords").value),
@@ -424,6 +476,193 @@
       : "neutral";
   }
 
+  function activityLabel(type) {
+    return (
+      {
+        submitted: "已提交",
+        pending_moderation: "待审核",
+        published: "已上线",
+        rejected: "被拒绝",
+        needs_follow_up: "需跟进",
+        needs_manual: "需人工",
+        link_missing: "链接失效",
+        note: "笔记",
+        legacy_import: "历史导入",
+        link_submit: "表格历史记录",
+        status: "状态更新",
+      }[type] || type || "暂无动态"
+    );
+  }
+
+  function formatActivityTime(value) {
+    if (!value) return "暂无记录";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(date);
+  }
+
+  function toDatetimeLocalValue(date = new Date()) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  function createActivityFact(label, value) {
+    const fact = document.createElement("div");
+    fact.className = "activity-fact";
+    const caption = document.createElement("span");
+    caption.className = "activity-fact-label";
+    caption.textContent = label;
+    const content = document.createElement("span");
+    content.className = "activity-fact-value";
+    content.textContent = value || "—";
+    fact.append(caption, content);
+    return fact;
+  }
+
+  function createSheetFieldsDetails(item) {
+    const details = document.createElement("details");
+    details.className = "sheet-fields";
+    const summary = document.createElement("summary");
+    summary.textContent = `表格原始字段${item.rowNumber ? ` · 第 ${item.rowNumber} 行` : ""}`;
+    const list = document.createElement("dl");
+    for (const [field, value] of Object.entries(item.rawFields || {})) {
+      if (value === undefined || value === null || String(value).trim() === "") continue;
+      const term = document.createElement("dt");
+      term.textContent = field;
+      const description = document.createElement("dd");
+      description.textContent = String(value);
+      list.append(term, description);
+    }
+    details.append(summary, list);
+    return details;
+  }
+
+  function renderTimelinePanel(item, panel) {
+    panel.replaceChildren();
+    const events = Array.isArray(item.events) ? item.events : [];
+    const list = document.createElement("div");
+    list.className = "timeline-list";
+    if (!events.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "还没有动态记录，可以在下面添加第一次提交或跟进笔记。";
+      list.append(empty);
+    } else {
+      for (const event of events) {
+        const row = document.createElement("div");
+        row.className = "timeline-event";
+        const head = document.createElement("div");
+        head.className = "timeline-event-head";
+        const profileName = event.profileName || event.profileId || "外链站";
+        head.textContent = `${formatActivityTime(event.occurredAt)} · ${profileName} · ${activityLabel(event.type || event.status)}`;
+        row.append(head);
+        if (event.note) {
+          const note = document.createElement("div");
+          note.className = "timeline-event-note";
+          note.textContent = event.note;
+          row.append(note);
+        }
+        const linkValue = event.publicUrl || event.evidenceUrl || "";
+        if (/^https?:\/\//i.test(linkValue)) {
+          const link = document.createElement("a");
+          link.href = linkValue;
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.textContent = "查看公开页 / 证据";
+          link.className = "timeline-event-note";
+          row.append(link);
+        }
+        list.append(row);
+      }
+    }
+
+    const form = document.createElement("form");
+    form.className = "timeline-form";
+    const profile = document.createElement("select");
+    profile.setAttribute("aria-label", "网站项目");
+    const destinationOption = document.createElement("option");
+    destinationOption.value = "__destination__";
+    destinationOption.textContent = "外链站通用动态";
+    profile.append(destinationOption);
+    for (const [id, itemProfile] of Object.entries(siteProfiles)) {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = itemProfile.name || id;
+      profile.append(option);
+    }
+    const type = document.createElement("select");
+    type.setAttribute("aria-label", "动态状态");
+    for (const [value, label] of [
+      ["submitted", "已提交"],
+      ["pending_moderation", "待审核"],
+      ["published", "已上线"],
+      ["rejected", "被拒绝"],
+      ["needs_follow_up", "需跟进"],
+      ["needs_manual", "需人工"],
+      ["link_missing", "链接失效"],
+      ["note", "仅记录笔记"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      type.append(option);
+    }
+    const occurredAt = document.createElement("input");
+    occurredAt.type = "datetime-local";
+    occurredAt.value = toDatetimeLocalValue();
+    occurredAt.setAttribute("aria-label", "发生时间");
+    const url = document.createElement("input");
+    url.type = "url";
+    url.placeholder = "公开页或证据链接（可选）";
+    url.setAttribute("aria-label", "公开页或证据链接");
+    const note = document.createElement("textarea");
+    note.placeholder = "发生了什么、需要何时跟进、审核提示等";
+    note.setAttribute("aria-label", "动态笔记");
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn btn-primary timeline-form-wide";
+    submit.textContent = "添加动态";
+    form.append(profile, type, occurredAt, url, note, submit);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      submit.disabled = true;
+      submit.textContent = "保存中…";
+      try {
+        const result = await chrome.runtime.sendMessage({
+          action: "addSubmissionTimelineEvent",
+          destinationKey: item.key,
+          destinationUrl: item.url,
+          profileId: profile.value,
+          profileName:
+            profile.value === "__destination__"
+              ? "外链站"
+              : siteProfiles[profile.value]?.name || profile.value,
+          type: type.value,
+          occurredAt: occurredAt.value ? new Date(occurredAt.value).toISOString() : new Date().toISOString(),
+          note: note.value.trim(),
+          publicUrl: type.value === "published" ? url.value.trim() : "",
+          evidenceUrl: type.value === "published" ? "" : url.value.trim(),
+          source: "manual",
+        });
+        if (!result?.ok) throw new Error(result?.error || "保存动态失败");
+        await loadLibrary();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        submit.disabled = false;
+        submit.textContent = "添加动态";
+      }
+    });
+    panel.append(list, form);
+  }
+
   function renderLibrary() {
     const el = $("libraryList");
     if (!el) return;
@@ -438,6 +677,9 @@
         item.url,
         status,
         item.note,
+        item.record,
+        item.detail,
+        ...(item.events || []).map((event) => `${event.profileName || event.profileId || ""} ${event.note || ""} ${event.type || ""}`),
         ...(item.profileStatuses || []).map((profile) => profile.profileName),
       ]
         .join(" ")
@@ -454,10 +696,10 @@
       return Number(b.quality?.score || 0) - Number(a.quality?.score || 0);
     });
     el.replaceChildren();
-    const shown = filtered.slice(0, 300);
+    const shown = filtered.slice(0, libraryVisibleLimit);
     if ($("libraryCount")) {
       $("libraryCount").textContent = filtered.length
-        ? `共 ${libraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 展示前 ${shown.length} 条`
+        ? `共 ${libraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`
         : `共 ${libraryItems.length} 条 · 没有符合筛选的外链站`;
     }
     if (!filtered.length) {
@@ -465,6 +707,7 @@
       empty.className = "empty-state";
       empty.textContent = "没有符合筛选条件的外链站。调整筛选后重试。";
       el.append(empty);
+      if ($("btnLibraryLoadMore")) $("btnLibraryLoadMore").hidden = true;
       return;
     }
     for (const item of shown) {
@@ -530,13 +773,25 @@
       const statuses = document.createElement("div");
       statuses.className = "profile-statuses";
       for (const profile of item.profileStatuses || []) {
-        if (!profile.success) continue;
+        if (!profile.success && !profile.latestEvent) continue;
         const chip = document.createElement("span");
-        const publication = profile.publicationStatus || "";
+        const timelineStatus =
+          profile.latestEvent?.publicationStatus ||
+          (["submitted", "pending_moderation", "published", "rejected", "needs_follow_up", "needs_manual", "link_missing"].includes(profile.latestEvent?.type)
+            ? profile.latestEvent.type
+            : "");
+        const publication = timelineStatus || profile.publicationStatus || "";
         const publicationLabel =
-          { submitted: "已提交", pending_moderation: "待审核", published: "已上线" }[publication] ||
-          "已成功";
-        chip.className = `profile-status success${publication ? ` ${publication}` : ""}`;
+          {
+            submitted: "已提交",
+            pending_moderation: "待审核",
+            published: "已上线",
+            rejected: "被拒绝",
+            needs_follow_up: "需跟进",
+            needs_manual: "需人工",
+            link_missing: "链接失效",
+          }[publication] || "已有记录";
+        chip.className = `profile-status${profile.success ? " success" : ""}${publication ? ` ${publication}` : ""}`;
         chip.textContent = `${profile.profileName} · ${publicationLabel}`;
         statuses.append(chip);
       }
@@ -571,12 +826,48 @@
         if (!result?.ok) return alert(result?.error || "删除失败");
         await loadLibrary();
       });
-      actions.append(pin, remove);
+      const timeline = document.createElement("button");
+      timeline.type = "button";
+      timeline.className = "btn btn-primary btn-sm";
+      timeline.textContent = `时间线${item.events?.length ? ` ${item.events.length}` : ""}`;
+      timeline.setAttribute("aria-expanded", "false");
+      const timelinePanel = document.createElement("div");
+      timelinePanel.className = "timeline-panel";
+      timelinePanel.hidden = true;
+      timeline.addEventListener("click", () => {
+        timelinePanel.hidden = !timelinePanel.hidden;
+        timeline.setAttribute("aria-expanded", String(!timelinePanel.hidden));
+        if (!timelinePanel.hidden) renderTimelinePanel(item, timelinePanel);
+      });
+      actions.append(timeline, pin, remove);
       card.append(head, meta, qualityRow);
+      const activitySummary = document.createElement("div");
+      activitySummary.className = "library-activity-summary";
+      const projectNames = (item.projects || [])
+        .map((id) => siteProfiles[id]?.name || id)
+        .filter(Boolean)
+        .join("、");
+      activitySummary.append(
+        createActivityFact("提交网站", projectNames || "尚未指定"),
+        createActivityFact(
+          "最近动态",
+          item.latestEvent
+            ? `${formatActivityTime(item.latestEvent.occurredAt)} · ${activityLabel(item.latestEvent.type || item.latestEvent.status)}`
+            : item.time
+              ? formatActivityTime(item.time)
+              : "暂无记录",
+        ),
+      );
+      card.append(activitySummary);
       if (item.note) card.append(note);
+      if (Object.keys(item.rawFields || {}).length) card.append(createSheetFieldsDetails(item));
       if (statuses.childNodes.length) card.append(statuses);
-      card.append(actions);
+      card.append(actions, timelinePanel);
       el.append(card);
+    }
+    if ($("btnLibraryLoadMore")) {
+      $("btnLibraryLoadMore").hidden = shown.length >= filtered.length;
+      $("btnLibraryLoadMore").textContent = `加载更多（剩余 ${filtered.length - shown.length} 条）`;
     }
   }
 
@@ -596,10 +887,19 @@
     renderLibrary();
   }
 
-  $("librarySearch")?.addEventListener("input", renderLibrary);
-  $("libraryStatusFilter")?.addEventListener("change", renderLibrary);
-  $("libraryQualityFilter")?.addEventListener("change", renderLibrary);
-  $("librarySort")?.addEventListener("change", renderLibrary);
+  function resetLibraryAndRender() {
+    libraryVisibleLimit = LIBRARY_PAGE_SIZE;
+    renderLibrary();
+  }
+
+  $("librarySearch")?.addEventListener("input", resetLibraryAndRender);
+  $("libraryStatusFilter")?.addEventListener("change", resetLibraryAndRender);
+  $("libraryQualityFilter")?.addEventListener("change", resetLibraryAndRender);
+  $("librarySort")?.addEventListener("change", resetLibraryAndRender);
+  $("btnLibraryLoadMore")?.addEventListener("click", () => {
+    libraryVisibleLimit += LIBRARY_PAGE_SIZE;
+    renderLibrary();
+  });
 
   function googleSheetValue() {
     return ($("googleSheetId")?.value || "").trim();

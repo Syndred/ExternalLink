@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-09-05｜扩展 2.9.0｜路线：混合 C
+> 最后更新：2026-09-05｜扩展 2.9.1｜路线：混合 C
 > `Link Submit` 现表头 Link / SubmitProject / Submit / Time / Record / Detail；同步已按此读取。
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
@@ -8,6 +8,7 @@
 
 ## 当前已完成
 
+- **2.9.1 离线查看与运营筛选修正**：打开 Settings 只读 `chrome.storage.local`，不再自动请求 `127.0.0.1:8790`；断开 Google 或 Agent 未运行时仍优先使用已应用的完整 Sheet 缓存。外链库新增“表格有提交动作（未核验）/已提交/待确认收录/待审核/待跟进/已收录/被拒绝/疑似丢链/未提交”进度筛选；卡片首屏常显入口 URL、提交项目、当前进度、提交时间、最近动态、Record 和 Detail。自动检查默认关闭，并明确标注只有该能力需要 Agent 常驻。
 - **2.9.0 表格全字段与外链动态时间线**：`Link Submit` 每行全部原始列、Record、Detail、行号均进入卡片；每个 Profile 子表的全部 Field / Content / Notes 均保留并可编辑。每张外链卡片按 Profile 展示追加式时间线，可记录精确提交时间、待审核、上线、拒绝、需跟进、链接失效和笔记；旧成功账本与表格历史会幂等迁移。备份已包含时间线与 Sheet 快照，无需另建远程数据库。
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
 - **2.8.2 Settings 外链库**：只有外链库页左右分栏（列表 + 同步）；网站资料/全局配置仍是顶部菜单。卡片一行两条，质量分写清楚，只显示已提交记录。
@@ -98,7 +99,7 @@ tests/local-agent-unit.test.py
 - 已通过全部 Node 测试、四个扩展脚本语法检查、`git diff --check` 和 Python 42 个 local_agent 单元测试。
 - Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
 - 本机 Agent 已用新代码重启：`/media/list` 回读 6 个 Profile、31 个文件；Google OAuth 已授权，快照为 6 / 2,905 / 29 / 0。
-- **Chrome 仍需在扩展管理页重新加载 2.9.0，再打开 Settings 执行“预览同步 → 应用同步”，才能把全字段快照和时间线迁移写入真实运行缓存。自动化工具因 `chrome-extension://` 安全策略无法代点或读取该页，未将此项冒充为已验收。**
+- **Chrome 仍需在扩展管理页重新加载 2.9.1。已有缓存可直接离线查看；只有要从 Google Sheet 拉取新改动或回写记录时才需临时启动本机 Agent。自动化工具因 `chrome-extension://` 安全策略无法直接接管该页，未将此项冒充为已验收。**
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 2026-09-05 2.8.1 半自动补齐

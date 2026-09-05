@@ -29,7 +29,7 @@ GOOGLE_SHEET_ID=你的私有工作簿ID
 GOOGLE_OAUTH_CLIENT_FILE=/仓库外/google-client.json
 ```
 
-启动本机 Agent 后，到 Settings → 外链库依次点击“连接 Google”“预览同步”“应用同步”。网站资料、外链入口和人工分类以后只维护 Google Sheet；扩展会把 `Link Submit` 的全部原始列、每个 Profile 的全部 `Field / Content / Notes` 保存到本地运行缓存。成功记录先本地落盘，再自动回写 `Submission Records`。Google 暂时不可用时记录留在 outbox，可点击“回写待同步记录”重试。
+首次连接或需要拉取 Google Sheet 新改动时启动本机 Agent，到 Settings → 外链库依次点击“连接 Google”“预览同步”“应用同步”。应用后日常查看、筛选、记录时间线均直接使用 `chrome.storage.local`，不需要 Agent 常驻；断开 Google 也不会丢弃已应用缓存。只有再次拉取、回写成功账本、AI/媒体等本机能力才需要临时启动 Agent。扩展会把 `Link Submit` 的全部原始列、每个 Profile 的全部 `Field / Content / Notes` 保存到本地运行缓存。Google 暂时不可用时记录留在 outbox，可点击“回写待同步记录”重试。
 
 Google token 优先保存在系统钥匙串；只有钥匙串不可用时才写入仓库外的用户私有文件。扩展自身不会获得 refresh token。
 
@@ -55,7 +55,7 @@ Google token 优先保存在系统钥匙串；只有钥匙串不可用时才写�
 - 私有 Google Sheet：日常唯一人工维护源。
 - `Table.xlsx` / `table-library.json`：首次安装和离线回滚种子，不再日常双处更新。
 
-Settings 的“外链库”可查看、删除、置顶和筛选站点。每张卡片显示提交项目、最近动态、表格原始字段，并可展开完整时间线继续追加审核和跟进记录；网站资料页可查看和编辑 Sheet 中的全部 Profile 字段与 Notes。“导出 JSON / 导入 JSON”会同时备份成功账本、时间线和 Sheet 快照。
+Settings 的“外链库”可分别按站点分类和运营进度筛选，包括表格有提交动作（未核验）、已提交、待确认收录、待审核、待跟进、已收录、被拒绝、疑似丢链和未提交。每张卡片首屏显示入口 URL、提交项目、提交时间、最近动态、Record、Detail 和备注，并可展开完整时间线继续追加审核和跟进记录；网站资料页可查看和编辑 Sheet 中的全部 Profile 字段与 Notes。“导出 JSON / 导入 JSON”会同时备份成功账本、时间线和 Sheet 快照。
 
 ## 支持的处理层
 

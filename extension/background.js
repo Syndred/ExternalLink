@@ -236,7 +236,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "googleSyncStatus":
-      getGoogleSyncStatus()
+      getGoogleSyncStatus(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -1819,34 +1819,26 @@ function resolveGoogleSpreadsheetId(value, storedValue = "") {
   return id;
 }
 
-async function getGoogleSyncStatus() {
+async function getGoogleSyncStatus(msg = {}) {
   const storage = await chrome.storage.local.get([
     "googleSpreadsheetId",
     "googleSheetSyncEnabled",
     "sheetSyncMeta",
     "sheetSyncOutbox",
+    "sheetTableData",
     "googleAutoPreviewEnabled",
     "googleAutoPreviewMinutes",
     "sheetPendingPreview",
   ]);
-  let agent = { connected: false, configured: false };
-  let agentError = "";
-  try {
-    agent = await callLocalAgent("/google/status", {});
-  } catch (err) {
-    agentError = err.message;
-  }
+  const status = await self.ExtLinkSheetSync.buildSyncStatus(
+    storage,
+    { probeAgent: msg.probeAgent === true },
+    () => callLocalAgent("/google/status", {}),
+  );
   return {
     ok: true,
-    spreadsheetId: storage.googleSpreadsheetId || DEFAULT_GOOGLE_SPREADSHEET_ID,
-    enabled: storage.googleSheetSyncEnabled === true,
-    meta: storage.sheetSyncMeta || null,
-    pendingRecords: Object.keys(storage.sheetSyncOutbox || {}).length,
-    autoPreviewEnabled: storage.googleAutoPreviewEnabled !== false,
-    autoPreviewMinutes: Number(storage.googleAutoPreviewMinutes || DEFAULT_SHEET_CHECK_MINUTES),
-    pendingPreview: storage.sheetPendingPreview || null,
-    agent,
-    agentError,
+    ...status,
+    spreadsheetId: status.spreadsheetId || DEFAULT_GOOGLE_SPREADSHEET_ID,
   };
 }
 
@@ -1863,7 +1855,7 @@ async function configureScheduledChecks() {
     "linkMonitorMinutes",
   ]);
   const defaults = {};
-  if (storage.googleAutoPreviewEnabled === undefined) defaults.googleAutoPreviewEnabled = true;
+  if (storage.googleAutoPreviewEnabled === undefined) defaults.googleAutoPreviewEnabled = false;
   if (storage.googleAutoPreviewMinutes === undefined) {
     defaults.googleAutoPreviewMinutes = DEFAULT_SHEET_CHECK_MINUTES;
   }
@@ -1873,7 +1865,7 @@ async function configureScheduledChecks() {
   }
   if (Object.keys(defaults).length) await chrome.storage.local.set(defaults);
 
-  const autoPreviewEnabled = storage.googleAutoPreviewEnabled !== false;
+  const autoPreviewEnabled = storage.googleAutoPreviewEnabled === true;
   const previewMinutes = clampScheduleMinutes(
     storage.googleAutoPreviewMinutes,
     DEFAULT_SHEET_CHECK_MINUTES,
@@ -2299,17 +2291,7 @@ async function loadTableLibrary() {
     /* table library optional */
   }
   const synced = await chrome.storage.local.get(["sheetTableData", "googleSheetSyncEnabled"]);
-  if (
-    synced.googleSheetSyncEnabled === true &&
-    synced.sheetTableData?.projects &&
-    Array.isArray(synced.sheetTableData?.entries)
-  ) {
-    tableData = {
-      source: "google-sheet",
-      ...synced.sheetTableData,
-    };
-  }
-  return tableData;
+  return self.ExtLinkSheetSync.selectCachedTableData(tableData, synced);
 }
 
 async function ensureProfilesFromTable(

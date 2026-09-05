@@ -31,6 +31,7 @@ assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
 assert.match(settingsHtml, /id="profileFieldList"/);
 assert.match(settingsHtml, /id="btnLibraryLoadMore"/);
+assert.match(settingsHtml, /id="libraryProgressFilter"/);
 assert.match(settingsHtml, /lib\/submission-timeline\.js/);
 assert.match(settingsHtml, /href="settings\.css"/);
 for (const id of [
@@ -68,8 +69,11 @@ assert.match(settingsJs, /profile\.latestEvent/);
 assert.match(settingsJs, /action:\s*"addSubmissionTimelineEvent"/);
 assert.match(settingsJs, /createSheetFieldsDetails/);
 assert.match(settingsJs, /renderProfileFields/);
+assert.match(settingsJs, /deriveLibraryProgress/);
+assert.match(settingsJs, /createKeyDetail/);
 assert.match(settingsJs, /质量分 \$\{score\}/);
-assert.doesNotMatch(settingsJs, /未提交/);
+assert.match(settingsJs, /待确认收录/);
+assert.match(settingsJs, /表格有提交动作 · 未核验/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 
 assert.match(settingsCss, /library-status\.can_submit/);

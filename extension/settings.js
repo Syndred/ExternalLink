@@ -4,6 +4,7 @@
 
   const $ = (id) => document.getElementById(id);
   const P = self.ExtLinkProfiles;
+  const Timeline = self.ExtLinkSubmissionTimeline;
 
   let siteProfiles = {};
   let activeSiteId = "";
@@ -92,24 +93,46 @@
     el.hidden = false;
   }
 
-  async function loadGoogleSyncStatus() {
-    setGoogleStatus("正在检查本机 Agent 和 Google 授权…");
-    const result = await chrome.runtime.sendMessage({ action: "googleSyncStatus" });
+  async function loadGoogleSyncStatus({ probeAgent = false } = {}) {
+    setGoogleStatus(probeAgent ? "正在检查本机 Agent 和 Google 授权…" : "正在读取本地缓存…");
+    const result = await chrome.runtime.sendMessage({ action: "googleSyncStatus", probeAgent });
     if (!result?.ok) throw new Error(result?.error || "读取 Google 同步状态失败");
     if ($("googleSheetId") && result.spreadsheetId) {
       $("googleSheetId").value = result.spreadsheetId;
     }
+    if ($("googleAutoPreviewEnabled")) {
+      $("googleAutoPreviewEnabled").checked = result.autoPreviewEnabled === true;
+    }
+    if ($("googleAutoPreviewMinutes")) {
+      $("googleAutoPreviewMinutes").value = String(result.autoPreviewMinutes || 60);
+    }
+    if (result.pendingPreview?.preview) setGooglePreview(result.pendingPreview.preview);
+    const cache = result.cache || {};
+    const cacheSummary = cache.ready
+      ? `本地缓存已就绪：${cache.destinations || 0} 个外链、${cache.profiles || 0} 个网站资料`
+      : "本地还没有完整表格缓存";
+    const syncedAt = cache.syncedAt || result.meta?.appliedAt || result.meta?.fetchedAt || "";
+    const pending = Number(result.pendingRecords || 0);
+    if (!probeAgent) {
+      setGoogleStatus(
+        `${cacheSummary}${syncedAt ? ` · 最近更新 ${new Date(syncedAt).toLocaleString()}` : ""}${pending ? ` · 待回写 ${pending} 条` : ""} · 日常查看无需启动服务；只有从 Google 更新或回写时才需要本机 Agent。`,
+        cache.ready ? "success" : "warning",
+      );
+      return result;
+    }
     const agent = result.agent || {};
     if (result.agentError) {
-      setGoogleStatus(`本机 Agent 未就绪：${result.agentError}`, "warning");
+      setGoogleStatus(
+        `${cacheSummary} · 本机 Agent 当前未运行；不影响查看，只影响 Google 更新和回写。`,
+        cache.ready ? "success" : "warning",
+      );
       return result;
     }
     const authenticated = agent.authenticated === true || agent.connected === true;
     const configured = agent.configured === true;
-    const pending = Number(result.pendingRecords || 0);
-    const syncedAt = result.meta?.appliedAt || result.meta?.fetchedAt || "";
     if (authenticated) {
       const details = [
+        cacheSummary,
         result.enabled ? "账本自动回写已启用" : "已授权，尚未应用同步",
         pending ? `待回写 ${pending} 条` : "无待回写记录",
         syncedAt ? `最近同步 ${new Date(syncedAt).toLocaleString()}` : "尚未同步",
@@ -120,17 +143,10 @@
       setGoogleStatus("本机配置已就绪，请点击“连接 Google”完成授权。", "warning");
     } else {
       setGoogleStatus(
-        "本机 Agent 尚未配置 GOOGLE_SHEET_ID 和 GOOGLE_OAUTH_CLIENT_FILE。",
+        `${cacheSummary} · 本机 Agent 尚未配置 GOOGLE_SHEET_ID 和 GOOGLE_OAUTH_CLIENT_FILE。`,
         "warning",
       );
     }
-    if ($("googleAutoPreviewEnabled")) {
-      $("googleAutoPreviewEnabled").checked = result.autoPreviewEnabled !== false;
-    }
-    if ($("googleAutoPreviewMinutes")) {
-      $("googleAutoPreviewMinutes").value = String(result.autoPreviewMinutes || 60);
-    }
-    if (result.pendingPreview?.preview) setGooglePreview(result.pendingPreview.preview);
     return result;
   }
 
@@ -526,6 +542,34 @@
     return fact;
   }
 
+  function progressLabel(progress) {
+    return (
+      {
+        unsubmitted: "未提交",
+        action_recorded: "表格有提交动作 · 未核验",
+        awaiting_index: "已提交 · 待确认收录",
+        pending_moderation: "待审核",
+        needs_follow_up: "待跟进",
+        published: "已收录 / 已上线",
+        rejected: "被拒绝",
+        link_missing: "疑似丢链",
+      }[progress?.current] || "暂无进度"
+    );
+  }
+
+  function createKeyDetail(label, value, wide = false) {
+    const row = document.createElement("div");
+    row.className = `library-key-detail${wide ? " wide" : ""}`;
+    const caption = document.createElement("span");
+    caption.className = "library-key-detail-label";
+    caption.textContent = label;
+    const content = document.createElement("span");
+    content.className = "library-key-detail-value";
+    content.textContent = value || "—";
+    row.append(caption, content);
+    return row;
+  }
+
   function createSheetFieldsDetails(item) {
     const details = document.createElement("details");
     details.className = "sheet-fields";
@@ -668,10 +712,12 @@
     if (!el) return;
     const query = ($("librarySearch")?.value || "").trim().toLowerCase();
     const statusFilter = $("libraryStatusFilter")?.value || "";
+    const progressFilter = $("libraryProgressFilter")?.value || "";
     const qualityFilter = Number($("libraryQualityFilter")?.value || 0);
     const sortMode = $("librarySort")?.value || "quality";
     const filtered = libraryItems.filter((item) => {
       const status = item.annotation?.status || "";
+      const progress = Timeline.deriveLibraryProgress(item);
       const haystack = [
         item.domain,
         item.url,
@@ -687,6 +733,7 @@
       return (
         (!query || haystack.includes(query)) &&
         (!statusFilter || status === statusFilter) &&
+        Timeline.matchesLibraryProgress(progress, progressFilter) &&
         Number(item.quality?.score || 0) >= qualityFilter
       );
     });
@@ -711,6 +758,7 @@
       return;
     }
     for (const item of shown) {
+      const progress = Timeline.deriveLibraryProgress(item);
       const card = document.createElement("article");
       card.className = "library-item";
       const head = document.createElement("div");
@@ -732,6 +780,12 @@
         ? `${sourceLabel} · ${item.platformType || "directory"} · 熟站 ${item.playbook.title}`
         : `${sourceLabel} · ${item.platformType || "directory"}`;
       if (item.playbook?.notes) meta.title = item.playbook.notes;
+      const destinationLink = document.createElement("a");
+      destinationLink.className = "library-destination-link";
+      destinationLink.href = item.url;
+      destinationLink.target = "_blank";
+      destinationLink.rel = "noreferrer";
+      destinationLink.textContent = item.url;
 
       const qualityRow = document.createElement("div");
       qualityRow.className = "quality-row";
@@ -760,7 +814,7 @@
       if (item.time) {
         const timeTag = document.createElement("span");
         timeTag.className = "metric-tag";
-        timeTag.textContent = `打开 ${item.time}`;
+        timeTag.textContent = `表格时间 ${item.time}`;
         qualityRow.append(timeTag);
       }
       if (item.monitorStatus) {
@@ -777,7 +831,7 @@
         const chip = document.createElement("span");
         const timelineStatus =
           profile.latestEvent?.publicationStatus ||
-          (["submitted", "pending_moderation", "published", "rejected", "needs_follow_up", "needs_manual", "link_missing"].includes(profile.latestEvent?.type)
+          (["submitted", "pending_moderation", "published", "rejected", "needs_follow_up", "needs_manual", "link_missing", "link_submit"].includes(profile.latestEvent?.type)
             ? profile.latestEvent.type
             : "");
         const publication = timelineStatus || profile.publicationStatus || "";
@@ -790,15 +844,12 @@
             needs_follow_up: "需跟进",
             needs_manual: "需人工",
             link_missing: "链接失效",
+            link_submit: "表格有提交动作 · 未核验",
           }[publication] || "已有记录";
         chip.className = `profile-status${profile.success ? " success" : ""}${publication ? ` ${publication}` : ""}`;
         chip.textContent = `${profile.profileName} · ${publicationLabel}`;
         statuses.append(chip);
       }
-
-      const note = document.createElement("p");
-      note.className = "library-note";
-      if (item.note) note.textContent = item.note;
 
       const actions = document.createElement("div");
       actions.className = "library-item-actions";
@@ -840,7 +891,7 @@
         if (!timelinePanel.hidden) renderTimelinePanel(item, timelinePanel);
       });
       actions.append(timeline, pin, remove);
-      card.append(head, meta, qualityRow);
+      card.append(head, destinationLink, meta, qualityRow);
       const activitySummary = document.createElement("div");
       activitySummary.className = "library-activity-summary";
       const projectNames = (item.projects || [])
@@ -849,6 +900,11 @@
         .join("、");
       activitySummary.append(
         createActivityFact("提交网站", projectNames || "尚未指定"),
+        createActivityFact("当前进度", progressLabel(progress)),
+        createActivityFact(
+          "提交时间",
+          progress.submittedAt ? formatActivityTime(progress.submittedAt) : "暂无提交记录",
+        ),
         createActivityFact(
           "最近动态",
           item.latestEvent
@@ -859,7 +915,20 @@
         ),
       );
       card.append(activitySummary);
-      if (item.note) card.append(note);
+      const keyDetails = document.createElement("div");
+      keyDetails.className = "library-key-details";
+      if (item.record) keyDetails.append(createKeyDetail("记录", item.record));
+      if (item.detail) keyDetails.append(createKeyDetail("备注 / 详情", item.detail));
+      const combinedNote = [item.record, item.detail].filter(Boolean).join(" | ");
+      if (
+        item.note &&
+        item.note !== combinedNote &&
+        item.note !== item.record &&
+        item.note !== item.detail
+      ) {
+        keyDetails.append(createKeyDetail("补充备注", item.note, true));
+      }
+      if (keyDetails.childNodes.length) card.append(keyDetails);
       if (Object.keys(item.rawFields || {}).length) card.append(createSheetFieldsDetails(item));
       if (statuses.childNodes.length) card.append(statuses);
       card.append(actions, timelinePanel);
@@ -894,6 +963,7 @@
 
   $("librarySearch")?.addEventListener("input", resetLibraryAndRender);
   $("libraryStatusFilter")?.addEventListener("change", resetLibraryAndRender);
+  $("libraryProgressFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryQualityFilter")?.addEventListener("change", resetLibraryAndRender);
   $("librarySort")?.addEventListener("change", resetLibraryAndRender);
   $("btnLibraryLoadMore")?.addEventListener("click", () => {
@@ -908,7 +978,7 @@
   $("btnGoogleRefresh")?.addEventListener("click", async () => {
     setGooglePreview();
     try {
-      await loadGoogleSyncStatus();
+      await loadGoogleSyncStatus({ probeAgent: true });
     } catch (err) {
       setGoogleStatus(err.message, "warning");
     }

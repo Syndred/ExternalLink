@@ -7,6 +7,83 @@ vm.createContext(context);
 vm.runInContext(readFileSync("extension/lib/sheet-sync.js", "utf8"), context);
 const S = context.self.ExtLinkSheetSync;
 
+assert.equal(
+  typeof S.describeLocalCache,
+  "function",
+  "settings should describe cached Sheet data without contacting the local agent",
+);
+assert.deepEqual(
+  JSON.parse(
+    JSON.stringify(
+      S.describeLocalCache({
+        sheetTableData: { entries: new Array(2905).fill({}), projects: { A: {}, B: {} } },
+        sheetSyncMeta: { appliedAt: "2026-09-05T12:30:00Z" },
+        sheetSyncOutbox: { one: {} },
+      }),
+    ),
+  ),
+  {
+    ready: true,
+    destinations: 2905,
+    profiles: 2,
+    pendingRecords: 1,
+    syncedAt: "2026-09-05T12:30:00Z",
+  },
+);
+let agentProbes = 0;
+assert.equal(
+  typeof S.buildSyncStatus,
+  "function",
+  "sync status should support a cache-only path",
+);
+const cachedOnlyStatus = await S.buildSyncStatus(
+  {
+    googleSpreadsheetId: "sheet-1",
+    googleSheetSyncEnabled: true,
+    sheetTableData: { entries: [{}, {}], projects: { A: {} } },
+    sheetSyncMeta: { appliedAt: "2026-09-05T12:30:00Z" },
+    sheetSyncOutbox: {},
+  },
+  { probeAgent: false },
+  async () => {
+    agentProbes += 1;
+    throw new Error("local agent should not be contacted");
+  },
+);
+assert.equal(agentProbes, 0, "opening Settings must use cache without probing localhost");
+assert.equal(cachedOnlyStatus.cache.ready, true);
+assert.equal(cachedOnlyStatus.agentChecked, false);
+
+const probedStatus = await S.buildSyncStatus(
+  { googleSpreadsheetId: "sheet-1", sheetTableData: { entries: [], projects: {} } },
+  { probeAgent: true },
+  async () => {
+    agentProbes += 1;
+    return { connected: true, configured: true };
+  },
+);
+assert.equal(agentProbes, 1, "explicit connection refresh should probe the local agent once");
+assert.equal(probedStatus.agentChecked, true);
+assert.equal(probedStatus.agent.connected, true);
+
+assert.equal(
+  typeof S.selectCachedTableData,
+  "function",
+  "the runtime should keep using an applied Sheet cache while Google is offline",
+);
+const offlineTable = S.selectCachedTableData(
+  { entries: [{ link: "https://seed.example" }], projects: {} },
+  {
+    googleSheetSyncEnabled: false,
+    sheetTableData: {
+      entries: [{ link: "https://cached.example", rawFields: { Record: "cached note" } }],
+      projects: { RainbowPetAI: { Name: "RainbowPetAI" } },
+    },
+  },
+);
+assert.equal(offlineTable.entries[0].link, "https://cached.example");
+assert.equal(offlineTable.source, "google-sheet-cache");
+
 const current = {
   siteProfiles: {
     RainbowPetAI: {

@@ -326,6 +326,109 @@
     return destinations;
   }
 
+  function deriveLibraryProgress(item = {}) {
+    const profiles = Array.isArray(item.profileStatuses) ? item.profileStatuses : [];
+    const events = Array.isArray(item.events) ? item.events : [];
+    const eventsByProfile = {};
+    for (const event of events) {
+      const profileId = normalizeProfileId(event?.profileId);
+      if (profileId) (eventsByProfile[profileId] ||= []).push(event);
+    }
+    const profileById = Object.fromEntries(
+      profiles.map((profile) => [normalizeProfileId(profile?.profileId), profile]).filter(([id]) => id),
+    );
+    const profileIds = new Set([...Object.keys(profileById), ...Object.keys(eventsByProfile)]);
+    const states = [];
+    const submittedTimes = [];
+    const historyTimes = [item.time];
+    let hasActionRecorded = false;
+    for (const profileId of profileIds) {
+      const profile = profileById[profileId] || {};
+      const profileEvents = eventsByProfile[profileId] || [];
+      const latestFromEvents = currentEvent(profileEvents);
+      const latest = !latestFromEvents
+        ? profile.latestEvent
+        : !profile.latestEvent
+          ? latestFromEvents
+          : compareEvents(profile.latestEvent, latestFromEvents) >= 0
+            ? profile.latestEvent
+            : latestFromEvents;
+      const latestType = text(latest?.publicationStatus || latest?.type || latest?.status);
+      const publicationStatus = latestType === "note"
+        ? text(profile.publicationStatus)
+        : latestType || text(profile.publicationStatus);
+      const submitted = profile.success === true;
+      if (submitted && Number.isFinite(parseTime(profile.submittedAt))) {
+        submittedTimes.push(profile.submittedAt);
+      }
+      for (const event of profileEvents) {
+        if (Number.isFinite(parseTime(event?.occurredAt))) historyTimes.push(event.occurredAt);
+        if (text(event?.type) === "link_submit") hasActionRecorded = true;
+      }
+      if (submitted) hasActionRecorded = true;
+      let state = "unsubmitted";
+      if (["link_missing"].includes(publicationStatus)) state = "link_missing";
+      else if (publicationStatus === "rejected") state = "rejected";
+      else if (publicationStatus === "needs_follow_up") state = "needs_follow_up";
+      else if (publicationStatus === "published") state = "published";
+      else if (publicationStatus === "pending_moderation") state = "pending_moderation";
+      else if (submitted) state = "awaiting_index";
+      else if (profileEvents.some((event) => text(event?.type) === "link_submit")) {
+        state = "action_recorded";
+      }
+      states.push(state);
+    }
+    const hasSubmitted = profiles.some((profile) => profile?.success === true);
+    const hasPublished = item.monitorStatus === "live" || states.includes("published");
+    const hasPendingModeration = states.includes("pending_moderation");
+    const needsFollowUp = states.some((state) => ["needs_follow_up", "awaiting_index"].includes(state));
+    submittedTimes.sort((left, right) => parseTime(right) - parseTime(left));
+    const validHistoryTimes = historyTimes.filter((value) => Number.isFinite(parseTime(value)));
+    validHistoryTimes.sort((left, right) => parseTime(right) - parseTime(left));
+    const priority = [
+      "needs_follow_up",
+      "pending_moderation",
+      "awaiting_index",
+      "link_missing",
+      "rejected",
+      "published",
+      "action_recorded",
+      "unsubmitted",
+    ];
+    const current = priority.find((state) => states.includes(state)) ||
+      (item.monitorStatus === "missing" || item.monitorStatus === "unreachable"
+        ? "link_missing"
+        : item.monitorStatus === "live"
+          ? "published"
+          : hasActionRecorded
+            ? "action_recorded"
+            : "unsubmitted");
+    return {
+      current,
+      hasSubmitted,
+      hasPublished,
+      hasPendingModeration,
+      needsFollowUp,
+      hasActionRecorded,
+      submittedAt: submittedTimes[0] || "",
+      historyAt: validHistoryTimes[0] || "",
+      profileStates: states,
+    };
+  }
+
+  function matchesLibraryProgress(progress, filter) {
+    const value = text(filter);
+    if (!value) return true;
+    if (value === "submitted") return progress?.hasSubmitted === true;
+    if (value === "awaiting_index") {
+      return Array.isArray(progress?.profileStates) && progress.profileStates.includes("awaiting_index");
+    }
+    if (value === "needs_follow_up") return progress?.needsFollowUp === true;
+    if (value === "published") return progress?.hasPublished === true;
+    if (value === "action_recorded") return progress?.hasActionRecorded === true && progress?.hasSubmitted !== true;
+    return progress?.current === value;
+  }
+
   function sourceRecordEvent(record, storedKey, index) {
     const raw = isObject(record) ? record : {};
     const keyParts = splitTimelineKey(storedKey);
@@ -575,6 +678,8 @@
     current: deriveCurrent,
     groupByDestination,
     groupTimelineByDestination: groupByDestination,
+    deriveLibraryProgress,
+    matchesLibraryProgress,
     migrateLegacy,
     migrateSubmissionTimeline: migrateLegacy,
     migrateFromLegacy: migrateLegacy,

@@ -584,7 +584,7 @@
               placeholder="筛选域名、分类或项目"
             />
             <select id="libraryStatusFilter">
-              <option value="">全部分类</option>
+              <option value="">全部站点分类</option>
               <option value="can_submit">可提交</option>
               <option value="needs_manual">需人工</option>
               <option value="needs_login">需登录</option>
@@ -593,6 +593,18 @@
               <option value="broken">无法提交</option>
               <option value="skip">跳过</option>
               <option value="deleted">已删除</option>
+            </select>
+            <select id="libraryProgressFilter" aria-label="提交与收录进度">
+              <option value="">全部进度</option>
+              <option value="action_recorded">表格有提交动作（未核验）</option>
+              <option value="submitted">已提交</option>
+              <option value="awaiting_index">待确认收录</option>
+              <option value="pending_moderation">待审核</option>
+              <option value="needs_follow_up">待跟进</option>
+              <option value="published">已收录 / 已上线</option>
+              <option value="rejected">被拒绝</option>
+              <option value="link_missing">疑似丢链</option>
+              <option value="unsubmitted">未提交</option>
             </select>
             <select id="libraryQualityFilter" aria-label="最低质量分">
               <option value="0">全部质量</option>
@@ -633,10 +645,10 @@
             </div>
             <div class="btn-row">
               <button class="btn btn-secondary" id="btnGoogleConnect">连接 Google</button>
-              <button class="btn btn-secondary" id="btnGoogleRefresh">刷新状态</button>
+              <button class="btn btn-secondary" id="btnGoogleRefresh">检查连接</button>
             </div>
             <div class="form-row sync-schedule-row">
-              <label><input type="checkbox" id="googleAutoPreviewEnabled" checked /> 定时检查表格变化并提醒</label>
+              <label><input type="checkbox" id="googleAutoPreviewEnabled" /> 自动检查表格变化（需本机 Agent 常驻）</label>
               <select id="googleAutoPreviewMinutes" aria-label="表格检查频率">
                 <option value="30">每 30 分钟</option>
                 <option value="60">每小时</option>
@@ -657,7 +669,7 @@
               <button class="btn btn-danger" id="btnGoogleDisconnect">断开 Google</button>
             </div>
             <div class="sync-status" id="googleSyncStatus" role="status" aria-live="polite">
-              正在检查本机 Agent 和 Google 授权…
+              正在读取本地缓存…
             </div>
             <div class="sync-preview" id="googleSyncPreview" hidden></div>
           </div>

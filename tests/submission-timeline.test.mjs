@@ -7,6 +7,125 @@ vm.createContext(context);
 vm.runInContext(readFileSync("extension/lib/submission-timeline.js", "utf8"), context);
 const T = context.self.ExtLinkSubmissionTimeline;
 
+assert.equal(
+  typeof T.deriveLibraryProgress,
+  "function",
+  "library progress derivation should be available to filters and cards",
+);
+
+const awaitingIndex = T.deriveLibraryProgress({
+  monitorStatus: "",
+  profileStatuses: [
+    {
+      profileId: "RainbowPetAI",
+      success: true,
+      publicationStatus: "submitted",
+      submittedAt: "2026-09-01T10:00:00Z",
+      latestEvent: { type: "submitted", occurredAt: "2026-09-01T10:00:00Z" },
+    },
+  ],
+  events: [
+    {
+      type: "submitted",
+      profileId: "RainbowPetAI",
+      occurredAt: "2026-09-01T10:00:00Z",
+    },
+  ],
+});
+assert.equal(awaitingIndex.current, "awaiting_index");
+assert.equal(awaitingIndex.hasSubmitted, true);
+assert.equal(awaitingIndex.hasPublished, false);
+assert.equal(awaitingIndex.needsFollowUp, true);
+assert.equal(awaitingIndex.submittedAt, "2026-09-01T10:00:00Z");
+assert.equal(T.matchesLibraryProgress(awaitingIndex, "submitted"), true);
+assert.equal(T.matchesLibraryProgress(awaitingIndex, "awaiting_index"), true);
+assert.equal(T.matchesLibraryProgress(awaitingIndex, "published"), false);
+
+const publishedProgress = T.deriveLibraryProgress({
+  monitorStatus: "live",
+  profileStatuses: [
+    {
+      profileId: "VideoToArticleAI",
+      success: true,
+      publicationStatus: "published",
+      submittedAt: "2026-08-24T03:00:00Z",
+    },
+  ],
+  events: [],
+});
+assert.equal(publishedProgress.current, "published");
+assert.equal(publishedProgress.needsFollowUp, false);
+assert.equal(T.matchesLibraryProgress(publishedProgress, "published"), true);
+
+const explicitFollowUp = T.deriveLibraryProgress({
+  profileStatuses: [
+    {
+      profileId: "RspAi",
+      success: false,
+      latestEvent: { type: "needs_follow_up", occurredAt: "2026-09-05T08:00:00Z" },
+    },
+  ],
+  events: [
+    { type: "needs_follow_up", profileId: "RspAi", occurredAt: "2026-09-05T08:00:00Z" },
+  ],
+});
+assert.equal(explicitFollowUp.current, "needs_follow_up");
+assert.equal(T.matchesLibraryProgress(explicitFollowUp, "needs_follow_up"), true);
+
+const legacyActionOnly = T.deriveLibraryProgress({
+  time: "2026-08-20T09:30:00Z",
+  profileStatuses: [{ profileId: "RainbowPetAI", success: false }],
+  events: [
+    {
+      type: "link_submit",
+      status: "legacy_submitted",
+      profileId: "RainbowPetAI",
+      occurredAt: "2026-08-20T09:30:00Z",
+    },
+  ],
+});
+assert.equal(legacyActionOnly.hasActionRecorded, true);
+assert.equal(legacyActionOnly.hasSubmitted, false, "legacy Link Submit must not become verified submission");
+assert.equal(legacyActionOnly.current, "action_recorded");
+assert.equal(legacyActionOnly.historyAt, "2026-08-20T09:30:00Z");
+assert.equal(T.matchesLibraryProgress(legacyActionOnly, "submitted"), false);
+assert.equal(T.matchesLibraryProgress(legacyActionOnly, "action_recorded"), true);
+
+const mixedProfiles = T.deriveLibraryProgress({
+  profileStatuses: [
+    {
+      profileId: "RainbowPetAI",
+      success: true,
+      publicationStatus: "published",
+      submittedAt: "2026-08-01T08:00:00Z",
+    },
+    {
+      profileId: "VideoToArticleAI",
+      success: true,
+      publicationStatus: "submitted",
+      submittedAt: "2026-09-05T08:00:00Z",
+    },
+  ],
+  events: [],
+});
+assert.equal(mixedProfiles.hasPublished, true);
+assert.equal(mixedProfiles.needsFollowUp, true, "one published profile must not hide another pending profile");
+assert.equal(mixedProfiles.current, "awaiting_index");
+assert.equal(T.matchesLibraryProgress(mixedProfiles, "published"), true);
+assert.equal(T.matchesLibraryProgress(mixedProfiles, "awaiting_index"), true);
+
+const profileLatestOnly = T.deriveLibraryProgress({
+  profileStatuses: [
+    {
+      profileId: "OldPhotoLive",
+      success: false,
+      latestEvent: { type: "rejected", occurredAt: "2026-09-04T08:00:00Z" },
+    },
+  ],
+  events: [],
+});
+assert.equal(profileLatestOnly.current, "rejected", "profile latest event must work without duplicated card events");
+
 assert.equal(T.timelineKey("https://www.Example.com/submit/", "RainbowPetAI"), "example.com/submit::RainbowPetAI");
 assert.deepEqual(
   JSON.parse(JSON.stringify(T.splitTimelineKey("example.com/submit::RainbowPetAI"))),

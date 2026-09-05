@@ -255,6 +255,53 @@
     return next;
   }
 
+  function describeLocalCache(storage = {}) {
+    const tableData = storage.sheetTableData || {};
+    const entries = Array.isArray(tableData.entries) ? tableData.entries : [];
+    const projects = tableData.projects && typeof tableData.projects === "object"
+      ? tableData.projects
+      : {};
+    return {
+      ready: entries.length > 0 || Object.keys(projects).length > 0,
+      destinations: entries.length,
+      profiles: Object.keys(projects).length,
+      pendingRecords: Object.keys(storage.sheetSyncOutbox || {}).length,
+      syncedAt: storage.sheetSyncMeta?.appliedAt || storage.sheetSyncMeta?.fetchedAt || "",
+    };
+  }
+
+  async function buildSyncStatus(storage = {}, options = {}, probeAgentStatus = null) {
+    const status = {
+      spreadsheetId: storage.googleSpreadsheetId || "",
+      enabled: storage.googleSheetSyncEnabled === true,
+      meta: storage.sheetSyncMeta || null,
+      pendingRecords: Object.keys(storage.sheetSyncOutbox || {}).length,
+      autoPreviewEnabled: storage.googleAutoPreviewEnabled === true,
+      autoPreviewMinutes: Number(storage.googleAutoPreviewMinutes || 60),
+      pendingPreview: storage.sheetPendingPreview || null,
+      cache: describeLocalCache(storage),
+      agentChecked: false,
+      agent: null,
+      agentError: "",
+    };
+    if (options.probeAgent !== true || typeof probeAgentStatus !== "function") return status;
+    status.agentChecked = true;
+    try {
+      status.agent = await probeAgentStatus();
+    } catch (error) {
+      status.agentError = error?.message || String(error);
+    }
+    return status;
+  }
+
+  function selectCachedTableData(seedTableData = {}, storage = {}) {
+    const cached = storage.sheetTableData;
+    if (cached?.projects && Array.isArray(cached.entries)) {
+      return { source: "google-sheet-cache", ...cached };
+    }
+    return seedTableData;
+  }
+
   global.ExtLinkSheetSync = {
     SNAPSHOT_FORMAT,
     validateSnapshot,
@@ -265,5 +312,8 @@
     applySnapshot,
     enqueueRecord,
     removePushed,
+    describeLocalCache,
+    buildSyncStatus,
+    selectCachedTableData,
   };
 })(typeof self !== "undefined" ? self : window);

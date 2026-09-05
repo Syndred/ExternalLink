@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-09-05｜扩展 2.9.1｜路线：混合 C
+> 最后更新：2026-09-05｜扩展 2.9.2｜路线：混合 C
 > `Link Submit` 现表头 Link / SubmitProject / Submit / Time / Record / Detail；同步已按此读取。
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
@@ -8,6 +8,7 @@
 
 ## 当前已完成
 
+- **2.9.2 表格快照内置**：已把 2026-09-05 真实 Google Sheet 快照（6 个项目、2,905 个外链站、29 条核验提交记录）更新为扩展离线种子；扩展重载后自动采用比运行缓存更新的内置版本，不再要求首次点击“应用同步”。按钮改为“检查 Google 更新 / 更新本地缓存”，更新本地缓存不再顺带回写 Google，避免读写边界混淆。
 - **2.9.1 离线查看与运营筛选修正**：打开 Settings 只读 `chrome.storage.local`，不再自动请求 `127.0.0.1:8790`；断开 Google 或 Agent 未运行时仍优先使用已应用的完整 Sheet 缓存。外链库新增“表格有提交动作（未核验）/已提交/待确认收录/待审核/待跟进/已收录/被拒绝/疑似丢链/未提交”进度筛选；卡片首屏常显入口 URL、提交项目、当前进度、提交时间、最近动态、Record 和 Detail。自动检查默认关闭，并明确标注只有该能力需要 Agent 常驻。
 - **2.9.0 表格全字段与外链动态时间线**：`Link Submit` 每行全部原始列、Record、Detail、行号均进入卡片；每个 Profile 子表的全部 Field / Content / Notes 均保留并可编辑。每张外链卡片按 Profile 展示追加式时间线，可记录精确提交时间、待审核、上线、拒绝、需跟进、链接失效和笔记；旧成功账本与表格历史会幂等迁移。备份已包含时间线与 Sheet 快照，无需另建远程数据库。
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
@@ -25,7 +26,7 @@
   4. **手动填充图标**：只在评论/目录提交表单页显示蓝色 `EL`；一点即用当前 Profile 填该字段。搜索框、登录框、普通网页不再挂图标。设置里可关「在评论/提交表单旁显示手动填充图标」。
 - 私有 Google Sheet 是网站资料、外链库和人工分类的唯一维护入口；`chrome.storage.local` 是运行缓存与本地成功账本，成功后通过 outbox 自动回写 Sheet。
 - `Table.xlsx` / `table-library.json` 只保留为首次安装与离线回滚种子，不再要求日常双处更新。
-- Settings 已提供 Google 连接、只读预览、应用同步、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
+- Settings 已提供 Google 连接、只读检查、更新本地缓存、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
 - 当前 Table 同步结果：6 个 Profile（含 VideoToArticleAI）、59 条 canonical 外链；RainbowPetAI 历史成功 10 条；VideoToArticleAI 2026-08-24 已确认免费成功 7 条。

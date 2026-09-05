@@ -2028,16 +2028,11 @@ async function applyGoogleSheetSync(msg = {}) {
     sheetSyncOutbox: outbox,
     sheetPendingPreview: null,
   });
-  const pushResult = await flushSheetSyncOutbox().catch((err) => ({
-    ok: false,
-    error: err.message,
-    pendingRecords: Object.keys(outbox).length,
-  }));
   return {
     ok: true,
     preview: self.ExtLinkSheetSync.computePreview(storage, snapshot),
     meta: merged.sheetSyncMeta,
-    push: pushResult,
+    pendingRecords: Object.keys(outbox).length,
   };
 }
 
@@ -2290,8 +2285,25 @@ async function loadTableLibrary() {
   } catch {
     /* table library optional */
   }
-  const synced = await chrome.storage.local.get(["sheetTableData", "googleSheetSyncEnabled"]);
-  return self.ExtLinkSheetSync.selectCachedTableData(tableData, synced);
+  const synced = await chrome.storage.local.get([
+    "sheetTableData",
+    "sheetSyncMeta",
+    "googleSheetSyncEnabled",
+  ]);
+  const selected = self.ExtLinkSheetSync.selectCachedTableData(tableData, synced);
+  if (selected.source === "bundled-sheet-snapshot") {
+    const { source, snapshotMeta = {}, ...cachedTableData } = selected;
+    await chrome.storage.local.set({
+      sheetTableData: cachedTableData,
+      googleSpreadsheetId: snapshotMeta.spreadsheetId || "",
+      sheetSyncMeta: {
+        ...(synced.sheetSyncMeta || {}),
+        ...snapshotMeta,
+        appliedAt: new Date().toISOString(),
+      },
+    });
+  }
+  return selected;
 }
 
 async function ensureProfilesFromTable(
@@ -2346,8 +2358,12 @@ async function ensureSubmissionSchema(
   schemaVersion,
   idRemap = {},
 ) {
+  const seededRecords = self.ExtLinkSheetSync.mergeSeedSubmissionRecords(
+    tableData,
+    existingRecords,
+  );
   const remappedRecords = self.ExtLinkQueue.remapSubmissionRecords(
-    existingRecords || {},
+    seededRecords,
     idRemap,
   );
   const migration = self.ExtLinkQueue.migrateSubmissionRecords({

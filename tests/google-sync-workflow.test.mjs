@@ -84,6 +84,49 @@ const offlineTable = S.selectCachedTableData(
 assert.equal(offlineTable.entries[0].link, "https://cached.example");
 assert.equal(offlineTable.source, "google-sheet-cache");
 
+const bundledTable = {
+  entries: [{ link: "https://bundled.example" }],
+  projects: { RainbowPetAI: {} },
+  submissionRecords: {
+    "bundled.example::RainbowPetAI": {
+      status: "success",
+      destinationKey: "bundled.example",
+      profileId: "RainbowPetAI",
+    },
+  },
+  snapshotMeta: { revision: "rev-new", fetchedAt: "2026-09-05T14:44:37Z" },
+};
+const fresherBundledTable = S.selectCachedTableData(bundledTable, {
+  sheetTableData: offlineTable,
+  sheetSyncMeta: { revision: "rev-old", fetchedAt: "2026-08-26T00:00:00Z" },
+});
+assert.equal(
+  fresherBundledTable.entries[0].link,
+  "https://bundled.example",
+  "a newer bundled Sheet snapshot should replace a stale runtime cache after extension reload",
+);
+assert.equal(fresherBundledTable.source, "bundled-sheet-snapshot");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(S.mergeSeedSubmissionRecords(bundledTable, {
+    "bundled.example::RainbowPetAI": { status: "pending", note: "local wins" },
+  }))),
+  {
+    "bundled.example::RainbowPetAI": bundledTable.submissionRecords["bundled.example::RainbowPetAI"],
+  },
+  "a verified bundled success should not be downgraded by a stale local pending record",
+);
+
+const backgroundSource = readFileSync("extension/background.js", "utf8");
+const applySource = backgroundSource.slice(
+  backgroundSource.indexOf("async function applyGoogleSheetSync"),
+  backgroundSource.indexOf("async function enqueueSheetSyncRecord"),
+);
+assert.doesNotMatch(
+  applySource,
+  /flushSheetSyncOutbox/,
+  "updating the local Sheet cache must not implicitly write records back to Google",
+);
+
 const current = {
   siteProfiles: {
     RainbowPetAI: {

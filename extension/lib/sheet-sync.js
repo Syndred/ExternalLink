@@ -296,10 +296,28 @@
 
   function selectCachedTableData(seedTableData = {}, storage = {}) {
     const cached = storage.sheetTableData;
+    const bundledFetchedAt = Date.parse(seedTableData.snapshotMeta?.fetchedAt || "") || 0;
+    const cachedFetchedAt = Date.parse(storage.sheetSyncMeta?.fetchedAt || "") || 0;
+    if (
+      seedTableData.snapshotMeta?.revision &&
+      Array.isArray(seedTableData.entries) &&
+      bundledFetchedAt > cachedFetchedAt
+    ) {
+      return { source: "bundled-sheet-snapshot", ...seedTableData };
+    }
     if (cached?.projects && Array.isArray(cached.entries)) {
       return { source: "google-sheet-cache", ...cached };
     }
     return seedTableData;
+  }
+
+  function mergeSeedSubmissionRecords(tableData = {}, existingRecords = {}) {
+    const merged = { ...(existingRecords || {}) };
+    for (const [key, seedRecord] of Object.entries(tableData.submissionRecords || {})) {
+      const chosen = chooseSuccessRecord(merged[key], seedRecord);
+      if (chosen) merged[key] = chosen;
+    }
+    return merged;
   }
 
   global.ExtLinkSheetSync = {
@@ -315,5 +333,6 @@
     describeLocalCache,
     buildSyncStatus,
     selectCachedTableData,
+    mergeSeedSubmissionRecords,
   };
 })(typeof self !== "undefined" ? self : window);

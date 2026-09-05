@@ -133,7 +133,7 @@
     if (authenticated) {
       const details = [
         cacheSummary,
-        result.enabled ? "账本自动回写已启用" : "已授权，尚未应用同步",
+        result.enabled ? "Google 更新通道已启用" : "已授权，可按需更新本地缓存",
         pending ? `待回写 ${pending} 条` : "无待回写记录",
         syncedAt ? `最近同步 ${new Date(syncedAt).toLocaleString()}` : "尚未同步",
         result.pendingPreview?.revision ? "表格有待应用更新" : "表格版本已对齐",
@@ -1018,7 +1018,7 @@
       setGoogleStatus(
         result.preview?.conflicts?.length
           ? "预览完成，但存在冲突，未改动扩展数据。"
-          : "预览完成。确认统计无误后再应用同步。",
+          : "检查完成。确认统计无误后更新本地缓存。",
         result.preview?.conflicts?.length ? "warning" : "success",
       );
     } catch (err) {
@@ -1037,7 +1037,7 @@
       if (!result?.ok) throw new Error(result?.error || "检查失败");
       if (result.changed) {
         setGooglePreview(result.preview);
-        setGoogleStatus("检测到表格更新，请确认预览后应用。", "warning");
+        setGoogleStatus("检测到表格更新，请确认后更新本地缓存。", "warning");
       } else {
         setGooglePreview();
         setGoogleStatus("表格与插件运行缓存版本一致。", "success");
@@ -1063,21 +1063,22 @@
     if (!googlePreviewRevision) return;
     const btn = $("btnGoogleApply");
     btn.disabled = true;
-    setGoogleStatus("正在应用已预览的数据并回写待同步成功记录…");
+    setGoogleStatus("正在把已确认的数据更新到本地缓存…");
     try {
       const result = await chrome.runtime.sendMessage({
         action: "googleSyncApply",
         spreadsheetId: googleSheetValue(),
         revision: googlePreviewRevision,
       });
-      if (!result?.ok) throw new Error(result?.error || "应用同步失败");
+      if (!result?.ok) throw new Error(result?.error || "更新本地缓存失败");
       googlePreviewRevision = "";
       setGooglePreview();
       await loadLibrary();
       await loadGoogleSyncStatus();
-      if (result.push?.ok === false) {
-        setGoogleStatus(`资料已同步；账本暂存待重试：${result.push.error}`, "warning");
-      }
+      setGoogleStatus(
+        `本地缓存已更新${result.pendingRecords ? ` · 有 ${result.pendingRecords} 条记录可单独回写 Google` : ""}。日常查看无需启动服务。`,
+        "success",
+      );
     } catch (err) {
       setGoogleStatus(err.message, "warning");
     }
@@ -1412,17 +1413,20 @@
       if ($("autoSubmitStandardWpComments")) {
         $("autoSubmitStandardWpComments").checked = items.autoSubmitStandardWpComments === true;
       }
-      loadLibrary().catch((err) => {
-        const el = $("libraryList");
-        if (el) {
-          el.replaceChildren();
-          const empty = document.createElement("div");
-          empty.className = "empty-state";
-          empty.textContent = err.message;
-          el.append(empty);
-        }
-      });
-      loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
+      loadLibrary()
+        .catch((err) => {
+          const el = $("libraryList");
+          if (el) {
+            el.replaceChildren();
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = err.message;
+            el.append(empty);
+          }
+        })
+        .finally(() => {
+          loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
+        });
       loadLinkMonitorState().catch((err) => setStatusLine("linkMonitorStatus", err.message, "warning"));
       loadTargetGateState().catch((err) => setStatusLine("targetGateStatus", err.message, "warning"));
     },

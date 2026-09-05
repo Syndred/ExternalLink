@@ -751,7 +751,18 @@
             />
             侧边栏打开时，访问待提交列表中的站点自动检测并填写</label
           >
-          <br /><br />
+          <br />
+          <label
+            ><input
+              type="checkbox"
+              id="autoSubmitStandardWpComments"
+            />
+            标准 WordPress 评论预检通过后可代点提交（默认关闭；有验证码仍停）</label
+          >
+          <p class="hint">
+            只对带 author / email / url / comment 的标准评论表单生效。目录站和社区站不会因此自动提交。入账写成「已提交」或「待审核」，不会直接标成已上线。
+          </p>
+          <br />
           <label
             ><input
               type="checkbox"

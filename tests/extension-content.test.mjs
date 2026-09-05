@@ -483,7 +483,31 @@ for (const actionType of ["fill", "click", "select", "check", "submit", "wait"])
   );
 }
 
+assert.match(
+  content,
+  /function\s+inspectStandardWpCommentForm\s*\(/,
+  "standard WordPress comment preflight should exist",
+);
+assert.match(
+  content,
+  /autoSubmitStandardWpComments/,
+  "optional standard WP auto-submit must stay behind an explicit flag",
+);
+assert.match(
+  content,
+  /isFillOnly\(config\) && !canAutoSubmit/,
+  "fill-only must still win unless the standard WP preflight passed",
+);
+assert.match(
+  background,
+  /lib\/playbooks\.js/,
+  "background should load directory playbooks",
+);
+assert.match(manifestText, /lib\/playbooks\.js/, "content scripts should include playbooks");
+
 const queue = readFileSync(resolve(root, "extension/lib/queue.js"), "utf8");
+assert.match(queue, /publicationStatus/, "success records should store publication status");
+assert.match(queue, /pending_moderation/, "publication status should include pending moderation");
 assert.match(queue, /classifyStatusFromReason/, "queue should classify failure reasons");
 assert.match(queue, /DEAD_END_STATUSES/, "queue should define dead-end statuses including paid");
 assert.match(

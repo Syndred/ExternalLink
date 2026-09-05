@@ -202,6 +202,18 @@
   border-color: #166534;
 }
 
+#panel-library .profile-status.submitted {
+  border-color: #0369a1;
+}
+
+#panel-library .profile-status.pending_moderation {
+  border-color: #b45309;
+}
+
+#panel-library .profile-status.published {
+  border-color: #166534;
+}
+
 #panel-library .library-item-actions {
   justify-content: flex-end;
   flex-wrap: wrap;

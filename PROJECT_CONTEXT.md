@@ -1,8 +1,9 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-08-28｜扩展 2.8.0｜路线：混合 C
+> 最后更新：2026-09-05｜扩展 2.8.1｜路线：混合 C
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
+> 2026-09-05 全自动差距评估见对话画布 `automation-gap`。
 
 ## 当前已完成
 
@@ -91,8 +92,16 @@ tests/local-agent-unit.test.py
 - 已通过全部 Node 测试、四个扩展脚本语法检查、`git diff --check` 和 Python 42 个 local_agent 单元测试。
 - Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
 - 本机 Agent 已用新代码重启：`/media/list` 回读 6 个 Profile、31 个文件；Google OAuth 已授权，快照为 6 / 2,905 / 29 / 0。
-- **Chrome 仍需重载 2.8.0，并在 Settings 执行“预览同步 → 应用同步”，才能把 2026-08-28 的 Sheet 更新写入 `chrome.storage.local`。**
+- **Chrome 仍需重载 2.8.1，并在 Settings 执行“预览同步 → 应用同步”，才能把 Sheet 更新和新的熟站/发布分级写入运行缓存。**
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
+
+## 2026-09-05 2.8.1 半自动补齐
+
+- 账本新增 `publicationStatus`：已提交 / 待审核 / 已上线。`status: success` 仍用于跳过，不把点提交或人工确认直接当成已上线。
+- Settings 增加「标准 WordPress 评论预检通过后可代点提交」，默认关闭；有验证码仍停。
+- 10 个熟站 playbook（TheJOAI、Launching Next 等）：侧栏芯片 + 外链库「熟站」标记 + 回执文本分级。
+- 链接监控发现 live 时只升级为已上线，不降级、不撤销成功。
+- P2 视觉 Agent / 博客仿写仍暂停。不追验证码代打。
 
 ## 后续边界
 
@@ -103,4 +112,4 @@ tests/local-agent-unit.test.py
 - 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。
 - 打开过的行都要写 **Time**；验证码/付费写 `Note` 后继续，不要停等。
 - 本地图库：`/Users/syndred/Desktop/projects/media/{Profile}/`。必填上传走 Agent `/media/file` + DataTransfer；iframe 内上传仍进不去。可用 `EXTERNALLINK_MEDIA_ROOT` 改根目录。
-- **使用前**：本机 Agent 已运行；chrome://extensions 重载 **2.8.0**，Settings → 外链库执行“预览同步 → 应用同步”，再检查本地图库和队列质量闸门。
+- **使用前**：本机 Agent 已运行；chrome://extensions 重载 **2.8.1**，Settings → 外链库执行“预览同步 → 应用同步”，再检查本地图库、队列质量闸门和标准评论代点开关（默认关）。

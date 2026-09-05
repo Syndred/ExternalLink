@@ -79,6 +79,7 @@ node tests/extension-content.test.mjs
 node tests/local-agent.test.mjs
 node tests/google-sync-workflow.test.mjs
 node tests/table-import.test.mjs
+node tests/publication-playbook.test.mjs
 python3 tests/local-agent-unit.test.py
 ```
 

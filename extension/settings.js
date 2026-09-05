@@ -385,6 +385,7 @@
       cfgPingIndex: $("cfgPingIndex").checked,
       autoOpenSidePanel: $("autoOpenSidePanel").checked,
       autoFillOnVisit: $("autoFillOnVisit").checked,
+      autoSubmitStandardWpComments: $("autoSubmitStandardWpComments")?.checked === true,
     });
     alert("✅ 全局配置已保存");
   });
@@ -473,7 +474,10 @@
       const meta = document.createElement("div");
       meta.className = "library-meta";
       const sourceLabel = { saved: "自定义", table: "Google 表格", library: "内置" }[item.source] || "内置";
-      meta.textContent = `${sourceLabel} · ${item.platformType || "directory"}`;
+      meta.textContent = item.playbook
+        ? `${sourceLabel} · ${item.platformType || "directory"} · 熟站 ${item.playbook.title}`
+        : `${sourceLabel} · ${item.platformType || "directory"}`;
+      if (item.playbook?.notes) meta.title = item.playbook.notes;
 
       const qualityRow = document.createElement("div");
       qualityRow.className = "quality-row";
@@ -508,8 +512,14 @@
       statuses.className = "profile-statuses";
       for (const profile of item.profileStatuses || []) {
         const chip = document.createElement("span");
-        chip.className = profile.success ? "profile-status success" : "profile-status";
-        chip.textContent = `${profile.profileName}: ${profile.success ? "已成功" : "未提交"}`;
+        const publication = profile.publicationStatus || "";
+        const publicationLabel =
+          { submitted: "已提交", pending_moderation: "待审核", published: "已上线" }[publication] ||
+          (profile.success ? "已成功" : "未提交");
+        chip.className = profile.success
+          ? `profile-status success${publication ? ` ${publication}` : ""}`
+          : "profile-status";
+        chip.textContent = `${profile.profileName}: ${publicationLabel}`;
         statuses.append(chip);
       }
 
@@ -990,6 +1000,7 @@
       "cfgPingIndex",
       "autoOpenSidePanel",
       "autoFillOnVisit",
+      "autoSubmitStandardWpComments",
     ],
     (items) => {
       siteProfiles = items.siteProfiles || {};
@@ -1003,6 +1014,9 @@
       $("cfgPingIndex").checked = items.cfgPingIndex !== false;
       $("autoOpenSidePanel").checked = items.autoOpenSidePanel === true;
       $("autoFillOnVisit").checked = items.autoFillOnVisit !== false;
+      if ($("autoSubmitStandardWpComments")) {
+        $("autoSubmitStandardWpComments").checked = items.autoSubmitStandardWpComments === true;
+      }
       loadLibrary().catch((err) => {
         const el = $("libraryList");
         if (el) {

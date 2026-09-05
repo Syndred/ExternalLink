@@ -4,6 +4,12 @@
 
   const DEFAULT_PROJECT = "TextComparison";
   const SUBMISSION_SCHEMA_VERSION = 2;
+  const PUBLICATION_STATUSES = ["submitted", "pending_moderation", "published"];
+  const PUBLICATION_LABELS = {
+    submitted: "已提交",
+    pending_moderation: "待审核",
+    published: "已上线",
+  };
 
   function normalizeUrlKey(url) {
     try {
@@ -46,6 +52,86 @@
     return record?.status === "success";
   }
 
+  function normalizePublicationStatus(value) {
+    const raw = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[-\s]+/g, "_");
+    if (raw === "under_review" || raw === "pending" || raw === "pending_review") {
+      return "pending_moderation";
+    }
+    return PUBLICATION_STATUSES.includes(raw) ? raw : "";
+  }
+
+  function publicationRank(value) {
+    return { submitted: 1, pending_moderation: 2, published: 3 }[normalizePublicationStatus(value)] || 0;
+  }
+
+  function hasCheckablePublicUrl(url) {
+    const value = String(url || "").trim();
+    if (!/^https?:\/\//i.test(value)) return false;
+    return !/\/(submit|add|new|apply|list-your|contact)(?:\/|$)/i.test(value);
+  }
+
+  function inferPublicationStatus(record = {}) {
+    const explicit = normalizePublicationStatus(record.publicationStatus);
+    if (explicit) return explicit;
+    const publicUrl = String(record.publicUrl || "").trim();
+    const evidenceUrl = String(record.evidenceUrl || "").trim();
+    const text = `${record.evidence || ""} ${publicUrl} ${evidenceUrl}`.toLowerCase();
+    if (hasCheckablePublicUrl(publicUrl) && /published|live listing|launched this week|launched in \d{4}/.test(text)) {
+      return "published";
+    }
+    if (hasCheckablePublicUrl(publicUrl) && /awaiting moderation|held for moderation|pending moderation|comment is awaiting/.test(text)) {
+      return "pending_moderation";
+    }
+    if (/awaiting moderation|held for moderation|pending moderation|comment is awaiting/.test(text)) {
+      return "pending_moderation";
+    }
+    if (/under review|in queue|submitted for review|pending review|waiting line|in review/.test(text)) {
+      return "pending_moderation";
+    }
+    return "submitted";
+  }
+
+  function hydratePublicationRecord(record) {
+    if (!record || typeof record !== "object") return record;
+    const publicationStatus = inferPublicationStatus(record);
+    if (record.publicationStatus === publicationStatus) return record;
+    return { ...record, publicationStatus };
+  }
+
+  function mergePublicationFields(winner, other) {
+    if (!winner) return other || null;
+    if (!other) return winner;
+    const nextStatus =
+      publicationRank(other.publicationStatus || inferPublicationStatus(other)) >
+      publicationRank(winner.publicationStatus || inferPublicationStatus(winner))
+        ? normalizePublicationStatus(other.publicationStatus) || inferPublicationStatus(other)
+        : normalizePublicationStatus(winner.publicationStatus) || inferPublicationStatus(winner);
+    return {
+      ...winner,
+      publicationStatus: nextStatus,
+      publicUrl: String(winner.publicUrl || other.publicUrl || "").trim(),
+      evidenceUrl: String(winner.evidenceUrl || other.evidenceUrl || "").trim(),
+    };
+  }
+
+  function applyPublicationUpgrade(record, nextStatus, extra = {}) {
+    if (!record || typeof record !== "object") return record;
+    const normalized = normalizePublicationStatus(nextStatus);
+    if (!normalized) return hydratePublicationRecord(record);
+    const current = normalizePublicationStatus(record.publicationStatus) || inferPublicationStatus(record);
+    if (publicationRank(normalized) < publicationRank(current)) {
+      return hydratePublicationRecord({ ...record, ...extra, publicationStatus: current });
+    }
+    return hydratePublicationRecord({
+      ...record,
+      ...extra,
+      publicationStatus: normalized,
+    });
+  }
+
   function buildSuccessRecord({
     destinationUrl,
     destinationKey,
@@ -54,9 +140,12 @@
     submittedAt,
     confirmedBy = "agent",
     evidence = "",
+    publicUrl = "",
+    evidenceUrl = "",
+    publicationStatus,
   }) {
     const normalizedDestinationKey = destinationKey || normalizeUrlKey(destinationUrl || "");
-    return {
+    const record = {
       status: "success",
       destinationKey: normalizedDestinationKey,
       destinationUrl: destinationUrl || "",
@@ -65,8 +154,12 @@
       submittedAt: submittedAt || new Date().toISOString(),
       confirmedBy,
       evidence,
+      publicUrl: publicUrl || "",
+      evidenceUrl: evidenceUrl || "",
       schemaVersion: SUBMISSION_SCHEMA_VERSION,
     };
+    record.publicationStatus = inferPublicationStatus({ ...record, publicationStatus });
+    return record;
   }
 
   function createMigratedSuccessRecord(destinationKey, destinationUrl, profileId, source, date) {
@@ -128,7 +221,11 @@
       }
     }
 
-    return { records: migrated, migratedCount, schemaVersion: SUBMISSION_SCHEMA_VERSION };
+    const hydrated = {};
+    for (const [key, record] of Object.entries(migrated)) {
+      hydrated[key] = hydratePublicationRecord(record);
+    }
+    return { records: hydrated, migratedCount, schemaVersion: SUBMISSION_SCHEMA_VERSION };
   }
 
   function remapSubmissionRecords(records, idRemap) {
@@ -138,7 +235,7 @@
       const profileId = idRemap?.[record.profileId] || record.profileId;
       const destinationKey = record.destinationKey || normalizeUrlKey(record.destinationUrl || "");
       const key = submissionRecordKey(destinationKey, profileId);
-      remapped[key] = { ...record, destinationKey, profileId };
+      remapped[key] = hydratePublicationRecord({ ...record, destinationKey, profileId });
     }
     return remapped;
   }
@@ -671,10 +768,18 @@
 
   global.ExtLinkQueue = {
     SUBMISSION_SCHEMA_VERSION,
+    PUBLICATION_STATUSES,
+    PUBLICATION_LABELS,
     normalizeUrlKey,
     extractDomain,
     submissionRecordKey,
     isSubmissionSuccessful,
+    normalizePublicationStatus,
+    publicationRank,
+    inferPublicationStatus,
+    hydratePublicationRecord,
+    mergePublicationFields,
+    applyPublicationUpgrade,
     buildSuccessRecord,
     migrateSubmissionRecords,
     remapSubmissionRecords,

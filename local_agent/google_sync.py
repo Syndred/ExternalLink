@@ -60,6 +60,7 @@ RECORD_HEADERS = [
     "Evidence",
     "EvidenceURL",
     "PublicURL",
+    "PublicationStatus",
     "UpdatedAt",
 ]
 
@@ -529,6 +530,7 @@ def parse_record_rows(rows: list[list[Any]]) -> dict[str, dict[str, Any]]:
             "evidence": _cell(row, headers, "evidence"),
             "evidenceUrl": _cell(row, headers, "evidenceurl"),
             "publicUrl": _cell(row, headers, "publicurl", "indexpage"),
+            "publicationStatus": _cell(row, headers, "publicationstatus"),
             "updatedAt": _cell(row, headers, "updatedat"),
             "schemaVersion": SUBMISSION_SCHEMA_VERSION,
         }
@@ -690,6 +692,7 @@ def merge_success_records(existing: dict[str, dict[str, Any]], incoming: Iterabl
             "evidence": str(raw.get("evidence") or "").strip(),
             "evidenceUrl": str(raw.get("evidenceUrl") or "").strip(),
             "publicUrl": str(raw.get("publicUrl") or "").strip(),
+            "publicationStatus": str(raw.get("publicationStatus") or "").strip(),
             "updatedAt": str(raw.get("updatedAt") or "").strip(),
             "schemaVersion": SUBMISSION_SCHEMA_VERSION,
         }
@@ -718,6 +721,7 @@ def _records_to_rows(records: dict[str, dict[str, Any]]) -> list[list[str]]:
             str(record.get("evidence", "")),
             str(record.get("evidenceUrl", "")),
             str(record.get("publicUrl", "")),
+            str(record.get("publicationStatus", "")),
             str(record.get("updatedAt", "")),
         ])
     return rows

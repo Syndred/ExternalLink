@@ -92,9 +92,12 @@
       return remoteRecord;
     }
     if (localRecord?.status === SUCCESS_STATUS && remoteRecord?.status === SUCCESS_STATUS) {
-      return recordStrength(remoteRecord) > recordStrength(localRecord)
-        ? remoteRecord
-        : localRecord;
+      const winner =
+        recordStrength(remoteRecord) > recordStrength(localRecord) ? remoteRecord : localRecord;
+      const other = winner === remoteRecord ? localRecord : remoteRecord;
+      return global.ExtLinkQueue && typeof global.ExtLinkQueue.mergePublicationFields === "function"
+        ? global.ExtLinkQueue.mergePublicationFields(winner, other)
+        : winner;
     }
     return remoteRecord || localRecord || null;
   }

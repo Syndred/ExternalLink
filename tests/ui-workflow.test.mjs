@@ -42,6 +42,7 @@ for (const id of [
   "btnRunLinkMonitor",
   "libraryQualityFilter",
   "librarySort",
+  "autoSubmitStandardWpComments",
 ]) {
   assert.match(settingsHtml, new RegExp(`id="${id}"`));
 }
@@ -76,6 +77,11 @@ assert.match(background, /case "runLinkMonitor"/);
 assert.match(background, /gatedByQuality/);
 assert.match(sidepanelJs, /renderMetricChip\("可索引"/);
 assert.match(sidepanelJs, /renderMetricChip\("Noindex"/);
+assert.match(sidepanelHtml, /id="playbookNote"/);
+assert.match(sidepanelJs, /熟站/);
+assert.match(settingsJs, /autoSubmitStandardWpComments/);
+assert.match(settingsJs, /pending_moderation/);
+assert.match(settingsCss, /profile-status\.published/);
 assert.match(background, /SHEET_PREVIEW_ALARM/);
 assert.match(background, /LINK_MONITOR_ALARM/);
 assert.match(background, /isNewPendingRevision/);

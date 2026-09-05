@@ -25,6 +25,9 @@
         incoming?.status === "success" &&
         recordStrength(existing) >= recordStrength(incoming)
       ) {
+        if (global.ExtLinkQueue && typeof global.ExtLinkQueue.mergePublicationFields === "function") {
+          merged[key] = global.ExtLinkQueue.mergePublicationFields(existing, incoming);
+        }
         continue;
       }
       merged[key] = incoming;

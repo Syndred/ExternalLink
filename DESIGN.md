@@ -18,7 +18,7 @@
 ## 状态
 
 - `pending`：等待；`running`：当前正在处理。
-- `success`：只有明确成功证据或人工确认后显示。
+- `success`：只有明确成功证据或人工确认后显示。账本另用 `publicationStatus` 区分已提交 / 待审核 / 已上线，不把点提交当成已上线。
 - `needs_login` / `needs_captcha` / `needs_manual`：待人工，不占批量并发位。
 - `paid` / `broken` / `skip` / `deleted`：外链站级排除状态。
 

@@ -44,7 +44,10 @@ const Q = loadQueueModule();
     submittedAt: "2026-07-30T12:00:00.000Z",
     confirmedBy: "manual",
     evidence: "user confirmed",
+    publicUrl: "",
+    evidenceUrl: "",
     schemaVersion: 2,
+    publicationStatus: "submitted",
   });
 }
 
@@ -139,6 +142,10 @@ const Q = loadQueueModule();
   assert.equal(
     initial.records[Q.submissionRecordKey(destinationD, "B")].status,
     "success",
+  );
+  assert.equal(
+    initial.records[Q.submissionRecordKey(destinationD, "B")].publicationStatus,
+    "submitted",
   );
   assert.equal(
     initial.records[

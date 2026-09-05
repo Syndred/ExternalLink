@@ -4,6 +4,7 @@
 importScripts(
   "lib/profiles.js",
   "lib/queue.js",
+  "lib/playbooks.js",
   "lib/scheduler.js",
   "lib/backup.js",
   "lib/sheet-sync.js",
@@ -665,7 +666,11 @@ async function startBatchRun(msg) {
     };
   }
 
-  state.config = msg.config || {};
+  const storedFlags = await chrome.storage.local.get(["autoSubmitStandardWpComments"]);
+  state.config = {
+    ...(msg.config || {}),
+    autoSubmitStandardWpComments: storedFlags.autoSubmitStandardWpComments === true,
+  };
   state.tasks = pending.tasks.map((task) => ({ ...task, status: "pending" }));
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
   state.queue = [...state.groups];
@@ -861,7 +866,7 @@ async function ensureContentScript(tabId) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["content.js"],
+      files: ["lib/playbooks.js", "content.js"],
     });
   } catch (err) {
     throw new Error(`无法注入页面脚本，请刷新页面后重试（${err.message}）`);
@@ -942,6 +947,7 @@ async function handleSidepanelFill(msg) {
     "cfgEmail",
     "cfgName",
     "cfgCommentTemplate",
+    "autoSubmitStandardWpComments",
   ]);
   const profile = self.ExtLinkProfiles.getActiveProfile(storage);
   if (!self.ExtLinkProfiles.profileConfigured(profile)) {
@@ -954,6 +960,7 @@ async function handleSidepanelFill(msg) {
     commentTemplate: storage.cfgCommentTemplate,
     fillOnly: true,
   });
+  config.autoSubmitStandardWpComments = storage.autoSubmitStandardWpComments === true;
   config.learnedFieldMappings = profile.learnedFieldMappings || {};
 
   if (msg.commentText) {
@@ -1124,6 +1131,51 @@ async function handleSidepanelFill(msg) {
   if (agentResult?.error && smartTotal === 0 && msg.mode !== "comment") {
     broadcastAutoFillUpdate({ tabId, status: "error", message: agentResult.error });
     return { error: agentResult.error };
+  }
+
+  if (msg.mode === "comment") {
+    const submitted = !!(agentResult?.clickedSubmit || agentResult?.submitted);
+    const publicationStatus = agentResult?.publicationStatus || "";
+    const evidence = agentResult?.evidence || "";
+    if (submitted && agentResult?.ok && agentResult?.matched === true && evidence) {
+      const pageUrl = await getTabUrlSafe(tabId);
+      if (pageUrl) {
+        await recordSubmittedProject({
+          url: pageUrl,
+          profileId: profile.id,
+          profileName: profile.name || profile.id,
+          confirmedBy: "agent",
+          successEvidence: evidence,
+          publicationStatus,
+          publicUrl: agentResult.publicUrl || "",
+          evidenceUrl: agentResult.evidenceUrl || "",
+        });
+      }
+    }
+    const doneMsg = submitted
+      ? publicationStatus === "pending_moderation"
+        ? "评论已提交，站点显示待审核"
+        : evidence
+          ? "评论已代点提交"
+          : "已代点提交，未见回执，请人工确认"
+      : agentResult?.error
+        ? agentResult.error
+        : "评论内容已填入";
+    broadcastAutoFillUpdate({
+      tabId,
+      status: submitted && !evidence ? "manual" : "done",
+      message: doneMsg,
+    });
+    return {
+      ok: !agentResult?.error,
+      fillOnly: !submitted,
+      submitted,
+      publicationStatus,
+      evidence,
+      standardWp: !!agentResult?.standardWp,
+      platform: "wp_comment",
+      error: agentResult?.error || "",
+    };
   }
 
   const doneMsg =
@@ -1406,6 +1458,9 @@ async function recordSubmittedProject(task) {
     profileName: task.profileName || task.config?.brandName || profileId,
     confirmedBy: task.confirmedBy || "agent",
     evidence: task.successEvidence || "judge confirmed submission success",
+    publicUrl: task.publicUrl || "",
+    evidenceUrl: task.evidenceUrl || "",
+    publicationStatus: task.publicationStatus,
   });
   records[key] = record;
   await chrome.storage.local.set({
@@ -1532,8 +1587,13 @@ async function getLibraryManagerState() {
         profileName: profile.name || profile.id,
         success: self.ExtLinkQueue.isSubmissionSuccessful(records, key, profile.id),
         submittedAt: record?.submittedAt || "",
+        publicationStatus: record?.publicationStatus || "",
       };
     });
+    const playbook =
+      self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
+        ? self.ExtLinkPlaybooks.lookup(domain)
+        : null;
     return {
       key,
       url: entry.url,
@@ -1546,6 +1606,9 @@ async function getLibraryManagerState() {
       monitorStatus,
       metrics: quality.metrics,
       profileStatuses,
+      playbook: playbook
+        ? { id: playbook.id, title: playbook.title, notes: playbook.notes }
+        : null,
     };
   });
   items.sort(self.ExtLinkOpportunityScore.compareOpportunities);
@@ -2010,7 +2073,25 @@ async function runLinkMonitor({ notify = false, force = false } = {}) {
     results[key] = result;
   }
   const lastRunAt = new Date().toISOString();
-  await chrome.storage.local.set({ linkMonitorResults: results, linkMonitorLastRunAt: lastRunAt });
+  const nextRecords = { ...(storage.submissionRecords || {}) };
+  let publicationUpgrades = 0;
+  for (const [key, record] of candidates) {
+    const result = results[key];
+    if (result?.status !== "live" || !record) continue;
+    const upgraded = self.ExtLinkQueue.applyPublicationUpgrade(record, "published", {
+      publicUrl: record.publicUrl || result.url || "",
+    });
+    if (upgraded.publicationStatus !== record.publicationStatus || upgraded.publicUrl !== record.publicUrl) {
+      nextRecords[key] = upgraded;
+      publicationUpgrades += 1;
+      enqueueSheetSyncRecord(upgraded).catch((err) => {
+        log(`公开状态回写：${err.message}`, "warn");
+      });
+    }
+  }
+  const storageUpdate = { linkMonitorResults: results, linkMonitorLastRunAt: lastRunAt };
+  if (publicationUpgrades) storageUpdate.submissionRecords = nextRecords;
+  await chrome.storage.local.set(storageUpdate);
   if (notify && changedToProblem.length) {
     chrome.notifications.create("externallink-links-changed", {
       type: "basic",
@@ -2023,7 +2104,15 @@ async function runLinkMonitor({ notify = false, force = false } = {}) {
     acc[item.status] = (acc[item.status] || 0) + 1;
     return acc;
   }, {});
-  return { ok: true, checked: candidates.length, changedToProblem: changedToProblem.length, counts, results, lastRunAt };
+  return {
+    ok: true,
+    checked: candidates.length,
+    changedToProblem: changedToProblem.length,
+    publicationUpgrades,
+    counts,
+    results,
+    lastRunAt,
+  };
 }
 
 async function disconnectGoogleSync() {
@@ -2925,6 +3014,7 @@ function getTaskConfig(task, extraConfig = {}) {
     ...extraConfig,
     autoSkipCaptcha: globals.autoSkipCaptcha,
     fillOnly: globals.fillOnly,
+    autoSubmitStandardWpComments: globals.autoSubmitStandardWpComments === true,
     manualWaitSec: globals.manualWaitSec,
     pingIndex: globals.pingIndex,
     note: task?.note || perTask.note || globals.note || "",
@@ -3147,6 +3237,14 @@ function completeTaskFromJudge(tabId, task, judge) {
   task.skipReason = "";
   task.successEvidence = judge.reason || judge.message || "judge success";
   task.confirmedBy = "agent";
+  task.publicationStatus = self.ExtLinkQueue.inferPublicationStatus({
+    evidence: task.successEvidence,
+    publicUrl: judge.publicUrl || task.publicUrl || "",
+    evidenceUrl: judge.evidenceUrl || "",
+    publicationStatus: judge.publicationStatus,
+  });
+  task.publicUrl = judge.publicUrl || task.publicUrl || "";
+  task.evidenceUrl = judge.evidenceUrl || "";
   log(`${task.domain}: 提交成功 - ${judge.reason || judge.message || "judge success"}`, "ok");
   recordSubmittedProject(task)
     .then(() => advanceDestinationGroup(tabId, task))

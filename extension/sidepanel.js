@@ -990,6 +990,8 @@
     }
 
     if (prescan?.hasCommentForm) row.append(renderMetricChip("有评论表单", "good"));
+    if (detection?.standardWpComment) row.append(renderMetricChip("标准 WP 评论", "good"));
+    if (detection?.playbook?.title) row.append(renderMetricChip(`熟站 ${detection.playbook.title}`, "good"));
     if (prescan?.hasCaptcha) row.append(renderMetricChip("含验证码", "bad"));
     if (prescan?.indexable === true) row.append(renderMetricChip("可索引", "good"));
     if (prescan?.indexable === false) row.append(renderMetricChip("Noindex", "bad"));
@@ -1018,6 +1020,30 @@
     if (!row.childElementCount) {
       row.append(renderMetricChip("点击「检测」获取页面信号", ""));
     }
+    renderPlaybookNote(detection?.playbook || lookupPlaybookForUrl(currentPageUrl));
+  }
+
+  function lookupPlaybookForUrl(url) {
+    if (self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function") {
+      const playbook = self.ExtLinkPlaybooks.lookup(url);
+      return playbook
+        ? { id: playbook.id, title: playbook.title, notes: playbook.notes, hints: playbook.hints || [] }
+        : null;
+    }
+    return null;
+  }
+
+  function renderPlaybookNote(playbook) {
+    const el = $("playbookNote");
+    if (!el) return;
+    if (!playbook?.notes) {
+      el.textContent = "";
+      el.setAttribute("hidden", "");
+      return;
+    }
+    const hints = Array.isArray(playbook.hints) && playbook.hints.length ? ` ${playbook.hints.join("；")}` : "";
+    el.textContent = `${playbook.title}：${playbook.notes}${hints}`;
+    el.removeAttribute("hidden");
   }
 
   function renderPageTdk(prescan) {
@@ -1226,7 +1252,13 @@
     if (result?.ok || result?.fillOnly) {
       let msg;
       if (mode === "comment") {
-        msg = "评论内容已填入";
+        msg = result.submitted
+          ? result.publicationStatus === "pending_moderation"
+            ? "评论已提交，站点显示待审核"
+            : result.evidence
+              ? "评论已代点提交"
+              : "已代点提交，未见回执，请人工确认"
+          : "评论内容已填入";
       } else if (result.invalidCount > 0) {
         msg = `${result.invalidCount} 个字段超出字数限制，请修正`;
       } else if (result.emptyCount > 0) {
@@ -1515,7 +1547,9 @@
     const summary = $("detectSummary");
     if (summary) {
       summary.textContent = d.operable
-        ? `检测到 ${d.platform || "表单"}${d.inModal ? " 弹窗" : ""}，当前区域 ${d.formFieldCount} 个可填字段。`
+        ? `检测到 ${d.platform || "表单"}${d.inModal ? " 弹窗" : ""}，当前区域 ${d.formFieldCount} 个可填字段。${
+            d.standardWpComment ? " 标准 WordPress 评论表单。" : ""
+          }${d.playbook?.title ? ` 熟站 ${d.playbook.title}。` : ""}`
         : "当前区域未发现可填字段，请打开提交弹窗或导航到提交页。";
     }
 

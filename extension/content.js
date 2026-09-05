@@ -91,12 +91,20 @@
         const hasComment = detectWPComment() || detectArticleComment();
         const scopedFields = queryFillableElements();
         const operable = !!(platform || scopedFields.length > 0 || hasComment);
+        const playbook =
+          self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
+            ? self.ExtLinkPlaybooks.lookup(location.href)
+            : null;
         sendResponse({
           url: location.href,
           hostname: location.hostname,
           platform: platform || snapshot.meta.platform,
           operable,
           commentFound: hasComment,
+          standardWpComment: inspectStandardWpCommentForm().ok,
+          playbook: playbook
+            ? { id: playbook.id, title: playbook.title, notes: playbook.notes, hints: playbook.hints || [] }
+            : null,
           formFieldCount: scopedFields.length,
           formCount: snapshot.meta.formCount,
           hasCaptcha: snapshot.meta.hasCaptcha,
@@ -339,6 +347,60 @@
       '#commentform, form.comment-form, textarea[name="comment"], #comment, ' +
         ".comment-respond, .wp-block-comments",
     );
+  }
+
+  function fieldHasValue(element) {
+    return !!String(element?.value || "").trim();
+  }
+
+  function inspectStandardWpCommentForm() {
+    if (window.top !== window) {
+      return { ok: false, reason: "iframe" };
+    }
+    const form = document.querySelector("#commentform, form.comment-form");
+    if (!form) return { ok: false, reason: "no_standard_form" };
+    const author = form.querySelector('#author, input[name="author"]');
+    const email = form.querySelector('#email, input[name="email"], input[type="email"]');
+    const url = form.querySelector('#url, input[name="url"], input[name="website"]');
+    const comment = form.querySelector('#comment, textarea[name="comment"]');
+    const submit = form.querySelector(
+      '#submit, input[type="submit"][name="submit"], button[type="submit"], input.comment-submit, button.comment-submit',
+    );
+    if (!author || !email || !url || !comment || !submit) {
+      return { ok: false, reason: "incomplete_fields", form, author, email, url, comment, submit };
+    }
+    if (typeof detectCaptcha === "function" && detectCaptcha()) {
+      return { ok: false, reason: "captcha", form, author, email, url, comment, submit };
+    }
+    return { ok: true, form, author, email, url, comment, submit };
+  }
+
+  function shouldAutoSubmitStandardWp(config, preflight) {
+    if (!config || config.autoSubmitStandardWpComments !== true) return false;
+    if (!preflight?.ok) return false;
+    if (typeof detectCaptcha === "function" && detectCaptcha()) return false;
+    return (
+      fieldHasValue(preflight.author) &&
+      fieldHasValue(preflight.email) &&
+      fieldHasValue(preflight.url) &&
+      fieldHasValue(preflight.comment)
+    );
+  }
+
+  function classifyVisibleEvidence() {
+    const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
+    const playbook =
+      self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
+        ? self.ExtLinkPlaybooks.lookup(location.href)
+        : null;
+    if (self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.classifyEvidence === "function") {
+      return self.ExtLinkPlaybooks.classifyEvidence(text, playbook);
+    }
+    const lower = text.toLowerCase();
+    if (/awaiting moderation|held for moderation|pending moderation|comment is awaiting/.test(lower)) {
+      return { publicationStatus: "pending_moderation", evidence: "comment awaiting moderation", matched: true };
+    }
+    return { publicationStatus: "submitted", evidence: "", matched: false };
   }
 
   function detectForum() {
@@ -828,23 +890,40 @@
       return { captcha: true };
     }
 
-    // Step 6: Submit
-    const submitBtn = findSubmitButton(
-      '#submit, input[type="submit"][name="submit"], button[type="submit"], input.comment-submit, button.comment-submit, .form-submit input[type="submit"]',
-      ["post comment", "submit", "comment"],
-    );
+    const preflight = inspectStandardWpCommentForm();
+    const canAutoSubmit = shouldAutoSubmitStandardWp(config, preflight);
+
+    // Step 6: Submit only when fillOnly is off, or the opt-in standard WP preflight passed.
+    const submitBtn =
+      preflight.submit ||
+      findSubmitButton(
+        '#submit, input[type="submit"][name="submit"], button[type="submit"], input.comment-submit, button.comment-submit, .form-submit input[type="submit"]',
+        ["post comment", "submit", "comment"],
+      );
     if (submitBtn) {
-      if (isFillOnly(config)) return returnAfterFill(config, "wp_comment");
-      logStep("🚀 提交评论…");
+      if (isFillOnly(config) && !canAutoSubmit) {
+        return { ...returnAfterFill(config, "wp_comment"), standardWp: preflight.ok };
+      }
+      logStep(canAutoSubmit ? "🚀 标准评论表单预检通过，代点提交…" : "🚀 提交评论…");
       submitBtn.click();
       await sleep(3000);
-    } else {
-      if (isFillOnly(config)) return returnAfterFill(config, "wp_comment");
-      logStep("⚠️ 未找到评论提交按钮，已填字段请手动提交");
-      return { manual: true, platform: "wp_comment", reason: "no_submit_button" };
+      const classified = classifyVisibleEvidence();
+      return {
+        ok: true,
+        platform: "wp_comment",
+        clickedSubmit: true,
+        submitted: true,
+        standardWp: preflight.ok,
+        publicationStatus: classified.publicationStatus || "submitted",
+        evidence: classified.evidence || "",
+        matched: classified.matched === true,
+      };
     }
-
-    return { ok: true, platform: "wp_comment" };
+    if (isFillOnly(config) && !canAutoSubmit) {
+      return { ...returnAfterFill(config, "wp_comment"), standardWp: preflight.ok };
+    }
+    logStep("⚠️ 未找到评论提交按钮，已填字段请手动提交");
+    return { manual: true, platform: "wp_comment", reason: "no_submit_button", standardWp: preflight.ok };
   }
 
   // ─── Forum Profile Link ───

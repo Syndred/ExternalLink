@@ -23,7 +23,7 @@ The private Google Sheet is the only place a human should maintain profile facts
 
 ## Status vocabulary
 
-Use `queued`, `ready`, `filling`, `filled`, `needs_login`, `needs_captcha`, `needs_otp`, `needs_manual`, `submitted`, `under_review`, `published`, `rejected`, `failed`, `paid`, `skip`, or `blocked` in operational reports. The v2 runtime ledger uses `status: success` when the submission itself has authoritative success evidence; retain the more precise review/publication state in evidence and human-facing fields.
+Use `queued`, `ready`, `filling`, `filled`, `needs_login`, `needs_captcha`, `needs_otp`, `needs_manual`, `submitted`, `under_review`, `published`, `rejected`, `failed`, `paid`, `skip`, or `blocked` in operational reports. The v2 runtime ledger uses `status: success` when the submission itself has authoritative success evidence. Store the precise review/publication state in `publicationStatus`: `submitted`, `pending_moderation`, or `published`. Do not treat a click or a casual confirm as `published`.
 
 ## Reconciliation order
 

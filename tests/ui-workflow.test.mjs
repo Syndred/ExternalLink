@@ -98,6 +98,11 @@ assert.match(settingsCss, /profile-field-row/);
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);
 assert.match(background, /case "getLibraryManagerState"/);
+assert.match(
+  background,
+  /case "getLibraryManagerState":\s*getLibraryManagerState\(msg\)/,
+  "a side panel timeline query must pass its current URL through to the existing library manager",
+);
 assert.match(background, /case "addSubmissionTimelineEvent"/);
 assert.match(background, /submissionTimeline/);
 assert.match(background, /case "googleCheckChanges"/);

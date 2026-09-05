@@ -356,6 +356,115 @@ body {
   color: #64748b;
 }
 
+/* ─── Current destination timeline ─── */
+.sidepanel-timeline-card {
+  padding-bottom: 10px;
+}
+.sidepanel-timeline-card .card-head-row {
+  align-items: flex-start;
+}
+.sidepanel-timeline-card .card-desc {
+  margin: 3px 0 0;
+}
+.sidepanel-timeline-summary {
+  margin: 8px 0;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 10px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.sidepanel-timeline-list {
+  display: grid;
+  gap: 6px;
+  max-height: 286px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.sidepanel-timeline-event {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid #dbeafe;
+  border-left: 3px solid #38bdf8;
+  border-radius: 7px;
+  background: #f8fafc;
+}
+.sidepanel-timeline-event-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 10px;
+}
+.sidepanel-timeline-profile {
+  min-width: 0;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #075985;
+  font-weight: 700;
+}
+.sidepanel-timeline-type {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  white-space: nowrap;
+}
+.sidepanel-timeline-type.published {
+  background: #dcfce7;
+  color: #166534;
+}
+.sidepanel-timeline-type.rejected,
+.sidepanel-timeline-type.link_missing {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.sidepanel-timeline-type.pending_moderation,
+.sidepanel-timeline-type.needs_follow_up,
+.sidepanel-timeline-type.awaiting_index {
+  background: #fef3c7;
+  color: #92400e;
+}
+.sidepanel-timeline-time {
+  min-width: 0;
+  margin-left: auto;
+  color: #64748b;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.sidepanel-timeline-note {
+  margin-top: 5px;
+  color: #334155;
+  font-size: 11px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+.sidepanel-timeline-link {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 4px;
+  color: #0284c7;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidepanel-timeline-more {
+  padding: 5px 6px;
+  color: #64748b;
+  font-size: 10px;
+  text-align: center;
+}
+
 /* ─── Workflow toolbar (BacklinkHelper style) ─── */
 .workflow-card {
   background: #fff;
@@ -1082,5 +1191,20 @@ input:focus-visible {
   .comment-studio .comment-controls {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 380px) {
+  .sidepanel-timeline-event-head {
+    flex-wrap: wrap;
+  }
+
+  .sidepanel-timeline-profile {
+    max-width: 58%;
+  }
+
+  .sidepanel-timeline-time {
+    width: 100%;
+    margin-left: 0;
   }
 }

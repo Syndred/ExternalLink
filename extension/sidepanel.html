@@ -64,6 +64,22 @@
         </div>
       </section>
 
+      <section class="card sidepanel-timeline-card" id="sidepanelTimelineCard">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">外链动态</h2>
+            <p class="card-desc">按 Profile 查看提交、审核、上线和跟进时间。</p>
+          </div>
+          <button type="button" class="btn-link" id="btnRefreshSidepanelTimeline">刷新</button>
+        </div>
+        <div class="sidepanel-timeline-summary" id="sidepanelTimelineSummary" role="status">
+          打开外链提交页后显示该站动态
+        </div>
+        <div class="sidepanel-timeline-list" id="sidepanelTimelineList" aria-live="polite">
+          <div class="empty-state compact-empty">尚未读取当前外链站时间线</div>
+        </div>
+      </section>
+
       <section class="workflow-card">
         <div class="workflow-steps" aria-hidden="true">
           <span class="step" id="stepDetect">1 检测</span>

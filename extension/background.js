@@ -217,7 +217,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "getLibraryManagerState":
-      getLibraryManagerState()
+      getLibraryManagerState(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message, items: [] }));
       return true;
@@ -1536,7 +1536,7 @@ async function removeFromSubmissionQueue(msg) {
   return markSubmissionSite({ url: msg.url, status: "deleted", note: msg.note || "" });
 }
 
-async function getLibraryManagerState() {
+async function getLibraryManagerState(options = {}) {
   const storage = await chrome.storage.local.get([
     "urlList",
     "siteAnnotations",
@@ -1599,8 +1599,23 @@ async function getLibraryManagerState() {
     seen.add(key);
     return true;
   });
+  const requestedKey = siteKeyForUrl(options.url || "");
+  const requestedDomain = requestedKey
+    ? self.ExtLinkQueue.extractDomain(options.url)
+    : "";
+  const exactUrls = requestedKey
+    ? urls.filter((entry) => siteKeyForUrl(entry.url) === requestedKey)
+    : [];
+  const scopedUrls = requestedKey
+    ? exactUrls.length
+      ? exactUrls
+      : urls.filter((entry) => {
+          const domain = entry.domain || self.ExtLinkQueue.extractDomain(entry.url);
+          return domain === requestedDomain;
+        })
+    : urls;
   const annotations = storage.siteAnnotations || {};
-  const items = urls.map((entry, index) => {
+  const items = scopedUrls.map((entry) => {
     const key = siteKeyForUrl(entry.url);
     const annotation = annotations[key] || annotations[entry.domain] || null;
     const domain = entry.domain || self.ExtLinkQueue.extractDomain(entry.url);
@@ -1655,7 +1670,7 @@ async function getLibraryManagerState() {
       domain,
       source: entry.source || "library",
       platformType: entry.platformType || "directory",
-      position: index,
+      position: urls.indexOf(entry),
       annotation,
       quality,
       monitorStatus,

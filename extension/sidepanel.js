@@ -1,3 +1,70 @@
+(function (global) {
+  "use strict";
+
+  // Keep the data shaping independent from the DOM so the side panel and its
+  // focused tests use the same Profile-aware timeline contract.
+  function buildTimelineModel(item = {}, siteProfiles = {}) {
+    const profileNames = new Map();
+    for (const profile of Array.isArray(item.profileStatuses) ? item.profileStatuses : []) {
+      const id = String(profile?.profileId || "").trim();
+      if (!id) continue;
+      profileNames.set(id, String(profile.profileName || siteProfiles[id]?.name || id).trim() || id);
+    }
+    for (const [id, profile] of Object.entries(siteProfiles || {})) {
+      if (!profileNames.has(id)) profileNames.set(id, String(profile?.name || id).trim() || id);
+    }
+
+    const events = [];
+    const seenIds = new Set();
+    const append = (raw, fallback = {}) => {
+      if (!raw || typeof raw !== "object") return;
+      const profileId = String(raw.profileId || raw.projectId || fallback.profileId || "__destination__").trim() || "__destination__";
+      const profileName =
+        String(raw.profileName || profileNames.get(profileId) || (profileId === "__destination__" ? "外链站" : profileId)).trim() || profileId;
+      const occurredAt = String(raw.occurredAt || raw.submittedAt || raw.time || fallback.occurredAt || "").trim();
+      const type = String(raw.publicationStatus || raw.type || raw.status || fallback.type || "note").trim() || "note";
+      const id = String(raw.id || "").trim();
+      if (id && seenIds.has(id)) return;
+      if (id) seenIds.add(id);
+      events.push({ ...raw, profileId, profileName, occurredAt, type, timestamp: Date.parse(occurredAt) });
+    };
+
+    for (const event of Array.isArray(item.events) ? item.events : []) append(event);
+    // A profile status can carry the latest record even when the flattened
+    // event list is unavailable during a background refresh.
+    for (const profile of Array.isArray(item.profileStatuses) ? item.profileStatuses : []) {
+      const latest = profile?.latestEvent;
+      if (latest && typeof latest === "object") append(latest, { profileId: profile.profileId });
+      else if (profile?.success || profile?.submittedAt || profile?.publicationStatus) {
+        append(
+          {
+            profileId: profile.profileId,
+            profileName: profile.profileName,
+            type: profile.publicationStatus || (profile.success ? "submitted" : "note"),
+            occurredAt: profile.submittedAt || "",
+            note: profile.success ? "已记录成功提交" : "",
+          },
+          { profileId: profile.profileId },
+        );
+      }
+    }
+
+    events.sort((left, right) => {
+      const leftTime = Number.isFinite(left.timestamp) ? left.timestamp : -Infinity;
+      const rightTime = Number.isFinite(right.timestamp) ? right.timestamp : -Infinity;
+      return rightTime - leftTime;
+    });
+    return {
+      events,
+      profileCount: new Set(events.map((event) => event.profileId)).size,
+      latestAt: events[0]?.occurredAt || String(item.time || "").trim(),
+    };
+  }
+
+  global.ExtLinkSidepanel = global.ExtLinkSidepanel || {};
+  global.ExtLinkSidepanel.buildTimelineModel = buildTimelineModel;
+})(typeof self !== "undefined" ? self : globalThis);
+
 // ExternalLink Side Panel — persistent UI for detect & fill
 (function () {
   "use strict";
@@ -5,6 +72,7 @@
   const $ = (id) => document.getElementById(id);
   const P = self.ExtLinkProfiles;
   const Q = self.ExtLinkQueue;
+  const Sidepanel = self.ExtLinkSidepanel;
 
   let activeTabId = null;
   let siteProfiles = {};
@@ -39,6 +107,7 @@
     fields: [],
   };
   let mediaLoadToken = 0;
+  let timelineLoadToken = 0;
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -126,6 +195,9 @@
     if (changes.deletedSubmissionKeys || changes.siteAnnotations || changes.urlList) {
       loadSubmissionQueue(currentPageUrl);
       loadClassifiedList();
+    }
+    if (changes.submissionRecords || changes.submissionTimeline) {
+      loadSidepanelTimeline(currentPageUrl).catch(() => {});
     }
   });
 
@@ -284,6 +356,160 @@
     statusEl.textContent = profileSummary || `项目 ${task.profileTotal || task.profileIds?.length || 0} 个`;
     statusEl.title = profileSummary;
     wrap.removeAttribute("hidden");
+  }
+
+  const SIDEPANEL_TIMELINE_LABELS = {
+    submitted: "已提交",
+    pending_moderation: "待审核",
+    published: "已上线",
+    rejected: "被拒绝",
+    needs_follow_up: "待跟进",
+    needs_manual: "待人工",
+    link_missing: "疑似丢链",
+    link_submit: "表格有提交动作 · 未核验",
+    action_recorded: "表格有提交动作 · 未核验",
+    awaiting_index: "待确认收录",
+    note: "笔记",
+    status: "状态更新",
+  };
+
+  function formatSidepanelTimelineTime(value) {
+    if (!value) return "时间未知";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(date);
+  }
+
+  function sidepanelTimelineLabel(type) {
+    return SIDEPANEL_TIMELINE_LABELS[String(type || "").trim()] || String(type || "动态");
+  }
+
+  function findSidepanelTimelineItem(items, pageUrl) {
+    if (!Array.isArray(items) || !pageUrl) return null;
+    const pageKey = typeof Q?.normalizeUrlKey === "function" ? Q.normalizeUrlKey(pageUrl) : "";
+    const exact = items.find((item) => item?.key === pageKey);
+    if (exact) return exact;
+    const pageDomain = typeof Q?.extractDomain === "function" ? Q.extractDomain(pageUrl) : "";
+    if (!pageDomain) return null;
+    return items.find((item) => {
+      const domain = item?.domain || (typeof Q?.extractDomain === "function" ? Q.extractDomain(item?.url) : "");
+      return String(domain || "").toLowerCase() === String(pageDomain).toLowerCase();
+    }) || null;
+  }
+
+  function renderSidepanelTimeline(item, options = {}) {
+    const summary = $("sidepanelTimelineSummary");
+    const list = $("sidepanelTimelineList");
+    if (!summary || !list) return;
+    list.replaceChildren();
+    if (options.loading) {
+      summary.textContent = "正在读取当前外链站动态…";
+      const loading = document.createElement("div");
+      loading.className = "empty-state compact-empty";
+      loading.textContent = "正在读取时间线…";
+      list.append(loading);
+      return;
+    }
+    if (options.error) {
+      summary.textContent = "时间线暂时无法读取";
+      const error = document.createElement("div");
+      error.className = "empty-state compact-empty";
+      error.textContent = options.error;
+      list.append(error);
+      return;
+    }
+    if (!item) {
+      summary.textContent = "当前页面尚未登记为外链站";
+      const empty = document.createElement("div");
+      empty.className = "empty-state compact-empty";
+      empty.textContent = "把当前页面加入外链库后，这里会显示提交和跟进动态。";
+      list.append(empty);
+      return;
+    }
+
+    const model = Sidepanel?.buildTimelineModel
+      ? Sidepanel.buildTimelineModel(item, siteProfiles)
+      : { events: [], profileCount: 0, latestAt: "" };
+    if (!model.events.length) {
+      summary.textContent = `${item.domain || "当前外链站"} · 暂无动态记录`;
+      const empty = document.createElement("div");
+      empty.className = "empty-state compact-empty";
+      empty.textContent = "还没有提交、审核或跟进记录；可在设置页外链库添加动态。";
+      list.append(empty);
+      return;
+    }
+
+    summary.textContent = `${item.domain || "当前外链站"} · ${model.profileCount} 个 Profile · ${model.events.length} 条动态 · 最近 ${formatSidepanelTimelineTime(model.latestAt)}`;
+    const visibleEvents = model.events.slice(0, 8);
+    for (const event of visibleEvents) {
+      const row = document.createElement("article");
+      row.className = "sidepanel-timeline-event";
+      const head = document.createElement("div");
+      head.className = "sidepanel-timeline-event-head";
+      const profile = document.createElement("span");
+      profile.className = "sidepanel-timeline-profile";
+      profile.textContent = event.profileName || event.profileId || "外链站";
+      const type = document.createElement("span");
+      type.className = `sidepanel-timeline-type ${String(event.type || "note").replace(/[^a-z0-9_-]/gi, "-")}`;
+      type.textContent = sidepanelTimelineLabel(event.type);
+      const time = document.createElement("time");
+      time.className = "sidepanel-timeline-time";
+      time.dateTime = event.occurredAt || "";
+      time.textContent = formatSidepanelTimelineTime(event.occurredAt);
+      head.append(profile, type, time);
+      row.append(head);
+      if (event.note) {
+        const note = document.createElement("p");
+        note.className = "sidepanel-timeline-note";
+        note.textContent = event.note;
+        row.append(note);
+      }
+      const linkValue = event.publicUrl || event.evidenceUrl || "";
+      if (/^https?:\/\//i.test(linkValue)) {
+        const link = document.createElement("a");
+        link.className = "sidepanel-timeline-link";
+        link.href = linkValue;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.textContent = "查看公开页 / 证据";
+        row.append(link);
+      }
+      list.append(row);
+    }
+    if (model.events.length > visibleEvents.length) {
+      const more = document.createElement("div");
+      more.className = "sidepanel-timeline-more";
+      more.textContent = `还有 ${model.events.length - visibleEvents.length} 条动态，可在设置页外链库查看完整时间线`;
+      list.append(more);
+    }
+  }
+
+  async function loadSidepanelTimeline(pageUrl = currentPageUrl) {
+    const token = ++timelineLoadToken;
+    if (!pageUrl?.startsWith("http")) {
+      renderSidepanelTimeline(null);
+      return;
+    }
+    renderSidepanelTimeline(null, { loading: true });
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "getLibraryManagerState",
+        url: pageUrl,
+      });
+      if (token !== timelineLoadToken) return;
+      if (!result?.ok) throw new Error(result?.error || "无法读取外链库");
+      renderSidepanelTimeline(findSidepanelTimelineItem(result.items, pageUrl));
+    } catch (err) {
+      if (token !== timelineLoadToken) return;
+      renderSidepanelTimeline(null, { error: err.message || "请稍后重试" });
+    }
   }
 
   function renderSubmissionNav() {
@@ -955,6 +1181,9 @@
   }
 
   $("btnRefreshMedia")?.addEventListener("click", () => loadMediaPreflight());
+  $("btnRefreshSidepanelTimeline")?.addEventListener("click", () => {
+    loadSidepanelTimeline(currentPageUrl).catch(() => {});
+  });
 
   $("spCommentText")?.addEventListener("input", handleCommentTextInput);
   $("commentDraftList")?.addEventListener("click", (event) => {
@@ -1423,10 +1652,12 @@
         $("spPageUrl") && ($("spPageUrl").textContent = "");
       }
       await refreshSiteAnnotation(tab.url);
+      loadSidepanelTimeline(tab.url).catch(() => {});
     } else {
       $("spHostname") && ($("spHostname").textContent = "—");
       $("spPageUrl") && ($("spPageUrl").textContent = "请在普通网页上使用");
       await refreshSiteAnnotation("");
+      renderSidepanelTimeline(null);
     }
     renderPageMetrics(pagePrescan, {});
   }
@@ -1446,6 +1677,7 @@
       if (info.url?.startsWith("http")) {
         loadSubmissionQueue(info.url);
         refreshSiteAnnotation(info.url);
+        loadSidepanelTimeline(info.url).catch(() => {});
         detectCurrentPage().catch(() => {});
         requestAutoFillForTab(activeTabId, info.url);
       }
@@ -1466,6 +1698,7 @@
     $("pageTdk")?.setAttribute("hidden", "");
     resetCommentStudio({ clearHistory: true });
     resetMediaUploadState();
+    renderSidepanelTimeline(null, { loading: true });
     setWorkflowStep("detect");
   }
 

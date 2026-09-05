@@ -86,7 +86,11 @@ assert.match(settingsCss, /prefers-reduced-motion/);
 assert.match(settingsCss, /quality-score\.priority/);
 assert.match(settingsCss, /library-split/);
 assert.match(settingsCss, /#panel-library \.library-tools[\s\S]*overflow-y:\s*auto/);
-assert.match(settingsCss, /repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+assert.match(
+  settingsCss,
+  /#panel-library \.library-list\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*minmax\(0,\s*1fr\);/,
+  "the dense library needs one full-width destination card per row",
+);
 assert.match(settingsCss, /monitor-tag\.missing/);
 assert.match(settingsCss, /timeline-event/);
 assert.match(settingsCss, /profile-field-row/);

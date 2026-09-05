@@ -3449,12 +3449,39 @@
     icon.style.left = `${window.scrollX + rect.right - 24}px`;
   }
 
+  function isSearchOrChromeField(element) {
+    const hint = `${getFieldHint(element)} ${getSnapshotLabel(element)} ${element.getAttribute("role") || ""}`.toLowerCase();
+    const type = (element.type || "").toLowerCase();
+    if (type === "search") return true;
+    return /search|query|\bnav\b|newsletter|subscribe|password|otp|one-time/.test(hint);
+  }
+
+  function pageLooksLikeManualFillTarget() {
+    if (detectWPComment() || detectDirectory()) return true;
+    if (document.querySelector("#commentform, form.comment-form, textarea[name='comment']")) {
+      return true;
+    }
+    for (const form of document.querySelectorAll("form")) {
+      if (form.querySelector('input[type="password"], input[type="search"]')) continue;
+      const hasWebsite = form.querySelector(
+        'input[type="url"], input[name="url"], input[name="website"], input[name="link"], input[name="product_url"]',
+      );
+      const hasLongText = form.querySelector("textarea");
+      const fields = form.querySelectorAll(
+        'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]), textarea, select',
+      );
+      if (hasWebsite && hasLongText && fields.length >= 3) return true;
+    }
+    return false;
+  }
+
   function manualIconTargets() {
     return queryFillableElements().filter((element) => {
       const type = (element.type || "").toLowerCase();
       if (["hidden", "submit", "button", "reset", "image"].includes(type)) return false;
       if (["checkbox", "radio"].includes(type)) return false;
       if (element.disabled || element.readOnly) return false;
+      if (isSearchOrChromeField(element)) return false;
       const rect = element.getBoundingClientRect();
       return rect.width >= 80 && rect.height >= 18;
     });
@@ -3572,8 +3599,8 @@
 
   async function initManualIcons() {
     if (manualIconsEnabled || !document.body) return;
-    // Only decorate pages that plausibly host a submission or comment form.
-    if (!identifyPlatform() && !hasLikelySubmissionFields()) return;
+    // Only decorate pages that look like a comment or directory submission form.
+    if (!pageLooksLikeManualFillTarget()) return;
 
     let filters = null;
     try {

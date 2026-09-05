@@ -660,8 +660,13 @@ assert.match(
 );
 assert.match(
   content,
-  /if \(!identifyPlatform\(\) && !hasLikelySubmissionFields\(\)\) return;/,
-  "manual fill icons should only decorate plausible submission pages",
+  /function pageLooksLikeManualFillTarget\s*\(/,
+  "manual fill icons should only decorate comment or directory submission pages",
+);
+assert.match(
+  content,
+  /isSearchOrChromeField/,
+  "manual fill icons should skip search and chrome fields",
 );
 assert.match(
   content,

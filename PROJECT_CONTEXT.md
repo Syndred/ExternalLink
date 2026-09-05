@@ -19,7 +19,7 @@
   1. **AI 评论生成**：`POST /comment`；读页面正文 → DeepSeek 写切题评论；拒绝套话开场；链接默认放 URL 字段；失败时用标题兜底，不再用 10 条硬编码英文模板。
   2. **本地图库上传注入**：`GET /media/list` + `/media/file` 读 `/Users/syndred/Desktop/projects/media/{Profile}/`；`File` + `DataTransfer` 赋给 `input[type=file]`，绕开系统文件选择器与 CORS。
   3. **提交前目标闸门**：域名黑名单（支持 `.suffix` / `*`）、RDAP 域名年龄缓存、`prescanPage` 的 dofollow 预估（优先看既有评论外链）；Settings「全局配置」可改阈值并一键预取队列年龄。
-  4. **手动填充图标**：疑似提交/评论页在输入框旁显示 `EL`；一点即用当前 Profile 填该字段（含评论与本地上传）。
+  4. **手动填充图标**：只在评论/目录提交表单页显示蓝色 `EL`；一点即用当前 Profile 填该字段。搜索框、登录框、普通网页不再挂图标。设置里可关「在评论/提交表单旁显示手动填充图标」。
 - 私有 Google Sheet 是网站资料、外链库和人工分类的唯一维护入口；`chrome.storage.local` 是运行缓存与本地成功账本，成功后通过 outbox 自动回写 Sheet。
 - `Table.xlsx` / `table-library.json` 只保留为首次安装与离线回滚种子，不再要求日常双处更新。
 - Settings 已提供 Google 连接、只读预览、应用同步、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
@@ -100,7 +100,7 @@ tests/local-agent-unit.test.py
 
 - 账本新增 `publicationStatus`：已提交 / 待审核 / 已上线。`status: success` 仍用于跳过，不把点提交或人工确认直接当成已上线。
 - Settings 增加「标准 WordPress 评论预检通过后可代点提交」，默认关闭；有验证码仍停。
-- 10 个熟站 playbook（TheJOAI、Launching Next 等）：侧栏芯片 + 外链库「熟站」标记 + 回执文本分级。
+- 10 个熟站 playbook（TheJOAI、Launching Next 等）：侧栏打开页面即显示「熟站」芯片和说明；外链库 meta 带熟站名。
 - 链接监控发现 live 时只升级为已上线，不降级、不撤销成功。
 - P2 视觉 Agent / 博客仿写仍暂停。不追验证码代打。
 

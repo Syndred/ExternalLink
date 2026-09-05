@@ -9,6 +9,26 @@
 #panel-library .library-tools {
   position: sticky;
   top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
+}
+
+#panel-library .library-tools::-webkit-scrollbar {
+  width: 10px;
+}
+
+#panel-library .library-tools::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 999px;
+}
+
+#panel-library .library-tools::-webkit-scrollbar-track {
+  background: #0f172a;
 }
 
 #panel-library .library-tools .section-title {
@@ -312,6 +332,9 @@
 
   #panel-library .library-tools {
     position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 

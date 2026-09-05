@@ -11,6 +11,7 @@ importScripts(
   "lib/sheet-sync.js",
   "lib/url-library.js",
   "lib/opportunity-score.js",
+  "lib/context-menu.js",
 );
 
 let state = {
@@ -59,6 +60,7 @@ let initializationPromise = restoreActiveBatchRun().catch((err) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
+  self.ExtLinkContextMenu.installActionSettingsMenu(chrome);
   if (chrome.sidePanel?.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
   }
@@ -68,6 +70,10 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
   configureScheduledChecks().catch(() => {});
+});
+
+chrome.contextMenus?.onClicked.addListener((info) => {
+  self.ExtLinkContextMenu.handleActionMenuClick(chrome, info);
 });
 
 chrome.runtime.onStartup.addListener(() => {

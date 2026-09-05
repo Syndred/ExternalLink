@@ -991,7 +991,8 @@
 
     if (prescan?.hasCommentForm) row.append(renderMetricChip("有评论表单", "good"));
     if (detection?.standardWpComment) row.append(renderMetricChip("标准 WP 评论", "good"));
-    if (detection?.playbook?.title) row.append(renderMetricChip(`熟站 ${detection.playbook.title}`, "good"));
+    const playbook = detection?.playbook || lookupPlaybookForUrl(currentPageUrl);
+    if (playbook?.title) row.append(renderMetricChip(`熟站 ${playbook.title}`, "good"));
     if (prescan?.hasCaptcha) row.append(renderMetricChip("含验证码", "bad"));
     if (prescan?.indexable === true) row.append(renderMetricChip("可索引", "good"));
     if (prescan?.indexable === false) row.append(renderMetricChip("Noindex", "bad"));
@@ -1020,7 +1021,7 @@
     if (!row.childElementCount) {
       row.append(renderMetricChip("点击「检测」获取页面信号", ""));
     }
-    renderPlaybookNote(detection?.playbook || lookupPlaybookForUrl(currentPageUrl));
+    renderPlaybookNote(playbook);
   }
 
   function lookupPlaybookForUrl(url) {
@@ -1042,7 +1043,7 @@
       return;
     }
     const hints = Array.isArray(playbook.hints) && playbook.hints.length ? ` ${playbook.hints.join("；")}` : "";
-    el.textContent = `${playbook.title}：${playbook.notes}${hints}`;
+    el.textContent = `熟站 ${playbook.title}：${playbook.notes}${hints}`;
     el.removeAttribute("hidden");
   }
 
@@ -1427,6 +1428,7 @@
       $("spPageUrl") && ($("spPageUrl").textContent = "请在普通网页上使用");
       await refreshSiteAnnotation("");
     }
+    renderPageMetrics(pagePrescan, {});
   }
 
   chrome.tabs.onActivated.addListener(async () => {
@@ -1926,6 +1928,7 @@
     refreshActiveTab().then(() => {
       loadSubmissionQueue();
       syncTasksFromBackground();
+      renderPageMetrics(pagePrescan, {});
       if (currentPageUrl) {
         detectCurrentPage().catch(() => {});
         requestAutoFillForTab(activeTabId, currentPageUrl);

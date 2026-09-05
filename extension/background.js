@@ -544,7 +544,11 @@ async function listLocalSubmissionMedia() {
   try {
     response = await fetch(`${LOCAL_AGENT_URL}/media/list`);
   } catch (err) {
-    return { ok: false, error: `本地媒体代理不可用: ${err.message}`, profiles: [] };
+    return {
+      ok: false,
+      error: "本机 Agent 未运行（http://127.0.0.1:8790）。Logo/截图预检和上传需要先启动：python3 -m local_agent.server",
+      profiles: [],
+    };
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {

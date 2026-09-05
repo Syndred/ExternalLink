@@ -33,6 +33,10 @@
       ...snapshot,
       tableData: {
         projects: tableData.projects,
+        profileNotes:
+          tableData.profileNotes && typeof tableData.profileNotes === "object"
+            ? tableData.profileNotes
+            : {},
         entries: tableData.entries,
         tasks: Array.isArray(tableData.tasks) ? tableData.tasks : [],
       },
@@ -47,7 +51,7 @@
     };
   }
 
-  function mergeProfile(profileId, fields, existing = {}) {
+  function mergeProfile(profileId, fields, existing = {}, fieldNotes = {}) {
     const remoteFields = compactObject(fields);
     const nextFields = { ...(existing.fields || {}), ...remoteFields };
     const remoteScreenshots = [1, 2, 3, 4]
@@ -60,6 +64,10 @@
       url: remoteFields.Url || existing.url || "",
       promoUrl: remoteFields.Url || existing.promoUrl || existing.url || "",
       fields: nextFields,
+      fieldNotes: {
+        ...(existing.fieldNotes || {}),
+        ...compactObject(fieldNotes),
+      },
       source: "google-sheet",
       updatedAt: new Date().toISOString(),
     };
@@ -117,7 +125,12 @@
     for (const [profileId, fields] of Object.entries(snapshot.tableData.projects)) {
       if (!currentProfiles[profileId]) profilesAdded += 1;
       else {
-        const merged = mergeProfile(profileId, fields, currentProfiles[profileId]);
+        const merged = mergeProfile(
+          profileId,
+          fields,
+          currentProfiles[profileId],
+          snapshot.tableData.profileNotes[profileId],
+        );
         const comparable = { ...merged };
         const existingComparable = { ...currentProfiles[profileId] };
         delete comparable.updatedAt;
@@ -182,7 +195,12 @@
       if (!snapshot.tableData.projects[profileId]) delete siteProfiles[profileId];
     }
     for (const [profileId, fields] of Object.entries(snapshot.tableData.projects)) {
-      siteProfiles[profileId] = mergeProfile(profileId, fields, siteProfiles[profileId]);
+      siteProfiles[profileId] = mergeProfile(
+        profileId,
+        fields,
+        siteProfiles[profileId],
+        snapshot.tableData.profileNotes[profileId],
+      );
     }
 
     const submissionRecords = { ...(current.submissionRecords || {}) };

@@ -429,7 +429,8 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
         return []
     headers = _header_map(rows[0])
     entries: list[dict[str, Any]] = []
-    for row in rows[1:]:
+    source_headers = [str(value or "").strip() for value in rows[0]]
+    for row_number, row in enumerate(rows[1:], start=2):
         link = _cell(row, headers, "link", "url")
         if not link.startswith(("http://", "https://")):
             continue
@@ -448,6 +449,8 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
             if candidate_status in SITE_ANNOTATION_STATUSES:
                 normalized_status = candidate_status
                 break
+        record = _cell(row, headers, "note", "record")
+        detail = _cell(row, headers, "detail")
         note = _compose_link_note(row, headers)
         site_annotation = None
         if normalized_status in SITE_ANNOTATION_STATUSES:
@@ -489,10 +492,20 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
                 "submitted": False,
                 "legacySubmitted": legacy_submitted,
                 "time": _cell(row, headers, "time"),
+                "record": record,
+                "detail": detail,
                 "note": note,
                 "indexPage": _cell(row, headers, "indexpage"),
                 "siteAnnotation": site_annotation,
                 "metrics": metrics,
+                "rowNumber": row_number,
+                # Keep every source column so future UI/model additions do not
+                # require another lossy migration from the workbook.
+                "rawFields": {
+                    header: str(row[index] or "").strip() if index < len(row) else ""
+                    for index, header in enumerate(source_headers)
+                    if header
+                },
             }
         )
     return entries
@@ -605,6 +618,11 @@ def read_snapshot(service, *, spreadsheet_id: Optional[str] = None) -> dict[str,
         for profile_id, profile in profiles.items()
         if isinstance(profile, dict)
     }
+    profile_notes = {
+        profile_id: profile.get("notes", {})
+        for profile_id, profile in profiles.items()
+        if isinstance(profile, dict)
+    }
     entries = []
     site_annotations: dict[str, dict[str, Any]] = {}
     for entry in links:
@@ -621,9 +639,14 @@ def read_snapshot(service, *, spreadsheet_id: Optional[str] = None) -> dict[str,
                 "projects": entry.get("projects", []),
                 "submitted": False,
                 "legacySubmitted": bool(entry.get("legacySubmitted")),
+                "time": entry.get("time", ""),
+                "record": entry.get("record", ""),
+                "detail": entry.get("detail", ""),
                 "note": entry.get("note", ""),
                 "indexPage": entry.get("indexPage", ""),
                 "metrics": entry.get("metrics", {}),
+                "rowNumber": entry.get("rowNumber"),
+                "rawFields": entry.get("rawFields", {}),
             }
         )
     tasks: list[dict[str, Any]] = []
@@ -647,7 +670,12 @@ def read_snapshot(service, *, spreadsheet_id: Optional[str] = None) -> dict[str,
             )
             task_index += 1
 
-    table_data = {"entries": entries, "projects": projects, "tasks": tasks}
+    table_data = {
+        "entries": entries,
+        "projects": projects,
+        "profileNotes": profile_notes,
+        "tasks": tasks,
+    }
     revision = snapshot_hash(
         {
             "spreadsheetId": spreadsheet_id,

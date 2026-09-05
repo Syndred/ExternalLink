@@ -320,6 +320,7 @@ class LocalAgentUnitTests(unittest.TestCase):
         self.assertTrue(snapshot["revision"])
         self.assertTrue(snapshot["fetchedAt"])
         self.assertIn("projects", snapshot["tableData"])
+        self.assertIn("profileNotes", snapshot["tableData"])
         self.assertIn("entries", snapshot["tableData"])
         self.assertIn("tasks", snapshot["tableData"])
         self.assertIn("siteAnnotations", snapshot)
@@ -327,6 +328,8 @@ class LocalAgentUnitTests(unittest.TestCase):
         legacy = snapshot["tableData"]["entries"][0]
         self.assertFalse(legacy["submitted"])
         self.assertTrue(legacy["legacySubmitted"])
+        self.assertEqual(legacy["rowNumber"], 2)
+        self.assertIn("Link", legacy["rawFields"])
         self.assertEqual(
             len([task for task in snapshot["tableData"]["tasks"] if task["domain"] == "legacy.example"]),
             2,

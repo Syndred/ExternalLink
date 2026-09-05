@@ -37,6 +37,9 @@ const snapshot = {
   revision: "rev-1",
   fetchedAt: "2026-08-25T00:00:00Z",
   tableData: {
+    profileNotes: {
+      RainbowPetAI: { Name: "公开展示名称" },
+    },
     projects: {
       RainbowPetAI: {
         Name: "RainbowPetAI",
@@ -79,6 +82,7 @@ const merged = S.applySnapshot(current, snapshot, 2);
 assert.equal(merged.siteProfiles.RainbowPetAI.name, "RainbowPetAI");
 assert.equal(merged.siteProfiles.RainbowPetAI.url, "https://rainbowpetai.com");
 assert.equal(merged.siteProfiles.RainbowPetAI.logoDataUrl, "data:image/png;base64,LOCAL");
+assert.equal(merged.siteProfiles.RainbowPetAI.fieldNotes.Name, "公开展示名称");
 assert.deepEqual(
   JSON.parse(JSON.stringify(merged.siteProfiles.RainbowPetAI.learnedFieldMappings)),
   { title: "#tool-name" },

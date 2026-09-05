@@ -210,6 +210,10 @@ class LocalAgentUnitTests(unittest.TestCase):
             "Digital Agency Network; Free; DR 76; tools listing | marketing/design/business audience",
         )
         self.assertEqual(first["time"], "2026-09-05")
+        self.assertEqual(first["record"], "Digital Agency Network; Free; DR 76; tools listing")
+        self.assertEqual(first["detail"], "marketing/design/business audience")
+        self.assertEqual(first["rawFields"]["SubmitProject"], "RainbowPet")
+        self.assertEqual(first["rowNumber"], 2)
         self.assertFalse(first["legacySubmitted"])
         self.assertEqual(first["metrics"]["dr"], "76")
         self.assertEqual(second["note"], "SoftwareWorld; Free; DA 73 / DR 70; directory")
@@ -429,6 +433,46 @@ class LocalAgentUnitTests(unittest.TestCase):
             self.assertEqual(payload["pushedKeys"], ["example.com::RainbowPetAI"])
 
         asyncio.run(run_test())
+
+    def test_push_ledger_writes_all_thirteen_record_columns(self):
+        captured = {}
+
+        class Execute:
+            def execute(self):
+                return {}
+
+        class Values:
+            def update(self, **kwargs):
+                captured.update(kwargs)
+                return Execute()
+
+        class Spreadsheets:
+            def values(self):
+                return Values()
+
+        class Service:
+            def spreadsheets(self):
+                return Spreadsheets()
+
+        snapshot = {
+            "submissionRecords": {},
+            "sheetNames": ["Submission Records"],
+            "hash": "rev-1",
+        }
+        record = {
+            "recordKey": "example.com::RainbowPetAI",
+            "destinationKey": "example.com",
+            "profileId": "RainbowPetAI",
+            "status": "success",
+            "updatedAt": "2026-09-05T12:00:00Z",
+        }
+        with mock.patch.dict(os.environ, {"GOOGLE_SHEET_ID": "allowed-sheet-id"}, clear=False):
+            with mock.patch.object(google_sync, "read_snapshot", return_value=snapshot):
+                google_sync.push_ledger(Service(), records=[record], spreadsheet_id="allowed-sheet-id")
+
+        self.assertEqual(captured["range"], "'Submission Records'!A1:M2")
+        self.assertEqual(len(captured["body"]["values"][0]), 13)
+        self.assertEqual(len(captured["body"]["values"][1]), 13)
 
     def test_extract_json_object_handles_text_around_object(self):
         extracted = server.extract_json_object(

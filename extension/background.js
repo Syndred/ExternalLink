@@ -6,6 +6,7 @@ importScripts(
   "lib/queue.js",
   "lib/playbooks.js",
   "lib/scheduler.js",
+  "lib/submission-timeline.js",
   "lib/backup.js",
   "lib/sheet-sync.js",
   "lib/url-library.js",
@@ -213,6 +214,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       getLibraryManagerState()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message, items: [] }));
+      return true;
+    case "addSubmissionTimelineEvent":
+      addSubmissionTimelineEvent(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "pinLibraryUrl":
       pinLibraryUrl(msg)
@@ -1471,6 +1477,19 @@ async function recordSubmittedProject(task) {
     submissionRecords: records,
     submissionSchemaVersion: SUBMISSION_SCHEMA_VERSION,
   });
+  await addSubmissionTimelineEvent({
+    destinationKey,
+    destinationUrl: url,
+    profileId,
+    profileName: record.profileName,
+    occurredAt: record.submittedAt,
+    type: record.publicationStatus || "submitted",
+    note: record.evidence,
+    evidenceUrl: record.evidenceUrl,
+    publicUrl: record.publicUrl,
+    source: record.confirmedBy === "manual" ? "manual" : "agent",
+    syncRecord: false,
+  });
   await enqueueSheetSyncRecord(record);
 }
 
@@ -1522,6 +1541,7 @@ async function getLibraryManagerState() {
     "submissionSchemaVersion",
     "domainMetricsCache",
     "linkMonitorResults",
+    "submissionTimeline",
   ]);
   const tableData = await loadTableLibrary();
   const seeded = await ensureProfilesFromTable(
@@ -1537,6 +1557,20 @@ async function getLibraryManagerState() {
     storage.submissionSchemaVersion,
     seeded.idRemap,
   );
+  const migratedTimeline = self.ExtLinkSubmissionTimeline.migrateLegacy({
+    timeline: storage.submissionTimeline || {},
+    submissionRecords: records,
+    tableData,
+    profileIdMap: seeded.idRemap,
+  }).timeline;
+  if (JSON.stringify(migratedTimeline) !== JSON.stringify(storage.submissionTimeline || {})) {
+    await chrome.storage.local.set({
+      submissionTimeline: migratedTimeline,
+      timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+    });
+  }
+  const timelineByDestination =
+    self.ExtLinkSubmissionTimeline.groupByDestination(migratedTimeline);
   const pluginUrls = self.ExtLinkQueue.resolvePluginUrls(
     storage.urlList || "",
     self.ExtLinkUrlLibrary || [],
@@ -1583,15 +1617,26 @@ async function getLibraryManagerState() {
       annotation,
       monitorStatus,
     });
+    const destinationTimeline = timelineByDestination[key] || null;
+    const events = (destinationTimeline?.profiles || [])
+      .flatMap((profile) => profile.events || [])
+      .sort((left, right) => {
+        const leftTime = Date.parse(left.occurredAt || "") || 0;
+        const rightTime = Date.parse(right.occurredAt || "") || 0;
+        return rightTime - leftTime;
+      });
     const profileStatuses = Object.values(seeded.profiles).map((profile) => {
       const recordKey = self.ExtLinkQueue.submissionRecordKey(key, profile.id);
       const record = records[recordKey] || null;
+      const timelineProfile = destinationTimeline?.groups?.[recordKey] || null;
       return {
         profileId: profile.id,
         profileName: profile.name || profile.id,
         success: self.ExtLinkQueue.isSubmissionSuccessful(records, key, profile.id),
         submittedAt: record?.submittedAt || "",
         publicationStatus: record?.publicationStatus || "",
+        latestEvent: timelineProfile?.current || null,
+        eventCount: timelineProfile?.events?.length || 0,
       };
     });
     const playbook =
@@ -1614,11 +1659,83 @@ async function getLibraryManagerState() {
         ? { id: playbook.id, title: playbook.title, notes: playbook.notes }
         : null,
       note: entry.entry?.note || annotation?.note || "",
+      record: entry.entry?.record || "",
+      detail: entry.entry?.detail || "",
+      rawFields: entry.entry?.rawFields || {},
+      rowNumber: entry.entry?.rowNumber || null,
+      projects: entry.entry?.projects || [],
       time: entry.entry?.time || "",
+      events,
+      latestEvent: events[0] || null,
     };
   });
   items.sort(self.ExtLinkOpportunityScore.compareOpportunities);
   return { ok: true, items, profiles: seeded.profiles };
+}
+
+async function addSubmissionTimelineEvent(msg = {}) {
+  const storage = await chrome.storage.local.get([
+    "submissionTimeline",
+    "submissionRecords",
+  ]);
+  const profileId = String(msg.profileId || "").trim();
+  if (!profileId) throw new Error("请选择要记录的网站项目");
+  const event = self.ExtLinkSubmissionTimeline.normalizeEvent({
+    destinationKey: msg.destinationKey,
+    destinationUrl: msg.destinationUrl,
+    profileId,
+    profileName: msg.profileName,
+    occurredAt: msg.occurredAt,
+    type: msg.type,
+    status: msg.type,
+    note: msg.note,
+    evidenceUrl: msg.evidenceUrl,
+    publicUrl: msg.publicUrl,
+    source: msg.source || "manual",
+    confirmedBy: msg.source === "agent" ? "agent" : "manual",
+  });
+  const submissionTimeline = self.ExtLinkSubmissionTimeline.append(
+    storage.submissionTimeline || {},
+    event,
+  );
+  const update = {
+    submissionTimeline,
+    timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+  };
+  let updatedRecord = null;
+  if (
+    profileId !== "__destination__" &&
+    ["submitted", "pending_moderation", "published"].includes(event.type)
+  ) {
+    const records = { ...(storage.submissionRecords || {}) };
+    const recordKey = self.ExtLinkQueue.submissionRecordKey(event.destinationKey, profileId);
+    const existing = records[recordKey] || null;
+    updatedRecord = existing
+      ? self.ExtLinkQueue.applyPublicationUpgrade(existing, event.type, {
+          updatedAt: event.occurredAt,
+          evidence: event.note || existing.evidence || "人工记录状态变化",
+          evidenceUrl: event.evidenceUrl || existing.evidenceUrl || "",
+          publicUrl: event.publicUrl || existing.publicUrl || "",
+        })
+      : self.ExtLinkQueue.buildSuccessRecord({
+          destinationKey: event.destinationKey,
+          destinationUrl: event.destinationUrl,
+          profileId,
+          profileName: event.profileName || profileId,
+          submittedAt: event.occurredAt,
+          confirmedBy: "manual",
+          evidence: event.note || `人工记录：${event.type}`,
+          evidenceUrl: event.evidenceUrl || "",
+          publicUrl: event.publicUrl || "",
+          publicationStatus: event.type,
+        });
+    records[recordKey] = updatedRecord;
+    update.submissionRecords = records;
+    update.submissionSchemaVersion = SUBMISSION_SCHEMA_VERSION;
+  }
+  await chrome.storage.local.set(update);
+  if (updatedRecord && msg.syncRecord !== false) await enqueueSheetSyncRecord(updatedRecord);
+  return { ok: true, event, record: updatedRecord };
 }
 
 async function pinLibraryUrl(msg) {
@@ -1646,6 +1763,9 @@ async function exportSubmissionData() {
     "activeSiteId",
     "selectedSiteIds",
     "urlList",
+    "submissionTimeline",
+    "timelineSchemaVersion",
+    "sheetTableData",
   ]);
   return {
     ok: true,
@@ -1659,6 +1779,10 @@ async function exportSubmissionData() {
       activeSiteId: storage.activeSiteId || "",
       selectedSiteIds: storage.selectedSiteIds || [],
       urlList: storage.urlList || "",
+      submissionTimeline: storage.submissionTimeline || {},
+      timelineSchemaVersion:
+        storage.timelineSchemaVersion || self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+      sheetTableData: storage.sheetTableData || null,
     },
   };
 }
@@ -1669,10 +1793,16 @@ async function importSubmissionData(data) {
     "siteAnnotations",
     "siteProfiles",
     "urlList",
+    "submissionTimeline",
+    "timelineSchemaVersion",
+    "sheetTableData",
   ]);
   const importedProfiles =
     data?.siteProfiles && typeof data.siteProfiles === "object" ? data.siteProfiles : {};
   const merged = self.ExtLinkBackup.mergeBackup(storage, data, SUBMISSION_SCHEMA_VERSION);
+  if (data?.sheetTableData && typeof data.sheetTableData === "object") {
+    merged.sheetTableData = data.sheetTableData;
+  }
   await chrome.storage.local.set(merged);
   return {
     ok: true,
@@ -2098,6 +2228,35 @@ async function runLinkMonitor({ notify = false, force = false } = {}) {
   const storageUpdate = { linkMonitorResults: results, linkMonitorLastRunAt: lastRunAt };
   if (publicationUpgrades) storageUpdate.submissionRecords = nextRecords;
   await chrome.storage.local.set(storageUpdate);
+  for (const [key, record] of candidates) {
+    const result = results[key];
+    if (result?.status !== "live" || record?.publicationStatus === "published") continue;
+    await addSubmissionTimelineEvent({
+      destinationKey: record.destinationKey,
+      destinationUrl: record.destinationUrl,
+      profileId: record.profileId,
+      profileName: record.profileName,
+      occurredAt: lastRunAt,
+      type: "published",
+      note: "发布链接监控确认外链已上线",
+      publicUrl: record.publicUrl || result.url || "",
+      source: "agent",
+      syncRecord: false,
+    });
+  }
+  for (const { record, result } of changedToProblem) {
+    await addSubmissionTimelineEvent({
+      destinationKey: record.destinationKey,
+      destinationUrl: record.destinationUrl,
+      profileId: record.profileId,
+      profileName: record.profileName,
+      occurredAt: lastRunAt,
+      type: "link_missing",
+      note: result.status === "unreachable" ? "发布链接当前无法访问，请人工复查" : "发布页面未发现目标外链，请人工复查",
+      evidenceUrl: result.url || record.publicUrl || record.evidenceUrl || "",
+      source: "agent",
+    });
+  }
   if (notify && changedToProblem.length) {
     chrome.notifications.create("externallink-links-changed", {
       type: "basic",

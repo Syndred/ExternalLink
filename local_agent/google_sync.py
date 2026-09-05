@@ -807,7 +807,7 @@ def push_ledger(service, *, records: Iterable[dict[str, Any]], spreadsheet_id: O
             .values()
             .update(
                 spreadsheetId=spreadsheet_id,
-                range=_quoted_range(records_tab, f"A1:L{max(1, len(values))}"),
+                range=_quoted_range(records_tab, f"A1:M{max(1, len(values))}"),
                 valueInputOption="USER_ENTERED",
                 body={"values": values},
             )

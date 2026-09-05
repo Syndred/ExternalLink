@@ -4,6 +4,28 @@
 
   const FORMAT = "externallink-submission-backup";
 
+  function hasOwn(object, key) {
+    return Object.prototype.hasOwnProperty.call(object || {}, key);
+  }
+
+  function validateTimelineValue(value) {
+    if (global.ExtLinkSubmissionTimeline && typeof global.ExtLinkSubmissionTimeline.validateTimeline === "function") {
+      return global.ExtLinkSubmissionTimeline.validateTimeline(value);
+    }
+    // backup.js is also used by a few isolated tests/tools.  The background
+    // worker loads submission-timeline.js first, but fail clearly if a caller
+    // tries to import a timeline without that module instead of accepting an
+    // unvalidated payload.
+    throw new Error("时间线模块未加载，无法校验外链提交时间线");
+  }
+
+  function mergeTimelineValues(currentValue, incomingValue) {
+    if (global.ExtLinkSubmissionTimeline && typeof global.ExtLinkSubmissionTimeline.mergeTimelines === "function") {
+      return global.ExtLinkSubmissionTimeline.mergeTimelines(currentValue, incomingValue);
+    }
+    throw new Error("时间线模块未加载，无法合并外链提交时间线");
+  }
+
   function nonempty(value) {
     return value !== undefined && value !== null && String(value).trim() !== "";
   }
@@ -39,10 +61,14 @@
     const incomingFields = Object.fromEntries(
       Object.entries(incoming.fields || {}).filter(([, value]) => nonempty(value)),
     );
+    const incomingFieldNotes = Object.fromEntries(
+      Object.entries(incoming.fieldNotes || {}).filter(([, value]) => nonempty(value)),
+    );
     const merged = {
       ...existing,
       ...Object.fromEntries(Object.entries(incoming).filter(([, value]) => nonempty(value))),
       fields: { ...(existing.fields || {}), ...incomingFields },
+      fieldNotes: { ...(existing.fieldNotes || {}), ...incomingFieldNotes },
     };
     if (existing.logoDataUrl && !incoming.logoDataUrl) merged.logoDataUrl = existing.logoDataUrl;
     if (existing.learnedFieldMappings && !incoming.learnedFieldMappings) {
@@ -71,7 +97,11 @@
     for (const [id, profile] of Object.entries(profiles)) {
       if (!id || profile?.id !== id) throw new Error(`Profile ID 不稳定: ${id || "unknown"}`);
     }
-    return { ...data, siteProfiles: profiles };
+    const normalized = { ...data, siteProfiles: profiles };
+    if (hasOwn(data, "submissionTimeline")) {
+      normalized.submissionTimeline = validateTimelineValue(data.submissionTimeline);
+    }
+    return normalized;
   }
 
   function mergeBackup(current, rawBackup, schemaVersion) {
@@ -84,7 +114,7 @@
       ? backup.selectedSiteIds
       : []
     ).filter((id) => profiles[id]);
-    return {
+    const merged = {
       submissionRecords: mergeRecords(current.submissionRecords, backup.submissionRecords),
       submissionSchemaVersion: schemaVersion,
       siteAnnotations: {
@@ -99,6 +129,18 @@
       selectedSiteIds,
       urlList: mergeUrlList(current.urlList, backup.urlList),
     };
+    if (hasOwn(current, "submissionTimeline") || hasOwn(backup, "submissionTimeline")) {
+      merged.submissionTimeline = mergeTimelineValues(
+        current.submissionTimeline,
+        backup.submissionTimeline,
+      );
+      merged.timelineSchemaVersion = Math.max(
+        Number(current.timelineSchemaVersion || 0),
+        Number(backup.timelineSchemaVersion || 0),
+        1,
+      );
+    }
+    return merged;
   }
 
   global.ExtLinkBackup = {

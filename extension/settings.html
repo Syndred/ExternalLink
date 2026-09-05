@@ -20,6 +20,9 @@
         margin: 0 auto;
         padding: 24px 16px 48px;
       }
+      body[data-panel="library"] .wrap {
+        max-width: 1280px;
+      }
       .page-head {
         display: flex;
         align-items: center;
@@ -273,7 +276,7 @@
     </style>
     <link rel="stylesheet" href="settings.css" />
   </head>
-  <body>
+  <body data-panel="sites">
     <div class="wrap">
       <div class="page-head">
         <img src="icons/icon48.png" width="40" height="40" alt="" />
@@ -291,24 +294,9 @@
       </div>
 
       <div class="tabs">
-        <button
-          class="tab active"
-          data-panel="sites"
-        >
-          网站资料
-        </button>
-        <button
-          class="tab"
-          data-panel="library"
-        >
-          外链库
-        </button>
-        <button
-          class="tab"
-          data-panel="config"
-        >
-          全局配置
-        </button>
+        <button class="tab active" data-panel="sites">网站资料</button>
+        <button class="tab" data-panel="library">外链库</button>
+        <button class="tab" data-panel="config">全局配置</button>
       </div>
 
       <!-- 网站资料 -->
@@ -578,7 +566,8 @@
         class="panel"
         id="panel-library"
       >
-        <div class="card">
+        <div class="library-split">
+        <div class="card library-board">
           <div class="section-title">外链库管理</div>
           <div class="library-toolbar">
             <input
@@ -609,6 +598,7 @@
               <option value="domain">域名 A-Z</option>
             </select>
           </div>
+          <p class="hint" id="libraryCount">正在加载外链库…</p>
           <div
             class="library-list"
             id="libraryList"
@@ -616,89 +606,77 @@
             <div class="empty-state">正在加载外链库…</div>
           </div>
         </div>
-        <div class="card">
-          <div class="section-title">Google Sheet 单一数据源</div>
-          <p class="hint">
-            网站资料、外链库和提交记录以私有 Google Sheet 为人工维护源。OAuth 令牌仅由本机 Agent 保存，扩展不会保存 Google 凭据。
-          </p>
-          <div class="form-row">
-            <label for="googleSheetId">Google Sheet 链接或 ID</label>
-            <input
-              type="text"
-              id="googleSheetId"
-              placeholder="https://docs.google.com/spreadsheets/d/.../edit"
-            />
+        <aside class="library-tools" id="railLibraryTools" aria-label="外链库同步与备份">
+          <div class="card">
+            <div class="section-title">Google Sheet 同步</div>
+            <p class="hint">
+              外链清单以私有 Google Sheet 的 Link Submit 为准。OAuth 只存在本机 Agent，扩展不保存 Google 凭据。
+            </p>
+            <div class="form-row">
+              <label for="googleSheetId">Google Sheet 链接或 ID</label>
+              <input
+                type="text"
+                id="googleSheetId"
+                placeholder="https://docs.google.com/spreadsheets/d/.../edit"
+              />
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btnGoogleConnect">连接 Google</button>
+              <button class="btn btn-secondary" id="btnGoogleRefresh">刷新状态</button>
+            </div>
+            <div class="form-row sync-schedule-row">
+              <label><input type="checkbox" id="googleAutoPreviewEnabled" checked /> 定时检查表格变化并提醒</label>
+              <select id="googleAutoPreviewMinutes" aria-label="表格检查频率">
+                <option value="30">每 30 分钟</option>
+                <option value="60">每小时</option>
+                <option value="360">每 6 小时</option>
+                <option value="1440">每天</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btnGoogleCheckChanges">立即检查变化</button>
+              <button class="btn btn-secondary" id="btnGoogleSaveSchedule">保存检查频率</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btnGooglePreview">预览同步</button>
+              <button class="btn btn-primary" id="btnGoogleApply" disabled>应用同步</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btnGooglePush">回写待同步记录</button>
+              <button class="btn btn-danger" id="btnGoogleDisconnect">断开 Google</button>
+            </div>
+            <div class="sync-status" id="googleSyncStatus" role="status" aria-live="polite">
+              正在检查本机 Agent 和 Google 授权…
+            </div>
+            <div class="sync-preview" id="googleSyncPreview" hidden></div>
           </div>
-          <div class="btn-row">
-            <button class="btn btn-secondary" id="btnGoogleConnect">连接 Google</button>
-            <button class="btn btn-secondary" id="btnGoogleRefresh">刷新状态</button>
+          <div class="card">
+            <div class="section-title">已发布外链存活监控</div>
+            <p class="hint">只检查账本里带公开地址的成功记录，不会撤销历史成功。</p>
+            <div class="form-row sync-schedule-row">
+              <label><input type="checkbox" id="linkMonitorEnabled" checked /> 每日复查已发布链接</label>
+              <select id="linkMonitorMinutes" aria-label="外链复查频率">
+                <option value="360">每 6 小时</option>
+                <option value="1440">每天</option>
+                <option value="10080">每周</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btnRunLinkMonitor">立即复查</button>
+              <button class="btn btn-secondary" id="btnSaveLinkMonitor">保存复查频率</button>
+            </div>
+            <div class="sync-status" id="linkMonitorStatus" role="status" aria-live="polite">正在读取外链监控状态…</div>
           </div>
-          <div class="form-row sync-schedule-row">
-            <label><input type="checkbox" id="googleAutoPreviewEnabled" checked /> 定时检查表格变化并提醒</label>
-            <select id="googleAutoPreviewMinutes" aria-label="表格检查频率">
-              <option value="30">每 30 分钟</option>
-              <option value="60">每小时</option>
-              <option value="360">每 6 小时</option>
-              <option value="1440">每天</option>
-            </select>
+          <div class="card">
+            <div class="section-title">提交账本备份</div>
+            <p class="hint">导出账本、分类、Profile 和自定义外链，重装后可恢复。</p>
+            <div class="backup-actions">
+              <button class="btn btn-secondary" id="btnExportLedger">导出 JSON</button>
+              <button class="btn btn-secondary" id="btnImportLedger">导入 JSON</button>
+              <input type="file" id="ledgerImportFile" accept="application/json,.json" hidden />
+            </div>
           </div>
-          <div class="btn-row">
-            <button class="btn btn-secondary" id="btnGoogleCheckChanges">立即检查变化</button>
-            <button class="btn btn-secondary" id="btnGoogleSaveSchedule">保存检查频率</button>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-secondary" id="btnGooglePreview">预览同步</button>
-            <button class="btn btn-primary" id="btnGoogleApply" disabled>应用同步</button>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-secondary" id="btnGooglePush">回写待同步记录</button>
-            <button class="btn btn-danger" id="btnGoogleDisconnect">断开 Google</button>
-          </div>
-          <div class="sync-status" id="googleSyncStatus" role="status" aria-live="polite">
-            正在检查本机 Agent 和 Google 授权…
-          </div>
-          <div class="sync-preview" id="googleSyncPreview" hidden></div>
-        </div>
-        <div class="card">
-          <div class="section-title">已发布外链存活监控</div>
-          <p class="hint">只检查账本中带 Public URL / Evidence URL 的成功记录；不会撤销历史成功，只对疑似丢链发出提醒。</p>
-          <div class="form-row sync-schedule-row">
-            <label><input type="checkbox" id="linkMonitorEnabled" checked /> 每日复查已发布链接</label>
-            <select id="linkMonitorMinutes" aria-label="外链复查频率">
-              <option value="360">每 6 小时</option>
-              <option value="1440">每天</option>
-              <option value="10080">每周</option>
-            </select>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btnRunLinkMonitor">立即复查</button>
-            <button class="btn btn-secondary" id="btnSaveLinkMonitor">保存复查频率</button>
-          </div>
-          <div class="sync-status" id="linkMonitorStatus" role="status" aria-live="polite">正在读取外链监控状态…</div>
-        </div>
-        <div class="card">
-          <div class="section-title">提交账本备份</div>
-          <p class="hint">导出包含提交账本、分类、Profile ID 和自定义外链，可用于扩展重装后的恢复。</p>
-          <div class="backup-actions">
-            <button
-              class="btn btn-secondary"
-              id="btnExportLedger"
-            >
-              导出 JSON
-            </button>
-            <button
-              class="btn btn-secondary"
-              id="btnImportLedger"
-            >
-              导入 JSON
-            </button>
-            <input
-              type="file"
-              id="ledgerImportFile"
-              accept="application/json,.json"
-              hidden
-            />
-          </div>
+        </aside>
         </div>
       </div>
 

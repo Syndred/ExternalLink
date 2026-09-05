@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ExternalLink - 外链批量提交",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "外链质量排序、AI 评论、发布状态分级、熟站 playbook 与标准评论可选代点",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications", "sidePanel", "alarms"],
   "host_permissions": ["https://*/*", "http://*/*", "http://127.0.0.1:8790/*"],

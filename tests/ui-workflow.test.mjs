@@ -23,6 +23,9 @@ assert.match(sidepanelJs, /外链站.*正在提交.*本站.*总进度/);
 assert.doesNotMatch(sidepanelJs, /innerHTML\s*=/);
 
 assert.match(settingsHtml, /id="panel-library"/);
+assert.match(settingsHtml, /class="library-split"/);
+assert.match(settingsHtml, /id="railLibraryTools"/);
+assert.match(settingsHtml, /id="libraryCount"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
 assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
@@ -57,6 +60,10 @@ assert.match(settingsJs, /action:\s*"googleCheckChanges"/);
 assert.match(settingsJs, /action:\s*"runLinkMonitor"/);
 assert.match(settingsJs, /library-status/);
 assert.match(settingsJs, /annotationTone/);
+assert.match(settingsJs, /setActivePanel/);
+assert.match(settingsJs, /if \(!profile\.success\) continue;/);
+assert.match(settingsJs, /质量分 \$\{score\}/);
+assert.doesNotMatch(settingsJs, /未提交/);
 assert.doesNotMatch(settingsJs, /innerHTML\s*=/);
 
 assert.match(settingsCss, /library-status\.can_submit/);
@@ -67,6 +74,8 @@ assert.match(settingsCss, /library-item-actions[\s\S]*gap:\s*10px/);
 assert.match(settingsCss, /library-item-actions \.btn:focus-visible/);
 assert.match(settingsCss, /prefers-reduced-motion/);
 assert.match(settingsCss, /quality-score\.priority/);
+assert.match(settingsCss, /library-split/);
+assert.match(settingsCss, /repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 assert.match(settingsCss, /monitor-tag\.missing/);
 
 assert.match(css, /min-height:\s*44px/);

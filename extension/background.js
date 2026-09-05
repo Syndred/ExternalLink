@@ -1613,6 +1613,8 @@ async function getLibraryManagerState() {
       playbook: playbook
         ? { id: playbook.id, title: playbook.title, notes: playbook.notes }
         : null,
+      note: entry.entry?.note || annotation?.note || "",
+      time: entry.entry?.time || "",
     };
   });
   items.sort(self.ExtLinkOpportunityScore.compareOpportunities);

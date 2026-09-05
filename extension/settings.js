@@ -89,14 +89,18 @@
     return result;
   }
 
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      tab.classList.add("active");
-      const panel = $(`panel-${tab.dataset.panel}`);
-      panel?.classList.add("active");
+  function setActivePanel(name) {
+    document.body.dataset.panel = name;
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.panel === name);
     });
+    document.querySelectorAll(".panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `panel-${name}`);
+    });
+  }
+
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => setActivePanel(tab.dataset.panel));
   });
 
   function save(obj) {
@@ -433,6 +437,7 @@
         item.domain,
         item.url,
         status,
+        item.note,
         ...(item.profileStatuses || []).map((profile) => profile.profileName),
       ]
         .join(" ")
@@ -449,6 +454,12 @@
       return Number(b.quality?.score || 0) - Number(a.quality?.score || 0);
     });
     el.replaceChildren();
+    const shown = filtered.slice(0, 300);
+    if ($("libraryCount")) {
+      $("libraryCount").textContent = filtered.length
+        ? `共 ${libraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 展示前 ${shown.length} 条`
+        : `共 ${libraryItems.length} 条 · 没有符合筛选的外链站`;
+    }
     if (!filtered.length) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
@@ -456,7 +467,7 @@
       el.append(empty);
       return;
     }
-    for (const item of filtered.slice(0, 300)) {
+    for (const item of shown) {
       const card = document.createElement("article");
       card.className = "library-item";
       const head = document.createElement("div");
@@ -485,8 +496,10 @@
       const score = Number(item.quality?.score || 0);
       const scoreClass = score >= 75 ? "priority" : score >= 55 ? "workable" : score >= 35 ? "watch" : "low";
       qualityScore.className = `quality-score ${scoreClass}`;
-      qualityScore.textContent = `${item.quality?.tier || "观察"} ${score}`;
-      qualityScore.title = (item.quality?.reasons || []).join(" · ");
+      qualityScore.textContent = `质量分 ${score} · ${item.quality?.tier || "观察"}`;
+      qualityScore.title =
+        (item.quality?.reasons || []).join(" · ") ||
+        "0–100 机会质量分：优先≥75，可做≥55，观察≥35，低于 35 为低质";
       qualityRow.append(qualityScore);
       const metricPairs = [
         ["DR", item.metrics?.dr],
@@ -501,6 +514,12 @@
         tag.textContent = `${label} ${value}`;
         qualityRow.append(tag);
       }
+      if (item.time) {
+        const timeTag = document.createElement("span");
+        timeTag.className = "metric-tag";
+        timeTag.textContent = `打开 ${item.time}`;
+        qualityRow.append(timeTag);
+      }
       if (item.monitorStatus) {
         const monitor = document.createElement("span");
         monitor.className = `monitor-tag ${item.monitorStatus}`;
@@ -511,17 +530,20 @@
       const statuses = document.createElement("div");
       statuses.className = "profile-statuses";
       for (const profile of item.profileStatuses || []) {
+        if (!profile.success) continue;
         const chip = document.createElement("span");
         const publication = profile.publicationStatus || "";
         const publicationLabel =
           { submitted: "已提交", pending_moderation: "待审核", published: "已上线" }[publication] ||
-          (profile.success ? "已成功" : "未提交");
-        chip.className = profile.success
-          ? `profile-status success${publication ? ` ${publication}` : ""}`
-          : "profile-status";
-        chip.textContent = `${profile.profileName}: ${publicationLabel}`;
+          "已成功";
+        chip.className = `profile-status success${publication ? ` ${publication}` : ""}`;
+        chip.textContent = `${profile.profileName} · ${publicationLabel}`;
         statuses.append(chip);
       }
+
+      const note = document.createElement("p");
+      note.className = "library-note";
+      if (item.note) note.textContent = item.note;
 
       const actions = document.createElement("div");
       actions.className = "library-item-actions";
@@ -550,7 +572,10 @@
         await loadLibrary();
       });
       actions.append(pin, remove);
-      card.append(head, meta, qualityRow, statuses, actions);
+      card.append(head, meta, qualityRow);
+      if (item.note) card.append(note);
+      if (statuses.childNodes.length) card.append(statuses);
+      card.append(actions);
       el.append(card);
     }
   }

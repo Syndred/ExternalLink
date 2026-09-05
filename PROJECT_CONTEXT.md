@@ -1,7 +1,7 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-09-05｜扩展 2.8.1｜路线：混合 C
-> 本机 Agent 已在 `127.0.0.1:8790` 拉起；侧栏「熟站」芯片改为打开页面即显示，不必先点检测。
+> 最后更新：2026-09-05｜扩展 2.8.2｜路线：混合 C
+> `Link Submit` 现表头 Link / SubmitProject / Submit / Time / Record / Detail；同步已按此读取。
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
 > 2026-09-05 全自动差距评估见对话画布 `automation-gap`。
@@ -9,6 +9,7 @@
 ## 当前已完成
 
 - Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
+- **2.8.2 Settings 外链库**：只有外链库页左右分栏（列表 + 同步）；网站资料/全局配置仍是顶部菜单。卡片一行两条，质量分写清楚，只显示已提交记录。
 - **2.8.0 补齐外链运营闭环**（代码、本机 Agent 与 Google Sheet 已验收；Chrome 运行缓存待重载后应用）：
   1. **机会质量分**：结合 DR/DA、流量、Spam、dofollow、indexable、相关性、域名年龄和复核时间生成 0–100 分；外链库可筛选/排序，队列可设置最低分闸门。
   2. **发布链接监控**：只复查成功账本里的 `Public URL / Evidence URL`，识别 live/missing/unreachable 和 rel；不撤销历史成功，只在“曾存活 → 异常”时提醒。

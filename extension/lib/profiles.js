@@ -33,6 +33,7 @@
       oldphotolive: "OldPhotoLive",
       oldphotoliveai: "OldPhotoLive",
       rainbowpetai: "RainbowPetAI",
+      rainbowpet: "RainbowPetAI",
       rspai: "RspAi",
       textcomparison: "TextComparison",
       comparisontext: "TextComparison",
@@ -216,6 +217,7 @@
     const aliases = {
       oldphotolive: "OldPhotoLive",
       rainbowpetai: "RainbowPetAI",
+      rainbowpet: "RainbowPetAI",
       rspai: "RspAi",
       textcomparison: "TextComparison",
       graffitiname: "GraffitiName",

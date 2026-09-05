@@ -40,7 +40,7 @@ Use `queued`, `ready`, `filling`, `filled`, `needs_login`, `needs_captcha`, `nee
 
 Keep the editable source in the existing private workbook rather than creating another spreadsheet:
 
-- `Link Submit`: one canonical destination per row, selected Profile IDs, notes, optional `Status`/`CategoryStatus`, and `IndexPage` only after a public listing resolves;
+- `Link Submit`: live headers are `Link`, `SubmitProject`, `Submit`, `Time`, `Record`, `Detail`. `Record`/`Detail` (or legacy `Note`) become the destination note; `DR`/`DA` inside `Record` fill quality metrics when those columns are absent. Optional `Status`/`CategoryStatus`/`IndexPage` still work if present.
 - website profile tabs: one stable Profile ID per tab/section with the source copy and media references;
 - `Submission Records`: one destination/Profile pair per row with `success` status, date, evidence, confirmation actor, and public page. This tab is the success-ledger writeback target, not a replacement for exact evidence.
 

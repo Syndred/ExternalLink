@@ -107,7 +107,7 @@ tests/local-agent-unit.test.py
 ## 后续边界
 
 - **2.8.0 已内置三候选 AI 评论**，社区/论坛候选可小流量试投，但仍人工确认成功。
-- `Link Submit` 仍是 Google 表格对象 `表格_1`（深绿表头）。不要再改成普通筛选。`SubmitProject` 下拉：**VideoToArticleAI / RainbowPet / OldPhotoLive / RSPAI / GraffitiName / TextComparison**。
+- `Link Submit` 仍是 Google 表格对象 `表格_1`（深绿表头）。表头：**Link / SubmitProject / Submit / Time / Record / Detail**。`Record`+`Detail` 进备注，文中的 DR/DA 进质量分。`Submit` 勾选不当成功。`SubmitProject` 下拉：**VideoToArticleAI / RainbowPet / OldPhotoLive / RSPAI / GraffitiName / TextComparison**。
 - 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认打勾。
 - 提交时同一时间只保留 1 个工作页签；验证码最多留 1–2 个。
 - 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。

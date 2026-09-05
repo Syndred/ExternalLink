@@ -183,6 +183,39 @@ class LocalAgentUnitTests(unittest.TestCase):
         self.assertEqual(entry["metrics"]["verifiedAt"], "2026-08-27")
         self.assertEqual(entry["metrics"]["linkType"], "directory")
 
+    def test_google_link_parser_reads_record_and_detail_headers(self):
+        rows = [
+            ["Link", "SubmitProject", "Submit", "Time", "Record", "Detail"],
+            [
+                "https://digitalagencynetwork.com/",
+                "RainbowPet",
+                "FALSE",
+                "2026-09-05",
+                "Digital Agency Network; Free; DR 76; tools listing",
+                "marketing/design/business audience",
+            ],
+            [
+                "https://www.softwareworld.co/",
+                "",
+                "0",
+                "",
+                "SoftwareWorld; Free; DA 73 / DR 70; directory",
+                "",
+            ],
+        ]
+        first, second = google_sync.parse_link_rows(rows)
+        self.assertEqual(first["projects"], ["RainbowPetAI"])
+        self.assertEqual(
+            first["note"],
+            "Digital Agency Network; Free; DR 76; tools listing | marketing/design/business audience",
+        )
+        self.assertEqual(first["time"], "2026-09-05")
+        self.assertFalse(first["legacySubmitted"])
+        self.assertEqual(first["metrics"]["dr"], "76")
+        self.assertEqual(second["note"], "SoftwareWorld; Free; DA 73 / DR 70; directory")
+        self.assertEqual(second["metrics"]["da"], "73")
+        self.assertEqual(second["metrics"]["dr"], "70")
+
     def test_google_snapshot_contract_uses_ledger_for_legacy_submit_and_parses_annotations(self):
         class FakeRequest:
             def __init__(self, payload):

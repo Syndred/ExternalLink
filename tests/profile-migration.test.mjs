@@ -18,6 +18,7 @@ assert.equal(P.canonicalProfileId("OldPhotoLive AI"), "OldPhotoLive");
 assert.equal(P.canonicalProfileId("comparison-text"), "TextComparison");
 assert.equal(P.canonicalProfileId("graffiti_name_ai"), "GraffitiName");
 assert.equal(P.canonicalProfileId("Rainbow Pet AI"), "RainbowPetAI");
+assert.equal(P.canonicalProfileId("RainbowPet"), "RainbowPetAI");
 assert.equal(P.canonicalProfileId("RSPAI"), "RspAi");
 
 const mediaConfig = {

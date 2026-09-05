@@ -341,6 +341,7 @@ def canonical_profile_id(value: Any) -> str:
         "oldphotolive": "OldPhotoLive",
         "oldphotoliveai": "OldPhotoLive",
         "rainbowpetai": "RainbowPetAI",
+        "rainbowpet": "RainbowPetAI",
         "rspai": "RspAi",
         "textcomparison": "TextComparison",
         "comparisontext": "TextComparison",
@@ -386,6 +387,27 @@ def _cell(row: list[Any], headers: dict[str, int], *names: str) -> str:
     return ""
 
 
+def _compose_link_note(row: list[Any], headers: dict[str, int]) -> str:
+    """Accept the live Link Submit headers Note, Record, and Detail."""
+    primary = _cell(row, headers, "note", "record")
+    detail = _cell(row, headers, "detail")
+    if primary and detail and detail not in primary:
+        return f"{primary} | {detail}"
+    return primary or detail
+
+
+def _metrics_from_text(*texts: str) -> dict[str, str]:
+    blob = " ".join(part for part in texts if part)
+    found: dict[str, str] = {}
+    dr = re.search(r"\bDR\s*[:：]?\s*(\d{1,3})\b", blob, re.I)
+    da = re.search(r"\bDA\s*[:：]?\s*(\d{1,3})\b", blob, re.I)
+    if dr:
+        found["dr"] = dr.group(1)
+    if da:
+        found["da"] = da.group(1)
+    return found
+
+
 def _quoted_range(title: str, range_name: str) -> str:
     escaped = title.replace("'", "''")
     return f"'{escaped}'!{range_name}"
@@ -426,12 +448,13 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
             if candidate_status in SITE_ANNOTATION_STATUSES:
                 normalized_status = candidate_status
                 break
+        note = _compose_link_note(row, headers)
         site_annotation = None
         if normalized_status in SITE_ANNOTATION_STATUSES:
             site_annotation = {
                 "status": normalized_status,
                 "url": link,
-                "note": _cell(row, headers, "note"),
+                "note": note,
                 "updatedAt": _cell(row, headers, "updatedat", "updated", "time"),
             }
             # Keep the shape compatible with annotations created by the
@@ -439,6 +462,21 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
             site_annotation = {
                 key: value for key, value in site_annotation.items() if value
             }
+        metrics = _metrics_from_text(note)
+        for key, value in {
+            "dr": _cell(row, headers, "dr", "domainrating"),
+            "da": _cell(row, headers, "da", "domainauthority"),
+            "traffic": _cell(row, headers, "traffic", "organictraffic"),
+            "spamScore": _cell(row, headers, "spamscore", "spam"),
+            "dofollow": _cell(row, headers, "dofollow", "follow"),
+            "indexable": _cell(row, headers, "indexable", "indexed"),
+            "difficulty": _cell(row, headers, "difficulty", "submissiondifficulty"),
+            "verifiedAt": _cell(row, headers, "verifiedat", "lastverified"),
+            "linkType": _cell(row, headers, "linktype", "type"),
+            "relevance": _cell(row, headers, "relevance", "relevancescore"),
+        }.items():
+            if value:
+                metrics[key] = value
         entries.append(
             {
                 "link": link,
@@ -451,25 +489,10 @@ def parse_link_rows(rows: list[list[Any]]) -> list[dict[str, Any]]:
                 "submitted": False,
                 "legacySubmitted": legacy_submitted,
                 "time": _cell(row, headers, "time"),
-                "note": _cell(row, headers, "note"),
+                "note": note,
                 "indexPage": _cell(row, headers, "indexpage"),
                 "siteAnnotation": site_annotation,
-                "metrics": {
-                    key: value
-                    for key, value in {
-                        "dr": _cell(row, headers, "dr", "domainrating"),
-                        "da": _cell(row, headers, "da", "domainauthority"),
-                        "traffic": _cell(row, headers, "traffic", "organictraffic"),
-                        "spamScore": _cell(row, headers, "spamscore", "spam"),
-                        "dofollow": _cell(row, headers, "dofollow", "follow"),
-                        "indexable": _cell(row, headers, "indexable", "indexed"),
-                        "difficulty": _cell(row, headers, "difficulty", "submissiondifficulty"),
-                        "verifiedAt": _cell(row, headers, "verifiedat", "lastverified"),
-                        "linkType": _cell(row, headers, "linktype", "type"),
-                        "relevance": _cell(row, headers, "relevance", "relevancescore"),
-                    }.items()
-                    if value
-                },
+                "metrics": metrics,
             }
         )
     return entries

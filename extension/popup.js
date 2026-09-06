@@ -51,8 +51,6 @@
     },
   };
 
-  const LOCAL_AGENT_URL = "http://127.0.0.1:8787";
-
   // ─── Site Profiles ───
   let siteProfiles = {};
   let activeSiteId = "";
@@ -255,16 +253,9 @@
     profileToForm(siteProfiles[activeSiteId]);
   }
 
-  async function callLocalAgent(path, body) {
-    const res = await fetch(`${LOCAL_AGENT_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.message || `HTTP ${res.status}`);
-    }
+  async function callCloudAssistant(action, payload) {
+    const data = await chrome.runtime.sendMessage({ action, payload });
+    if (!data?.ok) throw new Error(data?.error || "云端服务请求失败");
     return data;
   }
 
@@ -405,7 +396,7 @@
       btn.disabled = true;
       btn.textContent = "提取中…";
       try {
-        const data = await callLocalAgent("/extract-site", {
+        const data = await callCloudAssistant("cloudAiExtractSite", {
           url,
           language: $("siteLanguage").value || "auto",
         });
@@ -418,7 +409,7 @@
         log(`AI 已从 ${url} 提取站点资料`, "ok");
       } catch (err) {
         log(`提取失败: ${err.message}`, "err");
-        alert(`提取失败: ${err.message}\n\n请确认 local_agent 已启动且 DEEPSEEK_API_KEY 已配置`);
+        alert(`提取失败: ${err.message}\n\n请确认云端数据中心已连接。`);
       } finally {
         btn.disabled = false;
         btn.textContent = "🔍 从网址提取资料";
@@ -431,7 +422,7 @@
       btn.textContent = "生成中…";
       try {
         const partial = formToProfile(activeSiteId || undefined);
-        const data = await callLocalAgent("/generate-site", {
+        const data = await callCloudAssistant("cloudAiGenerateSite", {
           profile: partial,
           language: $("siteLanguage").value || "auto",
         });
@@ -659,11 +650,11 @@
   function formatAgentLog(msg) {
     const text = String(msg || "");
     if (
-      /DeepSeek local agent unavailable|local agent unavailable|127\.0\.0\.1:8787|ECONNREFUSED/i.test(
+      /云端|cloud|worker|fetch/i.test(
         text,
       )
     ) {
-      return `${text} - 本地代理未运行：请在仓库根目录执行 python3 -m local_agent.server`;
+      return `${text} - 云端服务暂不可用：请检查“云端数据中心”连接`;
     }
     if (/需要人工处理|needs_manual/i.test(text)) {
       return `${text} - needs_manual: 请查看前面的具体原因；可能是必填字段、图片上传、登录/验证码，或页面需要人工判断`;
@@ -986,5 +977,5 @@
 
   // Init log
   log("ExternalLink 外链提交扩展已就绪", "ok");
-  log("用法：刷新合并队列 → 查看任务栏 → 启动 local_agent → 开始提交", "");
+  log("用法：刷新合并队列 → 查看任务栏 → 确认云端连接 → 开始提交", "");
 })();

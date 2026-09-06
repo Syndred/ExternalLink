@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 const Core = await import("../cloud/worker/src/worker-core.mjs");
 
@@ -14,6 +15,7 @@ const documents = Core.normalizeDocuments({
   },
 });
 assert.equal(documents.siteProfiles.RainbowPetAI.id, "RainbowPetAI");
+assert.ok(Core.STATE_DOCUMENT_KEYS.includes("deletedSubmissionKeys"), "deleted task filters must sync between devices");
 assert.throws(
   () => Core.normalizeDocuments({ googleSheetId: "sensitive-id" }),
   /unsupported state document/i,
@@ -47,5 +49,9 @@ assert.throws(() => Core.mediaObjectKey("default", "../secret"), /invalid media 
 assert.equal(await Core.secureEqual("same-access-token", "same-access-token"), true);
 assert.equal(await Core.secureEqual("same-access-token", "different-token"), false);
 assert.equal(await Core.secureEqual("short", "longer"), false);
+
+const workerSource = await readFile("cloud/worker/src/index.mjs", "utf8");
+assert.match(workerSource, /sha256Hex\(bytes\).*!== sha256/s, "media uploads must verify the supplied checksum");
+assert.match(workerSource, /where externallink_workspace_documents\.revision = \$\{expectedRevision\}/, "state writes must use an atomic revision predicate");
 
 console.log("cloud worker core tests passed");

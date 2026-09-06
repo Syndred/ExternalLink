@@ -721,7 +721,7 @@
 
       const meta = document.createElement("div");
       meta.className = "library-meta";
-      const sourceLabel = { saved: "自定义", table: "Google 表格", library: "内置" }[item.source] || "内置";
+      const sourceLabel = { saved: "自定义", table: "迁移库", library: "内置" }[item.source] || "内置";
       meta.textContent = item.playbook
         ? `${sourceLabel} · ${item.platformType || "directory"} · 熟站 ${item.playbook.title}`
         : `${sourceLabel} · ${item.platformType || "directory"}`;

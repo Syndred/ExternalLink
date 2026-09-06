@@ -46,6 +46,7 @@ const COMMENT_CACHE_LIMIT = 60;
 const LINK_MONITOR_ALARM = "externallink-link-monitor";
 const DEFAULT_LINK_MONITOR_MINUTES = 24 * 60;
 const CLOUD_SYNC_DEBOUNCE_MS = 800;
+const CLOUD_SYNC_RETRY_DELAYS_MS = [1000, 5000, 15000, 60000];
 
 const commentDraftCache = new Map();
 
@@ -56,7 +57,8 @@ let cloudSyncTimer = null;
 let cloudSyncFlushPromise = null;
 let cloudSyncMute = false;
 const cloudSyncPendingKeys = new Set();
-const cloudSyncIgnoredKeys = new Set();
+const cloudSyncIgnoredValues = new Map();
+let cloudSyncRetryAttempt = 0;
 let initializationPromise = restoreActiveBatchRun().catch((err) => {
   log(`恢复上次批次失败: ${err.message}`, "warn");
 });
@@ -85,9 +87,10 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local" || cloudSyncMute) return;
   const keys = self.ExtLinkCloudSync.stateKeysFromChanges(changes).filter((key) => {
-    if (!cloudSyncIgnoredKeys.has(key)) return true;
-    cloudSyncIgnoredKeys.delete(key);
-    return false;
+    if (!cloudSyncIgnoredValues.has(key)) return true;
+    const pulledValue = cloudSyncIgnoredValues.get(key);
+    cloudSyncIgnoredValues.delete(key);
+    return JSON.stringify(changes[key]?.newValue) !== pulledValue;
   });
   if (!keys.length) return;
   for (const key of keys) cloudSyncPendingKeys.add(key);
@@ -470,7 +473,9 @@ async function connectCloudSync(rawConfig) {
 
 async function applyCloudSnapshot(snapshot) {
   const nextState = self.ExtLinkCloudSync.documentsToState(snapshot.documents || {});
-  Object.keys(nextState).forEach((key) => cloudSyncIgnoredKeys.add(key));
+  Object.entries(nextState).forEach(([key, value]) => {
+    cloudSyncIgnoredValues.set(key, JSON.stringify(value));
+  });
   cloudSyncMute = true;
   try {
     await chrome.storage.local.set({
@@ -518,12 +523,20 @@ async function ensureCloudRevisions() {
   return { ...(snapshot.revisions || {}) };
 }
 
-function scheduleCloudSync() {
+function scheduleCloudSync(delayMs = CLOUD_SYNC_DEBOUNCE_MS, resetRetry = true) {
   if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  if (resetRetry) cloudSyncRetryAttempt = 0;
   cloudSyncTimer = setTimeout(() => {
     cloudSyncTimer = null;
     flushCloudState().catch((err) => log(`云端保存失败: ${err.message}`, "warn"));
-  }, CLOUD_SYNC_DEBOUNCE_MS);
+  }, delayMs);
+}
+
+function scheduleCloudSyncRetry() {
+  if (!cloudSyncPendingKeys.size) return;
+  const index = Math.min(cloudSyncRetryAttempt, CLOUD_SYNC_RETRY_DELAYS_MS.length - 1);
+  cloudSyncRetryAttempt += 1;
+  scheduleCloudSync(CLOUD_SYNC_RETRY_DELAYS_MS[index], false);
 }
 
 async function flushCloudState(keys = null) {
@@ -562,12 +575,14 @@ async function flushCloudState(keys = null) {
       cloudSyncMetadata: { revisions, pushedAt: new Date().toISOString() },
     });
     await updateCloudMetadata({ lastPushAt: new Date().toISOString(), lastError: "" });
+    cloudSyncRetryAttempt = 0;
     return { ok: true, saved };
   })();
   try {
     return await cloudSyncFlushPromise;
   } catch (err) {
     await updateCloudMetadata({ lastError: err.message });
+    if (err.status !== 409) scheduleCloudSyncRetry();
     throw err;
   } finally {
     cloudSyncFlushPromise = null;
@@ -1999,37 +2014,6 @@ async function importSubmissionData(data) {
   };
 }
 
-function resolveGoogleSpreadsheetId(value, storedValue = "") {
-  const raw = String(value || storedValue || DEFAULT_GOOGLE_SPREADSHEET_ID).trim();
-  const match = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-  const id = match ? match[1] : raw;
-  if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) throw new Error("Google Sheet ID 或链接无效");
-  return id;
-}
-
-async function getGoogleSyncStatus(msg = {}) {
-  const storage = await chrome.storage.local.get([
-    "googleSpreadsheetId",
-    "googleSheetSyncEnabled",
-    "sheetSyncMeta",
-    "sheetSyncOutbox",
-    "sheetTableData",
-    "googleAutoPreviewEnabled",
-    "googleAutoPreviewMinutes",
-    "sheetPendingPreview",
-  ]);
-  const status = await self.ExtLinkSheetSync.buildSyncStatus(
-    storage,
-    { probeAgent: msg.probeAgent === true },
-    () => callLocalAgent("/google/status", {}),
-  );
-  return {
-    ok: true,
-    ...status,
-    spreadsheetId: status.spreadsheetId || DEFAULT_GOOGLE_SPREADSHEET_ID,
-  };
-}
-
 function clampScheduleMinutes(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.min(7 * 24 * 60, Math.max(15, Math.round(parsed))) : fallback;
@@ -2059,186 +2043,6 @@ async function configureScheduledChecks() {
       periodInMinutes: monitorMinutes,
     });
   }
-}
-
-async function saveGoogleSyncSchedule(msg = {}) {
-  const autoPreviewEnabled = msg.enabled !== false;
-  const autoPreviewMinutes = clampScheduleMinutes(
-    msg.minutes,
-    DEFAULT_SHEET_CHECK_MINUTES,
-  );
-  await chrome.storage.local.set({ googleAutoPreviewEnabled: autoPreviewEnabled, googleAutoPreviewMinutes: autoPreviewMinutes });
-  await configureScheduledChecks();
-  return { ok: true, autoPreviewEnabled, autoPreviewMinutes };
-}
-
-async function startGoogleAuth(msg = {}) {
-  const storage = await chrome.storage.local.get(["googleSpreadsheetId"]);
-  const spreadsheetId = resolveGoogleSpreadsheetId(
-    msg.spreadsheetId,
-    storage.googleSpreadsheetId,
-  );
-  const result = await callLocalAgent("/google/auth/start", { spreadsheetId });
-  if (!result.authUrl || !String(result.authUrl).startsWith("https://accounts.google.com/")) {
-    throw new Error("本地 Agent 未返回有效的 Google 授权地址");
-  }
-  await chrome.storage.local.set({ googleSpreadsheetId: spreadsheetId });
-  await chrome.tabs.create({ url: result.authUrl, active: true });
-  return { ok: true, spreadsheetId };
-}
-
-async function fetchGoogleSheetSnapshot(spreadsheetId) {
-  const result = await callLocalAgent("/google/sync/preview", { spreadsheetId });
-  return self.ExtLinkSheetSync.validateSnapshot(result.snapshot || result);
-}
-
-async function previewGoogleSheetSync(msg = {}) {
-  const storage = await chrome.storage.local.get([
-    "googleSpreadsheetId",
-    "siteProfiles",
-    "submissionRecords",
-    "siteAnnotations",
-    "sheetSyncMeta",
-  ]);
-  const spreadsheetId = resolveGoogleSpreadsheetId(
-    msg.spreadsheetId,
-    storage.googleSpreadsheetId,
-  );
-  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
-  const preview = self.ExtLinkSheetSync.computePreview(storage, snapshot);
-  await chrome.storage.local.set({
-    googleSpreadsheetId: spreadsheetId,
-    sheetPendingPreview: {
-      revision: snapshot.revision,
-      fetchedAt: snapshot.fetchedAt || new Date().toISOString(),
-      preview,
-    },
-  });
-  return { ok: true, preview };
-}
-
-async function checkGoogleSheetChanges({ notify = false, force = false } = {}) {
-  const storage = await chrome.storage.local.get([
-    "googleSpreadsheetId",
-    "googleSheetSyncEnabled",
-    "googleAutoPreviewEnabled",
-    "siteProfiles",
-    "submissionRecords",
-    "siteAnnotations",
-    "sheetSyncMeta",
-    "sheetPendingPreview",
-  ]);
-  if (storage.googleAutoPreviewEnabled === false && !force) {
-    return { ok: true, changed: false, disabled: true };
-  }
-  const spreadsheetId = resolveGoogleSpreadsheetId(storage.googleSpreadsheetId);
-  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
-  const preview = self.ExtLinkSheetSync.computePreview(storage, snapshot);
-  const changed = snapshot.revision !== storage.sheetSyncMeta?.revision;
-  const isNewPendingRevision = changed && snapshot.revision !== storage.sheetPendingPreview?.revision;
-  const pendingPreview = changed
-    ? { revision: snapshot.revision, fetchedAt: snapshot.fetchedAt || new Date().toISOString(), preview }
-    : null;
-  await chrome.storage.local.set({
-    googleSpreadsheetId: spreadsheetId,
-    sheetPendingPreview: pendingPreview,
-    googleLastCheckedAt: new Date().toISOString(),
-  });
-  if (isNewPendingRevision && notify) {
-    chrome.notifications.create("externallink-sheet-changed", {
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "ExternalLink 表格有更新",
-      message: `检测到 ${preview.destinations || 0} 个外链站的数据版本变化，请到设置页预览后应用。`,
-    });
-  }
-  return { ok: true, changed, preview, pendingPreview };
-}
-
-async function applyGoogleSheetSync(msg = {}) {
-  const storage = await chrome.storage.local.get([
-    "googleSpreadsheetId",
-    "siteProfiles",
-    "submissionRecords",
-    "siteAnnotations",
-    "selectedSiteIds",
-    "activeSiteId",
-    "sheetSyncOutbox",
-    "sheetSyncMeta",
-  ]);
-  const spreadsheetId = resolveGoogleSpreadsheetId(
-    msg.spreadsheetId,
-    storage.googleSpreadsheetId,
-  );
-  const snapshot = await fetchGoogleSheetSnapshot(spreadsheetId);
-  if (msg.revision && msg.revision !== snapshot.revision) {
-    throw new Error("Google Sheet 在预览后发生变化，请重新预览");
-  }
-  const merged = self.ExtLinkSheetSync.applySnapshot(
-    storage,
-    snapshot,
-    SUBMISSION_SCHEMA_VERSION,
-  );
-  let outbox = { ...(storage.sheetSyncOutbox || {}) };
-  for (const [key, record] of Object.entries(merged.submissionRecords)) {
-    const remote = snapshot.submissionRecords[key];
-    if (record?.status !== "success") continue;
-    if (
-      remote?.status !== "success" ||
-      self.ExtLinkSheetSync.recordStrength(record) > self.ExtLinkSheetSync.recordStrength(remote)
-    ) {
-      outbox = self.ExtLinkSheetSync.enqueueRecord(outbox, record);
-    }
-  }
-  await chrome.storage.local.set({
-    ...merged,
-    googleSpreadsheetId: spreadsheetId,
-    googleSheetSyncEnabled: true,
-    sheetSyncOutbox: outbox,
-    sheetPendingPreview: null,
-  });
-  return {
-    ok: true,
-    preview: self.ExtLinkSheetSync.computePreview(storage, snapshot),
-    meta: merged.sheetSyncMeta,
-    pendingRecords: Object.keys(outbox).length,
-  };
-}
-
-async function enqueueSheetSyncRecord(record) {
-  const storage = await chrome.storage.local.get([
-    "googleSheetSyncEnabled",
-    "googleSpreadsheetId",
-    "sheetSyncOutbox",
-  ]);
-  if (storage.googleSheetSyncEnabled !== true || !storage.googleSpreadsheetId) return;
-  const outbox = self.ExtLinkSheetSync.enqueueRecord(storage.sheetSyncOutbox || {}, record);
-  await chrome.storage.local.set({ sheetSyncOutbox: outbox });
-  flushSheetSyncOutbox().catch((err) => {
-    log(`Google Sheet 待回写：${err.message}`, "warn");
-  });
-}
-
-async function flushSheetSyncOutbox() {
-  const storage = await chrome.storage.local.get([
-    "googleSpreadsheetId",
-    "googleSheetSyncEnabled",
-    "sheetSyncOutbox",
-  ]);
-  const outbox = storage.sheetSyncOutbox || {};
-  const records = Object.values(outbox);
-  if (!records.length) return { ok: true, pushed: 0, pendingRecords: 0 };
-  if (storage.googleSheetSyncEnabled !== true || !storage.googleSpreadsheetId) {
-    return { ok: false, pushed: 0, pendingRecords: records.length, error: "尚未启用 Google Sheet 同步" };
-  }
-  const result = await callLocalAgent("/google/ledger/push", {
-    spreadsheetId: storage.googleSpreadsheetId,
-    records,
-  });
-  const pushedKeys = Array.isArray(result.pushedKeys) ? result.pushedKeys : [];
-  const next = self.ExtLinkSheetSync.removePushed(outbox, pushedKeys);
-  await chrome.storage.local.set({ sheetSyncOutbox: next });
-  return { ok: true, pushed: pushedKeys.length, pendingRecords: Object.keys(next).length };
 }
 
 function checkablePublicUrl(record) {
@@ -2433,12 +2237,6 @@ async function runLinkMonitor({ notify = false, force = false } = {}) {
   };
 }
 
-async function disconnectGoogleSync() {
-  await callLocalAgent("/google/disconnect", {});
-  await chrome.storage.local.set({ googleSheetSyncEnabled: false });
-  return { ok: true };
-}
-
 function broadcastAutoFillUpdate(payload) {
   chrome.runtime.sendMessage({ action: "autoFillUpdate", ...payload }).catch(() => {});
 }
@@ -2449,27 +2247,22 @@ async function loadTableLibrary() {
     const res = await fetch(chrome.runtime.getURL("table-library.json"));
     if (res.ok) tableData = await res.json();
   } catch {
-    /* table library optional */
+    /* The first-run snapshot is optional once the cloud cache exists. */
   }
-  const synced = await chrome.storage.local.get([
-    "sheetTableData",
-    "sheetSyncMeta",
-    "googleSheetSyncEnabled",
-  ]);
-  const selected = self.ExtLinkSheetSync.selectCachedTableData(tableData, synced);
-  if (selected.source === "bundled-sheet-snapshot") {
-    const { source, snapshotMeta = {}, ...cachedTableData } = selected;
-    await chrome.storage.local.set({
-      sheetTableData: cachedTableData,
-      googleSpreadsheetId: snapshotMeta.spreadsheetId || "",
-      sheetSyncMeta: {
-        ...(synced.sheetSyncMeta || {}),
-        ...snapshotMeta,
-        appliedAt: new Date().toISOString(),
-      },
-    });
+  const { sheetTableData } = await chrome.storage.local.get("sheetTableData");
+  if (
+    sheetTableData &&
+    typeof sheetTableData === "object" &&
+    Array.isArray(sheetTableData.entries) &&
+    sheetTableData.projects &&
+    typeof sheetTableData.projects === "object"
+  ) {
+    return { source: "cloud-cache", ...sheetTableData };
   }
-  return selected;
+  if (Array.isArray(tableData.entries) && tableData.projects && typeof tableData.projects === "object") {
+    await chrome.storage.local.set({ sheetTableData: tableData });
+  }
+  return { source: "bundled-first-run", ...tableData };
 }
 
 async function ensureProfilesFromTable(
@@ -2524,10 +2317,12 @@ async function ensureSubmissionSchema(
   schemaVersion,
   idRemap = {},
 ) {
-  const seededRecords = self.ExtLinkSheetSync.mergeSeedSubmissionRecords(
-    tableData,
-    existingRecords,
-  );
+  const seededRecords = { ...(existingRecords || {}) };
+  for (const [key, seedRecord] of Object.entries(tableData?.submissionRecords || {})) {
+    seededRecords[key] = seededRecords[key]
+      ? self.ExtLinkQueue.mergePublicationFields(seededRecords[key], seedRecord)
+      : seedRecord;
+  }
   const remappedRecords = self.ExtLinkQueue.remapSubmissionRecords(
     seededRecords,
     idRemap,
@@ -3003,8 +2798,8 @@ function handleTimeout(tabId) {
     bumpEntryRunId(entry);
     task.status = "err";
     task.skipReason = "timeout";
-    parkTaskEntry(tabId, entry, "本地代理循环超时");
-    log(`${task.domain}: 本地代理循环超时，请手动检查`, "warn");
+    parkTaskEntry(tabId, entry, "云端 AI 循环超时");
+    log(`${task.domain}: 云端 AI 循环超时，请手动检查`, "warn");
     broadcastTaskUpdate(task);
   }
 }
@@ -3122,7 +2917,7 @@ async function resumeAfterCaptcha(tabId, data) {
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (!task) return;
 
-  log(`${task.domain}: 验证码已处理，重新运行本地代理判断`, "");
+  log(`${task.domain}: 验证码已处理，重新运行云端 AI 判断`, "");
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
@@ -3823,7 +3618,7 @@ function markTaskBlocked(tabId, task, entry, reason) {
       task.status = "err";
       task.skipReason = reason;
       parkTaskEntry(tabId, entry, reason);
-      log(`${task.domain}: 本地代理停止 - ${reason}`, "err");
+      log(`${task.domain}: 云端 AI 停止 - ${reason}`, "err");
       broadcastTaskUpdate(task);
     });
 }

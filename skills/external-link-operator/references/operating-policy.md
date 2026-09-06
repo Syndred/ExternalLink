@@ -5,7 +5,7 @@
 - Submit ordinary free directory listings after the selected Profile, fields, media, destination, and preview pass preflight.
 - Use the existing Google quick-login session and select `syndredyoung@gmail.com` when the requested destination offers that already-authorized account.
 - Download public website assets or use files from the matching local project `public` directory, normalize them, upload them, and verify the page preview.
-- Update the Google handoff sheet, plugin library, exported ledger, workbook, and progress documentation after verified outcomes.
+- Let the plugin persist verified outcomes to the connected cloud workspace, then update only the export/backup and progress documentation when needed.
 
 ## Action-time gates
 

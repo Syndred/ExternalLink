@@ -230,9 +230,13 @@ assert.doesNotMatch(
 );
 
 assert.ok(
-  Array.isArray(manifest.host_permissions) &&
-    manifest.host_permissions.includes("http://127.0.0.1:8790/*"),
-  "manifest.json should allow the extension service worker to fetch the local agent",
+  Array.isArray(manifest.host_permissions) && manifest.host_permissions.includes("https://*/*"),
+  "manifest.json should allow the extension service worker to fetch its HTTPS Worker",
+);
+assert.equal(
+  manifest.host_permissions.includes("http://127.0.0.1:8790/*"),
+  false,
+  "manifest must not depend on a local Agent port",
 );
 
 assert.match(
@@ -336,11 +340,8 @@ assert.match(
   "select actions should use the native value setter helper",
 );
 
-assert.match(
-  popup,
-  /local agent unavailable|本地代理未运行|python3 -m local_agent\.server/i,
-  "popup should explain when the local agent is unavailable",
-);
+assert.match(popup, /云端服务暂不可用/, "popup should explain when the cloud service is unavailable");
+assert.doesNotMatch(popup, /local_agent\.server|127\.0\.0\.1/, "popup must not require a local Agent");
 
 assert.match(
   popup,
@@ -366,22 +367,14 @@ assert.match(
   "popup should surface success evidence or judge-based success log language",
 );
 
-assert.match(
-  readme,
-  /DEEPSEEK_API_KEY/,
-  "README should document DEEPSEEK_API_KEY setup for the local agent",
-);
+assert.match(readme, /Cloudflare Worker/, "README should document the cloud Worker data center");
+assert.match(readme, /R2 私有媒体/, "README should document private cloud media");
+assert.doesNotMatch(readme, /python3 -m local_agent\.server/, "README must not require a local Agent");
 
 assert.match(
   readme,
-  /python3 -m local_agent\.server/,
-  "README should document starting the local agent from the repo root",
-);
-
-assert.match(
-  readme,
-  /\/judge[\s\S]{0,220}(success evidence|success\/thank-you\/submitted|page confirmation|成功证据|确认)/i,
-  "README should explain success is marked only after /judge sees success evidence or page confirmation",
+  /judge[\s\S]{0,220}(success evidence|success\/thank-you\/submitted|page confirmation|成功证据|确认)/i,
+  "README should explain success is marked only after cloud judge sees success evidence or page confirmation",
 );
 
 assert.match(
@@ -390,19 +383,9 @@ assert.match(
   "README should explain success is not determined by a fixed timer",
 );
 
-assert.match(envExample, /^DEEPSEEK_API_KEY=/m, ".env.example should include DEEPSEEK_API_KEY=");
-
-assert.match(
-  envExample,
-  /^DEEPSEEK_BASE_URL=https:\/\/api\.deepseek\.com$/m,
-  ".env.example should include the DeepSeek base URL",
-);
-
-assert.match(
-  envExample,
-  /^DEEPSEEK_MODEL=deepseek-v4-pro$/m,
-  ".env.example should default to deepseek-v4-pro",
-);
+assert.match(envExample, /^EXTERNALLINK_CLOUD_URL=/m, ".env.example should include the Worker endpoint for one-time migration");
+assert.match(envExample, /^EXTERNALLINK_CLOUD_TOKEN=/m, ".env.example should include the one-time migration device key");
+assert.doesNotMatch(envExample, /^DEEPSEEK_API_KEY=/m, "DeepSeek credentials belong in Worker Secrets, not a local .env");
 
 assert.match(
   content,

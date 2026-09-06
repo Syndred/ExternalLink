@@ -1,6 +1,6 @@
 ---
 name: external-link-operator
-description: Operate the ExternalLink multi-site submission workflow, including ordinary directory submissions, one-off launches such as Product Hunt, Luna delegation, automatic media discovery from local project public folders, success-evidence validation, and synchronization of the private Google Sheet with the Chrome runtime and submission ledger. Use when asked to submit, continue, audit, reconcile, or report external-link listings for any managed website.
+description: Operate the ExternalLink multi-site submission workflow, including ordinary directory submissions, one-off launches such as Product Hunt, Luna delegation, R2 media resolution, success-evidence validation, and synchronization of the Neon-backed Cloudflare data center with the Chrome runtime and submission ledger. Use when asked to submit, continue, audit, reconcile, or report external-link listings for any managed website.
 ---
 
 # External Link Operator
@@ -9,9 +9,9 @@ Operate the ExternalLink workflow from `/Users/syndred/Desktop/projects/External
 
 ## Load context
 
-1. Read `PROJECT_CONTEXT.md`, `git status --short`, and the current private Google Sheet snapshot/status when configured. Use a handoff JSON only for first-install recovery or disaster-backup inspection.
+1. Read `PROJECT_CONTEXT.md`, `git status --short`, and the connected Cloud data center status. Use a handoff JSON only for first-install recovery or disaster-backup inspection.
 2. Read [references/operating-policy.md](references/operating-policy.md) before any live submission.
-3. Read [references/data-model.md](references/data-model.md) before changing records or reconciling the Google Sheet.
+3. Read [references/data-model.md](references/data-model.md) before changing records or reconciling the cloud snapshot.
 4. Read [references/media-resolution.md](references/media-resolution.md) when a form requests a logo, featured image, screenshot, or other upload.
 5. Preserve unrelated working-tree changes and use focused commits.
 
@@ -19,16 +19,16 @@ Operate the ExternalLink workflow from `/Users/syndred/Desktop/projects/External
 
 Use purpose-built access first:
 
-1. Use the Google Sheets/Drive connector for structured reads and writes when connected; otherwise use the local Agent's OAuth-backed Google Sheet sync. The configured private spreadsheet is the only human-maintained source.
-2. Use the ExternalLink extension for queue construction, standard field mapping, media normalization, runtime cache, and its success-ledger outbox.
+1. Use the ExternalLink Cloudflare Worker for canonical Neon state and R2 media. The connected workspace is the only human-maintained source.
+2. Use the ExternalLink extension for queue construction, standard field mapping, media normalization, runtime cache, and immediate cloud persistence.
 3. Use Computer Use for live pages, login selectors, custom widgets, unsupported sites, and authoritative result checks.
 4. Delegate bounded preparation and audit work to the configured `luna_worker`; never let two agents control the same browser or tab concurrently.
 
 ## Run the workflow
 
-1. Select one or more stable Profile IDs and requested destinations from the latest Google Sheet snapshot.
-2. Pull and preview the private Google Sheet before building a queue. Apply profile, destination, and site-annotation changes to the extension's `chrome.storage.local` runtime cache only after the preview is reviewed.
-3. Reconcile the runtime ledger and pending outbox with the Google Sheet `Submission Records` tab before building a queue:
+1. Select one or more stable Profile IDs and requested destinations from the latest cloud snapshot.
+2. Pull the connected cloud workspace before building a queue when another device may have changed it. The extension writes local edits back automatically.
+3. Reconcile the runtime ledger with the cloud `submissionRecords` document before building a queue:
 
    ```bash
    node skills/external-link-operator/scripts/audit-state.mjs --profile RainbowPetAI
@@ -45,7 +45,7 @@ Use purpose-built access first:
 7. Fill all safe fields, prepare/upload media, and verify required fields, lengths, categories, URLs, and visible media previews.
 8. Submit an ordinary free listing after the complete preflight passes. Apply the action-time gates in the operating policy.
 9. Capture authoritative evidence. A filled form, lack of errors, timer, or button click is not success.
-10. Record success using the exact destination/Profile pair in the extension ledger. The record must enter the outbox and be pushed to the private Sheet's `Submission Records` tab. The deterministic handoff recorder below is for first-install migration or disaster-backup repair only, not the normal sync path:
+10. Record success using the exact destination/Profile pair in the extension ledger. The changed ledger and timeline are saved to the cloud workspace automatically. The deterministic handoff recorder below is for first-install migration or disaster-backup repair only, not the normal sync path:
 
    ```bash
    node skills/external-link-operator/scripts/record-success.mjs \
@@ -57,16 +57,16 @@ Use purpose-built access first:
      --write
    ```
 
-11. Flush the acknowledged outbox to `Submission Records`; do not rewrite `Table.xlsx`, `extension/table-library.json`, handoff JSON, or the workbook after every submission. Those artifacts are for first-install seeding, migration, or disaster backup only. Set `IndexPage` only after a public listing resolves.
+11. Confirm the cloud write succeeds; do not rewrite `Table.xlsx`, `extension/table-library.json`, handoff JSON, or a workbook after every submission. Those artifacts are for first-install seeding, migration, or disaster backup only. Set `IndexPage` only after a public listing resolves.
 12. Re-run the audit and task-specific tests. Report submitted, under review, published, parked, paid, skipped, and unconfirmed outcomes separately.
 
 ## Enforce success integrity
 
 - Use `destinationKey + profileId` as the permanent success key.
-- Treat the private Google Sheet as the only human-maintained source for profiles, destinations, and manual site classifications. `chrome.storage.local` is the extension's runtime cache/local persistence, not a second manual source.
-- Treat `submissionRecords` as the permanent success ledger. A verified success is written locally, queued in the outbox, and acknowledged only after it is written to the Sheet `Submission Records` tab.
+- Treat the connected Neon workspace as the only human-maintained source for profiles, destinations, manual site classifications, and timeline notes. `chrome.storage.local` is an offline runtime cache, not a second manual source.
+- Treat `submissionRecords` as the permanent success ledger. A verified success is written locally and persisted to the cloud; the extension shows its exact `publicationStatus` separately.
 - `Table.xlsx`, `extension/table-library.json`, and exported/交接 JSON are first-install seeds or disaster backups; they are not required to be edited on every synchronization.
-- Ignore the legacy `Link Submit.Submit` column as permanent success truth. It is a historical site-level flag and cannot prove a `destinationKey::profileId` success; use explicit `Submission Records` evidence instead.
+- Ignore the legacy imported `Link Submit.Submit` field as permanent success truth. It is historical site-level metadata and cannot prove a `destinationKey::profileId` success; use explicit `submissionRecords` evidence instead.
 - Canonicalize known aliases with `references/destination-aliases.json` so a root URL and `/submit` do not double count one platform.
 - Preserve stronger existing evidence; never overwrite an existing success merely because a seed row says `submitted`.
 - Record `confirmedBy: agent` only from visible success evidence and `confirmedBy: manual` only from an explicit user confirmation.
@@ -81,7 +81,7 @@ Community platforms may distinguish a logged-in account from a post-enabled acco
 
 ## Finish
 
-- Update `PROJECT_CONTEXT.md`, `docs/进度.md`, and the dated progress/report note when workflow state changes; do not treat those notes or backup artifacts as a replacement for the private Sheet.
+- Update `PROJECT_CONTEXT.md`, `docs/进度.md`, and the dated progress/report note when workflow state changes; do not treat those notes or backup artifacts as a replacement for the cloud workspace.
 - Validate the Skill with the bundled Skill validator after editing it.
 - Forward-test material Skill revisions with a fresh Luna task that receives the Skill path and a realistic read-only prompt.
 - Do not claim live behavior from static tests alone.

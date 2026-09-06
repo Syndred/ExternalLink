@@ -14,6 +14,7 @@
     "timelineSchemaVersion",
     "submissionSchemaVersion",
     "siteAnnotations",
+    "deletedSubmissionKeys",
     "urlList",
     "sheetTableData",
     "domainBlacklist",

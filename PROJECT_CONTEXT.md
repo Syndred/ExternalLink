@@ -1,18 +1,24 @@
 # PROJECT_CONTEXT
 
-> 最后更新：2026-09-06｜扩展 2.9.3｜路线：混合 C
-> `Link Submit` 现表头 Link / SubmitProject / Submit / Time / Record / Detail；同步已按此读取。
+> 最后更新：2026-09-06｜扩展 3.0.0｜路线：云端单一数据源
+> 历史 `Link Submit` 字段已作为首迁移快照保留；日常不再与 Google Sheet 同步。
 > 完整进度见 [`进度.md`](进度.md) / [`docs/进度.md`](docs/进度.md)。
 > 今晚中断详见 [`docs/外链提交报告-2026-08-26.md`](docs/外链提交报告-2026-08-26.md)。
 > 2026-09-05 全自动差距评估见对话画布 `automation-gap`。
 
 ## 当前已完成
 
+- **3.0.0 云端数据中心（首次扩展迁移待执行）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`，其 `/v1/health` 已用设备密钥回读 `ok:true`。R2 bucket `externallink-media` 已创建。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
+- **云端唯一真相源**：连接后，外链库完整字段、Profile、提交账本、时间线、备注、分类和运营状态会自动写入 Neon；Logo/截图以私有 R2 对象保存，并以 `cloud-media://` 引用供填表时读取。首次迁移仍保留 `table-library.json` 只作为离线首装/灾备快照，绝不再读 Google 或启动本机 Agent。
+- **本地服务和 Google 同步已移除**：扩展源代码、manifest、Settings、Popup、Side Panel 都不再调用本地 Agent 或 Google OAuth；旧 Python Agent、Google 同步模块、启动脚本、依赖与相关测试已删除。`sheetTableData` 名称仅为兼容既有导入数据，实际是云端外链字段文档。
+
+### 3.0 前历史能力（仅用于解释首迁移来源）
+
 - **2.9.3 快速动态与单列运营视图**：固定扩展图标右键菜单新增“打开 ExternalLink 设置”；侧边栏会按当前外链站展示最多 8 条最新动态（按 Profile 区分提交、审核、上线、拒绝、跟进、笔记与证据链接），标签页切换、账本/时间线变化均自动刷新。查询只请求当前 URL 对应条目，不把 2,905 条库数据传到侧边栏。外链库改为每行一张全宽卡片，让状态、时间、Record、Detail 与备注使用横向空间。
 - **2.9.2 表格快照内置**：已把 2026-09-05 真实 Google Sheet 快照（6 个项目、2,905 个外链站、29 条核验提交记录）更新为扩展离线种子；扩展重载后自动采用比运行缓存更新的内置版本，不再要求首次点击“应用同步”。按钮改为“检查 Google 更新 / 更新本地缓存”，更新本地缓存不再顺带回写 Google，避免读写边界混淆。
 - **2.9.1 离线查看与运营筛选修正**：打开 Settings 只读 `chrome.storage.local`，不再自动请求 `127.0.0.1:8790`；断开 Google 或 Agent 未运行时仍优先使用已应用的完整 Sheet 缓存。外链库新增“表格有提交动作（未核验）/已提交/待确认收录/待审核/待跟进/已收录/被拒绝/疑似丢链/未提交”进度筛选；卡片首屏常显入口 URL、提交项目、当前进度、提交时间、最近动态、Record 和 Detail。自动检查默认关闭，并明确标注只有该能力需要 Agent 常驻。
 - **2.9.0 表格全字段与外链动态时间线**：`Link Submit` 每行全部原始列、Record、Detail、行号均进入卡片；每个 Profile 子表的全部 Field / Content / Notes 均保留并可编辑。每张外链卡片按 Profile 展示追加式时间线，可记录精确提交时间、待审核、上线、拒绝、需跟进、链接失效和笔记；旧成功账本与表格历史会幂等迁移。备份已包含时间线与 Sheet 快照，无需另建远程数据库。
-- Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、local_agent。
+- Chrome MV3：Side Panel 主 UI、Settings、Background 调度、Content 填表、Cloudflare Worker。
 - **2.8.2 Settings 外链库**：只有外链库页左右分栏（列表 + 同步）；网站资料/全局配置仍是顶部菜单。卡片一行两条，质量分写清楚，只显示已提交记录。
 - **2.8.0 补齐外链运营闭环**（代码、本机 Agent 与 Google Sheet 已验收；Chrome 运行缓存待重载后应用）：
   1. **机会质量分**：结合 DR/DA、流量、Spam、dofollow、indexable、相关性、域名年龄和复核时间生成 0–100 分；外链库可筛选/排序，队列可设置最低分闸门。
@@ -25,9 +31,9 @@
   2. **本地图库上传注入**：`GET /media/list` + `/media/file` 读 `/Users/syndred/Desktop/projects/media/{Profile}/`；`File` + `DataTransfer` 赋给 `input[type=file]`，绕开系统文件选择器与 CORS。
   3. **提交前目标闸门**：域名黑名单（支持 `.suffix` / `*`）、RDAP 域名年龄缓存、`prescanPage` 的 dofollow 预估（优先看既有评论外链）；Settings「全局配置」可改阈值并一键预取队列年龄。
   4. **手动填充图标**：只在评论/目录提交表单页显示蓝色 `EL`；一点即用当前 Profile 填该字段。搜索框、登录框、普通网页不再挂图标。设置里可关「在评论/提交表单旁显示手动填充图标」。
-- 私有 Google Sheet 是网站资料、外链库和人工分类的唯一维护入口；`chrome.storage.local` 是运行缓存与本地成功账本，成功后通过 outbox 自动回写 Sheet。
-- `Table.xlsx` / `table-library.json` 只保留为首次安装与离线回滚种子，不再要求日常双处更新。
-- Settings 已提供 Google 连接、只读检查、更新本地缓存、待同步账本回写和断开入口；OAuth refresh token 仅由本机 Agent 的系统钥匙串或仓库外 0600 文件保存。
+- Neon 工作区是网站资料、外链库、人工分类、账本与时间线的唯一维护入口；`chrome.storage.local` 只是离线运行缓存，变更会自动写入云端。
+- `Table.xlsx` / `table-library.json` 只保留为首次安装、首迁移与离线回滚种子，不再要求日常双处更新。
+- Settings 提供云端 Worker 连接、首次迁移、云端回读与手动推送；访问密钥只在 Cloudflare Secret 和当前 Chrome 本地扩展配置中保存。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
 - 当前 Table 同步结果：6 个 Profile（含 VideoToArticleAI）、59 条 canonical 外链；RainbowPetAI 历史成功 10 条；VideoToArticleAI 2026-08-24 已确认免费成功 7 条。
@@ -66,7 +72,7 @@
 | `selectedSiteIds`    | 最近一次批量多选                                |
 | `submissionRecords`  | v2 永久成功账本                                 |
 | `submissionTimeline` | 外链站 × Profile 的追加式提交、审核与跟进动态  |
-| `sheetTableData`     | 全字段 Sheet 运行快照与原始行数据               |
+| `sheetTableData`     | 全字段迁移库与原始行数据（变量名兼容历史）      |
 | `siteAnnotations`    | 外链站级分类与临时闸门                          |
 | `activeBatchRun`     | 仅恢复 running / waiting_manual / paused 的批次 |
 | `urlList`            | 自定义外链，新增/置顶项排在最前                 |
@@ -74,7 +80,8 @@
 | `targetFilters`      | 年龄阈值、AI 评论/图标开关等                    |
 | `domainMetricsCache` | RDAP 年龄查询缓存                               |
 | `linkMonitorResults` | 已发布外链的最近复查结果                       |
-| `sheetPendingPreview`| Sheet 定时检查发现的待人工应用预览             |
+| `cloudSyncConfig`    | Worker 地址、工作区和设备访问密钥               |
+| `cloudSyncMetadata`  | 云端文档版本、最近回读/写入时间                 |
 
 ## 关键文件
 
@@ -84,13 +91,14 @@ extension/lib/opportunity-score.js # 0–100 外链机会质量评分
 extension/lib/scheduler.js   # 同站续跑、并发位、稳定游标
 extension/lib/backup.js      # 账本、时间线与 Sheet 快照备份校验与合并
 extension/lib/submission-timeline.js # 追加式时间线、迁移、当前状态派生
-extension/lib/sheet-sync.js  # Sheet 预览、证据优先合并与回写 outbox
-extension/background.js      # 调度、评论草稿、本地媒体、域名指标、prescan/评论预览代理
+cloud/worker/                # Worker、Neon schema、R2 媒体接口
+extension/lib/cloud-sync.js  # 云端工作区数据合同、版本与媒体引用
+extension/background.js      # 调度、评论草稿、云端媒体、域名指标、prescan/评论预览代理
 extension/content.js         # 填表、AI 评论、DataTransfer 上传、手动图标、prescan
 extension/sidepanel.*        # 执行工作台（洞察卡 + 工具栏 + 评论工作室）/ 批量 / 待人工
 extension/settings.*         # Profile / 外链库 / 备份 / 闸门与助手配置
-local_agent/server.py        # /plan /comment /media/* /domain/metrics /google/*
-tools/import_table_xlsx.py   # 按工作表解析 Profile、媒体、外链和历史记录
+tools/migrate-media-to-r2.mjs # 首迁移上传本机媒体到私有 R2
+tools/import_table_xlsx.py   # 首迁移时按工作表解析 Profile、媒体、外链和历史记录
 DESIGN.md                    # UI 基础规则
 tests/*workflow.test.mjs     # 队列、调度、备份和 UI 行为测试
 tests/local-agent-unit.test.py
@@ -98,10 +106,9 @@ tests/local-agent-unit.test.py
 
 ## 验证状态
 
-- 已通过全部 Node 测试、四个扩展脚本语法检查、`git diff --check` 和 Python 42 个 local_agent 单元测试。
+- 已通过云同步/Worker 核心/UI/媒体 Node 测试、扩展脚本语法检查和 `git diff --check`；云端 Worker 已真实部署、健康检查已通过。
 - Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
-- 本机 Agent 已用新代码重启：`/media/list` 回读 6 个 Profile、31 个文件；Google OAuth 已授权，快照为 6 / 2,905 / 29 / 0。
-- **Chrome 仍需在扩展管理页重新加载 2.9.1。已有缓存可直接离线查看；只有要从 Google Sheet 拉取新改动或回写记录时才需临时启动本机 Agent。自动化工具因 `chrome-extension://` 安全策略无法直接接管该页，未将此项冒充为已验收。**
+- 首迁移源已确认包含 6 个 Profile、2,905 个外链站、29 条核验提交记录和 30 个支持的本机媒体文件；媒体脚本 dry-run 已通过。**Chrome 仍需重载 3.0.0 并在设置页完成一次「连接云端 → 首次迁移」；浏览器安全策略禁止自动打开 `chrome-extension://` 设置页，因此这一步尚未伪称完成。**
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 2026-09-05 2.8.1 半自动补齐
@@ -115,10 +122,10 @@ tests/local-agent-unit.test.py
 ## 后续边界
 
 - **2.8.0 已内置三候选 AI 评论**，社区/论坛候选可小流量试投，但仍人工确认成功。
-- `Link Submit` 仍是 Google 表格对象 `表格_1`（深绿表头）。表头：**Link / SubmitProject / Submit / Time / Record / Detail**。`Record`+`Detail` 进备注，文中的 DR/DA 进质量分。`Submit` 勾选不当成功。`SubmitProject` 下拉：**VideoToArticleAI / RainbowPet / OldPhotoLive / RSPAI / GraffitiName / TextComparison**。
+- 首迁移完成前，保留历史 `Link Submit` 快照与 JSON 备份作为只读灾备；完成后以 Neon 工作区为准。`Submit` 历史勾选不当成功，永久跳过仍只认 `submissionRecords` 证据。
 - 不破解验证码、不绕过付费墙；仅明确成功证据或人工确认打勾。
 - 提交时同一时间只保留 1 个工作页签；验证码最多留 1–2 个。
 - 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。
-- 打开过的行都要写 **Time**；验证码/付费写 `Note` 后继续，不要停等。
-- 本地图库：`/Users/syndred/Desktop/projects/media/{Profile}/`。必填上传走 Agent `/media/file` + DataTransfer；iframe 内上传仍进不去。可用 `EXTERNALLINK_MEDIA_ROOT` 改根目录。
-- **使用前**：本机 Agent 已运行；chrome://extensions 重载 **2.8.1**，Settings → 外链库执行“预览同步 → 应用同步”，再检查本地图库、队列质量闸门和标准评论代点开关（默认关）。
+- 新提交、审核、收录、拒绝和跟进都写入时间线；设备间以文档版本冲突保护，冲突时先从云端回读。
+- 媒体首迁移后由 R2 私有保存；表单上传走 Worker 读取 + `File` / `DataTransfer`，不用启动本地服务。
+- **使用前**：重载扩展 **3.0.0**，连接一次云端数据中心并完成首迁移，再检查队列质量闸门和标准评论代点开关（默认关）。

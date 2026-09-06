@@ -15,13 +15,13 @@ const dataModelText = await fs.readFile(
   path.resolve("skills/external-link-operator/references/data-model.md"),
   "utf8",
 );
-assert.match(skillText, /private Google Sheet as the only human-maintained source/);
-assert.match(skillText, /queued in the outbox.*Sheet `Submission Records`/);
-assert.match(skillText, /legacy `Link Submit\.Submit` column as permanent success truth/);
-assert.match(dataModelText, /私有 Google Sheet（唯一人工维护源）/);
+assert.match(skillText, /connected Neon workspace as the only human-maintained source/);
+assert.match(skillText, /persisted to the cloud/);
+assert.match(skillText, /legacy imported `Link Submit\.Submit` field as permanent success truth/);
+assert.match(dataModelText, /Canonical data center: Neon PostgreSQL/);
 assert.match(dataModelText, /chrome\.storage\.local/);
 assert.match(dataModelText, /not a per-submission maintenance target/);
-assert.match(dataModelText, /legacy `Submit` column.*permanent success source/);
+assert.match(dataModelText, /legacy imported `Link Submit\.Submit` field.*permanent success/);
 
 const audit = await auditState({ profile: "RainbowPetAI" });
 assert.equal(audit.ok, true);

@@ -7,6 +7,7 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
   "timelineSchemaVersion",
   "submissionSchemaVersion",
   "siteAnnotations",
+  "deletedSubmissionKeys",
   "urlList",
   "sheetTableData",
   "domainBlacklist",

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
+const background = readFileSync("extension/background.js", "utf8");
+
 const context = { self: {}, URL };
 vm.createContext(context);
 vm.runInContext(readFileSync("extension/lib/cloud-sync.js", "utf8"), context);
@@ -34,6 +36,7 @@ const state = {
     ],
   },
   siteAnnotations: { "directory.example": { status: "needs_followup" } },
+  deletedSubmissionKeys: ["removed.example"],
   urlList: "https://directory.example",
   targetFilters: { aiComments: true },
   activeBatchRun: null,
@@ -41,6 +44,7 @@ const state = {
 const documents = C.stateToDocuments(state);
 assert.equal(documents.siteProfiles.RainbowPetAI.id, "RainbowPetAI");
 assert.equal(documents.submissionTimeline["directory.example::RainbowPetAI"][0].id, "event-1");
+assert.deepEqual(JSON.parse(JSON.stringify(documents.deletedSubmissionKeys)), ["removed.example"]);
 assert.equal(Object.hasOwn(documents, "googleSheetId"), false, "Google credentials are never migrated");
 
 const restored = C.documentsToState(documents);
@@ -68,5 +72,9 @@ assert.deepEqual(
 assert.equal(C.isCloudMediaRef("cloud-media://logo-a"), true);
 assert.equal(C.isCloudMediaRef("/Users/syndred/Desktop/projects/media/RainbowPetAI/logo.png"), false);
 assert.equal(C.cloudMediaAssetId("cloud-media://folder/logo-a"), "folder/logo-a");
+assert.match(background, /source: "cloud-cache"/, "cloud state takes precedence over the bundled first-run snapshot");
+assert.doesNotMatch(background, /selectCachedTableData/, "the live data flow no longer selects a Google Sheet cache");
+assert.match(background, /cloudSyncIgnoredValues/, "pulled values must be ignored by value, not by a stale key marker");
+assert.match(background, /scheduleCloudSyncRetry/, "temporary cloud save failures must retry");
 
 console.log("cloud sync workflow tests passed");

@@ -127,6 +127,11 @@ function safeMediaIndex(value) {
   return index;
 }
 
+async function sha256Hex(bytes) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function parseModelJson(content) {
   const raw = String(content || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   const start = raw.indexOf("{");
@@ -404,23 +409,37 @@ async function router(request, env) {
     if (!STATE_DOCUMENT_KEYS.includes(key)) return json({ ok: false, error: "不支持的状态文档" }, { status: 404 });
     const input = await requestJson(request);
     const docs = normalizeDocuments({ [key]: input.data });
+    const expectedRevision = Number(input.revision);
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
+      return json({ ok: false, error: "状态文档缺少有效版本号" }, { status: 400 });
+    }
     const currentRows = await sql`
       select data, revision from externallink_workspace_documents
       where workspace_id = ${workspaceId} and document_key = ${key}
     `;
     const current = currentRows[0] || null;
-    const expectedRevision = Number(input.revision);
-    if (Number.isFinite(expectedRevision) && expectedRevision > 0 && Number(current?.revision || 0) !== expectedRevision) {
-      return json({ ok: false, error: "云端数据已被其他客户端更新", revision: Number(current?.revision || 0), data: current?.data }, { status: 409 });
-    }
     await ensureWorkspace(sql, workspaceId);
     const rows = await sql`
       insert into externallink_workspace_documents (workspace_id, document_key, data)
       values (${workspaceId}, ${key}, ${JSON.stringify(docs[key])}::jsonb)
       on conflict (workspace_id, document_key) do update
         set data = excluded.data, revision = externallink_workspace_documents.revision + 1, updated_at = now()
+        where externallink_workspace_documents.revision = ${expectedRevision}
       returning revision, updated_at
     `;
+    if (!rows[0]) {
+      const latestRows = await sql`
+        select data, revision from externallink_workspace_documents
+        where workspace_id = ${workspaceId} and document_key = ${key}
+      `;
+      const latest = latestRows[0] || null;
+      return json({
+        ok: false,
+        error: "云端数据已被其他客户端更新",
+        revision: Number(latest?.revision || 0),
+        data: latest?.data,
+      }, { status: 409 });
+    }
     if (key === "submissionTimeline") {
       for (const audit of timelineAuditRows(current?.data || {}, docs[key])) {
         await sql`
@@ -450,6 +469,7 @@ async function router(request, env) {
     const fileName = safeAssetName(request.headers.get("X-Asset-Name"), assetId);
     const sha256 = String(request.headers.get("X-Asset-Sha256") || "").trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error("媒体缺少有效的 SHA-256 校验值");
+    if ((await sha256Hex(bytes)) !== sha256) throw new Error("媒体 SHA-256 校验不匹配");
     const profileId = safeProfileId(request.headers.get("X-Profile-Id"));
     const mediaKind = safeMediaKind(request.headers.get("X-Media-Kind"));
     const mediaIndex = safeMediaIndex(request.headers.get("X-Media-Index"));

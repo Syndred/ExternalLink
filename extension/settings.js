@@ -75,6 +75,13 @@
     const result = await chrome.runtime.sendMessage({ action: "cloudSyncStatus" });
     if (!result?.ok) throw new Error(result?.error || "读取云端状态失败");
     const config = result.config || {};
+    const migrateButton = $("btnCloudMigrate");
+    if (migrateButton) {
+      const migrated = Boolean(config.migratedAt);
+      migrateButton.disabled = migrated;
+      migrateButton.textContent = migrated ? "首迁移已完成" : "首次迁移到云端";
+      migrateButton.title = migrated ? "状态和媒体首迁移已完成，日常由云端自动保存" : "仅首次安装或灾备恢复时使用";
+    }
     if ($("cloudWorkerEndpoint")) $("cloudWorkerEndpoint").value = config.endpoint || "";
     if ($("cloudAccessToken") && config.accessToken) $("cloudAccessToken").value = config.accessToken;
     if ($("cloudWorkspaceId")) $("cloudWorkspaceId").value = config.workspaceId || "default";

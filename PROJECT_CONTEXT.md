@@ -33,7 +33,7 @@
   4. **手动填充图标**：只在评论/目录提交表单页显示蓝色 `EL`；一点即用当前 Profile 填该字段。搜索框、登录框、普通网页不再挂图标。设置里可关「在评论/提交表单旁显示手动填充图标」。
 - Neon 工作区是网站资料、外链库、人工分类、账本与时间线的唯一维护入口；`chrome.storage.local` 只是离线运行缓存，变更会自动写入云端。
 - `Table.xlsx` / `table-library.json` 只保留为首次安装、首迁移与离线回滚种子，不再要求日常双处更新。
-- Settings 提供云端 Worker 连接、首次迁移、云端回读与手动推送；访问密钥只在 Cloudflare Secret 和当前 Chrome 本地扩展配置中保存。
+- Settings 提供云端 Worker 连接、云端回读与失败时的手动推送；首次迁移完成后按钮自动禁用，访问密钥只在 Cloudflare Secret 和当前 Chrome 本地扩展配置中保存。
 - `submissionRecords` v2 以 `destinationKey + profileId` 唯一标识成功组合。
 - 旧 `siteAnnotations[].submittedProjects` 与 Table 历史记录会幂等迁移。
 - 当前 Table 同步结果：6 个 Profile（含 VideoToArticleAI）、59 条 canonical 外链；RainbowPetAI 历史成功 10 条；VideoToArticleAI 2026-08-24 已确认免费成功 7 条。

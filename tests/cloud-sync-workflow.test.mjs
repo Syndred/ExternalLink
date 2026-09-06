@@ -79,5 +79,6 @@ assert.match(background, /cloudSyncIgnoredValues/, "pulled values must be ignore
 assert.match(background, /scheduleCloudSyncRetry/, "temporary cloud save failures must retry");
 assert.match(settings, /result\.pulledDocuments \?\? result\.totalDocuments/, "migration success must show the total cloud document count");
 assert.match(settings, /result\.resumed \? "迁移续传完成"/, "a resumed migration must not look like an empty migration");
+assert.match(settings, /migrateButton\.disabled = migrated/, "completed first migration must disable the one-time button");
 
 console.log("cloud sync workflow tests passed");

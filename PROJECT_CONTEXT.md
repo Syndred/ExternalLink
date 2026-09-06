@@ -8,7 +8,7 @@
 
 ## 当前已完成
 
-- **3.0.0 云端数据中心（状态首迁移已完成）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`。2026-09-06 首次迁移因旧实现逐条请求 Neon，超过 Cloudflare 免费 Worker 单次 50 个子请求而中断；Version `3337d930-d83e-4cda-9fab-22349d50954e` 改为单个 Neon HTTP 事务后续传成功。用户回读确认：已有状态文档无需重复写入（本次新增 0 类），105 条时间线事件已补齐；迁移调用已自动执行云端回读。R2 bucket `externallink-media` 已创建，媒体文件上传仍是剩余步骤。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
+- **3.0.0 云端数据中心（状态与媒体首迁移均已完成）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`。2026-09-06 首次迁移因旧实现逐条请求 Neon，超过 Cloudflare 免费 Worker 单次 50 个子请求而中断；Version `3337d930-d83e-4cda-9fab-22349d50954e` 改为单个 Neon HTTP 事务后续传成功。云端回读为 17 类有值文档（接口支持 21 类）、2,905 条外链、29 条提交记录、136 条当前时间线事件；续传时新增了 105 条缺失的时间线修订。R2 `externallink-media` 已实传 30 个媒体并逐个下载校验通过。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
 - **云端唯一真相源**：连接后，外链库完整字段、Profile、提交账本、时间线、备注、分类和运营状态会自动写入 Neon；Logo/截图以私有 R2 对象保存，并以 `cloud-media://` 引用供填表时读取。首次迁移仍保留 `table-library.json` 只作为离线首装/灾备快照，绝不再读 Google 或启动本机 Agent。
 - **本地服务和 Google 同步已移除**：扩展源代码、manifest、Settings、Popup、Side Panel 都不再调用本地 Agent 或 Google OAuth；旧 Python Agent、Google 同步模块、启动脚本、依赖与相关测试已删除。`sheetTableData` 名称仅为兼容既有导入数据，实际是云端外链字段文档。
 
@@ -108,7 +108,7 @@ tests/local-agent-unit.test.py
 
 - 已通过云同步/Worker 核心/UI/媒体 Node 测试、扩展脚本语法检查和 `git diff --check`；云端 Worker 已真实部署、健康检查已通过。
 - Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
-- 首迁移源已确认包含 6 个 Profile、2,905 个外链站、29 条核验提交记录和 30 个支持的本机媒体文件；状态续传和自动云端回读已由用户明确确认完成，补齐 105 条时间线事件。媒体脚本 dry-run 已通过，私有 R2 媒体实传仍待执行。
+- 首迁移和自动云端回读已完成：17 类有值文档、7 个当前 Profile（含 1 个用户新增 Profile）、6 个表格项目、2,905 个外链站、29 条核验提交记录、76 组/136 条当前时间线。6 个有整理媒体的 Profile 已上传 30 个 R2 对象（6 Logo、24 截图）；30/30 可下载，SHA-256、大小、Profile 引用和迁移字段引用全部一致。
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 2026-09-05 2.8.1 半自动补齐
@@ -128,4 +128,4 @@ tests/local-agent-unit.test.py
 - 目标：Video **30/30**；RainbowPet **12/30**（下拉用 **RainbowPet**）；OldPhotoLive **6/30**。电话 `+8615766379321`。
 - 新提交、审核、收录、拒绝和跟进都写入时间线；设备间以文档版本冲突保护，冲突时先从云端回读。
 - 媒体首迁移后由 R2 私有保存；表单上传走 Worker 读取 + `File` / `DataTransfer`，不用启动本地服务。
-- **使用前**：重载扩展 **3.0.0**，连接一次云端数据中心并完成首迁移，再检查队列质量闸门和标准评论代点开关（默认关）。
+- **使用前**：重载扩展 **3.0.0**；云端连接、状态首迁移和媒体首迁移已完成，只需检查队列质量闸门和标准评论代点开关（默认关）。

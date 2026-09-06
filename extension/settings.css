@@ -7,7 +7,7 @@
   padding-right: clamp(16px, 2.5vw, 36px);
 }
 
-#panel-sites {
+#panel-sites.panel.active {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   gap: 16px;
@@ -27,14 +27,48 @@
   margin-bottom: 0;
 }
 
-#panel-sites .site-editor-card > .form-row,
-#panel-sites .site-editor-card > .section-title,
-#panel-sites .site-editor-card > .profile-fields,
-#panel-sites .site-editor-card > .btn-primary {
-  min-width: 0;
+.site-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
 }
 
-#panel-config {
+.site-editor-section {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #111827;
+}
+
+.site-editor-section > .section-title:first-child {
+  margin-top: 0;
+}
+
+#panel-sites .site-editor-card > .btn-primary {
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.logo-upload-row input[type="file"] {
+  min-width: 0;
+  color: #94a3b8;
+}
+
+.logo-upload-row input[type="file"]::file-selector-button {
+  min-height: 38px;
+  margin-right: 10px;
+  padding: 7px 12px;
+  border: 1px solid #475569;
+  border-radius: 7px;
+  background: #334155;
+  color: #e2e8f0;
+  font: inherit;
+  cursor: pointer;
+}
+
+#panel-config.panel.active {
   display: grid;
   grid-template-columns: minmax(360px, 1.25fr) minmax(300px, 1fr) minmax(300px, 1fr);
   gap: 16px;
@@ -57,7 +91,7 @@
 
 .media-gallery {
   display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
   padding: 10px;
@@ -470,7 +504,7 @@
 
 .profile-field-row {
   display: grid;
-  grid-template-columns: minmax(130px, 0.7fr) minmax(220px, 1.5fr) minmax(150px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   align-items: start;
   padding: 8px;
@@ -480,7 +514,7 @@
 }
 
 .profile-field-name {
-  padding-top: 10px;
+  padding-top: 0;
   color: #bae6fd;
   font-size: 12px;
   font-weight: 600;
@@ -688,13 +722,21 @@
 }
 
 @media (max-width: 1100px) {
-  #panel-sites,
-  #panel-config {
+  #panel-sites.panel.active,
+  #panel-config.panel.active {
     grid-template-columns: 1fr;
   }
 
   #panel-sites .site-source-card {
     position: static;
+  }
+
+  .site-editor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-editor-section.rules {
+    grid-column: 1 / -1;
   }
 
   #panel-config .config-general-card,
@@ -726,6 +768,14 @@
 }
 
 @media (max-width: 560px) {
+  .site-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-editor-section.rules {
+    grid-column: auto;
+  }
+
   .media-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

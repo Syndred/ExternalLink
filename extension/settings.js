@@ -105,7 +105,9 @@
   function setActivePanel(name) {
     document.body.dataset.panel = name;
     document.querySelectorAll(".tab").forEach((tab) => {
-      tab.classList.toggle("active", tab.dataset.panel === name);
+      const active = tab.dataset.panel === name;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
     });
     document.querySelectorAll(".panel").forEach((panel) => {
       panel.classList.toggle("active", panel.id === `panel-${name}`);

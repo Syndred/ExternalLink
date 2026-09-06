@@ -11,7 +11,7 @@
 - **3.0.0 云端数据中心（状态与媒体首迁移均已完成）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`。2026-09-06 首次迁移因旧实现逐条请求 Neon，超过 Cloudflare 免费 Worker 单次 50 个子请求而中断；Version `3337d930-d83e-4cda-9fab-22349d50954e` 改为单个 Neon HTTP 事务后续传成功。云端回读为 17 类有值文档（接口支持 21 类）、2,905 条外链、29 条提交记录、136 条当前时间线事件；续传时新增了 105 条缺失的时间线修订。R2 `externallink-media` 已实传 30 个媒体并逐个下载校验通过。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
 - **云端唯一真相源**：连接后，外链库完整字段、Profile、提交账本、时间线、备注、分类和运营状态会自动写入 Neon；Logo/截图以私有 R2 对象保存，并以 `cloud-media://` 引用供填表时读取。首次迁移仍保留 `table-library.json` 只作为离线首装/灾备快照，绝不再读 Google 或启动本机 Agent。
 - **本地服务和 Google 同步已移除**：扩展源代码、manifest、Settings、Popup、Side Panel 都不再调用本地 Agent 或 Google OAuth；旧 Python Agent、Google 同步模块、启动脚本、依赖与相关测试已删除。`sheetTableData` 名称仅为兼容既有导入数据，实际是云端外链字段文档。
-- **设置页横向资料视图**：网站资料桌面端使用全宽左侧站点操作栏 + 右侧资料编辑区；全局配置使用横向三栏，窄窗口自动回退单栏。Logo/4 张截图直接读取云端 R2 预览；“原始表格字段（兼容保留）”默认折叠，完整 Field / Content / Notes 仍保留。
+- **设置页横向资料视图**：网站资料桌面端使用左侧站点操作栏 + 右侧“基本信息 / 内容描述 / 锚文本规则”三栏资料区；全局配置使用横向三栏。宽度低于 1100px 时逐步收为两栏/单栏，低于 560px 时收为单栏。已修复网格选择器覆盖 `.panel { display: none; }` 导致三个标签页同时显示、顶部按钮看似失效的问题；网格只在对应 `.panel.active` 时启用。Logo/4 张截图直接读取云端 R2 预览；“原始表格字段（兼容保留）”默认折叠，完整 Field / Content / Notes 仍保留。
 
 ### 3.0 前历史能力（仅用于解释首迁移来源）
 

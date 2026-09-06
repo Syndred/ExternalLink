@@ -293,16 +293,18 @@
         填表请使用浏览器右侧<strong>常驻侧边栏</strong>（点击扩展图标打开）。在此配置网站资料后，侧边栏点「填入网站资料」即可。
       </div>
 
-      <div class="tabs">
-        <button class="tab active" data-panel="sites">网站资料</button>
-        <button class="tab" data-panel="library">外链库</button>
-        <button class="tab" data-panel="config">全局配置</button>
+      <div class="tabs" role="tablist" aria-label="设置分类">
+        <button class="tab active" id="tab-sites" type="button" role="tab" data-panel="sites" aria-controls="panel-sites" aria-selected="true">网站资料</button>
+        <button class="tab" id="tab-library" type="button" role="tab" data-panel="library" aria-controls="panel-library" aria-selected="false">外链库</button>
+        <button class="tab" id="tab-config" type="button" role="tab" data-panel="config" aria-controls="panel-config" aria-selected="false">全局配置</button>
       </div>
 
       <!-- 网站资料 -->
       <div
         class="panel active"
         id="panel-sites"
+        role="tabpanel"
+        aria-labelledby="tab-sites"
       >
         <div class="card site-source-card">
           <div class="site-toolbar">
@@ -356,6 +358,8 @@
         </div>
 
         <div class="card site-editor-card">
+          <div class="site-editor-grid">
+            <section class="site-editor-section basics">
           <div class="section-title">基本信息</div>
           <div class="form-row">
             <label>站点名称</label>
@@ -436,6 +440,9 @@
             </div>
           </div>
 
+            </section>
+            <section class="site-editor-section content">
+
           <div class="section-title">内容描述</div>
           <div class="form-row">
             <label>短描述（20-30 词）</label>
@@ -498,6 +505,9 @@
             <label>不要写的内容</label>
             <textarea id="siteAvoidContent"></textarea>
           </div>
+
+            </section>
+            <section class="site-editor-section rules">
 
           <div class="section-title">锚文本规则</div>
           <div class="form-row">
@@ -564,6 +574,9 @@
             <div id="profileFieldList" class="profile-field-list"></div>
           </details>
 
+            </section>
+          </div>
+
           <button
             class="btn btn-primary"
             id="btnSaveSite"
@@ -576,6 +589,8 @@
       <div
         class="panel"
         id="panel-library"
+        role="tabpanel"
+        aria-labelledby="tab-library"
       >
         <div class="library-split">
         <div class="card library-board">
@@ -699,6 +714,8 @@
       <div
         class="panel"
         id="panel-config"
+        role="tabpanel"
+        aria-labelledby="tab-config"
       >
         <div class="card config-general-card">
           <div class="form-row">

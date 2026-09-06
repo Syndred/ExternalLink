@@ -93,9 +93,44 @@ assert.match(
 assert.match(settingsCss, /monitor-tag\.missing/);
 assert.match(settingsCss, /timeline-event/);
 assert.match(settingsCss, /profile-field-row/);
-assert.match(settingsCss, /#panel-sites\s*\{\s*display:\s*grid/);
-assert.match(settingsCss, /#panel-config\s*\{\s*display:\s*grid/);
 assert.match(settingsHtml, /<details class="profile-fields">/);
+assert.doesNotMatch(
+  settingsCss,
+  /#panel-(?:sites|config)\s*\{[^}]*display:\s*grid/s,
+  "inactive settings panels must remain hidden instead of overriding .panel display:none",
+);
+assert.match(
+  settingsCss,
+  /#panel-sites\.panel\.active\s*\{[^}]*display:\s*grid/s,
+  "the profile grid should only display for the active tab",
+);
+assert.match(
+  settingsCss,
+  /#panel-config\.panel\.active\s*\{[^}]*display:\s*grid/s,
+  "the global config grid should only display for the active tab",
+);
+assert.match(settingsHtml, /class="site-editor-grid"/, "profile fields should use a horizontal inner grid");
+assert.match(
+  settingsCss,
+  /\.site-editor-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s,
+  "the three-column editor must be allowed to shrink without horizontal overflow near the desktop breakpoint",
+);
+assert.match(
+  settingsCss,
+  /\.media-gallery\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/s,
+  "cloud media previews should fit inside the basic-info column",
+);
+assert.match(
+  settingsCss,
+  /\.profile-field-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s,
+  "legacy profile fields should remain inside the rules column when expanded",
+);
+assert.match(settingsHtml, /role="tablist"/);
+assert.match(settingsHtml, /aria-controls="panel-library"/);
+assert.match(settingsJs, /setAttribute\("aria-selected", String\(active\)\)/);
+for (const section of ["basics", "content", "rules"]) {
+  assert.match(settingsHtml, new RegExp(`class="site-editor-section ${section}"`));
+}
 
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);

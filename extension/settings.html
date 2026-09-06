@@ -283,7 +283,7 @@
         <div class="page-head-text">
           <h1>ExternalLink 设置</h1>
           <p class="subtitle">
-            网站资料与全局配置保存在本地，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
+            网站资料与全局配置保存在云端，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
           </p>
         </div>
       </div>
@@ -304,7 +304,7 @@
         class="panel active"
         id="panel-sites"
       >
-        <div class="card">
+        <div class="card site-source-card">
           <div class="site-toolbar">
             <select id="siteSelect"></select>
             <button
@@ -355,7 +355,7 @@
           <p class="hint">AI 提取在独立标签页进行，不会被网页弹窗打断。</p>
         </div>
 
-        <div class="card">
+        <div class="card site-editor-card">
           <div class="section-title">基本信息</div>
           <div class="form-row">
             <label>站点名称</label>
@@ -420,17 +420,20 @@
               hidden
             />
             <p class="hint">
-              用于目录站「Featured image」等上传字段。可上传本地图片（推荐，≤2MB）或填写 URL
+              云端已迁移的媒体会直接预览；用于目录站「Featured image」等上传字段。也可填写 URL 或上传新图片（≤2MB）。
             </p>
           </div>
           <div class="section-title">媒体</div>
           <div class="form-row">
-            <label>Screenshot 1–4（每行一个图片 URL）</label>
+            <label>Screenshot 1–4（云端引用或图片 URL，每行一个）</label>
             <textarea
               id="siteScreenshots"
               placeholder="https://example.com/screenshot-1.png&#10;https://example.com/screenshot-2.png"
             ></textarea>
-            <p class="hint">按统一媒体列表保存，填表时映射到 Screenshot 1–4。</p>
+            <p class="hint">云端引用会以缩略图显示，填表时映射到 Screenshot 1–4。</p>
+            <div class="media-gallery" id="siteMediaGallery" aria-live="polite">
+              <div class="media-gallery-empty">选择网站后读取 Logo 和截图预览…</div>
+            </div>
           </div>
 
           <div class="section-title">内容描述</div>
@@ -553,10 +556,10 @@
             </select>
           </div>
 
-          <details class="profile-fields" open>
-            <summary>迁移字段（全部保留） <span id="profileFieldCount"></span></summary>
+          <details class="profile-fields">
+            <summary>原始表格字段（兼容保留） <span id="profileFieldCount"></span></summary>
             <p class="hint">
-              这里保留对应网站子表的全部 Field / Content / Notes。已识别字段用于自动填表，其他字段也不会丢失。
+              这些字段只用于兼容旧资料和自动填表，日常优先使用上面的结构化资料。全部 Field / Content / Notes 仍会保留。
             </p>
             <div id="profileFieldList" class="profile-field-list"></div>
           </details>
@@ -697,7 +700,7 @@
         class="panel"
         id="panel-config"
       >
-        <div class="card">
+        <div class="card config-general-card">
           <div class="form-row">
             <label>邮箱（注册/评论用）</label>
             <input
@@ -776,7 +779,7 @@
           </button>
         </div>
 
-        <div class="card">
+        <div class="card config-gate-card">
           <div class="section-title">目标质量闸门</div>
           <p class="hint">
             在打开外链站之前先过滤：黑名单域名直接排除，域名年龄由云端 RDAP 查询结果判断。年龄数据只用缓存，不会在构建队列时联网。
@@ -832,7 +835,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card config-assistant-card">
           <div class="section-title">AI 评论与云端媒体</div>
           <p class="hint">
             AI 评论由云端服务生成，只有切题的草稿才会被采用；通用套话会被拒绝。R2 私有媒体用于必填上传字段，绕开系统文件选择器。

@@ -9,6 +9,7 @@
   let siteProfiles = {};
   let activeSiteId = "";
   let pendingLogoDataUrl = null;
+  let mediaPreviewToken = 0;
   let libraryItems = [];
   let libraryVisibleLimit = 200;
   const LIBRARY_PAGE_SIZE = 200;
@@ -131,6 +132,103 @@
     }
   }
 
+  function profileMediaSources(profile) {
+    const fields = profile?.fields || {};
+    const media = profile?.media || {};
+    const logo =
+      media.logo ||
+      fields["Cloud LOGO"] ||
+      media.featured ||
+      profile?.logoUrl ||
+      fields.LOGO ||
+      fields["Featured image"] ||
+      profile?.logoDataUrl ||
+      "";
+    const cloudScreenshots = [1, 2, 3, 4].map(
+      (index) => fields[`Cloud Screenshot ${index}`] || "",
+    );
+    const legacyScreenshots = [1, 2, 3, 4].map(
+      (index) => fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || "",
+    );
+    const screenshots =
+      cloudScreenshots.some(Boolean)
+        ? cloudScreenshots
+        : Array.isArray(media.screenshots) && media.screenshots.length
+          ? media.screenshots
+          : legacyScreenshots;
+    return [
+      { label: "Logo", source: logo, kind: "logo" },
+      ...screenshots.slice(0, 4).map((source, index) => ({
+        label: `截图 ${index + 1}`,
+        source,
+        kind: "screenshot",
+      })),
+    ].filter((item) => {
+      const source = typeof item.source === "object" ? item.source?.ref || item.source?.url : item.source;
+      return String(source || "").trim();
+    });
+  }
+
+  async function renderProfileMedia(profile) {
+    const gallery = $("siteMediaGallery");
+    if (!gallery) return;
+    const token = ++mediaPreviewToken;
+    gallery.replaceChildren();
+    const sources = profileMediaSources(profile);
+    if (!sources.length) {
+      const empty = document.createElement("div");
+      empty.className = "media-gallery-empty";
+      empty.textContent = "当前网站暂无 Logo 或截图";
+      gallery.append(empty);
+      return;
+    }
+    const entries = sources.map((item) => {
+      const figure = document.createElement("figure");
+      figure.className = `media-gallery-item ${item.kind}`;
+      const image = document.createElement("img");
+      image.alt = item.label;
+      image.loading = "lazy";
+      const caption = document.createElement("figcaption");
+      caption.textContent = item.label;
+      figure.append(image, caption);
+      gallery.append(figure);
+      return { item, figure, image };
+    });
+    await Promise.all(
+      entries.map(async ({ item, figure, image }) => {
+        if (token !== mediaPreviewToken) return;
+        const rawSource = typeof item.source === "object" ? item.source?.ref || item.source?.url : item.source;
+        const source = String(rawSource || "").trim();
+        figure.classList.add("is-loading");
+        try {
+          let dataUrl = source;
+          if (/^cloud-media:\/\//i.test(source)) {
+            const result = await chrome.runtime.sendMessage({
+              action: "fetchCloudSubmissionMedia",
+              ref: source,
+              name: item.label,
+            });
+            if (!result?.ok || !result.dataUrl) throw new Error(result?.error || "无法读取云端媒体");
+            dataUrl = result.dataUrl;
+          }
+          if (token !== mediaPreviewToken) return;
+          image.src = dataUrl;
+          image.addEventListener("error", () => {
+            figure.classList.remove("is-loading");
+            figure.classList.add("is-error");
+            image.alt = `${item.label}不可用`;
+          }, { once: true });
+          figure.classList.remove("is-loading");
+        } catch {
+          if (token !== mediaPreviewToken) return;
+          figure.classList.remove("is-loading");
+          figure.classList.add("is-error");
+          image.alt = `${item.label}不可用`;
+        }
+      }),
+    );
+  }
+
   function profileToForm(profile) {
     pendingLogoDataUrl = profile.logoDataUrl || null;
     const f = profile.fields || {};
@@ -151,6 +249,7 @@
       ],
     );
     updateLogoPreview(pendingLogoDataUrl);
+    renderProfileMedia(profile);
     if ($("siteLogoFile")) $("siteLogoFile").value = "";
     $("siteShortDesc").value = f["Short description(20-30 words)"] || "";
     $("siteMediumDesc").value = f["Short Discription(100-150 words)"] || "";
@@ -349,6 +448,7 @@
     pendingLogoDataUrl = profile.logoDataUrl || null;
     renderSiteSelector();
     persistProfiles();
+    renderProfileMedia(profile);
     alert("✅ 站点资料已保存");
   });
 

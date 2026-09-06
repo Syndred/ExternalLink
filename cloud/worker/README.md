@@ -19,4 +19,6 @@
 4. `npm run deploy` 后，将 Worker URL 和 token 填到扩展「云端数据中心」。
 5. 在扩展先导出 JSON 备份，再点击「迁移本机数据到云端」。迁移完成后运行「从云端回读」核对数量，最后运行 `tools/migrate-media-to-r2.mjs` 上传媒体。
 
+迁移会把全部状态文档和时间线放进同一个 Neon HTTP 事务，避免按记录消耗 Worker 子请求。若网络中断后重试，云端已有文档与本机相同则只补齐缺项；发现云端有不同内容时会返回冲突并拒绝覆盖。
+
 部署不创建 Google OAuth，也不读取 Google Sheet。数据库连接串和 DeepSeek 密钥仅在 Worker 中使用。

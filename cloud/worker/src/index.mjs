@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import {
+  migrationConflictKeys,
   mediaObjectKey,
   normalizeDocuments,
   normalizeWorkspaceId,
@@ -373,34 +374,73 @@ async function router(request, env) {
     const input = await requestJson(request);
     const documents = normalizeDocuments(input.documents);
     const existing = await sql`
-      select count(*)::int as count
+      select document_key, data
       from externallink_workspace_documents
       where workspace_id = ${workspaceId}
     `;
-    if (Number(existing[0]?.count || 0) > 0 && input.replace !== true) {
-      return json({ ok: false, error: "云端工作区已有数据；拒绝覆盖。请先拉取或明确恢复。" }, { status: 409 });
-    }
-    await ensureWorkspace(sql, workspaceId);
-    if (input.replace === true) {
-      await sql`delete from externallink_workspace_documents where workspace_id = ${workspaceId}`;
-      await sql`delete from externallink_timeline_revisions where workspace_id = ${workspaceId}`;
-    }
-    for (const [key, data] of Object.entries(documents)) {
-      await sql`
-        insert into externallink_workspace_documents (workspace_id, document_key, data)
-        values (${workspaceId}, ${key}, ${JSON.stringify(data)}::jsonb)
-        on conflict (workspace_id, document_key) do update
-          set data = excluded.data, revision = externallink_workspace_documents.revision + 1, updated_at = now()
-      `;
+    const replace = input.replace === true;
+    const conflictKeys = replace ? [] : migrationConflictKeys(existing, documents);
+    if (conflictKeys.length) {
+      return json({
+        ok: false,
+        error: "云端工作区已有不同数据；拒绝覆盖。请先从云端回读。",
+        conflictKeys,
+      }, { status: 409 });
     }
     const timeline = documents.submissionTimeline || {};
-    for (const audit of timelineAuditRows({}, timeline)) {
-      await sql`
-        insert into externallink_timeline_revisions (workspace_id, event_id, operation, event)
-        values (${workspaceId}, ${audit.eventId}, ${audit.operation}, ${JSON.stringify(audit.event)}::jsonb)
-      `;
+    const documentRows = Object.entries(documents).map(([documentKey, data]) => ({
+      document_key: documentKey,
+      data,
+    }));
+    const auditRows = timelineAuditRows({}, timeline).map((audit) => ({
+      event_id: audit.eventId,
+      operation: audit.operation,
+      event: audit.event,
+    }));
+    const queries = [sql`
+      insert into externallink_workspaces (workspace_id)
+      values (${workspaceId})
+      on conflict (workspace_id) do update set updated_at = now()
+    `];
+    if (replace) {
+      queries.push(sql`delete from externallink_workspace_documents where workspace_id = ${workspaceId}`);
+      queries.push(sql`delete from externallink_timeline_revisions where workspace_id = ${workspaceId}`);
     }
-    return json({ ok: true, workspaceId, importedDocuments: Object.keys(documents).length, timelineEvents: timelineAuditRows({}, timeline).length });
+    queries.push(sql`
+      insert into externallink_workspace_documents (workspace_id, document_key, data)
+      select ${workspaceId}, incoming.document_key, incoming.data
+      from jsonb_to_recordset(${JSON.stringify(documentRows)}::jsonb)
+        as incoming(document_key text, data jsonb)
+      on conflict (workspace_id, document_key) do nothing
+      returning document_key
+    `);
+    queries.push(sql`
+      insert into externallink_timeline_revisions (workspace_id, event_id, operation, event)
+      select ${workspaceId}, incoming.event_id, incoming.operation, incoming.event
+      from jsonb_to_recordset(${JSON.stringify(auditRows)}::jsonb)
+        as incoming(event_id text, operation text, event jsonb)
+      where not exists (
+        select 1
+        from externallink_timeline_revisions existing_revision
+        where existing_revision.workspace_id = ${workspaceId}
+          and existing_revision.event_id = incoming.event_id
+          and existing_revision.operation = incoming.operation
+          and existing_revision.event = incoming.event
+      )
+      returning revision_id
+    `);
+    const transactionResults = await sql.transaction(queries);
+    const importedDocuments = transactionResults.at(-2)?.length || 0;
+    const timelineEvents = transactionResults.at(-1)?.length || 0;
+    return json({
+      ok: true,
+      workspaceId,
+      importedDocuments,
+      timelineEvents,
+      resumed: existing.length > 0 && !replace,
+      totalDocuments: documentRows.length,
+      totalTimelineEvents: auditRows.length,
+    });
   }
 
   const stateMatch = path.match(/^\/v1\/state\/([a-zA-Z0-9_-]+)$/);
@@ -441,10 +481,17 @@ async function router(request, env) {
       }, { status: 409 });
     }
     if (key === "submissionTimeline") {
-      for (const audit of timelineAuditRows(current?.data || {}, docs[key])) {
+      const auditRows = timelineAuditRows(current?.data || {}, docs[key]).map((audit) => ({
+        event_id: audit.eventId,
+        operation: audit.operation,
+        event: audit.event,
+      }));
+      if (auditRows.length) {
         await sql`
           insert into externallink_timeline_revisions (workspace_id, event_id, operation, event)
-          values (${workspaceId}, ${audit.eventId}, ${audit.operation}, ${JSON.stringify(audit.event)}::jsonb)
+          select ${workspaceId}, incoming.event_id, incoming.operation, incoming.event
+          from jsonb_to_recordset(${JSON.stringify(auditRows)}::jsonb)
+            as incoming(event_id text, operation text, event jsonb)
         `;
       }
     }

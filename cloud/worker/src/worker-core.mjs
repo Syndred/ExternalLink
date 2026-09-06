@@ -33,6 +33,30 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+export function jsonEquivalent(left, right) {
+  if (left === right) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((value, index) => jsonEquivalent(value, right[index]));
+  }
+  if (isPlainObject(left) || isPlainObject(right)) {
+    if (!isPlainObject(left) || !isPlainObject(right)) return false;
+    const leftKeys = Object.keys(left).sort();
+    const rightKeys = Object.keys(right).sort();
+    if (!jsonEquivalent(leftKeys, rightKeys)) return false;
+    return leftKeys.every((key) => jsonEquivalent(left[key], right[key]));
+  }
+  return false;
+}
+
+export function migrationConflictKeys(existingRows, incomingDocuments) {
+  const incoming = isPlainObject(incomingDocuments) ? incomingDocuments : {};
+  return (Array.isArray(existingRows) ? existingRows : [])
+    .filter((row) => !Object.hasOwn(incoming, row.document_key)
+      || !jsonEquivalent(row.data, incoming[row.document_key]))
+    .map((row) => row.document_key);
+}
+
 export function normalizeWorkspaceId(value) {
   const normalized = String(value || "default")
     .trim()

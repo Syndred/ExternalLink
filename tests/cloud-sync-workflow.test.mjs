@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const background = readFileSync("extension/background.js", "utf8");
+const settings = readFileSync("extension/settings.js", "utf8");
 
 const context = { self: {}, URL };
 vm.createContext(context);
@@ -76,5 +77,7 @@ assert.match(background, /source: "cloud-cache"/, "cloud state takes precedence 
 assert.doesNotMatch(background, /selectCachedTableData/, "the live data flow no longer selects a Google Sheet cache");
 assert.match(background, /cloudSyncIgnoredValues/, "pulled values must be ignored by value, not by a stale key marker");
 assert.match(background, /scheduleCloudSyncRetry/, "temporary cloud save failures must retry");
+assert.match(settings, /result\.pulledDocuments \?\? result\.totalDocuments/, "migration success must show the total cloud document count");
+assert.match(settings, /result\.resumed \? "迁移续传完成"/, "a resumed migration must not look like an empty migration");
 
 console.log("cloud sync workflow tests passed");

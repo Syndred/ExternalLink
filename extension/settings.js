@@ -944,7 +944,11 @@
     try {
       const result = await chrome.runtime.sendMessage({ action: "cloudSyncMigrate" });
       if (!result?.ok) throw new Error(result?.error || "首次迁移失败");
-      setCloudStatus(`迁移完成：${result.importedDocuments || 0} 类数据、${result.timelineEvents || 0} 条时间线事件。`, "success");
+      const totalDocuments = result.pulledDocuments ?? result.totalDocuments ?? result.importedDocuments ?? 0;
+      const importedDocuments = result.importedDocuments ?? 0;
+      const timelineEvents = result.timelineEvents ?? 0;
+      const prefix = result.resumed ? "迁移续传完成" : "迁移完成";
+      setCloudStatus(`${prefix}：云端已核对 ${totalDocuments} 类数据（本次新增 ${importedDocuments} 类），新增 ${timelineEvents} 条时间线事件。`, "success");
       await loadLibrary();
     } catch (err) {
       setCloudStatus(err.message, "warning");

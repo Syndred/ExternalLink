@@ -8,7 +8,7 @@
 
 ## 当前已完成
 
-- **3.0.0 云端数据中心（首次扩展迁移待重试）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`。2026-09-06 首次迁移因旧实现逐条请求 Neon，超过 Cloudflare 免费 Worker 单次 50 个子请求而中断；现已部署 Version `3337d930-d83e-4cda-9fab-22349d50954e`，把文档与时间线写入合并为单个 Neon HTTP 事务，并允许内容一致的部分迁移安全续传。R2 bucket `externallink-media` 已创建。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
+- **3.0.0 云端数据中心（状态首迁移已完成）**：已创建 Neon `ExternalLink Admin` 生产分支、执行 4 张状态表与 2 个索引；Cloudflare Worker `externallink-cloud` 已部署到 `https://externallink-cloud.syndred.workers.dev`。2026-09-06 首次迁移因旧实现逐条请求 Neon，超过 Cloudflare 免费 Worker 单次 50 个子请求而中断；Version `3337d930-d83e-4cda-9fab-22349d50954e` 改为单个 Neon HTTP 事务后续传成功。用户回读确认：已有状态文档无需重复写入（本次新增 0 类），105 条时间线事件已补齐；迁移调用已自动执行云端回读。R2 bucket `externallink-media` 已创建，媒体文件上传仍是剩余步骤。Worker 密钥仅保存在 Cloudflare Secret：数据库连接串、DeepSeek Key、设备访问密钥均未写入仓库或扩展包。
 - **云端唯一真相源**：连接后，外链库完整字段、Profile、提交账本、时间线、备注、分类和运营状态会自动写入 Neon；Logo/截图以私有 R2 对象保存，并以 `cloud-media://` 引用供填表时读取。首次迁移仍保留 `table-library.json` 只作为离线首装/灾备快照，绝不再读 Google 或启动本机 Agent。
 - **本地服务和 Google 同步已移除**：扩展源代码、manifest、Settings、Popup、Side Panel 都不再调用本地 Agent 或 Google OAuth；旧 Python Agent、Google 同步模块、启动脚本、依赖与相关测试已删除。`sheetTableData` 名称仅为兼容既有导入数据，实际是云端外链字段文档。
 
@@ -108,7 +108,7 @@ tests/local-agent-unit.test.py
 
 - 已通过云同步/Worker 核心/UI/媒体 Node 测试、扩展脚本语法检查和 `git diff --check`；云端 Worker 已真实部署、健康检查已通过。
 - Settings 真实渲染无横向溢出，按钮行间距 12px；侧栏 500px 窄屏两列工具栏与评论头部换行已截图验收，同一规则覆盖常见 390–500px 侧栏。
-- 首迁移源已确认包含 6 个 Profile、2,905 个外链站、29 条核验提交记录和 30 个支持的本机媒体文件；媒体脚本 dry-run 已通过。首次点击已触发但被旧 Worker 子请求上限中断，线上修复已部署；**Chrome 设置页仍需原样再点一次「迁移本机数据到云端」，以完成安全续传和回读。浏览器安全策略禁止自动操作 `chrome-extension://` 设置页，因此这一步尚未伪称完成。**
+- 首迁移源已确认包含 6 个 Profile、2,905 个外链站、29 条核验提交记录和 30 个支持的本机媒体文件；状态续传和自动云端回读已由用户明确确认完成，补齐 105 条时间线事件。媒体脚本 dry-run 已通过，私有 R2 媒体实传仍待执行。
 - 2026-08-26 晚间批量开页已导致 Chrome 卡死；后续必须一页一关。
 
 ## 2026-09-05 2.8.1 半自动补齐

@@ -2,8 +2,6 @@
 (function (global) {
   "use strict";
 
-  const LOCAL_AGENT_URL = "http://127.0.0.1:8790";
-
   function linesToList(text) {
     return String(text || "")
       .split(/\n+/)
@@ -99,8 +97,15 @@
       tags: fields["Tags Keywords/Hashtags"] || "",
       pricing: fields.Pricing || "",
       launchDate: fields["Launch Date"] || fields["Launch date"] || "",
-      featuredImage: fields["Featured image"] || profile.logoUrl || fields.LOGO || "",
-      logoUrl: profile.logoUrl || fields.LOGO || fields["Featured image"] || "",
+      featuredImage:
+        fields["Cloud Featured image"] ||
+        profile.media?.featured ||
+        fields["Featured image"] ||
+        profile.logoUrl ||
+        fields.LOGO ||
+        "",
+      logoUrl:
+        fields["Cloud LOGO"] || profile.media?.logo || profile.logoUrl || fields.LOGO || fields["Featured image"] || "",
       logoDataUrl: profile.logoDataUrl || "",
       screenshots:
         profile.media?.screenshots ||
@@ -160,8 +165,11 @@
     if (/\b(logo|icon|avatar)\b/.test(normalizedHint)) {
       return {
         value:
-          fields.LOGO ||
+          fields["Cloud LOGO"] ||
           config?.logoUrl ||
+          config?.cloudLogo ||
+          fields["Cloud Featured image"] ||
+          config?.featuredImage ||
           fields["Featured image"] ||
           config?.featuredImage ||
           "",
@@ -320,17 +328,6 @@
     return merged;
   }
 
-  async function callLocalAgent(path, body) {
-    const res = await fetch(`${LOCAL_AGENT_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
-    return data;
-  }
-
   function getActiveProfile(storage) {
     const profiles = storage.siteProfiles || {};
     const activeId = storage.activeSiteId || Object.keys(profiles)[0] || "";
@@ -344,7 +341,6 @@
   }
 
   global.ExtLinkProfiles = {
-    LOCAL_AGENT_URL,
     linesToList,
     listToLines,
     slugifySiteId,
@@ -357,7 +353,6 @@
     stabilizeTableProfiles,
     applySavedProfilesToTasks,
     mergeExtractedProfile,
-    callLocalAgent,
     getActiveProfile,
     profileConfigured,
   };

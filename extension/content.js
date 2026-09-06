@@ -2717,39 +2717,18 @@
     return setSelectValue(element, value);
   }
 
-  // Maps a resolved media slot onto the local media library layout served by the
-  // local agent: {Profile}/logo.png and {Profile}/01..04-*.png.
-  function localMediaRequestFor(config, media) {
-    const profile = config?.projectKey || "";
-    if (!profile) return null;
-
-    const profileKey = String(media?.profileKey || "").trim();
-    const screenshotMatch = profileKey.match(/screenshot\s*([1-4])/i);
-    if (screenshotMatch) {
-      return { profile, kind: "screenshot", index: Number(screenshotMatch[1]) - 1 };
-    }
-    if (/^logo$/i.test(profileKey) || media?.useLogoDataUrl) {
-      return { profile, kind: "logo", index: 0 };
-    }
-    if (media?.screenshot) {
-      return { profile, kind: "screenshot", index: Math.max(0, Number(media.index) || 0) };
-    }
-    if (/featured|cover|banner|thumbnail|image|photo/i.test(profileKey)) {
-      return { profile, kind: "screenshot", index: 0, fallbackKind: "logo" };
-    }
-    return null;
+  function isCloudMediaRef(value) {
+    return /^cloud-media:\/\/[a-z0-9][a-z0-9._/-]{0,255}$/i.test(String(value || "").trim());
   }
 
-  async function fetchLocalMediaBlob(request) {
+  async function fetchCloudMediaBlob(ref, name = "") {
     const response = await chrome.runtime.sendMessage({
-      action: "fetchLocalSubmissionMedia",
-      profile: request.profile,
-      kind: request.kind,
-      index: request.index,
-      name: request.name || "",
+      action: "fetchCloudSubmissionMedia",
+      ref,
+      name,
     });
     if (!response?.ok || !response.dataUrl) {
-      throw new Error(response?.error || "本地媒体读取失败");
+      throw new Error(response?.error || "云端媒体读取失败");
     }
     return {
       blob: await (await fetch(response.dataUrl)).blob(),
@@ -2798,6 +2777,14 @@
         }
       }
       if (imageUrl) {
+        if (isCloudMediaRef(imageUrl)) {
+          const cloud = await fetchCloudMediaBlob(imageUrl, descriptor?.profileKey || "cloud-media");
+          if (await attachBlobToFileInput(input, cloud.blob, cloud.name)) {
+            logStep(`☁️ 已用云端媒体上传 ${cloud.name}`);
+            reportMediaUpload("success", { name: cloud.name, source: "cloud", bytes: cloud.blob.size, mime: cloud.blob.type });
+            return true;
+          }
+        }
         const absolute = new URL(imageUrl, baseUrl || location.href).href;
         const sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
         const blob = await fetchSubmissionMediaBlob(absolute);
@@ -2807,26 +2794,9 @@
         }
       }
     } catch {
-      /* Remote media failed — fall through to the local media library. */
+      /* The page may block remote image reads; report the usable cloud reference below. */
     }
-
-    // Local library fallback: works when the profile has no public image URL, or
-    // when the remote host blocks cross-origin fetches.
-    const request = localMediaRequestFor(config, descriptor);
-    if (!request) return false;
-    for (const kind of [request.kind, request.fallbackKind].filter(Boolean)) {
-      try {
-        const local = await fetchLocalMediaBlob({ ...request, kind });
-        if (await attachBlobToFileInput(input, local.blob, local.name)) {
-          logStep(`📁 已用本地图库上传 ${request.profile}/${local.name}`);
-          reportMediaUpload("success", { name: local.name, source: "local", profile: request.profile, bytes: local.blob.size, mime: local.blob.type });
-          return true;
-        }
-      } catch (err) {
-        if (kind === request.kind) logStep(`⚠️ 本地图库上传失败: ${err.message}`);
-      }
-    }
-    reportMediaUpload("failed", { profile: request?.profile || config?.projectKey || "", reason: "没有可用或符合要求的媒体文件" });
+    reportMediaUpload("failed", { profile: config?.projectKey || "", reason: "没有可用或符合要求的云端媒体文件" });
     return false;
   }
 
@@ -3043,7 +3013,7 @@
             value,
             label: getSnapshotLabel(element),
           };
-        } else if (value || localMediaRequestFor(config, media)) {
+        } else if (value) {
           skippedFiles.push(getSnapshotLabel(element) || element.name || "image");
         }
         if (media?.screenshot && !media.explicitIndex) screenshotCursor++;

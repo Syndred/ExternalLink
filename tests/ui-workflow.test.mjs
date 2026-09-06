@@ -35,16 +35,14 @@ assert.match(settingsHtml, /id="libraryProgressFilter"/);
 assert.match(settingsHtml, /lib\/submission-timeline\.js/);
 assert.match(settingsHtml, /href="settings\.css"/);
 for (const id of [
-  "googleSheetId",
-  "btnGoogleConnect",
-  "btnGooglePreview",
-  "btnGoogleApply",
-  "btnGooglePush",
-  "btnGoogleDisconnect",
-  "googleSyncStatus",
-  "googleSyncPreview",
-  "googleAutoPreviewEnabled",
-  "btnGoogleCheckChanges",
+  "cloudWorkerEndpoint",
+  "cloudAccessToken",
+  "cloudWorkspaceId",
+  "btnCloudConnect",
+  "btnCloudMigrate",
+  "btnCloudPull",
+  "btnCloudPush",
+  "cloudSyncStatus",
   "linkMonitorStatus",
   "btnRunLinkMonitor",
   "libraryQualityFilter",
@@ -56,11 +54,10 @@ for (const id of [
 assert.match(settingsJs, /action:\s*"getLibraryManagerState"/);
 assert.match(settingsJs, /action:\s*"exportSubmissionData"/);
 assert.match(settingsJs, /action:\s*"importSubmissionData"/);
-assert.match(settingsJs, /action:\s*"googleAuthStart"/);
-assert.match(settingsJs, /action:\s*"googleSyncPreview"/);
-assert.match(settingsJs, /action:\s*"googleSyncApply"/);
-assert.match(settingsJs, /action:\s*"googlePushLedger"/);
-assert.match(settingsJs, /action:\s*"googleCheckChanges"/);
+assert.match(settingsJs, /action:\s*"cloudSyncConnect"/);
+assert.match(settingsJs, /action:\s*"cloudSyncMigrate"/);
+assert.match(settingsJs, /action:\s*"cloudSyncPull"/);
+assert.match(settingsJs, /action:\s*"cloudSyncPush"/);
 assert.match(settingsJs, /action:\s*"runLinkMonitor"/);
 assert.match(settingsJs, /library-status/);
 assert.match(settingsJs, /annotationTone/);
@@ -105,20 +102,19 @@ assert.match(
 );
 assert.match(background, /case "addSubmissionTimelineEvent"/);
 assert.match(background, /submissionTimeline/);
-assert.match(background, /case "googleCheckChanges"/);
+assert.match(background, /case "cloudSyncMigrate"/);
 assert.match(background, /case "runLinkMonitor"/);
 assert.match(background, /gatedByQuality/);
 assert.match(sidepanelJs, /renderMetricChip\("可索引"/);
 assert.match(sidepanelJs, /renderMetricChip\("Noindex"/);
 assert.match(sidepanelHtml, /id="playbookNote"/);
 assert.match(sidepanelJs, /熟站 \$\{playbook\.title\}/);
-assert.match(background, /本机 Agent 未运行/);
+assert.doesNotMatch(background, /python3 -m local_agent\.server/);
 assert.match(settingsJs, /autoSubmitStandardWpComments/);
 assert.match(settingsJs, /pending_moderation/);
 assert.match(settingsCss, /profile-status\.published/);
-assert.match(background, /SHEET_PREVIEW_ALARM/);
 assert.match(background, /LINK_MONITOR_ALARM/);
-assert.match(background, /isNewPendingRevision/);
+assert.match(background, /cloudSyncPendingKeys/);
 assert.match(background, /candidateKeys\.has\(key\)/);
 assert.match(
   background,

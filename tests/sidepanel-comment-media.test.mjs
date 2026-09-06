@@ -33,12 +33,13 @@ assert.match(js, /commentRemaining/);
 assert.match(html, />生成 3 条</);
 assert.match(html, />填入评论</);
 
-// Local media preflight and post-fill upload evidence reuse existing messages.
+// Cloud media preflight and post-fill upload evidence reuse existing messages.
 for (const id of ["btnRefreshMedia", "mediaLibraryStatus", "mediaPreflightList", "mediaUploadResult"]) {
   assert.match(html, new RegExp(`id="${id}"`), `sidepanel should expose #${id}`);
 }
-assert.match(js, /action:\s*["']listLocalSubmissionMedia["']/);
-assert.match(js, /action:\s*["']fetchLocalSubmissionMedia["']/);
+assert.match(js, /action:\s*["']listCloudSubmissionMedia["']/);
+assert.match(js, /action:\s*["']fetchCloudSubmissionMedia["']/);
+assert.match(html, /云端 Logo 和截图/);
 assert.match(js, /action === ["']mediaUploadStatus["']/);
 assert.match(js, /function\s+refreshMediaUploadResult\s*\(/);
 assert.match(js, /function\s+renderMediaUploadResult\s*\(/);

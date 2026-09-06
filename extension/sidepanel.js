@@ -99,7 +99,7 @@
     label: "",
     source: "unknown",
   };
-  let localMediaLibrary = null;
+  let cloudMediaLibrary = null;
   let mediaUploadState = {
     status: "idle",
     uploaded: [],
@@ -960,20 +960,24 @@
     renderMediaUploadResult();
   }
 
-  function resolveLocalMediaProfile(profiles) {
-    const entries = Array.isArray(profiles) ? profiles : [];
+  function resolveCloudMediaFiles(assets) {
+    const entries = Array.isArray(assets) ? assets : [];
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
     const candidates = [activeSiteId, profile?.id, profile?.name]
       .map((value) => String(value || "").trim())
       .filter(Boolean);
-    return (
-      candidates.map((value) => entries.find((entry) => String(entry?.profile || "") === value)).find(Boolean) ||
-      candidates
-        .map((value) => value.toLowerCase())
-        .map((value) => entries.find((entry) => String(entry?.profile || "").toLowerCase() === value))
-        .find(Boolean) ||
-      null
-    );
+    const candidateSet = new Set(candidates.map((value) => value.toLowerCase()));
+    return entries
+      .filter((entry) => candidateSet.has(String(entry?.profile_id || "").toLowerCase()))
+      .map((entry) => ({
+        assetId: entry.asset_id,
+        name: entry.file_name,
+        kind: entry.media_kind,
+        mime: entry.content_type,
+        bytes: entry.byte_length,
+        index: entry.media_index,
+        profile: entry.profile_id,
+      }));
   }
 
   function createMediaFileRow(profileName, file) {
@@ -1023,15 +1027,14 @@
   }
 
   async function enrichMediaFilePreview(row, token) {
-    const profile = row?.__mediaProfile;
     const file = row?.__mediaFile;
-    if (!profile || !file || token !== mediaLoadToken) return;
+    if (!file || token !== mediaLoadToken) return;
     const availability = row.querySelector(".media-file-availability");
     const image = row.querySelector(".media-file-thumb");
     try {
       const response = await chrome.runtime.sendMessage({
-        action: "fetchLocalSubmissionMedia",
-        profile,
+        action: "fetchCloudSubmissionMedia",
+        ref: `cloud-media://${file.assetId}`,
         name: file.name,
       });
       if (!response?.ok || !response.dataUrl) throw new Error(response?.error || "无法读取");
@@ -1056,50 +1059,38 @@
       list.replaceChildren();
       const loading = document.createElement("div");
       loading.className = "empty-state compact-empty";
-      loading.textContent = "正在读取本地媒体清单…";
+      loading.textContent = "正在读取云端媒体清单…";
       list.append(loading);
     }
-    setMediaLibraryStatus("正在读取本地图库…");
+    setMediaLibraryStatus("正在读取云端媒体…");
     try {
-      const response = await chrome.runtime.sendMessage({ action: "listLocalSubmissionMedia" });
+      const response = await chrome.runtime.sendMessage({ action: "listCloudSubmissionMedia" });
       if (token !== mediaLoadToken) return;
-      localMediaLibrary = response || null;
-      if (!response?.ok) throw new Error(response?.error || "读取本地图库失败");
-      if (!response.mediaRootExists) {
-        setMediaLibraryStatus("本地图库目录不存在，请启动媒体代理或检查配置。", "warn");
+      cloudMediaLibrary = response || null;
+      if (!response?.ok) throw new Error(response?.error || "读取云端媒体失败");
+      const files = resolveCloudMediaFiles(response.assets);
+      if (!files.length) {
+        setMediaLibraryStatus(`${siteProfiles[activeSiteId]?.name || activeSiteId || "当前 Profile"} 暂无云端媒体`, "warn");
         if (list) {
           list.replaceChildren();
           const empty = document.createElement("div");
           empty.className = "empty-state compact-empty";
-          empty.textContent = "图库目录不可用";
+          empty.textContent = "当前 Profile 没有可用的云端 Logo 或截图";
           list.append(empty);
         }
         return;
       }
 
-      const entry = resolveLocalMediaProfile(response.profiles);
-      if (!entry || !entry.files?.length) {
-        setMediaLibraryStatus(`${siteProfiles[activeSiteId]?.name || activeSiteId || "当前 Profile"} 暂无本地媒体`, "warn");
-        if (list) {
-          list.replaceChildren();
-          const empty = document.createElement("div");
-          empty.className = "empty-state compact-empty";
-          empty.textContent = "当前 Profile 没有可用的 Logo 或截图";
-          list.append(empty);
-        }
-        return;
-      }
-
-      setMediaLibraryStatus(`已找到 ${entry.files.length} 个媒体文件 · ${entry.profile}`, "ok");
+      setMediaLibraryStatus(`云端媒体已就绪：${files.length} 个文件 · ${files[0].profile}`, "ok");
       if (!list) return;
       list.replaceChildren();
-      const rows = entry.files.map((file) => createMediaFileRow(entry.profile, file));
+      const rows = files.map((file) => createMediaFileRow(file.profile, file));
       rows.forEach((row) => list.append(row));
       await Promise.all(rows.map((row) => enrichMediaFilePreview(row, token)));
     } catch (err) {
       if (token !== mediaLoadToken) return;
-      localMediaLibrary = null;
-      setMediaLibraryStatus(err.message || "读取本地图库失败", "err");
+      cloudMediaLibrary = null;
+      setMediaLibraryStatus(err.message || "读取云端媒体失败", "err");
       if (list) {
         list.replaceChildren();
         const empty = document.createElement("div");
@@ -1161,7 +1152,7 @@
     const item = {
       label: message?.fieldLabel || message?.label || message?.name || "文件字段",
       name: message?.name || "",
-      source: { local: "本地图库", remote: "远程图片", embedded: "Profile 内置" }[message?.source] || message?.source || "页面",
+      source: { cloud: "云端媒体", remote: "远程图片", embedded: "Profile 内置" }[message?.source] || message?.source || "页面",
       reason: message?.reason || "",
     };
     if (message?.status === "success") {

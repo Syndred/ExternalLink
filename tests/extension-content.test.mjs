@@ -143,17 +143,8 @@ assert.match(
   "background.js should reset the timeout before starting slow form filling",
 );
 
-assert.match(
-  background,
-  /LOCAL_AGENT_URL\s*=\s*['"]http:\/\/127\.0\.0\.1:8790['"]/,
-  "background.js should point LOCAL_AGENT_URL at the local agent service",
-);
-
-assert.match(
-  background,
-  /function\s+callLocalAgent\s*\(/,
-  "background.js should define callLocalAgent()",
-);
+assert.match(background, /function\s+callCloudAgent\s*\(/, "background should use the authenticated cloud Worker");
+assert.doesNotMatch(background, /127\.0\.0\.1:8790/, "background must not require a local Agent service");
 
 assert.match(
   background,
@@ -561,8 +552,8 @@ assert.match(
 );
 assert.match(
   background,
-  /callLocalAgent\("\/comment"/,
-  "background should call the local agent /comment endpoint",
+  /callCloudAgent\("\/comment"/,
+  "background should call the cloud comment endpoint",
 );
 for (const site of ["wp_comment", "article"]) {
   assert.match(
@@ -577,16 +568,16 @@ assert.match(
   "comment call sites must await the async draft",
 );
 
-// ─── Local media library upload injection ───
+// ─── Cloud media upload injection ───
 assert.match(
   content,
-  /function localMediaRequestFor\s*\(/,
-  "content.js should map media slots onto the local media library layout",
+  /function isCloudMediaRef\s*\(/,
+  "content.js should recognise authenticated cloud media references",
 );
 assert.match(
   content,
-  /action:\s*["']fetchLocalSubmissionMedia["']/,
-  "content.js should request local media bytes from the background",
+  /action:\s*["']fetchCloudSubmissionMedia["']/,
+  "content.js should request cloud media bytes from the background",
 );
 assert.match(
   content,
@@ -595,13 +586,13 @@ assert.match(
 );
 assert.match(
   background,
-  /case\s+["']fetchLocalSubmissionMedia["']:/,
-  "background should proxy local media reads",
+  /case\s+["']fetchCloudSubmissionMedia["']:/,
+  "background should proxy private cloud media reads",
 );
 assert.match(
   background,
-  /\/media\/file\?/,
-  "background should read local media over the local agent media endpoint",
+  /\/v1\/media\//,
+  "background should read media through the Worker API",
 );
 
 // ─── Target quality prescan and gating ───
@@ -623,8 +614,8 @@ assert.match(
 );
 assert.match(
   background,
-  /callLocalAgent\("\/domain\/metrics"/,
-  "background should resolve domain age through the local agent",
+  /callCloudAgent\("\/domain\/metrics"/,
+  "background should resolve domain age through the cloud Worker",
 );
 assert.match(
   background,

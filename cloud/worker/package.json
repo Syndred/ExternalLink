@@ -1,0 +1,15 @@
+{
+  "name": "externallink-cloud-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ../../tests/cloud-worker-core.test.mjs",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

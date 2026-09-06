@@ -8,7 +8,7 @@ importScripts(
   "lib/scheduler.js",
   "lib/submission-timeline.js",
   "lib/backup.js",
-  "lib/sheet-sync.js",
+  "lib/cloud-sync.js",
   "lib/url-library.js",
   "lib/opportunity-score.js",
   "lib/context-menu.js",
@@ -30,8 +30,6 @@ const PAGE_LOAD_TIMEOUT_MS = 45000;
 const EXECUTION_TIMEOUT_MS = 180000;
 const POST_SUCCESS_CLOSE_DELAY_MS = 2000;
 const DEFAULT_MANUAL_WAIT_SEC = 120;
-const LOCAL_AGENT_URL = "http://127.0.0.1:8790";
-const DEFAULT_GOOGLE_SPREADSHEET_ID = "17xqgpPDGQZozG9mBMOLRjnqy2LPiZJ6xkoYaC-HuoD0";
 const MAX_AGENT_LOOPS = 8;
 const AGENT_ACTION_SETTLE_MS = 600;
 const SNAPSHOT_RETRY_ATTEMPTS = 5;
@@ -45,16 +43,20 @@ const DOMAIN_METRICS_BATCH = 20;
 const DOMAIN_METRICS_CACHE_LIMIT = 5000;
 const COMMENT_CACHE_TTL_MS = 30 * 60 * 1000;
 const COMMENT_CACHE_LIMIT = 60;
-const SHEET_PREVIEW_ALARM = "externallink-sheet-preview";
 const LINK_MONITOR_ALARM = "externallink-link-monitor";
-const DEFAULT_SHEET_CHECK_MINUTES = 60;
 const DEFAULT_LINK_MONITOR_MINUTES = 24 * 60;
+const CLOUD_SYNC_DEBOUNCE_MS = 800;
 
 const commentDraftCache = new Map();
 
 const autoFillTimers = new Map();
 const autoFillInProgress = new Set();
 let sidePanelOpen = false;
+let cloudSyncTimer = null;
+let cloudSyncFlushPromise = null;
+let cloudSyncMute = false;
+const cloudSyncPendingKeys = new Set();
+const cloudSyncIgnoredKeys = new Set();
 let initializationPromise = restoreActiveBatchRun().catch((err) => {
   log(`恢复上次批次失败: ${err.message}`, "warn");
 });
@@ -80,10 +82,19 @@ chrome.runtime.onStartup.addListener(() => {
   configureScheduledChecks().catch(() => {});
 });
 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || cloudSyncMute) return;
+  const keys = self.ExtLinkCloudSync.stateKeysFromChanges(changes).filter((key) => {
+    if (!cloudSyncIgnoredKeys.has(key)) return true;
+    cloudSyncIgnoredKeys.delete(key);
+    return false;
+  });
+  if (!keys.length) return;
+  for (const key of keys) cloudSyncPendingKeys.add(key);
+  scheduleCloudSync();
+});
+
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === SHEET_PREVIEW_ALARM) {
-    checkGoogleSheetChanges({ notify: true }).catch(() => {});
-  }
   if (alarm.name === LINK_MONITOR_ALARM) {
     runLinkMonitor({ notify: true }).catch(() => {});
   }
@@ -128,15 +139,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "fetchLocalSubmissionMedia":
-      fetchLocalSubmissionMedia(msg)
+    case "fetchCloudSubmissionMedia":
+      fetchCloudSubmissionMedia(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "listLocalSubmissionMedia":
-      listLocalSubmissionMedia()
+    case "listCloudSubmissionMedia":
+      listCloudSubmissionMedia()
         .then(sendResponse)
-        .catch((err) => sendResponse({ ok: false, error: err.message, profiles: [] }));
+        .catch((err) => sendResponse({ ok: false, error: err.message, assets: [] }));
       return true;
     case "generateCommentDrafts":
       generateCommentDrafts(msg)
@@ -241,43 +252,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleSyncStatus":
-      getGoogleSyncStatus(msg)
+    case "cloudSyncStatus":
+      getCloudSyncStatus()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleSyncSchedule":
-      saveGoogleSyncSchedule(msg)
+    case "cloudSyncConnect":
+      connectCloudSync(msg.config)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleCheckChanges":
-      checkGoogleSheetChanges({ notify: false, force: true })
+    case "cloudSyncMigrate":
+      migrateLocalStateToCloud()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleAuthStart":
-      startGoogleAuth(msg)
+    case "cloudSyncPull":
+      pullCloudState()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleSyncPreview":
-      previewGoogleSheetSync(msg)
+    case "cloudSyncPush":
+      pushCloudState()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googleSyncApply":
-      applyGoogleSheetSync(msg)
+    case "cloudAiExtractSite":
+      callCloudAgent("/extract-site", msg.payload || {})
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
-    case "googlePushLedger":
-      flushSheetSyncOutbox()
-        .then(sendResponse)
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
-      return true;
-    case "googleDisconnect":
-      disconnectGoogleSync()
+    case "cloudAiGenerateSite":
+      callCloudAgent("/generate-site", msg.payload || {})
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -381,6 +387,197 @@ async function fetchSubmissionMedia(rawUrl) {
   };
 }
 
+// ─── Cloud data source (Neon + Worker + R2) ───
+async function getCloudConfig() {
+  const stored = await chrome.storage.local.get([self.ExtLinkCloudSync.CONFIG_KEY]);
+  return self.ExtLinkCloudSync.normalizeConfig(stored[self.ExtLinkCloudSync.CONFIG_KEY] || {});
+}
+
+async function saveCloudConfig(config) {
+  await chrome.storage.local.set({ [self.ExtLinkCloudSync.CONFIG_KEY]: config });
+  return config;
+}
+
+function cloudUrl(config, pathname) {
+  const url = new URL(`${config.endpoint}${pathname}`);
+  url.searchParams.set("workspace", config.workspaceId);
+  return url.href;
+}
+
+async function cloudRequest(pathname, options = {}, configOverride = null) {
+  const config = configOverride || (await getCloudConfig());
+  if (!config.configured) throw new Error("云端数据中心尚未连接，请先在设置中填写 Worker 地址和设备密钥");
+  const headers = new Headers(options.headers || {});
+  headers.set("Authorization", `Bearer ${config.accessToken}`);
+  if (options.body !== undefined && !headers.has("Content-Type") && !(options.body instanceof ArrayBuffer)) {
+    headers.set("Content-Type", "application/json");
+  }
+  const response = await fetch(cloudUrl(config, pathname), {
+    ...options,
+    headers,
+    body:
+      options.body !== undefined && typeof options.body !== "string" && !(options.body instanceof ArrayBuffer)
+        ? JSON.stringify(options.body)
+        : options.body,
+  });
+  if (options.raw === true) {
+    if (!response.ok) {
+      const message = await response.text().catch(() => "");
+      throw new Error(message || `云端请求失败: HTTP ${response.status}`);
+    }
+    return response;
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.ok === false) {
+    const error = new Error(data?.error || `云端请求失败: HTTP ${response.status}`);
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+  return data;
+}
+
+async function updateCloudMetadata(patch) {
+  const current = await getCloudConfig();
+  const next = { ...current, ...patch };
+  delete next.configured;
+  return saveCloudConfig(next);
+}
+
+async function getCloudSyncStatus() {
+  const config = await getCloudConfig();
+  if (!config.configured) return { ok: true, connected: false, config };
+  try {
+    const health = await cloudRequest("/v1/health");
+    return { ok: true, connected: true, config: await getCloudConfig(), health };
+  } catch (err) {
+    await updateCloudMetadata({ lastError: err.message });
+    return { ok: true, connected: false, config: await getCloudConfig(), error: err.message };
+  }
+}
+
+async function connectCloudSync(rawConfig) {
+  const config = self.ExtLinkCloudSync.normalizeConfig(rawConfig || {});
+  if (!config.configured) throw new Error("请填写有效的 HTTPS Worker 地址和设备密钥");
+  await cloudRequest("/v1/health", {}, config);
+  const saved = await saveCloudConfig({
+    ...config,
+    connectedAt: new Date().toISOString(),
+    lastError: "",
+  });
+  return { ok: true, config: saved };
+}
+
+async function applyCloudSnapshot(snapshot) {
+  const nextState = self.ExtLinkCloudSync.documentsToState(snapshot.documents || {});
+  Object.keys(nextState).forEach((key) => cloudSyncIgnoredKeys.add(key));
+  cloudSyncMute = true;
+  try {
+    await chrome.storage.local.set({
+      ...nextState,
+      cloudSyncMetadata: {
+        revisions: snapshot.revisions || {},
+        pulledAt: new Date().toISOString(),
+      },
+    });
+  } finally {
+    cloudSyncMute = false;
+  }
+  return nextState;
+}
+
+async function pullCloudState() {
+  const snapshot = await cloudRequest("/v1/snapshot");
+  const state = await applyCloudSnapshot(snapshot);
+  await updateCloudMetadata({ lastPullAt: new Date().toISOString(), lastError: "" });
+  return {
+    ok: true,
+    documentCount: Object.keys(snapshot.documents || {}).length,
+    state,
+    revisions: snapshot.revisions || {},
+  };
+}
+
+async function migrateLocalStateToCloud() {
+  const storage = await chrome.storage.local.get(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+  const documents = self.ExtLinkCloudSync.stateToDocuments(storage);
+  const result = await cloudRequest("/v1/migrate", { method: "POST", body: { documents } });
+  const pulled = await pullCloudState();
+  await updateCloudMetadata({ migratedAt: new Date().toISOString(), lastError: "" });
+  return { ...result, pulledDocuments: pulled.documentCount };
+}
+
+async function ensureCloudRevisions() {
+  const stored = await chrome.storage.local.get("cloudSyncMetadata");
+  const known = stored.cloudSyncMetadata?.revisions;
+  if (known && typeof known === "object" && Object.keys(known).length) return { ...known };
+  const snapshot = await cloudRequest("/v1/snapshot");
+  await chrome.storage.local.set({
+    cloudSyncMetadata: { revisions: snapshot.revisions || {}, pulledAt: new Date().toISOString() },
+  });
+  return { ...(snapshot.revisions || {}) };
+}
+
+function scheduleCloudSync() {
+  if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => {
+    cloudSyncTimer = null;
+    flushCloudState().catch((err) => log(`云端保存失败: ${err.message}`, "warn"));
+  }, CLOUD_SYNC_DEBOUNCE_MS);
+}
+
+async function flushCloudState(keys = null) {
+  if (cloudSyncFlushPromise) return cloudSyncFlushPromise;
+  cloudSyncFlushPromise = (async () => {
+    const config = await getCloudConfig();
+    if (!config.configured) return { ok: true, skipped: true };
+    const requested = keys || [...cloudSyncPendingKeys];
+    const documentKeys = requested.filter((key) => self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key));
+    if (!documentKeys.length) return { ok: true, skipped: true };
+    const revisions = await ensureCloudRevisions();
+    const storage = await chrome.storage.local.get(documentKeys);
+    const saved = [];
+    for (const key of documentKeys) {
+      if (!Object.prototype.hasOwnProperty.call(storage, key)) {
+        cloudSyncPendingKeys.delete(key);
+        continue;
+      }
+      try {
+        const result = await cloudRequest(`/v1/state/${key}`, {
+          method: "PUT",
+          body: { data: storage[key], revision: revisions[key] || 0 },
+        });
+        revisions[key] = result.revision;
+        cloudSyncPendingKeys.delete(key);
+        saved.push(key);
+      } catch (err) {
+        if (err.status === 409) {
+          cloudSyncPendingKeys.delete(key);
+          throw new Error(`“${key}”已在其他设备更新，请先从云端回读再继续编辑`);
+        }
+        throw err;
+      }
+    }
+    await chrome.storage.local.set({
+      cloudSyncMetadata: { revisions, pushedAt: new Date().toISOString() },
+    });
+    await updateCloudMetadata({ lastPushAt: new Date().toISOString(), lastError: "" });
+    return { ok: true, saved };
+  })();
+  try {
+    return await cloudSyncFlushPromise;
+  } catch (err) {
+    await updateCloudMetadata({ lastError: err.message });
+    throw err;
+  } finally {
+    cloudSyncFlushPromise = null;
+  }
+}
+
+async function pushCloudState() {
+  return flushCloudState(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+}
+
 // ─── Target gating: domain blacklist + registration age ───
 function normalizeTargetFilters(raw) {
   const source = raw && typeof raw === "object" ? raw : {};
@@ -465,7 +662,7 @@ async function getDomainMetrics(msg = {}) {
   for (let offset = 0; offset < missing.length; offset += DOMAIN_METRICS_BATCH) {
     const batch = missing.slice(offset, offset + DOMAIN_METRICS_BATCH);
     try {
-      const data = await callLocalAgent("/domain/metrics", { domains: batch });
+      const data = await callCloudAgent("/domain/metrics", { domains: batch });
       for (const entry of data.results || []) {
         const domain = self.ExtLinkQueue.normalizeBlacklistEntry(entry.domain);
         if (!domain) continue;
@@ -519,59 +716,31 @@ async function getTargetGateState() {
   };
 }
 
-// ─── Local submission media (DataTransfer upload injection source) ───
-async function fetchLocalSubmissionMedia(msg = {}) {
-  const params = new URLSearchParams();
-  params.set("profile", String(msg.profile || "").trim());
-  if (msg.name) params.set("name", String(msg.name).trim());
-  if (msg.kind) params.set("kind", String(msg.kind).trim());
-  params.set("index", String(Number.isFinite(Number(msg.index)) ? Number(msg.index) : 0));
-
-  let response;
-  try {
-    response = await fetch(`${LOCAL_AGENT_URL}/media/file?${params.toString()}`);
-  } catch (err) {
-    throw new Error(`本地媒体代理不可用 (${LOCAL_AGENT_URL}): ${err.message}`);
+// ─── Cloud media (R2 → DataTransfer upload injection source) ───
+async function binaryResponseToDataUrl(response) {
+  const blob = await response.blob();
+  if (blob.size > MAX_SUBMISSION_MEDIA_BYTES) throw new Error("云端图片超过 6MB，无法自动上传");
+  const contentType = String(blob.type || response.headers.get("content-type") || "");
+  if (!contentType.toLowerCase().startsWith("image/")) throw new Error("云端媒体不是图片");
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
   }
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.dataUrl) {
-    throw new Error(data.message || `本地媒体读取失败: HTTP ${response.status}`);
-  }
-  if (data.bytes > MAX_SUBMISSION_MEDIA_BYTES) {
-    throw new Error("本地图片超过 6MB，无法自动上传");
-  }
-  return {
-    ok: true,
-    dataUrl: data.dataUrl,
-    contentType: data.mime,
-    name: data.name,
-    kind: data.kind,
-    byteLength: data.bytes,
-  };
+  return { dataUrl: `data:${contentType};base64,${btoa(binary)}`, contentType, byteLength: bytes.length };
 }
 
-async function listLocalSubmissionMedia() {
-  let response;
-  try {
-    response = await fetch(`${LOCAL_AGENT_URL}/media/list`);
-  } catch (err) {
-    return {
-      ok: false,
-      error: "本机 Agent 未运行（http://127.0.0.1:8790）。Logo/截图预检和上传需要先启动：python3 -m local_agent.server",
-      profiles: [],
-    };
-  }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    return { ok: false, error: data.message || `HTTP ${response.status}`, profiles: [] };
-  }
-  return {
-    ok: true,
-    mediaRoot: data.mediaRoot || "",
-    mediaRootExists: data.mediaRootExists === true,
-    profiles: data.profiles || [],
-  };
+async function fetchCloudSubmissionMedia(msg = {}) {
+  const assetId = self.ExtLinkCloudSync.cloudMediaAssetId(msg.ref || msg.assetId);
+  if (!assetId) throw new Error("无效的云端媒体引用");
+  const response = await cloudRequest(`/v1/media/${encodeURIComponent(assetId)}`, { raw: true });
+  const media = await binaryResponseToDataUrl(response);
+  return { ok: true, ...media, name: msg.name || assetId, source: "cloud" };
+}
+
+async function listCloudSubmissionMedia() {
+  const response = await cloudRequest("/v1/media");
+  return { ok: true, assets: response.assets || [] };
 }
 
 // ─── AI comment drafts ───
@@ -591,7 +760,7 @@ async function generateCommentDrafts(msg = {}) {
 
   let data;
   try {
-    data = await callLocalAgent("/comment", {
+    data = await callCloudAgent("/comment", {
       pageUrl,
       pageTitle: String(msg.pageTitle || ""),
       pageText: String(msg.pageText || ""),
@@ -1254,7 +1423,7 @@ async function runValidateAndFixFill(tabId, config) {
   if (report.allValid) return { submitReady: true, issues: [] };
 
   const snapshot = await getTabSnapshot(tabId);
-  const validation = await callLocalAgent("/validate-fill", {
+  const validation = await callCloudAgent("/validate-fill", {
     snapshot,
     filledFields: report.fields,
     config: {
@@ -1496,7 +1665,6 @@ async function recordSubmittedProject(task) {
     source: record.confirmedBy === "manual" ? "manual" : "agent",
     syncRecord: false,
   });
-  await enqueueSheetSyncRecord(record);
 }
 
 async function addToUrlList(msg) {
@@ -1755,7 +1923,6 @@ async function addSubmissionTimelineEvent(msg = {}) {
     update.submissionSchemaVersion = SUBMISSION_SCHEMA_VERSION;
   }
   await chrome.storage.local.set(update);
-  if (updatedRecord && msg.syncRecord !== false) await enqueueSheetSyncRecord(updatedRecord);
   return { ok: true, event, record: updatedRecord };
 }
 
@@ -1870,34 +2037,15 @@ function clampScheduleMinutes(value, fallback) {
 
 async function configureScheduledChecks() {
   const storage = await chrome.storage.local.get([
-    "googleAutoPreviewEnabled",
-    "googleAutoPreviewMinutes",
     "linkMonitorEnabled",
     "linkMonitorMinutes",
   ]);
   const defaults = {};
-  if (storage.googleAutoPreviewEnabled === undefined) defaults.googleAutoPreviewEnabled = false;
-  if (storage.googleAutoPreviewMinutes === undefined) {
-    defaults.googleAutoPreviewMinutes = DEFAULT_SHEET_CHECK_MINUTES;
-  }
   if (storage.linkMonitorEnabled === undefined) defaults.linkMonitorEnabled = true;
   if (storage.linkMonitorMinutes === undefined) {
     defaults.linkMonitorMinutes = DEFAULT_LINK_MONITOR_MINUTES;
   }
   if (Object.keys(defaults).length) await chrome.storage.local.set(defaults);
-
-  const autoPreviewEnabled = storage.googleAutoPreviewEnabled === true;
-  const previewMinutes = clampScheduleMinutes(
-    storage.googleAutoPreviewMinutes,
-    DEFAULT_SHEET_CHECK_MINUTES,
-  );
-  await chrome.alarms.clear(SHEET_PREVIEW_ALARM);
-  if (autoPreviewEnabled) {
-    chrome.alarms.create(SHEET_PREVIEW_ALARM, {
-      delayInMinutes: 1,
-      periodInMinutes: previewMinutes,
-    });
-  }
 
   const monitorEnabled = storage.linkMonitorEnabled !== false;
   const monitorMinutes = clampScheduleMinutes(
@@ -2228,9 +2376,6 @@ async function runLinkMonitor({ notify = false, force = false } = {}) {
     if (upgraded.publicationStatus !== record.publicationStatus || upgraded.publicUrl !== record.publicUrl) {
       nextRecords[key] = upgraded;
       publicationUpgrades += 1;
-      enqueueSheetSyncRecord(upgraded).catch((err) => {
-        log(`公开状态回写：${err.message}`, "warn");
-      });
     }
   }
   const storageUpdate = { linkMonitorResults: results, linkMonitorLastRunAt: lastRunAt };
@@ -2706,7 +2851,7 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
   let snapshot = await getTabSnapshot(tabId);
   const loops = Math.max(1, Math.min(maxLoops || MAX_AGENT_LOOPS, MAX_AGENT_LOOPS));
   for (let loop = 0; loop < loops; loop++) {
-    const plan = await callLocalAgent(
+    const plan = await callCloudAgent(
       "/plan",
       agentPayload(fakeTask, snapshot, { config, fillOnly: true }),
     );
@@ -3093,44 +3238,20 @@ function markTaskFilled(tabId, task, entry, reason) {
     .catch(() => {});
 }
 
-// ─── Local Agent Loop ───
-async function callLocalAgent(endpoint, payload) {
+// ─── Cloud AI loop ───
+async function callCloudAgent(endpoint, payload) {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  let response;
-  try {
-    response = await fetch(`${LOCAL_AGENT_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch (err) {
-    throw new Error(`DeepSeek local agent unavailable at ${LOCAL_AGENT_URL}: ${err.message}`);
-  }
-
-  const text = await response.text();
-  let data = null;
-  if (text.trim()) {
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      if (response.ok) {
-        throw new Error(`DeepSeek local agent ${path} returned invalid JSON`);
-      }
-    }
-  }
-
-  if (!response.ok) {
-    const detail =
-      (data && (data.message || data.reason)) ||
-      text.trim().slice(0, 300) ||
-      response.statusText ||
-      "request failed";
-    throw new Error(`DeepSeek local agent ${path} HTTP ${response.status}: ${detail}`);
-  }
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    throw new Error(`DeepSeek local agent ${path} returned an invalid response shape`);
-  }
-  return data;
+  const mapped = {
+    "/comment": "/v1/ai/comment",
+    "/plan": "/v1/ai/plan",
+    "/judge": "/v1/ai/judge",
+    "/validate-fill": "/v1/ai/validate-fill",
+    "/extract-site": "/v1/ai/extract-site",
+    "/generate-site": "/v1/ai/generate-site",
+    "/domain/metrics": "/v1/domain/metrics",
+  }[path];
+  if (!mapped) throw new Error(`不支持的云端助手能力: ${path}`);
+  return cloudRequest(mapped, { method: "POST", body: payload });
 }
 
 async function getTabSnapshot(tabId) {
@@ -3168,7 +3289,7 @@ async function getTabSnapshot(tabId) {
 
 async function executeTabActions(tabId, actions) {
   if (!Array.isArray(actions) || actions.length === 0) {
-    throw new Error("local agent returned no actions to execute");
+    throw new Error("云端 AI 未返回可执行动作");
   }
 
   const result = await chrome.tabs.sendMessage(tabId, {
@@ -3243,7 +3364,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
 
     let snapshot = await getTabSnapshot(tabId);
     assertRunCurrent(tabId, entry, runId);
-    let judge = await callLocalAgent("/judge", agentPayload(task, snapshot, extra));
+    let judge = await callCloudAgent("/judge", agentPayload(task, snapshot, extra));
     assertRunCurrent(tabId, entry, runId);
     if (judge.status === "success") {
       completeTaskFromJudge(tabId, task, judge);
@@ -3252,7 +3373,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
     if (handleTerminalJudge(tabId, task, entry, judge)) return;
 
     for (let loop = 0; loop < MAX_AGENT_LOOPS && !state.stopped; loop++) {
-      const plan = await callLocalAgent(
+      const plan = await callCloudAgent(
         "/plan",
         agentPayload(task, snapshot, { ...extra, judge, loop }),
       );
@@ -3263,7 +3384,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
           tabId,
           task,
           entry,
-          plan.reason || plan.message || "local agent needs manual input",
+          plan.reason || plan.message || "云端 AI 需要人工处理",
         );
         return;
       }
@@ -3272,7 +3393,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
           tabId,
           task,
           entry,
-          plan.reason || plan.message || "local agent blocked this page",
+          plan.reason || plan.message || "云端 AI 暂时无法处理该页面",
         );
         return;
       }
@@ -3287,7 +3408,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       }
 
       log(
-        `${task.domain}: 本地代理执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`,
+        `${task.domain}: 云端 AI 执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`,
         "",
       );
       const actionResult = await executeTabActions(tabId, plan.actions);
@@ -3306,7 +3427,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         throw err;
       }
       assertRunCurrent(tabId, entry, runId);
-      judge = await callLocalAgent(
+      judge = await callCloudAgent(
         "/judge",
         agentPayload(task, snapshot, { ...extra, plan, loop }),
       );
@@ -3335,7 +3456,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         tabId,
         task,
         entry,
-        "本地 AI 代理未运行，请先执行: python3 -m local_agent.server",
+        "云端 AI 服务暂不可用，请稍后重试",
       );
       return;
     }
@@ -3585,7 +3706,7 @@ function skipTaskWithReason(tabId, task, entry, reason) {
 
 function isAgentUnavailableError(err) {
   const message = err && err.message ? err.message : "";
-  return /local agent unavailable|127\.0\.0\.1:8790|ECONNREFUSED|Failed to fetch/i.test(message);
+  return /云端|cloud|worker|fetch/i.test(message);
 }
 
 function cancelRemainingDestinationTasks(task, status, reason) {

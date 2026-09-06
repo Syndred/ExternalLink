@@ -12,7 +12,6 @@
   let libraryItems = [];
   let libraryVisibleLimit = 200;
   const LIBRARY_PAGE_SIZE = 200;
-  let googlePreviewRevision = "";
 
   function renderProfileFields(profile) {
     const list = $("profileFieldList");
@@ -57,96 +56,41 @@
     return { fields, fieldNotes };
   }
 
-  function setGoogleStatus(message, tone = "") {
-    const el = $("googleSyncStatus");
+  function setCloudStatus(message, tone = "") {
+    const el = $("cloudSyncStatus");
     if (!el) return;
     el.className = `sync-status${tone ? ` ${tone}` : ""}`;
     el.textContent = message;
   }
 
-  function setGooglePreview(preview = null) {
-    const el = $("googleSyncPreview");
-    const apply = $("btnGoogleApply");
-    googlePreviewRevision = preview?.revision || "";
-    if (apply) apply.disabled = !googlePreviewRevision || !!preview?.conflicts?.length;
-    if (!el) return;
-    if (!preview) {
-      el.hidden = true;
-      el.textContent = "";
-      return;
-    }
-    const parts = [
-      `外链站 ${preview.destinations || 0} 个`,
-      `新增资料 ${preview.profilesAdded || 0} 个`,
-      `更新资料 ${preview.profilesUpdated || 0} 个`,
-      `移除资料 ${preview.profilesRemoved || 0} 个`,
-      `新增成功记录 ${preview.recordsAdded || 0} 条`,
-      `升级记录 ${preview.recordsUpgraded || 0} 条`,
-      `保护本地强证据 ${preview.recordsProtected || 0} 条`,
-      `分类变化 ${preview.annotationChanges || 0} 条`,
-      `清除分类 ${preview.annotationsRemoved || 0} 条`,
-    ];
-    if (preview.conflicts?.length) {
-      parts.push(`发现 ${preview.conflicts.length} 个冲突，请先在表格中处理后重新预览`);
-    }
-    el.textContent = parts.join(" · ");
-    el.hidden = false;
+  function cloudConfigFromForm() {
+    return {
+      endpoint: $("cloudWorkerEndpoint")?.value || "",
+      accessToken: $("cloudAccessToken")?.value || "",
+      workspaceId: $("cloudWorkspaceId")?.value || "default",
+    };
   }
 
-  async function loadGoogleSyncStatus({ probeAgent = false } = {}) {
-    setGoogleStatus(probeAgent ? "正在检查本机 Agent 和 Google 授权…" : "正在读取本地缓存…");
-    const result = await chrome.runtime.sendMessage({ action: "googleSyncStatus", probeAgent });
-    if (!result?.ok) throw new Error(result?.error || "读取 Google 同步状态失败");
-    if ($("googleSheetId") && result.spreadsheetId) {
-      $("googleSheetId").value = result.spreadsheetId;
-    }
-    if ($("googleAutoPreviewEnabled")) {
-      $("googleAutoPreviewEnabled").checked = result.autoPreviewEnabled === true;
-    }
-    if ($("googleAutoPreviewMinutes")) {
-      $("googleAutoPreviewMinutes").value = String(result.autoPreviewMinutes || 60);
-    }
-    if (result.pendingPreview?.preview) setGooglePreview(result.pendingPreview.preview);
-    const cache = result.cache || {};
-    const cacheSummary = cache.ready
-      ? `本地缓存已就绪：${cache.destinations || 0} 个外链、${cache.profiles || 0} 个网站资料`
-      : "本地还没有完整表格缓存";
-    const syncedAt = cache.syncedAt || result.meta?.appliedAt || result.meta?.fetchedAt || "";
-    const pending = Number(result.pendingRecords || 0);
-    if (!probeAgent) {
-      setGoogleStatus(
-        `${cacheSummary}${syncedAt ? ` · 最近更新 ${new Date(syncedAt).toLocaleString()}` : ""}${pending ? ` · 待回写 ${pending} 条` : ""} · 日常查看无需启动服务；只有从 Google 更新或回写时才需要本机 Agent。`,
-        cache.ready ? "success" : "warning",
-      );
+  async function loadCloudSyncStatus() {
+    const result = await chrome.runtime.sendMessage({ action: "cloudSyncStatus" });
+    if (!result?.ok) throw new Error(result?.error || "读取云端状态失败");
+    const config = result.config || {};
+    if ($("cloudWorkerEndpoint")) $("cloudWorkerEndpoint").value = config.endpoint || "";
+    if ($("cloudAccessToken") && config.accessToken) $("cloudAccessToken").value = config.accessToken;
+    if ($("cloudWorkspaceId")) $("cloudWorkspaceId").value = config.workspaceId || "default";
+    if (!config.configured) {
+      setCloudStatus("尚未连接。部署完成后填写 Worker 地址和本设备密钥。", "warning");
       return result;
     }
-    const agent = result.agent || {};
-    if (result.agentError) {
-      setGoogleStatus(
-        `${cacheSummary} · 本机 Agent 当前未运行；不影响查看，只影响 Google 更新和回写。`,
-        cache.ready ? "success" : "warning",
-      );
+    if (!result.connected) {
+      setCloudStatus(`云端不可用：${result.error || "连接失败"}`, "warning");
       return result;
     }
-    const authenticated = agent.authenticated === true || agent.connected === true;
-    const configured = agent.configured === true;
-    if (authenticated) {
-      const details = [
-        cacheSummary,
-        result.enabled ? "Google 更新通道已启用" : "已授权，可按需更新本地缓存",
-        pending ? `待回写 ${pending} 条` : "无待回写记录",
-        syncedAt ? `最近同步 ${new Date(syncedAt).toLocaleString()}` : "尚未同步",
-        result.pendingPreview?.revision ? "表格有待应用更新" : "表格版本已对齐",
-      ];
-      setGoogleStatus(details.join(" · "), result.enabled ? "success" : "warning");
-    } else if (configured) {
-      setGoogleStatus("本机配置已就绪，请点击“连接 Google”完成授权。", "warning");
-    } else {
-      setGoogleStatus(
-        `${cacheSummary} · 本机 Agent 尚未配置 GOOGLE_SHEET_ID 和 GOOGLE_OAUTH_CLIENT_FILE。`,
-        "warning",
-      );
-    }
+    const health = result.health || {};
+    const parts = ["已连接 Neon + R2", `工作区 ${config.workspaceId || "default"}`, `状态文档 ${health.documentKeys || 0} 类`];
+    if (config.migratedAt) parts.push(`首次迁移 ${new Date(config.migratedAt).toLocaleString()}`);
+    if (config.lastPushAt) parts.push(`最近保存 ${new Date(config.lastPushAt).toLocaleString()}`);
+    setCloudStatus(parts.join(" · "), "success");
     return result;
   }
 
@@ -411,10 +355,11 @@
     btn.disabled = true;
     btn.textContent = "提取中…（可切换标签页，不会中断）";
     try {
-      const data = await P.callLocalAgent("/extract-site", {
-        url,
-        language: $("siteLanguage").value || "auto",
+      const data = await chrome.runtime.sendMessage({
+        action: "cloudAiExtractSite",
+        payload: { url, language: $("siteLanguage").value || "auto" },
       });
+      if (!data?.ok) throw new Error(data?.error || "云端资料提取失败");
       const current =
         activeSiteId && siteProfiles[activeSiteId]
           ? siteProfiles[activeSiteId]
@@ -422,7 +367,7 @@
       const merged = P.mergeExtractedProfile(current, data.profile || {});
       profileToForm(merged);
     } catch (err) {
-      alert(`提取失败: ${err.message}\n\n请确认 local_agent 已启动且 DEEPSEEK_API_KEY 已配置`);
+      alert(`提取失败: ${err.message}\n\n请确认云端数据中心已连接。`);
     } finally {
       btn.disabled = false;
       btn.textContent = "🔍 从网址提取资料";
@@ -435,10 +380,11 @@
     btn.textContent = "生成中…";
     try {
       const partial = formToProfile(activeSiteId || undefined);
-      const data = await P.callLocalAgent("/generate-site", {
-        profile: partial,
-        language: $("siteLanguage").value || "auto",
+      const data = await chrome.runtime.sendMessage({
+        action: "cloudAiGenerateSite",
+        payload: { profile: partial, language: $("siteLanguage").value || "auto" },
       });
+      if (!data?.ok) throw new Error(data?.error || "云端资料完善失败");
       profileToForm(P.mergeExtractedProfile(partial, data.profile || {}));
     } catch (err) {
       alert(`生成失败: ${err.message}`);
@@ -971,143 +917,68 @@
     renderLibrary();
   });
 
-  function googleSheetValue() {
-    return ($("googleSheetId")?.value || "").trim();
-  }
-
-  $("btnGoogleRefresh")?.addEventListener("click", async () => {
-    setGooglePreview();
-    try {
-      await loadGoogleSyncStatus({ probeAgent: true });
-    } catch (err) {
-      setGoogleStatus(err.message, "warning");
-    }
+  $("btnCloudRefresh")?.addEventListener("click", () => {
+    loadCloudSyncStatus().catch((err) => setCloudStatus(err.message, "warning"));
   });
 
-  $("btnGoogleConnect")?.addEventListener("click", async () => {
-    const btn = $("btnGoogleConnect");
+  $("btnCloudConnect")?.addEventListener("click", async () => {
+    const btn = $("btnCloudConnect");
     btn.disabled = true;
-    setGooglePreview();
-    setGoogleStatus("正在打开 Google 授权页…");
+    setCloudStatus("正在验证云端连接…");
     try {
-      const result = await chrome.runtime.sendMessage({
-        action: "googleAuthStart",
-        spreadsheetId: googleSheetValue(),
-      });
-      if (!result?.ok) throw new Error(result?.error || "无法开始 Google 授权");
-      setGoogleStatus("授权页已打开。完成授权后回到这里点击“刷新状态”。", "warning");
+      const result = await chrome.runtime.sendMessage({ action: "cloudSyncConnect", config: cloudConfigFromForm() });
+      if (!result?.ok) throw new Error(result?.error || "无法连接云端数据中心");
+      await loadCloudSyncStatus();
     } catch (err) {
-      setGoogleStatus(err.message, "warning");
+      setCloudStatus(err.message, "warning");
     } finally {
       btn.disabled = false;
     }
   });
 
-  $("btnGooglePreview")?.addEventListener("click", async () => {
-    const btn = $("btnGooglePreview");
+  $("btnCloudMigrate")?.addEventListener("click", async () => {
+    if (!confirm("首次迁移会把当前插件资料、外链库、提交账本、时间线和备注保存为云端主数据。已有云端数据不会被覆盖。继续吗？")) return;
+    const btn = $("btnCloudMigrate");
     btn.disabled = true;
-    setGooglePreview();
-    setGoogleStatus("正在读取 Google Sheet，仅生成变更预览…");
+    setCloudStatus("正在迁移当前插件数据到云端…");
     try {
-      const result = await chrome.runtime.sendMessage({
-        action: "googleSyncPreview",
-        spreadsheetId: googleSheetValue(),
-      });
-      if (!result?.ok) throw new Error(result?.error || "同步预览失败");
-      setGooglePreview(result.preview);
-      setGoogleStatus(
-        result.preview?.conflicts?.length
-          ? "预览完成，但存在冲突，未改动扩展数据。"
-          : "检查完成。确认统计无误后更新本地缓存。",
-        result.preview?.conflicts?.length ? "warning" : "success",
-      );
-    } catch (err) {
-      setGoogleStatus(err.message, "warning");
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  $("btnGoogleCheckChanges")?.addEventListener("click", async () => {
-    const btn = $("btnGoogleCheckChanges");
-    btn.disabled = true;
-    setGoogleStatus("正在检查表格版本变化…");
-    try {
-      const result = await chrome.runtime.sendMessage({ action: "googleCheckChanges" });
-      if (!result?.ok) throw new Error(result?.error || "检查失败");
-      if (result.changed) {
-        setGooglePreview(result.preview);
-        setGoogleStatus("检测到表格更新，请确认后更新本地缓存。", "warning");
-      } else {
-        setGooglePreview();
-        setGoogleStatus("表格与插件运行缓存版本一致。", "success");
-      }
-    } catch (err) {
-      setGoogleStatus(err.message, "warning");
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  $("btnGoogleSaveSchedule")?.addEventListener("click", async () => {
-    const result = await chrome.runtime.sendMessage({
-      action: "googleSyncSchedule",
-      enabled: $("googleAutoPreviewEnabled").checked,
-      minutes: Number($("googleAutoPreviewMinutes").value || 60),
-    });
-    if (!result?.ok) return setGoogleStatus(result?.error || "保存检查频率失败", "warning");
-    setGoogleStatus(`表格变化检查已保存：${result.autoPreviewEnabled ? `每 ${result.autoPreviewMinutes} 分钟` : "已关闭"}`, "success");
-  });
-
-  $("btnGoogleApply")?.addEventListener("click", async () => {
-    if (!googlePreviewRevision) return;
-    const btn = $("btnGoogleApply");
-    btn.disabled = true;
-    setGoogleStatus("正在把已确认的数据更新到本地缓存…");
-    try {
-      const result = await chrome.runtime.sendMessage({
-        action: "googleSyncApply",
-        spreadsheetId: googleSheetValue(),
-        revision: googlePreviewRevision,
-      });
-      if (!result?.ok) throw new Error(result?.error || "更新本地缓存失败");
-      googlePreviewRevision = "";
-      setGooglePreview();
+      const result = await chrome.runtime.sendMessage({ action: "cloudSyncMigrate" });
+      if (!result?.ok) throw new Error(result?.error || "首次迁移失败");
+      setCloudStatus(`迁移完成：${result.importedDocuments || 0} 类数据、${result.timelineEvents || 0} 条时间线事件。`, "success");
       await loadLibrary();
-      await loadGoogleSyncStatus();
-      setGoogleStatus(
-        `本地缓存已更新${result.pendingRecords ? ` · 有 ${result.pendingRecords} 条记录可单独回写 Google` : ""}。日常查看无需启动服务。`,
-        "success",
-      );
     } catch (err) {
-      setGoogleStatus(err.message, "warning");
-    }
-  });
-
-  $("btnGooglePush")?.addEventListener("click", async () => {
-    const btn = $("btnGooglePush");
-    btn.disabled = true;
-    setGoogleStatus("正在回写待同步成功记录…");
-    try {
-      const result = await chrome.runtime.sendMessage({ action: "googlePushLedger" });
-      if (!result?.ok) throw new Error(result?.error || "回写失败");
-      await loadGoogleSyncStatus();
-    } catch (err) {
-      setGoogleStatus(err.message, "warning");
+      setCloudStatus(err.message, "warning");
     } finally {
       btn.disabled = false;
     }
   });
 
-  $("btnGoogleDisconnect")?.addEventListener("click", async () => {
-    if (!confirm("断开本机 Google 授权？扩展内现有资料和提交账本不会删除。")) return;
-    setGooglePreview();
+  $("btnCloudPull")?.addEventListener("click", async () => {
+    const btn = $("btnCloudPull");
+    btn.disabled = true;
+    setCloudStatus("正在从云端回读数据…");
     try {
-      const result = await chrome.runtime.sendMessage({ action: "googleDisconnect" });
-      if (!result?.ok) throw new Error(result?.error || "断开失败");
-      await loadGoogleSyncStatus();
+      const result = await chrome.runtime.sendMessage({ action: "cloudSyncPull" });
+      if (!result?.ok) throw new Error(result?.error || "云端回读失败");
+      setCloudStatus(`已回读 ${result.documentCount || 0} 类数据。`, "success");
+      location.reload();
     } catch (err) {
-      setGoogleStatus(err.message, "warning");
+      setCloudStatus(err.message, "warning");
+      btn.disabled = false;
+    }
+  });
+
+  $("btnCloudPush")?.addEventListener("click", async () => {
+    const btn = $("btnCloudPush");
+    btn.disabled = true;
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "cloudSyncPush" });
+      if (!result?.ok) throw new Error(result?.error || "云端保存失败");
+      await loadCloudSyncStatus();
+    } catch (err) {
+      setCloudStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -1309,7 +1180,7 @@
           `查询 ${domains.length} 个域名`,
           `拿到注册日期 ${known} 个`,
           `缓存共 ${state.metricsCached || 0} 个`,
-          result?.error ? `Agent 报错：${result.error}` : "",
+          result?.error ? `云端服务报错：${result.error}` : "",
         ]
           .filter(Boolean)
           .join(" · "),
@@ -1348,22 +1219,21 @@
     const btn = $("btnRefreshMediaLibrary");
     btn.disabled = true;
     try {
-      const result = await chrome.runtime.sendMessage({ action: "listLocalSubmissionMedia" });
-      if (!result?.ok) throw new Error(result?.error || "读取本地图库失败");
-      if (!result.mediaRootExists) {
-        setStatusLine("mediaLibraryStatus", `图库目录不存在：${result.mediaRoot}`, "warning");
-        return;
-      }
-      const summary = (result.profiles || [])
-        .map((entry) => {
-          const logos = entry.files.filter((file) => file.kind === "logo").length;
-          const shots = entry.files.filter((file) => file.kind === "screenshot").length;
-          return `${entry.profile}（Logo ${logos} / 截图 ${shots}）`;
-        })
+      const result = await chrome.runtime.sendMessage({ action: "listCloudSubmissionMedia" });
+      if (!result?.ok) throw new Error(result?.error || "读取云端媒体失败");
+      const grouped = (result.assets || []).reduce((map, item) => {
+        const profile = item.profile_id || "未归类";
+        if (!map[profile]) map[profile] = { logos: 0, shots: 0 };
+        if (item.media_kind === "logo") map[profile].logos += 1;
+        if (item.media_kind === "screenshot") map[profile].shots += 1;
+        return map;
+      }, {});
+      const summary = Object.entries(grouped)
+        .map(([profile, counts]) => `${profile}（Logo ${counts.logos} / 截图 ${counts.shots}）`)
         .join("，");
       setStatusLine(
         "mediaLibraryStatus",
-        summary ? `${result.mediaRoot} → ${summary}` : `${result.mediaRoot} 下没有可用图片`,
+        summary ? `R2 私有媒体库 → ${summary}` : "R2 中还没有可用图片",
         summary ? "success" : "warning",
       );
     } catch (err) {
@@ -1397,6 +1267,7 @@
       "autoOpenSidePanel",
       "autoFillOnVisit",
       "autoSubmitStandardWpComments",
+      "cloudSyncConfig",
     ],
     (items) => {
       siteProfiles = items.siteProfiles || {};
@@ -1425,7 +1296,7 @@
           }
         })
         .finally(() => {
-          loadGoogleSyncStatus().catch((err) => setGoogleStatus(err.message, "warning"));
+          loadCloudSyncStatus().catch((err) => setCloudStatus(err.message, "warning"));
         });
       loadLinkMonitorState().catch((err) => setStatusLine("linkMonitorStatus", err.message, "warning"));
       loadTargetGateState().catch((err) => setStatusLine("targetGateStatus", err.message, "warning"));

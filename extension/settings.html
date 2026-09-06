@@ -631,47 +631,36 @@
         </div>
         <aside class="library-tools" id="railLibraryTools" aria-label="外链库同步与备份">
           <div class="card">
-            <div class="section-title">Google Sheet 同步</div>
+            <div class="section-title">云端数据中心</div>
             <p class="hint">
-              外链清单以私有 Google Sheet 的 Link Submit 为准。OAuth 只存在本机 Agent，扩展不保存 Google 凭据。
+              Neon 保存外链库、Profile、提交记录、时间线和备注；R2 保存私有 Logo 与截图。连接后自动保存，Google Sheet 和本机 Agent 不参与日常使用。
             </p>
             <div class="form-row">
-              <label for="googleSheetId">Google Sheet 链接或 ID</label>
-              <input
-                type="text"
-                id="googleSheetId"
-                placeholder="https://docs.google.com/spreadsheets/d/.../edit"
-              />
+              <label for="cloudWorkerEndpoint">Worker 地址</label>
+              <input type="url" id="cloudWorkerEndpoint" placeholder="https://externallink-cloud.…workers.dev" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="cloudAccessToken">本设备密钥</label>
+              <input type="password" id="cloudAccessToken" placeholder="由部署时生成" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="cloudWorkspaceId">工作区</label>
+              <input type="text" id="cloudWorkspaceId" value="default" maxlength="80" autocomplete="off" />
             </div>
             <div class="btn-row">
-              <button class="btn btn-secondary" id="btnGoogleConnect">连接 Google</button>
-              <button class="btn btn-secondary" id="btnGoogleRefresh">检查连接</button>
-            </div>
-            <div class="form-row sync-schedule-row">
-              <label><input type="checkbox" id="googleAutoPreviewEnabled" /> 自动检查表格变化（需本机 Agent 常驻）</label>
-              <select id="googleAutoPreviewMinutes" aria-label="表格检查频率">
-                <option value="30">每 30 分钟</option>
-                <option value="60">每小时</option>
-                <option value="360">每 6 小时</option>
-                <option value="1440">每天</option>
-              </select>
+              <button class="btn btn-secondary" id="btnCloudConnect">连接云端</button>
+              <button class="btn btn-secondary" id="btnCloudRefresh">刷新状态</button>
             </div>
             <div class="btn-row">
-              <button class="btn btn-secondary" id="btnGoogleCheckChanges">立即检查变化</button>
-              <button class="btn btn-secondary" id="btnGoogleSaveSchedule">保存检查频率</button>
+              <button class="btn btn-primary" id="btnCloudMigrate">首次迁移到云端</button>
+              <button class="btn btn-secondary" id="btnCloudPull">从云端回读</button>
             </div>
             <div class="btn-row">
-              <button class="btn btn-secondary" id="btnGooglePreview">检查 Google 更新</button>
-              <button class="btn btn-primary" id="btnGoogleApply" disabled>更新本地缓存</button>
+              <button class="btn btn-secondary" id="btnCloudPush">立即保存</button>
             </div>
-            <div class="btn-row">
-              <button class="btn btn-secondary" id="btnGooglePush">回写待同步记录</button>
-              <button class="btn btn-danger" id="btnGoogleDisconnect">断开 Google</button>
+            <div class="sync-status" id="cloudSyncStatus" role="status" aria-live="polite">
+              尚未连接云端数据中心。
             </div>
-            <div class="sync-status" id="googleSyncStatus" role="status" aria-live="polite">
-              正在读取本地缓存…
-            </div>
-            <div class="sync-preview" id="googleSyncPreview" hidden></div>
           </div>
           <div class="card">
             <div class="section-title">已发布外链存活监控</div>
@@ -790,7 +779,7 @@
         <div class="card">
           <div class="section-title">目标质量闸门</div>
           <p class="hint">
-            在打开外链站之前先过滤：黑名单域名直接排除，域名年龄用本机 Agent 的 RDAP 查询结果判断。年龄数据只用缓存，不会在构建队列时联网。
+            在打开外链站之前先过滤：黑名单域名直接排除，域名年龄由云端 RDAP 查询结果判断。年龄数据只用缓存，不会在构建队列时联网。
           </p>
           <label
             ><input
@@ -844,9 +833,9 @@
         </div>
 
         <div class="card">
-          <div class="section-title">AI 评论与本地图库</div>
+          <div class="section-title">AI 评论与云端媒体</div>
           <p class="hint">
-            AI 评论由本机 Agent 读取页面正文后生成，只有切题的草稿才会被采用；通用套话会被拒绝。本地图库用于必填上传字段，绕开系统文件选择器。
+            AI 评论由云端服务生成，只有切题的草稿才会被采用；通用套话会被拒绝。R2 私有媒体用于必填上传字段，绕开系统文件选择器。
           </p>
           <label
             ><input
@@ -877,11 +866,11 @@
           <div class="btn-row">
             <button class="btn btn-primary" id="btnSaveAssistant">保存助手设置</button>
             <button class="btn btn-secondary" id="btnRefreshMediaLibrary">
-              检查本地图库
+              检查云端媒体
             </button>
           </div>
           <div class="sync-status" id="mediaLibraryStatus" role="status" aria-live="polite">
-            尚未检查本地图库。
+            尚未检查云端媒体。
           </div>
         </div>
       </div>

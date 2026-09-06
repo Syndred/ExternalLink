@@ -27,6 +27,7 @@ assert.match(settingsHtml, /class="library-split"/);
 assert.match(settingsHtml, /id="railLibraryTools"/);
 assert.match(settingsHtml, /id="libraryCount"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
+assert.match(settingsHtml, /id="siteMediaGallery"/);
 assert.match(settingsHtml, /id="btnExportLedger"/);
 assert.match(settingsHtml, /id="btnImportLedger"/);
 assert.match(settingsHtml, /id="profileFieldList"/);
@@ -66,6 +67,7 @@ assert.match(settingsJs, /profile\.latestEvent/);
 assert.match(settingsJs, /action:\s*"addSubmissionTimelineEvent"/);
 assert.match(settingsJs, /createSheetFieldsDetails/);
 assert.match(settingsJs, /renderProfileFields/);
+assert.match(settingsJs, /action:\s*"fetchCloudSubmissionMedia"/);
 assert.match(settingsJs, /deriveLibraryProgress/);
 assert.match(settingsJs, /createKeyDetail/);
 assert.match(settingsJs, /质量分 \$\{score\}/);
@@ -91,6 +93,9 @@ assert.match(
 assert.match(settingsCss, /monitor-tag\.missing/);
 assert.match(settingsCss, /timeline-event/);
 assert.match(settingsCss, /profile-field-row/);
+assert.match(settingsCss, /#panel-sites\s*\{\s*display:\s*grid/);
+assert.match(settingsCss, /#panel-config\s*\{\s*display:\s*grid/);
+assert.match(settingsHtml, /<details class="profile-fields">/);
 
 assert.match(css, /min-height:\s*44px/);
 assert.match(css, /:focus-visible/);

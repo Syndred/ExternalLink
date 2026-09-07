@@ -240,6 +240,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
+    case "updateSubmissionTimelineEvent":
+      updateSubmissionTimelineEvent(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "removeSubmissionTimelineEvent":
+      removeSubmissionTimelineEvent(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "pinLibraryUrl":
       pinLibraryUrl(msg)
         .then(sendResponse)
@@ -1877,6 +1887,41 @@ async function getLibraryManagerState(options = {}) {
   return { ok: true, items, profiles: seeded.profiles };
 }
 
+function applyTimelinePublicationUpgrade(records, event) {
+  const profileId = String(event.profileId || "").trim();
+  if (
+    !profileId ||
+    profileId === "__destination__" ||
+    !["submitted", "pending_moderation", "published"].includes(event.type)
+  ) {
+    return { records, updatedRecord: null };
+  }
+  const next = { ...records };
+  const recordKey = self.ExtLinkQueue.submissionRecordKey(event.destinationKey, profileId);
+  const existing = next[recordKey] || null;
+  const updatedRecord = existing
+    ? self.ExtLinkQueue.applyPublicationUpgrade(existing, event.type, {
+        updatedAt: event.occurredAt,
+        evidence: event.note || existing.evidence || "人工记录状态变化",
+        evidenceUrl: event.evidenceUrl || existing.evidenceUrl || "",
+        publicUrl: event.publicUrl || existing.publicUrl || "",
+      })
+    : self.ExtLinkQueue.buildSuccessRecord({
+        destinationKey: event.destinationKey,
+        destinationUrl: event.destinationUrl,
+        profileId,
+        profileName: event.profileName || profileId,
+        submittedAt: event.occurredAt,
+        confirmedBy: "manual",
+        evidence: event.note || `人工记录：${event.type}`,
+        evidenceUrl: event.evidenceUrl || "",
+        publicUrl: event.publicUrl || "",
+        publicationStatus: event.type,
+      });
+  next[recordKey] = updatedRecord;
+  return { records: next, updatedRecord };
+}
+
 async function addSubmissionTimelineEvent(msg = {}) {
   const storage = await chrome.storage.local.get([
     "submissionTimeline",
@@ -1906,39 +1951,61 @@ async function addSubmissionTimelineEvent(msg = {}) {
     submissionTimeline,
     timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
   };
-  let updatedRecord = null;
-  if (
-    profileId !== "__destination__" &&
-    ["submitted", "pending_moderation", "published"].includes(event.type)
-  ) {
-    const records = { ...(storage.submissionRecords || {}) };
-    const recordKey = self.ExtLinkQueue.submissionRecordKey(event.destinationKey, profileId);
-    const existing = records[recordKey] || null;
-    updatedRecord = existing
-      ? self.ExtLinkQueue.applyPublicationUpgrade(existing, event.type, {
-          updatedAt: event.occurredAt,
-          evidence: event.note || existing.evidence || "人工记录状态变化",
-          evidenceUrl: event.evidenceUrl || existing.evidenceUrl || "",
-          publicUrl: event.publicUrl || existing.publicUrl || "",
-        })
-      : self.ExtLinkQueue.buildSuccessRecord({
-          destinationKey: event.destinationKey,
-          destinationUrl: event.destinationUrl,
-          profileId,
-          profileName: event.profileName || profileId,
-          submittedAt: event.occurredAt,
-          confirmedBy: "manual",
-          evidence: event.note || `人工记录：${event.type}`,
-          evidenceUrl: event.evidenceUrl || "",
-          publicUrl: event.publicUrl || "",
-          publicationStatus: event.type,
-        });
-    records[recordKey] = updatedRecord;
-    update.submissionRecords = records;
+  const upgraded = applyTimelinePublicationUpgrade(storage.submissionRecords || {}, event);
+  if (upgraded.updatedRecord) {
+    update.submissionRecords = upgraded.records;
     update.submissionSchemaVersion = SUBMISSION_SCHEMA_VERSION;
   }
   await chrome.storage.local.set(update);
-  return { ok: true, event, record: updatedRecord };
+  return { ok: true, event, record: upgraded.updatedRecord };
+}
+
+async function updateSubmissionTimelineEvent(msg = {}) {
+  const storage = await chrome.storage.local.get([
+    "submissionTimeline",
+    "submissionRecords",
+  ]);
+  const eventId = String(msg.eventId || "").trim();
+  if (!eventId) throw new Error("缺少动态编号");
+  const profileId = String(msg.profileId || "").trim();
+  if (!profileId) throw new Error("请选择要记录的网站项目");
+  const result = self.ExtLinkSubmissionTimeline.updateEvent(storage.submissionTimeline || {}, eventId, {
+    destinationKey: msg.destinationKey,
+    destinationUrl: msg.destinationUrl,
+    profileId,
+    profileName: msg.profileName,
+    occurredAt: msg.occurredAt,
+    type: msg.type,
+    status: msg.type,
+    note: msg.note,
+    evidenceUrl: msg.evidenceUrl,
+    publicUrl: msg.publicUrl,
+    source: msg.source || "manual",
+    confirmedBy: "manual",
+  });
+  const update = {
+    submissionTimeline: result.timeline,
+    timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+  };
+  const upgraded = applyTimelinePublicationUpgrade(storage.submissionRecords || {}, result.event);
+  if (upgraded.updatedRecord) {
+    update.submissionRecords = upgraded.records;
+    update.submissionSchemaVersion = SUBMISSION_SCHEMA_VERSION;
+  }
+  await chrome.storage.local.set(update);
+  return { ok: true, event: result.event, record: upgraded.updatedRecord };
+}
+
+async function removeSubmissionTimelineEvent(msg = {}) {
+  const storage = await chrome.storage.local.get(["submissionTimeline"]);
+  const eventId = String(msg.eventId || "").trim();
+  if (!eventId) throw new Error("缺少动态编号");
+  const result = self.ExtLinkSubmissionTimeline.removeEvent(storage.submissionTimeline || {}, eventId);
+  await chrome.storage.local.set({
+    submissionTimeline: result.timeline,
+    timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+  });
+  return { ok: true, event: result.event };
 }
 
 async function pinLibraryUrl(msg) {

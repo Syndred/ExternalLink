@@ -137,4 +137,16 @@ const repeated = P.stabilizeTableProfiles(tableProjects, stabilized.profiles);
 assert.equal(repeated.changed, false, "stable profile migration should be idempotent");
 assert.deepEqual(JSON.parse(JSON.stringify(repeated.idRemap)), {});
 
+const unordered = {
+  Zebra: { id: "Zebra", name: "Zebra", sortIndex: 2 },
+  Alpha: { id: "Alpha", name: "Alpha", sortIndex: 0 },
+  Middle: { id: "Middle", name: "Middle", sortIndex: 1 },
+};
+assert.equal(P.orderedProfileIds(unordered).join(","), "Alpha,Middle,Zebra");
+const reordered = P.applyProfileOrder(unordered, ["Zebra", "Alpha", "Middle"]);
+assert.equal(reordered.Zebra.sortIndex, 0);
+assert.equal(reordered.Alpha.sortIndex, 1);
+assert.equal(reordered.Middle.sortIndex, 2);
+assert.equal(P.nextProfileSortIndex(reordered), 3);
+
 console.log("profile migration tests passed");

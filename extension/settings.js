@@ -13,6 +13,19 @@
   let libraryItems = [];
   let libraryVisibleLimit = 200;
   const LIBRARY_PAGE_SIZE = 200;
+  let selectedLibraryKey = "";
+  let editingTimelineEventId = "";
+  let draggingSiteId = "";
+  const TIMELINE_TYPES = [
+    ["submitted", "已提交"],
+    ["pending_moderation", "待审核"],
+    ["published", "已上线"],
+    ["rejected", "被拒绝"],
+    ["needs_follow_up", "需跟进"],
+    ["needs_manual", "需人工"],
+    ["link_missing", "链接失效"],
+    ["note", "仅记录笔记"],
+  ];
 
   function renderProfileFields(profile) {
     const list = $("profileFieldList");
@@ -349,33 +362,101 @@
       useCases: P.linesToList($("siteUseCases").value),
       sellablePoints: P.linesToList($("siteSellPoints").value),
       avoidContent: P.linesToList($("siteAvoidContent").value),
+      sortIndex: Number.isFinite(Number(existing.sortIndex)) ? Number(existing.sortIndex) : P.nextProfileSortIndex(siteProfiles),
       updatedAt: new Date().toISOString(),
     };
   }
 
+  function orderedSiteIds() {
+    return P.orderedProfileIds(siteProfiles);
+  }
+
   function renderSiteSelector() {
-    const sel = $("siteSelect");
-    const ids = Object.keys(siteProfiles);
-    sel.replaceChildren();
+    const list = $("siteNavList");
+    if (!list) return;
+    const ids = orderedSiteIds();
+    list.replaceChildren();
     if (!ids.length) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "点击 + 添加站点";
-      sel.append(option);
+      const empty = document.createElement("li");
+      empty.className = "empty-state";
+      empty.textContent = "还没有站点。点击右上角添加。";
+      list.append(empty);
       return;
     }
+    if (!activeSiteId || !siteProfiles[activeSiteId]) activeSiteId = ids[0] || "";
     for (const id of ids) {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = siteProfiles[id]?.name || id;
-      option.selected = id === activeSiteId;
-      sel.append(option);
+      const profile = siteProfiles[id] || {};
+      const item = document.createElement("li");
+      item.className = `site-nav-item${id === activeSiteId ? " is-active" : ""}${id === draggingSiteId ? " is-dragging" : ""}`;
+      item.dataset.siteId = id;
+      item.draggable = true;
+      item.setAttribute("role", "button");
+      item.tabIndex = 0;
+      item.setAttribute("aria-current", id === activeSiteId ? "true" : "false");
+      const handle = document.createElement("span");
+      handle.className = "site-nav-handle";
+      handle.textContent = "⋮⋮";
+      handle.title = "拖动排序";
+      item.addEventListener("dragstart", (event) => {
+        draggingSiteId = id;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", id);
+        item.classList.add("is-dragging");
+      });
+      item.addEventListener("dragend", () => {
+        draggingSiteId = "";
+        renderSiteSelector();
+      });
+      const copy = document.createElement("div");
+      copy.className = "site-nav-copy";
+      const name = document.createElement("div");
+      name.className = "site-nav-name";
+      name.textContent = profile.name || id;
+      const url = document.createElement("div");
+      url.className = "site-nav-url";
+      url.textContent = profile.url || profile.promoUrl || "尚未填写地址";
+      copy.append(name, url);
+      item.append(handle, copy);
+      item.addEventListener("click", () => selectSite(id));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectSite(id);
+        }
+      });
+      item.addEventListener("dragover", (event) => {
+        if (!draggingSiteId || draggingSiteId === id) return;
+        event.preventDefault();
+      });
+      item.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const sourceId = event.dataTransfer.getData("text/plain") || draggingSiteId;
+        if (!sourceId || sourceId === id) return;
+        reorderSites(sourceId, id);
+      });
+      list.append(item);
     }
-    if (activeSiteId && siteProfiles[activeSiteId]) sel.value = activeSiteId;
-    else if (ids.length) {
-      activeSiteId = ids[0];
-      sel.value = activeSiteId;
-    }
+  }
+
+  function selectSite(id) {
+    if (!id || !siteProfiles[id] || id === activeSiteId) return;
+    activeSiteId = id;
+    loadActiveToForm();
+    persistProfiles();
+    renderSiteSelector();
+  }
+
+  function reorderSites(sourceId, targetId) {
+    const ids = orderedSiteIds();
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, sourceId);
+    siteProfiles = P.applyProfileOrder(siteProfiles, ids);
+    draggingSiteId = "";
+    persistProfiles();
+    renderSiteSelector();
   }
 
   function persistProfiles() {
@@ -416,7 +497,10 @@
 
   $("btnAddSite")?.addEventListener("click", () => {
     const id = "site-" + Date.now().toString(36);
-    siteProfiles[id] = P.emptySiteProfile(id, "新站点");
+    siteProfiles[id] = {
+      ...P.emptySiteProfile(id, "新站点"),
+      sortIndex: P.nextProfileSortIndex(siteProfiles),
+    };
     activeSiteId = id;
     renderSiteSelector();
     loadActiveToForm();
@@ -425,16 +509,11 @@
 
   $("btnRemoveSite")?.addEventListener("click", () => {
     if (!activeSiteId || !siteProfiles[activeSiteId]) return;
-    if (!confirm(`移除「${siteProfiles[activeSiteId].name || activeSiteId}」？`)) return;
+    if (!confirm(`删除「${siteProfiles[activeSiteId].name || activeSiteId}」？此操作会从云端资料里移除该站点。`)) return;
     delete siteProfiles[activeSiteId];
-    activeSiteId = Object.keys(siteProfiles)[0] || "";
+    siteProfiles = P.applyProfileOrder(siteProfiles, orderedSiteIds());
+    activeSiteId = orderedSiteIds()[0] || "";
     renderSiteSelector();
-    loadActiveToForm();
-    persistProfiles();
-  });
-
-  $("siteSelect")?.addEventListener("change", () => {
-    activeSiteId = $("siteSelect").value;
     loadActiveToForm();
     persistProfiles();
   });
@@ -625,22 +704,120 @@
     return row;
   }
 
-  function createSheetFieldsDetails(item) {
-    const details = document.createElement("details");
-    details.className = "sheet-fields";
-    const summary = document.createElement("summary");
-    summary.textContent = `表格原始字段${item.rowNumber ? ` · 第 ${item.rowNumber} 行` : ""}`;
-    const list = document.createElement("dl");
-    for (const [field, value] of Object.entries(item.rawFields || {})) {
-      if (value === undefined || value === null || String(value).trim() === "") continue;
-      const term = document.createElement("dt");
-      term.textContent = field;
-      const description = document.createElement("dd");
-      description.textContent = String(value);
-      list.append(term, description);
+  function timelinePayload(item, form) {
+    return {
+      destinationKey: item.key,
+      destinationUrl: item.url,
+      profileId: form.profile.value,
+      profileName:
+        form.profile.value === "__destination__"
+          ? "外链站"
+          : siteProfiles[form.profile.value]?.name || form.profile.value,
+      type: form.type.value,
+      occurredAt: form.occurredAt.value ? new Date(form.occurredAt.value).toISOString() : new Date().toISOString(),
+      note: form.note.value.trim(),
+      publicUrl: form.type.value === "published" ? form.url.value.trim() : "",
+      evidenceUrl: form.type.value === "published" ? "" : form.url.value.trim(),
+      source: "manual",
+    };
+  }
+
+  function fillTimelineForm(form, event = null) {
+    form.profile.value = event?.profileId || "__destination__";
+    if (event?.profileId && !Array.from(form.profile.options).some((option) => option.value === event.profileId)) {
+      const option = document.createElement("option");
+      option.value = event.profileId;
+      option.textContent = event.profileName || event.profileId;
+      form.profile.append(option);
+      form.profile.value = event.profileId;
     }
-    details.append(summary, list);
-    return details;
+    if (event?.type && !Array.from(form.type.options).some((option) => option.value === event.type)) {
+      const option = document.createElement("option");
+      option.value = event.type;
+      option.textContent = activityLabel(event.type);
+      form.type.append(option);
+    }
+    form.type.value = event?.type || "submitted";
+    const occurred = event?.occurredAt ? new Date(event.occurredAt) : new Date();
+    form.occurredAt.value = Number.isNaN(occurred.getTime()) ? toDatetimeLocalValue() : toDatetimeLocalValue(occurred);
+    form.url.value = event?.publicUrl || event?.evidenceUrl || "";
+    form.note.value = event?.note || "";
+    form.submit.textContent = event ? "保存修改" : "添加动态";
+    form.cancel.hidden = !event;
+  }
+
+  function createTimelineForm(item) {
+    const form = document.createElement("form");
+    form.className = "timeline-form";
+    const profile = document.createElement("select");
+    profile.setAttribute("aria-label", "网站项目");
+    const destinationOption = document.createElement("option");
+    destinationOption.value = "__destination__";
+    destinationOption.textContent = "外链站通用动态";
+    profile.append(destinationOption);
+    for (const id of orderedSiteIds()) {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = siteProfiles[id]?.name || id;
+      profile.append(option);
+    }
+    const type = document.createElement("select");
+    type.setAttribute("aria-label", "动态状态");
+    for (const [value, label] of TIMELINE_TYPES) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      type.append(option);
+    }
+    const occurredAt = document.createElement("input");
+    occurredAt.type = "datetime-local";
+    occurredAt.setAttribute("aria-label", "发生时间");
+    const url = document.createElement("input");
+    url.type = "url";
+    url.placeholder = "公开页或证据链接（可选）";
+    url.setAttribute("aria-label", "公开页或证据链接");
+    const note = document.createElement("textarea");
+    note.placeholder = "发生了什么、需要何时跟进、审核提示等";
+    note.setAttribute("aria-label", "动态笔记");
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn btn-primary timeline-form-wide";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn btn-secondary timeline-form-wide";
+    cancel.textContent = "取消编辑";
+    cancel.hidden = true;
+    const fields = { profile, type, occurredAt, url, note, submit, cancel };
+    fillTimelineForm(fields);
+    cancel.addEventListener("click", () => {
+      editingTimelineEventId = "";
+      fillTimelineForm(fields);
+    });
+    form.append(profile, type, occurredAt, url, note, submit, cancel);
+    form.timelineFields = fields;
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      submit.disabled = true;
+      const editing = Boolean(editingTimelineEventId);
+      submit.textContent = editing ? "保存中…" : "保存中…";
+      try {
+        const payload = timelinePayload(item, fields);
+        const result = await chrome.runtime.sendMessage(
+          editing
+            ? { action: "updateSubmissionTimelineEvent", eventId: editingTimelineEventId, ...payload }
+            : { action: "addSubmissionTimelineEvent", ...payload },
+        );
+        if (!result?.ok) throw new Error(result?.error || (editing ? "保存动态失败" : "添加动态失败"));
+        editingTimelineEventId = "";
+        await loadLibrary();
+      } catch (err) {
+        alert(err.message);
+        fillTimelineForm(fields, editing ? item.events?.find((row) => row.id === editingTimelineEventId) : null);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+    return form;
   }
 
   function renderTimelinePanel(item, panel) {
@@ -678,88 +855,57 @@
           link.className = "timeline-event-note";
           row.append(link);
         }
+        const actions = document.createElement("div");
+        actions.className = "timeline-event-actions";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "btn btn-secondary btn-sm";
+        edit.textContent = "编辑";
+        edit.setAttribute("aria-label", `编辑 ${activityLabel(event.type || event.status)} 动态`);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn btn-danger btn-sm";
+        remove.textContent = "删除";
+        remove.setAttribute("aria-label", `删除 ${activityLabel(event.type || event.status)} 动态`);
+        edit.addEventListener("click", () => {
+          editingTimelineEventId = event.id || "";
+          renderSelectedLibraryTimeline();
+        });
+        remove.addEventListener("click", async () => {
+          if (!event.id) return;
+          if (!confirm("删除这条时间线动态？已核验的提交账本不会被撤销。")) return;
+          const result = await chrome.runtime.sendMessage({
+            action: "removeSubmissionTimelineEvent",
+            eventId: event.id,
+          });
+          if (!result?.ok) return alert(result?.error || "删除动态失败");
+          if (editingTimelineEventId === event.id) editingTimelineEventId = "";
+          await loadLibrary();
+        });
+        actions.append(edit, remove);
+        row.append(actions);
         list.append(row);
       }
     }
-
-    const form = document.createElement("form");
-    form.className = "timeline-form";
-    const profile = document.createElement("select");
-    profile.setAttribute("aria-label", "网站项目");
-    const destinationOption = document.createElement("option");
-    destinationOption.value = "__destination__";
-    destinationOption.textContent = "外链站通用动态";
-    profile.append(destinationOption);
-    for (const [id, itemProfile] of Object.entries(siteProfiles)) {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = itemProfile.name || id;
-      profile.append(option);
-    }
-    const type = document.createElement("select");
-    type.setAttribute("aria-label", "动态状态");
-    for (const [value, label] of [
-      ["submitted", "已提交"],
-      ["pending_moderation", "待审核"],
-      ["published", "已上线"],
-      ["rejected", "被拒绝"],
-      ["needs_follow_up", "需跟进"],
-      ["needs_manual", "需人工"],
-      ["link_missing", "链接失效"],
-      ["note", "仅记录笔记"],
-    ]) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = label;
-      type.append(option);
-    }
-    const occurredAt = document.createElement("input");
-    occurredAt.type = "datetime-local";
-    occurredAt.value = toDatetimeLocalValue();
-    occurredAt.setAttribute("aria-label", "发生时间");
-    const url = document.createElement("input");
-    url.type = "url";
-    url.placeholder = "公开页或证据链接（可选）";
-    url.setAttribute("aria-label", "公开页或证据链接");
-    const note = document.createElement("textarea");
-    note.placeholder = "发生了什么、需要何时跟进、审核提示等";
-    note.setAttribute("aria-label", "动态笔记");
-    const submit = document.createElement("button");
-    submit.type = "submit";
-    submit.className = "btn btn-primary timeline-form-wide";
-    submit.textContent = "添加动态";
-    form.append(profile, type, occurredAt, url, note, submit);
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      submit.disabled = true;
-      submit.textContent = "保存中…";
-      try {
-        const result = await chrome.runtime.sendMessage({
-          action: "addSubmissionTimelineEvent",
-          destinationKey: item.key,
-          destinationUrl: item.url,
-          profileId: profile.value,
-          profileName:
-            profile.value === "__destination__"
-              ? "外链站"
-              : siteProfiles[profile.value]?.name || profile.value,
-          type: type.value,
-          occurredAt: occurredAt.value ? new Date(occurredAt.value).toISOString() : new Date().toISOString(),
-          note: note.value.trim(),
-          publicUrl: type.value === "published" ? url.value.trim() : "",
-          evidenceUrl: type.value === "published" ? "" : url.value.trim(),
-          source: "manual",
-        });
-        if (!result?.ok) throw new Error(result?.error || "保存动态失败");
-        await loadLibrary();
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        submit.disabled = false;
-        submit.textContent = "添加动态";
-      }
-    });
+    const form = createTimelineForm(item);
+    const editingEvent = events.find((event) => event.id === editingTimelineEventId) || null;
+    if (editingEvent) fillTimelineForm(form.timelineFields, editingEvent);
     panel.append(list, form);
+  }
+
+  function renderSelectedLibraryTimeline() {
+    const pane = $("libraryTimelinePane");
+    if (!pane) return;
+    const item = libraryItems.find((entry) => entry.key === selectedLibraryKey);
+    if (!item) {
+      pane.replaceChildren();
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = selectedLibraryKey ? "这条外链已不在当前列表中，请重新选择。" : "先在左侧选择一个外链站。";
+      pane.append(empty);
+      return;
+    }
+    renderTimelinePanel(item, pane);
   }
 
   function renderLibrary() {
@@ -810,6 +956,7 @@
       empty.textContent = "没有符合筛选条件的外链站。调整筛选后重试。";
       el.append(empty);
       if ($("btnLibraryLoadMore")) $("btnLibraryLoadMore").hidden = true;
+      renderSelectedLibraryTimeline();
       return;
     }
     for (const item of shown) {
@@ -913,7 +1060,8 @@
       pin.className = "btn btn-secondary btn-sm";
       pin.textContent = "置顶";
       pin.setAttribute("aria-label", `置顶 ${item.domain || item.url}`);
-      pin.addEventListener("click", async () => {
+      pin.addEventListener("click", async (event) => {
+        event.stopPropagation();
         const result = await chrome.runtime.sendMessage({ action: "pinLibraryUrl", url: item.url });
         if (!result?.ok) return alert(result?.error || "置顶失败");
         await loadLibrary();
@@ -923,29 +1071,34 @@
       remove.className = "btn btn-danger btn-sm";
       remove.textContent = "删除";
       remove.setAttribute("aria-label", `删除 ${item.domain || item.url}`);
-      remove.addEventListener("click", async () => {
+      remove.addEventListener("click", async (event) => {
+        event.stopPropagation();
         if (!confirm(`确认从队列删除 ${item.domain || item.url}？`)) return;
         const result = await chrome.runtime.sendMessage({
           action: "removeFromSubmissionQueue",
           url: item.url,
         });
         if (!result?.ok) return alert(result?.error || "删除失败");
+        if (selectedLibraryKey === item.key) selectedLibraryKey = "";
         await loadLibrary();
       });
-      const timeline = document.createElement("button");
-      timeline.type = "button";
-      timeline.className = "btn btn-primary btn-sm";
-      timeline.textContent = `时间线${item.events?.length ? ` ${item.events.length}` : ""}`;
-      timeline.setAttribute("aria-expanded", "false");
-      const timelinePanel = document.createElement("div");
-      timelinePanel.className = "timeline-panel";
-      timelinePanel.hidden = true;
-      timeline.addEventListener("click", () => {
-        timelinePanel.hidden = !timelinePanel.hidden;
-        timeline.setAttribute("aria-expanded", String(!timelinePanel.hidden));
-        if (!timelinePanel.hidden) renderTimelinePanel(item, timelinePanel);
+      actions.append(pin, remove);
+      card.classList.toggle("is-selected", selectedLibraryKey === item.key);
+      card.tabIndex = 0;
+      card.setAttribute("aria-selected", String(selectedLibraryKey === item.key));
+      card.addEventListener("click", () => {
+        selectedLibraryKey = item.key;
+        editingTimelineEventId = "";
+        renderLibrary();
       });
-      actions.append(timeline, pin, remove);
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectedLibraryKey = item.key;
+          editingTimelineEventId = "";
+          renderLibrary();
+        }
+      });
       card.append(head, destinationLink, meta, qualityRow);
       const activitySummary = document.createElement("div");
       activitySummary.className = "library-activity-summary";
@@ -984,15 +1137,15 @@
         keyDetails.append(createKeyDetail("补充备注", item.note, true));
       }
       if (keyDetails.childNodes.length) card.append(keyDetails);
-      if (Object.keys(item.rawFields || {}).length) card.append(createSheetFieldsDetails(item));
       if (statuses.childNodes.length) card.append(statuses);
-      card.append(actions, timelinePanel);
+      card.append(actions);
       el.append(card);
     }
     if ($("btnLibraryLoadMore")) {
       $("btnLibraryLoadMore").hidden = shown.length >= filtered.length;
       $("btnLibraryLoadMore").textContent = `加载更多（剩余 ${filtered.length - shown.length} 条）`;
     }
+    renderSelectedLibraryTimeline();
   }
 
   async function loadLibrary() {
@@ -1003,7 +1156,7 @@
       const hadProfiles = Object.keys(siteProfiles).length > 0;
       siteProfiles = result.profiles;
       if (!activeSiteId || !siteProfiles[activeSiteId]) {
-        activeSiteId = Object.keys(siteProfiles)[0] || "";
+        activeSiteId = orderedSiteIds()[0] || "";
       }
       renderSiteSelector();
       if (!hadProfiles) loadActiveToForm();
@@ -1384,7 +1537,7 @@
     ],
     (items) => {
       siteProfiles = items.siteProfiles || {};
-      activeSiteId = items.activeSiteId || Object.keys(siteProfiles)[0] || "";
+      activeSiteId = items.activeSiteId || P.orderedProfileIds(siteProfiles)[0] || "";
       renderSiteSelector();
       loadActiveToForm();
       if (items.cfgEmail) $("cfgEmail").value = items.cfgEmail;

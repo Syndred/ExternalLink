@@ -328,9 +328,40 @@
     return merged;
   }
 
+  function orderedProfileIds(profiles = {}) {
+    return Object.keys(profiles || {}).sort((leftId, rightId) => {
+      const left = Number(profiles[leftId]?.sortIndex);
+      const right = Number(profiles[rightId]?.sortIndex);
+      const leftOrder = Number.isFinite(left) ? left : Number.MAX_SAFE_INTEGER;
+      const rightOrder = Number.isFinite(right) ? right : Number.MAX_SAFE_INTEGER;
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      return String(profiles[leftId]?.name || leftId).localeCompare(
+        String(profiles[rightId]?.name || rightId),
+        "zh",
+      );
+    });
+  }
+
+  function applyProfileOrder(profiles = {}, orderedIds = []) {
+    const next = { ...profiles };
+    const remaining = orderedProfileIds(next).filter((id) => !orderedIds.includes(id));
+    [...orderedIds, ...remaining].forEach((id, index) => {
+      if (!next[id]) return;
+      next[id] = { ...next[id], sortIndex: index };
+    });
+    return next;
+  }
+
+  function nextProfileSortIndex(profiles = {}) {
+    return orderedProfileIds(profiles).reduce((max, id) => {
+      const value = Number(profiles[id]?.sortIndex);
+      return Number.isFinite(value) ? Math.max(max, value) : max;
+    }, -1) + 1;
+  }
+
   function getActiveProfile(storage) {
     const profiles = storage.siteProfiles || {};
-    const activeId = storage.activeSiteId || Object.keys(profiles)[0] || "";
+    const activeId = storage.activeSiteId || orderedProfileIds(profiles)[0] || "";
     return activeId && profiles[activeId] ? profiles[activeId] : null;
   }
 
@@ -353,6 +384,9 @@
     stabilizeTableProfiles,
     applySavedProfilesToTasks,
     mergeExtractedProfile,
+    orderedProfileIds,
+    applyProfileOrder,
+    nextProfileSortIndex,
     getActiveProfile,
     profileConfigured,
   };

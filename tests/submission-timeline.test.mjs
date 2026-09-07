@@ -288,4 +288,21 @@ assert.throws(
   /缺少 id|缺少 occurredAt|缺少 destinationKey|缺少 profileId/,
 );
 
+const edited = T.updateEvent(timeline, "event-2", {
+  type: "published",
+  note: "公开页已确认",
+  publicUrl: "https://example.com/listing/rainbow-live",
+});
+assert.equal(edited.event.note, "公开页已确认");
+assert.equal(edited.event.id, "event-2");
+assert.equal(
+  edited.timeline["example.com/submit::RainbowPetAI"].find((event) => event.id === "event-2").publicUrl,
+  "https://example.com/listing/rainbow-live",
+);
+const removed = T.removeEvent(edited.timeline, "event-2");
+assert.equal(removed.event.id, "event-2");
+assert.equal(removed.timeline["example.com/submit::RainbowPetAI"].length, 1);
+assert.equal(removed.timeline["example.com/submit::RainbowPetAI"][0].id, "event-1");
+assert.throws(() => T.removeEvent(removed.timeline, "missing-event"), /找不到这条动态/);
+
 console.log("submission timeline tests passed");

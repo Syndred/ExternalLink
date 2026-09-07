@@ -24,6 +24,8 @@ assert.doesNotMatch(sidepanelJs, /innerHTML\s*=/);
 
 assert.match(settingsHtml, /id="panel-library"/);
 assert.match(settingsHtml, /class="library-split"/);
+assert.match(settingsHtml, /id="siteNavList"/);
+assert.match(settingsHtml, /id="libraryTimelinePane"/);
 assert.match(settingsHtml, /id="railLibraryTools"/);
 assert.match(settingsHtml, /id="libraryCount"/);
 assert.match(settingsHtml, /id="siteScreenshots"/);
@@ -65,7 +67,12 @@ assert.match(settingsJs, /annotationTone/);
 assert.match(settingsJs, /setActivePanel/);
 assert.match(settingsJs, /profile\.latestEvent/);
 assert.match(settingsJs, /action:\s*"addSubmissionTimelineEvent"/);
-assert.match(settingsJs, /createSheetFieldsDetails/);
+assert.match(settingsJs, /action:\s*"updateSubmissionTimelineEvent"/);
+assert.match(settingsJs, /action:\s*"removeSubmissionTimelineEvent"/);
+assert.match(settingsJs, /renderSelectedLibraryTimeline/);
+assert.match(settingsJs, /reorderSites/);
+assert.doesNotMatch(settingsJs, /createSheetFieldsDetails/);
+assert.doesNotMatch(settingsJs, /表格原始字段/);
 assert.match(settingsJs, /renderProfileFields/);
 assert.match(settingsJs, /action:\s*"fetchCloudSubmissionMedia"/);
 assert.match(settingsJs, /deriveLibraryProgress/);
@@ -91,7 +98,9 @@ assert.match(
   "the dense library needs one full-width destination card per row",
 );
 assert.match(settingsCss, /monitor-tag\.missing/);
-assert.match(settingsCss, /timeline-event/);
+assert.match(settingsCss, /site-nav-list/);
+assert.match(settingsCss, /library-item\.is-selected/);
+assert.match(settingsCss, /timeline-event-actions/);
 assert.match(settingsCss, /profile-field-row/);
 assert.match(settingsHtml, /<details class="profile-fields">/);
 assert.doesNotMatch(
@@ -141,6 +150,8 @@ assert.match(
   "a side panel timeline query must pass its current URL through to the existing library manager",
 );
 assert.match(background, /case "addSubmissionTimelineEvent"/);
+assert.match(background, /case "updateSubmissionTimelineEvent"/);
+assert.match(background, /case "removeSubmissionTimelineEvent"/);
 assert.match(background, /submissionTimeline/);
 assert.match(background, /case "cloudSyncMigrate"/);
 assert.match(background, /case "runLinkMonitor"/);

@@ -248,6 +248,59 @@
     return { timeline: next, event, added: true };
   }
 
+  function findEvent(groups, eventId) {
+    const id = text(eventId);
+    if (!id) return null;
+    for (const [key, events] of Object.entries(groups || {})) {
+      const index = events.findIndex((event) => text(event?.id) === id);
+      if (index >= 0) return { key, index, event: events[index] };
+    }
+    return null;
+  }
+
+  function writeGroup(groups, key, events) {
+    const next = { ...groups };
+    if (events.length) next[key] = events;
+    else delete next[key];
+    return next;
+  }
+
+  function updateEvent(timeline, eventId, patch = {}) {
+    const current = normalizeTimeline(timeline);
+    const found = findEvent(current, eventId);
+    if (!found) throw new Error("找不到这条动态");
+    const nextEvent = normalizeEvent({
+      ...found.event,
+      ...(isObject(patch) ? patch : {}),
+      id: found.event.id,
+      destinationKey: patch.destinationKey || patch.destinationUrl || found.event.destinationKey,
+      destinationUrl: patch.destinationUrl || found.event.destinationUrl,
+      profileId: patch.profileId || found.event.profileId,
+    });
+    let next = writeGroup(
+      current,
+      found.key,
+      (current[found.key] || []).filter((event) => text(event.id) !== text(found.event.id)),
+    );
+    const newKey = timelineKey(nextEvent.destinationKey, nextEvent.profileId);
+    next = writeGroup(next, newKey, [...(next[newKey] || []), nextEvent].sort(compareEvents));
+    return { timeline: next, event: nextEvent };
+  }
+
+  function removeEvent(timeline, eventId) {
+    const current = normalizeTimeline(timeline);
+    const found = findEvent(current, eventId);
+    if (!found) throw new Error("找不到这条动态");
+    return {
+      timeline: writeGroup(
+        current,
+        found.key,
+        (current[found.key] || []).filter((event) => text(event.id) !== text(found.event.id)),
+      ),
+      event: found.event,
+    };
+  }
+
   function appendMany(timeline, events) {
     let next = normalizeTimeline(timeline);
     let added = 0;
@@ -674,6 +727,8 @@
     appendEvent: append,
     appendWithResult,
     appendMany,
+    updateEvent,
+    removeEvent,
     deriveCurrent,
     current: deriveCurrent,
     groupByDestination,

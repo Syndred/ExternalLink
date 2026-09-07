@@ -20,7 +20,8 @@
         margin: 0 auto;
         padding: 24px 16px 48px;
       }
-      body[data-panel="library"] .wrap {
+      body[data-panel="library"] .wrap,
+      body[data-panel="sites"] .wrap {
         max-width: 1280px;
       }
       .page-head {
@@ -307,21 +308,17 @@
         aria-labelledby="tab-sites"
       >
         <div class="card site-source-card">
-          <div class="site-toolbar">
-            <select id="siteSelect"></select>
-            <button
-              class="btn btn-secondary"
-              id="btnAddSite"
-            >
-              + 添加
-            </button>
-            <button
-              class="btn btn-danger"
-              id="btnRemoveSite"
-            >
-              移除
-            </button>
+          <div class="site-nav-head">
+            <div class="section-title">我的站点</div>
+            <div class="site-nav-actions">
+              <button class="btn btn-secondary btn-sm" id="btnAddSite" type="button">+ 添加</button>
+              <button class="btn btn-danger btn-sm" id="btnRemoveSite" type="button">删除</button>
+            </div>
           </div>
+          <p class="hint">点击查看资料，拖动手柄可调整顺序。保存后会自动写入云端。</p>
+          <ul class="site-nav-list" id="siteNavList" aria-label="站点列表">
+            <li class="empty-state">正在读取站点…</li>
+          </ul>
 
           <div class="form-row">
             <label>网站地址（用于 AI 提取）</label>
@@ -647,7 +644,19 @@
             加载更多外链
           </button>
         </div>
-        <aside class="library-tools" id="railLibraryTools" aria-label="外链库同步与备份">
+        <aside class="library-tools" id="railLibraryTools" aria-label="外链时间线与云端配置">
+          <div class="card library-timeline-card">
+            <div class="section-title">时间线</div>
+            <p class="hint">点击左侧外链站后，在这里增删改提交、审核和跟进记录。变更会自动保存到云端。</p>
+            <div id="libraryTimelinePane">
+              <div class="empty-state">先在左侧选择一个外链站。</div>
+            </div>
+          </div>
+          <details class="library-ops">
+            <summary>云端、备份与监控（配置后一般不用打开）</summary>
+            <p class="hint">
+              首次连接并完成迁移后，资料、外链库、账本和时间线会自动写回 Neon，日常不用反复同步。
+            </p>
           <div class="card">
             <div class="section-title">云端数据中心</div>
             <p class="hint">
@@ -706,6 +715,7 @@
               <input type="file" id="ledgerImportFile" accept="application/json,.json" hidden />
             </div>
           </div>
+          </details>
         </aside>
         </div>
       </div>

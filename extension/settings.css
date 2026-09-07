@@ -743,6 +743,16 @@
   background: transparent;
 }
 
+#panel-library .activity-fact.wide {
+  grid-column: 1 / -1;
+}
+
+#panel-library .activity-fact.wide .activity-fact-value {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 #panel-library .activity-fact-label {
   display: inline;
   flex: 0 0 auto;
@@ -784,7 +794,12 @@
 }
 
 #panel-library .library-timeline-card {
+  min-width: 0;
   margin-bottom: 12px;
+}
+
+#panel-library .library-timeline-card #libraryTimelinePane {
+  min-width: 0;
 }
 
 #panel-library .library-mark-panel {
@@ -797,10 +812,7 @@
   color: #f8fafc;
   font-size: 13px;
   font-weight: 600;
-}
-
-#panel-library .library-mark-panel .hint {
-  margin: 4px 0 8px;
+  margin-bottom: 8px;
 }
 
 #panel-library .library-mark-btns {
@@ -847,6 +859,7 @@
 #panel-library .timeline-event-actions {
   display: flex;
   flex: 0 0 auto;
+  flex-shrink: 0;
   gap: 4px;
   margin-top: 0;
 }
@@ -861,6 +874,7 @@
 
 #panel-library .timeline-event-head {
   display: flex;
+  min-width: 0;
   flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
@@ -915,6 +929,8 @@
 
 #panel-library .timeline-event {
   position: relative;
+  min-width: 0;
+  overflow-x: hidden;
   padding: 4px 8px 4px 24px;
   border-left: 2px solid #475569;
   border-radius: 0 8px 8px 0;
@@ -933,10 +949,16 @@
 }
 
 #panel-library .timeline-event-note {
+  min-width: 0;
+  max-height: 7.2em;
   margin-top: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: #cbd5e1;
   font-size: 12px;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
 }
 

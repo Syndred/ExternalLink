@@ -35,12 +35,7 @@
       }
       .page-head-text h1 {
         font-size: 22px;
-        margin-bottom: 4px;
-      }
-      .subtitle {
-        color: #94a3b8;
-        font-size: 13px;
-        margin-bottom: 20px;
+        margin-bottom: 0;
       }
       .tabs {
         display: flex;
@@ -274,9 +269,6 @@
         <img src="icons/icon48.png" width="40" height="40" alt="" />
         <div class="page-head-text">
           <h1>ExternalLink 设置</h1>
-          <p class="subtitle">
-            网站资料与全局配置保存在云端，侧边栏填表时自动使用。此页面不会因点击网页而关闭。
-          </p>
         </div>
       </div>
 
@@ -301,7 +293,6 @@
               <button class="btn btn-danger btn-sm" id="btnRemoveSite" type="button">删除</button>
             </div>
           </div>
-          <p class="hint">点击查看资料，拖动手柄可调整顺序。保存后会自动写入云端。</p>
           <ul class="site-nav-list" id="siteNavList" aria-label="站点列表">
             <li class="empty-state">正在读取站点…</li>
           </ul>
@@ -337,7 +328,6 @@
               ✨ 完善当前资料
             </button>
           </div>
-          <p class="hint">AI 提取在独立标签页进行，不会被网页弹窗打断。</p>
         </div>
 
         <div class="card site-editor-card">
@@ -406,9 +396,6 @@
               alt=""
               hidden
             />
-            <p class="hint">
-              云端已迁移的媒体会直接预览；用于目录站「Featured image」等上传字段。也可填写 URL 或上传新图片（≤2MB）。
-            </p>
           </div>
           <div class="section-title">媒体</div>
           <div class="form-row">
@@ -417,7 +404,6 @@
               id="siteScreenshots"
               placeholder="https://example.com/screenshot-1.png&#10;https://example.com/screenshot-2.png"
             ></textarea>
-            <p class="hint">云端引用会以缩略图显示，填表时映射到 Screenshot 1–4。</p>
             <div class="media-gallery" id="siteMediaGallery" aria-live="polite">
               <div class="media-gallery-empty">选择网站后读取 Logo 和截图预览…</div>
             </div>
@@ -551,9 +537,6 @@
 
           <details class="profile-fields">
             <summary>原始表格字段（兼容保留） <span id="profileFieldCount"></span></summary>
-            <p class="hint">
-              这些字段只用于兼容旧资料和自动填表，日常优先使用上面的结构化资料。全部 Field / Content / Notes 仍会保留。
-            </p>
             <div id="profileFieldList" class="profile-field-list"></div>
           </details>
 
@@ -633,21 +616,14 @@
         <aside class="library-tools" id="railLibraryTools" aria-label="外链时间线与云端配置">
           <div class="card library-timeline-card">
             <div class="section-title">站点标记与时间线</div>
-            <p class="hint">点击左侧外链站后，可以标记可提交/登录/付费等状态，并增删改提交与跟进记录。变更会自动保存到云端。</p>
             <div id="libraryTimelinePane">
               <div class="empty-state">先在左侧选择一个外链站。</div>
             </div>
           </div>
           <details class="library-ops">
-            <summary>云端、备份与监控（配置后一般不用打开）</summary>
-            <p class="hint">
-              首次连接并完成迁移后，资料、外链库、账本和时间线会自动写回 Neon，日常不用反复同步。
-            </p>
+            <summary>云端、备份与监控</summary>
           <div class="card">
             <div class="section-title">云端数据中心</div>
-            <p class="hint">
-              Neon 保存外链库、Profile、提交记录、时间线和备注；R2 保存私有 Logo 与截图。连接后自动保存，Google Sheet 和本机 Agent 不参与日常使用。
-            </p>
             <div class="form-row">
               <label for="cloudWorkerEndpoint">Worker 地址</label>
               <input type="url" id="cloudWorkerEndpoint" placeholder="https://externallink-cloud.…workers.dev" autocomplete="off" />
@@ -677,7 +653,6 @@
           </div>
           <div class="card">
             <div class="section-title">已发布外链存活监控</div>
-            <p class="hint">只检查账本里带公开地址的成功记录，不会撤销历史成功。</p>
             <div class="form-row sync-schedule-row">
               <label><input type="checkbox" id="linkMonitorEnabled" checked /> 每日复查已发布链接</label>
               <select id="linkMonitorMinutes" aria-label="外链复查频率">
@@ -694,7 +669,6 @@
           </div>
           <div class="card">
             <div class="section-title">提交账本备份</div>
-            <p class="hint">导出账本、分类、Profile 和自定义外链，重装后可恢复。</p>
             <div class="backup-actions">
               <button class="btn btn-secondary" id="btnExportLedger">导出 JSON</button>
               <button class="btn btn-secondary" id="btnImportLedger">导入 JSON</button>
@@ -746,7 +720,7 @@
               type="checkbox"
               id="autoOpenSidePanel"
             />
-            进入网页时自动打开侧边栏（默认关闭，避免遮挡其他插件）</label
+            进入网页时自动打开侧边栏</label
           >
           <br />
           <label
@@ -755,7 +729,7 @@
               id="autoFillOnVisit"
               checked
             />
-            侧边栏打开时，访问待提交列表中的站点自动检测并填写</label
+            访问待提交站点时自动检测并填写</label
           >
           <br />
           <label
@@ -763,11 +737,8 @@
               type="checkbox"
               id="autoSubmitStandardWpComments"
             />
-            标准 WordPress 评论预检通过后可代点提交（默认关闭；有验证码仍停）</label
+            标准 WordPress 评论可代点提交</label
           >
-          <p class="hint">
-            只对带 author / email / url / comment 的标准评论表单生效。目录站和社区站不会因此自动提交。入账写成「已提交」或「待审核」，不会直接标成已上线。
-          </p>
           <br />
           <label
             ><input
@@ -794,10 +765,7 @@
 
         <div class="card config-gate-card">
           <div class="section-title">目标质量闸门</div>
-          <p class="hint">
-            在打开外链站之前先过滤：黑名单域名直接排除，域名年龄由云端 RDAP 查询结果判断。年龄数据只用缓存，不会在构建队列时联网。
-          </p>
-          <label
+          <label>
             ><input
               type="checkbox"
               id="filterBlacklistEnabled"
@@ -850,16 +818,13 @@
 
         <div class="card config-assistant-card">
           <div class="section-title">AI 评论与云端媒体</div>
-          <p class="hint">
-            AI 评论由云端服务生成，只有切题的草稿才会被采用；通用套话会被拒绝。R2 私有媒体用于必填上传字段，绕开系统文件选择器。
-          </p>
-          <label
+          <label>
             ><input
               type="checkbox"
               id="filterAiComments"
               checked
             />
-            博客/论坛评论使用 AI 生成（关闭后仅用评论模板）</label
+            博客/论坛评论使用 AI 生成</label
           >
           <br />
           <label
@@ -868,7 +833,7 @@
               id="filterAiCommentAllowLink"
               checked
             />
-            允许 AI 在评论中自然嵌入推广链接（关闭则只写无链接评论）</label
+            允许 AI 评论嵌入推广链接</label
           >
           <br /><br />
           <label
@@ -877,7 +842,7 @@
               id="filterManualFillIcons"
               checked
             />
-            在评论/提交表单旁显示手动填充图标 EL（自动填表失败时点一下补填；普通网页不显示）</label
+            在评论/提交表单旁显示手动填充图标 EL</label
           >
           <div class="btn-row">
             <button class="btn btn-primary" id="btnSaveAssistant">保存助手设置</button>

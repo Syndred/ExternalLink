@@ -672,15 +672,26 @@
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
-  function createActivityFact(label, value) {
+  function latestActivityText(item) {
+    const event = item?.latestEvent;
+    if (!event) return "暂无记录";
+    const note = String(event.note || "").replace(/\s+/g, " ").trim();
+    if (note) return note;
+    const label = activityLabel(event.type || event.status);
+    const profile = event.profileName || event.profileId || "";
+    return profile && profile !== "外链站" ? `${label} · ${profile}` : label;
+  }
+
+  function createActivityFact(label, value, wide = false) {
     const fact = document.createElement("div");
-    fact.className = "activity-fact";
+    fact.className = `activity-fact${wide ? " wide" : ""}`;
     const caption = document.createElement("span");
     caption.className = "activity-fact-label";
     caption.textContent = label;
     const content = document.createElement("span");
     content.className = "activity-fact-value";
     content.textContent = value || "—";
+    content.title = value || "";
     fact.append(caption, content);
     return fact;
   }
@@ -854,16 +865,18 @@
   }
 
   async function markLibrarySite(item, status) {
-    if (status === "deleted" && !confirm(`确认从外链列表删除 ${item.domain || item.url}？删除后不会再自动填表。`)) {
+    const current = item.annotation?.status || "";
+    const clearing = current === status;
+    if (!clearing && status === "deleted" && !confirm(`确认从外链列表删除 ${item.domain || item.url}？删除后不会再自动填表。`)) {
       return;
     }
-    const result = await chrome.runtime.sendMessage({
-      action: "markSubmissionSite",
-      url: item.url,
-      status,
-    });
-    if (!result?.ok) throw new Error(result?.error || "标记失败");
-    if (status === "deleted" && selectedLibraryKey === item.key) selectedLibraryKey = "";
+    const result = await chrome.runtime.sendMessage(
+      clearing
+        ? { action: "clearSiteAnnotation", url: item.url }
+        : { action: "markSubmissionSite", url: item.url, status },
+    );
+    if (!result?.ok) throw new Error(result?.error || (clearing ? "取消标记失败" : "标记失败"));
+    if (!clearing && status === "deleted" && selectedLibraryKey === item.key) selectedLibraryKey = "";
     await loadLibrary();
   }
 
@@ -873,9 +886,6 @@
     const title = document.createElement("div");
     title.className = "library-mark-title";
     title.textContent = "站点标记";
-    const hint = document.createElement("p");
-    hint.className = "hint";
-    hint.textContent = "与提交时侧边栏标记相同，会同步到云端并影响队列。";
     const btns = document.createElement("div");
     btns.className = "library-mark-btns";
     const current = item.annotation?.status || "";
@@ -897,7 +907,7 @@
       });
       btns.append(btn);
     }
-    wrap.append(title, hint, btns);
+    wrap.append(title, btns);
     return wrap;
   }
 
@@ -1191,14 +1201,7 @@
           "提交时间",
           progress.submittedAt ? formatActivityTime(progress.submittedAt) : "暂无提交记录",
         ),
-        createActivityFact(
-          "最近动态",
-          item.latestEvent
-            ? `${formatActivityTime(item.latestEvent.occurredAt)} · ${activityLabel(item.latestEvent.type || item.latestEvent.status)}`
-            : item.time
-              ? formatActivityTime(item.time)
-              : "暂无记录",
-        ),
+        createActivityFact("最近动态", latestActivityText(item), true),
       );
       card.append(activitySummary);
       const keyDetails = document.createElement("div");

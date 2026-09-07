@@ -1552,20 +1552,26 @@
       showToast("当前页不是有效网址", true);
       return;
     }
-    if (status === "deleted") {
-      if (!confirm("确认从外链列表删除此站点？删除后不会再自动填表。")) return;
-    }
     try {
-      const result = await chrome.runtime.sendMessage({
-        action: "markSubmissionSite",
+      const currentInfo = await chrome.runtime.sendMessage({
+        action: "getSiteAnnotation",
         url: currentPageUrl,
-        status,
       });
-      if (!result?.ok) throw new Error(result?.error || "标记失败");
+      const current = currentInfo?.annotation?.status || "";
+      const clearing = current === status;
+      if (!clearing && status === "deleted") {
+        if (!confirm("确认从外链列表删除此站点？删除后不会再自动填表。")) return;
+      }
+      const result = await chrome.runtime.sendMessage(
+        clearing
+          ? { action: "clearSiteAnnotation", url: currentPageUrl }
+          : { action: "markSubmissionSite", url: currentPageUrl, status },
+      );
+      if (!result?.ok) throw new Error(result?.error || (clearing ? "取消标记失败" : "标记失败"));
       await refreshSiteAnnotation(currentPageUrl);
       await loadSubmissionQueue(currentPageUrl);
       await loadClassifiedList();
-      showToast(SITE_STATUS_MAP[status]?.label || "已标记");
+      showToast(clearing ? "已取消标记" : SITE_STATUS_MAP[status]?.label || "已标记");
     } catch (err) {
       showToast(err.message, true);
     }

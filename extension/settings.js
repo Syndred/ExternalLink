@@ -26,6 +26,15 @@
     ["link_missing", "链接失效"],
     ["note", "仅记录笔记"],
   ];
+  const SITE_MARK_STATUSES = [
+    ["can_submit", "可提交"],
+    ["needs_login", "需登录"],
+    ["needs_captcha", "验证码"],
+    ["paid", "付费"],
+    ["broken", "无法提交"],
+    ["skip", "跳过"],
+    ["deleted", "删除"],
+  ];
 
   function renderProfileFields(profile) {
     const list = $("profileFieldList");
@@ -844,8 +853,57 @@
     return form;
   }
 
+  async function markLibrarySite(item, status) {
+    if (status === "deleted" && !confirm(`确认从外链列表删除 ${item.domain || item.url}？删除后不会再自动填表。`)) {
+      return;
+    }
+    const result = await chrome.runtime.sendMessage({
+      action: "markSubmissionSite",
+      url: item.url,
+      status,
+    });
+    if (!result?.ok) throw new Error(result?.error || "标记失败");
+    if (status === "deleted" && selectedLibraryKey === item.key) selectedLibraryKey = "";
+    await loadLibrary();
+  }
+
+  function createLibraryMarkPanel(item) {
+    const wrap = document.createElement("section");
+    wrap.className = "library-mark-panel";
+    const title = document.createElement("div");
+    title.className = "library-mark-title";
+    title.textContent = "站点标记";
+    const hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = "与提交时侧边栏标记相同，会同步到云端并影响队列。";
+    const btns = document.createElement("div");
+    btns.className = "library-mark-btns";
+    const current = item.annotation?.status || "";
+    for (const [status, label] of SITE_MARK_STATUSES) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `library-mark-btn${status === "deleted" ? " mark-danger" : ""}${current === status ? " active" : ""}`;
+      btn.textContent = label;
+      btn.setAttribute("aria-pressed", String(current === status));
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        btn.disabled = true;
+        try {
+          await markLibrarySite(item, status);
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+        }
+      });
+      btns.append(btn);
+    }
+    wrap.append(title, hint, btns);
+    return wrap;
+  }
+
   function renderTimelinePanel(item, panel) {
     panel.replaceChildren();
+    panel.append(createLibraryMarkPanel(item));
     const events = Array.isArray(item.events) ? item.events : [];
     const list = document.createElement("div");
     list.className = "timeline-list";
@@ -1024,12 +1082,18 @@
         ? `${sourceLabel} · ${item.platformType || "directory"} · 熟站 ${item.playbook.title}`
         : `${sourceLabel} · ${item.platformType || "directory"}`;
       if (item.playbook?.notes) meta.title = item.playbook.notes;
+      const destinationWrap = document.createElement("div");
+      destinationWrap.className = "library-destination";
       const destinationLink = document.createElement("a");
       destinationLink.className = "library-destination-link";
       destinationLink.href = item.url;
       destinationLink.target = "_blank";
       destinationLink.rel = "noreferrer";
       destinationLink.textContent = item.url;
+      destinationLink.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      destinationWrap.append(destinationLink);
 
       const qualityRow = document.createElement("div");
       qualityRow.className = "quality-row";
@@ -1099,7 +1163,8 @@
       card.classList.toggle("is-selected", selectedLibraryKey === item.key);
       card.tabIndex = 0;
       card.setAttribute("aria-selected", String(selectedLibraryKey === item.key));
-      card.addEventListener("click", () => {
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("a, button, input, textarea, select, label")) return;
         selectedLibraryKey = item.key;
         editingTimelineEventId = "";
         renderLibrary();
@@ -1112,7 +1177,7 @@
           renderLibrary();
         }
       });
-      card.append(head, destinationLink, qualityRow);
+      card.append(head, destinationWrap, qualityRow);
       const activitySummary = document.createElement("div");
       activitySummary.className = "library-activity-summary";
       const projectNames = (item.projects || [])
@@ -1138,8 +1203,8 @@
       card.append(activitySummary);
       const keyDetails = document.createElement("div");
       keyDetails.className = "library-key-details";
-      if (item.record) keyDetails.append(createKeyDetail("记录", item.record));
-      if (item.detail) keyDetails.append(createKeyDetail("备注 / 详情", item.detail));
+      if (item.record) keyDetails.append(createKeyDetail("记录", item.record, true));
+      if (item.detail) keyDetails.append(createKeyDetail("备注 / 详情", item.detail, true));
       const combinedNote = [item.record, item.detail].filter(Boolean).join(" | ");
       if (
         item.note &&

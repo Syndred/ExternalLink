@@ -305,6 +305,99 @@
     });
   }
 
+  const REUSABLE_PROFILE_KEYS = new Set([
+    "Name",
+    "Url",
+    "Title",
+    "Business mail",
+    "Note",
+    "Short description(20-30 words)",
+    "Short Discription(100-150 words)",
+    "Long description (250-500 words)",
+    "Tags Keywords/Hashtags",
+    "Feature description",
+    "Pricing",
+    "PRICING TYPE",
+  ]);
+
+  function inferReusableProfileKey(label = "", profileKey = "") {
+    const known = String(profileKey || "").trim();
+    const hint = `${label} ${known}`.toLowerCase();
+    if (
+      /\b(captcha|password|otp|verify|verification|agree|terms|privacy|comment|message|username|login)\b/.test(
+        hint,
+      )
+    ) {
+      return "";
+    }
+    if (REUSABLE_PROFILE_KEYS.has(known)) return known;
+    if (/\b(e-?mail|business mail|contact mail)\b/.test(hint)) return "Business mail";
+    if (/\b(tool name|product name|app name|startup name|company name|brand name)\b/.test(hint)) {
+      return "Name";
+    }
+    if (/\b(website|homepage|product url|tool url|official (site|url))\b/.test(hint)) return "Url";
+    if (/\b(tagline|one.?liner|elevator pitch|short description|short desc)\b/.test(hint)) {
+      return "Short description(20-30 words)";
+    }
+    if (/\b(long description|detailed description|about the (tool|product))\b/.test(hint)) {
+      return "Long description (250-500 words)";
+    }
+    if (/\b(description|summary|about)\b/.test(hint)) return "Short Discription(100-150 words)";
+    if (/\b(title|headline|subject)\b/.test(hint)) return "Title";
+    if (/\b(tags|keywords|hashtags)\b/.test(hint) && !/\bcategor/.test(hint)) {
+      return "Tags Keywords/Hashtags";
+    }
+    if (/\b(feature description|features|what (it|the tool) does)\b/.test(hint)) {
+      return "Feature description";
+    }
+    if (/\b(pricing type|price type|billing type)\b/.test(hint)) return "PRICING TYPE";
+    if (/\b(pricing|price|cost)\b/.test(hint)) return "Pricing";
+    return "";
+  }
+
+  function isReusableFillValue(key, mapping = {}) {
+    const value = String(mapping.value || "").trim();
+    if (!key || !value) return false;
+    if (value.length > 2000) return false;
+    if (/^(on|off|true|false|yes|no|1|0)$/i.test(value)) return false;
+    if (/^\d{4}-\d{2}-\d{2}/.test(value) && /date|launch/i.test(`${mapping.label || ""} ${key}`)) {
+      return false;
+    }
+    if (!/^https?:\/\//i.test(value) && /\.(png|jpe?g|gif|webp|svg|pdf)$/i.test(value)) return false;
+    if (key === "Url" && !/^https?:\/\//i.test(value)) return false;
+    if (key === "Business mail" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return false;
+    return true;
+  }
+
+  function learnProfileFieldsFromFill(profile, mappings = {}) {
+    const current = profile && typeof profile === "object" ? profile : emptySiteProfile("site");
+    const fields = { ...(current.fields || {}) };
+    const notes = { ...(current.fieldNotes || {}) };
+    const added = [];
+    for (const mapping of Object.values(mappings || {})) {
+      if (!mapping || typeof mapping !== "object") continue;
+      const key = inferReusableProfileKey(mapping.label || mapping.hint || "", mapping.profileKey);
+      if (!key || String(fields[key] || "").trim()) continue;
+      if (!isReusableFillValue(key, mapping)) continue;
+      fields[key] = String(mapping.value).trim();
+      if (!notes[key]) notes[key] = "填表学习";
+      added.push(key);
+    }
+    if (!added.length) return { profile: current, added };
+    return {
+      profile: {
+        ...current,
+        fields,
+        fieldNotes: notes,
+        name: current.name || fields.Name || current.name,
+        url: current.url || fields.Url || current.url,
+        promoUrl: current.promoUrl || fields.Url || current.promoUrl,
+        updatedAt: new Date().toISOString(),
+      },
+      added,
+    };
+  }
+
   function mergeExtractedProfile(current, extracted) {
     const merged = { ...current, ...extracted };
     merged.fields = { ...(current.fields || {}), ...(extracted.fields || {}) };
@@ -384,6 +477,8 @@
     stabilizeTableProfiles,
     applySavedProfilesToTasks,
     mergeExtractedProfile,
+    inferReusableProfileKey,
+    learnProfileFieldsFromFill,
     orderedProfileIds,
     applyProfileOrder,
     nextProfileSortIndex,

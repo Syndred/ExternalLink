@@ -1196,6 +1196,7 @@ async function handleSidepanelFill(msg) {
   let smartTotal = 0;
   let skippedFiles = [];
   let inferredFields = [];
+  let learnedFields = [];
   let agentResult = {};
   let lastEmpty = { emptyCount: 0, totalCount: 0 };
   let validation = { submitReady: true, issues: [] };
@@ -1276,6 +1277,18 @@ async function handleSidepanelFill(msg) {
     const learned = await sendTabMessage(tabId, { action: "collectFillLearnings", config });
     if (learned?.mappings) {
       await mergeLearnedMappings(storage.activeSiteId, hostname, learned.mappings);
+      const latest = await chrome.storage.local.get("siteProfiles");
+      const profiles = latest.siteProfiles || {};
+      const current = profiles[profile.id];
+      if (current) {
+        const expanded = self.ExtLinkProfiles.learnProfileFieldsFromFill(current, learned.mappings);
+        if (expanded.added.length) {
+          profiles[profile.id] = expanded.profile;
+          await chrome.storage.local.set({ siteProfiles: profiles });
+          learnedFields = expanded.added;
+          log(`资料库已补齐 ${expanded.added.join("、")}`, "ok");
+        }
+      }
     }
   } catch {
     /* non-fatal */
@@ -1419,6 +1432,7 @@ async function handleSidepanelFill(msg) {
     totalCount: lastEmpty.totalCount,
     skippedFiles,
     inferredFields,
+    learnedFields,
     platform: platformType,
     submitReady:
       validation?.submitReady !== false && lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount,

@@ -149,4 +149,33 @@ assert.equal(reordered.Alpha.sortIndex, 1);
 assert.equal(reordered.Middle.sortIndex, 2);
 assert.equal(P.nextProfileSortIndex(reordered), 3);
 
+assert.equal(P.inferReusableProfileKey("Product URL", ""), "Url");
+assert.equal(P.inferReusableProfileKey("Short description", ""), "Short description(20-30 words)");
+assert.equal(P.inferReusableProfileKey("CAPTCHA", "Title"), "");
+
+const learned = P.learnProfileFieldsFromFill(
+  {
+    id: "Demo",
+    name: "Demo",
+    fields: { Name: "Demo" },
+    learnedFieldMappings: { "demo.example": { website: { profileKey: "Url" } } },
+  },
+  {
+    url: { label: "Website", value: "https://demo.example" },
+    title: { label: "Title", value: "Demo Tool" },
+    name: { label: "Product name", value: "Should not overwrite" },
+    captcha: { label: "CAPTCHA", value: "AB12" },
+    date: { label: "Launch date", value: "2026-09-08" },
+  },
+);
+assert.equal(learned.profile.fields.Url, "https://demo.example");
+assert.equal(learned.profile.fields.Title, "Demo Tool");
+assert.equal(learned.profile.fields.Name, "Demo");
+assert.ok(!learned.profile.fields.CAPTCHA);
+assert.ok(!learned.added.includes("Name"));
+assert.equal(learned.added.length, 2);
+assert.ok(learned.added.includes("Title"));
+assert.ok(learned.added.includes("Url"));
+assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profileKey, "Url");
+
 console.log("profile migration tests passed");

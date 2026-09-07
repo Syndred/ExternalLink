@@ -1493,6 +1493,9 @@
       } else {
         msg = `已填写 ${result.filledCount || 0} 个，还剩 ${result.emptyCount} 个空字段`;
       }
+      if (result.learnedFields?.length) {
+        msg += `；资料库已补齐 ${result.learnedFields.join("、")}`;
+      }
       const cls =
         result.submitReady !== false && !result.invalidCount && result.emptyCount === 0
           ? "ok"

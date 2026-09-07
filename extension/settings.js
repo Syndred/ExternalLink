@@ -676,6 +676,30 @@
     return fact;
   }
 
+  const ICON_PATHS = {
+    pin: "M16 12V4h1V2H7v2h1v8l-2 2v2h5.2V22h1.6v-6H18v-2l-2-2z",
+    edit: "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
+    remove: "M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z",
+  };
+
+  function createIconButton(kind, label, danger = false) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `icon-btn${danger ? " icon-btn-danger" : ""}`;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", ICON_PATHS[kind]);
+    path.setAttribute("fill", "currentColor");
+    svg.append(path);
+    button.append(svg);
+    return button;
+  }
+
   function progressLabel(progress) {
     return (
       {
@@ -781,10 +805,10 @@
     note.setAttribute("aria-label", "动态笔记");
     const submit = document.createElement("button");
     submit.type = "submit";
-    submit.className = "btn btn-primary timeline-form-wide";
+    submit.className = "btn btn-primary";
     const cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.className = "btn btn-secondary timeline-form-wide";
+    cancel.className = "btn btn-secondary";
     cancel.textContent = "取消编辑";
     cancel.hidden = true;
     const fields = { profile, type, occurredAt, url, note, submit, cancel };
@@ -837,7 +861,32 @@
         const head = document.createElement("div");
         head.className = "timeline-event-head";
         const profileName = event.profileName || event.profileId || "外链站";
-        head.textContent = `${formatActivityTime(event.occurredAt)} · ${profileName} · ${activityLabel(event.type || event.status)}`;
+        const title = document.createElement("span");
+        title.className = "timeline-event-title";
+        title.textContent = `${formatActivityTime(event.occurredAt)} · ${profileName} · ${activityLabel(event.type || event.status)}`;
+        const actions = document.createElement("div");
+        actions.className = "timeline-event-actions";
+        const edit = createIconButton("edit", `编辑 ${activityLabel(event.type || event.status)} 动态`);
+        const remove = createIconButton("remove", `删除 ${activityLabel(event.type || event.status)} 动态`, true);
+        edit.addEventListener("click", (clickEvent) => {
+          clickEvent.stopPropagation();
+          editingTimelineEventId = event.id || "";
+          renderSelectedLibraryTimeline();
+        });
+        remove.addEventListener("click", async (clickEvent) => {
+          clickEvent.stopPropagation();
+          if (!event.id) return;
+          if (!confirm("删除这条时间线动态？已核验的提交账本不会被撤销。")) return;
+          const result = await chrome.runtime.sendMessage({
+            action: "removeSubmissionTimelineEvent",
+            eventId: event.id,
+          });
+          if (!result?.ok) return alert(result?.error || "删除动态失败");
+          if (editingTimelineEventId === event.id) editingTimelineEventId = "";
+          await loadLibrary();
+        });
+        actions.append(edit, remove);
+        head.append(title, actions);
         row.append(head);
         if (event.note) {
           const note = document.createElement("div");
@@ -855,35 +904,6 @@
           link.className = "timeline-event-note";
           row.append(link);
         }
-        const actions = document.createElement("div");
-        actions.className = "timeline-event-actions";
-        const edit = document.createElement("button");
-        edit.type = "button";
-        edit.className = "btn btn-secondary btn-sm";
-        edit.textContent = "编辑";
-        edit.setAttribute("aria-label", `编辑 ${activityLabel(event.type || event.status)} 动态`);
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "btn btn-danger btn-sm";
-        remove.textContent = "删除";
-        remove.setAttribute("aria-label", `删除 ${activityLabel(event.type || event.status)} 动态`);
-        edit.addEventListener("click", () => {
-          editingTimelineEventId = event.id || "";
-          renderSelectedLibraryTimeline();
-        });
-        remove.addEventListener("click", async () => {
-          if (!event.id) return;
-          if (!confirm("删除这条时间线动态？已核验的提交账本不会被撤销。")) return;
-          const result = await chrome.runtime.sendMessage({
-            action: "removeSubmissionTimelineEvent",
-            eventId: event.id,
-          });
-          if (!result?.ok) return alert(result?.error || "删除动态失败");
-          if (editingTimelineEventId === event.id) editingTimelineEventId = "";
-          await loadLibrary();
-        });
-        actions.append(edit, remove);
-        row.append(actions);
         list.append(row);
       }
     }
@@ -973,7 +993,29 @@
       category.className = `library-status ${annotationTone(status)}`;
       category.textContent = annotationLabel(item.annotation?.status);
       category.setAttribute("aria-label", `站点状态：${annotationLabel(status)}`);
-      head.append(title, category);
+      const pin = createIconButton("pin", `置顶 ${item.domain || item.url}`);
+      pin.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        const result = await chrome.runtime.sendMessage({ action: "pinLibraryUrl", url: item.url });
+        if (!result?.ok) return alert(result?.error || "置顶失败");
+        await loadLibrary();
+      });
+      const remove = createIconButton("remove", `删除 ${item.domain || item.url}`, true);
+      remove.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        if (!confirm(`确认从队列删除 ${item.domain || item.url}？`)) return;
+        const result = await chrome.runtime.sendMessage({
+          action: "removeFromSubmissionQueue",
+          url: item.url,
+        });
+        if (!result?.ok) return alert(result?.error || "删除失败");
+        if (selectedLibraryKey === item.key) selectedLibraryKey = "";
+        await loadLibrary();
+      });
+      const actions = document.createElement("div");
+      actions.className = "library-item-actions";
+      actions.append(pin, remove);
+      head.append(title, category, actions);
 
       const meta = document.createElement("div");
       meta.className = "library-meta";
@@ -1026,6 +1068,8 @@
         qualityRow.append(monitor);
       }
 
+      qualityRow.prepend(meta);
+
       const statuses = document.createElement("div");
       statuses.className = "profile-statuses";
       for (const profile of item.profileStatuses || []) {
@@ -1052,37 +1096,6 @@
         chip.textContent = `${profile.profileName} · ${publicationLabel}`;
         statuses.append(chip);
       }
-
-      const actions = document.createElement("div");
-      actions.className = "library-item-actions";
-      const pin = document.createElement("button");
-      pin.type = "button";
-      pin.className = "btn btn-secondary btn-sm";
-      pin.textContent = "置顶";
-      pin.setAttribute("aria-label", `置顶 ${item.domain || item.url}`);
-      pin.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        const result = await chrome.runtime.sendMessage({ action: "pinLibraryUrl", url: item.url });
-        if (!result?.ok) return alert(result?.error || "置顶失败");
-        await loadLibrary();
-      });
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "btn btn-danger btn-sm";
-      remove.textContent = "删除";
-      remove.setAttribute("aria-label", `删除 ${item.domain || item.url}`);
-      remove.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        if (!confirm(`确认从队列删除 ${item.domain || item.url}？`)) return;
-        const result = await chrome.runtime.sendMessage({
-          action: "removeFromSubmissionQueue",
-          url: item.url,
-        });
-        if (!result?.ok) return alert(result?.error || "删除失败");
-        if (selectedLibraryKey === item.key) selectedLibraryKey = "";
-        await loadLibrary();
-      });
-      actions.append(pin, remove);
       card.classList.toggle("is-selected", selectedLibraryKey === item.key);
       card.tabIndex = 0;
       card.setAttribute("aria-selected", String(selectedLibraryKey === item.key));
@@ -1099,7 +1112,7 @@
           renderLibrary();
         }
       });
-      card.append(head, destinationLink, meta, qualityRow);
+      card.append(head, destinationLink, qualityRow);
       const activitySummary = document.createElement("div");
       activitySummary.className = "library-activity-summary";
       const projectNames = (item.projects || [])
@@ -1138,7 +1151,6 @@
       }
       if (keyDetails.childNodes.length) card.append(keyDetails);
       if (statuses.childNodes.length) card.append(statuses);
-      card.append(actions);
       el.append(card);
     }
     if ($("btnLibraryLoadMore")) {

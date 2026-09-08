@@ -704,6 +704,18 @@
         ),
       )
       .filter(Boolean);
+    // A Profile can contain several KB of copy and media metadata. Building it
+    // once per destination made a large batch allocate tens/hundreds of MB.
+    // Jobs share the immutable run snapshot; the background strips it before
+    // persisting task state.
+    const profileConfigs = new Map(
+      profiles.map((profile) => {
+        const config = buildAgentConfigFromProfile
+          ? buildAgentConfigFromProfile(profile)
+          : buildAgentConfigFromTableFields(profile.id, profile.fields || {});
+        return [profile.id, { ...config, projectKey: profile.id }];
+      }),
+    );
 
     const groups = [];
     for (const destination of destinations.values()) {
@@ -729,9 +741,7 @@
           continue;
         }
 
-        const config = buildAgentConfigFromProfile
-          ? buildAgentConfigFromProfile(profile)
-          : buildAgentConfigFromTableFields(profile.id, profile.fields || {});
+        const config = profileConfigs.get(profile.id) || {};
         jobs.push({
           id: submissionRecordKey(destination.destinationKey, profile.id),
           destinationKey: destination.destinationKey,
@@ -740,7 +750,7 @@
           profileName: profile.name || profile.fields?.Name || profile.id,
           projectKey: profile.id,
           status: "pending",
-          config: { ...config, projectKey: profile.id },
+          config,
         });
       }
 

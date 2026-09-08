@@ -155,17 +155,23 @@
       return true;
     }
     if (msg.action === "executeSubmit") {
-      executeSubmit(msg.config, msg.platformType, msg.taskIndex).then(sendResponse);
+      executeSubmit(msg.config, msg.platformType, msg.taskIndex)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true; // keep channel open for async
     }
     if (msg.action === "finalizeSubmit") {
-      finalizeSubmit(msg.config, msg.taskIndex).then(sendResponse);
+      finalizeSubmit(msg.config, msg.taskIndex)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     }
     if (msg.action === "trySubmit") {
       // User clicked "继续填表" from overlay banner
       removeWaitingBanner();
-      executeSubmit(msg.config, msg.platformType, msg.taskIndex).then(sendResponse);
+      executeSubmit(msg.config, msg.platformType, msg.taskIndex)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     }
     if (msg.action === "prescanPage") {
@@ -564,13 +570,13 @@
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      });
+      }).catch(() => {});
     });
     document.getElementById("__extlink_skip_btn")?.addEventListener("click", () => {
       chrome.runtime.sendMessage({
         action: "manualSkip",
         taskIndex: taskIndex,
-      });
+      }).catch(() => {});
       removeWaitingBanner();
     });
 
@@ -586,7 +592,7 @@
           taskIndex: taskIndex,
           config: config,
           platformType: platformType,
-        });
+        }).catch(() => {});
       }
     }, 2000);
   }
@@ -674,11 +680,11 @@
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      });
+      }).catch(() => {});
       removeManualWaitBanner();
     });
     document.getElementById("__extlink_manual_skip_btn")?.addEventListener("click", () => {
-      chrome.runtime.sendMessage({ action: "manualSkip", taskIndex: taskIndex });
+      chrome.runtime.sendMessage({ action: "manualSkip", taskIndex: taskIndex }).catch(() => {});
       removeManualWaitBanner();
     });
     document.getElementById("__extlink_manual_success_btn")?.addEventListener("click", () => {
@@ -686,7 +692,7 @@
         action: "confirmSubmissionSuccess",
         taskIndex: taskIndex,
         evidence: "user confirmed from page banner",
-      });
+      }).catch(() => {});
       removeManualWaitBanner();
     });
   }

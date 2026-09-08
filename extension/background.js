@@ -22,6 +22,8 @@ let state = {
   groups: [],
   activeTabs: new Map(), // tabId -> { taskIndex, redirectCount }
   parkedTaskIds: new Set(),
+  profileConfigs: {},
+  runId: "",
   concurrency: 1,
   stopped: false,
 };
@@ -48,6 +50,9 @@ const LINK_MONITOR_ALARM = "externallink-link-monitor";
 const DEFAULT_LINK_MONITOR_MINUTES = 24 * 60;
 const CLOUD_SYNC_DEBOUNCE_MS = 800;
 const CLOUD_SYNC_RETRY_DELAYS_MS = [1000, 5000, 15000, 60000];
+const BATCH_LOG_STORAGE_KEY = "batchRunLog";
+const BATCH_LOG_LIMIT = 400;
+const BATCH_TASK_WINDOW_SIZE = 180;
 
 const commentDraftCache = new Map();
 
@@ -60,8 +65,27 @@ let cloudSyncMute = false;
 const cloudSyncPendingKeys = new Set();
 const cloudSyncIgnoredValues = new Map();
 let cloudSyncRetryAttempt = 0;
+let batchLogWritePromise = Promise.resolve();
+let pendingBatchLogEntries = [];
+let batchLogFlushTimer = null;
+let processQueuePromise = null;
+let startBatchPromise = null;
 let initializationPromise = restoreActiveBatchRun().catch((err) => {
   log(`恢复上次批次失败: ${err.message}`, "warn");
+});
+
+self.addEventListener?.("unhandledrejection", (event) => {
+  const reason = event?.reason;
+  log(`未处理异步异常: ${reason?.message || String(reason || "unknown")}`, "err", {
+    event: "unhandled_rejection",
+    stack: reason?.stack,
+  });
+});
+self.addEventListener?.("error", (event) => {
+  log(`后台脚本异常: ${event?.message || "unknown"}`, "err", {
+    event: "worker_error",
+    stack: event?.error?.stack,
+  });
 });
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -105,14 +129,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status !== "complete" || !tab.url?.startsWith("http")) return;
-  const { autoOpenSidePanel } = await chrome.storage.local.get("autoOpenSidePanel");
-  if (autoOpenSidePanel !== true) return;
   try {
+    if (changeInfo.status !== "complete" || !tab.url?.startsWith("http")) return;
+    const { autoOpenSidePanel } = await chrome.storage.local.get("autoOpenSidePanel");
+    if (autoOpenSidePanel !== true) return;
     await chrome.sidePanel.setOptions({ tabId, path: "sidepanel.html", enabled: true });
     await chrome.sidePanel.open({ tabId });
-  } catch {
-    /* side panel may be unavailable */
+  } catch (err) {
+    log(`自动打开侧栏失败: ${err.message}`, "warn", { event: "sidepanel_open_failed" });
   }
 });
 
@@ -322,8 +346,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "start":
-      startBatchRun(msg)
+      startBatchRunOnce(msg)
         .then(sendResponse)
+        .catch((err) => {
+          log(`批次启动失败: ${err.message}`, "err", { event: "run_start_failed", stack: err.stack });
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    case "getBatchLog":
+      chrome.storage.local
+        .get(BATCH_LOG_STORAGE_KEY)
+        .then((stored) => sendResponse({ ok: true, log: stored[BATCH_LOG_STORAGE_KEY] || null }))
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "stop":
@@ -336,19 +369,50 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       log("任务已停止", "warn");
       break;
     case "contentReady":
-      handleContentReady(sender.tab, msg);
+      if (sender.tab) {
+        handleContentReady(sender.tab, msg).catch((err) =>
+          log(`页面就绪处理失败: ${err.message}`, "err", {
+            event: "content_ready_failed",
+            domain: sender.tab?.url ? self.ExtLinkQueue.extractDomain(sender.tab.url) : "",
+            stack: err.stack,
+          }),
+        );
+      }
       break;
     case "captchaResolved":
-      resumeAfterCaptcha(sender.tab.id, msg);
+      if (sender.tab?.id) {
+        resumeAfterCaptcha(sender.tab.id, msg).catch((err) =>
+          log(`验证码后恢复失败: ${err.message}`, "err", { event: "captcha_resume_failed", stack: err.stack }),
+        );
+      }
       break;
     case "manualSubmit":
-      handleManualSubmit(msg);
+      handleManualSubmit(msg).catch((err) =>
+        log(`人工继续失败: ${err.message}`, "err", { event: "manual_resume_failed", stack: err.stack }),
+      );
       break;
     case "manualSkip":
-      handleManualSkip(msg);
+      Promise.resolve(handleManualSkip(msg)).catch((err) =>
+        log(`人工跳过失败: ${err.message}`, "err", { event: "manual_skip_failed", stack: err.stack }),
+      );
       break;
     case "manualContinue":
-      handleManualSubmit(msg);
+      handleManualSubmit(msg).catch((err) =>
+        log(`人工继续失败: ${err.message}`, "err", { event: "manual_continue_failed", stack: err.stack }),
+      );
+      break;
+    case "log":
+      if (sender.tab?.id) {
+        const entry = state.activeTabs.get(sender.tab.id);
+        const task = entry ? state.tasks.find((item) => item.index === entry.taskIndex) : null;
+        log(msg.msg, msg.cls, {
+          event: msg.event || "content_step",
+          taskIndex: task?.index,
+          taskId: task?.id,
+          domain: task?.domain || (sender.tab.url ? self.ExtLinkQueue.extractDomain(sender.tab.url) : ""),
+          profileId: task?.profileId,
+        });
+      }
       break;
     case "confirmSubmissionSuccess":
       confirmSubmissionSuccess(msg)
@@ -356,7 +420,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "getState":
-      getRuntimeState().then(sendResponse);
+      getRuntimeState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
   }
 });
@@ -847,6 +913,16 @@ async function getActiveFillConfig() {
   return { ok: true, config, profileId: profile.id, profileName: profile.name || profile.id, filters };
 }
 
+function startBatchRunOnce(msg) {
+  if (startBatchPromise) {
+    return Promise.resolve({ ok: false, error: "批次正在启动，请勿重复点击" });
+  }
+  startBatchPromise = startBatchRun(msg).finally(() => {
+    startBatchPromise = null;
+  });
+  return startBatchPromise;
+}
+
 async function startBatchRun(msg) {
   await initializationPromise;
   closeAllTabs();
@@ -857,6 +933,12 @@ async function startBatchRun(msg) {
     throw new Error("请至少选择一个要提交的自家网站");
   }
 
+  state.runId = `run-${Date.now().toString(36)}`;
+  await resetBatchLog(state.runId, selectedSiteIds);
+  log(`正在为 ${selectedSiteIds.length} 个 Profile 构建批量队列`, "", {
+    event: "queue_build_started",
+    selectedSiteIds,
+  });
   await chrome.storage.local.set({ selectedSiteIds });
   const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
   if (!pending.tasks.length) {
@@ -864,7 +946,9 @@ async function startBatchRun(msg) {
     state.tasks = [];
     state.groups = [];
     state.queue = [];
+    state.profileConfigs = {};
     broadcastStatus();
+    log("所选网站没有待提交组合", "warn", { event: "queue_empty" });
     return {
       ok: true,
       empty: true,
@@ -886,7 +970,8 @@ async function startBatchRun(msg) {
       storedFlags.autoSubmitDirectoryListings !== false && msg.config?.fillOnly !== true,
     autoSubmitStandardWpComments: storedFlags.autoSubmitStandardWpComments === true,
   };
-  state.tasks = pending.tasks.map((task) => ({ ...task, status: "pending" }));
+  state.profileConfigs = collectProfileConfigs(pending.tasks);
+  state.tasks = pending.tasks.map((task) => stripTaskConfig({ ...task, status: "pending" }));
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
   state.queue = [...state.groups];
   state.parkedTaskIds.clear();
@@ -896,42 +981,36 @@ async function startBatchRun(msg) {
 
   await chrome.storage.local.set({
     activeBatchRun: {
-      version: 2,
-      runId: `run-${Date.now().toString(36)}`,
+      version: 3,
+      runId: state.runId,
       status: "running",
       selectedSiteIds,
       config: state.config,
+      profileConfigs: state.profileConfigs,
+      destinations: serializeBatchDestinations(state.groups),
       parkedTaskIds: [],
       startedAt: new Date().toISOString(),
-      tasks: state.tasks,
+      tasks: serializeBatchTasks(state.tasks),
     },
   });
   broadcastStatus();
   log(
     `开始处理 ${state.groups.length} 个外链站、${state.tasks.length} 个项目组合`,
     "ok",
+    {
+      event: "run_started",
+      destinationTotal: state.groups.length,
+      taskTotal: state.tasks.length,
+    },
   );
-  processQueue();
+  scheduleQueueProcessing();
+  const taskWindow = buildTaskWindow(state.tasks);
   return {
     ok: true,
-    tasks: state.tasks.map((task) => ({
-      id: task.id,
-      key: task.key,
-      destinationKey: task.destinationKey,
-      destinationGroupKey: task.destinationGroupKey,
-      url: task.url,
-      domain: task.domain,
-      platformType: task.platformType,
-      source: task.source,
-      profileId: task.profileId,
-      profileName: task.profileName,
-      projectKey: task.projectKey,
-      status: task.status,
-      index: task.index,
-      groupJobIndex: task.groupJobIndex,
-      groupJobCount: task.groupJobCount,
-    })),
-    groups: state.groups.map(toSubmissionGroupSummary),
+    tasks: taskWindow.tasks,
+    taskWindow: taskWindow.meta,
+    stats: summarizeTaskStats(state.tasks),
+    groupTotal: state.groups.length,
     meta: pending.meta,
   };
 }
@@ -946,7 +1025,7 @@ function markActiveBatchStopped() {
           ...stored.activeBatchRun,
           status: "stopped",
           stoppedAt: new Date().toISOString(),
-          tasks: state.tasks,
+          tasks: serializeBatchTasks(state.tasks),
           parkedTaskIds: [],
         },
       });
@@ -963,10 +1042,13 @@ async function getRuntimeState() {
       activeByTaskId.set(task.id, { tabId, parkedReason: entry.parkedReason || "" });
     }
   }
+  const taskWindow = buildTaskWindow(state.tasks);
   return {
+    ok: true,
     running: state.running,
-    tasks: state.tasks,
-    groups: state.groups,
+    tasks: taskWindow.tasks,
+    taskWindow: taskWindow.meta,
+    groupTotal: state.groups.length,
     parkedTasks: [...state.parkedTaskIds]
       .map((taskId) => {
         const task = state.tasks.find((item) => item.id === taskId);
@@ -988,33 +1070,67 @@ async function getRuntimeState() {
 }
 
 async function restoreActiveBatchRun() {
-  const storage = await chrome.storage.local.get(["activeBatchRun"]);
+  const storage = await chrome.storage.local.get([
+    "activeBatchRun",
+    "submissionRecords",
+    "siteAnnotations",
+    "deletedSubmissionKeys",
+  ]);
   const batch = storage.activeBatchRun;
   if (!batch || !["running", "waiting_manual", "paused"].includes(batch.status)) return;
   if (!Array.isArray(batch.tasks) || !batch.tasks.length) return;
 
   state.config = batch.config || {};
-  state.tasks = batch.tasks.map((task) => ({
-    ...task,
-    status: task.status === "running" ? "pending" : task.status,
-  }));
+  state.runId = batch.runId || `restored-${Date.now().toString(36)}`;
+  state.profileConfigs = {
+    ...(batch.profileConfigs || {}),
+    ...collectProfileConfigs(batch.tasks),
+  };
+  const persistedDestinations = hydrateBatchDestinations(batch.destinations || []);
+  const submissionRecords = storage.submissionRecords || {};
+  const annotations = storage.siteAnnotations || {};
+  const deletedKeys = new Set(storage.deletedSubmissionKeys || []);
+  state.tasks = batch.tasks.map((rawTask) => {
+    const task = hydratePersistedTask(rawTask, persistedDestinations);
+    const successful = self.ExtLinkQueue.isSubmissionSuccessful(
+      submissionRecords,
+      task.destinationKey,
+      task.profileId,
+    );
+    const annotation = annotations[task.destinationKey] || annotations[task.domain];
+    const deleted = deletedKeys.has(task.destinationKey);
+    const restoredStatus = successful
+      ? "ok"
+      : deleted || self.ExtLinkQueue.isDeadEndStatus(annotation?.status)
+        ? "skip"
+        : task.status === "running"
+          ? "pending"
+          : task.status;
+    return {
+      ...stripTaskConfig(task),
+      status: restoredStatus,
+    };
+  });
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
   state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.stopped = false;
   state.parkedTaskIds = new Set(batch.parkedTaskIds || []);
 
   const tabs = await chrome.tabs.query({});
+  const claimedTabIds = new Set();
   for (const taskId of state.parkedTaskIds) {
     const task = state.tasks.find((item) => item.id === taskId);
     if (!task) continue;
     const tab = tabs.find((item) => {
+      if (!item?.id || claimedTabIds.has(item.id)) return false;
       try {
-        return self.ExtLinkQueue.extractDomain(item.url || "") === task.domain;
+        return self.ExtLinkQueue.normalizeUrlKey(item.url || "") === task.destinationKey;
       } catch {
         return false;
       }
     });
     if (!tab?.id) continue;
+    claimedTabIds.add(tab.id);
     state.activeTabs.set(tab.id, {
       taskIndex: task.index,
       groupKey: task.destinationGroupKey,
@@ -1031,7 +1147,148 @@ async function restoreActiveBatchRun() {
     state.parkedTaskIds,
   );
   state.running = state.queue.length > 0;
-  if (state.running) processQueue();
+  if (state.running) {
+    log("已恢复上次未完成批次", "warn", { event: "run_restored" });
+    scheduleQueueProcessing();
+  }
+}
+
+function collectProfileConfigs(tasks = []) {
+  const configs = {};
+  for (const task of tasks) {
+    const profileId = task?.profileId || task?.projectKey || task?.config?.projectKey;
+    if (!profileId || configs[profileId] || !task?.config) continue;
+    configs[profileId] = task.config;
+  }
+  return configs;
+}
+
+function stripTaskConfig(task = {}) {
+  const { config: _config, ...lightTask } = task;
+  return lightTask;
+}
+
+function serializeBatchTasks(tasks = []) {
+  return tasks.map((task) => [
+    task.index,
+    task.destinationGroupIndex,
+    task.profileId,
+    task.profileName,
+    task.status,
+    task.groupJobIndex,
+    task.groupJobCount,
+    task.skipReason || "",
+    task.successEvidence || "",
+    task.publicationStatus || "",
+    task.publicUrl || "",
+    task.evidenceUrl || "",
+    task.isDofollow === true ? 1 : 0,
+    task.relResult || "",
+  ]);
+}
+
+function serializeBatchDestinations(groups = []) {
+  return groups.map((group, arrayIndex) => [
+    group.tasks?.[0]?.destinationGroupIndex || group.index || arrayIndex + 1,
+    group.key,
+    group.url,
+    group.domain,
+    group.tasks?.[0]?.platformType || group.platformType || "directory",
+    group.tasks?.[0]?.source || group.source || "table",
+    group.tasks?.[0]?.note || group.note || "",
+  ]);
+}
+
+function hydrateBatchDestinations(rows = []) {
+  const result = new Map();
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue;
+    result.set(Number(row[0]), {
+      index: Number(row[0]),
+      key: row[1] || "",
+      url: row[2] || "",
+      domain: row[3] || "",
+      platformType: row[4] || "directory",
+      source: row[5] || "table",
+      note: row[6] || "",
+    });
+  }
+  return result;
+}
+
+function hydratePersistedTask(rawTask, destinations) {
+  if (!Array.isArray(rawTask)) return rawTask || {};
+  const destination = destinations.get(Number(rawTask[1])) || {};
+  const profileId = rawTask[2] || "";
+  const key = destination.key || "";
+  return {
+    id: self.ExtLinkQueue.submissionRecordKey(key, profileId),
+    key,
+    destinationKey: key,
+    destinationUrl: destination.url || "",
+    destinationGroupKey: key,
+    destinationGroupIndex: Number(rawTask[1]),
+    url: destination.url || "",
+    domain: destination.domain || "",
+    platformType: destination.platformType || "directory",
+    source: destination.source || "table",
+    note: destination.note || "",
+    profileId,
+    profileName: rawTask[3] || profileId,
+    projectKey: profileId,
+    status: rawTask[4] || "pending",
+    index: Number(rawTask[0]),
+    groupJobIndex: Number(rawTask[5]) || 1,
+    groupJobCount: Number(rawTask[6]) || 1,
+    skipReason: rawTask[7] || "",
+    successEvidence: rawTask[8] || "",
+    publicationStatus: rawTask[9] || "",
+    publicUrl: rawTask[10] || "",
+    evidenceUrl: rawTask[11] || "",
+    isDofollow: rawTask[12] === 1,
+    relResult: rawTask[13] || "",
+  };
+}
+
+function summarizeTaskForUi(task = {}) {
+  return {
+    id: task.id,
+    index: task.index,
+    domain: task.domain,
+    url: task.url,
+    profileId: task.profileId,
+    profileName: task.profileName,
+    status: task.status,
+    skipReason: task.skipReason || "",
+    groupJobIndex: task.groupJobIndex,
+    groupJobCount: task.groupJobCount,
+  };
+}
+
+function buildTaskWindow(tasks = [], limit = BATCH_TASK_WINDOW_SIZE) {
+  if (tasks.length <= limit) {
+    return {
+      tasks: tasks.map(summarizeTaskForUi),
+      meta: { start: 0, end: tasks.length, total: tasks.length, truncated: false },
+    };
+  }
+  const runningIndex = tasks.findIndex((task) => task.status === "running");
+  let focus = runningIndex;
+  if (focus < 0) {
+    for (let index = tasks.length - 1; index >= 0; index -= 1) {
+      if (tasks[index].status !== "pending") {
+        focus = index;
+        break;
+      }
+    }
+  }
+  if (focus < 0) focus = 0;
+  const start = Math.max(0, Math.min(tasks.length - limit, focus - Math.floor(limit / 3)));
+  const end = Math.min(tasks.length, start + limit);
+  return {
+    tasks: tasks.slice(start, end).map(summarizeTaskForUi),
+    meta: { start, end, total: tasks.length, truncated: true },
+  };
 }
 
 function summarizeTaskStats(taskList) {
@@ -3044,6 +3301,26 @@ async function processQueue() {
   await refreshBatchRunStatus();
 }
 
+function scheduleQueueProcessing() {
+  if (processQueuePromise) return processQueuePromise;
+  processQueuePromise = processQueue()
+    .catch((err) => {
+      state.running = false;
+      log(`批量调度异常: ${err.message}`, "err", {
+        event: "queue_failed",
+        stack: err.stack,
+      });
+      broadcastStatus();
+    })
+    .finally(() => {
+      processQueuePromise = null;
+      if (state.running && state.queue.length > 0 && !state.stopped) {
+        scheduleQueueProcessing();
+      }
+    });
+  return processQueuePromise;
+}
+
 async function refreshBatchRunStatus() {
   const hasProcessing = countProcessingTabs() > 0;
   const hasQueuedGroups = state.queue.some((group) =>
@@ -3059,31 +3336,54 @@ async function refreshBatchRunStatus() {
 
   state.running = false;
   const stored = await chrome.storage.local.get(["activeBatchRun"]);
+  const finalStatus = state.stopped ? "stopped" : hasParkedTasks ? "waiting_manual" : "finished";
   if (stored.activeBatchRun) {
     await chrome.storage.local.set({
       activeBatchRun: {
         ...stored.activeBatchRun,
-        status: hasParkedTasks ? "waiting_manual" : "finished",
-        ...(hasParkedTasks ? {} : { finishedAt: new Date().toISOString() }),
-        tasks: state.tasks,
+        status: finalStatus,
+        ...(finalStatus === "finished" ? { finishedAt: new Date().toISOString() } : {}),
+        ...(finalStatus === "stopped" ? { stoppedAt: new Date().toISOString() } : {}),
+        tasks: serializeBatchTasks(state.tasks),
         parkedTaskIds: [...state.parkedTaskIds],
       },
     });
   }
   broadcastStatus();
-  if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
-  else log("✅ 所有任务处理完毕", "ok");
+  if (finalStatus === "stopped") log("任务已停止", "warn", { event: "run_stopped" });
+  else if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
+  else log("✅ 所有任务处理完毕", "ok", { event: "run_finished" });
+  await flushBatchLogEntries();
 }
 
 async function processOne(group) {
+  let task = null;
+  const batchRunId = state.runId;
   try {
-    const task = (group?.tasks || []).find((item) => item.status === "pending");
+    task = (group?.tasks || []).find((item) => item.status === "pending");
     if (!task) return;
     const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
+    log(`[${task.index}/${state.tasks.length}] 打开 ${task.domain} · ${task.profileName}`, "", {
+      event: "task_opening",
+      taskIndex: task.index,
+      taskId: task.id,
+      domain: task.domain,
+      profileId: task.profileId,
+    });
     task.status = "running";
     broadcastTaskUpdate(task);
 
     const tab = await chrome.tabs.create({ url, active: false });
+    if (state.runId !== batchRunId || state.stopped || !state.running) {
+      await chrome.tabs.remove(tab.id).catch(() => {});
+      log(`已关闭过期批次创建的页签: ${task.domain}`, "warn", {
+        event: "stale_tab_closed",
+        taskIndex: task.index,
+        domain: task.domain,
+        profileId: task.profileId,
+      });
+      return;
+    }
     const entry = {
       taskIndex: task.index,
       groupKey: group.key,
@@ -3096,7 +3396,7 @@ async function processOne(group) {
   } catch (err) {
     log(`创建标签页失败: ${group?.domain || group?.key || "unknown"} - ${err.message}`, "err");
     for (const task of group?.tasks || []) {
-      if (task.status !== "pending") continue;
+      if (!["pending", "running"].includes(task.status)) continue;
       task.status = "err";
       task.skipReason = err.message;
       broadcastTaskUpdate(task);
@@ -3555,7 +3855,8 @@ async function executeTabActions(tabId, actions) {
 
 function getTaskConfig(task, extraConfig = {}) {
   const globals = state.config || {};
-  const perTask = task && task.config ? task.config : {};
+  const profileId = task?.profileId || task?.projectKey || task?.config?.projectKey || "";
+  const perTask = task?.config || state.profileConfigs?.[profileId] || {};
   const merged = self.ExtLinkProfiles.mergeFillConfig(globals, perTask, extraConfig);
   return {
     ...merged,
@@ -3854,7 +4155,7 @@ function parkTaskEntry(tabId, entry, reason) {
           activeBatchRun: {
             ...stored.activeBatchRun,
             status: "waiting_manual",
-            tasks: state.tasks,
+            tasks: serializeBatchTasks(state.tasks),
             parkedTaskIds: [...state.parkedTaskIds],
           },
         });
@@ -3872,7 +4173,7 @@ function persistParkedTaskIds() {
         activeBatchRun: {
           ...stored.activeBatchRun,
           parkedTaskIds: [...state.parkedTaskIds],
-          tasks: state.tasks,
+          tasks: serializeBatchTasks(state.tasks),
         },
       });
     })
@@ -3883,8 +4184,10 @@ async function advanceDestinationGroup(tabId, completedTask) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
   const group = findGroupForTask(completedTask);
-  if (completedTask?.id) state.parkedTaskIds.delete(completedTask.id);
-  persistParkedTaskIds();
+  const removedParkedTask = completedTask?.id
+    ? state.parkedTaskIds.delete(completedTask.id)
+    : false;
+  if (removedParkedTask) persistParkedTaskIds();
   const nextTask = self.ExtLinkScheduler.nextPendingTask(group, completedTask.index);
   if (!nextTask) {
     entry.agentDone = true;
@@ -4116,7 +4419,15 @@ function resumePendingRejudgeAfterRun(tabId, task, entry) {
   if (!state.activeTabs.has(tabId)) return;
   entry.rejudgeAfterRun = false;
   entry.contentReadyWhileRunning = false;
-  runAgentLoop(tabId, task, entry, { pendingRejudge: true });
+  runAgentLoop(tabId, task, entry, { pendingRejudge: true }).catch((err) =>
+    log(`${task.domain}: 重新判断失败 - ${err.message}`, "err", {
+      event: "rejudge_failed",
+      taskIndex: task.index,
+      domain: task.domain,
+      profileId: task.profileId,
+      stack: err.stack,
+    }),
+  );
 }
 
 function isNavigationSnapshotError(err) {
@@ -4174,7 +4485,15 @@ function closeTab(tabId) {
     clearEntryTimeout(entry);
   }
   state.activeTabs.delete(tabId);
-  chrome.tabs.remove(tabId).catch(() => {});
+  chrome.tabs
+    .remove(tabId)
+    .catch(() => {})
+    .finally(() => {
+      if (state.running && state.queue.length > 0 && !state.stopped) scheduleQueueProcessing();
+      refreshBatchRunStatus().catch((err) =>
+        log(`刷新批次状态失败: ${err.message}`, "err", { event: "run_status_failed" }),
+      );
+    });
 }
 
 function delayCloseTab(tabId, delayMs) {
@@ -4208,7 +4527,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
         state.queue.unshift(group);
         state.running = true;
         state.stopped = false;
-        processQueue();
+        scheduleQueueProcessing();
       }
     }
     state.activeTabs.delete(tabId);
@@ -4223,18 +4542,21 @@ function countProcessingTabs() {
 
 // ─── Messaging ───
 function broadcastTaskUpdate(task) {
-  chrome.storage.local
-    .get(["activeBatchRun"])
-    .then((stored) => {
-      if (!stored.activeBatchRun) return;
-      return chrome.storage.local.set({
-        activeBatchRun: {
-          ...stored.activeBatchRun,
-          tasks: state.tasks,
-        },
-      });
-    })
-    .catch(() => {});
+  const logSignature = `${task.status}|${task.skipReason || ""}`;
+  if (task._lastLogSignature !== logSignature) {
+    task._lastLogSignature = logSignature;
+    log(
+      `[${task.index}/${state.tasks.length}] ${task.domain} · ${task.profileName}: ${task.status}${task.skipReason ? ` - ${task.skipReason}` : ""}`,
+      task.status === "err" ? "err" : ["skip", "captcha", "needs_manual", "filled"].includes(task.status) ? "warn" : "",
+      {
+        event: "task_status",
+        taskIndex: task.index,
+        taskId: task.id,
+        domain: task.domain,
+        profileId: task.profileId,
+      },
+    );
+  }
   chrome.runtime
     .sendMessage({
       action: "taskUpdate",
@@ -4263,8 +4585,101 @@ function broadcastStatus() {
     .catch(() => {});
 }
 
-function log(msg, cls) {
-  chrome.runtime.sendMessage({ action: "log", msg, cls }).catch(() => {});
+async function resetBatchLog(runId, selectedSiteIds = []) {
+  if (batchLogFlushTimer) {
+    clearTimeout(batchLogFlushTimer);
+    batchLogFlushTimer = null;
+  }
+  await flushBatchLogEntries();
+  const startedAt = new Date().toISOString();
+  await chrome.storage.local.set({
+    [BATCH_LOG_STORAGE_KEY]: {
+      schemaVersion: 1,
+      runId,
+      startedAt,
+      updatedAt: startedAt,
+      selectedSiteIds,
+      entries: [],
+    },
+  });
+  chrome.runtime.sendMessage({ action: "batchLogReset", runId, startedAt }).catch(() => {});
+}
+
+function persistBatchLogEntry(entry) {
+  pendingBatchLogEntries.push(entry);
+  if (!batchLogFlushTimer) {
+    batchLogFlushTimer = setTimeout(() => {
+      batchLogFlushTimer = null;
+      flushBatchLogEntries();
+    }, 350);
+  }
+}
+
+function flushBatchLogEntries() {
+  const pending = pendingBatchLogEntries.splice(0);
+  if (!pending.length) return batchLogWritePromise;
+  batchLogWritePromise = batchLogWritePromise
+    .then(async () => {
+      const stored = await chrome.storage.local.get(BATCH_LOG_STORAGE_KEY);
+      const current = stored[BATCH_LOG_STORAGE_KEY] || {
+        schemaVersion: 1,
+        runId: pending[0]?.runId || "diagnostic",
+        startedAt: pending[0]?.at,
+        selectedSiteIds: [],
+        entries: [],
+      };
+      const entries = [...(Array.isArray(current.entries) ? current.entries : []), ...pending].slice(
+        -BATCH_LOG_LIMIT,
+      );
+      const latest = pending[pending.length - 1];
+      await chrome.storage.local.set({
+        [BATCH_LOG_STORAGE_KEY]: {
+          ...current,
+          runId: current.runId || latest.runId || "diagnostic",
+          updatedAt: latest.at,
+          entries,
+        },
+      });
+    })
+    .catch((err) => {
+      console.warn("ExternalLink batch log persistence failed", err);
+      chrome.runtime
+        .sendMessage({
+          action: "logPersistenceError",
+          error: err.message || String(err),
+        })
+        .catch(() => {});
+    });
+  return batchLogWritePromise;
+}
+
+function log(msg, cls, context = {}) {
+  const at = new Date().toISOString();
+  const message = String(msg || "").slice(0, 2000);
+  const entry = {
+    id: `${at}-${Math.random().toString(36).slice(2, 9)}`,
+    at,
+    time: new Date(at).toLocaleTimeString(),
+    level: cls === "err" ? "error" : cls === "warn" ? "warn" : cls === "ok" ? "success" : "info",
+    cls: cls || "",
+    event: String(context.event || "runtime").slice(0, 80),
+    runId: state.runId || "",
+    message,
+    ...(context.taskIndex ? { taskIndex: context.taskIndex } : {}),
+    ...(context.taskId ? { taskId: context.taskId } : {}),
+    ...(context.domain ? { domain: String(context.domain).slice(0, 255) } : {}),
+    ...(context.profileId ? { profileId: String(context.profileId).slice(0, 160) } : {}),
+    ...(context.destinationTotal !== undefined
+      ? { destinationTotal: Number(context.destinationTotal) || 0 }
+      : {}),
+    ...(context.taskTotal !== undefined ? { taskTotal: Number(context.taskTotal) || 0 } : {}),
+    ...(context.selectedSiteIds ? { selectedSiteIds: context.selectedSiteIds } : {}),
+    ...(context.stack ? { stack: String(context.stack).slice(0, 3000) } : {}),
+  };
+  const consoleMethod = entry.level === "error" ? "error" : entry.level === "warn" ? "warn" : "log";
+  console[consoleMethod](`[ExternalLink][${entry.event}] ${message}`, context.stack || "");
+  persistBatchLogEntry(entry);
+  chrome.runtime.sendMessage({ action: "log", msg: message, cls, entry }).catch(() => {});
 }
 
 // ─── IndexNow Ping ───

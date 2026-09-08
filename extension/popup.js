@@ -864,18 +864,34 @@
       persistTasks();
       log(`开始提交 ${tasks.length} 个合并后的外链目标`, "ok");
 
+      btnStart.disabled = true;
       setRunning(true);
-      const result = await chrome.runtime.sendMessage({
-        action: "start",
-        selectedSiteIds,
-        config: buildRuntimeConfig(),
-      });
-      if (!result?.ok) throw new Error(result?.error || "启动失败");
-      tasks = result.tasks || [];
-      stats = { done: 0, skip: 0, err: 0, total: tasks.length, dofollow: 0, nofollow: 0 };
-      updateStats();
-      renderTasks();
-      log("任务已发送到后台，可在任务栏查看实时进度", "ok");
+      try {
+        const result = await chrome.runtime.sendMessage({
+          action: "start",
+          selectedSiteIds,
+          config: buildRuntimeConfig(),
+        });
+        if (!result?.ok) throw new Error(result?.error || "启动失败");
+        tasks = result.tasks || [];
+        stats = result.stats || {
+          done: 0,
+          skip: 0,
+          err: 0,
+          total: result.taskWindow?.total || tasks.length,
+          dofollow: 0,
+          nofollow: 0,
+        };
+        updateStats();
+        renderTasks();
+        log(`任务已发送到后台：${result.groupTotal || 0} 个外链站、${stats.total} 个组合`, "ok");
+      } catch (err) {
+        setRunning(false);
+        log(`启动失败: ${err.message}`, "err");
+        alert(err.message);
+      } finally {
+        btnStart.disabled = false;
+      }
     });
 
   bindClick("btnContinue", async () => {

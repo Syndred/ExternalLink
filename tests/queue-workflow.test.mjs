@@ -27,6 +27,33 @@ function profile(id) {
 const Q = loadQueueModule();
 
 {
+  let configBuilds = 0;
+  const entries = Array.from({ length: 250 }, (_, index) => ({
+    link: `https://directory-${index}.example/submit`,
+    projects: [],
+  }));
+  const groups = Q.buildDestinationGroups({
+    tableData: { projects: {}, entries },
+    siteProfiles: { A: profile("A"), B: profile("B") },
+    selectedProfileIds: ["A", "B"],
+    submissionRecords: {},
+    annotations: {},
+    buildAgentConfigFromProfile: (item) => {
+      configBuilds += 1;
+      return { projectKey: item.id, projectFields: { Long: "x".repeat(8000) } };
+    },
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+  assert.equal(groups.length, 250);
+  assert.equal(configBuilds, 2, "large batches must build heavy Profile config once per Profile");
+  assert.equal(
+    groups[0].jobs[0].config,
+    groups[249].jobs[0].config,
+    "jobs for one Profile should share the immutable run config instead of cloning it per destination",
+  );
+}
+
+{
   const record = Q.buildSuccessRecord({
     destinationUrl: "https://d.example/submit",
     profileId: "C",

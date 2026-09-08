@@ -154,7 +154,7 @@ assert.match(
 
 assert.match(
   background,
-  /case\s+["']start["']:[\s\S]{0,160}?startBatchRun\(msg\)/,
+  /case\s+["']start["']:[\s\S]{0,160}?startBatchRunOnce\(msg\)/,
   "the start message should rebuild a fresh batch run",
 );
 assert.match(
@@ -162,6 +162,43 @@ assert.match(
   /async function\s+startBatchRun\(msg\)[\s\S]{0,160}?closeAllTabs\(\)/,
   "a fresh batch run should clear existing active tabs before replacing task state",
 );
+assert.match(
+  background,
+  /profileConfigs:\s*state\.profileConfigs[\s\S]{0,180}?destinations:\s*serializeBatchDestinations[\s\S]{0,180}?tasks:\s*serializeBatchTasks/,
+  "batch persistence should store one Profile snapshot plus compact destination/task rows",
+);
+assert.match(
+  background,
+  /const\s+BATCH_TASK_WINDOW_SIZE\s*=\s*\d+[\s\S]*function\s+buildTaskWindow/,
+  "large batches should send a bounded task window to the side panel",
+);
+assert.match(
+  background,
+  /function\s+scheduleQueueProcessing[\s\S]*if\s*\(processQueuePromise\)/,
+  "only one queue-processing loop may run at a time",
+);
+assert.match(
+  background,
+  /BATCH_LOG_STORAGE_KEY\s*=\s*["']batchRunLog["'][\s\S]*function\s+persistBatchLogEntry/,
+  "batch diagnostics should persist in extension storage instead of living only in the open panel",
+);
+assert.match(
+  background,
+  /case\s+["']log["']:[\s\S]{0,500}?sender\.tab\?\.id[\s\S]{0,500}?event:\s*msg\.event\s*\|\|\s*["']content_step["']/,
+  "content-script progress logs should be accepted only from a real task tab and persisted with context",
+);
+assert.doesNotMatch(
+  background.match(/function\s+broadcastTaskUpdate[\s\S]*?\n}\n\nfunction\s+broadcastStatus/)?.[0] || "",
+  /activeBatchRun/,
+  "each task update must not rewrite the full batch checkpoint",
+);
+for (const action of ["executeSubmit", "finalizeSubmit", "trySubmit"]) {
+  assert.match(
+    content,
+    new RegExp(`msg\\.action === ["']${action}["'][\\s\\S]{0,220}?\\.catch\\(\\(err\\) => sendResponse`),
+    `${action} should return async failures instead of leaving an unhandled rejection`,
+  );
+}
 
 assert.match(
   background,

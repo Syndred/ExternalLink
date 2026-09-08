@@ -28,6 +28,7 @@ let state = {
   concurrency: 1,
   paused: false,
   stopped: false,
+  lifecycleVersion: 0,
 };
 
 const PAGE_LOAD_TIMEOUT_MS = 45000;
@@ -68,6 +69,7 @@ let cloudSyncTimer = null;
 let cloudSyncFlushPromise = null;
 let cloudSyncMute = false;
 const cloudSyncPendingKeys = new Set();
+const runActiveBatchWrite = self.ExtLinkBatchControls.createSerialExecutor();
 const cloudSyncIgnoredValues = new Map();
 let cloudSyncRetryAttempt = 0;
 let batchLogWritePromise = Promise.resolve();
@@ -369,14 +371,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "stop":
-      state.stopped = true;
-      state.paused = false;
-      state.running = false;
-      closeAutomatedTabs();
-      markActiveBatchStopped();
-      broadcastStatus();
-      log("任务已停止", "warn", { event: "run_stop_requested" });
-      break;
+      stopBatchRun()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "pause":
       pauseBatchRun()
         .then(sendResponse)
@@ -958,6 +956,19 @@ async function pauseBatchRun() {
   return { ok: true, status: "paused" };
 }
 
+async function stopBatchRun() {
+  await initializationPromise;
+  state.lifecycleVersion += 1;
+  state.stopped = true;
+  state.paused = false;
+  state.running = false;
+  closeAutomatedTabs();
+  await markActiveBatchStopped();
+  broadcastStatus();
+  log("任务已停止", "warn", { event: "run_stop_requested" });
+  return { ok: true, status: "stopped" };
+}
+
 async function resumeBatchRun() {
   await initializationPromise;
   if (!state.paused || state.stopped) {
@@ -996,21 +1007,43 @@ async function resumeBatchRun() {
 }
 
 async function persistActiveBatchStatus(status, extra = {}) {
-  const stored = await chrome.storage.local.get(["activeBatchRun"]);
-  if (!stored.activeBatchRun) return;
-  await chrome.storage.local.set({
-    activeBatchRun: {
-      ...stored.activeBatchRun,
-      ...extra,
-      status,
-      tasks: serializeBatchTasks(state.tasks),
-      parkedTaskIds: [...state.parkedTaskIds],
-    },
+  return updateActiveBatchRun((activeBatchRun) => ({
+    ...activeBatchRun,
+    ...extra,
+    status,
+    tasks: serializeBatchTasks(state.tasks),
+    parkedTaskIds: [...state.parkedTaskIds],
+  }));
+}
+
+function updateActiveBatchRun(updater) {
+  return runActiveBatchWrite(async () => {
+    const stored = await chrome.storage.local.get(["activeBatchRun"]);
+    if (!stored.activeBatchRun) return null;
+    const current = stored.activeBatchRun;
+    const next = updater(current);
+    if (!next) return null;
+    if (current.status === "stopped" && next.status !== "stopped") {
+      next.status = "stopped";
+      next.stoppedAt = current.stoppedAt || next.stoppedAt || new Date().toISOString();
+    }
+    await chrome.storage.local.set({ activeBatchRun: next });
+    return next;
+  });
+}
+
+function replaceActiveBatchRun(activeBatchRun) {
+  return runActiveBatchWrite(async () => {
+    await chrome.storage.local.set({ activeBatchRun });
+    return activeBatchRun;
   });
 }
 
 async function startBatchRun(msg) {
   await initializationPromise;
+  const lifecycleVersion = state.lifecycleVersion + 1;
+  state.lifecycleVersion = lifecycleVersion;
+  state.stopped = false;
   closeAllTabs();
   const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
     ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
@@ -1027,6 +1060,7 @@ async function startBatchRun(msg) {
   });
   await chrome.storage.local.set({ selectedSiteIds });
   const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
+  assertBatchStartCurrent(lifecycleVersion);
   if (!pending.tasks.length) {
     state.running = false;
     state.tasks = [];
@@ -1049,6 +1083,7 @@ async function startBatchRun(msg) {
     "autoSubmitStandardWpComments",
     "autoSubmitDirectoryListings",
   ]);
+  assertBatchStartCurrent(lifecycleVersion);
   state.config = {
     ...(msg.config || {}),
     fillOnly: msg.config?.fillOnly === true,
@@ -1066,8 +1101,7 @@ async function startBatchRun(msg) {
   state.paused = false;
   state.stopped = false;
 
-  await chrome.storage.local.set({
-    activeBatchRun: {
+  await replaceActiveBatchRun({
       version: 3,
       runId: state.runId,
       status: "running",
@@ -1078,8 +1112,8 @@ async function startBatchRun(msg) {
       parkedTaskIds: [],
       startedAt: new Date().toISOString(),
       tasks: serializeBatchTasks(state.tasks),
-    },
   });
+  assertBatchStartCurrent(lifecycleVersion);
   broadcastStatus();
   log(
     `开始处理 ${state.groups.length} 个外链站、${state.tasks.length} 个项目组合`,
@@ -1102,22 +1136,21 @@ async function startBatchRun(msg) {
   };
 }
 
+function assertBatchStartCurrent(lifecycleVersion) {
+  if (state.lifecycleVersion === lifecycleVersion && !state.stopped) return;
+  const err = new Error("批次启动期间已停止，已取消本次启动");
+  err.staleRun = true;
+  throw err;
+}
+
 function markActiveBatchStopped() {
-  chrome.storage.local
-    .get(["activeBatchRun"])
-    .then((stored) => {
-      if (!stored.activeBatchRun) return;
-      return chrome.storage.local.set({
-        activeBatchRun: {
-          ...stored.activeBatchRun,
-          status: "stopped",
-          stoppedAt: new Date().toISOString(),
-          tasks: serializeBatchTasks(state.tasks),
-          parkedTaskIds: [...state.parkedTaskIds],
-        },
-      });
-    })
-    .catch(() => {});
+  return updateActiveBatchRun((activeBatchRun) => ({
+    ...activeBatchRun,
+    status: "stopped",
+    stoppedAt: new Date().toISOString(),
+    tasks: serializeBatchTasks(state.tasks),
+    parkedTaskIds: [...state.parkedTaskIds],
+  }));
 }
 
 async function getRuntimeState() {
@@ -3468,20 +3501,15 @@ async function refreshBatchRunStatus() {
   }
 
   state.running = false;
-  const stored = await chrome.storage.local.get(["activeBatchRun"]);
   const finalStatus = state.stopped ? "stopped" : hasParkedTasks ? "waiting_manual" : "finished";
-  if (stored.activeBatchRun) {
-    await chrome.storage.local.set({
-      activeBatchRun: {
-        ...stored.activeBatchRun,
-        status: finalStatus,
-        ...(finalStatus === "finished" ? { finishedAt: new Date().toISOString() } : {}),
-        ...(finalStatus === "stopped" ? { stoppedAt: new Date().toISOString() } : {}),
-        tasks: serializeBatchTasks(state.tasks),
-        parkedTaskIds: [...state.parkedTaskIds],
-      },
-    });
-  }
+  await updateActiveBatchRun((activeBatchRun) => ({
+    ...activeBatchRun,
+    status: finalStatus,
+    ...(finalStatus === "finished" ? { finishedAt: new Date().toISOString() } : {}),
+    ...(finalStatus === "stopped" ? { stoppedAt: new Date().toISOString() } : {}),
+    tasks: serializeBatchTasks(state.tasks),
+    parkedTaskIds: [...state.parkedTaskIds],
+  }));
   broadcastStatus();
   if (finalStatus === "stopped") log("任务已停止", "warn", { event: "run_stopped" });
   else if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
@@ -3554,8 +3582,14 @@ async function processOne(group) {
 async function handleContentReady(tab, data = {}) {
   const entry = state.activeTabs.get(tab.id);
   if (!entry) return;
+  if (state.stopped) return;
   if (entry.agentDone) return;
   entry.lastContentReady = data;
+  if (entry.agentRunning) {
+    entry.pendingRejudge = true;
+    entry.contentReadyWhileRunning = true;
+    return;
+  }
   if (entry.readyCheckPromise) return;
 
   entry.readyCheckPromise = waitForTabContentReady(tab.id, entry, data)
@@ -3596,7 +3630,7 @@ async function waitForTabContentReady(tabId, entry, initialData = {}) {
   let lastStatus = "unknown";
   let lastProbeError = "";
   while (Date.now() < deadline) {
-    if (!state.activeTabs.has(tabId)) {
+    if (state.stopped || !state.activeTabs.has(tabId)) {
       const err = new Error("tracked task tab is no longer available");
       err.staleRun = true;
       throw err;
@@ -3637,6 +3671,13 @@ async function waitForTabContentReady(tabId, entry, initialData = {}) {
       url: tab.url || "",
       title,
       textLength: text.length,
+      textHead: text.slice(0, 160),
+      textTail: text.slice(-160),
+      contentShape: self.ExtLinkBatchControls.contentFingerprint({
+        forms: snapshot?.forms || [],
+        fields: snapshot?.fields || [],
+        buttons: snapshot?.buttons || [],
+      }),
       platform: detection?.platform || initialData.mode || "unknown",
       fieldCount: Number(detection?.formFieldCount || snapshot?.meta?.fieldCount || 0),
       buttonCount: Number(snapshot?.meta?.buttonCount || 0),
@@ -3689,12 +3730,7 @@ async function waitForTabContentReady(tabId, entry, initialData = {}) {
 
 async function handleStableContentReady(tab, data) {
   const entry = state.activeTabs.get(tab.id);
-  if (!entry || entry.agentDone) return;
-  if (entry.agentRunning) {
-    entry.pendingRejudge = true;
-    entry.contentReadyWhileRunning = true;
-    return;
-  }
+  if (!entry || state.stopped || entry.agentDone) return;
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (!task) return;
 
@@ -3788,6 +3824,7 @@ function handleTimeout(tabId) {
 
 // ─── Manual continue: user clicked "继续填表" from banner ───
 async function handleManualSubmit(msg) {
+  if (state.stopped) return;
   const { taskIndex, platformType } = msg;
   const task = state.tasks.find((t) => t.index === taskIndex);
   if (!task) return;
@@ -3809,6 +3846,14 @@ async function handleManualSubmit(msg) {
 
   log(`${task.domain}: 用户确认继续，AI 接管后续步骤`, "");
   const entry = state.activeTabs.get(tabId);
+  if (isCustomLaunchTask(task)) {
+    const reason = "Product Hunt 多步骤发布需人工完成";
+    task.status = "needs_manual";
+    task.skipReason = reason;
+    parkTaskEntry(tabId, entry, reason);
+    broadcastTaskUpdate(task);
+    return;
+  }
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
@@ -3834,6 +3879,7 @@ async function handleManualSubmit(msg) {
 
 // ─── Manual skip: user clicked "跳过" from banner ───
 function handleManualSkip(msg) {
+  if (state.stopped) return;
   const { taskIndex } = msg;
   const task = state.tasks.find((t) => t.index === taskIndex);
   if (!task) return;
@@ -3882,6 +3928,7 @@ async function confirmSubmissionSuccess(msg) {
   task.successEvidence = msg.evidence || "user confirmed submission success";
   await recordSubmittedProject(task);
   broadcastTaskUpdate(task);
+  if (task.id && state.parkedTaskIds.delete(task.id)) await persistParkedTaskIds();
 
   for (const [tabId, entry] of state.activeTabs) {
     if (entry.taskIndex !== task.index) continue;
@@ -3893,6 +3940,7 @@ async function confirmSubmissionSuccess(msg) {
 }
 
 async function resumeAfterCaptcha(tabId, data) {
+  if (state.stopped) return;
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
@@ -3947,7 +3995,7 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       navCount += 1;
       log(`${task.domain}: 打开提交入口 ${result.label || result.url}`, "");
       await navigateTaskTab(tabId, entry, result.url);
-      await sleep(4500);
+      await waitForTabContentReady(tabId, entry, { mode: "unknown" });
       assertRunCurrent(tabId, entry, runId);
       result = await sendExecuteSubmit(
         tabId,
@@ -4304,6 +4352,8 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       assertRunCurrent(tabId, entry, runId);
       await sleep(AGENT_ACTION_SETTLE_MS);
       assertRunCurrent(tabId, entry, runId);
+      await waitForTabContentReady(tabId, entry, entry.lastContentReady || { mode: "unknown" });
+      assertRunCurrent(tabId, entry, runId);
 
       try {
         snapshot = await getTabSnapshot(tabId);
@@ -4482,37 +4532,21 @@ function parkTaskEntry(tabId, entry, reason) {
   const task = state.tasks.find((item) => item.index === entry.taskIndex);
   if (task?.id) state.parkedTaskIds.add(task.id);
   if (tabId) {
-    chrome.storage.local
-      .get(["activeBatchRun"])
-      .then((stored) => {
-        if (!stored.activeBatchRun) return;
-        return chrome.storage.local.set({
-          activeBatchRun: {
-            ...stored.activeBatchRun,
-            status: state.paused && !state.stopped ? "paused" : "waiting_manual",
-            tasks: serializeBatchTasks(state.tasks),
-            parkedTaskIds: [...state.parkedTaskIds],
-          },
-        });
-      })
-      .catch(() => {});
+    updateActiveBatchRun((activeBatchRun) => ({
+      ...activeBatchRun,
+      status: state.paused && !state.stopped ? "paused" : "waiting_manual",
+      tasks: serializeBatchTasks(state.tasks),
+      parkedTaskIds: [...state.parkedTaskIds],
+    })).catch(() => {});
   }
 }
 
 function persistParkedTaskIds() {
-  chrome.storage.local
-    .get(["activeBatchRun"])
-    .then((stored) => {
-      if (!stored.activeBatchRun) return;
-      return chrome.storage.local.set({
-        activeBatchRun: {
-          ...stored.activeBatchRun,
-          parkedTaskIds: [...state.parkedTaskIds],
-          tasks: serializeBatchTasks(state.tasks),
-        },
-      });
-    })
-    .catch(() => {});
+  return updateActiveBatchRun((activeBatchRun) => ({
+    ...activeBatchRun,
+    parkedTaskIds: [...state.parkedTaskIds],
+    tasks: serializeBatchTasks(state.tasks),
+  })).catch(() => null);
 }
 
 async function advanceDestinationGroup(tabId, completedTask) {
@@ -4629,15 +4663,18 @@ function cancelRemainingDestinationTasks(task, status, reason) {
 }
 
 function markTaskNeedsManual(tabId, task, entry, reason, preferredStatus = "") {
-  if (state.config && state.config.autoSkipCaptcha) {
-    skipTaskWithReason(tabId, task, entry, reason || "需要人工处理，已配置为自动跳过");
-    return;
-  }
-
   const url = task.url?.startsWith("http") ? task.url : `https://${task.url}`;
   const fallback =
     preferredStatus ||
-    (/captcha|验证码/i.test(String(reason || "")) ? "needs_captcha" : "needs_login");
+    (/captcha|验证码/i.test(String(reason || ""))
+      ? "needs_captcha"
+      : /product hunt|多步骤发布需人工|custom launch/i.test(String(reason || ""))
+        ? "needs_manual"
+        : "needs_login");
+  if (self.ExtLinkBatchControls.shouldAutoSkipGate(state.config?.autoSkipCaptcha, fallback)) {
+    skipTaskWithReason(tabId, task, entry, reason || "验证码任务已配置为自动跳过");
+    return;
+  }
 
   autoClassifySite(url, reason || "需要人工处理", fallback)
     .then((classified) => {
@@ -4773,12 +4810,16 @@ function pauseEntryForBatch(tabId, task, entry) {
 }
 
 function resumePendingRejudgeAfterRun(tabId, task, entry) {
+  if (state.stopped) return;
   if (!entry.rejudgeAfterRun || !entry.pendingRejudge || entry.agentDone || entry.agentPaused)
     return;
   if (!state.activeTabs.has(tabId)) return;
   entry.rejudgeAfterRun = false;
   entry.contentReadyWhileRunning = false;
-  runAgentLoop(tabId, task, entry, { pendingRejudge: true }).catch((err) =>
+  handleContentReady(
+    { id: tabId, url: task.url },
+    entry.lastContentReady || { mode: "unknown" },
+  ).catch((err) =>
     log(`${task.domain}: 重新判断失败 - ${err.message}`, "err", {
       event: "rejudge_failed",
       taskIndex: task.index,
@@ -4807,7 +4848,7 @@ function bumpEntryRunId(entry) {
 }
 
 function assertRunCurrent(tabId, entry, runId) {
-  if (!state.activeTabs.has(tabId) || entry.runId !== runId) {
+  if (state.stopped || !state.activeTabs.has(tabId) || entry.runId !== runId) {
     const err = new Error("stale agent run");
     err.staleRun = true;
     throw err;
@@ -4888,23 +4929,35 @@ function closeAllTabs() {
 }
 
 function closeAutomatedTabs() {
-  const tabIds = self.ExtLinkBatchControls.automatedTabIds(
-    state.activeTabs,
-    state.parkedTaskIds,
-  );
-  for (const tabId of tabIds) {
-    const entry = state.activeTabs.get(tabId);
-    if (!entry) continue;
+  for (const [tabId, entry] of [...state.activeTabs.entries()]) {
     const task = state.tasks.find((item) => item.index === entry.taskIndex);
-    const humanWaitingStatuses = new Set([
-      "needs_login",
-      "needs_captcha",
-      "needs_otp",
-      "needs_manual",
-      "captcha",
-    ]);
-    if (task && (humanWaitingStatuses.has(task.status) || isCustomLaunchTask(task))) {
+    const customLaunch = isCustomLaunchTask(task);
+    const disposition = self.ExtLinkBatchControls.stopTabDisposition({
+      entry,
+      parkedTaskIds: state.parkedTaskIds,
+      taskStatus: task?.status,
+      customLaunch,
+    });
+    if (disposition === "preserve_manual") {
+      bumpEntryRunId(entry);
       clearEntryTimeout(entry);
+      clearManualWaitTimer(entry);
+      entry.agentDone = true;
+      entry.agentPaused = true;
+      entry.pendingRejudge = false;
+      entry.slotActive = false;
+      if (task) {
+        const reason =
+          task.skipReason ||
+          (customLaunch ? "Product Hunt 多步骤发布需人工完成" : "任务已停止，保留页签等待人工处理");
+        if (!["captcha", "needs_manual"].includes(task.status)) {
+          task.status = self.ExtLinkBatchControls.parkedTaskStatus(task.status);
+        }
+        task.skipReason = reason;
+        entry.parkedReason = reason;
+        if (task.id) state.parkedTaskIds.add(task.id);
+        broadcastTaskUpdate(task);
+      }
       continue;
     }
     if (task && ["pending", "running", "filled"].includes(task.status)) {

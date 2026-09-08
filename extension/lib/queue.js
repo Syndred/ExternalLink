@@ -487,7 +487,7 @@
   /** Dead-end statuses: permanently excluded from pending queue (until revoked). */
   const DEAD_END_STATUSES = new Set(["deleted", "skip", "broken", "paid"]);
   /** Gate statuses: keep tab for human, do not permanently exclude from queue. */
-  const GATE_STATUSES = new Set(["needs_login", "needs_captcha", "needs_manual"]);
+  const GATE_STATUSES = new Set(["needs_login", "needs_captcha", "needs_otp", "needs_manual"]);
 
   function classifyStatusFromReason(reason, fallback = "broken") {
     const text = String(reason || "").toLowerCase();
@@ -504,6 +504,13 @@
       )
     ) {
       return "needs_captcha";
+    }
+    if (
+      /\botp\b|one[-\s]*time (?:password|code)|email verification|required verification code|邮箱验证|邮件验证|一次性密码/.test(
+        text,
+      )
+    ) {
+      return "needs_otp";
     }
     if (
       /需登录|登录|log\s*in|sign\s*in|signin|authentication required|account required|login required/.test(
@@ -589,7 +596,9 @@
   function filterSubmissionTasks(tasks, options = {}) {
     const deletedKeys = new Set(options.deletedKeys || []);
     const annotations = options.annotations || {};
-    const skipStatuses = new Set(options.excludeStatuses || [...DEAD_END_STATUSES]);
+    const skipStatuses = new Set(
+      options.excludeStatuses || [...DEAD_END_STATUSES, ...GATE_STATUSES],
+    );
     const activeProject = options.activeProjectKey || "";
     const isBlacklisted = buildBlacklistMatcher(options.blacklist);
     const excluded = [];

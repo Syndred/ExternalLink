@@ -2145,9 +2145,14 @@
   });
 
   $("btnStop")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ action: "stop" });
-    setBatchStatus("stopped");
-    syncTasksFromBackground();
+    const result = await chrome.runtime.sendMessage({ action: "stop" });
+    if (!result?.ok) {
+      showToast(result?.error || "自动任务已停止，但批次状态保存失败", true);
+      await syncTasksFromBackground();
+      return;
+    }
+    setBatchStatus(result.status || "stopped");
+    await syncTasksFromBackground();
     log("已停止", "warn");
   });
 
@@ -2208,10 +2213,15 @@
       const resume = document.createElement("button");
       resume.type = "button";
       resume.className = "btn btn-ghost";
-      resume.textContent = task.tabId ? "继续处理" : "页签已关闭";
+      resume.textContent = task.tabId
+        ? batchStatus === "stopped"
+          ? "打开页签"
+          : "继续处理"
+        : "页签已关闭";
       resume.disabled = !task.tabId;
       resume.addEventListener("click", async () => {
         if (task.tabId) await chrome.tabs.update(task.tabId, { active: true }).catch(() => {});
+        if (batchStatus === "stopped") return;
         await chrome.runtime.sendMessage({
           action: "manualContinue",
           taskIndex: task.index,

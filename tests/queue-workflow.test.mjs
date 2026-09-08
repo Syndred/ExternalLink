@@ -210,6 +210,13 @@ const Q = loadQueueModule();
 }
 
 assert.equal(Q.isGateStatus("needs_manual"), true);
+assert.equal(Q.isGateStatus("needs_otp"), true);
+assert.equal(Q.classifyStatusFromReason("Email OTP verification required", "broken"), "needs_otp");
+const otpFiltered = Q.filterSubmissionTasks(
+  [{ key: "otp.example", domain: "otp.example", status: "pending" }],
+  { annotations: { "otp.example": { status: "needs_otp" } } },
+);
+assert.equal(otpFiltered.length, 0, "an OTP-gated destination must not re-enter a fresh automatic queue");
 
 // ─── Domain blacklist normalization and matching ───
 {

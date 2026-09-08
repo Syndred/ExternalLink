@@ -169,7 +169,7 @@ assert.match(
 );
 assert.match(
   background,
-  /async function\s+startBatchRun\(msg\)[\s\S]{0,160}?closeAllTabs\(\)/,
+  /async function\s+startBatchRun\(msg\)[\s\S]{0,320}?closeAllTabs\(\)/,
   "a fresh batch run should clear existing active tabs before replacing task state",
 );
 assert.match(
@@ -581,8 +581,8 @@ assert.match(queue, /classifyStatusFromReason/, "queue should classify failure r
 assert.match(queue, /DEAD_END_STATUSES/, "queue should define dead-end statuses including paid");
 assert.match(
   queue,
-  /excludeStatuses \|\| \[\.\.\.DEAD_END_STATUSES\]/,
-  "filterSubmissionTasks should exclude paid by default",
+  /excludeStatuses \|\| \[\.\.\.DEAD_END_STATUSES, \.\.\.GATE_STATUSES\]/,
+  "filterSubmissionTasks should exclude paid and parked human gates by default",
 );
 assert.match(background, /lines\.unshift/, "new URL library entries should prepend");
 assert.match(

@@ -598,7 +598,6 @@
       cfgCommentTemplate: $("cfgCommentTemplate").value,
       cfgConcurrency: $("cfgConcurrency").value,
       cfgPingIndex: $("cfgPingIndex").checked,
-      autoOpenSidePanel: $("autoOpenSidePanel").checked,
       autoFillOnVisit: $("autoFillOnVisit").checked,
       autoSubmitDirectoryListings: $("autoSubmitDirectoryListings")?.checked !== false,
       autoSubmitStandardWpComments: $("autoSubmitStandardWpComments")?.checked === true,
@@ -1611,7 +1610,6 @@
       "cfgCommentTemplate",
       "cfgConcurrency",
       "cfgPingIndex",
-      "autoOpenSidePanel",
       "autoFillOnVisit",
       "autoSubmitDirectoryListings",
       "autoSubmitStandardWpComments",
@@ -1627,7 +1625,6 @@
       if (items.cfgCommentTemplate) $("cfgCommentTemplate").value = items.cfgCommentTemplate;
       if (items.cfgConcurrency) $("cfgConcurrency").value = items.cfgConcurrency;
       $("cfgPingIndex").checked = items.cfgPingIndex !== false;
-      $("autoOpenSidePanel").checked = items.autoOpenSidePanel === true;
       $("autoFillOnVisit").checked = items.autoFillOnVisit !== false;
       if ($("autoSubmitDirectoryListings")) {
         $("autoSubmitDirectoryListings").checked = items.autoSubmitDirectoryListings !== false;

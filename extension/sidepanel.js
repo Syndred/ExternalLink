@@ -83,6 +83,7 @@
   let running = false;
   let stats = { done: 0, skip: 0, err: 0, total: 0 };
   const logLines = [];
+  let batchLogStatus = "idle";
   let submissionTasks = [];
   let submissionIndex = 0;
   let submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
@@ -1896,8 +1897,12 @@
       cls: entry.cls || (entry.level === "error" ? "err" : entry.level === "warn" ? "warn" : entry.level === "success" ? "ok" : ""),
     });
     if (logLines.length > 400) logLines.shift();
+    if (["run_stopped", "run_stop_requested"].includes(entry.event)) batchLogStatus = "stopped";
+    else if (entry.event === "run_finished") batchLogStatus = "finished";
+    else if (entry.event === "queue_failed") batchLogStatus = "failed";
+    else if (entry.runId && batchLogStatus === "idle") batchLogStatus = "running";
     if (entry.runId && $("batchLogSummary")) {
-      $("batchLogSummary").textContent = `${entry.runId} · 运行中 · ${logLines.length} 条（最多保留 400 条）`;
+      $("batchLogSummary").textContent = `${entry.runId} · ${batchLogStatusLabel(batchLogStatus)} · ${logLines.length} 条（最多保留 400 条）`;
     }
     const el = $("log");
     if (el) {
@@ -1912,16 +1917,39 @@
     }
   }
 
-  function hydrateBatchLog(batchLog) {
+  function hydrateBatchLog(batchLog, explicitStatus = "") {
     if (!batchLog || !Array.isArray(batchLog.entries)) return;
+    batchLogStatus = explicitStatus || inferBatchLogStatus(batchLog.entries);
     logLines.length = 0;
     $("log")?.replaceChildren();
     for (const entry of batchLog.entries.slice(-400)) appendLogEntry(entry);
     const summary = $("batchLogSummary");
     if (summary) {
       const started = batchLog.startedAt ? new Date(batchLog.startedAt).toLocaleString() : "时间未知";
-      summary.textContent = `${batchLog.runId || "诊断日志"} · ${started} · ${batchLog.entries.length} 条（最多保留 400 条）`;
+      summary.textContent = `${batchLog.runId || "诊断日志"} · ${batchLogStatusLabel(batchLogStatus)} · ${started} · ${batchLog.entries.length} 条（最多保留 400 条）`;
     }
+  }
+
+  function inferBatchLogStatus(entries = []) {
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const event = entries[index]?.event;
+      if (["run_stopped", "run_stop_requested"].includes(event)) return "stopped";
+      if (event === "run_finished") return "finished";
+      if (event === "queue_failed") return "failed";
+      if (event === "run_started") return "running";
+    }
+    return entries.length ? "diagnostic" : "idle";
+  }
+
+  function batchLogStatusLabel(status) {
+    return {
+      running: "运行中",
+      stopped: "已停止",
+      finished: "已完成",
+      failed: "异常结束",
+      diagnostic: "诊断日志",
+      idle: "暂无运行",
+    }[status] || "诊断日志";
   }
 
   $("btnCopyBatchLog")?.addEventListener("click", async () => {
@@ -2160,7 +2188,7 @@
 
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.action === "batchLogReset") {
-      hydrateBatchLog({ runId: msg.runId, startedAt: msg.startedAt, entries: [] });
+      hydrateBatchLog({ runId: msg.runId, startedAt: msg.startedAt, entries: [] }, "running");
       return;
     }
     if (msg.action === "logPersistenceError") {
@@ -2221,7 +2249,9 @@
       }
       syncTasksFromBackground();
     }
-    if (msg.action === "log") appendLogEntry(msg.entry || { msg: msg.msg, cls: msg.cls });
+    // Content-script log messages reach every extension page. Only render the
+    // enriched background copy so each step appears once and includes context.
+    if (msg.action === "log" && msg.entry) appendLogEntry(msg.entry);
     if (msg.action === "status") setRunning(msg.running);
     if (msg.action === "progress") {
       stats = msg.stats;

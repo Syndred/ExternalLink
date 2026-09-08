@@ -93,11 +93,6 @@ chrome.runtime.onInstalled.addListener(() => {
   if (chrome.sidePanel?.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
   }
-  chrome.storage.local.get(["autoOpenSidePanel"], (items) => {
-    if (items.autoOpenSidePanel === undefined) {
-      chrome.storage.local.set({ autoOpenSidePanel: false });
-    }
-  });
   configureScheduledChecks().catch(() => {});
 });
 
@@ -125,18 +120,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === LINK_MONITOR_ALARM) {
     runLinkMonitor({ notify: true }).catch(() => {});
-  }
-});
-
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  try {
-    if (changeInfo.status !== "complete" || !tab.url?.startsWith("http")) return;
-    const { autoOpenSidePanel } = await chrome.storage.local.get("autoOpenSidePanel");
-    if (autoOpenSidePanel !== true) return;
-    await chrome.sidePanel.setOptions({ tabId, path: "sidepanel.html", enabled: true });
-    await chrome.sidePanel.open({ tabId });
-  } catch (err) {
-    log(`自动打开侧栏失败: ${err.message}`, "warn", { event: "sidepanel_open_failed" });
   }
 });
 
@@ -366,7 +349,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       state.parkedTaskIds.clear();
       markActiveBatchStopped();
       broadcastStatus();
-      log("任务已停止", "warn");
+      log("任务已停止", "warn", { event: "run_stop_requested" });
       break;
     case "contentReady":
       if (sender.tab) {

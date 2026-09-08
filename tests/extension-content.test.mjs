@@ -35,6 +35,16 @@ assert.match(
   /chrome\.tabs\.update\(tabId,\s*\{\s*url(?:,|:)/,
   "background.js should navigate tracked task tabs after content.js returns a navigation request",
 );
+assert.doesNotMatch(
+  background,
+  /sidePanel\.open\(/,
+  "the background must not call sidePanel.open outside a user gesture",
+);
+assert.doesNotMatch(
+  readFileSync(resolve(root, "extension/settings.html"), "utf8"),
+  /id=["']autoOpenSidePanel["']/,
+  "settings must not expose an automatic side-panel option Chrome cannot support",
+);
 
 assert.doesNotMatch(
   content,

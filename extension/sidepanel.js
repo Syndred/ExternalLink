@@ -72,6 +72,7 @@
   const $ = (id) => document.getElementById(id);
   const P = self.ExtLinkProfiles;
   const Q = self.ExtLinkQueue;
+  const Controls = self.ExtLinkBatchControls;
   const Sidepanel = self.ExtLinkSidepanel;
 
   let activeTabId = null;
@@ -81,6 +82,7 @@
   let tasks = [];
   let taskWindow = { start: 0, end: 0, total: 0, truncated: false };
   let running = false;
+  let batchStatus = "idle";
   let stats = { done: 0, skip: 0, err: 0, total: 0 };
   const logLines = [];
   let batchLogStatus = "idle";
@@ -159,7 +161,7 @@
         const activeRun = items.activeBatchRun;
         if (
           activeRun?.tasks?.length &&
-          ["running", "waiting_manual", "paused"].includes(activeRun.status)
+          ["running", "waiting_manual", "paused", "stopped"].includes(activeRun.status)
         ) {
           // Persisted v3 rows are compact tuples. Ask the background for the
           // current UI window instead of expanding the entire batch here.
@@ -167,9 +169,7 @@
           taskWindow = { start: 0, end: 0, total: activeRun.tasks.length, truncated: true };
           syncTasksFromBackground();
         }
-        if (activeRun?.status === "running") {
-          setRunning(true, false);
-        }
+        setBatchStatus(activeRun?.status || "idle", false);
         hydrateBatchLog(items.batchRunLog, batchRunStatusForLog(activeRun?.status));
         renderSiteSelect();
         renderBatchSiteChoices();
@@ -1996,6 +1996,9 @@
       skip: "⏭跳",
       err: "❌错",
       captcha: "🤖人工",
+      needs_login: "🔐人工",
+      needs_captcha: "🤖人工",
+      needs_otp: "🔑人工",
       needs_manual: "🤖人工",
       filled: "✏️已填",
     };
@@ -2025,7 +2028,10 @@
       notice.textContent = `为避免侧栏卡死，仅显示第 ${taskWindow.start + 1}–${taskWindow.end} 项；本批共 ${taskWindow.total} 项，列表会随当前进度滚动。`;
       el.append(notice);
     }
-    const waiting = tasks.some((t) => t.status === "captcha" || t.status === "needs_manual");
+    const waiting =
+      batchStatus !== "stopped" &&
+      (parkedTasks.length > 0 ||
+        tasks.some((t) => ["captcha", "needs_captcha", "needs_otp", "needs_manual"].includes(t.status)));
     if ($("btnContinue")) $("btnContinue").hidden = !waiting;
     renderRunContext();
   }
@@ -2040,11 +2046,20 @@
     );
   }
 
-  function setRunning(r, save = true) {
-    running = r;
-    if ($("btnStart")) $("btnStart").hidden = r;
-    if ($("btnStop")) $("btnStop").hidden = !r;
-    if (save) chrome.storage.local.set({ running: r });
+  function renderBatchControls() {
+    const visibility = Controls.controlVisibility(batchStatus);
+    running = batchStatus === "running";
+    if ($("btnStart")) $("btnStart").hidden = visibility.startHidden;
+    if ($("btnPause")) $("btnPause").hidden = visibility.pauseHidden;
+    if ($("btnResumeBatch")) $("btnResumeBatch").hidden = visibility.resumeHidden;
+    if ($("btnStop")) $("btnStop").hidden = visibility.stopHidden;
+  }
+
+  function setBatchStatus(status, save = true) {
+    const allowed = new Set(["idle", "running", "paused", "waiting_manual", "stopped", "finished"]);
+    batchStatus = allowed.has(status) ? status : "idle";
+    renderBatchControls();
+    if (save) chrome.storage.local.set({ running: batchStatus === "running" });
   }
 
   function buildAgentConfigFromProfile(profile) {
@@ -2080,6 +2095,9 @@
       tasks = state?.tasks || [];
       taskWindow = state?.taskWindow || { start: 0, end: tasks.length, total: tasks.length, truncated: false };
       parkedTasks = state?.parkedTasks || [];
+      if (state?.status) setBatchStatus(state.status);
+      else if (state?.running) setBatchStatus(state.paused ? "paused" : "running");
+      else if (state?.stopped) setBatchStatus("stopped");
       if (state.stats) stats = state.stats;
       updateStats();
       renderTasks();
@@ -2090,7 +2108,7 @@
   }
 
   $("btnStart")?.addEventListener("click", async () => {
-    if (running) return;
+    if (running || batchStatus === "paused") return;
     if (!selectedSiteIds.length) {
       showToast("请至少勾选一个自家网站", true);
       return;
@@ -2115,10 +2133,10 @@
       stats = result.stats || { done: 0, skip: 0, err: 0, total: taskWindow.total || tasks.length };
       updateStats();
       renderTasks();
-      setRunning(stats.total > 0);
+      setBatchStatus(stats.total > 0 ? "running" : "finished");
       updateBatchPreview();
     } catch (err) {
-      setRunning(false);
+      setBatchStatus("idle");
       showToast(err.message, true);
     } finally {
       startButton.disabled = false;
@@ -2128,8 +2146,33 @@
 
   $("btnStop")?.addEventListener("click", async () => {
     await chrome.runtime.sendMessage({ action: "stop" });
-    setRunning(false);
+    setBatchStatus("stopped");
+    syncTasksFromBackground();
     log("已停止", "warn");
+  });
+
+  $("btnPause")?.addEventListener("click", async () => {
+    if (batchStatus !== "running") return;
+    const result = await chrome.runtime.sendMessage({ action: "pause" });
+    if (!result?.ok) {
+      showToast(result?.error || "暂停失败", true);
+      return;
+    }
+    setBatchStatus("paused");
+    syncTasksFromBackground();
+    log("批量已暂停；队列和人工页签均保留", "warn");
+  });
+
+  $("btnResumeBatch")?.addEventListener("click", async () => {
+    if (batchStatus !== "paused") return;
+    const result = await chrome.runtime.sendMessage({ action: "resume" });
+    if (!result?.ok) {
+      showToast(result?.error || "继续失败", true);
+      return;
+    }
+    setBatchStatus("running");
+    syncTasksFromBackground();
+    log("批量已继续", "ok");
   });
 
   $("btnContinue")?.addEventListener("click", async () => {
@@ -2263,7 +2306,9 @@
     // Content-script log messages reach every extension page. Only render the
     // enriched background copy so each step appears once and includes context.
     if (msg.action === "log" && msg.entry) appendLogEntry(msg.entry);
-    if (msg.action === "status") setRunning(msg.running);
+    if (msg.action === "status") {
+      setBatchStatus(msg.status || (msg.running ? "running" : msg.stopped ? "stopped" : "idle"));
+    }
     if (msg.action === "progress") {
       stats = msg.stats;
       updateStats();

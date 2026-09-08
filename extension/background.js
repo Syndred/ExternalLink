@@ -5,6 +5,7 @@ importScripts(
   "lib/profiles.js",
   "lib/queue.js",
   "lib/playbooks.js",
+  "lib/batch-controls.js",
   "lib/scheduler.js",
   "lib/submission-timeline.js",
   "lib/backup.js",
@@ -25,10 +26,14 @@ let state = {
   profileConfigs: {},
   runId: "",
   concurrency: 1,
+  paused: false,
   stopped: false,
 };
 
 const PAGE_LOAD_TIMEOUT_MS = 45000;
+const CONTENT_READY_TIMEOUT_MS = 30000;
+const CONTENT_READY_POLL_MS = 500;
+const CONTENT_READY_STABLE_CHECKS = self.ExtLinkBatchControls.REQUIRED_STABLE_CHECKS || 2;
 const EXECUTION_TIMEOUT_MS = 180000;
 const POST_SUCCESS_CLOSE_DELAY_MS = 2000;
 const DEFAULT_MANUAL_WAIT_SEC = 120;
@@ -120,6 +125,27 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === LINK_MONITOR_ALARM) {
     runLinkMonitor({ notify: true }).catch(() => {});
+  }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  const entry = state.activeTabs.get(tabId);
+  if (!entry) return;
+  if (changeInfo.status === "loading") {
+    entry.tabLoadComplete = false;
+    entry.lastContentReady = null;
+    entry.readyProbe = null;
+    return;
+  }
+  if (changeInfo.status !== "complete") return;
+  entry.tabLoadComplete = true;
+  if (entry.lastContentReady) {
+    handleContentReady(tab || { id: tabId }, entry.lastContentReady).catch((err) =>
+      log(`页面就绪处理失败: ${err.message}`, "err", {
+        event: "content_ready_failed",
+        stack: err.stack,
+      }),
+    );
   }
 });
 
@@ -344,13 +370,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "stop":
       state.stopped = true;
+      state.paused = false;
       state.running = false;
-      closeAllTabs();
-      state.parkedTaskIds.clear();
+      closeAutomatedTabs();
       markActiveBatchStopped();
       broadcastStatus();
       log("任务已停止", "warn", { event: "run_stop_requested" });
       break;
+    case "pause":
+      pauseBatchRun()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "resume":
+      resumeBatchRun()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
     case "contentReady":
       if (sender.tab) {
         handleContentReady(sender.tab, msg).catch((err) =>
@@ -906,6 +942,73 @@ function startBatchRunOnce(msg) {
   return startBatchPromise;
 }
 
+async function pauseBatchRun() {
+  await initializationPromise;
+  if (!state.running || state.stopped) {
+    return { ok: false, error: "当前没有可暂停的批量任务" };
+  }
+  if (state.paused) return { ok: true, status: "paused" };
+  state.paused = true;
+  for (const entry of state.activeTabs.values()) {
+    if (entry.slotActive !== false) entry.pauseRequested = true;
+  }
+  await persistActiveBatchStatus("paused", { pausedAt: new Date().toISOString() });
+  broadcastStatus();
+  log("批量已暂停；队列和人工页签均保留", "warn", { event: "run_paused" });
+  return { ok: true, status: "paused" };
+}
+
+async function resumeBatchRun() {
+  await initializationPromise;
+  if (!state.paused || state.stopped) {
+    return { ok: false, error: "当前没有已暂停的批量任务" };
+  }
+  state.paused = false;
+  state.running = true;
+  for (const [tabId, entry] of state.activeTabs) {
+    if (!entry.batchPaused) continue;
+    entry.batchPaused = false;
+    entry.pauseRequested = false;
+    entry.agentPaused = false;
+    const task = state.tasks.find((item) => item.index === entry.taskIndex);
+    if (task) {
+      handleContentReady({ id: tabId, url: task.url }, entry.lastContentReady || { mode: "unknown" }).catch((err) =>
+        log(`${task.domain}: 暂停后恢复失败 - ${err.message}`, "err", {
+          event: "run_resume_failed",
+          taskIndex: task.index,
+          domain: task.domain,
+          profileId: task.profileId,
+          stack: err.stack,
+        }),
+      );
+    }
+  }
+  for (const [tabId, entry] of state.activeTabs) {
+    if (!entry.closeAfterResume) continue;
+    entry.closeAfterResume = false;
+    closeTab(tabId);
+  }
+  await persistActiveBatchStatus("running", { resumedAt: new Date().toISOString() });
+  broadcastStatus();
+  log("批量已继续", "ok", { event: "run_resumed" });
+  scheduleQueueProcessing();
+  return { ok: true, status: "running" };
+}
+
+async function persistActiveBatchStatus(status, extra = {}) {
+  const stored = await chrome.storage.local.get(["activeBatchRun"]);
+  if (!stored.activeBatchRun) return;
+  await chrome.storage.local.set({
+    activeBatchRun: {
+      ...stored.activeBatchRun,
+      ...extra,
+      status,
+      tasks: serializeBatchTasks(state.tasks),
+      parkedTaskIds: [...state.parkedTaskIds],
+    },
+  });
+}
+
 async function startBatchRun(msg) {
   await initializationPromise;
   closeAllTabs();
@@ -960,6 +1063,7 @@ async function startBatchRun(msg) {
   state.parkedTaskIds.clear();
   state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.running = true;
+  state.paused = false;
   state.stopped = false;
 
   await chrome.storage.local.set({
@@ -1009,7 +1113,7 @@ function markActiveBatchStopped() {
           status: "stopped",
           stoppedAt: new Date().toISOString(),
           tasks: serializeBatchTasks(state.tasks),
-          parkedTaskIds: [],
+          parkedTaskIds: [...state.parkedTaskIds],
         },
       });
     })
@@ -1025,10 +1129,17 @@ async function getRuntimeState() {
       activeByTaskId.set(task.id, { tabId, parkedReason: entry.parkedReason || "" });
     }
   }
+  const hasParkedTasks =
+    state.parkedTaskIds.size > 0 ||
+    [...state.activeTabs.values()].some((entry) => entry.slotActive === false);
+  const status = getBatchStatus(hasParkedTasks);
   const taskWindow = buildTaskWindow(state.tasks);
   return {
     ok: true,
     running: state.running,
+    paused: state.paused,
+    stopped: state.stopped,
+    status,
     tasks: taskWindow.tasks,
     taskWindow: taskWindow.meta,
     groupTotal: state.groups.length,
@@ -1052,6 +1163,18 @@ async function getRuntimeState() {
   };
 }
 
+function getBatchStatus(hasParkedTasks = null) {
+  const parked =
+    hasParkedTasks === null
+      ? state.parkedTaskIds.size > 0 ||
+        [...state.activeTabs.values()].some((entry) => entry.slotActive === false)
+      : hasParkedTasks;
+  if (state.stopped) return "stopped";
+  if (state.paused) return "paused";
+  if (state.running) return "running";
+  return parked ? "waiting_manual" : "finished";
+}
+
 async function restoreActiveBatchRun() {
   const storage = await chrome.storage.local.get([
     "activeBatchRun",
@@ -1060,7 +1183,7 @@ async function restoreActiveBatchRun() {
     "deletedSubmissionKeys",
   ]);
   const batch = storage.activeBatchRun;
-  if (!batch || !["running", "waiting_manual", "paused"].includes(batch.status)) return;
+  if (!batch || !["running", "waiting_manual", "paused", "stopped"].includes(batch.status)) return;
   if (!Array.isArray(batch.tasks) || !batch.tasks.length) return;
 
   state.config = batch.config || {};
@@ -1096,7 +1219,8 @@ async function restoreActiveBatchRun() {
   });
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
   state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
-  state.stopped = false;
+  state.paused = batch.status === "paused";
+  state.stopped = batch.status === "stopped";
   state.parkedTaskIds = new Set(batch.parkedTaskIds || []);
 
   const tabs = await chrome.tabs.query({});
@@ -1120,6 +1244,7 @@ async function restoreActiveBatchRun() {
       timeoutId: null,
       runId: 0,
       slotActive: false,
+      taskId: task.id,
       agentPaused: true,
       parkedReason: task.skipReason || "恢复的待人工任务",
     });
@@ -1129,8 +1254,8 @@ async function restoreActiveBatchRun() {
     state.groups,
     state.parkedTaskIds,
   );
-  state.running = state.queue.length > 0;
-  if (state.running) {
+  state.running = !state.stopped && (state.paused || state.queue.length > 0);
+  if (state.running && !state.paused) {
     log("已恢复上次未完成批次", "warn", { event: "run_restored" });
     scheduleQueueProcessing();
   }
@@ -1666,6 +1791,17 @@ async function persistFillLearnings(tabId, profileId, config) {
 }
 
 async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, options = {}) {
+  const currentUrl = await getTabUrlSafe(tabId);
+  if (isCustomLaunchUrl(currentUrl)) {
+    const reason = "Product Hunt 多步骤发布需人工完成";
+    broadcastAutoFillUpdate({
+      tabId,
+      status: "manual",
+      message: reason,
+      keepTab: true,
+    });
+    return { needs_manual: true, reason, keepTab: true, advance: false };
+  }
   const mismatch = self.ExtLinkProfiles.fillIdentityMismatch(config, profile);
   if (mismatch) {
     broadcastAutoFillUpdate({
@@ -3274,8 +3410,12 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
 
 // ─── Queue Processing ───
 async function processQueue() {
-  while (state.running && state.queue.length > 0 && !state.stopped) {
-    while (countProcessingTabs() < state.concurrency && state.queue.length > 0) {
+  while (self.ExtLinkBatchControls.shouldProcessQueue(state) && state.queue.length > 0) {
+    while (
+      self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+      countProcessingTabs() < state.concurrency &&
+      state.queue.length > 0
+    ) {
       const group = state.queue.shift();
       await processOne(group);
     }
@@ -3297,7 +3437,10 @@ function scheduleQueueProcessing() {
     })
     .finally(() => {
       processQueuePromise = null;
-      if (state.running && state.queue.length > 0 && !state.stopped) {
+      if (
+        self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+        state.queue.length > 0
+      ) {
         scheduleQueueProcessing();
       }
     });
@@ -3312,7 +3455,14 @@ async function refreshBatchRunStatus() {
   const hasParkedTasks =
     state.parkedTaskIds.size > 0 ||
     [...state.activeTabs.values()].some((entry) => entry.slotActive === false);
-  if (hasProcessing || hasQueuedGroups) {
+  if (state.paused && !state.stopped) {
+    state.running = true;
+    await persistActiveBatchStatus("paused", { pausedAt: new Date().toISOString() });
+    broadcastStatus();
+    await flushBatchLogEntries();
+    return;
+  }
+  if (!state.stopped && (hasProcessing || hasQueuedGroups)) {
     state.running = true;
     return;
   }
@@ -3343,6 +3493,10 @@ async function processOne(group) {
   let task = null;
   const batchRunId = state.runId;
   try {
+    if (!self.ExtLinkBatchControls.shouldProcessQueue(state)) {
+      state.queue.unshift(group);
+      return;
+    }
     task = (group?.tasks || []).find((item) => item.status === "pending");
     if (!task) return;
     const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
@@ -3358,6 +3512,11 @@ async function processOne(group) {
 
     const tab = await chrome.tabs.create({ url, active: false });
     if (state.runId !== batchRunId || state.stopped || !state.running) {
+      if (state.runId === batchRunId && state.stopped && task) {
+        task.status = "pending";
+        task.skipReason = "停止后自动任务未开始执行";
+        broadcastTaskUpdate(task);
+      }
       await chrome.tabs.remove(tab.id).catch(() => {});
       log(`已关闭过期批次创建的页签: ${task.domain}`, "warn", {
         event: "stale_tab_closed",
@@ -3373,6 +3532,10 @@ async function processOne(group) {
       timeoutId: null,
       runId: 0,
       slotActive: true,
+      taskId: task.id,
+      tabLoadComplete: tab.status === "complete",
+      lastContentReady: null,
+      readyProbe: null,
     };
     state.activeTabs.set(tab.id, entry);
     resetEntryTimeout(entry, tab.id, PAGE_LOAD_TIMEOUT_MS);
@@ -3388,18 +3551,180 @@ async function processOne(group) {
 }
 
 // ─── Content Script Callbacks ───
-async function handleContentReady(tab, data) {
+async function handleContentReady(tab, data = {}) {
   const entry = state.activeTabs.get(tab.id);
   if (!entry) return;
   if (entry.agentDone) return;
+  entry.lastContentReady = data;
+  if (entry.readyCheckPromise) return;
+
+  entry.readyCheckPromise = waitForTabContentReady(tab.id, entry, data)
+    .then((readyData) => handleStableContentReady(tab, readyData))
+    .catch((err) => {
+      if (err?.batchPaused || err?.staleRun) return;
+      const task = state.tasks.find((item) => item.index === entry.taskIndex);
+      if (!task || !state.activeTabs.has(tab.id)) return;
+      if (err?.readinessTimeout) {
+        const reason = `页面加载/内容脚本未稳定，已等待 ${Math.round(
+          CONTENT_READY_TIMEOUT_MS / 1000,
+        )} 秒：${err.message}`;
+        log(`${task.domain}: ${reason}`, "warn", {
+          event: "content_ready_timeout",
+          taskIndex: task.index,
+          domain: task.domain,
+          profileId: task.profileId,
+        });
+        markTaskNeedsManual(tab.id, task, entry, reason, "needs_manual");
+        return;
+      }
+      log(`${task.domain}: 页面就绪探测失败 - ${err.message}`, "warn", {
+        event: "content_ready_failed",
+        taskIndex: task.index,
+        domain: task.domain,
+        profileId: task.profileId,
+      });
+    })
+    .finally(() => {
+      entry.readyCheckPromise = null;
+    });
+}
+
+async function waitForTabContentReady(tabId, entry, initialData = {}) {
+  const deadline = Date.now() + CONTENT_READY_TIMEOUT_MS;
+  let stableChecks = 0;
+  let previousSignature = "";
+  let lastStatus = "unknown";
+  let lastProbeError = "";
+  while (Date.now() < deadline) {
+    if (!state.activeTabs.has(tabId)) {
+      const err = new Error("tracked task tab is no longer available");
+      err.staleRun = true;
+      throw err;
+    }
+    if (state.paused && !state.stopped) {
+      entry.batchPaused = true;
+      entry.agentPaused = true;
+      return { ...initialData, paused: true };
+    }
+    const tab = await chrome.tabs.get(tabId).catch((err) => {
+      lastProbeError = err.message || String(err);
+      return null;
+    });
+    lastStatus = tab?.status || "unknown";
+    if (!tab || tab.status !== "complete") {
+      entry.tabLoadComplete = false;
+      await sleep(CONTENT_READY_POLL_MS);
+      continue;
+    }
+    entry.tabLoadComplete = true;
+
+    let detection;
+    let snapshot;
+    try {
+      detection = await sendTabMessage(tabId, { action: "detectPage" });
+      snapshot = await chrome.tabs.sendMessage(tabId, { action: "getPageSnapshot" });
+      lastProbeError = "";
+    } catch (err) {
+      lastProbeError = err.message || String(err);
+      await sleep(CONTENT_READY_POLL_MS);
+      continue;
+    }
+
+    const title = String(snapshot?.title || "").trim();
+    const text = String(snapshot?.text || "").replace(/\s+/g, " ").trim();
+    const contentReady = self.ExtLinkBatchControls.hasContentReadySignal({ snapshot, detection });
+    const signature = JSON.stringify({
+      url: tab.url || "",
+      title,
+      textLength: text.length,
+      platform: detection?.platform || initialData.mode || "unknown",
+      fieldCount: Number(detection?.formFieldCount || snapshot?.meta?.fieldCount || 0),
+      buttonCount: Number(snapshot?.meta?.buttonCount || 0),
+      operable: detection?.operable === true,
+    });
+    if (contentReady && signature === previousSignature) stableChecks += 1;
+    else if (contentReady) stableChecks = 1;
+    else stableChecks = 0;
+    previousSignature = signature;
+    entry.readyProbe = {
+      tabStatus: tab.status,
+      contentReady,
+      stableChecks,
+      title,
+      textLength: text.length,
+      platform: detection?.platform || initialData.mode || "unknown",
+      probedAt: new Date().toISOString(),
+    };
+
+    if (
+      self.ExtLinkBatchControls.isStableContentReady({
+        tabStatus: tab.status,
+        contentReady,
+        stableChecks,
+        requiredStableChecks: CONTENT_READY_STABLE_CHECKS,
+      })
+    ) {
+      return {
+        ...initialData,
+        mode: detection?.platform || initialData.mode || "unknown",
+        detection,
+        snapshot,
+        tabStatus: tab.status,
+        contentReady: true,
+        stableChecks,
+      };
+    }
+    await sleep(CONTENT_READY_POLL_MS);
+  }
+
+  const detail = [
+    `tabStatus=${lastStatus}`,
+    `stableChecks=${entry.readyProbe?.stableChecks || 0}/${CONTENT_READY_STABLE_CHECKS}`,
+    lastProbeError ? `probe=${lastProbeError}` : "probe=未完成",
+  ].join(", ");
+  const err = new Error(detail);
+  err.readinessTimeout = true;
+  throw err;
+}
+
+async function handleStableContentReady(tab, data) {
+  const entry = state.activeTabs.get(tab.id);
+  if (!entry || entry.agentDone) return;
   if (entry.agentRunning) {
     entry.pendingRejudge = true;
     entry.contentReadyWhileRunning = true;
     return;
   }
-  const shouldResumeRejudge = entry.pendingRejudge;
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (!task) return;
+
+  if (isCustomLaunchTask(task)) {
+    if (state.paused) {
+      entry.batchPaused = true;
+      entry.agentPaused = true;
+      entry.pauseRequested = false;
+      return;
+    }
+    if (!entry.customLaunchGateRequested) {
+      entry.customLaunchGateRequested = true;
+      markTaskNeedsManual(
+        tab.id,
+        task,
+        entry,
+        "Product Hunt 多步骤发布需人工完成",
+        "needs_manual",
+      );
+    }
+    return;
+  }
+  if (state.paused) {
+    entry.batchPaused = true;
+    entry.agentPaused = true;
+    entry.pauseRequested = false;
+    return;
+  }
+
+  const shouldResumeRejudge = entry.pendingRejudge;
   if (entry.agentPaused && !shouldResumeRejudge) {
     if (!looksReadyForManualResume(data)) return;
     log(`页面就绪: ${task.domain} ${data.mode}，自动继续半自动填表`, "");
@@ -3425,6 +3750,16 @@ async function handleContentReady(tab, data) {
   await runRuleBasedFill(tab.id, task, entry);
 }
 
+function isCustomLaunchTask(task) {
+  const url = task?.url || task?.destinationUrl || "";
+  const playbook = self.ExtLinkPlaybooks?.lookup?.(url);
+  return self.ExtLinkBatchControls.isCustomLaunchPlaybook(playbook);
+}
+
+function isCustomLaunchUrl(url) {
+  return isCustomLaunchTask({ url });
+}
+
 function looksReadyForManualResume(data) {
   const mode = data && typeof data.mode === "string" ? data.mode : "";
   return !!mode && mode !== "unknown";
@@ -3433,6 +3768,13 @@ function looksReadyForManualResume(data) {
 function handleTimeout(tabId) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
+  if (state.paused && !state.stopped) {
+    entry.batchPaused = true;
+    entry.agentPaused = true;
+    clearEntryTimeout(entry);
+    log("批量已暂停，暂不判定当前页签超时", "warn", { event: "task_timeout_deferred" });
+    return;
+  }
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (task) {
     bumpEntryRunId(entry);
@@ -3722,6 +4064,10 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
     markTaskFilled(tabId, task, entry, "表单已填写，请检查后提交");
   } catch (err) {
     if (err && err.staleRun) return;
+    if (err && err.batchPaused) {
+      pauseEntryForBatch(tabId, task, entry);
+      return;
+    }
     task.status = "err";
     task.skipReason = err.message;
     parkTaskEntry(tabId, entry, err.message);
@@ -3841,11 +4187,13 @@ function getTaskConfig(task, extraConfig = {}) {
   const profileId = task?.profileId || task?.projectKey || task?.config?.projectKey || "";
   const perTask = task?.config || state.profileConfigs?.[profileId] || {};
   const merged = self.ExtLinkProfiles.mergeFillConfig(globals, perTask, extraConfig);
+  const customLaunch = isCustomLaunchTask(task);
   return {
     ...merged,
     autoSkipCaptcha: globals.autoSkipCaptcha,
     fillOnly: globals.fillOnly === true,
-    autoSubmitDirectory: globals.autoSubmitDirectory !== false && globals.fillOnly !== true,
+    autoSubmitDirectory:
+      !customLaunch && globals.autoSubmitDirectory !== false && globals.fillOnly !== true,
     autoSubmitStandardWpComments: globals.autoSubmitStandardWpComments === true,
     manualWaitSec: globals.manualWaitSec,
     pingIndex: globals.pingIndex,
@@ -3991,6 +4339,10 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
     );
   } catch (err) {
     if (err && err.staleRun) return;
+    if (err && err.batchPaused) {
+      pauseEntryForBatch(tabId, task, entry);
+      return;
+    }
     if (isAgentUnavailableError(err)) {
       skipTaskWithReason(
         tabId,
@@ -4137,7 +4489,7 @@ function parkTaskEntry(tabId, entry, reason) {
         return chrome.storage.local.set({
           activeBatchRun: {
             ...stored.activeBatchRun,
-            status: "waiting_manual",
+            status: state.paused && !state.stopped ? "paused" : "waiting_manual",
             tasks: serializeBatchTasks(state.tasks),
             parkedTaskIds: [...state.parkedTaskIds],
           },
@@ -4180,11 +4532,17 @@ async function advanceDestinationGroup(tabId, completedTask) {
   }
 
   entry.taskIndex = nextTask.index;
+  entry.taskId = nextTask.id;
   entry.agentDone = false;
   entry.agentPaused = false;
   entry.pendingRejudge = false;
   entry.contentReadyWhileRunning = false;
   entry.rejudgeAfterRun = false;
+  entry.batchPaused = false;
+  entry.pauseRequested = false;
+  entry.lastContentReady = null;
+  entry.readyProbe = null;
+  entry.customLaunchGateRequested = false;
   entry.slotActive = true;
   nextTask.status = "pending";
   nextTask.skipReason = "";
@@ -4270,14 +4628,16 @@ function cancelRemainingDestinationTasks(task, status, reason) {
   }
 }
 
-function markTaskNeedsManual(tabId, task, entry, reason) {
+function markTaskNeedsManual(tabId, task, entry, reason, preferredStatus = "") {
   if (state.config && state.config.autoSkipCaptcha) {
     skipTaskWithReason(tabId, task, entry, reason || "需要人工处理，已配置为自动跳过");
     return;
   }
 
   const url = task.url?.startsWith("http") ? task.url : `https://${task.url}`;
-  const fallback = /captcha|验证码/i.test(String(reason || "")) ? "needs_captcha" : "needs_login";
+  const fallback =
+    preferredStatus ||
+    (/captcha|验证码/i.test(String(reason || "")) ? "needs_captcha" : "needs_login");
 
   autoClassifySite(url, reason || "需要人工处理", fallback)
     .then((classified) => {
@@ -4299,7 +4659,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
         return;
       }
 
-      task.status = status === "needs_login" ? "needs_manual" : "captcha";
+      task.status = self.ExtLinkBatchControls.parkedTaskStatus(status);
       task.skipReason = reason;
       parkTaskEntry(tabId, entry, reason);
       const projectLabel = task.projectKey ? ` [${task.projectKey}]` : "";
@@ -4326,7 +4686,7 @@ function markTaskNeedsManual(tabId, task, entry, reason) {
       startManualWaitTimer(tabId, task, entry);
     })
     .catch(() => {
-      task.status = "captcha";
+      task.status = self.ExtLinkBatchControls.parkedTaskStatus(fallback);
       task.skipReason = reason;
       parkTaskEntry(tabId, entry, reason);
       broadcastTaskUpdate(task);
@@ -4396,6 +4756,22 @@ function markPendingRejudge(task, entry, tabId, reason) {
   log(`${task.domain}: 等待导航完成后重新判断 - ${reason}`, "");
 }
 
+function pauseEntryForBatch(tabId, task, entry) {
+  if (!entry || !state.paused || state.stopped) return;
+  entry.batchPaused = true;
+  entry.pauseRequested = false;
+  entry.agentPaused = true;
+  entry.pendingRejudge = false;
+  clearEntryTimeout(entry);
+  log(`${task.domain}: 已暂停，保留当前页签与已填写内容`, "warn", {
+    event: "task_paused",
+    taskIndex: task.index,
+    taskId: task.id,
+    domain: task.domain,
+    profileId: task.profileId,
+  });
+}
+
 function resumePendingRejudgeAfterRun(tabId, task, entry) {
   if (!entry.rejudgeAfterRun || !entry.pendingRejudge || entry.agentDone || entry.agentPaused)
     return;
@@ -4436,6 +4812,11 @@ function assertRunCurrent(tabId, entry, runId) {
     err.staleRun = true;
     throw err;
   }
+  if (state.paused && !state.stopped) {
+    const err = new Error("batch run paused");
+    err.batchPaused = true;
+    throw err;
+  }
 }
 
 // ─── Tab Management ───
@@ -4463,6 +4844,11 @@ async function navigateTaskTab(tabId, entry, url) {
 
 function closeTab(tabId) {
   const entry = state.activeTabs.get(tabId);
+  if (entry && state.paused && !state.stopped && entry.slotActive !== false) {
+    clearEntryTimeout(entry);
+    entry.closeAfterResume = true;
+    return;
+  }
   if (entry) {
     bumpEntryRunId(entry);
     clearEntryTimeout(entry);
@@ -4472,7 +4858,9 @@ function closeTab(tabId) {
     .remove(tabId)
     .catch(() => {})
     .finally(() => {
-      if (state.running && state.queue.length > 0 && !state.stopped) scheduleQueueProcessing();
+      if (self.ExtLinkBatchControls.shouldProcessQueue(state) && state.queue.length > 0) {
+        scheduleQueueProcessing();
+      }
       refreshBatchRunStatus().catch((err) =>
         log(`刷新批次状态失败: ${err.message}`, "err", { event: "run_status_failed" }),
       );
@@ -4483,6 +4871,10 @@ function delayCloseTab(tabId, delayMs) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
   clearEntryTimeout(entry);
+  if (state.paused && !state.stopped) {
+    entry.closeAfterResume = true;
+    return;
+  }
   entry.timeoutId = setTimeout(() => closeTab(tabId), delayMs);
 }
 
@@ -4495,22 +4887,66 @@ function closeAllTabs() {
   state.activeTabs.clear();
 }
 
+function closeAutomatedTabs() {
+  const tabIds = self.ExtLinkBatchControls.automatedTabIds(
+    state.activeTabs,
+    state.parkedTaskIds,
+  );
+  for (const tabId of tabIds) {
+    const entry = state.activeTabs.get(tabId);
+    if (!entry) continue;
+    const task = state.tasks.find((item) => item.index === entry.taskIndex);
+    const humanWaitingStatuses = new Set([
+      "needs_login",
+      "needs_captcha",
+      "needs_otp",
+      "needs_manual",
+      "captcha",
+    ]);
+    if (task && (humanWaitingStatuses.has(task.status) || isCustomLaunchTask(task))) {
+      clearEntryTimeout(entry);
+      continue;
+    }
+    if (task && ["pending", "running", "filled"].includes(task.status)) {
+      task.status = "pending";
+      task.skipReason = "";
+      broadcastTaskUpdate(task);
+    }
+    bumpEntryRunId(entry);
+    clearEntryTimeout(entry);
+    clearManualWaitTimer(entry);
+    state.activeTabs.delete(tabId);
+    chrome.tabs.remove(tabId).catch(() => {});
+  }
+}
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   const entry = state.activeTabs.get(tabId);
   if (entry) {
     bumpEntryRunId(entry);
     const task = state.tasks.find((t) => t.index === entry.taskIndex);
-    if (task && !["ok", "skip", "err"].includes(task.status)) {
-      task.status = "skip";
-      task.skipReason = "tab_closed_current_run";
+    if (task && entry.slotActive === false) {
+      // A parked page is owned by the human-review queue. Closing it must not
+      // turn the task into a skip or silently start another task.
+      task.skipReason = task.skipReason || "待人工页签已关闭，请重新打开后继续";
       broadcastTaskUpdate(task);
-      const group = findGroupForTask(task);
-      const nextTask = self.ExtLinkScheduler.nextPendingTask(group, task.index);
-      if (nextTask) {
-        state.queue.unshift(group);
-        state.running = true;
-        state.stopped = false;
-        scheduleQueueProcessing();
+    } else if (task && !["ok", "skip", "err"].includes(task.status)) {
+      if (state.stopped) {
+        task.status = "pending";
+        task.skipReason = "停止后自动任务页签已关闭，可重新开始批次";
+        broadcastTaskUpdate(task);
+      } else {
+        task.status = "skip";
+        task.skipReason = "tab_closed_current_run";
+        broadcastTaskUpdate(task);
+        const group = findGroupForTask(task);
+        const nextTask = self.ExtLinkScheduler.nextPendingTask(group, task.index);
+        if (nextTask) {
+          state.queue.unshift(group);
+          state.running = true;
+          state.stopped = false;
+          if (!state.paused) scheduleQueueProcessing();
+        }
       }
     }
     state.activeTabs.delete(tabId);
@@ -4560,10 +4996,14 @@ function broadcastTaskUpdate(task) {
 }
 
 function broadcastStatus() {
+  const status = getBatchStatus();
   chrome.runtime
     .sendMessage({
       action: "status",
       running: state.running,
+      paused: state.paused,
+      stopped: state.stopped,
+      status,
     })
     .catch(() => {});
 }

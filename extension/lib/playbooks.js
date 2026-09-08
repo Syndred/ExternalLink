@@ -87,9 +87,9 @@
     {
       id: "producthunt",
       hosts: ["producthunt.com"],
-      kind: "directory",
+      kind: "custom_launch",
       title: "Product Hunt",
-      notes: "高价值发布，按人工流程。公开产品页才算已上线。",
+      notes: "高价值多步骤发布，按人工流程。公开产品页才算已上线。",
       hints: ["不要把讨论区评论当成产品上线"],
       pendingPatterns: ["under review", "scheduled"],
       publishedPatterns: ["launched this week", "launched in"],

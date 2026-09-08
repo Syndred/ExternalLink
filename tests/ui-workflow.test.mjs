@@ -215,7 +215,7 @@ assert.match(
 );
 assert.match(background, /self\.ExtLinkBackup\.mergeBackup/);
 assert.match(background, /restoreActiveBatchRun/);
-assert.match(background, /\["running", "waiting_manual", "paused"\]/);
+assert.match(background, /\["running", "waiting_manual", "paused", "stopped"\]/);
 assert.match(background, /parkedTaskIds/);
 const advanceGroup = background.match(
   /async function advanceDestinationGroup[\s\S]*?\n}\n\nfunction getManualWaitTimeoutSec/,

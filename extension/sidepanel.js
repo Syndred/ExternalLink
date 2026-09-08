@@ -170,7 +170,7 @@
         if (activeRun?.status === "running") {
           setRunning(true, false);
         }
-        hydrateBatchLog(items.batchRunLog);
+        hydrateBatchLog(items.batchRunLog, batchRunStatusForLog(activeRun?.status));
         renderSiteSelect();
         renderBatchSiteChoices();
         updateProfileStatus();
@@ -1941,11 +1941,22 @@
     return entries.length ? "diagnostic" : "idle";
   }
 
+  function batchRunStatusForLog(status) {
+    return {
+      running: "running",
+      paused: "running",
+      waiting_manual: "waiting_manual",
+      stopped: "stopped",
+      finished: "finished",
+    }[status] || "";
+  }
+
   function batchLogStatusLabel(status) {
     return {
       running: "运行中",
       stopped: "已停止",
       finished: "已完成",
+      waiting_manual: "等待人工处理",
       failed: "异常结束",
       diagnostic: "诊断日志",
       idle: "暂无运行",

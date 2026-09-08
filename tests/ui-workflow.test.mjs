@@ -23,6 +23,8 @@ assert.match(sidepanelJs, /navigator\.clipboard\.writeText/);
 assert.match(sidepanelJs, /msg\.action === "log" && msg\.entry/);
 assert.match(sidepanelJs, /run_stop_requested/);
 assert.match(sidepanelJs, /已停止/);
+assert.match(sidepanelJs, /batchRunStatusForLog\(activeRun\?\.status\)/);
+assert.match(sidepanelJs, /waiting_manual:\s*"等待人工处理"/);
 assert.match(sidepanelHtml, /id="manualTaskList"/);
 assert.match(sidepanelJs, /selectedSiteIds/);
 assert.match(sidepanelJs, /action:\s*"confirmSubmissionSuccess"/);

@@ -157,5 +157,6 @@ tests/local-agent-unit.test.py
 - 停止通过 `closeAutomatedTabs()` 选择普通自动页；`needs_login`、`needs_captcha`、`needs_otp`、`needs_manual` 和 `custom_launch` 页签均保留，`parkedTaskIds` 不再清空，停止后关闭页签事件也不会重新启动队列。
 - 就绪判断要求标签页 `complete`、内容脚本可探测且内容信号连续稳定两轮；标题壳/loading 不算 ready，超时人工原因会包含 tab 状态、稳定轮次和探测错误。
 - Product Hunt playbook 为 `custom_launch`，稳定就绪后以「Product Hunt 多步骤发布需人工完成」和 `needs_manual` 停放，禁止普通目录无验证码代点提交，也不会误写成“需登录”。
+- 二轮 review 又补齐停止终态拦截、串行化 `activeBatchRun` 写入、导航后的统一稳定就绪、loading + 可交互假阳性、OTP 队列闸门，以及无页签人工确认后的停放清理。
 - RED：新增行为测试首次运行在缺少暂停控件时失败；GREEN：`node tests/batch-controls.test.mjs`、`node tests/ui-workflow.test.mjs` 与 `node --test tests/*.mjs` 通过。
 - Chrome 实机边界：仍需用户重载扩展后在隔离/授权目标确认暂停/继续动作、停止后人工页签保留及 Product Hunt 不自动点击发布；未把静态测试或本地模拟当作第三方成功回执。

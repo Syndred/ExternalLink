@@ -124,7 +124,7 @@
       sellablePoints: profile.sellablePoints || [],
       avoidContent: profile.avoidContent || [],
       projectFields: fields,
-      fillOnly: globalConfig.fillOnly !== false,
+      fillOnly: globalConfig.fillOnly === true,
     };
   }
 
@@ -318,18 +318,118 @@
     "Feature description",
     "Pricing",
     "PRICING TYPE",
+    "Discord",
+    "Twitter",
+    "GitHub",
+    "LinkedIn",
+    "Slack",
+    "YouTube",
+    "Telegram",
+    "Instagram",
+    "Facebook",
+    "Product Hunt",
+    "Founded year",
+    "Integration list",
+    "Alternative to",
+    "API docs",
+    "Changelog",
+    "Founder",
   ]);
 
-  function inferReusableProfileKey(label = "", profileKey = "") {
+  const SITE_SPECIFIC_FIELD =
+    /\b(captcha|password|otp|verify|verification|agree|terms|privacy|consent|newsletter|subscribe|comment|message|username|login|sign[\s-]?in|how did you hear|hear about us|referr|utm|traffic source|referral source|lead source|category|categories|listing type|directory|topic|coupon|promo code)\b/;
+
+  const REUSABLE_FIELD_ALIASES = [
+    { key: "Discord", pattern: /\bdiscord\b/ },
+    { key: "Twitter", pattern: /\b(twitter|\bx\b|x\.com)\b/ },
+    { key: "GitHub", pattern: /\bgithub\b/ },
+    { key: "LinkedIn", pattern: /\blinkedin\b/ },
+    { key: "Slack", pattern: /\bslack\b/ },
+    { key: "YouTube", pattern: /\byoutube\b/ },
+    { key: "Telegram", pattern: /\btelegram\b/ },
+    { key: "Instagram", pattern: /\binstagram\b/ },
+    { key: "Facebook", pattern: /\bfacebook\b/ },
+    { key: "Product Hunt", pattern: /\bproduct\s*hunt\b/ },
+    { key: "Founded year", pattern: /\b(founded year|year founded|founding year|established)\b/ },
+    { key: "Integration list", pattern: /\bintegration(s| list)?\b/ },
+    { key: "Alternative to", pattern: /\balternative(s| to)?\b/ },
+    { key: "API docs", pattern: /\bapi\s*(docs?|documentation|reference)\b/ },
+    { key: "Changelog", pattern: /\bchange\s*log\b/ },
+    { key: "Founder", pattern: /\b(founder|maker)\b/ },
+  ];
+
+  function normalizeFieldHint(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[:*]+$/g, "")
+      .replace(/[^a-z0-9\s./+-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isSiteSpecificField(label = "", profileKey = "") {
     const known = String(profileKey || "").trim();
-    const hint = `${label} ${known}`.toLowerCase();
-    if (
-      /\b(captcha|password|otp|verify|verification|agree|terms|privacy|comment|message|username|login)\b/.test(
-        hint,
-      )
-    ) {
-      return "";
+    if (known === "category" || known === "select" || known === "username") return true;
+    const hint = `${normalizeFieldHint(label)} ${normalizeFieldHint(known)}`.trim();
+    return SITE_SPECIFIC_FIELD.test(hint);
+  }
+
+  function matchExistingFieldKey(label, existingKeys = []) {
+    const norm = normalizeFieldHint(label);
+    if (!norm) return "";
+    const keys = Array.isArray(existingKeys) ? existingKeys : Object.keys(existingKeys || {});
+    for (const key of keys) {
+      if (normalizeFieldHint(key) === norm) return key;
     }
+    const tokens = new Set(norm.split(/\s+/).filter((token) => token.length > 2));
+    if (!tokens.size) return "";
+    for (const key of keys) {
+      const keyTokens = new Set(
+        normalizeFieldHint(key)
+          .split(/\s+/)
+          .filter((token) => token.length > 2),
+      );
+      if (!keyTokens.size) continue;
+      if ([...keyTokens].every((token) => tokens.has(token))) return key;
+      if ([...tokens].every((token) => keyTokens.has(token))) return key;
+    }
+    return "";
+  }
+
+  function stableFieldKeyFromLabel(label) {
+    const cleaned = String(label || "")
+      .replace(/[:*]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!cleaned || cleaned.length > 80) return "";
+    if (/^(other|please specify|additional info|notes?|details?)$/i.test(cleaned)) return "";
+    return cleaned.replace(/\b[a-z]/g, (char) => char.toUpperCase()).slice(0, 80);
+  }
+
+  function looksReusableProductField(label = "", value = "") {
+    const hint = normalizeFieldHint(label);
+    const text = String(value || "").trim();
+    if (!hint || !text || isSiteSpecificField(label)) return false;
+    if (REUSABLE_FIELD_ALIASES.some((alias) => alias.pattern.test(hint))) return true;
+    if (/^https?:\/\//i.test(text) && /\b(url|link|profile|page|community|docs?)\b/.test(hint)) {
+      return true;
+    }
+    if (/^\d{4}$/.test(text) && /found|establish|launch year|year/.test(hint)) return true;
+    if (
+      text.length >= 2 &&
+      text.length <= 500 &&
+      /^[a-z][a-z0-9 /&+_.-]{1,60}$/i.test(String(label || "").trim()) &&
+      !/^(what|which|how|please|select|choose|pick)\b/.test(hint)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function inferReusableProfileKey(label = "", profileKey = "", existingKeys = [], value = "") {
+    const known = String(profileKey || "").trim();
+    const hint = `${normalizeFieldHint(label)} ${normalizeFieldHint(known)}`.trim();
+    if (isSiteSpecificField(label, known)) return "";
     if (REUSABLE_PROFILE_KEYS.has(known)) return known;
     if (/\b(e-?mail|business mail|contact mail)\b/.test(hint)) return "Business mail";
     if (/\b(tool name|product name|app name|startup name|company name|brand name)\b/.test(hint)) {
@@ -352,6 +452,11 @@
     }
     if (/\b(pricing type|price type|billing type)\b/.test(hint)) return "PRICING TYPE";
     if (/\b(pricing|price|cost)\b/.test(hint)) return "Pricing";
+    const alias = REUSABLE_FIELD_ALIASES.find((item) => item.pattern.test(hint));
+    if (alias) return alias.key;
+    const existing = matchExistingFieldKey(label, existingKeys);
+    if (existing) return existing;
+    if (looksReusableProductField(label, value)) return stableFieldKeyFromLabel(label);
     return "";
   }
 
@@ -360,6 +465,7 @@
     if (!key || !value) return false;
     if (value.length > 2000) return false;
     if (/^(on|off|true|false|yes|no|1|0)$/i.test(value)) return false;
+    if (isSiteSpecificField(mapping.label || mapping.hint || "", mapping.profileKey)) return false;
     if (/^\d{4}-\d{2}-\d{2}/.test(value) && /date|launch/i.test(`${mapping.label || ""} ${key}`)) {
       return false;
     }
@@ -376,7 +482,12 @@
     const added = [];
     for (const mapping of Object.values(mappings || {})) {
       if (!mapping || typeof mapping !== "object") continue;
-      const key = inferReusableProfileKey(mapping.label || mapping.hint || "", mapping.profileKey);
+      const key = inferReusableProfileKey(
+        mapping.label || mapping.hint || "",
+        mapping.profileKey,
+        Object.keys(fields),
+        mapping.value,
+      );
       if (!key || String(fields[key] || "").trim()) continue;
       if (!isReusableFillValue(key, mapping)) continue;
       fields[key] = String(mapping.value).trim();
@@ -478,6 +589,7 @@
     applySavedProfilesToTasks,
     mergeExtractedProfile,
     inferReusableProfileKey,
+    isSiteSpecificField,
     learnProfileFieldsFromFill,
     orderedProfileIds,
     applyProfileOrder,

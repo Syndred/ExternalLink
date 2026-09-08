@@ -876,9 +876,15 @@ async function startBatchRun(msg) {
     };
   }
 
-  const storedFlags = await chrome.storage.local.get(["autoSubmitStandardWpComments"]);
+  const storedFlags = await chrome.storage.local.get([
+    "autoSubmitStandardWpComments",
+    "autoSubmitDirectoryListings",
+  ]);
   state.config = {
     ...(msg.config || {}),
+    fillOnly: msg.config?.fillOnly === true,
+    autoSubmitDirectory:
+      storedFlags.autoSubmitDirectoryListings !== false && msg.config?.fillOnly !== true,
     autoSubmitStandardWpComments: storedFlags.autoSubmitStandardWpComments === true,
   };
   state.tasks = pending.tasks.map((task) => ({ ...task, status: "pending" }));
@@ -1158,6 +1164,7 @@ async function handleSidepanelFill(msg) {
     "cfgName",
     "cfgCommentTemplate",
     "autoSubmitStandardWpComments",
+    "autoSubmitDirectoryListings",
   ]);
   const profile = self.ExtLinkProfiles.getActiveProfile(storage);
   if (!self.ExtLinkProfiles.profileConfigured(profile)) {
@@ -1168,9 +1175,11 @@ async function handleSidepanelFill(msg) {
     email: storage.cfgEmail,
     username: storage.cfgName,
     commentTemplate: storage.cfgCommentTemplate,
-    fillOnly: true,
+    fillOnly: msg.mode === "comment",
   });
   config.autoSubmitStandardWpComments = storage.autoSubmitStandardWpComments === true;
+  config.autoSubmitDirectory =
+    storage.autoSubmitDirectoryListings !== false && msg.mode !== "comment";
   config.learnedFieldMappings = profile.learnedFieldMappings || {};
 
   if (msg.commentText) {
@@ -1272,24 +1281,7 @@ async function handleSidepanelFill(msg) {
   }
 
   try {
-    const tab = await chrome.tabs.get(tabId);
-    const hostname = new URL(tab.url).hostname;
-    const learned = await sendTabMessage(tabId, { action: "collectFillLearnings", config });
-    if (learned?.mappings) {
-      await mergeLearnedMappings(storage.activeSiteId, hostname, learned.mappings);
-      const latest = await chrome.storage.local.get("siteProfiles");
-      const profiles = latest.siteProfiles || {};
-      const current = profiles[profile.id];
-      if (current) {
-        const expanded = self.ExtLinkProfiles.learnProfileFieldsFromFill(current, learned.mappings);
-        if (expanded.added.length) {
-          profiles[profile.id] = expanded.profile;
-          await chrome.storage.local.set({ siteProfiles: profiles });
-          learnedFields = expanded.added;
-          log(`资料库已补齐 ${expanded.added.join("、")}`, "ok");
-        }
-      }
-    }
+    learnedFields = await persistFillLearnings(tabId, profile.id, config);
   } catch {
     /* non-fatal */
   }
@@ -1401,6 +1393,27 @@ async function handleSidepanelFill(msg) {
     };
   }
 
+  const submitReady =
+    validation?.submitReady !== false && lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount;
+  const baseFill = {
+    ok: true,
+    filledCount: smartTotal,
+    emptyCount: lastEmpty.emptyCount,
+    invalidCount: lastEmpty.invalidCount || 0,
+    totalCount: lastEmpty.totalCount,
+    skippedFiles,
+    inferredFields,
+    learnedFields,
+    platform: platformType,
+    submitReady,
+    validationIssues: validation?.issues || [],
+  };
+
+  if (submitReady) {
+    const submitted = await tryAutoSubmitFilledForm(tabId, config, profile, platformType);
+    if (submitted) return { ...baseFill, ...submitted };
+  }
+
   const doneMsg =
     lastEmpty.invalidCount > 0
       ? `${lastEmpty.invalidCount} 个字段超出字数限制，请检查后提交`
@@ -1414,30 +1427,153 @@ async function handleSidepanelFill(msg) {
     tabId,
     status: "done",
     message: doneMsg,
-    filledCount: smartTotal,
-    emptyCount: lastEmpty.emptyCount,
-    invalidCount: lastEmpty.invalidCount || 0,
-    totalCount: lastEmpty.totalCount,
-    submitReady:
-      validation?.submitReady !== false && lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount,
-    validationIssues: validation?.issues || [],
+    ...baseFill,
   });
 
-  return {
-    ok: true,
-    fillOnly: true,
-    filledCount: smartTotal,
-    emptyCount: lastEmpty.emptyCount,
-    invalidCount: lastEmpty.invalidCount || 0,
-    totalCount: lastEmpty.totalCount,
-    skippedFiles,
-    inferredFields,
-    learnedFields,
-    platform: platformType,
-    submitReady:
-      validation?.submitReady !== false && lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount,
-    validationIssues: validation?.issues || [],
-  };
+  return { ...baseFill, fillOnly: true };
+}
+
+async function persistFillLearnings(tabId, profileId, config) {
+  if (!profileId) return [];
+  const tab = await chrome.tabs.get(tabId);
+  const hostname = new URL(tab.url).hostname;
+  const learned = await sendTabMessage(tabId, { action: "collectFillLearnings", config: config || {} });
+  if (!learned?.mappings) return [];
+  await mergeLearnedMappings(profileId, hostname, learned.mappings);
+  const latest = await chrome.storage.local.get("siteProfiles");
+  const profiles = latest.siteProfiles || {};
+  const current = profiles[profileId];
+  if (!current) return [];
+  const expanded = self.ExtLinkProfiles.learnProfileFieldsFromFill(current, learned.mappings);
+  if (!expanded.added.length) return [];
+  profiles[profileId] = expanded.profile;
+  await chrome.storage.local.set({ siteProfiles: profiles });
+  log(`资料库已补齐 ${expanded.added.join("、")}`, "ok");
+  return expanded.added;
+}
+
+async function tryAutoSubmitFilledForm(tabId, config, profile, platformType) {
+  broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
+  let submitResult = {};
+  try {
+    submitResult = await sendTabMessage(tabId, {
+      action: "submitFilledForm",
+      config,
+      platform: platformType || "directory",
+    });
+  } catch (err) {
+    await sleep(2000);
+    submitResult = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({
+      submitted: true,
+      matched: false,
+      reason: err.message,
+    }));
+  }
+
+  if (submitResult?.captcha) {
+    const pageUrl = await getTabUrlSafe(tabId);
+    if (pageUrl) await autoClassifySite(pageUrl, "请完成验证码", "needs_captcha");
+    broadcastAutoFillUpdate({
+      tabId,
+      status: "captcha",
+      message: "请完成验证码；页签已留下",
+      classifyStatus: "needs_captcha",
+      advance: true,
+      keepTab: true,
+    });
+    return { captcha: true, classified: "needs_captcha", advance: true, keepTab: true };
+  }
+  if (submitResult?.needs_manual) {
+    const pageUrl = await getTabUrlSafe(tabId);
+    const classified = pageUrl
+      ? await autoClassifySite(pageUrl, submitResult.reason || "需要人工处理", "needs_login")
+      : null;
+    broadcastAutoFillUpdate({
+      tabId,
+      status: classified?.status || "manual",
+      message: submitResult.reason || "需要人工处理",
+      classifyStatus: classified?.status,
+      advance: true,
+      keepTab: true,
+    });
+    return {
+      needs_manual: true,
+      reason: submitResult.reason,
+      classified: classified?.status,
+      advance: true,
+      keepTab: true,
+      deadEnd: classified ? self.ExtLinkQueue.isDeadEndStatus(classified.status) : false,
+    };
+  }
+  if (submitResult?.blocked) {
+    const pageUrl = await getTabUrlSafe(tabId);
+    const classified = pageUrl
+      ? await autoClassifySite(pageUrl, submitResult.reason || "无法提交", "broken")
+      : null;
+    broadcastAutoFillUpdate({
+      tabId,
+      status: "blocked",
+      message: submitResult.reason || "无法提交",
+      classifyStatus: classified?.status,
+      advance: true,
+      keepTab: true,
+    });
+    return {
+      blocked: true,
+      reason: submitResult.reason,
+      classified: classified?.status,
+      advance: true,
+      keepTab: true,
+      deadEnd: true,
+    };
+  }
+
+  if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
+    const pageUrl = await getTabUrlSafe(tabId);
+    if (pageUrl) {
+      await recordSubmittedProject({
+        url: pageUrl,
+        profileId: profile.id,
+        profileName: profile.name || profile.id,
+        confirmedBy: "agent",
+        successEvidence: submitResult.evidence,
+        publicationStatus: submitResult.publicationStatus || "submitted",
+      });
+    }
+    const doneMsg =
+      submitResult.publicationStatus === "pending_moderation"
+        ? "已提交，站点显示待审核"
+        : submitResult.publicationStatus === "published"
+          ? "已提交并看到上线回执"
+          : "已提交并记入账本";
+    broadcastAutoFillUpdate({ tabId, status: "done", message: doneMsg });
+    return {
+      ok: true,
+      submitted: true,
+      matched: true,
+      evidence: submitResult.evidence,
+      publicationStatus: submitResult.publicationStatus || "submitted",
+      advance: true,
+    };
+  }
+
+  if (submitResult?.submitted) {
+    broadcastAutoFillUpdate({
+      tabId,
+      status: "manual",
+      message: "已代点提交，未见回执，请人工确认；页签已保留",
+    });
+    return {
+      ok: true,
+      submitted: true,
+      matched: false,
+      fillOnly: false,
+      keepTab: true,
+      advance: false,
+    };
+  }
+
+  return null;
 }
 
 async function runValidateAndFixFill(tabId, config) {
@@ -2844,26 +2980,25 @@ async function handleContentReady(tab, data) {
     if (!looksReadyForManualResume(data)) return;
     log(`页面就绪: ${task.domain} ${data.mode}，自动继续半自动填表`, "");
     resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
-    if (state.config && state.config.fillOnly) {
-      await runRuleBasedFill(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
+    if (state.config && state.config.useAgent === true) {
+      await runAgentLoop(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
       return;
     }
-    await runAgentLoop(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
+    await runRuleBasedFill(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
     return;
   }
 
   log(`页面就绪: ${task.domain} ${data.mode}`, "");
   resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
-  if (state.config && state.config.fillOnly) {
-    await runRuleBasedFill(tab.id, task, entry);
+  if (state.config && state.config.useAgent === true) {
+    if (shouldResumeRejudge) {
+      await runAgentLoop(tab.id, task, entry, { pendingRejudge: true });
+      return;
+    }
+    await runAgentLoop(tab.id, task, entry);
     return;
   }
-  if (shouldResumeRejudge) {
-    await runAgentLoop(tab.id, task, entry, { pendingRejudge: true });
-    return;
-  }
-  await runAgentLoop(tab.id, task, entry);
-  return;
+  await runRuleBasedFill(tab.id, task, entry);
 }
 
 function looksReadyForManualResume(data) {
@@ -2916,20 +3051,19 @@ async function handleManualSubmit(msg) {
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   const activeConfig = getTaskConfig(task, config || {});
-  if (activeConfig && activeConfig.fillOnly) {
-    await runRuleBasedFill(tabId, task, entry, {
+  if (activeConfig && activeConfig.useAgent === true) {
+    await runAgentLoop(tabId, task, entry, {
       config: activeConfig,
       platformType: platformType || task.platformType,
       manual: true,
     });
     return;
   }
-  await runAgentLoop(tabId, task, entry, {
+  await runRuleBasedFill(tabId, task, entry, {
     config: activeConfig,
     platformType: platformType || task.platformType,
     manual: true,
   });
-  return;
 }
 
 // ─── Manual skip: user clicked "跳过" from banner ───
@@ -3017,7 +3151,7 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
   entry.agentPaused = false;
   entry.pendingRejudge = false;
 
-  const fillConfig = getTaskConfig(task, { ...(extra.config || {}), fillOnly: true });
+  const fillConfig = getTaskConfig(task, extra.config || {});
 
   try {
     task.status = "running";
@@ -3047,8 +3181,23 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       assertRunCurrent(tabId, entry, runId);
     }
 
+    try {
+      const profileId = task.profileId || task.projectKey || fillConfig.projectKey;
+      await persistFillLearnings(tabId, profileId, fillConfig);
+    } catch {
+      /* non-fatal */
+    }
+
     if (result && result.captcha) {
-      markTaskFilled(tabId, task, entry, "验证码已出现 — 请手动完成并提交");
+      markTaskNeedsManual(tabId, task, entry, "验证码已出现 — 页签留下，请完成后继续");
+      return;
+    }
+    if (result && result.needs_manual) {
+      markTaskNeedsManual(tabId, task, entry, result.reason || "需要人工处理");
+      return;
+    }
+    if (result && result.blocked) {
+      markTaskBlocked(tabId, task, entry, result.reason || "无法提交");
       return;
     }
     if (result && result.waiting) {
@@ -3064,8 +3213,23 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       markTaskFilled(tabId, task, entry, result.skipReason || result.error);
       return;
     }
+    if (result?.submitted && result?.matched && result?.evidence) {
+      completeTaskFromSubmit(tabId, task, result);
+      return;
+    }
+    if (result?.submitted && !result?.matched) {
+      markTaskFilled(tabId, task, entry, "已代点提交，未见回执，请人工确认");
+      return;
+    }
     if (result && (result.fillOnly || result.manual || result.ok)) {
-      markTaskFilled(tabId, task, entry, "表单已填写，请检查内容后手动点击提交");
+      markTaskFilled(
+        tabId,
+        task,
+        entry,
+        fillConfig.fillOnly
+          ? "表单已填写，请检查内容后手动点击提交"
+          : "表单已填写，请检查后提交",
+      );
       return;
     }
 
@@ -3194,7 +3358,8 @@ function getTaskConfig(task, extraConfig = {}) {
     ...perTask,
     ...extraConfig,
     autoSkipCaptcha: globals.autoSkipCaptcha,
-    fillOnly: globals.fillOnly,
+    fillOnly: globals.fillOnly === true,
+    autoSubmitDirectory: globals.autoSubmitDirectory !== false && globals.fillOnly !== true,
     autoSubmitStandardWpComments: globals.autoSubmitStandardWpComments === true,
     manualWaitSec: globals.manualWaitSec,
     pingIndex: globals.pingIndex,
@@ -3406,6 +3571,15 @@ function handleTerminalJudge(tabId, task, entry, judge) {
     return true;
   }
   return false;
+}
+
+function completeTaskFromSubmit(tabId, task, result) {
+  completeTaskFromJudge(tabId, task, {
+    reason: result.evidence || "directory auto-submit evidence",
+    publicationStatus: result.publicationStatus || "submitted",
+    publicUrl: result.publicUrl || "",
+    evidenceUrl: result.evidenceUrl || "",
+  });
 }
 
 function completeTaskFromJudge(tabId, task, judge) {

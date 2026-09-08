@@ -8,7 +8,7 @@
       hosts: ["thejoai.com"],
       kind: "directory",
       title: "TheJOAI",
-      notes: "富文本描述、主图有尺寸限制、缺省日期用今天、分类必选。最终提交仍人工点。",
+      notes: "富文本描述、主图有尺寸限制、缺省日期用今天、分类必选。无验证码时代点提交，有验证码页签留下。",
       hints: ["核对主图预览", "分类必选", "日期若是今天请再看一眼"],
       pendingPatterns: ["submitted for review", "excellent submission"],
     },
@@ -134,6 +134,8 @@
 
   const GENERIC_PENDING =
     /awaiting moderation|held for moderation|pending moderation|comment is awaiting|under review|in queue|submitted for review|pending review|waiting line/;
+  const GENERIC_THANKS =
+    /thank you for (submitting|applying|listing)|thanks for (your )?(submission|applying)|we'll be in touch|we will be in touch|submission received|successfully submitted|your (tool|product|startup) (has been|was) submitted/;
 
   function snippetAround(text, needle) {
     const blob = String(text || "");
@@ -172,6 +174,15 @@
       return {
         publicationStatus: "pending_moderation",
         evidence: snippetAround(blob, generic[0]),
+        playbookId: playbook?.id || "",
+        matched: true,
+      };
+    }
+    const thanks = blob.match(GENERIC_THANKS);
+    if (thanks) {
+      return {
+        publicationStatus: "submitted",
+        evidence: snippetAround(blob, thanks[0]),
         playbookId: playbook?.id || "",
         matched: true,
       };

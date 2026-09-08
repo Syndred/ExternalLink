@@ -24,6 +24,7 @@
     "linkMonitorSchedule",
     "activeBatchRun",
     "autoSubmitStandardWpComments",
+    "autoSubmitDirectoryListings",
     "cfgEmail",
     "cfgName",
     "cfgCommentTemplate",

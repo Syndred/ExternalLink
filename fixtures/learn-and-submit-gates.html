@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ExternalLink 回填与提交闸门</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 16px;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        margin: 8px 0;
+      }
+      input,
+      select,
+      textarea {
+        width: min(100%, 420px);
+        min-height: 44px;
+        padding: 8px;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #f1f5f9;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .ok {
+        color: #047857;
+      }
+      .warn {
+        color: #b45309;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>回填与提交闸门夹具</h1>
+    <div class="card">
+      <p>可复用栏应入库：Discord、Founded year、Integration list。本站栏不应入库：分类、How did you hear、同意条款。</p>
+      <form id="demoForm">
+        <label>Product name <input name="name" value="Demo Tool" /></label>
+        <label>Website <input name="website" value="https://demo.example" /></label>
+        <label>Discord <input name="discord" value="https://discord.gg/demo" /></label>
+        <label>Founded year <input name="founded" value="2024" /></label>
+        <label>Integration list <input name="integrations" value="Slack, Notion" /></label>
+        <label>Category
+          <select name="category">
+            <option value="AI Tools" selected>AI Tools</option>
+          </select>
+        </label>
+        <label>How did you hear about us <input name="hear" value="Google" /></label>
+        <label><input type="checkbox" name="agree" checked /> I agree to the terms</label>
+        <button type="submit">Submit listing</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>学习结果</h2>
+      <pre id="learnOut"></pre>
+    </div>
+    <script src="../extension/lib/profiles.js"></script>
+    <script>
+      const P = self.ExtLinkProfiles;
+      const mappings = {
+        name: { label: "Product name", value: "Demo Tool" },
+        website: { label: "Website", value: "https://demo.example" },
+        discord: { label: "Discord", value: "https://discord.gg/demo" },
+        founded: { label: "Founded year", value: "2024" },
+        integrations: { label: "Integration list", value: "Slack, Notion" },
+        category: { label: "Category", profileKey: "category", value: "AI Tools" },
+        hear: { label: "How did you hear about us", value: "Google" },
+        agree: { label: "I agree to the terms", value: "on" },
+      };
+      const learned = P.learnProfileFieldsFromFill({ id: "Demo", name: "Demo", fields: { Name: "Demo" } }, mappings);
+      const out = {
+        added: learned.added,
+        fields: learned.profile.fields,
+        rejected: {
+          Category: !learned.profile.fields.Category,
+          Hear: !learned.profile.fields["How did you hear about us"],
+          Agree: !learned.profile.fields["I Agree To The Terms"],
+        },
+      };
+      document.getElementById("learnOut").textContent = JSON.stringify(out, null, 2);
+    </script>
+  </body>
+</html>

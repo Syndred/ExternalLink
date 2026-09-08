@@ -579,7 +579,7 @@
     workflowStep = step;
     const map = { detect: "stepDetect", fill: "stepFill", submit: "stepSubmit" };
     const order = ["detect", "fill", "submit"];
-    const idx = order.indexOf(step);
+    const idx = step === "done" ? order.length : order.indexOf(step);
     for (const [key, id] of Object.entries(map)) {
       const el = $(id);
       if (!el) continue;
@@ -1441,7 +1441,23 @@
 
   async function handleFillResult(result, mode) {
     if (mode === "form") refreshMediaUploadResult(result).catch(() => {});
-    if (result?.needs_manual || result?.captcha || result?.blocked || result?.advance) {
+    if (result?.submitted && result?.matched && result?.evidence) {
+      const successLabel =
+        result.publicationStatus === "pending_moderation"
+          ? "已提交，站点显示待审核"
+          : result.publicationStatus === "published"
+            ? "已提交并看到上线回执"
+            : "已提交并记入账本";
+      setAutoFillStatus(successLabel, "ok");
+      await loadClassifiedList();
+      await loadSubmissionQueue(currentPageUrl);
+      if (result.advance) {
+        showToast(`${successLabel} — 打开下一站`);
+        cycleSubmission(1, { keepCurrent: true }).catch(() => {});
+      }
+      return;
+    }
+    if (result?.needs_manual || result?.captcha || result?.blocked) {
       const label =
         SITE_STATUS_MAP[result.classified]?.label ||
         result.reason ||
@@ -1480,6 +1496,15 @@
               ? "评论已代点提交"
               : "已代点提交，未见回执，请人工确认"
           : "评论内容已填入";
+      } else if (result.submitted && result.matched && result.evidence) {
+        msg =
+          result.publicationStatus === "pending_moderation"
+            ? "已提交，站点显示待审核"
+            : result.publicationStatus === "published"
+              ? "已提交并看到上线回执"
+              : "已提交并记入账本";
+      } else if (result.submitted && !result.matched) {
+        msg = "已代点提交，未见回执，请人工确认；页签已保留";
       } else if (result.invalidCount > 0) {
         msg = `${result.invalidCount} 个字段超出字数限制，请修正`;
       } else if (result.emptyCount > 0) {
@@ -1833,7 +1858,8 @@
       });
 
       handleFillResult(result, mode);
-      if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
+      if (mode === "form" && result?.submitted && result?.matched) setWorkflowStep("done");
+      else if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
       else if (mode === "comment" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
     } catch (err) {
       setAutoFillStatus(err.message, "err");

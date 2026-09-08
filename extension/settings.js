@@ -600,6 +600,7 @@
       cfgPingIndex: $("cfgPingIndex").checked,
       autoOpenSidePanel: $("autoOpenSidePanel").checked,
       autoFillOnVisit: $("autoFillOnVisit").checked,
+      autoSubmitDirectoryListings: $("autoSubmitDirectoryListings")?.checked !== false,
       autoSubmitStandardWpComments: $("autoSubmitStandardWpComments")?.checked === true,
     });
     alert("✅ 全局配置已保存");
@@ -1612,6 +1613,7 @@
       "cfgPingIndex",
       "autoOpenSidePanel",
       "autoFillOnVisit",
+      "autoSubmitDirectoryListings",
       "autoSubmitStandardWpComments",
       "cloudSyncConfig",
     ],
@@ -1627,6 +1629,9 @@
       $("cfgPingIndex").checked = items.cfgPingIndex !== false;
       $("autoOpenSidePanel").checked = items.autoOpenSidePanel === true;
       $("autoFillOnVisit").checked = items.autoFillOnVisit !== false;
+      if ($("autoSubmitDirectoryListings")) {
+        $("autoSubmitDirectoryListings").checked = items.autoSubmitDirectoryListings !== false;
+      }
       if ($("autoSubmitStandardWpComments")) {
         $("autoSubmitStandardWpComments").checked = items.autoSubmitStandardWpComments === true;
       }

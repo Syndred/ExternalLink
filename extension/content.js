@@ -70,6 +70,16 @@
       sendResponse(collectFillLearnings(msg.config || {}));
       return true;
     }
+    if (msg.action === "submitFilledForm") {
+      submitFilledForm(msg.config || {}, msg.platform || "directory")
+        .then(sendResponse)
+        .catch((err) => sendResponse({ error: err.message }));
+      return true;
+    }
+    if (msg.action === "classifySubmitEvidence") {
+      sendResponse(classifyVisibleEvidence());
+      return true;
+    }
     if (msg.action === "countEmptyFields") {
       sendResponse(countEmptyFillableFields());
       return true;
@@ -375,6 +385,43 @@
     return { ok: true, form, author, email, url, comment, submit };
   }
 
+  function shouldAutoSubmitListing(config, platform) {
+    if (config && config.fillOnly === true) return false;
+    if (platform === "wp_comment" || platform === "article") return false;
+    if (platform === "forum" || platform === "profile") return false;
+    return config?.autoSubmitDirectory !== false;
+  }
+
+  function detectPaidSubmit() {
+    const submitBtn = findSubmitButton(
+      'button[type="submit"], input[type="submit"]',
+      ["submit", "add", "list", "publish", "pay", "buy", "checkout", "upgrade"],
+    );
+    const label = submitBtn ? getElementLabel(submitBtn) : "";
+    if (/\$\d+|pay now|checkout|upgrade to|buy listing|fast.?track|premium only/i.test(label)) {
+      return "当前提交按钮是付费入口";
+    }
+    const text = String(document.body?.innerText || "").slice(0, 4000).toLowerCase();
+    const hasFreeSubmit = /free (submit|listing|launch)|submit for free|no credit card/.test(text);
+    if (
+      !hasFreeSubmit &&
+      /this listing is paid|unlock with|choose a paid plan|upgrade to submit/.test(text)
+    ) {
+      return "页面要求付费后才能提交";
+    }
+    return "";
+  }
+
+  function detectSubmitBlockers() {
+    if (typeof detectCaptcha === "function" && detectCaptcha()) return { captcha: true };
+    if (document.querySelector('input[type="password"]')) {
+      return { needs_manual: true, reason: "需要登录或注册" };
+    }
+    const paid = detectPaidSubmit();
+    if (paid) return { blocked: true, reason: paid };
+    return null;
+  }
+
   function shouldAutoSubmitStandardWp(config, preflight) {
     if (!config || config.autoSubmitStandardWpComments !== true) return false;
     if (!preflight?.ok) return false;
@@ -660,6 +707,60 @@
   async function returnAfterFill(config, platform) {
     logStep("✅ 表单已填写 — 请手动检查并提交");
     return { ok: true, fillOnly: true, manual: true, platform, reason: "fill_only" };
+  }
+
+  async function submitFilledForm(config, platform = "directory", fillResult = {}) {
+    const blocker = detectSubmitBlockers();
+    if (blocker?.captcha) {
+      logStep("🤖 检测到验证码 — 页签留下等人，不代点提交");
+      highlightCaptchaArea();
+      return { captcha: true, keepTab: true, platform, ...fillResult };
+    }
+    if (blocker?.needs_manual) {
+      logStep(`⚠️ ${blocker.reason} — 不代点提交`);
+      return { needs_manual: true, reason: blocker.reason, keepTab: true, platform, ...fillResult };
+    }
+    if (blocker?.blocked) {
+      logStep(`⛔ ${blocker.reason} — 不代点提交`);
+      return { blocked: true, reason: blocker.reason, keepTab: true, platform, ...fillResult };
+    }
+
+    const submitBtn = findSubmitButton('button[type="submit"], input[type="submit"]', [
+      "submit",
+      "add",
+      "list",
+      "publish",
+      "send",
+    ]);
+    if (!submitBtn) {
+      if (!shouldAutoSubmitListing(config, platform)) return returnAfterFill(config, platform);
+      logStep("⚠️ 未找到提交按钮，已填字段请手动提交");
+      return { manual: true, platform, reason: "no_submit_button", ...fillResult };
+    }
+    if (!shouldAutoSubmitListing(config, platform)) {
+      return returnAfterFill(config, platform);
+    }
+
+    logStep("🚀 无验证码，代点提交…");
+    const beforeUrl = location.href;
+    submitBtn.click();
+    await sleep(3500);
+    const classified = classifyVisibleEvidence();
+    const urlChanged = location.href !== beforeUrl;
+    const pageHint = `${location.href} ${document.title || ""}`;
+    const urlLooksDone = /thank|success|submitted|queue|review|confirm|done/i.test(pageHint);
+    const matched = classified.matched === true || (urlChanged && urlLooksDone);
+    return {
+      ok: true,
+      platform,
+      clickedSubmit: true,
+      submitted: true,
+      publicationStatus: classified.publicationStatus || "submitted",
+      evidence: classified.evidence || (matched ? document.title : ""),
+      matched: !!matched,
+      urlChanged,
+      ...fillResult,
+    };
   }
 
   function findSubmissionLink() {
@@ -982,30 +1083,7 @@
       logStep(`⚠️ 图片字段需手动上传: ${result.skippedFiles.join(", ")}`);
     }
 
-    if (detectCaptcha()) {
-      logStep("🤖 检测到验证码 — 请手动完成");
-      highlightCaptchaArea();
-      return { captcha: true };
-    }
-
-    const submitBtn = findSubmitButton('button[type="submit"], input[type="submit"]', [
-      "submit",
-      "add",
-      "list",
-      "publish",
-    ]);
-    if (submitBtn) {
-      if (isFillOnly(config)) return returnAfterFill(config, "directory");
-      logStep("🚀 提交目录…");
-      submitBtn.click();
-      await sleep(3000);
-    } else {
-      if (isFillOnly(config)) return returnAfterFill(config, "directory");
-      logStep("⚠️ 未找到目录提交按钮，已填字段请手动提交");
-      return { manual: true, platform: "directory", reason: "no_submit_button" };
-    }
-
-    return { ok: true, platform: "directory", ...result };
+    return submitFilledForm(config, "directory", result);
   }
 
   // ─── Article Comment Submission ───
@@ -1135,28 +1213,7 @@
       return { error: "no_fillable_fields", skipReason: "未找到可自动填写字段" };
     }
 
-    if (detectCaptcha()) {
-      logStep("🤖 检测到验证码 — 请手动完成");
-      highlightCaptchaArea();
-      return { captcha: true };
-    }
-
-    const submitBtn = findSubmitButton(
-      'input[type="submit"], button[type="submit"], button[name="submit"], input[name="submit"]',
-      ["submit", "send", "save", "publish"],
-    );
-    if (submitBtn) {
-      if (isFillOnly(config)) return returnAfterFill(config, "generic");
-      logStep("🚀 提交表单…");
-      submitBtn.click();
-      await sleep(3000);
-    } else {
-      if (isFillOnly(config)) return returnAfterFill(config, "generic");
-      logStep("⚠️ 未找到提交按钮，已填字段请手动提交");
-      return { manual: true, platform: "generic", reason: "no_submit_button" };
-    }
-
-    return { ok: true, platform: "generic" };
+    return submitFilledForm(config, "generic", { filledCount });
   }
 
   // ─── Finalize After Captcha ───
@@ -2709,6 +2766,14 @@
       if (keyNorm.includes("mail") && /\bmail/.test(hint)) return val;
     }
 
+    const inferredKey =
+      self.ExtLinkProfiles && typeof self.ExtLinkProfiles.inferReusableProfileKey === "function"
+        ? self.ExtLinkProfiles.inferReusableProfileKey(hint, "", Object.keys(pf))
+        : "";
+    if (inferredKey && pf[inferredKey]) {
+      return fitValueToConstraints(pf[inferredKey], getFieldConstraints(element));
+    }
+
     return "";
   }
 
@@ -3152,6 +3217,7 @@
         profileKey: inferProfileKeyForValue(config, val),
         value: String(val).trim(),
         label: getSnapshotLabel(element),
+        hint: getFieldHint(element),
       };
     }
     return { mappings };

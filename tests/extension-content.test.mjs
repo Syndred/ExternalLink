@@ -473,6 +473,41 @@ assert.match(
   "fill-only must still win unless the standard WP preflight passed",
 );
 assert.match(
+  content,
+  /function\s+shouldAutoSubmitListing\s*\(/,
+  "directory listings should have an explicit auto-submit gate",
+);
+assert.match(
+  content,
+  /function\s+detectSubmitBlockers\s*\(/,
+  "auto-submit must stop on captcha, login, or paid buttons",
+);
+assert.match(
+  content,
+  /function\s+submitFilledForm\s*\(/,
+  "filled directory forms should submit only after blocker checks",
+);
+assert.match(
+  content,
+  /页签留下等人/,
+  "captcha tabs should stay open for a human instead of being closed",
+);
+assert.match(
+  background,
+  /function tryAutoSubmitFilledForm/,
+  "side panel fill should attempt directory auto-submit after a ready form",
+);
+assert.match(
+  background,
+  /function completeTaskFromSubmit/,
+  "batch auto-submit should write the ledger only after submit evidence",
+);
+assert.match(
+  background,
+  /autoSubmitDirectoryListings/,
+  "directory auto-submit should be a persisted setting",
+);
+assert.match(
   background,
   /lib\/playbooks\.js/,
   "background should load directory playbooks",

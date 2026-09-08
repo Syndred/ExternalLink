@@ -152,6 +152,13 @@ assert.equal(P.nextProfileSortIndex(reordered), 3);
 assert.equal(P.inferReusableProfileKey("Product URL", ""), "Url");
 assert.equal(P.inferReusableProfileKey("Short description", ""), "Short description(20-30 words)");
 assert.equal(P.inferReusableProfileKey("CAPTCHA", "Title"), "");
+assert.equal(P.inferReusableProfileKey("Discord", "", [], "https://discord.gg/demo"), "Discord");
+assert.equal(P.inferReusableProfileKey("Founded year", "", [], "2024"), "Founded year");
+assert.equal(P.inferReusableProfileKey("Integration list", "", [], "Slack, Notion"), "Integration list");
+assert.equal(P.inferReusableProfileKey("How did you hear about us", "", [], "Google"), "");
+assert.equal(P.inferReusableProfileKey("Category", "select", [], "AI Tools"), "");
+assert.equal(P.inferReusableProfileKey("I agree to the terms", "", [], "on"), "");
+assert.equal(P.isSiteSpecificField("How did you hear about us"), true);
 
 const learned = P.learnProfileFieldsFromFill(
   {
@@ -166,16 +173,28 @@ const learned = P.learnProfileFieldsFromFill(
     name: { label: "Product name", value: "Should not overwrite" },
     captcha: { label: "CAPTCHA", value: "AB12" },
     date: { label: "Launch date", value: "2026-09-08" },
+    discord: { label: "Discord", value: "https://discord.gg/demo" },
+    founded: { label: "Founded year", value: "2024" },
+    integrations: { label: "Integration list", value: "Slack, Notion" },
+    hear: { label: "How did you hear about us", value: "Google" },
+    category: { label: "Category", profileKey: "category", value: "AI Tools" },
   },
 );
 assert.equal(learned.profile.fields.Url, "https://demo.example");
 assert.equal(learned.profile.fields.Title, "Demo Tool");
 assert.equal(learned.profile.fields.Name, "Demo");
+assert.equal(learned.profile.fields.Discord, "https://discord.gg/demo");
+assert.equal(learned.profile.fields["Founded year"], "2024");
+assert.equal(learned.profile.fields["Integration list"], "Slack, Notion");
 assert.ok(!learned.profile.fields.CAPTCHA);
+assert.ok(!learned.profile.fields.Category);
+assert.ok(!learned.profile.fields["How did you hear about us"]);
 assert.ok(!learned.added.includes("Name"));
-assert.equal(learned.added.length, 2);
 assert.ok(learned.added.includes("Title"));
 assert.ok(learned.added.includes("Url"));
+assert.ok(learned.added.includes("Discord"));
+assert.ok(learned.added.includes("Founded year"));
+assert.ok(learned.added.includes("Integration list"));
 assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profileKey, "Url");
 
 console.log("profile migration tests passed");

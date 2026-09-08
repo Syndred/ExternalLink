@@ -51,6 +51,7 @@ for (const id of [
   "libraryQualityFilter",
   "librarySort",
   "autoSubmitStandardWpComments",
+  "autoSubmitDirectoryListings",
 ]) {
   assert.match(settingsHtml, new RegExp(`id="${id}"`));
 }
@@ -180,6 +181,7 @@ assert.match(background, /case "removeSubmissionTimelineEvent"/);
 assert.match(background, /submissionTimeline/);
 assert.match(background, /case "cloudSyncMigrate"/);
 assert.match(background, /case "runLinkMonitor"/);
+assert.match(background, /function persistFillLearnings/);
 assert.match(background, /learnProfileFieldsFromFill\(current,/);
 assert.doesNotMatch(background, /learnProfileFieldsFromFill\(profile,/);
 assert.match(sidepanelJs, /资料库已补齐/);
@@ -190,6 +192,9 @@ assert.match(sidepanelHtml, /id="playbookNote"/);
 assert.match(sidepanelJs, /熟站 \$\{playbook\.title\}/);
 assert.doesNotMatch(background, /python3 -m local_agent\.server/);
 assert.match(settingsJs, /autoSubmitStandardWpComments/);
+assert.match(settingsJs, /autoSubmitDirectoryListings/);
+assert.match(sidepanelJs, /已提交并记入账本/);
+assert.match(sidepanelJs, /未见回执，请人工确认/);
 assert.match(settingsJs, /pending_moderation/);
 assert.match(settingsCss, /profile-status\.published/);
 assert.match(background, /LINK_MONITOR_ALARM/);

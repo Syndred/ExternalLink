@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Form validation retry fixture</title>
+    <style>
+      body { font-family: sans-serif; max-width: 32rem; margin: 2rem auto; }
+      label { display: block; margin: 0.75rem 0 0.25rem; }
+      .error { color: #b91c1c; min-height: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Submit a tool</h1>
+    <form id="listing">
+      <label for="name">Tool name</label>
+      <input id="name" name="product_name" required />
+      <label for="url">Website</label>
+      <input id="url" name="website" type="url" required />
+      <label for="category">Category *</label>
+      <select id="category" name="category" required>
+        <option value="">Select a category</option>
+        <option value="ai">AI Tools</option>
+        <option value="productivity">Productivity</option>
+      </select>
+      <p id="category-error" class="error" hidden>This field is required</p>
+      <button type="submit">Submit</button>
+    </form>
+    <p id="thanks" hidden>Thank you, your listing is under review.</p>
+    <script>
+      document.getElementById("listing").addEventListener("submit", (event) => {
+        const category = document.getElementById("category");
+        const error = document.getElementById("category-error");
+        if (!category.value) {
+          event.preventDefault();
+          error.hidden = false;
+          category.setAttribute("aria-invalid", "true");
+          return;
+        }
+        event.preventDefault();
+        error.hidden = true;
+        document.getElementById("listing").hidden = true;
+        document.getElementById("thanks").hidden = false;
+      });
+    </script>
+  </body>
+</html>

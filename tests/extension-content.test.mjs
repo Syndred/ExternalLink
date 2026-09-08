@@ -489,6 +489,14 @@ assert.match(
 );
 assert.match(
   content,
+  /function\s+collectFormValidationState\s*\(/,
+  "submit should inspect required and invalid fields before treating a click as success",
+);
+assert.match(content, /validationFailed:\s*true/);
+assert.match(content, /deferSubmit/);
+assert.match(content, /action === ["']collectFormValidation["']/);
+assert.match(
+  content,
   /页签留下等人/,
   "captcha tabs should stay open for a human instead of being closed",
 );
@@ -496,6 +504,11 @@ assert.match(
   background,
   /function tryAutoSubmitFilledForm/,
   "side panel fill should attempt directory auto-submit after a ready form",
+);
+assert.match(
+  background,
+  /function submitUntilAccepted/,
+  "failed HTML/site validation should refill with AI instead of parking immediately",
 );
 assert.match(
   background,
@@ -687,6 +700,12 @@ assert.match(
   /case\s+["']getActiveFillConfig["']:/,
   "background should hand the active profile config to in-page icons",
 );
+assert.doesNotMatch(
+  content,
+  /if \(manualIconConfig\) return manualIconConfig/,
+  "EL icons must re-read the current Profile instead of caching the first site's copy",
+);
+assert.match(content, /changes\.activeSiteId \|\| changes\.siteProfiles/);
 
 const settingsHtml = readFileSync(resolve(root, "extension/settings.html"), "utf8");
 const settingsJs = readFileSync(resolve(root, "extension/settings.js"), "utf8");

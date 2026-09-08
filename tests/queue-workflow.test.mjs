@@ -286,4 +286,62 @@ assert.equal(Q.isGateStatus("needs_manual"), true);
   assert.equal(withoutCollect.gateExclusions, undefined);
 }
 
+{
+  const rainbow = {
+    id: "RainbowPetAI",
+    name: "RainbowPetAI",
+    fields: { Name: "RainbowPetAI", Url: "https://rainbowpetai.com" },
+  };
+  const video = {
+    id: "VideoToArticleAI",
+    name: "VideoToArticleAI",
+    fields: { Name: "VideoToArticleAI", Url: "https://videotoarticleai.com" },
+  };
+  const groups = Q.buildDestinationGroups({
+    tableData: {
+      projects: {},
+      entries: [
+        {
+          link: "https://dir.example/submit",
+          projects: ["RainbowPetAI", "VideoToArticleAI"],
+          submitted: false,
+        },
+      ],
+    },
+    pluginUrls: [],
+    siteProfiles: { RainbowPetAI: rainbow, VideoToArticleAI: video },
+    selectedProfileIds: ["RainbowPetAI", "VideoToArticleAI"],
+    submissionRecords: {},
+    annotations: {},
+    buildAgentConfigFromProfile: (item) => ({
+      projectKey: item.id,
+      brandName: item.fields.Name,
+      targetDomain: item.fields.Url,
+      projectFields: item.fields,
+    }),
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+  assert.equal(groups.length, 1);
+  const jobs = groups[0].jobs;
+  assert.equal(jobs[0].profileId, "RainbowPetAI");
+  assert.equal(jobs[1].profileId, "VideoToArticleAI");
+  assert.equal(jobs[0].config.brandName, "RainbowPetAI");
+  assert.equal(jobs[1].config.brandName, "VideoToArticleAI");
+  assert.equal(jobs[0].config.targetDomain, "https://rainbowpetai.com");
+  assert.equal(jobs[1].config.targetDomain, "https://videotoarticleai.com");
+  assert.notEqual(jobs[0].config.brandName, jobs[1].config.brandName);
+  assert.notEqual(jobs[0].config.targetDomain, jobs[1].config.targetDomain);
+
+  const tasks = Q.flattenDestinationGroups(groups);
+  const page = "https://dir.example/submit";
+  assert.equal(Q.matchSubmissionTarget(page, tasks, "VideoToArticleAI").profileId, "VideoToArticleAI");
+  assert.equal(Q.matchSubmissionTarget(page, tasks, "RainbowPetAI").profileId, "RainbowPetAI");
+  assert.equal(Q.matchSubmissionTarget(page, tasks, "Missing"), null);
+  assert.equal(Q.findSubmissionIndex(page, tasks, "VideoToArticleAI"), 1);
+  assert.notEqual(
+    Q.matchSubmissionTarget(page, tasks, "VideoToArticleAI").config.brandName,
+    Q.matchSubmissionTarget(page, tasks, "RainbowPetAI").config.brandName,
+  );
+}
+
 console.log("queue workflow tests passed");

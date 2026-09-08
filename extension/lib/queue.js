@@ -341,18 +341,25 @@
           config = {
             ...config,
             ...profileConfig,
+            projectKey: profile.id || projectKey,
             projectFields: {
               ...(config.projectFields || {}),
               ...(profileConfig.projectFields || {}),
             },
           };
         }
-      } else if (activeSiteId && siteProfiles[activeSiteId] && buildAgentConfigFromProfile) {
+      } else if (
+        activeSiteId &&
+        siteProfiles[activeSiteId] &&
+        buildAgentConfigFromProfile &&
+        (projectKey === activeSiteId ||
+          findMatchingProfile?.(projectKey, { [activeSiteId]: siteProfiles[activeSiteId] }))
+      ) {
         const profileConfig = buildAgentConfigFromProfile(siteProfiles[activeSiteId]);
         config = {
           ...config,
           ...profileConfig,
-          projectKey: config.projectKey || profileConfig.projectKey,
+          projectKey: profileConfig.projectKey || activeSiteId,
           projectFields: {
             ...(config.projectFields || {}),
             ...(profileConfig.projectFields || {}),
@@ -422,26 +429,42 @@
     };
   }
 
-  /** Match current page to a pending submission target (exact URL or same domain). */
-  function matchSubmissionTarget(pageUrl, tasks) {
-    if (!pageUrl || !Array.isArray(tasks) || !tasks.length) return null;
+  function taskMatchesPage(task, pageUrl) {
+    if (!task || !pageUrl) return false;
     const pageKey = normalizeUrlKey(pageUrl);
     const pageHost = extractDomain(pageUrl).toLowerCase();
-
-    for (const task of tasks) {
-      if (task.key === pageKey) return task;
-    }
-    for (const task of tasks) {
-      const taskHost = String(task.domain || extractDomain(task.url)).toLowerCase();
-      if (taskHost && taskHost === pageHost) return task;
-    }
-    return null;
+    if ((task.key || task.destinationKey) === pageKey) return true;
+    const taskHost = String(task.domain || extractDomain(task.url)).toLowerCase();
+    return !!(taskHost && taskHost === pageHost);
   }
 
-  function findSubmissionIndex(pageUrl, tasks) {
-    const match = matchSubmissionTarget(pageUrl, tasks);
+  function taskMatchesProfile(task, profileId) {
+    const wanted = String(profileId || "").trim();
+    if (!wanted || !task) return false;
+    return (
+      task.profileId === wanted ||
+      task.projectKey === wanted ||
+      task.config?.projectKey === wanted
+    );
+  }
+
+  /** Match current page to a pending submission target (exact URL or same domain). */
+  function matchSubmissionTarget(pageUrl, tasks, profileId = "") {
+    if (!pageUrl || !Array.isArray(tasks) || !tasks.length) return null;
+    const matches = tasks.filter((task) => taskMatchesPage(task, pageUrl));
+    if (!matches.length) return null;
+    if (profileId) {
+      return matches.find((task) => taskMatchesProfile(task, profileId)) || null;
+    }
+    return matches[0];
+  }
+
+  function findSubmissionIndex(pageUrl, tasks, profileId = "") {
+    const match = matchSubmissionTarget(pageUrl, tasks, profileId);
     if (!match) return -1;
-    return tasks.findIndex((t) => t.key === match.key);
+    const byId = tasks.findIndex((t) => t.id && match.id && t.id === match.id);
+    if (byId >= 0) return byId;
+    return tasks.findIndex((t) => t === match);
   }
 
   /** Saved urlList lines + built-in library, deduped (saved entries win). */
@@ -794,6 +817,7 @@
     flattenDestinationGroups,
     matchSubmissionTarget,
     findSubmissionIndex,
+    taskMatchesProfile,
     classifyStatusFromReason,
     isDeadEndStatus,
     isGateStatus,

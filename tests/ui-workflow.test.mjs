@@ -217,6 +217,23 @@ assert.match(advanceGroup, /无法重新进入提交入口/);
 assert.match(advanceGroup, /parkTaskEntry/);
 assert.doesNotMatch(advanceGroup, /recordSubmittedProject/);
 
+assert.match(background, /mergeFillConfig\(globals, perTask, extraConfig\)/);
+assert.match(background, /matchSubmissionTarget\(tabUrl, pendingTasks, profile\.id\)/);
+assert.match(background, /fillIdentityMismatch\(config, profile\)/);
+assert.match(background, /taskConfigIdentityMismatch\(task, fillConfig\)/);
+assert.match(background, /profileId:\s*latestProfile\.id/);
+assert.doesNotMatch(background, /commentTemplate:\s*storage\.cfgCommentTemplate/);
+assert.match(sidepanelJs, /profileId:\s*activeSiteId/);
+assert.doesNotMatch(sidepanelJs, /commentTemplate:\s*items\.cfgCommentTemplate/);
+assert.match(sidepanelJs, /loadCommentTemplate\(\{\s*force:\s*true\s*\}\)/);
+assert.match(background, /function fillFormUntilReady/);
+assert.match(background, /function submitUntilAccepted/);
+assert.match(background, /const MAX_FILL_ROUNDS = 1/);
+assert.match(background, /const MAX_VALIDATION_RETRIES = 2/);
+assert.match(background, /deferSubmit:\s*true/);
+assert.match(background, /validationFailed/);
+assert.match(sidepanelJs, /表单校验未通过，已让 AI 补填/);
+
 for (const panel of ["submit", "sites", "config", "log"]) {
   assert.match(popupHtml, new RegExp(`id="panel-${panel}"`));
 }

@@ -188,6 +188,7 @@
         if (previousActiveSiteId !== activeSiteId) {
           resetCommentStudio({ clearHistory: true });
           resetMediaUploadState();
+          loadCommentTemplate({ force: true });
         }
         loadMediaPreflight().catch(() => {});
       });
@@ -284,7 +285,7 @@
     resetCommentStudio({ clearHistory: true });
     resetMediaUploadState();
     updateProfileStatus();
-    loadCommentTemplate();
+    loadCommentTemplate({ force: true });
     loadMediaPreflight().catch(() => {});
   });
 
@@ -1505,6 +1506,10 @@
               : "已提交并记入账本";
       } else if (result.submitted && !result.matched) {
         msg = "已代点提交，未见回执，请人工确认；页签已保留";
+      } else if (result.validationFailed) {
+        msg = `表单校验未通过，已让 AI 补填：${
+          (result.issues || result.validationIssues || []).slice(0, 2).join("；") || "仍有必填栏"
+        }`;
       } else if (result.invalidCount > 0) {
         msg = `${result.invalidCount} 个字段超出字数限制，请修正`;
       } else if (result.emptyCount > 0) {
@@ -1648,18 +1653,16 @@
     }
   }
 
-  function loadCommentTemplate() {
+  function loadCommentTemplate({ force = false } = {}) {
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
     if (!profile) return;
-    chrome.storage.local.get(["cfgCommentTemplate"], (items) => {
-      const cfg = P.buildAgentConfigFromProfile(profile, {
-        commentTemplate: items.cfgCommentTemplate,
-      });
-      if ($("spCommentText") && !$("spCommentText").value.trim()) {
-        $("spCommentText").value = cfg.commentTemplate || "";
-        updateCommentCharCount();
-      }
-    });
+    const cfg = P.buildAgentConfigFromProfile(profile, {});
+    const box = $("spCommentText");
+    if (!box) return;
+    if (force || !box.value.trim()) {
+      box.value = cfg.commentTemplate || "";
+      updateCommentCharCount();
+    }
   }
 
   // ─── Active tab tracking ───
@@ -1855,6 +1858,7 @@
         mode,
         commentText: commentOverride,
         useAgent: true,
+        profileId: activeSiteId,
       });
 
       handleFillResult(result, mode);

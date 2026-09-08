@@ -23,7 +23,9 @@ for (const id of [
 assert.match(js, /action:\s*["']generateCommentDrafts["']/);
 assert.match(js, /count:\s*3/);
 assert.match(js, /function\s+selectCommentDraft\s*\(/);
-assert.match(js, /function\s+restoreCommentHistory\s*\(/);
+assert.match(js, /loadCommentTemplate\(\{\s*force:\s*true\s*\}\)/);
+assert.match(js, /表单校验未通过，已让 AI 补填/);
+assert.doesNotMatch(js, /commentTemplate:\s*items\.cfgCommentTemplate/);
 assert.match(js, /function\s+captureCommentState\s*\(/);
 assert.match(js, /function\s+commentIsOverLimit\s*\(/);
 assert.match(js, /请先生成或编辑评论，再点击填入评论/);

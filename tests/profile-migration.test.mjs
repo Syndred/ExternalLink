@@ -197,4 +197,82 @@ assert.ok(learned.added.includes("Founded year"));
 assert.ok(learned.added.includes("Integration list"));
 assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profileKey, "Url");
 
+{
+  const rainbow = {
+    id: "RainbowPetAI",
+    name: "RainbowPetAI",
+    promoUrl: "https://rainbowpetai.com",
+    fields: {
+      Name: "RainbowPetAI",
+      Url: "https://rainbowpetai.com",
+      "Long description (250-500 words)": "RainbowPetAI helps remember pets.",
+    },
+  };
+  const video = {
+    id: "VideoToArticleAI",
+    name: "VideoToArticleAI",
+    promoUrl: "https://videotoarticleai.com",
+    fields: {
+      Name: "VideoToArticleAI",
+      Url: "https://videotoarticleai.com",
+      "Long description (250-500 words)": "VideoToArticleAI turns video into articles.",
+    },
+  };
+  const leakedGlobal = P.buildAgentConfigFromProfile(video, {
+    commentTemplate: "RainbowPetAI leftover copy",
+    brandName: "RainbowPetAI",
+  });
+  assert.equal(leakedGlobal.brandName, "VideoToArticleAI");
+  assert.equal(leakedGlobal.targetDomain, "https://videotoarticleai.com");
+  assert.equal(leakedGlobal.commentTemplate, "VideoToArticleAI turns video into articles.");
+  assert.equal(leakedGlobal.projectKey, "VideoToArticleAI");
+
+  const explicitComment = P.buildAgentConfigFromProfile(video, {
+    applyCommentTemplate: true,
+    commentTemplate: "custom comment for this page",
+  });
+  assert.equal(explicitComment.commentTemplate, "custom comment for this page");
+
+  const merged = P.mergeFillConfig(
+    {
+      brandName: "RainbowPetAI",
+      targetDomain: "https://rainbowpetai.com",
+      commentTemplate: "Rainbow leftover",
+      fillOnly: false,
+      autoSubmitDirectory: true,
+      pingIndex: true,
+    },
+    P.buildAgentConfigFromProfile(video),
+    {
+      brandName: "RainbowPetAI",
+      targetDomain: "https://rainbowpetai.com",
+      commentTemplate: "also leftover",
+      concurrency: 3,
+    },
+  );
+  assert.equal(merged.brandName, "VideoToArticleAI");
+  assert.equal(merged.targetDomain, "https://videotoarticleai.com");
+  assert.equal(merged.commentTemplate, "VideoToArticleAI turns video into articles.");
+  assert.equal(merged.projectKey, "VideoToArticleAI");
+  assert.equal(merged.pingIndex, true);
+  assert.equal(merged.concurrency, 3);
+
+  assert.equal(P.fillIdentityMismatch(merged, video), "");
+  assert.equal(
+    P.fillIdentityMismatch(P.buildAgentConfigFromProfile(rainbow), video),
+    "projectKey",
+  );
+  assert.equal(
+    P.taskConfigIdentityMismatch(
+      {
+        profileId: "VideoToArticleAI",
+        profileName: "VideoToArticleAI",
+        config: P.buildAgentConfigFromProfile(video),
+      },
+      P.buildAgentConfigFromProfile(rainbow),
+    ),
+    "projectKey",
+  );
+}
+
 console.log("profile migration tests passed");

@@ -84,6 +84,10 @@
       sendResponse(countEmptyFillableFields());
       return true;
     }
+    if (msg.action === "collectFormValidation") {
+      sendResponse(collectFormValidationState());
+      return true;
+    }
     if (msg.action === "getFilledFieldsReport") {
       sendResponse(collectFilledFieldsReport());
       return true;
@@ -741,6 +745,21 @@
       return returnAfterFill(config, platform);
     }
 
+    const precheck = collectFormValidationState();
+    if (precheck.validationFailed) {
+      logStep(`⚠️ 表单校验未通过，先补填: ${precheck.issues[0] || "有必填或无效栏"}`);
+      return {
+        validationFailed: true,
+        submitted: false,
+        clickedSubmit: false,
+        issues: precheck.issues,
+        emptyCount: precheck.emptyCount,
+        invalidCount: precheck.invalidCount,
+        platform,
+        ...fillResult,
+      };
+    }
+
     logStep("🚀 无验证码，代点提交…");
     const beforeUrl = location.href;
     submitBtn.click();
@@ -750,14 +769,55 @@
     const pageHint = `${location.href} ${document.title || ""}`;
     const urlLooksDone = /thank|success|submitted|queue|review|confirm|done/i.test(pageHint);
     const matched = classified.matched === true || (urlChanged && urlLooksDone);
+    if (matched) {
+      return {
+        ok: true,
+        platform,
+        clickedSubmit: true,
+        submitted: true,
+        publicationStatus: classified.publicationStatus || "submitted",
+        evidence: classified.evidence || document.title || "",
+        matched: true,
+        urlChanged,
+        ...fillResult,
+      };
+    }
+
+    const afterBlocker = detectSubmitBlockers();
+    if (afterBlocker?.captcha) {
+      highlightCaptchaArea();
+      return { captcha: true, keepTab: true, clickedSubmit: true, platform, ...fillResult };
+    }
+    if (afterBlocker?.needs_manual) {
+      return { needs_manual: true, reason: afterBlocker.reason, keepTab: true, platform, ...fillResult };
+    }
+    if (afterBlocker?.blocked) {
+      return { blocked: true, reason: afterBlocker.reason, keepTab: true, platform, ...fillResult };
+    }
+
+    const after = collectFormValidationState();
+    if (after.validationFailed) {
+      logStep(`⚠️ 提交后站点仍提示漏填: ${after.issues[0] || "校验未通过"}`);
+      return {
+        validationFailed: true,
+        submitted: false,
+        clickedSubmit: true,
+        issues: after.issues,
+        emptyCount: after.emptyCount,
+        invalidCount: after.invalidCount,
+        platform,
+        ...fillResult,
+      };
+    }
+
     return {
       ok: true,
       platform,
       clickedSubmit: true,
       submitted: true,
       publicationStatus: classified.publicationStatus || "submitted",
-      evidence: classified.evidence || (matched ? document.title : ""),
-      matched: !!matched,
+      evidence: classified.evidence || "",
+      matched: false,
       urlChanged,
       ...fillResult,
     };
@@ -1083,6 +1143,9 @@
       logStep(`⚠️ 图片字段需手动上传: ${result.skippedFiles.join(", ")}`);
     }
 
+    if (config.deferSubmit) {
+      return { ok: true, fillOnly: true, deferred: true, platform: "directory", ...result };
+    }
     return submitFilledForm(config, "directory", result);
   }
 
@@ -1213,6 +1276,9 @@
       return { error: "no_fillable_fields", skipReason: "未找到可自动填写字段" };
     }
 
+    if (config.deferSubmit) {
+      return { ok: true, fillOnly: true, deferred: true, platform: "generic", filledCount };
+    }
     return submitFilledForm(config, "generic", { filledCount });
   }
 
@@ -3194,6 +3260,52 @@
     };
   }
 
+  function collectVisibleFieldErrors() {
+    const issues = [];
+    const nodes = document.querySelectorAll(
+      "form [aria-invalid='true'], form .invalid-feedback, form .field-error, form .error-message, form .form-error, form .help-block, form [role='alert']",
+    );
+    const looksLikeError =
+      /required|必填|请填写|请选择|this field|is required|cannot be empty|can't be empty|can’t be empty|missing|invalid|填写|选择一项|不能为空/i;
+    for (const node of nodes) {
+      if (!isVisible(node)) continue;
+      const text = compactText(node.innerText || node.textContent || "", 160);
+      if (!text) continue;
+      if (node.getAttribute("aria-invalid") === "true" || looksLikeError.test(text)) {
+        issues.push(text);
+      }
+    }
+    for (const element of queryFillableElements()) {
+      if (element.getAttribute("aria-invalid") === "true") {
+        issues.push(`${getSnapshotLabel(element) || element.name || "字段"}: 站点标记为无效`);
+      }
+      try {
+        if (typeof element.checkValidity === "function" && !element.checkValidity()) {
+          issues.push(
+            `${getSnapshotLabel(element) || element.name || "字段"}: ${
+              element.validationMessage || "HTML 校验未通过"
+            }`,
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return [...new Set(issues)].slice(0, 12);
+  }
+
+  function collectFormValidationState() {
+    const empty = countEmptyFillableFields();
+    const issues = collectVisibleFieldErrors();
+    if (empty.emptyCount > 0) issues.unshift(`还有 ${empty.emptyCount} 个必填栏未填`);
+    if (empty.invalidCount > 0) issues.unshift(`${empty.invalidCount} 个字段校验未通过`);
+    return {
+      ...empty,
+      issues,
+      validationFailed: empty.emptyCount > 0 || empty.invalidCount > 0 || issues.length > 0,
+    };
+  }
+
   function fieldIsRequired(element) {
     if (!element) return false;
     if (element.required || element.getAttribute("aria-required") === "true") return true;
@@ -3453,6 +3565,14 @@
   let manualIconTimer = null;
   let manualIconObserver = null;
 
+  if (chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && (changes.activeSiteId || changes.siteProfiles)) {
+        manualIconConfig = null;
+      }
+    });
+  }
+
   function ensureManualIconStyles() {
     if (document.getElementById(MANUAL_ICON_STYLE_ID)) return;
     const style = document.createElement("style");
@@ -3524,14 +3644,16 @@
   }
 
   async function loadManualIconConfig() {
-    if (manualIconConfig) return manualIconConfig;
     try {
       const response = await chrome.runtime.sendMessage({ action: "getActiveFillConfig" });
-      if (response?.ok && response.config) manualIconConfig = response.config;
+      if (response?.ok && response.config) {
+        manualIconConfig = response.config;
+        return manualIconConfig;
+      }
     } catch {
       /* background unavailable */
     }
-    return manualIconConfig;
+    return null;
   }
 
   async function handleManualIconClick(event, field) {

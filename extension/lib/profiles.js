@@ -93,7 +93,10 @@
       anchorText,
       email,
       username: globalConfig.username || name,
-      commentTemplate: globalConfig.commentTemplate || longDesc || shortDesc,
+      commentTemplate:
+        globalConfig.applyCommentTemplate === true && globalConfig.commentTemplate
+          ? globalConfig.commentTemplate
+          : longDesc || shortDesc,
       tags: fields["Tags Keywords/Hashtags"] || "",
       pricing: fields.Pricing || "",
       launchDate: fields["Launch Date"] || fields["Launch date"] || "",
@@ -126,6 +129,150 @@
       projectFields: fields,
       fillOnly: globalConfig.fillOnly === true,
     };
+  }
+
+  const FILL_RUNTIME_KEYS = [
+    "autoSkipCaptcha",
+    "fillOnly",
+    "autoSubmitDirectory",
+    "autoSubmitStandardWpComments",
+    "manualWaitSec",
+    "pingIndex",
+    "concurrency",
+    "useAgent",
+  ];
+
+  const PRODUCT_IDENTITY_KEYS = [
+    "projectKey",
+    "brandName",
+    "targetDomain",
+    "anchorText",
+    "commentTemplate",
+    "projectFields",
+    "tags",
+    "pricing",
+    "launchDate",
+    "featuredImage",
+    "logoUrl",
+    "logoDataUrl",
+    "screenshots",
+    "learnedFieldMappings",
+    "anchorRules",
+    "blogRules",
+    "targetAudience",
+    "valueProposition",
+    "useCases",
+    "sellablePoints",
+    "avoidContent",
+  ];
+
+  function pickKeys(source, keys) {
+    const out = {};
+    if (!source || typeof source !== "object") return out;
+    for (const key of keys) {
+      if (source[key] !== undefined) out[key] = source[key];
+    }
+    return out;
+  }
+
+  function omitKeys(source, keys) {
+    const skip = new Set(keys);
+    const out = {};
+    if (!source || typeof source !== "object") return out;
+    for (const [key, value] of Object.entries(source)) {
+      if (!skip.has(key)) out[key] = value;
+    }
+    return out;
+  }
+
+  function normalizeIdentityUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw.includes("://") ? raw : `https://${raw.replace(/^\/+/, "")}`);
+      return `${url.hostname.replace(/^www\./i, "").toLowerCase()}${url.pathname.replace(/\/+$/, "")}`;
+    } catch {
+      return raw
+        .replace(/^https?:\/\//i, "")
+        .replace(/^www\./i, "")
+        .replace(/\/+$/, "")
+        .toLowerCase();
+    }
+  }
+
+  function mergeFillConfig(runtimeConfig = {}, profileConfig = {}, extraConfig = {}) {
+    const runtime = pickKeys(runtimeConfig, FILL_RUNTIME_KEYS);
+    const extraRuntime = pickKeys(extraConfig, FILL_RUNTIME_KEYS);
+    const extraRest = omitKeys(extraConfig, [...FILL_RUNTIME_KEYS, ...PRODUCT_IDENTITY_KEYS]);
+    const fillOnly = extraRuntime.fillOnly === true || runtime.fillOnly === true;
+    const autoSubmitDirectory =
+      extraRuntime.autoSubmitDirectory !== undefined
+        ? extraRuntime.autoSubmitDirectory !== false && !fillOnly
+        : runtime.autoSubmitDirectory !== false && !fillOnly;
+    return {
+      ...profileConfig,
+      ...extraRest,
+      ...runtime,
+      ...extraRuntime,
+      projectKey: profileConfig.projectKey || "",
+      brandName: profileConfig.brandName || "",
+      targetDomain: profileConfig.targetDomain || "",
+      anchorText: profileConfig.anchorText || "",
+      commentTemplate: profileConfig.commentTemplate || "",
+      projectFields: profileConfig.projectFields || {},
+      tags: profileConfig.tags || "",
+      pricing: profileConfig.pricing || "",
+      launchDate: profileConfig.launchDate || "",
+      featuredImage: profileConfig.featuredImage || "",
+      logoUrl: profileConfig.logoUrl || "",
+      logoDataUrl: profileConfig.logoDataUrl || "",
+      screenshots: profileConfig.screenshots || [],
+      learnedFieldMappings: profileConfig.learnedFieldMappings || {},
+      anchorRules: profileConfig.anchorRules || {},
+      blogRules: profileConfig.blogRules || {},
+      targetAudience: profileConfig.targetAudience || "",
+      valueProposition: profileConfig.valueProposition || "",
+      useCases: profileConfig.useCases || [],
+      sellablePoints: profileConfig.sellablePoints || [],
+      avoidContent: profileConfig.avoidContent || [],
+      fillOnly,
+      autoSubmitDirectory,
+      autoSubmitStandardWpComments:
+        extraRuntime.autoSubmitStandardWpComments === true ||
+        runtime.autoSubmitStandardWpComments === true,
+    };
+  }
+
+  function fillIdentityMismatch(config, profile) {
+    if (!config || !profile) return "missing_profile";
+    const expectedKey = String(profile.id || "").trim();
+    if (expectedKey && config.projectKey && String(config.projectKey) !== expectedKey) {
+      return "projectKey";
+    }
+    const expectedName = String(profile.fields?.Name || profile.name || "").trim();
+    const actualName = String(config.brandName || "").trim();
+    if (expectedName && actualName && expectedName !== actualName) return "brandName";
+    const expectedUrl = normalizeIdentityUrl(
+      profile.promoUrl || profile.url || profile.fields?.Url || "",
+    );
+    const actualUrl = normalizeIdentityUrl(config.targetDomain || config.projectFields?.Url || "");
+    if (expectedUrl && actualUrl && expectedUrl !== actualUrl) return "targetDomain";
+    return "";
+  }
+
+  function taskConfigIdentityMismatch(task, config) {
+    if (!task || !config) return "missing_task";
+    return fillIdentityMismatch(config, {
+      id: task.profileId || task.projectKey || task.config?.projectKey || "",
+      name: task.profileName || task.config?.brandName || "",
+      promoUrl: task.config?.targetDomain || "",
+      url: task.config?.targetDomain || "",
+      fields: {
+        Name: task.config?.brandName || task.profileName || "",
+        Url: task.config?.targetDomain || "",
+        ...((task.config && task.config.projectFields) || {}),
+      },
+    });
   }
 
   function getScreenshotValuesFromConfig(config) {
@@ -582,6 +729,9 @@
     canonicalProfileId,
     emptySiteProfile,
     buildAgentConfigFromProfile,
+    mergeFillConfig,
+    fillIdentityMismatch,
+    taskConfigIdentityMismatch,
     getScreenshotValuesFromConfig,
     resolveMediaField,
     findMatchingProfile,

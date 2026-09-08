@@ -79,6 +79,7 @@
   let activeSiteId = "";
   let detection = null;
   let tasks = [];
+  let taskWindow = { start: 0, end: 0, total: 0, truncated: false };
   let running = false;
   let stats = { done: 0, skip: 0, err: 0, total: 0 };
   const logLines = [];
@@ -147,6 +148,7 @@
         "activeBatchRun",
         "selectedSiteIds",
         "urlList",
+        "batchRunLog",
       ],
       (items) => {
         siteProfiles = items.siteProfiles || {};
@@ -158,13 +160,16 @@
           activeRun?.tasks?.length &&
           ["running", "waiting_manual", "paused"].includes(activeRun.status)
         ) {
-          tasks = activeRun.tasks;
-          renderTasks();
+          // Persisted v3 rows are compact tuples. Ask the background for the
+          // current UI window instead of expanding the entire batch here.
+          tasks = [];
+          taskWindow = { start: 0, end: 0, total: activeRun.tasks.length, truncated: true };
+          syncTasksFromBackground();
         }
         if (activeRun?.status === "running") {
           setRunning(true, false);
-          syncTasksFromBackground();
         }
+        hydrateBatchLog(items.batchRunLog);
         renderSiteSelect();
         renderBatchSiteChoices();
         updateProfileStatus();
@@ -1878,9 +1883,22 @@
 
   // ─── Batch (from popup) ───
   function log(msg, cls) {
-    const time = new Date().toLocaleTimeString();
-    logLines.push({ time, msg, cls });
-    if (logLines.length > 80) logLines.shift();
+    appendLogEntry({ time: new Date().toLocaleTimeString(), msg, message: msg, cls });
+  }
+
+  function appendLogEntry(entry = {}) {
+    const id = entry.id || "";
+    if (id && logLines.some((line) => line.id === id)) return;
+    logLines.push({
+      id,
+      time: entry.time || (entry.at ? new Date(entry.at).toLocaleTimeString() : new Date().toLocaleTimeString()),
+      msg: entry.message || entry.msg || "",
+      cls: entry.cls || (entry.level === "error" ? "err" : entry.level === "warn" ? "warn" : entry.level === "success" ? "ok" : ""),
+    });
+    if (logLines.length > 400) logLines.shift();
+    if (entry.runId && $("batchLogSummary")) {
+      $("batchLogSummary").textContent = `${entry.runId} · 运行中 · ${logLines.length} 条（最多保留 400 条）`;
+    }
     const el = $("log");
     if (el) {
       el.replaceChildren();
@@ -1893,6 +1911,32 @@
       el.scrollTop = el.scrollHeight;
     }
   }
+
+  function hydrateBatchLog(batchLog) {
+    if (!batchLog || !Array.isArray(batchLog.entries)) return;
+    logLines.length = 0;
+    $("log")?.replaceChildren();
+    for (const entry of batchLog.entries.slice(-400)) appendLogEntry(entry);
+    const summary = $("batchLogSummary");
+    if (summary) {
+      const started = batchLog.startedAt ? new Date(batchLog.startedAt).toLocaleString() : "时间未知";
+      summary.textContent = `${batchLog.runId || "诊断日志"} · ${started} · ${batchLog.entries.length} 条（最多保留 400 条）`;
+    }
+  }
+
+  $("btnCopyBatchLog")?.addEventListener("click", async () => {
+    const text = logLines.map((line) => `[${line.time}] ${line.msg}`).join("\n");
+    if (!text) {
+      showToast("当前没有可复制的批量日志", true);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(`已复制 ${logLines.length} 条日志`);
+    } catch (err) {
+      showToast(`复制失败：${err.message}`, true);
+    }
+  });
 
   function updateStats() {
     const remaining = Math.max(0, stats.total - stats.done - stats.skip - stats.err);
@@ -1936,6 +1980,12 @@
       row.append(index, label, status);
       el.append(row);
     }
+    if (taskWindow.truncated) {
+      const notice = document.createElement("div");
+      notice.className = "empty-state compact-empty";
+      notice.textContent = `为避免侧栏卡死，仅显示第 ${taskWindow.start + 1}–${taskWindow.end} 项；本批共 ${taskWindow.total} 项，列表会随当前进度滚动。`;
+      el.append(notice);
+    }
     const waiting = tasks.some((t) => t.status === "captcha" || t.status === "needs_manual");
     if ($("btnContinue")) $("btnContinue").hidden = !waiting;
     renderRunContext();
@@ -1945,9 +1995,9 @@
     const current = tasks.find((task) => task.status === "running");
     const status = $("autoFillStatus");
     if (!current || !status) return;
-    const finished = tasks.filter((task) => ["ok", "skip", "err"].includes(task.status)).length;
+    const finished = stats.done + stats.skip + stats.err;
     setAutoFillStatus(
-      `外链站 ${current.domain || current.url} · 正在提交 ${current.profileName || current.profileId} · 本站 ${current.groupJobIndex || 1}/${current.groupJobCount || 1} · 总进度 ${finished + 1}/${tasks.length}`,
+      `外链站 ${current.domain || current.url} · 正在提交 ${current.profileName || current.profileId} · 本站 ${current.groupJobIndex || 1}/${current.groupJobCount || 1} · 总进度 ${finished + 1}/${stats.total || taskWindow.total || tasks.length}`,
     );
   }
 
@@ -1989,6 +2039,7 @@
     try {
       const state = await chrome.runtime.sendMessage({ action: "getState" });
       tasks = state?.tasks || [];
+      taskWindow = state?.taskWindow || { start: 0, end: tasks.length, total: tasks.length, truncated: false };
       parkedTasks = state?.parkedTasks || [];
       if (state.stats) stats = state.stats;
       updateStats();
@@ -2005,6 +2056,9 @@
       showToast("请至少勾选一个自家网站", true);
       return;
     }
+    const startButton = $("btnStart");
+    startButton.disabled = true;
+    startButton.textContent = "正在构建队列…";
     try {
       const result = await chrome.runtime.sendMessage({
         action: "start",
@@ -2018,20 +2072,18 @@
       });
       if (!result?.ok) throw new Error(result?.error || "启动失败");
       tasks = result.tasks || [];
-      stats = { done: 0, skip: 0, err: 0, total: tasks.length };
+      taskWindow = result.taskWindow || { start: 0, end: tasks.length, total: tasks.length, truncated: false };
+      stats = result.stats || { done: 0, skip: 0, err: 0, total: taskWindow.total || tasks.length };
       updateStats();
       renderTasks();
-      setRunning(tasks.length > 0);
-      log(
-        tasks.length
-          ? `开始处理 ${result.groups?.length || 0} 个外链站、${tasks.length} 个项目组合`
-          : result.message || "没有待提交组合",
-        tasks.length ? "ok" : "warn",
-      );
+      setRunning(stats.total > 0);
       updateBatchPreview();
     } catch (err) {
       setRunning(false);
       showToast(err.message, true);
+    } finally {
+      startButton.disabled = false;
+      startButton.textContent = "开始提交";
     }
   });
 
@@ -2107,6 +2159,17 @@
   }
 
   chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.action === "batchLogReset") {
+      hydrateBatchLog({ runId: msg.runId, startedAt: msg.startedAt, entries: [] });
+      return;
+    }
+    if (msg.action === "logPersistenceError") {
+      appendLogEntry({
+        msg: `日志持久化失败：${msg.error || "未知错误"}`,
+        cls: "err",
+      });
+      return;
+    }
     if (msg.action === "mediaUploadStatus") {
       handleMediaUploadStatus(msg);
       return;
@@ -2158,7 +2221,7 @@
       }
       syncTasksFromBackground();
     }
-    if (msg.action === "log") log(msg.msg, msg.cls);
+    if (msg.action === "log") appendLogEntry(msg.entry || { msg: msg.msg, cls: msg.cls });
     if (msg.action === "status") setRunning(msg.running);
     if (msg.action === "progress") {
       stats = msg.stats;

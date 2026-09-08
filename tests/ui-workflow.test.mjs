@@ -16,6 +16,10 @@ for (const panel of ["home", "batch", "manual"]) {
 }
 assert.match(sidepanelHtml, /id="batchSiteChoices"/);
 assert.match(sidepanelHtml, /id="batchSelectionSummary"/);
+assert.match(sidepanelHtml, /id="btnCopyBatchLog"/);
+assert.match(sidepanelHtml, /保留最近 400 条/);
+assert.match(sidepanelJs, /taskWindow\.truncated/);
+assert.match(sidepanelJs, /navigator\.clipboard\.writeText/);
 assert.match(sidepanelHtml, /id="manualTaskList"/);
 assert.match(sidepanelJs, /selectedSiteIds/);
 assert.match(sidepanelJs, /action:\s*"confirmSubmissionSuccess"/);

@@ -1148,11 +1148,25 @@ textarea {
 }
 .log {
   margin-top: 8px;
-  max-height: 100px;
+  max-height: 260px;
   overflow-y: auto;
   font-family: monospace;
-  font-size: 10px;
+  font-size: 11px;
+  line-height: 1.5;
   color: #64748b;
+}
+.log > div {
+  padding: 3px 0;
+  border-bottom: 1px solid #eef2f7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.log > .ok { color: #047857; }
+.log > .warn { color: #b45309; }
+.log > .err { color: #b91c1c; }
+
+.batch-log-head {
+  margin-top: 12px;
 }
 
 /* ─── Toast ─── */

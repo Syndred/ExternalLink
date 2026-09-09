@@ -4320,9 +4320,19 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         return;
       }
       if (result.status === "ready_to_create" || result.ready_to_create === true) {
-        const reason = "Product Hunt 必填 100%，等待确认 Create draft（不会排期或购买推广）";
         entry.productHuntReadyToCreate = true;
-        parkProductHuntTask(tabId, task, entry, reason);
+        log(`${task.domain}: Product Hunt 必填项已完成，交给通用截图智能体执行 Create draft 并核验回执`, "");
+        await recordAutomationEvent(task, {
+          type: "producthunt_handoff",
+          status: "running",
+          action: "visual_agent",
+          result: "required fields complete; generic visual agent owns final draft creation and receipt verification",
+        });
+        entry.agentRunning = false;
+        await runAgentLoop(tabId, task, entry, {
+          manual: true,
+          productHuntPrepared: true,
+        });
         return;
       }
       if (result.status === "error" || result.error) {
@@ -4808,6 +4818,7 @@ async function executeTabActions(tabId, actions) {
     const failed = Array.isArray(result.results)
       ? result.results.find((item) => item && !item.ok)
       : null;
+    if (failed?.needs_manual) return result;
     throw new Error(
       result.error || (failed && failed.error) || "content script could not execute action plan",
     );
@@ -4843,7 +4854,7 @@ async function uploadAutomationArtifact(dataUrl, task, kind = "screenshot") {
 
 async function captureTaskVisualContext(tabId, task) {
   const prepared = await chrome.tabs.sendMessage(tabId, { action: "prepareVisualSnapshot" });
-  if (!prepared?.ok || !prepared.elements?.length) throw new Error("页面没有可供视觉兜底识别的控件");
+  if (!prepared?.ok) throw new Error("页面视觉快照准备失败");
   const tab = await chrome.tabs.get(tabId);
   const [previous] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
   try {
@@ -4854,7 +4865,7 @@ async function captureTaskVisualContext(tabId, task) {
     const screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 65 });
     let artifactRef = "";
     try {
-      artifactRef = await uploadAutomationArtifact(screenshot, task, "visual_fallback");
+      artifactRef = await uploadAutomationArtifact(screenshot, task, "computer_use_step");
     } catch (err) {
       console.warn("ExternalLink visual artifact upload failed", err?.message || err);
     }
@@ -4868,38 +4879,48 @@ async function captureTaskVisualContext(tabId, task) {
 function safeVisualActions(actions, elements) {
   const bySelector = new Map((elements || []).map((element) => [element.selector, element]));
   return (actions || []).filter((action) => {
-    if (action.type === "wait") return true;
-    if (action.type === "click") return false;
+    if (["wait", "scroll"].includes(action.type)) return true;
+    if (action.type === "click" && !action.selector) {
+      return Number.isFinite(Number(action.x)) && Number.isFinite(Number(action.y));
+    }
     const element = bySelector.get(action.selector);
     if (!element) return false;
-    const label = `${element.label || ""} ${element.type || ""} ${element.role || ""}`.toLowerCase();
-    if (action.type === "click" && /submit|publish|launch|pay|checkout|sign in|log in|agree|提交|发布|付款|登录|同意/.test(label)) return false;
     return true;
   });
 }
 
-async function executeVisualFallback(tabId, task, snapshot, failure) {
+async function createVisualActionPlan(tabId, task, snapshot, context = {}) {
   const visual = await captureTaskVisualContext(tabId, task);
   const plan = await callCloudAgent("/vision-plan", {
-    ...agentPayload(task, snapshot, { visualFallback: true }),
+    ...agentPayload(task, snapshot, { visualAgent: true }),
     screenshot: visual.screenshot,
     elements: visual.elements,
     viewport: visual.viewport,
-    failure,
+    failure: context.failure || "",
+    history: context.history || [],
+    step: context.step || 0,
   });
   const actions = safeVisualActions(plan.actions, visual.elements);
   await recordAutomationEvent(task, {
     type: "vision_plan",
     status: plan.status,
     action: summarizePlanActions(actions),
-    result: plan.reason || failure || "",
+    result: [plan.stage, plan.reason || context.failure || ""].filter(Boolean).join(" · "),
     artifactRef: visual.artifactRef,
   });
   task.artifactRef = visual.artifactRef || task.artifactRef || "";
-  if (plan.status !== "act" || !actions.length) {
+  return {
+    plan: { ...plan, actions, visualAgent: true },
+    visual,
+  };
+}
+
+async function executeVisualFallback(tabId, task, snapshot, failure) {
+  const { plan } = await createVisualActionPlan(tabId, task, snapshot, { failure });
+  if (plan.status !== "act" || !plan.actions.length) {
     throw new Error(plan.reason || "视觉兜底未返回安全可执行动作");
   }
-  return executeTabActions(tabId, actions);
+  return executeTabActions(tabId, plan.actions);
 }
 
 function getTaskConfig(task, extraConfig = {}) {
@@ -4997,23 +5018,50 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       if (completed) return;
       judge = { ...judge, status: "incomplete", reason: "模型成功判断未通过硬证据闸门，继续执行" };
     }
+    if (judge.status === "needs_manual" && !isExplicitHumanGateJudge(judge, snapshot)) {
+      log(`${task.domain}: 模型尚未确认人工闸门，继续由截图智能体观察和操作`, "warn");
+      judge = { ...judge, status: "incomplete", reason: judge.reason || "当前证据不足，继续观察" };
+    }
     if (handleTerminalJudge(tabId, task, entry, judge)) return;
 
     for (let loop = 0; loop < MAX_AGENT_LOOPS && !state.stopped; loop++) {
-      const plan = await callCloudAgent(
-        "/plan",
-        agentPayload(task, snapshot, { ...extra, judge, loop }),
-      );
+      entry.agentHistory = Array.isArray(entry.agentHistory) ? entry.agentHistory : [];
+      let plan;
+      try {
+        const visualStep = await createVisualActionPlan(tabId, task, snapshot, {
+          step: loop,
+          history: entry.agentHistory,
+          failure: entry.noProgressCount > 0
+            ? `Previous action produced no visible page change (${entry.noProgressCount} consecutive times). Reassess the screenshot and choose a different action.`
+            : "",
+        });
+        plan = visualStep.plan;
+      } catch (visualError) {
+        log(`${task.domain}: 截图智能体暂不可用，使用 DOM 计划继续 - ${visualError.message}`, "warn");
+        plan = await callCloudAgent(
+          "/plan",
+          agentPayload(task, snapshot, { ...extra, judge, loop, visualError: visualError.message }),
+        );
+        plan.visualAgent = false;
+      }
       assertRunCurrent(tabId, entry, runId);
 
       if (plan.status === "needs_manual") {
-        markTaskNeedsManual(
-          tabId,
-          task,
-          entry,
-          plan.reason || plan.message || "云端 AI 需要人工处理",
-        );
-        return;
+        if (isExplicitHumanGateJudge(plan, snapshot)) {
+          markTaskNeedsManual(
+            tabId,
+            task,
+            entry,
+            plan.reason || plan.message || "云端 AI 识别到人工闸门",
+          );
+          return;
+        }
+        plan = {
+          ...plan,
+          status: "act",
+          reason: `${plan.reason || "当前截图不足以决定下一步"}；未发现人工闸门，继续观察页面`,
+          actions: [{ type: "scroll", delta_y: Math.round((snapshot?.viewport?.height || 800) * 0.72) }],
+        };
       }
       if (plan.status === "blocked" || plan.status === "error") {
         markTaskBlocked(
@@ -5051,12 +5099,22 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         actionResult = await executeTabActions(tabId, plan.actions);
       } catch (actionError) {
         entry.actionFailures = Math.max(0, Number(entry.actionFailures) || 0) + 1;
-        if (entry.visualFallbackUsed || entry.actionFailures < VISION_FALLBACK_AFTER_FAILURES) throw actionError;
-        entry.visualFallbackUsed = true;
-        log(`${task.domain}: DOM 动作失败，启用截图标注 + 多模态兜底`, "warn");
+        if (plan.visualAgent) throw actionError;
+        log(`${task.domain}: DOM 动作失败，改由截图智能体接管`, "warn");
         actionResult = await executeVisualFallback(tabId, task, snapshot, actionError.message);
       }
-      if (actionResult.results?.some((item) => item?.submitted)) entry.submissionAttempted = true;
+      const humanGate = actionResult.results?.find((item) => item?.needs_manual);
+      if (humanGate) {
+        const status = humanGate.humanGate === "captcha" ? "needs_captcha" : "needs_manual";
+        markTaskNeedsManual(tabId, task, entry, humanGate.error || "当前动作需要人工处理", status);
+        return;
+      }
+      const submitAction = actionResult.results?.find((item) => item?.submitted);
+      if (submitAction) {
+        entry.submissionAttempted = true;
+        entry.submissionEvidenceBaseline = submitAction.evidenceBaseline || "";
+        entry.submissionUrlBaseline = submitAction.beforeUrl || snapshot.url || "";
+      }
       log(`${task.domain}: 第 ${loop + 1} 轮结果 - ${summarizeActionResults(actionResult)}`, "");
       await recordAutomationEvent(task, {
         type: "action_result",
@@ -5081,26 +5139,25 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       }
       assertRunCurrent(tabId, entry, runId);
 
-      const expectedMutation = plan.actions?.some((action) => ["fill", "select", "check"].includes(action?.type));
-      if (expectedMutation && snapshot.domHash && snapshot.domHash === previousSnapshotHash && !entry.visualFallbackUsed) {
-        entry.visualFallbackUsed = true;
-        log(`${task.domain}: DOM 动作无可见状态变化，启用截图标注 + 多模态兜底`, "warn");
-        const visualResult = await executeVisualFallback(
-          tabId,
-          task,
-          snapshot,
-          "DOM action reported success but snapshot state did not change",
-        );
-        await recordAutomationEvent(task, {
-          type: "vision_action_result",
-          status: visualResult.ok ? "ok" : "failed",
-          result: summarizeActionResults(visualResult),
-        });
-        await sleep(AGENT_ACTION_SETTLE_MS);
-        snapshot = await getTabSnapshot(tabId);
+      const expectedMutation = plan.actions?.some((action) => ["fill", "select", "check", "click", "scroll"].includes(action?.type));
+      const changed = !expectedMutation || !snapshot.domHash || snapshot.domHash !== previousSnapshotHash;
+      entry.noProgressCount = changed ? 0 : Math.max(0, Number(entry.noProgressCount) || 0) + 1;
+      entry.agentHistory.push({
+        step: loop + 1,
+        stage: plan.stage || "",
+        actions: summarizePlanActions(plan.actions),
+        result: summarizeActionResults(actionResult),
+        changed,
+        url: snapshot.url || "",
+      });
+      entry.agentHistory = entry.agentHistory.slice(-8);
+      if (!changed) {
+        log(`${task.domain}: 第 ${loop + 1} 轮页面无变化，下轮将基于新截图重新判断`, "warn");
       }
 
-      const terminalSubmit = await tryAgentDeterministicSubmit(tabId, task, entry, snapshot);
+      const terminalSubmit = !plan.visualAgent
+        ? await tryAgentDeterministicSubmit(tabId, task, entry, snapshot)
+        : false;
       if (terminalSubmit) return;
       assertRunCurrent(tabId, entry, runId);
 
@@ -5129,6 +5186,10 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         });
         if (completed) return;
         judge = { ...judge, status: "incomplete", reason: "模型成功判断未通过硬证据闸门" };
+      }
+      if (judge.status === "needs_manual" && !isExplicitHumanGateJudge(judge, snapshot)) {
+        log(`${task.domain}: 未发现验证码、登录、付费或法律确认闸门，继续自动化`, "warn");
+        judge = { ...judge, status: "incomplete", reason: judge.reason || "继续观察页面" };
       }
       if (handleTerminalJudge(tabId, task, entry, judge)) return;
     }
@@ -5276,6 +5337,12 @@ function handleTerminalJudge(tabId, task, entry, judge) {
   return false;
 }
 
+function isExplicitHumanGateJudge(judge, snapshot) {
+  if (snapshot?.meta?.hasCaptcha === true) return true;
+  const reason = `${judge?.reason || ""} ${judge?.message || ""}`.toLowerCase();
+  return /captcha|recaptcha|hcaptcha|turnstile|验证码|人机验证|\botp\b|verification code|短信码|邮箱验证码|\blog[ -]?in\b|\bsign[ -]?in\b|oauth|登录|登入|paywall|payment|purchase|checkout|subscribe|付款|支付|购买|订阅|legal agreement|accept terms|同意条款|接受协议/.test(reason);
+}
+
 function completeTaskFromSubmit(tabId, task, result) {
   completeTaskFromJudge(tabId, task, {
     evidence: result.evidence || "",
@@ -5296,12 +5363,24 @@ function completeTaskFromSubmit(tabId, task, result) {
 
 function completeTaskFromJudge(tabId, task, judge) {
   const entry = state.activeTabs.get(tabId);
+  const baselineEvidence = shortText(entry?.submissionEvidenceBaseline || "", 2000).toLowerCase();
+  const baselineUrl = String(entry?.submissionUrlBaseline || "");
+  const resultUrl = String(judge.evidenceUrl || judge.publicUrl || "");
+  const resultMoved = Boolean(resultUrl && baselineUrl && resultUrl !== baselineUrl);
+  const evidenceSignals = (Array.isArray(judge.evidenceSignals) ? judge.evidenceSignals : []).filter((signal) => {
+    if (!baselineEvidence || resultMoved) return true;
+    return shortText(signal?.text || "", 2000).toLowerCase() !== baselineEvidence;
+  });
+  const evidence = baselineEvidence && !resultMoved
+    && shortText(judge.evidence || "", 2000).toLowerCase() === baselineEvidence
+    ? ""
+    : judge.evidence || "";
   const proof = self.ExtLinkAutomationLedger.validateSuccessProof({
     confirmedBy: "agent",
-    evidence: judge.evidence || "",
+    evidence,
     source: judge.source || "judge",
     actionObserved: judge.actionObserved === true || entry?.submissionAttempted === true,
-    evidenceSignals: judge.evidenceSignals || [],
+    evidenceSignals,
     networkEvidence: judge.networkEvidence || null,
     publicationStatus: judge.publicationStatus,
     publicUrl: judge.publicUrl || "",

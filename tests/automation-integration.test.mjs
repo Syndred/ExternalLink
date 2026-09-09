@@ -50,16 +50,23 @@ assert.match(background, /executeVisualFallback/);
 assert.match(background, /runProductHuntLaunchLoop/);
 assert.match(background, /type:\s*["']producthunt_stage["']/,
   "Product Hunt must persist a checkpoint for every stage");
-assert.match(background, /status === ["']ready_to_create["'][\s\S]*等待确认 Create draft/,
-  "the final representational action must be a distinct confirmation gate");
+assert.match(background, /status === ["']ready_to_create["'][\s\S]*通用截图智能体执行 Create draft/,
+  "Product Hunt preparation must hand off to the same general visual agent used on other sites");
 assert.doesNotMatch(background, /Product Hunt 多步骤发布需人工完成/,
   "Product Hunt must not be hard-coded to manual before automation runs");
-assert.match(background, /snapshot\.domHash === previousSnapshotHash/,
-  "silent custom-widget failures must trigger visual fallback");
+assert.match(background, /createVisualActionPlan\(tabId, task, snapshot/,
+  "every agent turn must start from a fresh annotated screenshot");
+assert.match(background, /entry\.agentHistory\.push/,
+  "the visual agent must retain bounded cross-step action history");
+assert.match(background, /submissionEvidenceBaseline/,
+  "model-driven submission evidence must be compared with its pre-click baseline");
 assert.match(worker, /deepseek-v4-flash-vision-exp/);
-assert.match(worker, /allowedTypes = new Set\(\["fill", "select", "check", "wait"\]\)/);
-assert.doesNotMatch(worker, /allowedTypes = new Set\([^\n]*"click"/,
-  "models must not receive generic click authority");
+assert.match(worker, /allowedTypes = new Set\(\["fill", "select", "check", "click", "scroll", "wait"\]\)/,
+  "the visual agent must be able to navigate unfamiliar multi-step sites");
+assert.match(worker, /final ordinary free directory\/listing submission control/,
+  "ordinary submissions should be standing-authorized in the visual-agent prompt");
+assert.match(content, /classifyModelClickGate/,
+  "model clicks still need runtime gates for captcha, login, payment, legal, and destructive actions");
 assert.match(worker, /MEDIA_BUCKET\.head\(objectKey\)/,
   "referenced audit screenshots must be immutable");
 assert.match(worker, /status in \('finished', 'stopped', 'failed'\)/,

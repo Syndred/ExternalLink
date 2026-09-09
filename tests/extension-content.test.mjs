@@ -499,7 +499,7 @@ assert.match(
   "fill/select/check actions should dispatch bubbling change events",
 );
 
-for (const actionType of ["fill", "click", "select", "check", "submit", "wait"]) {
+for (const actionType of ["fill", "click", "select", "check", "submit", "scroll", "wait"]) {
   assert.match(
     content,
     new RegExp(`case\\s+['"]${actionType}['"]`),

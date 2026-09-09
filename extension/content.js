@@ -3494,6 +3494,7 @@
       );
     }
     if (element.getAttribute("role") === "button") return true;
+    if (element.matches("label[for], [onclick], [tabindex]:not([tabindex='-1'])")) return true;
     if (tag !== "input") return false;
 
     const type = (element.getAttribute("type") || "text").toLowerCase();
@@ -3518,7 +3519,7 @@
     clearVisualSnapshot();
     assignStableSelectors();
     const candidates = Array.from(document.querySelectorAll(
-      'input, textarea, select, button, [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
+      'input, textarea, select, button, label[for], [onclick], [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [role="option"], [role="tab"], [role="menuitem"], [role="link"], [role="switch"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
     )).filter(isRelevantSnapshotElement).slice(0, 60);
     const elements = [];
     candidates.forEach((element, index) => {
@@ -3551,6 +3552,12 @@
         role: element.getAttribute("role") || "",
         label: getSnapshotLabel(element),
         value: getSnapshotValueInfo(element, element.getAttribute("type") || element.tagName.toLowerCase()),
+        rect: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        },
       });
     });
     return { ok: true, elements, viewport: { width: window.innerWidth, height: window.innerHeight, scrollX, scrollY } };
@@ -3570,6 +3577,7 @@
       try {
         const result = await executeModelAction(action || {});
         results.push({ index, type: action && action.type, ...result });
+        if (!result.ok || result.needs_manual || result.navigationExpected || result.submitted) break;
       } catch (err) {
         results.push({ index, type: action && action.type, ok: false, error: err.message });
       }
@@ -3601,7 +3609,44 @@
         return { ok: true, selector: action.selector };
       }
       case "click": {
-        return actionFailure(action, "AI click capability is disabled; deterministic controls own navigation and submission");
+        const element = resolveActionElement(action);
+        if (!element) return actionFailure(action, "selector not found");
+        if (!isActionElementAllowed(element, action.type))
+          return actionFailure(action, "action target is not clickable");
+        const gate = classifyModelClickGate(element);
+        if (gate) {
+          return {
+            ...actionFailure(action, gate.reason),
+            needs_manual: true,
+            humanGate: gate.type,
+          };
+        }
+
+        const label = compactText(getElementLabel(element), 240);
+        const beforeEvidence = classifyVisibleEvidence();
+        const beforeUrl = redactSnapshotUrl(location.href);
+        const submitted = isModelSubmissionControl(element, label);
+        element.scrollIntoView({ block: "center", inline: "center" });
+        await sleep(80);
+
+        const tag = element.tagName.toLowerCase();
+        const href = tag === "a" ? element.href || element.getAttribute("href") || "" : "";
+        if (href && /^https?:/i.test(href)) {
+          location.assign(href);
+        } else {
+          element.focus();
+          element.click();
+        }
+        return {
+          ok: true,
+          selector: action.selector,
+          clicked: true,
+          submitted,
+          navigationExpected: submitted || Boolean(href) || isLikelyNavigationControl(label),
+          beforeUrl,
+          evidenceBaseline: beforeEvidence?.matched ? beforeEvidence.evidence || "" : "",
+          target: label,
+        };
       }
       case "select": {
         const element = resolveActionElement(action);
@@ -3658,6 +3703,15 @@
       }
       case "submit": {
         return actionFailure(action, "AI action plans cannot submit; deterministic preflight owns submission");
+      }
+      case "scroll": {
+        const requested = Number(action.delta_y ?? action.deltaY ?? action.value ?? 0);
+        const deltaY = Number.isFinite(requested)
+          ? Math.max(-Math.max(window.innerHeight, 900), Math.min(requested, Math.max(window.innerHeight, 900)))
+          : Math.round(window.innerHeight * 0.75);
+        window.scrollBy({ top: deltaY, left: 0, behavior: "auto" });
+        await sleep(180);
+        return { ok: true, scrolled: true, deltaY };
       }
       case "wait": {
         const requestedMs = action.timeout_ms ?? action.ms ?? action.duration ?? 0;
@@ -3828,12 +3882,23 @@
   }
 
   function resolveActionElement(action) {
-    if (!action.selector) return null;
-    try {
-      return document.querySelector(action.selector);
-    } catch (e) {
-      return null;
+    if (action.selector) {
+      try {
+        return document.querySelector(action.selector);
+      } catch (e) {
+        return null;
+      }
     }
+    const x = Number(action.x);
+    const y = Number(action.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const pointed = document.elementFromPoint(
+      Math.max(0, Math.min(x, window.innerWidth - 1)),
+      Math.max(0, Math.min(y, window.innerHeight - 1)),
+    );
+    return pointed?.closest?.(
+      'button, a[href], input, select, textarea, label[for], [onclick], [role="button"], [role="link"], [role="option"], [role="tab"], [role="menuitem"], [role="checkbox"], [role="radio"], [role="switch"], [tabindex]:not([tabindex="-1"])',
+    ) || pointed;
   }
 
   function actionFailure(action, error) {
@@ -3846,7 +3911,7 @@
 
   function isActionElementAllowed(element, actionType) {
     if (!element || !element.matches) return false;
-    if (!element.hasAttribute(SNAPSHOT_SELECTOR_ATTR)) return false;
+    if (!element.hasAttribute(SNAPSHOT_SELECTOR_ATTR) && actionType !== "click") return false;
     if (element.closest('[aria-hidden="true"], [hidden]')) return false;
     if (!isVisible(element)) return false;
 
@@ -3881,9 +3946,51 @@
       return tag === "input" && ["checkbox", "radio"].includes((element.type || "").toLowerCase());
     if (actionType === "submit")
       return tag === "form" || isSubmitControl(element) || !!element.closest("form");
-    if (actionType === "click") return false;
+    if (actionType === "click") {
+      const role = (element.getAttribute("role") || "").toLowerCase();
+      const inputType = (element.getAttribute("type") || "").toLowerCase();
+      return (
+        ["button", "a", "summary", "option"].includes(tag) ||
+        element.matches("label[for], [onclick], [tabindex]:not([tabindex='-1'])") ||
+        (tag === "input" && ["button", "submit", "reset", "checkbox", "radio"].includes(inputType)) ||
+        ["button", "link", "option", "tab", "menuitem", "checkbox", "radio", "switch"].includes(role) ||
+        element.getAttribute("aria-haspopup") === "listbox"
+      );
+    }
 
     return false;
+  }
+
+  function classifyModelClickGate(element) {
+    const label = compactText(getElementLabel(element), 500).toLowerCase();
+    const nearby = compactText(element.closest("form, dialog, [role='dialog']")?.innerText || "", 1200).toLowerCase();
+    const context = `${label} ${nearby}`;
+    if (detectCaptcha() || /captcha|recaptcha|hcaptcha|turnstile|验证码|人机验证/.test(context)) {
+      return { type: "captcha", reason: "检测到验证码，需要人工完成" };
+    }
+    if (/\b(log[ -]?in|sign[ -]?in|sign up|continue with (google|github|apple)|oauth)\b|登录|登入|注册账号|第三方授权/.test(label)) {
+      return { type: "login", reason: "登录或 OAuth 授权需要人工处理" };
+    }
+    if (/\b(pay|payment|purchase|buy now|checkout|subscribe|upgrade plan|start trial)\b|付款|支付|购买|订阅|升级套餐|开始试用/.test(context)) {
+      return { type: "payment", reason: "检测到付费或订阅动作，需要人工确认" };
+    }
+    if (/\b(delete account|delete project|remove account|cancel subscription)\b|删除账号|注销账号|取消订阅/.test(context)) {
+      return { type: "destructive", reason: "检测到不可逆或破坏性动作，需要人工确认" };
+    }
+    if (/\b(i agree|accept terms|agree to (the )?(terms|privacy)|legal agreement|consent)\b|同意.*(条款|协议|隐私)|接受.*(条款|协议)/.test(context)) {
+      return { type: "legal", reason: "检测到明确法律条款确认，需要人工处理" };
+    }
+    return null;
+  }
+
+  function isModelSubmissionControl(element, label = "") {
+    if (isSubmitControl(element)) return true;
+    const normalized = String(label || "").toLowerCase();
+    return /\b(submit|publish|launch|create draft|send listing|add (my )?(site|product|startup)|post comment)\b|提交|发布|创建草稿|发布评论|添加网站|添加产品/.test(normalized);
+  }
+
+  function isLikelyNavigationControl(label = "") {
+    return /\b(next|continue|proceed|back|previous|finish|done|save and continue)\b|下一步|继续|上一步|返回|完成/.test(String(label).toLowerCase());
   }
 
   function isSubmitControl(element) {

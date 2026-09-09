@@ -20,6 +20,10 @@ assert.match(sidepanelHtml, /id="btnResumeBatch"/, "batch UI needs a visible res
 assert.match(sidepanelHtml, /lib\/batch-controls\.js/, "side panel must load the shared batch state predicates");
 assert.match(sidepanel, /btnPause/, "side panel must wire the pause control");
 assert.match(sidepanel, /btnResumeBatch/, "side panel must wire the resume control");
+const pauseClickHandler = sidepanel.match(/\$\("btnPause"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
+const resumeClickHandler = sidepanel.match(/\$\("btnResumeBatch"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
+assert.doesNotMatch(pauseClickHandler, /\blog\(/, "background is the single source of pause log lines");
+assert.doesNotMatch(resumeClickHandler, /\blog\(/, "background is the single source of resume log lines");
 
 const stopCase = background.match(/case\s+["']stop["']:[\s\S]*?\n\s*break;/)?.[0] || "";
 assert.doesNotMatch(stopCase, /closeAllTabs\(\)/, "stop must not close parked human-review tabs");
@@ -27,6 +31,16 @@ assert.match(background, /function\s+closeAutomatedTabs\s*\(/, "stop needs a sel
 assert.match(stopCase, /stopBatchRun\(\)/, "the stop message must await the serialized stop transition");
 assert.match(background, /async function\s+stopBatchRun[\s\S]*?await markActiveBatchStopped\(\)/, "stop must persist the stopped batch before replying");
 assert.match(background, /function\s+markActiveBatchStopped[\s\S]*?parkedTaskIds:\s*\[\.\.\.state\.parkedTaskIds\]/, "stopped persistence must retain parked task ids");
+assert.match(
+  background,
+  /normalizeDestinationKey\(item\.url \|\| ""\) === task\.destinationKey/,
+  "restoring parked tabs must use the same host-scoped destination key as queue construction",
+);
+assert.equal(
+  [...background.matchAll(/log\("任务已停止"/g)].length,
+  1,
+  "a stop transition must write one final stopped line instead of duplicate identical logs",
+);
 const removedHandler = background.match(/chrome\.tabs\.onRemoved\.addListener\([\s\S]*?\n}\);/)?.[0] || "";
 assert.match(removedHandler, /if \(state\.stopped\)/, "closing a tab after stop must not restart the queue");
 
@@ -98,6 +112,17 @@ assert.equal(
   controls.hasContentReadySignal({ snapshot: { text: "Loading…".padEnd(100, " ") }, detection: {} }),
   false,
   "a loading shell must not count as ready",
+);
+assert.equal(
+  controls.hasContentReadySignal({
+    snapshot: {
+      title: "请稍候…",
+      text: "Product Hunt security interstitial content without a completed launch page".padEnd(120, " "),
+    },
+    detection: { operable: true, formFieldCount: 2 },
+  }),
+  false,
+  "a loading browser title must override provisional body content and controls",
 );
 assert.equal(
   controls.hasContentReadySignal({

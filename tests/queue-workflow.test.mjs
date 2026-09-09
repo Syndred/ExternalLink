@@ -27,6 +27,97 @@ function profile(id) {
 const Q = loadQueueModule();
 
 {
+  const groups = Q.buildDestinationGroups({
+    tableData: {
+      projects: {},
+      entries: [
+        { link: "https://www.producthunt.com/", projects: [] },
+        { link: "https://producthunt.com/posts/new", projects: [] },
+      ],
+    },
+    pluginUrls: [{ url: "https://www.producthunt.com/", source: "library" }],
+    siteProfiles: { A: profile("A") },
+    selectedProfileIds: ["A"],
+    submissionRecords: {},
+    annotations: {},
+    buildAgentConfigFromProfile: (item) => ({ projectKey: item.id }),
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+
+  assert.equal(groups.length, 1, "Product Hunt root and launch paths must be one destination");
+  assert.equal(groups[0].destinationKey, "producthunt.com");
+  assert.equal(groups[0].jobs.length, 1, "one Profile must never open duplicate Product Hunt tabs");
+  assert.equal(
+    Q.isSubmissionSuccessful(
+      {
+        "producthunt.com/posts/new::A": {
+          status: "success",
+          destinationKey: "producthunt.com/posts/new",
+          profileId: "A",
+        },
+      },
+      "producthunt.com",
+      "A",
+    ),
+    true,
+    "host-scoped destinations must still recognize successful legacy path records",
+  );
+  assert.equal(
+    Q.findDestinationAnnotation(
+      { "producthunt.com/posts/new": { status: "needs_manual" } },
+      "producthunt.com",
+    )?.status,
+    "needs_manual",
+    "host-scoped destinations must recognize legacy path annotations",
+  );
+  assert.equal(
+    Q.hasStoredDestinationKey(new Set(["producthunt.com/posts/new"]), "producthunt.com"),
+    true,
+    "host-scoped destinations must recognize legacy soft-delete keys",
+  );
+}
+
+{
+  const groups = Q.buildDestinationGroups({
+    tableData: {
+      projects: {},
+      entries: [
+        { link: "https://aitools.neilpatel.com/", projects: [] },
+        { link: "https://aitools.neilpatel.com/submit", projects: [] },
+      ],
+    },
+    pluginUrls: [],
+    siteProfiles: { A: profile("A") },
+    selectedProfileIds: ["A"],
+    submissionRecords: {},
+    annotations: {},
+    buildAgentConfigFromProfile: (item) => ({ projectKey: item.id }),
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+
+  assert.equal(groups.length, 1, "Neil Patel root and submit paths must be one destination");
+  assert.equal(groups[0].destinationKey, "aitools.neilpatel.com");
+}
+
+{
+  const groups = Q.buildDestinationGroups({
+    tableData: {
+      projects: {},
+      entries: [{ link: "https://producthunt.com/posts/new", projects: ["B"] }],
+    },
+    pluginUrls: [{ url: "https://www.producthunt.com/", source: "saved" }],
+    siteProfiles: { A: profile("A") },
+    selectedProfileIds: ["A"],
+    submissionRecords: {},
+    annotations: {},
+    buildAgentConfigFromProfile: (item) => ({ projectKey: item.id }),
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+
+  assert.equal(groups.length, 0, "a saved host alias must not discard table Profile restrictions");
+}
+
+{
   let configBuilds = 0;
   const entries = Array.from({ length: 250 }, (_, index) => ({
     link: `https://directory-${index}.example/submit`,

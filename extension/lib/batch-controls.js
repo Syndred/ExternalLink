@@ -35,8 +35,11 @@
   function hasContentReadySignal({ snapshot = {}, detection = {} } = {}) {
     const page = snapshot && typeof snapshot === "object" ? snapshot : {};
     const probe = detection && typeof detection === "object" ? detection : {};
+    const title = String(page.title || "").replace(/\s+/g, " ").trim();
     const text = String(page.text || "").replace(/\s+/g, " ").trim();
-    const loadingSignal = /\b(?:loading|please wait|just a moment|skeleton)\b|稍候|正在加载/i.test(text);
+    const loadingSignal = /\b(?:loading|please wait|just a moment|skeleton)\b|稍候|正在加载/i.test(
+      `${title} ${text}`,
+    );
     const interactive = probe.operable === true || Number(probe.formFieldCount || 0) > 0;
     return page.error == null && !loadingSignal && (interactive || text.length >= MIN_READY_TEXT_LENGTH);
   }

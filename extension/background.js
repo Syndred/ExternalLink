@@ -965,7 +965,7 @@ async function stopBatchRun() {
   closeAutomatedTabs();
   await markActiveBatchStopped();
   broadcastStatus();
-  log("任务已停止", "warn", { event: "run_stop_requested" });
+  log("已请求停止，正在保留人工页签并关闭自动页签", "warn", { event: "run_stop_requested" });
   return { ok: true, status: "stopped" };
 }
 
@@ -1236,8 +1236,12 @@ async function restoreActiveBatchRun() {
       task.destinationKey,
       task.profileId,
     );
-    const annotation = annotations[task.destinationKey] || annotations[task.domain];
-    const deleted = deletedKeys.has(task.destinationKey);
+    const annotation = self.ExtLinkQueue.findDestinationAnnotation(
+      annotations,
+      task.destinationKey,
+      task.domain,
+    );
+    const deleted = self.ExtLinkQueue.hasStoredDestinationKey(deletedKeys, task.destinationKey);
     const restoredStatus = successful
       ? "ok"
       : deleted || self.ExtLinkQueue.isDeadEndStatus(annotation?.status)
@@ -1264,7 +1268,7 @@ async function restoreActiveBatchRun() {
     const tab = tabs.find((item) => {
       if (!item?.id || claimedTabIds.has(item.id)) return false;
       try {
-        return self.ExtLinkQueue.normalizeUrlKey(item.url || "") === task.destinationKey;
+        return self.ExtLinkQueue.normalizeDestinationKey(item.url || "") === task.destinationKey;
       } catch {
         return false;
       }

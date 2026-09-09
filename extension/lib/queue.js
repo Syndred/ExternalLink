@@ -10,6 +10,13 @@
     pending_moderation: "待审核",
     published: "已上线",
   };
+  // These libraries contain both a landing URL and a submit-route alias for
+  // the same directory. Treat each host as one destination so a Profile is
+  // never opened twice for the same service.
+  const HOST_SCOPED_DESTINATIONS = new Set([
+    "aitools.neilpatel.com",
+    "producthunt.com",
+  ]);
 
   function normalizeUrlKey(url) {
     try {
@@ -43,13 +50,41 @@
     return match ? match[1] : raw;
   }
 
+  function normalizeDestinationKey(url) {
+    const normalized = normalizeUrlKey(url);
+    const domain = extractDomain(url).toLowerCase();
+    return HOST_SCOPED_DESTINATIONS.has(domain) ? domain : normalized;
+  }
+
+  function hasStoredDestinationKey(keys, destinationKey) {
+    return [...(keys || [])].some(
+      (key) => key === destinationKey || normalizeDestinationKey(key) === destinationKey,
+    );
+  }
+
+  function findDestinationAnnotation(annotations, destinationKey, domain = "") {
+    const direct = annotations?.[destinationKey] || annotations?.[domain];
+    if (direct) return direct;
+    const match = Object.entries(annotations || {}).find(
+      ([key]) => normalizeDestinationKey(key) === destinationKey,
+    );
+    return match?.[1] || null;
+  }
+
   function submissionRecordKey(destinationKey, profileId) {
     return `${String(destinationKey || "").trim()}::${String(profileId || "").trim()}`;
   }
 
   function isSubmissionSuccessful(records, destinationKey, profileId) {
     const record = (records || {})[submissionRecordKey(destinationKey, profileId)];
-    return record?.status === "success";
+    if (record?.status === "success") return true;
+    if (!HOST_SCOPED_DESTINATIONS.has(destinationKey)) return false;
+    return Object.values(records || {}).some(
+      (item) =>
+        item?.status === "success" &&
+        item?.profileId === profileId &&
+        normalizeDestinationKey(item.destinationKey || item.destinationUrl || "") === destinationKey,
+    );
   }
 
   function normalizePublicationStatus(value) {
@@ -604,8 +639,8 @@
     const excluded = [];
 
     const kept = (tasks || []).filter((task) => {
-      if (deletedKeys.has(task.key)) return false;
-      const ann = annotations[task.key] || annotations[task.domain];
+      if (hasStoredDestinationKey(deletedKeys, task.key)) return false;
+      const ann = findDestinationAnnotation(annotations, task.key, task.domain);
       if (ann && skipStatuses.has(ann.status)) return false;
       if (
         activeProject &&
@@ -690,8 +725,13 @@
     for (const candidate of candidates) {
       const url = String(candidate?.url || "").trim();
       if (!url) continue;
-      const destinationKey = normalizeUrlKey(url);
-      if (!destinationKey || destinations.has(destinationKey)) continue;
+      const destinationKey = normalizeDestinationKey(url);
+      if (!destinationKey) continue;
+      const existing = destinations.get(destinationKey);
+      if (existing) {
+        if (candidate.entry && !existing.entry) existing.entry = candidate.entry;
+        continue;
+      }
       destinations.set(destinationKey, {
         destinationKey,
         url,
@@ -728,8 +768,11 @@
 
     const groups = [];
     for (const destination of destinations.values()) {
-      const annotation =
-        annotations[destination.destinationKey] || annotations[destination.domain] || null;
+      const annotation = findDestinationAnnotation(
+        annotations,
+        destination.destinationKey,
+        destination.domain,
+      );
       if (annotation && DEAD_END_STATUSES.has(annotation.status)) continue;
 
       const jobs = [];
@@ -813,6 +856,9 @@
     PUBLICATION_STATUSES,
     PUBLICATION_LABELS,
     normalizeUrlKey,
+    normalizeDestinationKey,
+    hasStoredDestinationKey,
+    findDestinationAnnotation,
     extractDomain,
     submissionRecordKey,
     isSubmissionSuccessful,

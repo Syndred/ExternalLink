@@ -2165,7 +2165,6 @@
     }
     setBatchStatus("paused");
     syncTasksFromBackground();
-    log("批量已暂停；队列和人工页签均保留", "warn");
   });
 
   $("btnResumeBatch")?.addEventListener("click", async () => {
@@ -2177,7 +2176,6 @@
     }
     setBatchStatus("running");
     syncTasksFromBackground();
-    log("批量已继续", "ok");
   });
 
   $("btnContinue")?.addEventListener("click", async () => {

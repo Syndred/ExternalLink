@@ -66,7 +66,7 @@
       "needs_manual",
       "captcha",
     ]).has(taskStatus);
-    if (entry?.slotActive === false || parked.has(entry?.taskId) || humanStatus || customLaunch) {
+    if (entry?.slotActive === false || parked.has(entry?.taskId) || humanStatus) {
       return "preserve_manual";
     }
     return "close_automated";

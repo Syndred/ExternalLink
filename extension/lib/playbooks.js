@@ -89,9 +89,18 @@
       hosts: ["producthunt.com"],
       kind: "custom_launch",
       title: "Product Hunt",
-      notes: "高价值多步骤发布，按人工流程。公开产品页才算已上线。",
-      hints: ["不要把讨论区评论当成产品上线"],
-      pendingPatterns: ["under review", "scheduled"],
+      notes: "专用多步骤状态机自动准备发布；仅登录、验证码、OTP、付费/法律确认和最终 Create draft 动作停下确认。",
+      hints: ["逐步保存恢复点", "校验上传预览", "不要把讨论区评论或旧产品页当成本次回执"],
+      workflow: {
+        stages: ["entry", "main_info", "images", "makers", "shoutouts", "extras", "investors", "checklist"],
+        finalAction: "Create draft",
+        forbiddenActions: ["Schedule launch for later", "Promote", "Boost", "Pay"],
+        evidence: {
+          draftPath: "/products/",
+          identityFields: ["productName", "targetDomain"],
+        },
+      },
+      pendingPatterns: ["draft", "in progress", "under review", "scheduled"],
       publishedPatterns: ["launched this week", "launched in"],
     },
   ];

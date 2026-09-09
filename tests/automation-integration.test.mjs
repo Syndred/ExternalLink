@@ -47,6 +47,13 @@ assert.match(content, /if \(!strongMatches && !explicitPath\) return null/,
 assert.match(background, /captureVisibleTab/);
 assert.match(background, /cloud-artifact:\/\//);
 assert.match(background, /executeVisualFallback/);
+assert.match(background, /runProductHuntLaunchLoop/);
+assert.match(background, /type:\s*["']producthunt_stage["']/,
+  "Product Hunt must persist a checkpoint for every stage");
+assert.match(background, /status === ["']ready_to_create["'][\s\S]*等待确认 Create draft/,
+  "the final representational action must be a distinct confirmation gate");
+assert.doesNotMatch(background, /Product Hunt 多步骤发布需人工完成/,
+  "Product Hunt must not be hard-coded to manual before automation runs");
 assert.match(background, /snapshot\.domHash === previousSnapshotHash/,
   "silent custom-widget failures must trigger visual fallback");
 assert.match(worker, /deepseek-v4-flash-vision-exp/);

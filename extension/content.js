@@ -49,6 +49,17 @@
   const ACTION_WAIT_LIMIT_MS = 5000;
   const VISUAL_OVERLAY_ATTR = "data-extlink-visual-overlay";
   const SENSITIVE_URL_PARAM_PATTERN = /token|key|secret|code|session|csrf|nonce/i;
+  const PRODUCT_HUNT_STAGES = Object.freeze([
+    "entry",
+    "main_info",
+    "images",
+    "makers",
+    "shoutouts",
+    "extras",
+    "investors",
+    "checklist",
+  ]);
+  const PRODUCT_HUNT_OPTIONAL_STAGES = new Set(["shoutouts", "investors"]);
 
   // ─── Message Handler (registered at end of IIFE) ───
   function onExtensionMessage(msg, sender, sendResponse) {
@@ -75,6 +86,12 @@
       submitFilledForm(msg.config || {}, msg.platform || "directory")
         .then(sendResponse)
         .catch((err) => sendResponse({ error: err.message }));
+      return true;
+    }
+    if (msg.action === "runProductHuntStep" || msg.type === "runProductHuntStep") {
+      runProductHuntStep(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, stage: "gate", error: err.message }));
       return true;
     }
     if (msg.action === "classifySubmitEvidence") {
@@ -715,6 +732,1556 @@
     logStep("✅ 表单已填写 — 请手动检查并提交");
     return { ok: true, fillOnly: true, manual: true, platform, reason: "fill_only" };
   }
+
+  // ---------------------------------------------------------------------------
+  // Product Hunt launch workflow
+  // ---------------------------------------------------------------------------
+  // Product Hunt is a React/SPA launch wizard, not an ordinary directory form.
+  // Keep its stage detection and the final-button policy local and deterministic:
+  // the AI action-plan route must never gain a free-form click/submit capability.
+  function isProductHuntPage() {
+    return /(^|\.)producthunt\.com$/i.test(String(location.hostname || ""));
+  }
+
+  function normalizeProductHuntText(value) {
+    return String(value || "")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201c\u201d]/g, '"')
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  function productHuntSnapshotText(snapshot = {}) {
+    const fields = Array.isArray(snapshot.fields) ? snapshot.fields : [];
+    const buttons = Array.isArray(snapshot.buttons) ? snapshot.buttons : [];
+    const widgets = Array.isArray(snapshot.widgets) ? snapshot.widgets : [];
+    return normalizeProductHuntText(
+      [
+        snapshot.title,
+        snapshot.text,
+        fields
+          .map((field) =>
+            [field.label, field.name, field.id, field.placeholder, field.aria, field.text]
+              .filter(Boolean)
+              .join(" "),
+          )
+          .join(" "),
+        buttons
+          .map((button) => productHuntSnapshotButtonLabel(button))
+          .join(" "),
+        widgets
+          .map((widget) => [widget.label, widget.role].filter(Boolean).join(" "))
+          .join(" "),
+      ].filter(Boolean).join(" "),
+    );
+  }
+
+  function productHuntFieldSnapshotHint(field) {
+    return normalizeProductHuntText(
+      [field?.label, field?.name, field?.id, field?.placeholder, field?.aria, field?.text]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
+
+  function productHuntFieldSnapshotChecked(field) {
+    if (!field) return false;
+    if (field.checked === true || field.selected === true) return true;
+    if (field.value && typeof field.value === "object") {
+      return field.value.checked === true || field.value.selected === true;
+    }
+    return /^(true|checked|on|yes)$/i.test(String(field["aria-checked"] || ""));
+  }
+
+  function productHuntSnapshotButtonLabel(button = {}) {
+    return compactText(
+      [button.text, button.value, button.aria, button.title].find((value) => value && String(value).trim()) || "",
+      180,
+    );
+  }
+
+  function productHuntGateFromSnapshot(snapshot = {}) {
+    const text = productHuntSnapshotText(snapshot);
+    const fields = Array.isArray(snapshot.fields) ? snapshot.fields : [];
+    const buttons = Array.isArray(snapshot.buttons) ? snapshot.buttons : [];
+    const fieldHints = fields.map(productHuntFieldSnapshotHint);
+    const buttonHints = buttons
+      .map((button) => normalizeProductHuntText(productHuntSnapshotButtonLabel(button)))
+      .filter(Boolean);
+
+    // Keep CAPTCHA ahead of OTP because the generic detector historically treats
+    // every verification-code input as a captcha. Product Hunt needs the two gates
+    // to remain recoverable and separately visible in the batch ledger.
+    if (
+      snapshot.captcha === true ||
+      /captcha|recaptcha|hcaptcha|turnstile|cloudflare challenge|verify you are human/.test(text)
+    ) {
+      return "captcha";
+    }
+
+    const hasPassword = fields.some((field) => String(field.type || "").toLowerCase() === "password") ||
+      fieldHints.some((hint) => /password/.test(hint));
+    if (
+      snapshot.login === true ||
+      hasPassword ||
+      /log in to continue|sign in to continue|log in to submit|sign in to submit|you must log in|please log in|please sign in/.test(
+        text,
+      ) ||
+      buttonHints.some((hint) => /^(log in|login|sign in|signin)$/.test(hint))
+    ) {
+      return "login";
+    }
+
+    if (
+      snapshot.otp === true ||
+      fields.some((field, index) => {
+        const hint = fieldHints[index];
+        return /\b(?:otp|one[- ]?time|verification|security)\s*(?:code|token)?\b/.test(hint) ||
+          /(?:verification|security|email)[-_ ]?code/.test(String(field.name || field.id || ""));
+      }) ||
+      /enter (?:the )?(?:verification|security|one[- ]?time) code|check your email for (?:a )?code/.test(
+        text,
+      )
+    ) {
+      return "otp";
+    }
+
+    const paymentButton = buttonHints.some((hint) =>
+      /^(?:promote|boost|pay(?: now)?|checkout|upgrade|buy|sponsor)(?:\b|\s)/.test(hint),
+    );
+    if (
+      snapshot.pay === true ||
+      paymentButton ||
+      /payment required|credit card required|paid plan required|choose a paid plan|checkout to continue|promote this launch|boost this launch/.test(
+        text,
+      )
+    ) {
+      return "pay";
+    }
+
+    const legalField = fields.some((field, index) => {
+      const hint = fieldHints[index];
+      const type = String(field.type || "").toLowerCase();
+      const unchecked = !productHuntFieldSnapshotChecked(field);
+      return (
+        unchecked &&
+        (type === "checkbox" || /checkbox|check box/.test(hint)) &&
+        /terms|privacy|legal|consent|agree|accept|conditions|条款|隐私|同意/.test(hint)
+      );
+    });
+    if (
+      snapshot.legal === true ||
+      legalField ||
+      /(?:agree|accept|confirm) (?:to|the) (?:terms|privacy|legal)|terms of (?:use|service) must be accepted|legal confirmation required/.test(
+        text,
+      )
+    ) {
+      return "legal";
+    }
+
+    return "";
+  }
+
+  function productHuntStageFromSnapshot(snapshot = {}) {
+    if (productHuntGateFromSnapshot(snapshot)) return "gate";
+    const fields = Array.isArray(snapshot.fields) ? snapshot.fields : [];
+    const buttons = Array.isArray(snapshot.buttons) ? snapshot.buttons : [];
+    const fieldHints = fields.map(productHuntFieldSnapshotHint);
+    const buttonLabels = buttons.map((button) =>
+      productHuntNormalizeButtonLabel(productHuntSnapshotButtonLabel(button)),
+    );
+    const hasField = (pattern) => fieldHints.some((hint) => pattern.test(hint));
+    const hasButton = (pattern) => buttonLabels.some((label) => pattern.test(label));
+    const hasCreateDraft = buttonLabels.some((label) => productHuntButtonPolicy(label, "create"));
+    const text = productHuntSnapshotText(snapshot);
+
+    // The left stepper renders every stage label in the DOM. Prefer the
+    // currently editable field IDs and the exact "Next step: ..." action so
+    // those navigation labels cannot make every page look like checklist.
+    if (
+      hasButton(/^continue editing$/) &&
+      /my products|products?\s*(?:&|and)\s*launches|drafts?/.test(text)
+    ) {
+      return "entry";
+    }
+    if (hasButton(/^launch in progress$/) && /\bin progress\b/.test(text)) return "entry";
+    if (hasCreateDraft || (/100\s*%\s*(?:complete|completed)/.test(text) && /complete/.test(text))) {
+      return "checklist";
+    }
+    if (hasButton(/^next step: launch checklist$/) && hasField(/investor|funding|backed/)) {
+      return "investors";
+    }
+    if (hasButton(/^next step: extras$/)) return "shoutouts";
+    if (hasButton(/^next step: shoutouts$/) && hasField(/\b(?:ismaker|solomaker|solo maker|is solo|maker|founder|creator)\b/)) {
+      return "makers";
+    }
+    if (hasField(/(?:^|\b)(?:pricingtype|free options?|pricing|price)(?:\b|$)/)) return "extras";
+    if (hasField(/file-input-(?:thumbnailimageuuid|media)|(?:gallery|product image|screenshot|logo)/)) return "images";
+    if (
+      hasField(/(?:product name|tagline|one[- ]?liner|commentbody|website|homepage|description|product url)/) ||
+      hasField(/(?:^|\b)(?:name|tagline|topics?)(?:\b|$)/)
+    ) {
+      return "main_info";
+    }
+    return "unknown";
+  }
+
+  function productHuntNormalizeButtonLabel(label) {
+    return normalizeProductHuntText(label)
+      .replace(/[\u2192\u2194>»]+$/g, "")
+      .replace(/[.!:]+$/g, "")
+      .trim();
+  }
+
+  function productHuntButtonPolicy(label, kind = "advance") {
+    const normalized = productHuntNormalizeButtonLabel(label);
+    if (!normalized) return false;
+    if (kind === "create") return normalized === "create draft";
+    if (kind === "skip") {
+      return /^(?:skip|skip for now|not now|no thanks|later|跳过|暂不|以后再说)$/.test(normalized);
+    }
+    if (/^next step: (?:images and media|makers|shoutouts|extras|connect with investors|launch checklist)$/.test(normalized)) {
+      return true;
+    }
+    if (/schedule launch|promote|boost|pay|checkout|upgrade|buy|sponsor|create draft|agree|accept|log in|sign in|publish|launch/.test(normalized)) {
+      return false;
+    }
+    return /^(?:next|continue|proceed|save and continue|下一步|继续|保存并继续)$/.test(normalized);
+  }
+
+  function productHuntShouldClickCreateDraft(confirmCreate, checklistReady, label) {
+    return confirmCreate === true && checklistReady === true && productHuntButtonPolicy(label, "create");
+  }
+
+  function productHuntConfigValues(config = {}) {
+    const nested =
+      config.productHunt && typeof config.productHunt === "object"
+        ? config.productHunt
+        : config.producthunt && typeof config.producthunt === "object"
+          ? config.producthunt
+          : {};
+    const pf = getProfileFields(config);
+    const first = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") || "";
+    const list = (value) => {
+      if (Array.isArray(value)) return value.flatMap((item) => list(item));
+      if (value && typeof value === "object") {
+        return list(value.url || value.ref || value.value || value.source || "");
+      }
+      const raw = String(value || "").trim();
+      if (!raw) return [];
+      if (/^data:/i.test(raw) || /^cloud-media:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) return [raw];
+      return raw.split(/[\n;|]+/).map((item) => item.trim()).filter(Boolean);
+    };
+    const logoValue = nested.logo && typeof nested.logo === "object"
+      ? nested.logo
+      : first(nested.logo, nested.logoUrl, nested.logoDataUrl, config.logoUrl, config.logoDataUrl, pf.LOGO, pf["Featured image"]);
+    const galleryValue = first(
+      nested.gallery,
+      nested.images,
+      nested.screenshots,
+      config.gallery,
+      config.screenshots,
+      getScreenshotValues(config),
+    );
+    const topicsValue = first(
+      nested.topics,
+      nested.topic,
+      config.productHuntTopics,
+      config.topics,
+      pf["Product Hunt Topics"],
+      pf.Topics,
+    );
+    return {
+      productName: first(nested.productName, nested.name, config.brandName, pf.Name, pf.Title),
+      tagline: first(nested.tagline, nested.oneLiner, config.tagline, pf["Short description(20-30 words)"], pf.Note),
+      description: first(
+        nested.description,
+        config.description,
+        pf["Feature description"],
+        pf["Short Discription(100-150 words)"],
+        pf["Long description (250-500 words)"],
+        pf["Short description(20-30 words)"],
+      ),
+      website: first(nested.website, nested.url, config.targetDomain, pf.Url),
+      topics: list(topicsValue),
+      makerHandle: first(
+        nested.makerHandle,
+        nested.maker,
+        nested.handle,
+        config.makerHandle,
+        config.productHuntMakerHandle,
+        pf["Maker Handle"],
+        pf.Maker,
+      ),
+      soloMaker:
+        nested.soloMaker === true ||
+        nested.solo === true ||
+        config.soloMaker === true ||
+        /^(?:true|yes|y|是|1)$/i.test(String(nested.soloMaker || nested.solo || config.soloMaker || pf["Solo Maker"] || "").trim()),
+      pricing: first(nested.freeOptions, nested.pricing, config.pricing, pf["PRICING TYPE"], pf.Pricing, "free"),
+      launchDate: first(nested.launchDate, config.launchDate, pf["Launch Date"], pf["Launch date"], pf["Release Date"]),
+      firstComment: first(
+        nested.firstComment,
+        nested.shoutout,
+        config.firstComment,
+        pf["Product Hunt First Comment"],
+        config.commentTemplate,
+      ),
+      investors: list(first(nested.investors, config.investors, pf.Investors)),
+      logo: logoValue,
+      gallery: list(galleryValue),
+      slug: first(nested.slug, config.slug),
+    };
+  }
+
+  function productHuntControlLabel(element) {
+    if (!element) return "";
+    return compactText(
+      [element.innerText, element.value, element.getAttribute?.("aria-label"), element.textContent, element.getAttribute?.("title")]
+        .find((value) => value && String(value).trim()) || "",
+      180,
+    );
+  }
+
+  function productHuntFieldHint(element) {
+    return normalizeProductHuntText(
+      [
+        getSnapshotLabel(element),
+        element.name,
+        element.id,
+        element.type,
+        element.getAttribute?.("aria-label"),
+        element.getAttribute?.("placeholder"),
+        element.getAttribute?.("data-placeholder"),
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
+
+  function productHuntVisibleText(scope) {
+    const root = scope || document;
+    return compactText(root.innerText || root.textContent || "", 10000);
+  }
+
+  function productHuntQueryVisible(scope, selector) {
+    const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+    const result = Array.from(root.querySelectorAll(selector)).filter((element) => {
+      try {
+        return isVisible(element);
+      } catch {
+        return false;
+      }
+    });
+    if (result.length || root === document) return result;
+    return Array.from(document.querySelectorAll(selector)).filter((element) => {
+      try {
+        return isVisible(element);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  function productHuntActiveScope() {
+    try {
+      const active = getActiveFillScope();
+      if (active && active !== document && isVisible(active)) return active;
+    } catch {
+      /* fall back to the visible document below */
+    }
+    const candidates = productHuntQueryVisible(
+      document,
+      'main, [role="main"], [data-testid*="launch" i], [class*="Launch"], [class*="launch"]',
+    );
+    return candidates[0] || document;
+  }
+
+  function productHuntFormSnapshot(scope = productHuntActiveScope()) {
+    const fields = productHuntQueryVisible(
+      scope,
+      'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="combobox"]',
+    ).map((element) => ({
+      label: getSnapshotLabel(element),
+      name: element.getAttribute?.("name") || "",
+      id: element.id || "",
+      type: element.getAttribute?.("type") || element.tagName?.toLowerCase() || "",
+      placeholder: element.getAttribute?.("placeholder") || "",
+      aria: element.getAttribute?.("aria-label") || "",
+      required: !!element.required || element.getAttribute?.("aria-required") === "true",
+      checked: !!element.checked,
+      value: getElementFillValue(element),
+    }));
+    // Product Hunt keeps the real file controls visually hidden behind its
+    // upload dropzones. Include those controls in stage detection even though
+    // ordinary fillable-field snapshots intentionally omit hidden inputs.
+    const hiddenMediaInputs = Array.from(
+      (scope && typeof scope.querySelectorAll === "function" ? scope : document).querySelectorAll('input[type="file"]'),
+    ).filter((element) => !fields.some((field) => field.name === (element.name || "") && field.id === (element.id || "")));
+    hiddenMediaInputs.forEach((element) => {
+      fields.push({
+        label: getSnapshotLabel(element),
+        name: element.getAttribute?.("name") || "",
+        id: element.id || "",
+        type: "file",
+        placeholder: element.getAttribute?.("placeholder") || "",
+        aria: element.getAttribute?.("aria-label") || "",
+        required: !!element.required || element.getAttribute?.("aria-required") === "true",
+        checked: false,
+        value: getElementFillValue(element),
+      });
+    });
+    const buttons = productHuntQueryVisible(
+      scope,
+      'button, input[type="button"], input[type="submit"], [role="button"]',
+    ).map((element) => ({
+      text: productHuntControlLabel(element),
+      aria: element.getAttribute?.("aria-label") || "",
+      title: element.getAttribute?.("title") || "",
+      disabled: !!element.disabled || element.getAttribute?.("aria-disabled") === "true",
+    }));
+    return {
+      url: location.href,
+      title: document.title || "",
+      text: productHuntVisibleText(scope),
+      fields,
+      buttons,
+      captcha: productHuntHasExplicitCaptcha(scope),
+    };
+  }
+
+  function productHuntHasExplicitCaptcha(scope = document) {
+    return productHuntQueryVisible(
+      scope,
+      '.g-recaptcha, .h-captcha, .cf-turnstile, [data-sitekey], iframe[src*="recaptcha" i], iframe[src*="hcaptcha" i], iframe[src*="captcha" i], iframe[src*="challenges.cloudflare" i], img[src*="captcha" i], img[alt*="captcha" i], input[name*="captcha" i], input[id*="captcha" i], input[placeholder*="captcha" i]',
+    ).length > 0;
+  }
+
+  function detectProductHuntGate(scope = productHuntActiveScope()) {
+    const snapshot = productHuntFormSnapshot(scope);
+    const gate = productHuntGateFromSnapshot(snapshot);
+    if (!gate) return null;
+    const reasons = {
+      login: "Product Hunt 需要登录后才能继续",
+      captcha: "Product Hunt 检测到验证码或人机验证",
+      otp: "Product Hunt 需要输入一次性验证码",
+      pay: "Product Hunt 当前步骤要求付费或 Promote/Boost",
+      legal: "Product Hunt 需要人工确认条款或法律声明",
+    };
+    if (gate === "captcha") highlightCaptchaArea();
+    return {
+      gate,
+      needs_manual: true,
+      keepTab: true,
+      releaseSlot: true,
+      reason: reasons[gate] || "Product Hunt 需要人工处理",
+    };
+  }
+
+  function detectProductHuntStage(scope = productHuntActiveScope()) {
+    const snapshot = productHuntFormSnapshot(scope);
+    return productHuntStageFromSnapshot(snapshot);
+  }
+
+  function productHuntFindField(scope, patterns, used = new Set()) {
+    const wanted = (Array.isArray(patterns) ? patterns : [patterns]).map(
+      (pattern) => (pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i")),
+    );
+    const candidates = productHuntQueryVisible(
+      scope,
+      'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+    ).filter((element) => {
+      const type = String(element.type || "").toLowerCase();
+      return !used.has(element) && !["hidden", "file", "submit", "button", "reset", "checkbox", "radio"].includes(type);
+    });
+    return candidates
+      .map((element) => {
+        const hint = productHuntFieldHint(element);
+        let score = 0;
+        wanted.forEach((pattern, index) => {
+          if (!pattern.test(hint)) return;
+          score += 20 - index;
+          if (pattern.test(String(element.name || ""))) score += 10;
+          if (pattern.test(String(element.id || ""))) score += 8;
+        });
+        return { element, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)[0]?.element || null;
+  }
+
+  function productHuntValueMatches(element, expected) {
+    if (!element || expected == null || expected === "") return true;
+    const actual = normalizeProductHuntText(getElementFillValue(element));
+    const desired = normalizeProductHuntText(expected);
+    if (!actual || !desired) return false;
+    if (/^https?:\/\//i.test(String(expected))) {
+      try {
+        return new URL(actual).href.replace(/\/$/, "") === new URL(expected).href.replace(/\/$/, "");
+      } catch {
+        /* compare normalized text below */
+      }
+    }
+    return actual === desired || actual.startsWith(desired) || desired.startsWith(actual);
+  }
+
+  async function productHuntFillField(element, value) {
+    if (!element || value == null || value === "") return { ok: false, reason: "empty_value" };
+    const fitted = fitValueToConstraints(String(value), getFieldConstraints(element));
+    const type = String(element.type || "").toLowerCase();
+    if (type === "select-one" || element.tagName?.toLowerCase() === "select") {
+      const ok = setSelectValue(element, fitted);
+      return { ok, value: getElementFillValue(element) };
+    }
+    if (!productHuntValueMatches(element, fitted) || fieldNeedsRefill(element)) {
+      await simulateTyping(element, fitted);
+    }
+    const actual = getElementFillValue(element);
+    return { ok: productHuntValueMatches(element, fitted), value: actual };
+  }
+
+  async function fillProductHuntMainInfo(scope, values) {
+    const specs = [
+      {
+        key: "productName",
+        value: values.productName,
+        patterns: [/product\s*name/, /name\s*of\s*(?:your\s*)?product/, /app\s*name/, /tool\s*name/],
+      },
+      {
+        key: "tagline",
+        value: values.tagline,
+        patterns: [/tagline/, /one[- ]?liner/, /short\s*description/, /subtitle/],
+      },
+      {
+        key: "website",
+        value: values.website,
+        patterns: [/website/, /homepage/, /product\s*url/, /url/],
+      },
+      {
+        key: "description",
+        value: values.description,
+        patterns: [/long\s*description/, /product\s*description/, /describe/, /about\s*(?:your\s*)?product/],
+      },
+    ];
+    const used = new Set();
+    const filled = [];
+    const missing = [];
+    for (const spec of specs) {
+      if (!spec.value) continue;
+      const field = productHuntFindField(scope, spec.patterns, used);
+      if (!field) continue;
+      used.add(field);
+      const result = await productHuntFillField(field, spec.value);
+      if (result.ok) filled.push(spec.key);
+      else if (fieldIsRequired(field)) missing.push(spec.key);
+    }
+    const topicFields = productHuntQueryVisible(
+      scope,
+      'input[name="topics" i], input[id="topics" i], input[name="topic" i], textarea[name="topics" i]',
+    ).filter((element) => !used.has(element));
+    if (values.topics.length && topicFields.length && !productHuntChoiceControls(scope, /topic|categor/).length) {
+      const field = topicFields[0];
+      used.add(field);
+      const result = await productHuntFillField(field, values.topics.join(", "));
+      if (result.ok) filled.push("topics");
+      else if (fieldIsRequired(field)) missing.push("topics");
+    } else {
+      const topics = await fillProductHuntTopics(scope, values);
+      if (!topics.ok) missing.push(...(topics.missing || ["topics"]));
+      else if (topics.selected?.length || topics.selectedAfter?.length || values.topics.length === 0) filled.push("topics");
+    }
+    const commentField = productHuntFindField(scope, [/^commentbody\b/, /comment\s*body/, /first\s*comment/], used);
+    if (commentField && values.firstComment) {
+      used.add(commentField);
+      const result = await productHuntFillField(commentField, values.firstComment);
+      if (result.ok) filled.push("firstComment");
+      else if (fieldIsRequired(commentField)) missing.push("firstComment");
+    }
+    return { filled, missing };
+  }
+
+  function productHuntChoiceLabel(element) {
+    const label = getSnapshotLabel(element);
+    if (label) return compactText(label, 180);
+    return productHuntControlLabel(element) || compactText(element.value || "", 180);
+  }
+
+  function productHuntRawControls(scope, selector) {
+    const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+    const controls = Array.from(root.querySelectorAll(selector));
+    if (controls.length || root === document) return controls;
+    return Array.from(document.querySelectorAll(selector));
+  }
+
+  function productHuntClickAssociatedLabel(input) {
+    const id = input?.id;
+    let label = null;
+    if (id) {
+      try {
+        label = document.querySelector(`label[for="${cssEscape(id)}"]`);
+      } catch {
+        label = null;
+      }
+    }
+    label = label || input?.closest?.("label") || null;
+    if (label) label.click?.();
+    else input?.click?.();
+    if (input) {
+      setCheckedValue(input, true);
+      input.setAttribute?.("aria-checked", "true");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    return !!input;
+  }
+
+  async function waitForProductHuntMakerIdentity(scope, makerHandle, timeoutMs = 1800) {
+    const expected = normalizeProductHuntText(makerHandle || "");
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const text = normalizeProductHuntText(productHuntVisibleText(scope || document));
+      const makerControls = productHuntRawControls(scope, 'input[name*="maker" i], input[name*="founder" i], [role="combobox"]')
+        .filter((input) => !/^(?:ismaker|solomaker|is_maker|solo_maker)$/i.test(input.name || ""));
+      if ((expected && text.includes(expected)) || makerControls.length) return true;
+      await sleep(150);
+    }
+    return false;
+  }
+
+  function productHuntChoiceMatches(label, desired) {
+    const actual = productHuntNormalizeButtonLabel(label);
+    const expected = productHuntNormalizeButtonLabel(desired);
+    if (!actual || !expected) return false;
+    if (actual === expected) return true;
+    // Handles are allowed to appear next to the maker display name, but a topic
+    // must remain an exact chip/option to avoid silently choosing a neighbouring
+    // Product Hunt taxonomy item.
+    if (expected.startsWith("@")) {
+      return new RegExp(`(?:^|\\s)${expected.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?:$|\\s)`, "i").test(actual);
+    }
+    return false;
+  }
+
+  function productHuntChoiceControls(scope, pattern) {
+    const wanted = pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i");
+    return productHuntQueryVisible(
+      scope,
+      'input[type="checkbox"], input[type="radio"], input[name="topics" i], input[id="topics" i], select, [role="combobox"], [aria-haspopup="listbox"]',
+    ).filter((element) => wanted.test(productHuntFieldHint(element)) || wanted.test(productHuntChoiceLabel(element)));
+  }
+
+  function productHuntSelectedLabels(scope, pattern) {
+    const wanted = pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i");
+    const selected = productHuntQueryVisible(
+      scope,
+      'input[type="checkbox"], input[type="radio"], option:checked, [aria-checked="true"], [aria-selected="true"], [data-state="checked"], [data-selected="true"]',
+    );
+    return selected
+      .map((element) => productHuntChoiceLabel(element))
+      .filter((label) => wanted.test(label));
+  }
+
+  function productHuntOptionElements(scope) {
+    const selectors = [
+      '[role="option"]',
+      '[role="listbox"] li',
+      '[data-radix-collection-item]',
+      '.dropdown-item',
+      '[class*="option"]',
+      '[class*="Option"]',
+    ];
+    const result = [];
+    const seen = new Set();
+    selectors.forEach((selector) => {
+      productHuntQueryVisible(scope, selector).forEach((element) => {
+        if (seen.has(element)) return;
+        seen.add(element);
+        result.push(element);
+      });
+    });
+    return result;
+  }
+
+  async function productHuntSelectExact(scope, pattern, desiredValues, options = {}) {
+    const desired = (Array.isArray(desiredValues) ? desiredValues : [desiredValues])
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .map((value) => String(value || "").trim())
+      .filter(Boolean);
+    if (!desired.length) return { selected: [], missing: [] };
+    const controls = productHuntChoiceControls(scope, pattern);
+    const selected = [];
+    const missing = [];
+
+    for (const value of desired) {
+      let matched = false;
+      for (const control of controls) {
+        const type = String(control.type || "").toLowerCase();
+        if (control.tagName?.toLowerCase() === "select") {
+          const option = Array.from(control.options || []).find((item) =>
+            productHuntChoiceMatches(item.textContent || item.label || item.value, value) ||
+            productHuntChoiceMatches(item.value, value),
+          );
+          if (option && setSelectValue(control, option.value)) {
+            selected.push(value);
+            matched = true;
+            break;
+          }
+          continue;
+        }
+        if (type === "checkbox" || type === "radio") {
+          const label = productHuntChoiceLabel(control);
+          if (productHuntChoiceMatches(label, value)) {
+            if (!control.checked) {
+              setCheckedValue(control, true);
+              control.dispatchEvent(new Event("input", { bubbles: true }));
+              control.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            selected.push(value);
+            matched = true;
+            break;
+          }
+          continue;
+        }
+        const hint = productHuntFieldHint(control);
+        if (!pattern.test(hint) && !pattern.test(productHuntChoiceLabel(control))) continue;
+        const current = productHuntChoiceLabel(control);
+        if (productHuntChoiceMatches(current, value)) {
+          selected.push(value);
+          matched = true;
+          break;
+        }
+        control.focus?.();
+        control.click?.();
+        if (
+          control.matches?.('input[name="topics" i], input[id="topics" i], [role="combobox"]') &&
+          String(control.type || "text").toLowerCase() !== "checkbox" &&
+          String(control.type || "text").toLowerCase() !== "radio"
+        ) {
+          await simulateTyping(control, value);
+        }
+        await sleep(250);
+        const option = productHuntOptionElements(scope).find((item) =>
+          productHuntChoiceMatches(productHuntControlLabel(item), value),
+        );
+        if (option) {
+          option.click();
+          await sleep(150);
+          selected.push(value);
+          matched = true;
+          break;
+        }
+        document.body?.click?.();
+      }
+      if (!matched) missing.push(value);
+    }
+
+    const selectedAfter = productHuntSelectedLabels(scope, pattern);
+    return {
+      selected: [...new Set(selected)],
+      selectedAfter,
+      missing,
+      ok: missing.length === 0,
+      requireExact: options.requireExact !== false,
+    };
+  }
+
+  async function fillProductHuntTopics(scope, values) {
+    const topics = [...new Set((values.topics || []).map((topic) => String(topic).trim()).filter(Boolean))];
+    if (!topics.length) {
+      const required = productHuntChoiceControls(scope, /topic|category/).some(fieldIsRequired);
+      return { ok: !required, selected: [], missing: required ? ["topics"] : [] };
+    }
+    const result = await productHuntSelectExact(scope, /topic|categor/, topics, { requireExact: true });
+    return {
+      ok: result.missing.length === 0,
+      selected: result.selected,
+      missing: result.missing,
+      selectedAfter: result.selectedAfter,
+    };
+  }
+
+  async function fillProductHuntMaker(scope, values) {
+    const isMakerInputs = productHuntRawControls(scope, 'input[name="isMaker"], input[name="is_maker"]');
+    const hiddenIsMaker = isMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || isMakerInputs[0];
+    const soloMakerInputs = productHuntRawControls(scope, 'input[name="soloMaker"], input[name="solo_maker"]');
+    const hiddenSoloMaker = soloMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || soloMakerInputs[0];
+    if ((values.makerHandle || values.soloMaker) && hiddenIsMaker) {
+      if (!hiddenIsMaker.checked) productHuntClickAssociatedLabel(hiddenIsMaker);
+      await waitForProductHuntMakerIdentity(scope, values.makerHandle);
+    }
+    if (values.soloMaker && hiddenSoloMaker) {
+      if (!hiddenSoloMaker.checked) productHuntClickAssociatedLabel(hiddenSoloMaker);
+      return { ok: true, solo: true, maker: values.makerHandle || "" };
+    }
+
+    const soloControls = productHuntQueryVisible(
+      scope,
+      'input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"]',
+    ).filter((element) => /solo maker|i am (?:the )?maker|building (?:it )?myself|maker myself/.test(productHuntChoiceLabel(element).toLowerCase()));
+    if (values.soloMaker && soloControls.length) {
+      const control = soloControls[0];
+      if (!control.checked && control.getAttribute?.("aria-checked") !== "true") {
+        setCheckedValue(control, true);
+        control.setAttribute?.("aria-checked", "true");
+        control.dispatchEvent(new Event("input", { bubbles: true }));
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      return { ok: true, solo: true, maker: "" };
+    }
+
+    const makerControls = productHuntChoiceControls(scope, /maker|founder|creator|who.*mak/);
+    if (!values.makerHandle) {
+      const required = makerControls.some((field) => fieldIsRequired(field)) || !values.soloMaker;
+      return { ok: !required, solo: false, maker: "", missing: required ? ["makerHandle"] : [] };
+    }
+
+    const result = await productHuntSelectExact(scope, /maker|founder|creator|who.*mak/, [values.makerHandle], {
+      requireExact: true,
+    });
+    return {
+      ok: result.missing.length === 0,
+      solo: false,
+      maker: result.selected[0] || "",
+      missing: result.missing,
+      selectedAfter: result.selectedAfter,
+    };
+  }
+
+  function productHuntMediaSource(value) {
+    if (value && typeof value === "object") {
+      return value.ref || value.url || value.dataUrl || value.source || value.value || "";
+    }
+    return String(value || "").trim();
+  }
+
+  async function fetchProductHuntMediaBlob(source, config, name) {
+    const value = productHuntMediaSource(source);
+    if (!value) throw new Error("媒体引用为空");
+    if (/^data:/i.test(value)) return { blob: await (await fetch(value)).blob(), name: name || "image" };
+    if (isCloudMediaRef(value)) return fetchCloudMediaBlob(value, name || "cloud-media");
+    const absolute = new URL(value, config?.targetDomain || location.href).href;
+    return { blob: await fetchSubmissionMediaBlob(absolute), name: absolute.split("/").pop()?.split("?")[0] || name || "image" };
+  }
+
+  function productHuntPreviewImages(input) {
+    const roots = [];
+    let current = input;
+    for (let index = 0; current && index < 5; index += 1, current = current.parentElement) roots.push(current);
+    const images = new Set();
+    roots.forEach((root) => {
+      productHuntQueryVisible(root, 'img[src], img[currentSrc], [role="img"]').forEach((image) => images.add(image));
+    });
+    const associated = productHuntQueryVisible(document, 'img[src], img[currentSrc], [role="img"]').filter((image) => {
+      const hint = normalizeProductHuntText(
+        [image.alt, image.getAttribute?.("aria-label"), image.parentElement?.textContent]
+          .filter(Boolean)
+          .join(" "),
+      );
+      return /preview|uploaded|logo|gallery|image|screenshot/.test(hint);
+    });
+    associated.forEach((image) => images.add(image));
+    return [...images].filter((image) => image.currentSrc || image.src || image.getAttribute?.("src"));
+  }
+
+  function productHuntPersistentPreviewCount(kind) {
+    const selector = kind === "logo" ? 'img[alt="preview" i]' : 'img[alt="Media" i]';
+    return productHuntQueryVisible(document, selector).length;
+  }
+
+  async function waitForProductHuntPreview(input, expectedCount = 1, timeoutMs = 1800, kind = "") {
+    const deadline = Date.now() + timeoutMs;
+    let count = Math.max(productHuntPreviewImages(input).length, productHuntPersistentPreviewCount(kind));
+    while (count < expectedCount && Date.now() < deadline) {
+      await sleep(150);
+      count = Math.max(productHuntPreviewImages(input).length, productHuntPersistentPreviewCount(kind));
+    }
+    return { verified: count >= expectedCount, count };
+  }
+
+  async function attachProductHuntMediaFiles(input, sources, config, namePrefix, mediaKind = "") {
+    const usableSources = (sources || []).map(productHuntMediaSource).filter(Boolean);
+    if (!usableSources.length) return { ok: false, reason: "media_source_missing", files: 0, previewVerified: false };
+    try {
+      const files = [];
+      for (let index = 0; index < usableSources.length; index += 1) {
+        const media = await fetchProductHuntMediaBlob(usableSources[index], config, `${namePrefix || "producthunt"}-${index + 1}`);
+        if (!media.blob || !String(media.blob.type || "").startsWith("image/")) throw new Error("媒体不是图片");
+        const normalized = await normalizeImageForFileInput(media.blob, input);
+        const mime = normalized.type || media.blob.type || "image/png";
+        const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1]?.split("+")[0] || "png";
+        const sourceName = String(media.name || namePrefix || "image").replace(/\.[a-z0-9]+$/i, "") || "image";
+        files.push(new File([normalized], `${sourceName}-${index + 1}.${ext}`, { type: mime }));
+      }
+      const dt = new DataTransfer();
+      files.forEach((file) => dt.items.add(file));
+      input.files = dt.files;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      const preview = await waitForProductHuntPreview(
+        input,
+        Math.min(files.length, input.multiple ? files.length : 1),
+        1800,
+        mediaKind,
+      );
+      reportMediaUpload(preview.verified ? "success" : "failed", {
+        name: namePrefix || "producthunt",
+        source: usableSources.some((source) => isCloudMediaRef(source)) ? "cloud" : "remote",
+        files: files.length,
+        previewVerified: preview.verified,
+      });
+      return {
+        ok: files.length > 0 && preview.verified,
+        files: files.length,
+        previewVerified: preview.verified,
+        previewCount: preview.count,
+      };
+    } catch (error) {
+      reportMediaUpload("failed", { name: namePrefix || "producthunt", reason: error.message });
+      return { ok: false, reason: error.message, files: 0, previewVerified: false };
+    }
+  }
+
+  function productHuntMediaInputs(scope) {
+    const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+    const inputs = [];
+    const seen = new Set();
+    const collect = (nodes) => nodes.forEach((input) => {
+      if (input.disabled || input.closest?.('[aria-hidden="true"]')) return;
+      const identity = input.id || input.name || input;
+      if (seen.has(identity)) return;
+      seen.add(identity);
+      inputs.push(input);
+    });
+    collect(Array.from(root.querySelectorAll('input[type="file"]')));
+    if (!inputs.length && root !== document) {
+      collect(Array.from(document.querySelectorAll('input[type="file"]')));
+    }
+    const logo = inputs.find((input) => /file-input-thumbnailimageuuid|thumbnail|logo|icon|avatar/.test(productHuntFieldHint(input))) || null;
+    const gallery = inputs.filter((input) => input !== logo && (
+      input.multiple || /file-input-media|gallery|image|screenshot|product media|photo/.test(productHuntFieldHint(input))
+    ));
+    return { inputs, logo, gallery: gallery.length ? gallery : inputs.filter((input) => input !== logo) };
+  }
+
+  async function fillProductHuntImages(scope, values, config) {
+    const media = productHuntMediaInputs(scope);
+    const logo = productHuntMediaSource(values.logo);
+    const gallery = (values.gallery || []).map(productHuntMediaSource).filter(Boolean);
+    const persistentLogoPreview = productHuntPersistentPreviewCount("logo");
+    const persistentGalleryPreview = productHuntPersistentPreviewCount("gallery");
+    if (!media.inputs.length) {
+      return { ok: !logo && !gallery.length, uploaded: [], missing: logo || gallery.length ? ["images"] : [] };
+    }
+    const uploaded = [];
+    const missing = [];
+    if (media.logo && logo) {
+      if (persistentLogoPreview > 0 || (media.logo.files?.length && productHuntPreviewImages(media.logo).length > 0)) {
+        uploaded.push({ kind: "logo", files: media.logo.files?.length || 1, previewVerified: true, reused: true });
+      } else {
+        const result = await attachProductHuntMediaFiles(media.logo, [logo], { ...config, logoDataUrl: /^data:/i.test(logo) ? logo : config.logoDataUrl }, "logo", "logo");
+        if (result.ok) uploaded.push({ kind: "logo", ...result });
+        else if (fieldIsRequired(media.logo)) missing.push("logo");
+      }
+    } else if (logo) {
+      missing.push("logo");
+    }
+
+    if (gallery.length && persistentGalleryPreview >= gallery.length) {
+      uploaded.push({ kind: "gallery", files: persistentGalleryPreview, previewVerified: true, reused: true });
+      gallery.length = 0;
+    }
+
+    let galleryCursor = 0;
+    for (const input of media.gallery) {
+      if (galleryCursor >= gallery.length) {
+        if (fieldIsRequired(input)) missing.push("gallery");
+        continue;
+      }
+      const sources = input.multiple ? gallery.slice(galleryCursor) : [gallery[galleryCursor]];
+      if (input.files?.length && productHuntPreviewImages(input).length >= Math.min(input.files.length, sources.length)) {
+        galleryCursor += sources.length;
+        uploaded.push({ kind: "gallery", files: input.files.length, previewVerified: true, reused: true });
+        continue;
+      }
+      const result = await attachProductHuntMediaFiles(input, sources, config, "gallery", "gallery");
+      if (result.ok) {
+        uploaded.push({ kind: "gallery", ...result });
+        galleryCursor += sources.length;
+      } else if (fieldIsRequired(input)) {
+        missing.push("gallery");
+      }
+      if (!input.multiple) galleryCursor += result.ok ? 0 : 1;
+    }
+    if (galleryCursor < gallery.length) missing.push("gallery");
+    return {
+      ok: missing.length === 0 && uploaded.every((item) => item.previewVerified !== false),
+      uploaded,
+      missing: [...new Set(missing)],
+      previewVerified: uploaded.length > 0 && uploaded.every((item) => item.previewVerified !== false),
+    };
+  }
+
+  function productHuntPricingValue(value) {
+    const pricing = normalizeProductHuntText(value);
+    if (/freemium|free (?:trial|plan|tier|option)|paid.*free|free.*paid/.test(pricing)) {
+      return "free_options";
+    }
+    if (/paid only|payment required|no free/.test(pricing)) return "payment_required";
+    return /free|no cost|免费/.test(pricing) ? "free" : "";
+  }
+
+  async function fillProductHuntPricing(scope, values) {
+    const pricingText = normalizeProductHuntText(values.pricing || "free");
+    const pricingValue = productHuntPricingValue(pricingText);
+    const hiddenPricing = productHuntRawControls(
+      scope,
+      `input[name="pricingType"][value="${cssEscape(pricingValue)}"]`,
+    )[0];
+    if (hiddenPricing && pricingValue) {
+      if (!hiddenPricing.checked) productHuntClickAssociatedLabel(hiddenPricing);
+      return { ok: true, pricing: pricingValue };
+    }
+    const pricingControls = productHuntChoiceControls(scope, /pric|free option|plan|billing|cost/);
+    const native = pricingControls.find((control) => control.tagName?.toLowerCase() === "select");
+    if (native) {
+      const options = Array.from(native.options || []).filter((option) => !option.disabled && option.value);
+      const wantedFree = /free|freemium|no cost|免费/.test(pricingText);
+      const option = options.find((item) => {
+        const label = normalizeProductHuntText(`${item.textContent || ""} ${item.value || ""}`);
+        return wantedFree ? /free|freemium|no cost|免费/.test(label) && !/paid|premium|pro|upgrade/.test(label) : productHuntChoiceMatches(label, pricingText);
+      });
+      if (option && setSelectValue(native, option.value)) {
+        return { ok: true, pricing: option.textContent || option.value };
+      }
+      if (wantedFree && options.some((item) => /paid|premium|pro|upgrade/i.test(item.textContent || item.value || ""))) {
+        return { ok: false, gate: "pay", reason: "没有可选的免费 Product Hunt 定价" };
+      }
+    }
+
+    const freeChoice = productHuntQueryVisible(
+      scope,
+      'input[type="radio"], input[type="checkbox"], [role="radio"], [role="option"], [data-state], [data-value]',
+    ).find((control) => {
+      const label = normalizeProductHuntText(productHuntChoiceLabel(control));
+      return /free|freemium|no cost|免费/.test(label) && !/paid|premium|pro|upgrade|promote|boost/.test(label);
+    });
+    if (freeChoice) {
+      if (freeChoice.type === "radio" || freeChoice.type === "checkbox") {
+        if (!freeChoice.checked) {
+          setCheckedValue(freeChoice, true);
+          freeChoice.dispatchEvent(new Event("input", { bubbles: true }));
+          freeChoice.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      } else if (freeChoice.getAttribute?.("aria-selected") !== "true" && freeChoice.getAttribute?.("data-state") !== "checked") {
+        freeChoice.click?.();
+        await sleep(120);
+      }
+      return { ok: true, pricing: productHuntChoiceLabel(freeChoice) };
+    }
+    const required = pricingControls.some((control) => fieldIsRequired(control));
+    return { ok: !required, pricing: "", missing: required ? ["pricing"] : [] };
+  }
+
+  async function fillProductHuntTextByHint(scope, value, patterns, key) {
+    if (!value) return { ok: true, skipped: true, key };
+    const field = productHuntFindField(scope, patterns);
+    if (!field) return { ok: true, skipped: true, key };
+    const result = await productHuntFillField(field, value);
+    return { ...result, key, label: getSnapshotLabel(field) };
+  }
+
+  async function fillProductHuntShoutouts(scope, values) {
+    // Shoutouts are optional. The first comment belongs to main_info's
+    // commentBody field; never invent or move copy into this optional step.
+    return { ok: true, skipped: true, optional: true, key: "shoutouts" };
+  }
+
+  async function fillProductHuntExtras(scope, values) {
+    const results = [];
+    results.push(await fillProductHuntPricing(scope, values));
+    if (values.launchDate) {
+      results.push(
+        await fillProductHuntTextByHint(
+          scope,
+          normalizeDateValue(values.launchDate) || values.launchDate,
+          [/launch\s*date/, /schedule\s*date/, /release\s*date/],
+          "launchDate",
+        ),
+      );
+    }
+    return {
+      ok: results.every((result) => result.ok),
+      results,
+      missing: results.flatMap((result) => result.missing || []),
+      gate: results.find((result) => result.gate)?.gate || "",
+    };
+  }
+
+  async function fillProductHuntInvestors(scope, values) {
+    if (!values.investors.length) return { ok: true, skipped: true, optional: true };
+    const result = await fillProductHuntTextByHint(
+      scope,
+      values.investors.join(", "),
+      [/investor/, /funding/, /backed\s*by/],
+      "investors",
+    );
+    return { ...result, optional: true };
+  }
+
+  function productHuntFindOptionalSkipButton(scope) {
+    return productHuntQueryVisible(scope, 'button, input[type="button"], [role="button"], a[role="button"]')
+      .filter((element) => !element.disabled && element.getAttribute?.("aria-disabled") !== "true")
+      .find((element) => productHuntButtonPolicy(productHuntControlLabel(element), "skip"));
+  }
+
+  function productHuntFindAdvanceButton(scope) {
+    return productHuntQueryVisible(scope, 'button, input[type="button"], input[type="submit"], [role="button"], a[role="button"]')
+      .filter((element) => !element.disabled && element.getAttribute?.("aria-disabled") !== "true")
+      .find((element) => productHuntButtonPolicy(productHuntControlLabel(element), "advance"));
+  }
+
+  function productHuntFindCreateDraftButton(scope) {
+    return productHuntQueryVisible(scope, 'button, input[type="button"], input[type="submit"], [role="button"], a[role="button"]')
+      .filter((element) => !element.disabled && element.getAttribute?.("aria-disabled") !== "true")
+      .find((element) => productHuntButtonPolicy(productHuntControlLabel(element), "create"));
+  }
+
+  function productHuntStageSignature(scope = productHuntActiveScope()) {
+    const controls = productHuntQueryVisible(
+      scope,
+      'input:not([type="hidden"]), textarea, select, [contenteditable="true"], button, [role="button"], [role="combobox"]',
+    );
+    return hashSnapshot(
+      `${location.href}\n${productHuntVisibleText(scope)}\n${controls
+        .slice(0, 120)
+        .map((element) => `${element.tagName}|${productHuntFieldHint(element)}|${productHuntControlLabel(element)}`)
+        .join("\n")}`,
+    );
+  }
+
+  async function waitForProductHuntStageChange(beforeStage, beforeSignature, timeoutMs = 4000) {
+    const deadline = Date.now() + timeoutMs;
+    let stage = detectProductHuntStage();
+    let signature = productHuntStageSignature();
+    while (Date.now() < deadline) {
+      if ((stage && stage !== beforeStage && stage !== "unknown") || signature !== beforeSignature) {
+        return { stage, signature, changed: true };
+      }
+      await sleep(250);
+      stage = detectProductHuntStage();
+      signature = productHuntStageSignature();
+    }
+    return { stage, signature, changed: stage !== beforeStage || signature !== beforeSignature };
+  }
+
+  async function advanceProductHuntStage(scope, stage, options = {}) {
+    const skip = options.optional ? productHuntFindOptionalSkipButton(scope) : null;
+    const button = skip || productHuntFindAdvanceButton(scope);
+    if (!button) {
+      return {
+        ok: true,
+        stageCompleted: false,
+        waiting: true,
+        reason: options.optional ? "等待可选步骤跳过按钮" : "等待下一步按钮",
+        retryAfterMs: 800,
+      };
+    }
+    const label = productHuntControlLabel(button);
+    const beforeUrl = location.href;
+    const beforeSignature = productHuntStageSignature(scope);
+    button.click();
+    const changed = await waitForProductHuntStageChange(stage, beforeSignature);
+    return {
+      ok: true,
+      stageCompleted: true,
+      stageAdvanced: changed.changed,
+      skipped: button === skip,
+      clickedLabel: label,
+      nextStage: changed.stage,
+      urlChanged: location.href !== beforeUrl,
+      waiting: !changed.changed,
+    };
+  }
+
+  function productHuntChecklistStatus(scope, values) {
+    const text = productHuntVisibleText(scope);
+    const progress = productHuntQueryVisible(scope, '[role="progressbar"], progress, [aria-valuenow], [data-progress]')
+      .map((element) => Number(element.getAttribute?.("aria-valuenow") || element.value || element.getAttribute?.("data-progress") || ""))
+      .find((value) => Number.isFinite(value));
+    const textProgress = text.match(/\b(100)\s*%\b/);
+    const requiredUnchecked = productHuntQueryVisible(scope, 'input[type="checkbox"], [role="checkbox"]')
+      .filter((element) => {
+        const label = normalizeProductHuntText(productHuntChoiceLabel(element));
+        return !productHuntFieldSnapshotChecked({ checked: !!element.checked, value: element.value }) &&
+          (/required|must|terms|privacy|legal|agree|accept/.test(label) || element.required);
+      });
+    const unresolved = /\b(?:incomplete|missing|required field|not ready|fix (?:this|these)|add (?:a|an)?)\b/i.test(text);
+    const ready = (progress === 100 || !!textProgress || /all (?:steps|requirements) complete|ready to create/.test(normalizeProductHuntText(text))) &&
+      !requiredUnchecked.length && !unresolved;
+    const createButton = productHuntFindCreateDraftButton(scope);
+    const missing = [];
+    if (!ready) missing.push("checklist");
+    return {
+      ready,
+      progress: progress ?? (textProgress ? 100 : null),
+      missing,
+      requiredUnchecked: requiredUnchecked.map((element) => productHuntChoiceLabel(element)),
+      createButton,
+      productName: values.productName,
+    };
+  }
+
+  function productHuntExpectedSlug(values) {
+    const configured = String(values.slug || "").trim().toLowerCase();
+    if (configured) return configured.replace(/^\/+|\/+$/g, "");
+    return normalizeProductHuntText(values.productName)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function productHuntPublicUrl(values) {
+    const expectedSlug = productHuntExpectedSlug(values);
+    const candidates = [location.href];
+    productHuntQueryVisible(document, "a[href]").forEach((link) => candidates.push(link.href || link.getAttribute("href")));
+    for (const candidate of candidates) {
+      try {
+        const parsed = new URL(candidate, location.href);
+        const match = parsed.pathname.match(/^\/products\/([^/?#]+)/i);
+        if (match && (!expectedSlug || normalizeProductHuntText(match[1]) === expectedSlug)) {
+          parsed.search = "";
+          parsed.hash = "";
+          return parsed.href.replace(/\/$/, "");
+        }
+      } catch {
+        /* ignore malformed links */
+      }
+    }
+    return "";
+  }
+
+  function classifyProductHuntResult(config, baseline = {}) {
+    const values = productHuntConfigValues(config);
+    const text = productHuntVisibleText(document);
+    const normalized = normalizeProductHuntText(text);
+    const beforeEvidence = normalizeProductHuntText(baseline.evidence || "");
+    const evidenceMatch = text.match(/(?:draft (?:created|saved)|submitted (?:for review)?|launch (?:created|submitted)|your product is (?:live|published)|launched (?:this week|in \d{4}))/i);
+    const evidence = compactText(evidenceMatch?.[0] || "", 240);
+    const publicUrl = productHuntPublicUrl(values);
+    const slug = productHuntExpectedSlug(values);
+    const identity = (values.productName && normalized.includes(normalizeProductHuntText(values.productName))) ||
+      (slug && publicUrl && normalizeProductHuntText(publicUrl).includes(`/products/${slug}`));
+    const newEvidence = !!evidence && normalizeProductHuntText(evidence) !== beforeEvidence;
+    const publicChanged = !!publicUrl && publicUrl !== String(baseline.publicUrl || "");
+    const matched = Boolean(identity && ((newEvidence && evidence) || publicChanged));
+    let publicationStatus = "submitted";
+    if (/\b(?:launched|live|published)\b/i.test(`${evidence} ${normalized}`)) publicationStatus = "published";
+    else if (/\bscheduled\b/i.test(normalized)) publicationStatus = "scheduled";
+    const evidenceSignals = matched
+      ? [{
+          type: publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+          text: evidence || `Product Hunt public product page: ${publicUrl}`,
+          url: publicUrl || redactSnapshotUrl(location.href),
+          matched: true,
+          publicationStatus,
+          playbookId: "producthunt",
+        }]
+      : [];
+    return {
+      matched,
+      evidence,
+      publicUrl,
+      publicationStatus,
+      evidenceSignals,
+      productName: values.productName,
+      expectedSlug: slug,
+    };
+  }
+
+  async function waitForProductHuntResult(config, baseline, timeoutMs = 15000) {
+    const deadline = Date.now() + timeoutMs;
+    let last = classifyProductHuntResult(config, baseline);
+    while (Date.now() < deadline) {
+      last = classifyProductHuntResult(config, baseline);
+      if (last.matched) return last;
+      await sleep(500);
+    }
+    return { ...last, matched: false, evidence: "", evidenceSignals: [] };
+  }
+
+  function productHuntRequiredMissing(scope) {
+    return productHuntQueryVisible(
+      scope,
+      'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="combobox"]',
+    )
+      .filter((element) => fieldIsRequired(element))
+      .filter((element) => !getElementFillValue(element) || fieldNeedsRefill(element))
+      .map((element) => getSnapshotLabel(element) || element.name || element.id || "必填栏")
+      .slice(0, 12);
+  }
+
+  function productHuntResultBaseline(config) {
+    return classifyProductHuntResult(config, {
+      evidence: "",
+      publicUrl: productHuntPublicUrl(productHuntConfigValues(config)),
+    });
+  }
+
+  function productHuntEntryCard(element) {
+    let current = element;
+    for (let depth = 0; current && depth < 5; depth += 1, current = current.parentElement) {
+      const tag = current.tagName?.toLowerCase() || "";
+      const className = String(current.className || "");
+      if (["article", "li"].includes(tag) || /card|product|launch/i.test(className)) return current;
+    }
+    return element.parentElement || element;
+  }
+
+  async function openProductHuntEntry(scope, values) {
+    const productName = normalizeProductHuntText(values.productName);
+    if (!productName) {
+      return {
+        ok: false,
+        stage: "entry",
+        waiting: true,
+        keepTab: true,
+        reason: "缺少 brandName/productName，拒绝猜测 Product Hunt 产品",
+      };
+    }
+
+    const editButtons = productHuntQueryVisible(
+      scope,
+      'button, input[type="button"], input[type="submit"], [role="button"], a[role="button"]',
+    ).filter((element) => productHuntNormalizeButtonLabel(productHuntControlLabel(element)) === "continue editing");
+    const launchInProgress = productHuntQueryVisible(
+      scope,
+      'button, input[type="button"], input[type="submit"], [role="button"], a[role="button"]',
+    ).filter((element) => productHuntNormalizeButtonLabel(productHuntControlLabel(element)) === "launch in progress");
+    if (
+      launchInProgress.length === 1 &&
+      normalizeProductHuntText(productHuntVisibleText(scope)).includes(productName)
+    ) {
+      const beforeSignature = productHuntStageSignature(scope);
+      const beforeUrl = location.href;
+      launchInProgress[0].click();
+      const changed = await waitForProductHuntStageChange("entry", beforeSignature);
+      return {
+        ok: true,
+        stage: "entry",
+        entryOpened: true,
+        matchedProduct: values.productName,
+        stageAdvanced: changed.changed,
+        nextStage: changed.stage,
+        urlChanged: location.href !== beforeUrl,
+        waiting: !changed.changed,
+      };
+    }
+    const matching = editButtons.filter((button) => {
+      const cardText = normalizeProductHuntText(productHuntEntryCard(button).textContent || "");
+      return cardText.includes(productName);
+    });
+    if (matching.length === 1) {
+      const beforeSignature = productHuntStageSignature(scope);
+      const beforeUrl = location.href;
+      matching[0].click();
+      const changed = await waitForProductHuntStageChange("entry", beforeSignature);
+      return {
+        ok: true,
+        stage: "entry",
+        entryOpened: true,
+        matchedProduct: values.productName,
+        stageAdvanced: changed.changed,
+        nextStage: changed.stage,
+        urlChanged: location.href !== beforeUrl,
+        waiting: !changed.changed,
+      };
+    }
+
+    // Starting a new product is safe only from an explicit new-product control;
+    // never choose another existing card when the requested draft is absent.
+    const newProduct = productHuntQueryVisible(
+      scope,
+      'button, input[type="button"], input[type="submit"], [role="button"], a[role="button"]',
+    ).find((element) => /^(?:add|new|submit) (?:a )?product$|^start (?:a )?new product$/.test(
+      productHuntNormalizeButtonLabel(productHuntControlLabel(element)),
+    ));
+    if (!newProduct) {
+      return {
+        ok: true,
+        stage: "entry",
+        waiting: true,
+        retryAfterMs: 800,
+        reason: matching.length > 1 ? "匹配到多个同名 Product Hunt 草稿，拒绝猜测" : "等待目标产品草稿或明确的新建产品入口",
+      };
+    }
+    const beforeSignature = productHuntStageSignature(scope);
+    const beforeUrl = location.href;
+    newProduct.click();
+    const changed = await waitForProductHuntStageChange("entry", beforeSignature);
+    return {
+      ok: true,
+      stage: "entry",
+      entryOpened: true,
+      newProduct: true,
+      stageAdvanced: changed.changed,
+      nextStage: changed.stage,
+      urlChanged: location.href !== beforeUrl,
+      waiting: !changed.changed,
+    };
+  }
+
+  async function runProductHuntStep(request = {}) {
+    const config = request.config && typeof request.config === "object" ? request.config : {};
+    if (!isProductHuntPage()) {
+      return {
+        ok: false,
+        stage: "gate",
+        gate: "unsupported",
+        needs_manual: true,
+        keepTab: true,
+        reason: "当前页不是 producthunt.com，拒绝执行 Product Hunt 专用动作",
+      };
+    }
+
+    const scope = productHuntActiveScope();
+    const gate = detectProductHuntGate(scope);
+    if (gate) return { ok: false, stage: "gate", ...gate };
+
+    const stage = detectProductHuntStage(scope);
+    const values = productHuntConfigValues(config);
+    if (stage === "unknown") {
+      const text = normalizeProductHuntText(productHuntVisibleText(scope));
+      return {
+        ok: true,
+        stage: "unknown",
+        waiting: true,
+        retryAfterMs: 800,
+        reason: /loading|please wait|请稍候|正在加载|just a moment/.test(text)
+          ? "Product Hunt 发布步骤仍在加载"
+          : "等待识别 Product Hunt 当前发布步骤",
+      };
+    }
+
+    if (stage === "entry") {
+      return openProductHuntEntry(scope, values);
+    }
+
+    if (stage === "checklist") {
+      const checklist = productHuntChecklistStatus(scope, values);
+      if (!checklist.ready) {
+        return {
+          ok: true,
+          stage,
+          ready_to_create: false,
+          submittedAttempt: false,
+          waiting: true,
+          progress: checklist.progress,
+          missing: checklist.missing,
+          requiredUnchecked: checklist.requiredUnchecked,
+          reason: "Product Hunt checklist 尚未达到 100%，不点击最终按钮",
+        };
+      }
+
+      const createButton = checklist.createButton || productHuntFindCreateDraftButton(scope);
+      const label = productHuntControlLabel(createButton);
+      const canCreate = productHuntShouldClickCreateDraft(request.confirmCreate, checklist.ready, label);
+      if (!canCreate) {
+        return {
+          ok: true,
+          stage,
+          ready_to_create: true,
+          submittedAttempt: false,
+          clickedCreateDraft: false,
+          finalAction: "create draft",
+          reason: "checklist 已 100%，等待 background/UI 明确确认后再创建草稿",
+        };
+      }
+
+      const baseline = productHuntResultBaseline(config);
+      createButton.click();
+      const result = await waitForProductHuntResult(
+        config,
+        baseline,
+        Number(request.resultTimeoutMs || request.timeoutMs || 15000),
+      );
+      return {
+        ok: true,
+        stage,
+        ready_to_create: true,
+        submittedAttempt: true,
+        clickedCreateDraft: true,
+        finalAction: "create draft",
+        ...result,
+      };
+    }
+
+    let stageResult = { ok: true };
+    if (stage === "main_info") {
+      stageResult = await fillProductHuntMainInfo(scope, values);
+      const requiredMissing = productHuntRequiredMissing(scope);
+      stageResult.missing = [...new Set([...(stageResult.missing || []), ...requiredMissing])];
+      stageResult.ok = stageResult.missing.length === 0;
+    } else if (stage === "images") {
+      stageResult = await fillProductHuntImages(scope, values, config);
+    } else if (stage === "makers") {
+      stageResult = await fillProductHuntMaker(scope, values);
+    } else if (stage === "shoutouts") {
+      stageResult = await fillProductHuntShoutouts(scope, values);
+      stageResult.ok = stageResult.ok !== false;
+    } else if (stage === "extras") {
+      stageResult = await fillProductHuntExtras(scope, values);
+    } else if (stage === "investors") {
+      stageResult = await fillProductHuntInvestors(scope, values);
+      stageResult.ok = stageResult.ok !== false;
+    }
+
+    if (stageResult.gate) {
+      return {
+        ok: false,
+        stage: "gate",
+        gate: stageResult.gate,
+        needs_manual: true,
+        keepTab: true,
+        reason: stageResult.reason || "Product Hunt 当前步骤需要人工处理",
+      };
+    }
+    if (stageResult.ok === false) {
+      return {
+        ok: false,
+        stage,
+        waiting: true,
+        keepTab: true,
+        missing: stageResult.missing || [stage],
+        uploaded: stageResult.uploaded || [],
+        reason: "Product Hunt 当前步骤尚未满足自动化前置条件",
+      };
+    }
+
+    const transition = await advanceProductHuntStage(scope, stage, {
+      optional: PRODUCT_HUNT_OPTIONAL_STAGES.has(stage),
+    });
+    return {
+      ok: true,
+      stage,
+      ...stageResult,
+      ...transition,
+    };
+  }
+
+  // Expose a narrow, non-clicking test surface. The live message route remains
+  // the only way to invoke the DOM workflow; these pure helpers make the safety
+  // boundary regression-testable without a browser or a third-party DOM library.
+  self.__extLinkProductHunt = {
+    stages: PRODUCT_HUNT_STAGES,
+    runProductHuntStep,
+    detectStage: productHuntStageFromSnapshot,
+    detectGate: productHuntGateFromSnapshot,
+    buttonPolicy: productHuntButtonPolicy,
+    shouldClickCreateDraft: productHuntShouldClickCreateDraft,
+    pricingValue: productHuntPricingValue,
+    classifyResult: classifyProductHuntResult,
+  };
+  self.__extLinkProductHuntTestHooks = self.__extLinkProductHunt;
 
   async function submitFilledForm(config, platform = "directory", fillResult = {}) {
     const blocker = detectSubmitBlockers();

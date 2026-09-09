@@ -21,6 +21,8 @@ assert.match(sidepanelHtml, /lib\/batch-controls\.js/, "side panel must load the
 assert.match(sidepanel, /btnBatchToggle/, "side panel must wire the pause/resume toggle");
 assert.match(sidepanel, /resuming \? "resume" : "pause"/, "the toggle action must follow the current batch state");
 assert.match(sidepanel, /batchStatus === "paused" \? "继续批量" : "暂停批量"/, "the toggle label must follow the current batch state");
+assert.match(sidepanel, /确认创建 Product Hunt 草稿/, "Product Hunt final action needs an explicit action-time confirmation label");
+assert.match(sidepanel, /confirmProductHuntCreate:\s*productHuntReady/, "only the explicit Product Hunt confirmation button may authorize Create draft");
 const toggleClickHandler = sidepanel.match(/\$\("btnBatchToggle"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
 assert.doesNotMatch(toggleClickHandler, /\blog\(/, "background is the single source of pause/resume log lines");
 
@@ -53,9 +55,12 @@ assert.equal(
   "custom_launch",
   "Product Hunt lookup must resolve to the custom launch playbook",
 );
-assert.match(background, /Product Hunt 多步骤发布需人工完成/, "Product Hunt must park with an explicit manual reason");
+assert.match(background, /function\s+runProductHuntLaunchLoop\s*\(/, "Product Hunt needs a dedicated resumable launch loop");
+assert.match(background, /isCustomLaunchTask\(task\)[\s\S]*https:\/\/www\.producthunt\.com\/posts\/new/,
+  "Product Hunt batches must start from the launch dashboard rather than the marketing homepage");
 const productGuard = background.match(/if \(isCustomLaunchUrl\(currentUrl\)\)\s*\{[\s\S]*?\n  \}/)?.[0] || "";
-assert.doesNotMatch(productGuard, /未见回执|submitFilledForm/, "Product Hunt must not use the ordinary auto-submit fallback");
+assert.match(productGuard, /runProductHuntStep/, "Product Hunt must use its dedicated content adapter");
+assert.doesNotMatch(productGuard, /Product Hunt 多步骤发布需人工完成/, "Product Hunt must not be parked before running its workflow");
 assert.match(background, /function\s+waitForTabContentReady\s*\(/, "content readiness needs a named wait helper");
 assert.match(background, /tab\.status\s*===\s*["']complete["']/, "automation must wait for tabs.onUpdated complete");
 assert.match(background, /state\.paused && !state\.stopped && entry\.slotActive !== false/, "pause must defer automated tab closes");
@@ -160,8 +165,8 @@ assert.equal(
     taskStatus: "running",
     customLaunch: true,
   }),
-  "preserve_manual",
-  "stopping during custom-launch loading must preserve the tab and promote it into the manual list",
+  "close_automated",
+  "stopping an actively automated custom launch must close it like other automated tabs",
 );
 assert.equal(
   controls.stopTabDisposition({

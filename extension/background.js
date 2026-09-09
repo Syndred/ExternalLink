@@ -1521,6 +1521,10 @@ function serializeBatchTasks(tasks = []) {
     task.relResult || "",
     Math.max(0, Number(task._attempt) || 0),
     task.confirmationNonce || "",
+    task.productHuntStage || "",
+    Math.max(0, Number(task.productHuntStageAttempt) || 0),
+    task.productHuntExpectedNext || "",
+    task.productHuntLastTransitionAt || "",
   ]);
 }
 
@@ -1586,6 +1590,10 @@ function hydratePersistedTask(rawTask, destinations) {
     relResult: rawTask[13] || "",
     _attempt: Math.max(0, Number(rawTask[14]) || 0),
     confirmationNonce: rawTask[15] || "",
+    productHuntStage: rawTask[16] || "",
+    productHuntStageAttempt: Math.max(0, Number(rawTask[17]) || 0),
+    productHuntExpectedNext: rawTask[18] || "",
+    productHuntLastTransitionAt: rawTask[19] || "",
   };
 }
 
@@ -2036,14 +2044,11 @@ async function persistFillLearnings(tabId, profileId, config) {
 async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, options = {}) {
   const currentUrl = await getTabUrlSafe(tabId);
   if (isCustomLaunchUrl(currentUrl)) {
-    const reason = "Product Hunt 多步骤发布需人工完成";
-    broadcastAutoFillUpdate({
-      tabId,
-      status: "manual",
-      message: reason,
-      keepTab: true,
+    return sendTabMessage(tabId, {
+      action: "runProductHuntStep",
+      config,
+      confirmCreate: options.confirmProductHuntCreate === true,
     });
-    return { needs_manual: true, reason, keepTab: true, advance: false };
   }
   const mismatch = self.ExtLinkProfiles.fillIdentityMismatch(config, profile);
   if (mismatch) {
@@ -3805,7 +3810,10 @@ async function processOne(group) {
     task = (group?.tasks || []).find((item) => item.status === "pending");
     if (!task) return;
     task._attempt = Math.max(0, Number(task._attempt) || 0) + 1;
-    const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
+    const configuredUrl = task.url.startsWith("http") ? task.url : "https://" + task.url;
+    const url = isCustomLaunchTask(task)
+      ? "https://www.producthunt.com/posts/new"
+      : configuredUrl;
     log(`[${task.index}/${state.tasks.length}] 打开 ${task.domain} · ${task.profileName}`, "", {
       event: "task_opening",
       taskIndex: task.index,
@@ -4024,16 +4032,7 @@ async function handleStableContentReady(tab, data) {
       entry.pauseRequested = false;
       return;
     }
-    if (!entry.customLaunchGateRequested) {
-      entry.customLaunchGateRequested = true;
-      markTaskNeedsManual(
-        tab.id,
-        task,
-        entry,
-        "Product Hunt 多步骤发布需人工完成",
-        "needs_manual",
-      );
-    }
+    await runProductHuntLaunchLoop(tab.id, task, entry);
     return;
   }
   if (state.paused) {
@@ -4077,6 +4076,117 @@ function isCustomLaunchTask(task) {
 
 function isCustomLaunchUrl(url) {
   return isCustomLaunchTask({ url });
+}
+
+const PRODUCT_HUNT_MAX_STEPS = 12;
+
+async function persistProductHuntCheckpoint(task, result = {}) {
+  task.productHuntStage = result.stage || task.productHuntStage || "unknown";
+  task.productHuntStageAttempt = Math.max(0, Number(task.productHuntStageAttempt) || 0) + 1;
+  task.productHuntExpectedNext = result.expectedNext || result.nextStage || "";
+  task.productHuntLastTransitionAt = new Date().toISOString();
+  await persistActiveBatchStatus(state.paused ? "paused" : "running");
+  await recordAutomationEvent(task, {
+    type: "producthunt_stage",
+    status: result.status || "running",
+    action: task.productHuntStage,
+    result: result.reason || result.expectedNext || result.nextStage || "",
+    artifactRef: result.artifactRef || "",
+  });
+}
+
+function productHuntGateStatus(result = {}) {
+  if (result.captcha || result.status === "needs_captcha") return "needs_captcha";
+  if (result.status === "needs_otp") return "needs_otp";
+  if (result.status === "needs_login") return "needs_login";
+  return "needs_manual";
+}
+
+function parkProductHuntTask(tabId, task, entry, reason, status = "needs_manual") {
+  task.status = status === "needs_captcha" ? "captcha" : status;
+  task.skipReason = reason;
+  parkTaskEntry(tabId, entry, reason);
+  log(`${task.domain} [${task.projectKey || task.profileId}]: ${reason}`, "warn", {
+    event: "producthunt_gate",
+    taskIndex: task.index,
+    taskId: task.id,
+    status,
+  });
+  broadcastTaskUpdate(task);
+  chrome.tabs.sendMessage(tabId, {
+    action: "showManualWaitBanner",
+    taskIndex: task.index,
+    reason,
+    timeoutSec: 0,
+    config: getTaskConfig(task),
+    platformType: task.platformType,
+  }).catch(() => {});
+}
+
+async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
+  if (entry.agentRunning || entry.agentDone || state.stopped) return;
+  const runId = nextEntryRunId(entry);
+  entry.agentRunning = true;
+  entry.agentPaused = false;
+  entry.pendingRejudge = false;
+  task.status = "running";
+  task.skipReason = "";
+  broadcastTaskUpdate(task);
+  try {
+    const config = getTaskConfig(task);
+    const mismatch = self.ExtLinkProfiles.taskConfigIdentityMismatch(task, config);
+    if (mismatch) {
+      parkProductHuntTask(tabId, task, entry, `资料与当前任务不一致（${mismatch}），已阻止发布`);
+      return;
+    }
+    for (let step = 0; step < PRODUCT_HUNT_MAX_STEPS; step += 1) {
+      assertRunCurrent(tabId, entry, runId);
+      const result = await sendTabMessage(tabId, {
+        action: "runProductHuntStep",
+        config,
+        confirmCreate: options.confirmCreate === true,
+      });
+      if (!result || typeof result !== "object") throw new Error("Product Hunt 步骤返回无效");
+      await persistProductHuntCheckpoint(task, result);
+      if (result.status === "gate" || result.needs_manual || result.captcha || /^needs_/.test(result.status || "")) {
+        parkProductHuntTask(tabId, task, entry, result.reason || "Product Hunt 需要人工处理", productHuntGateStatus(result));
+        return;
+      }
+      if (result.status === "ready_to_create" || result.ready_to_create === true) {
+        const reason = "Product Hunt 必填 100%，等待确认 Create draft（不会排期或购买推广）";
+        entry.productHuntReadyToCreate = true;
+        parkProductHuntTask(tabId, task, entry, reason);
+        return;
+      }
+      if (result.submittedAttempt && result.matched && result.evidence) {
+        entry.submissionAttempted = true;
+        completeTaskFromSubmit(tabId, task, {
+          ...result,
+          submitted: true,
+          clickedSubmit: true,
+          publicationStatus: result.publicationStatus || "submitted",
+        });
+        return;
+      }
+      if (result.status === "error" || result.error) {
+        throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
+      }
+      if (!(result.advanced || result.stageAdvanced || result.stageCompleted || result.entryOpened)) {
+        throw new Error(result.reason || `Product Hunt ${result.stage || "unknown"} 未推进`);
+      }
+      await sleep(900);
+    }
+    throw new Error("Product Hunt 步骤超过安全上限");
+  } catch (err) {
+    if (err?.staleRun) return;
+    if (err?.batchPaused) {
+      pauseEntryForBatch(tabId, task, entry);
+      return;
+    }
+    parkProductHuntTask(tabId, task, entry, `Product Hunt 自动化暂停：${err.message}`);
+  } finally {
+    entry.agentRunning = false;
+  }
 }
 
 function looksReadyForManualResume(data) {
@@ -4130,11 +4240,15 @@ async function handleManualSubmit(msg) {
   log(`${task.domain}: 用户确认继续，AI 接管后续步骤`, "");
   const entry = state.activeTabs.get(tabId);
   if (isCustomLaunchTask(task)) {
-    const reason = "Product Hunt 多步骤发布需人工完成";
-    task.status = "needs_manual";
-    task.skipReason = reason;
-    parkTaskEntry(tabId, entry, reason);
-    broadcastTaskUpdate(task);
+    clearManualWaitTimer(entry);
+    entry.slotActive = true;
+    entry.agentDone = false;
+    state.parkedTaskIds.delete(task.id);
+    await persistParkedTaskIds();
+    await chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
+    await runProductHuntLaunchLoop(tabId, task, entry, {
+      confirmCreate: msg.confirmProductHuntCreate === true,
+    });
     return;
   }
   clearManualWaitTimer(entry);
@@ -4602,13 +4716,12 @@ function getTaskConfig(task, extraConfig = {}) {
   const profileId = task?.profileId || task?.projectKey || task?.config?.projectKey || "";
   const perTask = task?.config || state.profileConfigs?.[profileId] || {};
   const merged = self.ExtLinkProfiles.mergeFillConfig(globals, perTask, extraConfig);
-  const customLaunch = isCustomLaunchTask(task);
   return {
     ...merged,
     autoSkipCaptcha: globals.autoSkipCaptcha,
     fillOnly: globals.fillOnly === true,
-    autoSubmitDirectory:
-      !customLaunch && globals.autoSubmitDirectory !== false && globals.fillOnly !== true,
+    autoSubmitDirectory: globals.autoSubmitDirectory !== false && globals.fillOnly !== true,
+    productHuntAutomation: isCustomLaunchTask(task),
     autoSubmitStandardWpComments: globals.autoSubmitStandardWpComments === true,
     manualWaitSec: globals.manualWaitSec,
     pingIndex: globals.pingIndex,
@@ -5515,7 +5628,7 @@ function closeAutomatedTabs() {
       entry,
       parkedTaskIds: state.parkedTaskIds,
       taskStatus: task?.status,
-      customLaunch,
+      customLaunch: false,
     });
     if (disposition === "preserve_manual") {
       bumpEntryRunId(entry);
@@ -5526,9 +5639,7 @@ function closeAutomatedTabs() {
       entry.pendingRejudge = false;
       entry.slotActive = false;
       if (task) {
-        const reason =
-          task.skipReason ||
-          (customLaunch ? "Product Hunt 多步骤发布需人工完成" : "任务已停止，保留页签等待人工处理");
+        const reason = task.skipReason || "任务已停止，保留页签等待人工处理";
         if (!["captcha", "needs_manual"].includes(task.status)) {
           task.status = self.ExtLinkBatchControls.parkedTaskStatus(task.status);
         }

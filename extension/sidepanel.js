@@ -2231,11 +2231,16 @@
       actions.className = "manual-actions";
       const resume = document.createElement("button");
       resume.type = "button";
-      resume.className = "btn btn-ghost";
+      const productHuntReady = /Product Hunt 必填 100%.*Create draft/i.test(
+        task.parkedReason || task.skipReason || "",
+      );
+      resume.className = productHuntReady ? "btn btn-primary" : "btn btn-ghost";
       resume.textContent = task.tabId
         ? batchStatus === "stopped"
           ? "打开页签"
-          : "继续处理"
+          : productHuntReady
+            ? "确认创建 Product Hunt 草稿"
+            : "继续处理"
         : "页签已关闭";
       resume.disabled = !task.tabId;
       resume.addEventListener("click", async () => {
@@ -2245,6 +2250,7 @@
           action: "manualContinue",
           taskIndex: task.index,
           platformType: task.platformType,
+          confirmProductHuntCreate: productHuntReady,
         });
         syncTasksFromBackground();
       });
@@ -2262,7 +2268,8 @@
         });
         syncTasksFromBackground();
       });
-      actions.append(resume, confirm);
+      actions.append(resume);
+      if (!productHuntReady) actions.append(confirm);
       card.append(title, reason, actions);
       el.append(card);
     }

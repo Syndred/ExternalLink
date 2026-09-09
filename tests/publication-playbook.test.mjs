@@ -94,6 +94,13 @@ const P = playbookSelf.ExtLinkPlaybooks;
   const unmatched = P.classifyEvidence("Just a long blog post about tools and comments", null);
   assert.equal(unmatched.matched, false);
   assert.equal(unmatched.evidence, "", "unmatched page text must not become success evidence");
+
+  const productHunt = P.lookup("https://www.producthunt.com/posts/new/submission");
+  assert.deepEqual(Array.from(productHunt.workflow.stages), [
+    "entry", "main_info", "images", "makers", "shoutouts", "extras", "investors", "checklist",
+  ]);
+  assert.equal(productHunt.workflow.finalAction, "Create draft");
+  assert.ok(productHunt.workflow.forbiddenActions.includes("Schedule launch for later"));
 }
 
 {

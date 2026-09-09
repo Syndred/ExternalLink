@@ -2050,8 +2050,13 @@
     const visibility = Controls.controlVisibility(batchStatus);
     running = batchStatus === "running";
     if ($("btnStart")) $("btnStart").hidden = visibility.startHidden;
-    if ($("btnPause")) $("btnPause").hidden = visibility.pauseHidden;
-    if ($("btnResumeBatch")) $("btnResumeBatch").hidden = visibility.resumeHidden;
+    const toggle = $("btnBatchToggle");
+    if (toggle) {
+      toggle.hidden = visibility.pauseHidden && visibility.resumeHidden;
+      toggle.textContent = batchStatus === "paused" ? "继续批量" : "暂停批量";
+      toggle.classList.toggle("btn-primary", batchStatus === "paused");
+      toggle.classList.toggle("btn-ghost", batchStatus !== "paused");
+    }
     if ($("btnStop")) $("btnStop").hidden = visibility.stopHidden;
   }
 
@@ -2156,25 +2161,15 @@
     log("已停止", "warn");
   });
 
-  $("btnPause")?.addEventListener("click", async () => {
-    if (batchStatus !== "running") return;
-    const result = await chrome.runtime.sendMessage({ action: "pause" });
+  $("btnBatchToggle")?.addEventListener("click", async () => {
+    if (!["running", "paused"].includes(batchStatus)) return;
+    const resuming = batchStatus === "paused";
+    const result = await chrome.runtime.sendMessage({ action: resuming ? "resume" : "pause" });
     if (!result?.ok) {
-      showToast(result?.error || "暂停失败", true);
+      showToast(result?.error || (resuming ? "继续失败" : "暂停失败"), true);
       return;
     }
-    setBatchStatus("paused");
-    syncTasksFromBackground();
-  });
-
-  $("btnResumeBatch")?.addEventListener("click", async () => {
-    if (batchStatus !== "paused") return;
-    const result = await chrome.runtime.sendMessage({ action: "resume" });
-    if (!result?.ok) {
-      showToast(result?.error || "继续失败", true);
-      return;
-    }
-    setBatchStatus("running");
+    setBatchStatus(resuming ? "running" : "paused");
     syncTasksFromBackground();
   });
 

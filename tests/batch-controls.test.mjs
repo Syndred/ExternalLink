@@ -15,15 +15,14 @@ assert.match(background, /function\s+pauseBatchRun\s*\(/, "pause must persist a 
 assert.match(background, /function\s+resumeBatchRun\s*\(/, "resume must restart a paused batch state");
 const pauseFunction = background.match(/async function\s+pauseBatchRun\s*\([\s\S]*?\n}\n\nasync function/)?.[0] || "";
 assert.doesNotMatch(pauseFunction, /close(?:All|Automated)Tabs\(\)|activeTabs\.clear\(\)|queue\s*=\s*\[\]/, "pause must keep queue and tabs intact");
-assert.match(sidepanelHtml, /id="btnPause"/, "batch UI needs a visible pause button");
-assert.match(sidepanelHtml, /id="btnResumeBatch"/, "batch UI needs a visible resume button");
+assert.match(sidepanelHtml, /id="btnBatchToggle"/, "batch UI needs one pause/resume toggle button");
+assert.doesNotMatch(sidepanelHtml, /id="btnResumeBatch"/, "pause and resume must not be separate buttons");
 assert.match(sidepanelHtml, /lib\/batch-controls\.js/, "side panel must load the shared batch state predicates");
-assert.match(sidepanel, /btnPause/, "side panel must wire the pause control");
-assert.match(sidepanel, /btnResumeBatch/, "side panel must wire the resume control");
-const pauseClickHandler = sidepanel.match(/\$\("btnPause"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
-const resumeClickHandler = sidepanel.match(/\$\("btnResumeBatch"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
-assert.doesNotMatch(pauseClickHandler, /\blog\(/, "background is the single source of pause log lines");
-assert.doesNotMatch(resumeClickHandler, /\blog\(/, "background is the single source of resume log lines");
+assert.match(sidepanel, /btnBatchToggle/, "side panel must wire the pause/resume toggle");
+assert.match(sidepanel, /resuming \? "resume" : "pause"/, "the toggle action must follow the current batch state");
+assert.match(sidepanel, /batchStatus === "paused" \? "继续批量" : "暂停批量"/, "the toggle label must follow the current batch state");
+const toggleClickHandler = sidepanel.match(/\$\("btnBatchToggle"\)\?\.addEventListener\([\s\S]*?\n  \}\);/)?.[0] || "";
+assert.doesNotMatch(toggleClickHandler, /\blog\(/, "background is the single source of pause/resume log lines");
 
 const stopCase = background.match(/case\s+["']stop["']:[\s\S]*?\n\s*break;/)?.[0] || "";
 assert.doesNotMatch(stopCase, /closeAllTabs\(\)/, "stop must not close parked human-review tabs");

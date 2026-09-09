@@ -788,6 +788,7 @@
   function productHuntFieldSnapshotChecked(field) {
     if (!field) return false;
     if (field.checked === true || field.selected === true) return true;
+    if (/^(?:true|checked|on|yes|1)$/i.test(String(field.value || "").trim())) return true;
     if (field.value && typeof field.value === "object") {
       return field.value.checked === true || field.value.selected === true;
     }
@@ -909,13 +910,14 @@
     if (hasCreateDraft || (/100\s*%\s*(?:complete|completed)/.test(text) && /complete/.test(text))) {
       return "checklist";
     }
-    if (hasButton(/^next step: launch checklist$/) && hasField(/investor|funding|backed/)) {
-      return "investors";
-    }
+    // The exact next-step action is a stronger stage signal than hidden
+    // controls that may remain mounted while React transitions between panes.
+    if (hasButton(/^next step: images and media$/)) return "main_info";
+    if (hasButton(/^next step: makers$/)) return "images";
+    if (hasButton(/^next step: shoutouts$/)) return "makers";
     if (hasButton(/^next step: extras$/)) return "shoutouts";
-    if (hasButton(/^next step: shoutouts$/) && hasField(/\b(?:ismaker|solomaker|solo maker|is solo|maker|founder|creator)\b/)) {
-      return "makers";
-    }
+    if (hasButton(/^next step: connect with investors$/)) return "extras";
+    if (hasButton(/^next step: launch checklist$/)) return "investors";
     if (hasField(/(?:^|\b)(?:pricingtype|free options?|pricing|price)(?:\b|$)/)) return "extras";
     if (hasField(/file-input-(?:thumbnailimageuuid|media)|(?:gallery|product image|screenshot|logo)/)) return "images";
     if (
@@ -1098,11 +1100,33 @@
     return candidates[0] || document;
   }
 
-  function productHuntFormSnapshot(scope = productHuntActiveScope()) {
-    const fields = productHuntQueryVisible(
-      scope,
-      'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="combobox"]',
-    ).map((element) => ({
+  // Product Hunt's React form keeps the authoritative values for maker,
+  // pricing, and legal consent in visually hidden inputs.  They must be part
+  // of the stage snapshot; otherwise a page can look like an empty/unknown
+  // step while the visible controls are still hydrating.
+  const PRODUCT_HUNT_HIDDEN_STATE_SELECTOR = [
+    'input[name="isMaker" i]',
+    'input[name="is_maker" i]',
+    'input[name="soloMaker" i]',
+    'input[name="solo_maker" i]',
+    'input[name="pricingType" i]',
+    'input[name="pricing_type" i]',
+    'input[name*="legal" i]',
+    'input[id*="legal" i]',
+    'input[name*="consent" i]',
+    'input[id*="consent" i]',
+    'input[name*="terms" i]',
+    'input[id*="terms" i]',
+    'input[name*="agree" i]',
+    'input[id*="agree" i]',
+    'input[name*="accept" i]',
+    'input[id*="accept" i]',
+    '[data-legal-control]',
+    '[data-consent-control]',
+  ].join(", ");
+
+  function productHuntSnapshotField(element, hidden = false) {
+    return {
       label: getSnapshotLabel(element),
       name: element.getAttribute?.("name") || "",
       id: element.id || "",
@@ -1112,25 +1136,35 @@
       required: !!element.required || element.getAttribute?.("aria-required") === "true",
       checked: !!element.checked,
       value: getElementFillValue(element),
-    }));
+      ...(hidden ? { hidden: true } : {}),
+    };
+  }
+
+  function productHuntHiddenStateControls(scope) {
+    const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+    const local = Array.from(root.querySelectorAll(PRODUCT_HUNT_HIDDEN_STATE_SELECTOR));
+    if (local.length || root === document) return local;
+    return Array.from(document.querySelectorAll(PRODUCT_HUNT_HIDDEN_STATE_SELECTOR));
+  }
+
+  function productHuntFormSnapshot(scope = productHuntActiveScope()) {
+    const visibleElements = productHuntQueryVisible(
+      scope,
+      'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="combobox"]',
+    );
+    const fields = visibleElements.map((element) => productHuntSnapshotField(element));
+    const hiddenStateControls = productHuntHiddenStateControls(scope);
+    hiddenStateControls
+      .filter((element) => !visibleElements.includes(element))
+      .forEach((element) => fields.push(productHuntSnapshotField(element, true)));
     // Product Hunt keeps the real file controls visually hidden behind its
     // upload dropzones. Include those controls in stage detection even though
     // ordinary fillable-field snapshots intentionally omit hidden inputs.
     const hiddenMediaInputs = Array.from(
       (scope && typeof scope.querySelectorAll === "function" ? scope : document).querySelectorAll('input[type="file"]'),
-    ).filter((element) => !fields.some((field) => field.name === (element.name || "") && field.id === (element.id || "")));
+    ).filter((element) => !visibleElements.includes(element) && !hiddenStateControls.includes(element));
     hiddenMediaInputs.forEach((element) => {
-      fields.push({
-        label: getSnapshotLabel(element),
-        name: element.getAttribute?.("name") || "",
-        id: element.id || "",
-        type: "file",
-        placeholder: element.getAttribute?.("placeholder") || "",
-        aria: element.getAttribute?.("aria-label") || "",
-        required: !!element.required || element.getAttribute?.("aria-required") === "true",
-        checked: false,
-        value: getElementFillValue(element),
-      });
+      fields.push(productHuntSnapshotField(element, true));
     });
     const buttons = productHuntQueryVisible(
       scope,
@@ -1336,17 +1370,36 @@
     return !!input;
   }
 
+  function productHuntBooleanControlChecked(control) {
+    if (!control) return false;
+    // Hidden inputs may carry the option value "true" even when that option
+    // is not selected.  Only an actual checked/ARIA state is authoritative for
+    // the maker and solo-maker toggles.
+    return control.checked === true ||
+      control.getAttribute?.("aria-checked") === "true" ||
+      control.getAttribute?.("data-state") === "checked" ||
+      control.getAttribute?.("data-selected") === "true";
+  }
+
   async function waitForProductHuntMakerIdentity(scope, makerHandle, timeoutMs = 1800) {
     const expected = normalizeProductHuntText(makerHandle || "");
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
-      const text = normalizeProductHuntText(productHuntVisibleText(scope || document));
-      const makerControls = productHuntRawControls(scope, 'input[name*="maker" i], input[name*="founder" i], [role="combobox"]')
-        .filter((input) => !/^(?:ismaker|solomaker|is_maker|solo_maker)$/i.test(input.name || ""));
-      if ((expected && text.includes(expected)) || makerControls.length) return true;
+      if (productHuntSelectionConfirmed(scope, /maker|founder|creator|who.*mak/, expected)) return true;
       await sleep(150);
     }
-    return false;
+    return productHuntSelectionConfirmed(scope, /maker|founder|creator|who.*mak/, expected);
+  }
+
+  async function waitForProductHuntMakerControls(scope, timeoutMs = 1800) {
+    const deadline = Date.now() + timeoutMs;
+    const hasControls = () => productHuntChoiceControls(scope, /maker|founder|creator|who.*mak/)
+      .some((control) => !/^(?:ismaker|solomaker|is_maker|solo_maker)$/i.test(control.name || ""));
+    while (Date.now() < deadline) {
+      if (hasControls()) return true;
+      await sleep(150);
+    }
+    return hasControls();
   }
 
   function productHuntChoiceMatches(label, desired) {
@@ -1380,6 +1433,47 @@
     return selected
       .map((element) => productHuntChoiceLabel(element))
       .filter((label) => wanted.test(label));
+  }
+
+  function productHuntSelectionConfirmed(scope, pattern, expected) {
+    const wanted = String(expected || "").trim();
+    if (!wanted) return false;
+    // Selected chips often expose only their own label (without the word
+    // "topic" or "maker"), so apply the exact-value check independently of
+    // the field hint after the requested control has been interacted with.
+    const selectedLabels = productHuntSelectedLabels(scope, /.*/);
+    if (selectedLabels.some((label) => productHuntChoiceMatches(label, wanted))) return true;
+    const controls = productHuntChoiceControls(scope, pattern);
+    return controls.some((control) => {
+      const type = String(control.type || "").toLowerCase();
+      if (type === "checkbox" || type === "radio") {
+        return productHuntFieldSnapshotChecked({
+          checked: !!control.checked,
+          value: control.value,
+          "aria-checked": control.getAttribute?.("aria-checked"),
+        }) && productHuntChoiceMatches(productHuntChoiceLabel(control), wanted);
+      }
+      if (control.tagName?.toLowerCase() === "select") {
+        return Array.from(control.selectedOptions || []).some((option) =>
+          productHuntChoiceMatches(option.textContent || option.label || option.value, wanted) ||
+          productHuntChoiceMatches(option.value, wanted),
+        );
+      }
+      const selected = control.getAttribute?.("aria-selected") === "true" ||
+        control.getAttribute?.("aria-checked") === "true" ||
+        control.getAttribute?.("data-state") === "checked" ||
+        control.getAttribute?.("data-selected") === "true";
+      return selected && productHuntChoiceMatches(productHuntChoiceLabel(control), wanted);
+    });
+  }
+
+  async function waitForProductHuntSelection(scope, pattern, expected, timeoutMs = 1800) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (productHuntSelectionConfirmed(scope, pattern, expected)) return true;
+      await sleep(150);
+    }
+    return productHuntSelectionConfirmed(scope, pattern, expected);
   }
 
   function productHuntOptionElements(scope) {
@@ -1422,7 +1516,7 @@
             productHuntChoiceMatches(item.textContent || item.label || item.value, value) ||
             productHuntChoiceMatches(item.value, value),
           );
-          if (option && setSelectValue(control, option.value)) {
+          if (option && setSelectValue(control, option.value) && productHuntSelectionConfirmed(scope, pattern, value)) {
             selected.push(value);
             matched = true;
             break;
@@ -1437,8 +1531,10 @@
               control.dispatchEvent(new Event("input", { bubbles: true }));
               control.dispatchEvent(new Event("change", { bubbles: true }));
             }
-            selected.push(value);
-            matched = true;
+            if (productHuntSelectionConfirmed(scope, pattern, value)) {
+              selected.push(value);
+              matched = true;
+            }
             break;
           }
           continue;
@@ -1446,7 +1542,7 @@
         const hint = productHuntFieldHint(control);
         if (!pattern.test(hint) && !pattern.test(productHuntChoiceLabel(control))) continue;
         const current = productHuntChoiceLabel(control);
-        if (productHuntChoiceMatches(current, value)) {
+        if (productHuntChoiceMatches(current, value) && productHuntSelectionConfirmed(scope, pattern, value)) {
           selected.push(value);
           matched = true;
           break;
@@ -1467,8 +1563,10 @@
         if (option) {
           option.click();
           await sleep(150);
-          selected.push(value);
-          matched = true;
+          if (await waitForProductHuntSelection(scope, pattern, value)) {
+            selected.push(value);
+            matched = true;
+          }
           break;
         }
         document.body?.click?.();
@@ -1506,13 +1604,38 @@
     const hiddenIsMaker = isMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || isMakerInputs[0];
     const soloMakerInputs = productHuntRawControls(scope, 'input[name="soloMaker"], input[name="solo_maker"]');
     const hiddenSoloMaker = soloMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || soloMakerInputs[0];
-    if ((values.makerHandle || values.soloMaker) && hiddenIsMaker) {
-      if (!hiddenIsMaker.checked) productHuntClickAssociatedLabel(hiddenIsMaker);
-      await waitForProductHuntMakerIdentity(scope, values.makerHandle);
+    if ((values.makerHandle || values.soloMaker) && hiddenIsMaker && !productHuntBooleanControlChecked(hiddenIsMaker)) {
+      productHuntClickAssociatedLabel(hiddenIsMaker);
     }
+
+    let makerResult = { ok: !values.makerHandle, selected: [] };
+    if (values.makerHandle) {
+      await waitForProductHuntMakerControls(scope);
+      makerResult = await productHuntSelectExact(scope, /maker|founder|creator|who.*mak/, [values.makerHandle], {
+        requireExact: true,
+      });
+      if (!makerResult.ok || !(await waitForProductHuntMakerIdentity(scope, values.makerHandle))) {
+        return {
+          ok: false,
+          solo: false,
+          maker: makerResult.selected?.[0] || "",
+          missing: makerResult.missing?.length ? makerResult.missing : ["makerHandle"],
+        };
+      }
+    }
+
     if (values.soloMaker && hiddenSoloMaker) {
-      if (!hiddenSoloMaker.checked) productHuntClickAssociatedLabel(hiddenSoloMaker);
-      return { ok: true, solo: true, maker: values.makerHandle || "" };
+      if (!productHuntBooleanControlChecked(hiddenSoloMaker)) productHuntClickAssociatedLabel(hiddenSoloMaker);
+      const soloChecked = await (async () => {
+        const deadline = Date.now() + 1200;
+        while (Date.now() < deadline) {
+          if (productHuntBooleanControlChecked(hiddenSoloMaker)) return true;
+          await sleep(120);
+        }
+        return productHuntBooleanControlChecked(hiddenSoloMaker);
+      })();
+      if (!soloChecked) return { ok: false, solo: false, maker: makerResult.selected?.[0] || "", missing: ["soloMaker"] };
+      return { ok: true, solo: true, maker: makerResult.selected?.[0] || values.makerHandle || "" };
     }
 
     const soloControls = productHuntQueryVisible(
@@ -1527,7 +1650,10 @@
         control.dispatchEvent(new Event("input", { bubbles: true }));
         control.dispatchEvent(new Event("change", { bubbles: true }));
       }
-      return { ok: true, solo: true, maker: "" };
+      const soloChecked = control.checked || control.getAttribute?.("aria-checked") === "true";
+      return soloChecked
+        ? { ok: true, solo: true, maker: makerResult.selected?.[0] || "" }
+        : { ok: false, solo: false, maker: "", missing: ["soloMaker"] };
     }
 
     const makerControls = productHuntChoiceControls(scope, /maker|founder|creator|who.*mak/);
@@ -1535,16 +1661,12 @@
       const required = makerControls.some((field) => fieldIsRequired(field)) || !values.soloMaker;
       return { ok: !required, solo: false, maker: "", missing: required ? ["makerHandle"] : [] };
     }
-
-    const result = await productHuntSelectExact(scope, /maker|founder|creator|who.*mak/, [values.makerHandle], {
-      requireExact: true,
-    });
     return {
-      ok: result.missing.length === 0,
+      ok: makerResult.ok,
       solo: false,
-      maker: result.selected[0] || "",
-      missing: result.missing,
-      selectedAfter: result.selectedAfter,
+      maker: makerResult.selected[0] || "",
+      missing: makerResult.missing,
+      selectedAfter: makerResult.selectedAfter,
     };
   }
 
@@ -1586,7 +1708,8 @@
 
   function productHuntPersistentPreviewCount(kind) {
     const selector = kind === "logo" ? 'img[alt="preview" i]' : 'img[alt="Media" i]';
-    return productHuntQueryVisible(document, selector).length;
+    const images = Array.from(document.querySelectorAll(selector));
+    return images.filter((image, index) => images.indexOf(image) === index && (image.currentSrc || image.src || image.getAttribute?.("src"))).length;
   }
 
   async function waitForProductHuntPreview(input, expectedCount = 1, timeoutMs = 1800, kind = "") {
@@ -1647,10 +1770,12 @@
     const inputs = [];
     const seen = new Set();
     const collect = (nodes) => nodes.forEach((input) => {
-      if (input.disabled || input.closest?.('[aria-hidden="true"]')) return;
-      const identity = input.id || input.name || input;
-      if (seen.has(identity)) return;
-      seen.add(identity);
+      if (input.disabled) return;
+      // Product Hunt currently renders multiple file inputs with the same
+      // id/name.  The DOM node, not that duplicated markup id, is the unit we
+      // need to retain for upload routing.
+      if (seen.has(input)) return;
+      seen.add(input);
       inputs.push(input);
     });
     collect(Array.from(root.querySelectorAll('input[type="file"]')));
@@ -1675,6 +1800,9 @@
     }
     const uploaded = [];
     const missing = [];
+    const galleryAlreadySatisfied = gallery.length > 0
+      ? persistentGalleryPreview >= gallery.length
+      : persistentGalleryPreview > 0;
     if (media.logo && logo) {
       if (persistentLogoPreview > 0 || (media.logo.files?.length && productHuntPreviewImages(media.logo).length > 0)) {
         uploaded.push({ kind: "logo", files: media.logo.files?.length || 1, previewVerified: true, reused: true });
@@ -1687,7 +1815,7 @@
       missing.push("logo");
     }
 
-    if (gallery.length && persistentGalleryPreview >= gallery.length) {
+    if (galleryAlreadySatisfied) {
       uploaded.push({ kind: "gallery", files: persistentGalleryPreview, previewVerified: true, reused: true });
       gallery.length = 0;
     }
@@ -1695,7 +1823,7 @@
     let galleryCursor = 0;
     for (const input of media.gallery) {
       if (galleryCursor >= gallery.length) {
-        if (fieldIsRequired(input)) missing.push("gallery");
+        if (!galleryAlreadySatisfied && fieldIsRequired(input)) missing.push("gallery");
         continue;
       }
       const sources = input.multiple ? gallery.slice(galleryCursor) : [gallery[galleryCursor]];

@@ -6,6 +6,7 @@ import vm from "node:vm";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const content = readFileSync(resolve(root, "extension/content.js"), "utf8");
+const background = readFileSync(resolve(root, "extension/background.js"), "utf8");
 
 function loadProductHuntHooks() {
   const runtime = {
@@ -179,6 +180,63 @@ assert.match(
   content,
   /productHuntSelectExact[\s\S]*?simulateTyping\(control, value\)[\s\S]*?productHuntOptionElements/,
   "plain Product Hunt topic inputs must type the exact topic before selecting a suggestion",
+);
+
+// P0/P1 regression contracts from the live Product Hunt review.
+const productHuntLoop = background.match(/async function\s+runProductHuntLaunchLoop[\s\S]*?\n}\n\nfunction\s+looksReadyForManualResume/)?.[0] || "";
+const submittedBranch = productHuntLoop.indexOf("result.submittedAttempt");
+const readyBranch = productHuntLoop.indexOf("result.ready_to_create");
+assert.ok(submittedBranch >= 0 && readyBranch >= 0 && submittedBranch < readyBranch,
+  "a submitted attempt with fresh evidence must be completed before ready_to_create is parked");
+assert.match(
+  productHuntLoop,
+  /if\s*\(result\.waiting[\s\S]*?retryAfterMs[\s\S]*?await sleep\([\s\S]*?continue;/,
+  "Product Hunt waiting results must sleep and retry inside the launch loop instead of becoming manual",
+);
+assert.match(
+  background,
+  /function\s+productHuntGateStatus[\s\S]*?result\.gate\s*===\s*["']captcha["'][\s\S]*?needs_captcha/,
+  "Product Hunt gate=captcha must map to the recoverable captcha task state",
+);
+assert.match(
+  background,
+  /async function\s+resumeAfterCaptcha[\s\S]*?isCustomLaunchTask\(task\)[\s\S]*?runProductHuntLaunchLoop/,
+  "captcha recovery on Product Hunt must return to the dedicated launch loop",
+);
+assert.match(
+  content,
+  /productHuntFormSnapshot[\s\S]*?(?:hidden|RawControls|input\[name=[^\n]*(?:isMaker|soloMaker|pricingType|legal|terms|consent))/i,
+  "stage snapshots must include hidden Product Hunt state controls",
+);
+assert.match(
+  content,
+  /connect with investors[\s\S]*?return ["']extras["']/i,
+  "Connect with Investors is the Extras step boundary, not an unknown stage",
+);
+assert.doesNotMatch(
+  content,
+  /const identity = input\.id \|\| input\.name \|\| input;/,
+  "duplicate Product Hunt file IDs must not drop real inputs during media discovery",
+);
+assert.match(
+  content,
+  /productHuntMediaInputs[\s\S]*?seen\.has\(input\)[\s\S]*?seen\.add\(input\)/,
+  "media inputs should deduplicate DOM nodes by object identity, not duplicate ids",
+);
+assert.match(
+  content,
+  /selectedAfter[\s\S]*?missing\.push\(value\)|productHuntSelectionConfirmed/,
+  "maker/topic selection must be verified after the option/chip is actually selected",
+);
+assert.match(
+  content,
+  /const baseline = productHuntResultBaseline\(config\)[\s\S]*?createButton\.click\(\)[\s\S]*?waitForProductHuntResult\(/,
+  "Product Hunt result polling must start from a baseline captured immediately before the click",
+);
+assert.match(
+  content,
+  /const beforeEvidence = normalizeProductHuntText\(baseline\.evidence \|\| ""\)[\s\S]*?const newEvidence = [\s\S]*?beforeEvidence[\s\S]*?const publicChanged = [\s\S]*?baseline\.publicUrl/,
+  "Product Hunt receipt evidence must be new relative to the pre-click baseline",
 );
 
 console.log("Product Hunt stage, gate, media, and final-action safety tests passed");

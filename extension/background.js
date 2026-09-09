@@ -4079,6 +4079,7 @@ function isCustomLaunchUrl(url) {
 }
 
 const PRODUCT_HUNT_MAX_STEPS = 12;
+const PRODUCT_HUNT_MAX_WAIT_RETRIES = 60;
 
 async function persistProductHuntCheckpoint(task, result = {}) {
   task.productHuntStage = result.stage || task.productHuntStage || "unknown";
@@ -4096,7 +4097,14 @@ async function persistProductHuntCheckpoint(task, result = {}) {
 }
 
 function productHuntGateStatus(result = {}) {
-  if (result.captcha || result.status === "needs_captcha") return "needs_captcha";
+  if (
+    result.captcha ||
+    result.gate === "captcha" ||
+    result.status === "captcha" ||
+    result.status === "needs_captcha"
+  ) {
+    return "needs_captcha";
+  }
   if (result.status === "needs_otp") return "needs_otp";
   if (result.status === "needs_login") return "needs_login";
   return "needs_manual";
@@ -4139,7 +4147,9 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
       parkProductHuntTask(tabId, task, entry, `资料与当前任务不一致（${mismatch}），已阻止发布`);
       return;
     }
-    for (let step = 0; step < PRODUCT_HUNT_MAX_STEPS; step += 1) {
+    let step = 0;
+    let waitingRetries = 0;
+    while (step < PRODUCT_HUNT_MAX_STEPS && waitingRetries < PRODUCT_HUNT_MAX_WAIT_RETRIES) {
       assertRunCurrent(tabId, entry, runId);
       const result = await sendTabMessage(tabId, {
         action: "runProductHuntStep",
@@ -4152,12 +4162,6 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         parkProductHuntTask(tabId, task, entry, result.reason || "Product Hunt 需要人工处理", productHuntGateStatus(result));
         return;
       }
-      if (result.status === "ready_to_create" || result.ready_to_create === true) {
-        const reason = "Product Hunt 必填 100%，等待确认 Create draft（不会排期或购买推广）";
-        entry.productHuntReadyToCreate = true;
-        parkProductHuntTask(tabId, task, entry, reason);
-        return;
-      }
       if (result.submittedAttempt && result.matched && result.evidence) {
         entry.submissionAttempted = true;
         completeTaskFromSubmit(tabId, task, {
@@ -4168,12 +4172,29 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         });
         return;
       }
+      if (result.status === "ready_to_create" || result.ready_to_create === true) {
+        const reason = "Product Hunt 必填 100%，等待确认 Create draft（不会排期或购买推广）";
+        entry.productHuntReadyToCreate = true;
+        parkProductHuntTask(tabId, task, entry, reason);
+        return;
+      }
       if (result.status === "error" || result.error) {
         throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
+      }
+      if (result.waiting) {
+        waitingRetries += 1;
+        const retryAfterMs = Number(result.retryAfterMs);
+        const delayMs = Number.isFinite(retryAfterMs)
+          ? Math.max(150, Math.min(retryAfterMs, 5000))
+          : 800;
+        await sleep(delayMs);
+        continue;
       }
       if (!(result.advanced || result.stageAdvanced || result.stageCompleted || result.entryOpened)) {
         throw new Error(result.reason || `Product Hunt ${result.stage || "unknown"} 未推进`);
       }
+      step += 1;
+      waitingRetries = 0;
       await sleep(900);
     }
     throw new Error("Product Hunt 步骤超过安全上限");
@@ -4344,9 +4365,13 @@ async function resumeAfterCaptcha(tabId, data) {
   entry.slotActive = true;
   entry.agentDone = false;
   state.parkedTaskIds.delete(task.id);
-  persistParkedTaskIds();
+  await persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
+  if (isCustomLaunchTask(task)) {
+    await runProductHuntLaunchLoop(tabId, task, entry, { captchaResolved: true });
+    return;
+  }
   await runAgentLoop(tabId, task, entry, { captchaResolved: true, data });
 }
 

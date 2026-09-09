@@ -52,6 +52,16 @@ assert.match(background, /type:\s*["']producthunt_stage["']/,
   "Product Hunt must persist a checkpoint for every stage");
 assert.match(background, /status === ["']ready_to_create["'][\s\S]*通用截图智能体执行 Create draft/,
   "Product Hunt preparation must hand off to the same general visual agent used on other sites");
+assert.match(background, /function handOffToVisualAgent[\s\S]*type:\s*["']visual_escalation["']/,
+  "the batch must write a durable escalation event before visual supervision starts");
+assert.match(background, /extra\.escalationReason[\s\S]*Previous action produced no visible page change/,
+  "the visual supervisor must receive the deterministic failure that caused its handoff");
+assert.match(background, /async function runRuleBasedFill[\s\S]*allowAgent:\s*false/,
+  "ordinary batch forms must start with the original deterministic filler");
+assert.match(background, /DETERMINISTIC_ENTRY_WAIT_RETRIES[\s\S]*result\.waiting[\s\S]*页面暂未暴露表单或入口[\s\S]*await sleep\(800\)/,
+  "an incompletely rendered page must get bounded deterministic waits before visual escalation");
+assert.match(background, /async function runAgentLoop[\s\S]*if \(!extra\.visualEscalation\)[\s\S]*runRuleBasedFill/,
+  "the visual loop must reject accidental all-sites invocation without an explicit escalation");
 assert.doesNotMatch(background, /Product Hunt 多步骤发布需人工完成/,
   "Product Hunt must not be hard-coded to manual before automation runs");
 assert.match(background, /createVisualActionPlan\(tabId, task, snapshot/,
@@ -65,6 +75,8 @@ assert.match(worker, /allowedTypes = new Set\(\["fill", "select", "check", "clic
   "the visual agent must be able to navigate unfamiliar multi-step sites");
 assert.match(worker, /final ordinary free directory\/listing submission control/,
   "ordinary submissions should be standing-authorized in the visual-agent prompt");
+assert.match(worker, /fill-only supervision pass/,
+  "manual visual filling must not silently click a final submission control");
 assert.match(content, /classifyModelClickGate/,
   "model clicks still need runtime gates for captcha, login, payment, legal, and destructive actions");
 assert.match(worker, /MEDIA_BUCKET\.head\(objectKey\)/,

@@ -227,15 +227,28 @@ assert.match(
 
 assert.match(
   background,
-  /function\s+handleContentReady[\s\S]*pendingRejudge[\s\S]*runAgentLoop\(tab\.id,\s*task,\s*entry,\s*\{[\s\S]*pendingRejudge:\s*true/,
-  "background.js should resume a pending rejudge when contentReady fires after navigation",
+  /function\s+handleContentReady[\s\S]*pendingRejudge[\s\S]*runRuleBasedFill\(tab\.id,\s*task,\s*entry,\s*\{[\s\S]*pendingRejudge:/,
+  "background.js should resume deterministic handling when contentReady fires after navigation",
 );
 
 assert.match(
   background,
-  /agentPaused[\s\S]*looksReadyForManualResume[\s\S]*runAgentLoop\(tab\.id,\s*task,\s*entry,\s*\{[\s\S]*manual:\s*true/,
-  "background.js should automatically resume a paused manual task when the user navigates to a recognizable form page",
+  /agentPaused[\s\S]*looksReadyForManualResume[\s\S]*runRuleBasedFill\(tab\.id,\s*task,\s*entry,\s*\{[\s\S]*manual:\s*true/,
+  "background.js should automatically resume deterministic handling when the user navigates to a recognizable form page",
 );
+
+assert.match(background, /function\s+handOffToVisualAgent\s*\(/,
+  "complex or failed deterministic flows need an explicit visual-agent handoff");
+assert.match(background, /allowAgent:\s*false/,
+  "ordinary batch forms must complete their deterministic pass before an AI escalation");
+assert.match(background, /visualEscalation:\s*true/,
+  "only an explicit handoff may enter the visual execution loop");
+assert.match(background, /function\s+isVisualSubmissionAction\s*\(/,
+  "fill-only visual supervision must filter final submission clicks");
+assert.match(content, /function\s+isAutomatableFileInput\s*\(/,
+  "visible upload dropzones should expose their hidden file control for DataTransfer injection");
+assert.match(content, /uploadedFiles/,
+  "a media injection should request a visual preview check before the batch continues");
 
 assert.match(
   background,

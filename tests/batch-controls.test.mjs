@@ -152,6 +152,9 @@ assert.equal(
 );
 assert.equal(controls.parkedTaskStatus("needs_login"), "needs_manual");
 assert.equal(controls.parkedTaskStatus("needs_captcha"), "captcha");
+const markManual = background.match(/function\s+markTaskNeedsManual[\s\S]*?\n}\n\nfunction\s+markTaskBlocked/)?.[0] || "";
+assert.match(markManual, /:\s*"needs_manual"/,
+  "an unresolved automation failure must default to the manual queue, not be mislabeled as login");
 assert.equal(controls.shouldAutoSkipGate(true, "needs_captcha"), true);
 assert.equal(
   controls.shouldAutoSkipGate(true, "needs_manual"),

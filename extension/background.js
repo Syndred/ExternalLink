@@ -46,6 +46,7 @@ const SNAPSHOT_RETRY_ATTEMPTS = 5;
 const SNAPSHOT_RETRY_MS = 700;
 const MAX_FILL_ROUNDS = 1;
 const MAX_VALIDATION_RETRIES = 2;
+const DETERMINISTIC_ENTRY_WAIT_RETRIES = 3;
 const AUTO_FILL_DEBOUNCE_MS = 900;
 const MAX_SUBMISSION_MEDIA_BYTES = 6 * 1024 * 1024;
 const SUBMISSION_SCHEMA_VERSION = self.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION || 2;
@@ -1886,6 +1887,7 @@ async function handleSidepanelFill(msg) {
 
   let smartTotal = 0;
   let skippedFiles = [];
+  let uploadedFiles = [];
   let inferredFields = [];
   let learnedFields = [];
   let agentResult = {};
@@ -1909,6 +1911,7 @@ async function handleSidepanelFill(msg) {
     });
     smartTotal = filled.smartTotal;
     skippedFiles = filled.skippedFiles;
+    uploadedFiles = filled.uploadedFiles;
     inferredFields = filled.inferredFields;
     agentResult = filled.agentResult;
     lastEmpty = filled.lastEmpty;
@@ -2047,6 +2050,7 @@ async function handleSidepanelFill(msg) {
     invalidCount: lastEmpty.invalidCount || 0,
     totalCount: lastEmpty.totalCount,
     skippedFiles,
+    uploadedFiles,
     inferredFields,
     learnedFields,
     platform: platformType,
@@ -2298,6 +2302,7 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
   const allowAgent = options.allowAgent !== false;
   let smartTotal = 0;
   let skippedFiles = [];
+  let uploadedFiles = [];
   let inferredFields = [];
   let agentResult = {};
   let lastEmpty = { emptyCount: 0, invalidCount: 0, totalCount: 0 };
@@ -2309,6 +2314,9 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
       const smartResult = await sendTabMessage(tabId, { action: "smartFill", config });
       smartTotal += smartResult.filledCount || 0;
       if (smartResult.skippedFiles?.length) skippedFiles = smartResult.skippedFiles;
+      if (smartResult.uploadedFiles?.length) {
+        uploadedFiles = [...new Set([...uploadedFiles, ...smartResult.uploadedFiles])];
+      }
       if (smartResult.inferredFields?.length) {
         inferredFields = [...new Set([...inferredFields, ...smartResult.inferredFields])];
       }
@@ -2371,7 +2379,7 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
       invalidCount: 0,
       totalCount: 0,
     }));
-    validation = await runValidateAndFixFill(tabId, config);
+    validation = await runValidateAndFixFill(tabId, config, { allowAgent });
     lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => lastEmpty);
     formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(
       () => formState,
@@ -2383,6 +2391,7 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
   return {
     smartTotal,
     skippedFiles,
+    uploadedFiles,
     inferredFields,
     agentResult,
     lastEmpty,
@@ -2517,7 +2526,7 @@ async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
   };
 }
 
-async function runValidateAndFixFill(tabId, config) {
+async function runValidateAndFixFill(tabId, config, options = {}) {
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "AI 检查填写内容…" });
 
   let report = await sendTabMessage(tabId, { action: "getFilledFieldsReport" });
@@ -2537,6 +2546,15 @@ async function runValidateAndFixFill(tabId, config) {
   }
 
   if (report.allValid) return { submitReady: true, issues: [] };
+
+  if (options.allowAgent === false) {
+    return {
+      submitReady: false,
+      issues: report.issues || ["确定性校验未通过"],
+      invalidCount: report.invalidCount || 0,
+      emptyCount: report.fields.filter((field) => !field.value).length,
+    };
+  }
 
   const snapshot = await getTabSnapshot(tabId);
   const validation = await callCloudAgent("/validate-fill", {
@@ -3826,12 +3844,17 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
   };
 
   let snapshot = await getTabSnapshot(tabId);
+  const history = [];
   const loops = Math.max(1, Math.min(maxLoops || MAX_AGENT_LOOPS, MAX_AGENT_LOOPS));
   for (let loop = 0; loop < loops; loop++) {
-    const plan = await callCloudAgent(
-      "/plan",
-      agentPayload(fakeTask, snapshot, { config, fillOnly: true }),
-    );
+    const visualStep = await createVisualActionPlan(tabId, fakeTask, snapshot, {
+      step: loop,
+      history,
+      config,
+      fillOnly: true,
+      failure: loop > 0 ? "The deterministic fill still leaves required fields or validation errors." : "",
+    });
+    const plan = visualStep.plan;
 
     if (plan.status === "needs_manual") {
       return { needs_manual: true, reason: plan.reason || plan.message || "需要人工处理" };
@@ -3848,13 +3871,16 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
       return { error: plan.reason || "无可用填表动作" };
     }
 
-    try {
-      await executeTabActions(tabId, plan.actions);
-    } catch (actionError) {
-      await executeVisualFallback(tabId, fakeTask, snapshot, actionError.message);
-    }
+    const actionResult = await executeTabActions(tabId, plan.actions);
     await sleep(AGENT_ACTION_SETTLE_MS);
     snapshot = await getTabSnapshot(tabId);
+    history.push({
+      step: loop + 1,
+      stage: plan.stage || "",
+      actions: summarizePlanActions(plan.actions),
+      result: summarizeActionResults(actionResult),
+      url: snapshot.url || "",
+    });
   }
 
   return { ok: true, fillOnly: true };
@@ -4190,27 +4216,15 @@ async function handleStableContentReady(tab, data) {
   const shouldResumeRejudge = entry.pendingRejudge;
   if (entry.agentPaused && !shouldResumeRejudge) {
     if (!looksReadyForManualResume(data)) return;
-    log(`页面就绪: ${task.domain} ${data.mode}，自动继续半自动填表`, "");
+    log(`页面就绪: ${task.domain} ${data.mode}，继续确定性填表`, "");
     resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
-    if (state.config && state.config.useAgent === true) {
-      await runAgentLoop(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
-      return;
-    }
     await runRuleBasedFill(tab.id, task, entry, { manual: true, resumedFromContentReady: true });
     return;
   }
 
   log(`页面就绪: ${task.domain} ${data.mode}`, "");
   resetEntryTimeout(entry, tab.id, EXECUTION_TIMEOUT_MS);
-  if (state.config && state.config.useAgent === true) {
-    if (shouldResumeRejudge) {
-      await runAgentLoop(tab.id, task, entry, { pendingRejudge: true });
-      return;
-    }
-    await runAgentLoop(tab.id, task, entry);
-    return;
-  }
-  await runRuleBasedFill(tab.id, task, entry);
+  await runRuleBasedFill(tab.id, task, entry, { pendingRejudge: shouldResumeRejudge });
 }
 
 function isCustomLaunchTask(task) {
@@ -4328,11 +4342,10 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
           action: "visual_agent",
           result: "required fields complete; generic visual agent owns final draft creation and receipt verification",
         });
-        entry.agentRunning = false;
-        await runAgentLoop(tabId, task, entry, {
+        await handOffToVisualAgent(tabId, task, entry, {
           manual: true,
           productHuntPrepared: true,
-        });
+        }, "Product Hunt 进入复杂的最终创建与回执核验阶段");
         return;
       }
       if (result.status === "error" || result.error) {
@@ -4456,14 +4469,6 @@ async function handleManualSubmit(msg) {
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
   const activeConfig = getTaskConfig(task);
-  if (activeConfig && activeConfig.useAgent === true) {
-    await runAgentLoop(tabId, task, entry, {
-      config: activeConfig,
-      platformType: platformType || task.platformType,
-      manual: true,
-    });
-    return;
-  }
   await runRuleBasedFill(tabId, task, entry, {
     config: activeConfig,
     platformType: platformType || task.platformType,
@@ -4548,10 +4553,38 @@ async function resumeAfterCaptcha(tabId, data) {
     await runProductHuntLaunchLoop(tabId, task, entry, { captchaResolved: true });
     return;
   }
-  await runAgentLoop(tabId, task, entry, { captchaResolved: true, data });
+  await runRuleBasedFill(tabId, task, entry, { captchaResolved: true, data });
 }
 
 // ─── Rule-based fill (no DeepSeek required) ───
+function shouldEscalateToVisualAgent(reason, details = {}) {
+  if (isExplicitHumanGateJudge({ reason }, details.snapshot)) return false;
+  if (details.fillOnly) return false;
+  return true;
+}
+
+async function handOffToVisualAgent(tabId, task, entry, extra = {}, reason = "") {
+  if (entry.visualEscalationInProgress) return true;
+  entry.visualEscalationInProgress = true;
+  entry.agentRunning = false;
+  log(`${task.domain}: 确定性流程无法继续，截图智能体接管 - ${reason || "复杂组件或多步骤页面"}`, "warn");
+  await recordAutomationEvent(task, {
+    type: "visual_escalation",
+    status: "running",
+    result: reason || "deterministic flow requires visual supervision",
+  });
+  try {
+    await runAgentLoop(tabId, task, entry, {
+      ...extra,
+      visualEscalation: true,
+      escalationReason: reason || "deterministic flow requires visual supervision",
+    });
+  } finally {
+    entry.visualEscalationInProgress = false;
+  }
+  return true;
+}
+
 async function runRuleBasedFill(tabId, task, entry, extra = {}) {
   if (entry.agentRunning || entry.agentDone) return;
   const fillConfig = getTaskConfig(task, extra.config || {});
@@ -4585,11 +4618,21 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
     assertRunCurrent(tabId, entry, runId);
 
     let navCount = 0;
-    while (result && result.navigating && navCount < 4 && !state.stopped) {
-      navCount += 1;
-      log(`${task.domain}: 打开提交入口 ${result.label || result.url}`, "");
-      await navigateTaskTab(tabId, entry, result.url);
-      await waitForTabContentReady(tabId, entry, { mode: "unknown" });
+    let entryWaitCount = 0;
+    while (result && !state.stopped) {
+      if (result.navigating && navCount < 4) {
+        navCount += 1;
+        entryWaitCount = 0;
+        log(`${task.domain}: 打开提交入口 ${result.label || result.url}`, "");
+        await navigateTaskTab(tabId, entry, result.url);
+        await waitForTabContentReady(tabId, entry, { mode: "unknown" });
+      } else if (result.waiting && entryWaitCount < DETERMINISTIC_ENTRY_WAIT_RETRIES) {
+        entryWaitCount += 1;
+        log(`${task.domain}: 页面暂未暴露表单或入口，继续等待 ${entryWaitCount}/${DETERMINISTIC_ENTRY_WAIT_RETRIES}`, "");
+        await sleep(800);
+      } else {
+        break;
+      }
       assertRunCurrent(tabId, entry, runId);
       result = await sendExecuteSubmit(
         tabId,
@@ -4605,7 +4648,12 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (result && result.needs_manual) {
-      markTaskNeedsManual(tabId, task, entry, result.reason || "需要人工处理");
+      const reason = result.reason || "确定性流程无法识别当前页面";
+      if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+        await handOffToVisualAgent(tabId, task, entry, extra, reason);
+        return;
+      }
+      markTaskNeedsManual(tabId, task, entry, reason);
       return;
     }
     if (result && result.blocked) {
@@ -4613,22 +4661,27 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (result && result.waiting) {
-      markTaskFilled(
-        tabId,
-        task,
-        entry,
-        result.skipReason || "请导航到提交页面后点击「继续填表」",
-      );
+      const reason = result.skipReason || "确定性流程未能定位提交入口";
+      if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+        await handOffToVisualAgent(tabId, task, entry, extra, reason);
+        return;
+      }
+      markTaskFilled(tabId, task, entry, reason);
       return;
     }
     if (result && result.error) {
-      markTaskFilled(tabId, task, entry, result.skipReason || result.error);
+      const reason = result.skipReason || result.error;
+      if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+        await handOffToVisualAgent(tabId, task, entry, extra, reason);
+        return;
+      }
+      markTaskFilled(tabId, task, entry, reason);
       return;
     }
 
     const platformType = extra.platformType || task.platformType || result?.platform || "directory";
     const filled = await fillFormUntilReady(tabId, fillConfig, platformType, {
-      allowAgent: fillConfig.useAgent !== false,
+      allowAgent: false,
     });
     assertRunCurrent(tabId, entry, runId);
 
@@ -4644,7 +4697,12 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (filled.agentResult?.needs_manual) {
-      markTaskNeedsManual(tabId, task, entry, filled.agentResult.reason || "需要人工处理");
+      const reason = filled.agentResult.reason || "确定性填表无法完成";
+      if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+        await handOffToVisualAgent(tabId, task, entry, extra, reason);
+        return;
+      }
+      markTaskNeedsManual(tabId, task, entry, reason);
       return;
     }
     if (filled.agentResult?.blocked) {
@@ -4657,6 +4715,20 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
 
+    if (
+      Number(filled.lastEmpty?.emptyCount || 0) > 0 ||
+      Number(filled.lastEmpty?.invalidCount || 0) > 0 ||
+      filled.formState?.validationFailed === true ||
+      (filled.skippedFiles || []).length > 0 ||
+      (filled.uploadedFiles || []).length > 0
+    ) {
+      const reason = (filled.uploadedFiles || []).length > 0
+        ? "已注入媒体文件，交给截图智能体核验上传预览并继续"
+        : "确定性填写后仍有必填项、校验项或媒体预览未完成";
+      await handOffToVisualAgent(tabId, task, entry, extra, reason);
+      return;
+    }
+
     const taskProfile = {
       id: task.profileId || task.projectKey || fillConfig.projectKey,
       name: task.profileName || fillConfig.brandName,
@@ -4665,7 +4737,7 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       fields: fillConfig.projectFields || {},
     };
     const submitted = await submitUntilAccepted(tabId, fillConfig, taskProfile, platformType, {
-      allowAgent: fillConfig.useAgent !== false,
+      allowAgent: false,
       recordLedger: false,
       lastEmpty: filled.lastEmpty,
     });
@@ -4676,7 +4748,12 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (submitted?.needs_manual) {
-      markTaskNeedsManual(tabId, task, entry, submitted.reason || "需要人工处理");
+      const reason = submitted.reason || "确定性提交无法完成";
+      if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+        await handOffToVisualAgent(tabId, task, entry, extra, reason);
+        return;
+      }
+      markTaskNeedsManual(tabId, task, entry, reason);
       return;
     }
     if (submitted?.blocked) {
@@ -4688,14 +4765,10 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (submitted?.validationFailed) {
-      markTaskFilled(
-        tabId,
-        task,
-        entry,
-        `表单校验未通过，补完一轮仍缺：${
-          (submitted.issues && submitted.issues[0]) || "仍有必填或无效栏"
-        }`,
-      );
+      const reason = `确定性提交校验未通过：${
+        (submitted.issues && submitted.issues[0]) || "仍有必填或无效栏"
+      }`;
+      await handOffToVisualAgent(tabId, task, entry, extra, reason);
       return;
     }
     if (submitted?.submitted && !submitted?.matched) {
@@ -4703,17 +4776,23 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
 
-    markTaskFilled(tabId, task, entry, "表单已填写，请检查后提交");
+    await handOffToVisualAgent(tabId, task, entry, extra, "确定性流程未找到可验证的提交动作");
+    return;
   } catch (err) {
     if (err && err.staleRun) return;
     if (err && err.batchPaused) {
       pauseEntryForBatch(tabId, task, entry);
       return;
     }
+    const reason = err?.message || "确定性流程执行异常";
+    if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
+      await handOffToVisualAgent(tabId, task, entry, extra, reason);
+      return;
+    }
     task.status = "err";
-    task.skipReason = err.message;
-    parkTaskEntry(tabId, entry, err.message);
-    log(`${task.domain}: ${err.message}`, "err");
+    task.skipReason = reason;
+    parkTaskEntry(tabId, entry, reason);
+    log(`${task.domain}: ${reason}`, "err");
     broadcastTaskUpdate(task);
   } finally {
     entry.agentRunning = false;
@@ -4889,18 +4968,29 @@ function safeVisualActions(actions, elements) {
   });
 }
 
+function isVisualSubmissionAction(action, elements = []) {
+  if (action?.type !== "click") return false;
+  if (!action.selector) return true;
+  const target = (elements || []).find((element) => element.selector === action.selector);
+  const label = `${target?.label || ""} ${target?.aria || ""} ${target?.type || ""}`.toLowerCase();
+  return /\b(submit|publish|launch|create draft|send listing|add (?:my )?(?:site|product|startup)|post comment)\b|提交|发布|创建草稿|发布评论|添加网站|添加产品/.test(label);
+}
+
 async function createVisualActionPlan(tabId, task, snapshot, context = {}) {
   const visual = await captureTaskVisualContext(tabId, task);
   const plan = await callCloudAgent("/vision-plan", {
-    ...agentPayload(task, snapshot, { visualAgent: true }),
+    ...agentPayload(task, snapshot, { visualAgent: true, config: context.config || {} }),
     screenshot: visual.screenshot,
     elements: visual.elements,
     viewport: visual.viewport,
     failure: context.failure || "",
     history: context.history || [],
     step: context.step || 0,
+    fillOnly: context.fillOnly === true,
   });
-  const actions = safeVisualActions(plan.actions, visual.elements);
+  const actions = safeVisualActions(plan.actions, visual.elements).filter(
+    (action) => context.fillOnly !== true || !isVisualSubmissionAction(action, visual.elements),
+  );
   await recordAutomationEvent(task, {
     type: "vision_plan",
     status: plan.status,
@@ -4966,6 +5056,12 @@ function agentPayload(task, snapshot, extra = {}) {
 }
 
 async function runAgentLoop(tabId, task, entry, extra = {}) {
+  // Ordinary forms stay on deterministic smart-fill/submit. A caller must
+  // explicitly hand off a complex or failed flow before the visual operator runs.
+  if (!extra.visualEscalation) {
+    await runRuleBasedFill(tabId, task, entry, extra);
+    return;
+  }
   if (entry.agentRunning || entry.agentDone) return;
   if (entry.agentPaused && !extra.manual && !extra.captchaResolved && !extra.pendingRejudge) return;
   const identityMismatch = self.ExtLinkProfiles.taskConfigIdentityMismatch(
@@ -5031,9 +5127,13 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         const visualStep = await createVisualActionPlan(tabId, task, snapshot, {
           step: loop,
           history: entry.agentHistory,
-          failure: entry.noProgressCount > 0
-            ? `Previous action produced no visible page change (${entry.noProgressCount} consecutive times). Reassess the screenshot and choose a different action.`
-            : "",
+          fillOnly: getTaskConfig(task, extra.config || {}).fillOnly === true,
+          failure: [
+            extra.escalationReason || "",
+            entry.noProgressCount > 0
+              ? `Previous action produced no visible page change (${entry.noProgressCount} consecutive times). Reassess the screenshot and choose a different action.`
+              : "",
+          ].filter(Boolean).join(" "),
         });
         plan = visualStep.plan;
       } catch (visualError) {
@@ -5083,7 +5183,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       }
 
       log(
-        `${task.domain}: 云端 AI 执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`,
+        `${task.domain}: 截图智能体执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`,
         "",
       );
       await recordAutomationEvent(task, {
@@ -5630,9 +5730,11 @@ function markTaskNeedsManual(tabId, task, entry, reason, preferredStatus = "") {
     preferredStatus ||
     (/captcha|验证码/i.test(String(reason || ""))
       ? "needs_captcha"
-      : /product hunt|多步骤发布需人工|custom launch/i.test(String(reason || ""))
-        ? "needs_manual"
-        : "needs_login");
+      : /\botp\b|verification code|短信码|邮箱验证码/i.test(String(reason || ""))
+        ? "needs_otp"
+        : /\b(log[ -]?in|sign[ -]?in|oauth)\b|登录|登入|第三方授权/i.test(String(reason || ""))
+          ? "needs_login"
+          : "needs_manual");
   if (self.ExtLinkBatchControls.shouldAutoSkipGate(state.config?.autoSkipCaptcha, fallback)) {
     skipTaskWithReason(tabId, task, entry, reason || "验证码任务已配置为自动跳过");
     return;

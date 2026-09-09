@@ -4368,9 +4368,13 @@
         'input, textarea, select, [contenteditable="true"], [role="textbox"][contenteditable]',
       ),
     ).filter((element) => {
+      const type = (element.type || "").toLowerCase();
+      // Modern upload UIs usually hide the real file control behind a visible
+      // dropzone. Keep that control available for DataTransfer injection, but
+      // only when the nearby visible label is clearly an upload/media target.
+      if (type === "file") return isAutomatableFileInput(element);
       if (!isFillableField(element)) return false;
       if (isContentEditableField(element) && element.parentElement?.isContentEditable) return false;
-      const type = (element.type || "").toLowerCase();
       if (type === "hidden" || type === "submit" || type === "button" || type === "reset")
         return false;
       return true;
@@ -5254,6 +5258,7 @@
     let filledCount = choiceResult.filledCount;
     const mappings = { ...choiceResult.mappings };
     const skippedFiles = [];
+    const uploadedFiles = [];
     const inferredFields = new Set();
     let screenshotCursor = 0;
 
@@ -5294,6 +5299,7 @@
         });
         if (ok) {
           filledCount++;
+          uploadedFiles.push(getSnapshotLabel(element) || element.name || "image");
           mappings[fieldMappingKey(element)] = {
             profileKey: media?.profileKey || "Featured image",
             value,
@@ -5352,7 +5358,7 @@
       }
     }
 
-    return { filledCount, mappings, skippedFiles, inferredFields: [...inferredFields] };
+    return { filledCount, mappings, skippedFiles, uploadedFiles, inferredFields: [...inferredFields] };
   }
 
   function isCustomDropdownEmpty(trigger) {
@@ -5495,6 +5501,29 @@
     if (!isVisible(element)) return false;
     if (element.closest('[aria-hidden="true"]')) return false;
     return true;
+  }
+
+  function isAutomatableFileInput(element) {
+    if (!element || String(element.type || "").toLowerCase() !== "file") return false;
+    if (element.disabled || element.readOnly || element.closest('[aria-hidden="true"], [hidden]')) return false;
+    if (isVisible(element)) return true;
+
+    const labels = Array.from(element.labels || []);
+    const wrapper = element.closest(
+      'label, [data-dropzone], [data-upload], [class*="dropzone" i], [class*="upload" i]',
+    );
+    const nearby = [wrapper, ...labels, element.parentElement, element.parentElement?.parentElement]
+      .filter(Boolean)
+      .filter(isVisible);
+    if (!nearby.length) return false;
+
+    const hint = compactText(
+      [getSnapshotLabel(element), element.name, element.id, ...nearby.map((node) => node.textContent || "")]
+        .filter(Boolean)
+        .join(" "),
+      800,
+    ).toLowerCase();
+    return /upload|drop|image|logo|screenshot|gallery|media|photo|thumbnail|attachment|文件|上传|图片|封面|截图|媒体|附件/.test(hint);
   }
 
   // ─── Captcha Detection ───

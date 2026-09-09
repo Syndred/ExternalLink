@@ -13,6 +13,7 @@ importScripts(
   "lib/url-library.js",
   "lib/opportunity-score.js",
   "lib/context-menu.js",
+  "lib/automation-ledger.js",
 );
 
 let state = {
@@ -29,6 +30,7 @@ let state = {
   paused: false,
   stopped: false,
   lifecycleVersion: 0,
+  automationFinalStatus: "",
 };
 
 const PAGE_LOAD_TIMEOUT_MS = 45000;
@@ -59,6 +61,11 @@ const CLOUD_SYNC_RETRY_DELAYS_MS = [1000, 5000, 15000, 60000];
 const BATCH_LOG_STORAGE_KEY = "batchRunLog";
 const BATCH_LOG_LIMIT = 400;
 const BATCH_TASK_WINDOW_SIZE = 180;
+const AUTOMATION_LEDGER_KEY = "automationRunLedger";
+const AUTOMATION_OUTBOX_KEY = "automationEventOutbox";
+const AUTOMATION_OUTBOX_ALARM = "externallink-automation-outbox";
+const AUTOMATION_OUTBOX_LIMIT = 3000;
+const VISION_FALLBACK_AFTER_FAILURES = 1;
 
 const commentDraftCache = new Map();
 
@@ -77,9 +84,15 @@ let pendingBatchLogEntries = [];
 let batchLogFlushTimer = null;
 let processQueuePromise = null;
 let startBatchPromise = null;
-let initializationPromise = restoreActiveBatchRun().catch((err) => {
-  log(`恢复上次批次失败: ${err.message}`, "warn");
-});
+let automationCloudWritePromise = Promise.resolve();
+let automationLedgerWritePromise = Promise.resolve();
+let initializationPromise = restoreActiveBatchRun()
+  .catch((err) => {
+    log(`恢复上次批次失败: ${err.message}`, "warn");
+  })
+  .then(() => flushAutomationOutbox().catch((err) => {
+    log(`自动化记录补传失败: ${err.message}`, "warn");
+  }));
 
 self.addEventListener?.("unhandledrejection", (event) => {
   const reason = event?.reason;
@@ -101,6 +114,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
   }
   configureScheduledChecks().catch(() => {});
+  chrome.alarms.create(AUTOMATION_OUTBOX_ALARM, { periodInMinutes: 5 });
 });
 
 chrome.contextMenus?.onClicked.addListener((info) => {
@@ -109,6 +123,8 @@ chrome.contextMenus?.onClicked.addListener((info) => {
 
 chrome.runtime.onStartup.addListener(() => {
   configureScheduledChecks().catch(() => {});
+  chrome.alarms.create(AUTOMATION_OUTBOX_ALARM, { periodInMinutes: 5 });
+  flushAutomationOutbox().catch(() => {});
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -127,6 +143,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === LINK_MONITOR_ALARM) {
     runLinkMonitor({ notify: true }).catch(() => {});
+  }
+  if (alarm.name === AUTOMATION_OUTBOX_ALARM) {
+    flushAutomationOutbox().catch(() => {});
   }
 });
 
@@ -432,6 +451,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
       break;
     case "confirmSubmissionSuccess":
+      if (sender.tab?.id) {
+        sendResponse({ ok: false, error: "人工成功确认只能从扩展侧栏发起" });
+        return true;
+      }
       confirmSubmissionSuccess(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
@@ -532,6 +555,164 @@ async function cloudRequest(pathname, options = {}, configOverride = null) {
     throw error;
   }
   return data;
+}
+
+function automationRunSummary(status = "running") {
+  return {
+    runId: state.runId,
+    status,
+    selectedProfileIds: state.tasks.length
+      ? [...new Set(state.tasks.map((task) => task.profileId).filter(Boolean))]
+      : [],
+    config: {
+      fillOnly: state.config?.fillOnly === true,
+      concurrency: state.concurrency,
+      multimodalFallback: true,
+    },
+    taskTotal: state.tasks.length,
+    destinationTotal: state.groups.length,
+    startedAt: state.startedAt || new Date().toISOString(),
+    finishedAt: ["finished", "stopped", "failed"].includes(status) ? new Date().toISOString() : null,
+  };
+}
+
+function automationEventForTask(task, event = {}) {
+  const at = event.at || new Date().toISOString();
+  const taskId = String(task?.id || event.taskId || "run-event");
+  const attempt = Math.max(1, Number(event.attempt || task?._attempt || 1));
+  return {
+    id: event.id || `evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`,
+    at,
+    runId: state.runId,
+    taskId,
+    attempt,
+    attemptId: `${state.runId}:${taskId}:a${attempt}`,
+    destinationKey: task?.destinationKey || task?.destinationGroupKey || event.destinationKey || "",
+    profileId: task?.profileId || event.profileId || "",
+    ...event,
+  };
+}
+
+function queueAutomationOutboxRemoval(eventId) {
+  const removal = automationLedgerWritePromise.catch(() => null).then(async () => {
+    const stored = await chrome.storage.local.get(AUTOMATION_OUTBOX_KEY);
+    const current = Array.isArray(stored[AUTOMATION_OUTBOX_KEY]) ? stored[AUTOMATION_OUTBOX_KEY] : [];
+    const next = current.filter((item) => item?.event?.id !== eventId);
+    if (next.length !== current.length) {
+      await chrome.storage.local.set({ [AUTOMATION_OUTBOX_KEY]: next });
+    }
+    return next;
+  });
+  automationLedgerWritePromise = removal;
+  return removal;
+}
+
+async function flushAutomationOutbox() {
+  const stored = await chrome.storage.local.get(AUTOMATION_OUTBOX_KEY);
+  const pending = Array.isArray(stored[AUTOMATION_OUTBOX_KEY])
+    ? stored[AUTOMATION_OUTBOX_KEY].slice(0, AUTOMATION_OUTBOX_LIMIT)
+    : [];
+  for (const item of pending) {
+    if (!item?.event?.id || !item?.run) continue;
+    try {
+      await cloudRequest("/v1/automation/events", {
+        method: "POST",
+        body: { run: item.run, event: item.event },
+      });
+      await queueAutomationOutboxRemoval(item.event.id);
+    } catch (err) {
+      console.warn("ExternalLink automation outbox replay paused", err?.message || err);
+      break;
+    }
+  }
+}
+
+function recordAutomationEvent(task, event = {}, options = {}) {
+  if (!state.runId) return Promise.resolve(null);
+  const normalized = automationEventForTask(task, event);
+  const runId = normalized.runId;
+  const runStatus = options.runStatus || (state.stopped ? "stopped" : state.paused ? "paused" : "running");
+  const runSummary = { ...automationRunSummary(runStatus), runId };
+  const localWrite = automationLedgerWritePromise.catch((err) => {
+    console.error("ExternalLink automation ledger recovered after write failure", err?.message || err);
+    return null;
+  }).then(async () => {
+    const stored = await chrome.storage.local.get([AUTOMATION_LEDGER_KEY, AUTOMATION_OUTBOX_KEY]);
+    const current = self.ExtLinkAutomationLedger.normalizeLedger(stored[AUTOMATION_LEDGER_KEY]);
+    let next = self.ExtLinkAutomationLedger.appendEvent(current, runId, normalized);
+    if (options.runStatus) {
+      next = self.ExtLinkAutomationLedger.finishRun(next, runId, runStatus, normalized.at);
+    }
+    const outbox = (Array.isArray(stored[AUTOMATION_OUTBOX_KEY]) ? stored[AUTOMATION_OUTBOX_KEY] : [])
+      .filter((item) => item?.event?.id !== normalized.id);
+    outbox.push({ run: runSummary, event: normalized });
+    await chrome.storage.local.set({
+      [AUTOMATION_LEDGER_KEY]: next,
+      [AUTOMATION_OUTBOX_KEY]: outbox.slice(-AUTOMATION_OUTBOX_LIMIT),
+    });
+    return next;
+  });
+  automationLedgerWritePromise = localWrite;
+  const cloudWrite = automationCloudWritePromise
+    .then(async () => {
+      await localWrite;
+      await cloudRequest("/v1/automation/events", {
+        method: "POST",
+        body: { run: runSummary, event: normalized },
+      });
+      await queueAutomationOutboxRemoval(normalized.id);
+    })
+    .catch((err) => {
+      console.warn("ExternalLink automation event cloud write failed", err?.message || err);
+      return null;
+    });
+  automationCloudWritePromise = cloudWrite;
+  return localWrite.then(async (ledger) => {
+    await cloudWrite;
+    return ledger;
+  });
+}
+
+async function startAutomationRunLedger(selectedProfileIds) {
+  const stored = await chrome.storage.local.get(AUTOMATION_LEDGER_KEY);
+  const startedAt = new Date().toISOString();
+  state.startedAt = startedAt;
+  const next = self.ExtLinkAutomationLedger.startRun(stored[AUTOMATION_LEDGER_KEY], {
+    runId: state.runId,
+    selectedProfileIds,
+    taskTotal: state.tasks.length,
+    destinationTotal: state.groups.length,
+    fillOnly: state.config?.fillOnly === true,
+    startedAt,
+  });
+  await chrome.storage.local.set({ [AUTOMATION_LEDGER_KEY]: next });
+  await recordAutomationEvent(null, {
+    taskId: "run-event",
+    type: "run_started",
+    status: "running",
+    result: `${state.groups.length} destinations / ${state.tasks.length} tasks`,
+  });
+}
+
+async function finishAutomationRunLedger(status) {
+  if (!state.runId) return;
+  const runId = state.runId;
+  if (state.automationFinalStatus === status) return;
+  if (state.automationFinalStatus && ["finished", "stopped", "failed"].includes(state.automationFinalStatus)) return;
+  await recordAutomationEvent(null, {
+    taskId: "run-event",
+    type: `run_${status}`,
+    status,
+    finishedAt: new Date().toISOString(),
+  }, { runStatus: status });
+  automationLedgerWritePromise = automationLedgerWritePromise.then(async () => {
+    const stored = await chrome.storage.local.get(AUTOMATION_LEDGER_KEY);
+    const next = self.ExtLinkAutomationLedger.finishRun(stored[AUTOMATION_LEDGER_KEY], runId, status);
+    await chrome.storage.local.set({ [AUTOMATION_LEDGER_KEY]: next });
+  });
+  await automationLedgerWritePromise;
+  await automationCloudWritePromise;
+  if (["finished", "stopped", "failed"].includes(status)) state.automationFinalStatus = status;
 }
 
 async function updateCloudMetadata(patch) {
@@ -951,6 +1132,7 @@ async function pauseBatchRun() {
     if (entry.slotActive !== false) entry.pauseRequested = true;
   }
   await persistActiveBatchStatus("paused", { pausedAt: new Date().toISOString() });
+  await recordAutomationEvent(null, { taskId: "run-event", type: "run_paused", status: "paused" }, { runStatus: "paused" });
   broadcastStatus();
   log("批量已暂停；队列和人工页签均保留", "warn", { event: "run_paused" });
   return { ok: true, status: "paused" };
@@ -964,6 +1146,7 @@ async function stopBatchRun() {
   state.running = false;
   closeAutomatedTabs();
   await markActiveBatchStopped();
+  await finishAutomationRunLedger("stopped");
   broadcastStatus();
   log("已请求停止，正在保留人工页签并关闭自动页签", "warn", { event: "run_stop_requested" });
   return { ok: true, status: "stopped" };
@@ -1000,6 +1183,7 @@ async function resumeBatchRun() {
     closeTab(tabId);
   }
   await persistActiveBatchStatus("running", { resumedAt: new Date().toISOString() });
+  await recordAutomationEvent(null, { taskId: "run-event", type: "run_resumed", status: "running" }, { runStatus: "running" });
   broadcastStatus();
   log("批量已继续", "ok", { event: "run_resumed" });
   scheduleQueueProcessing();
@@ -1044,6 +1228,7 @@ async function startBatchRun(msg) {
   const lifecycleVersion = state.lifecycleVersion + 1;
   state.lifecycleVersion = lifecycleVersion;
   state.stopped = false;
+  state.automationFinalStatus = "";
   closeAllTabs();
   const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
     ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
@@ -1100,6 +1285,8 @@ async function startBatchRun(msg) {
   state.running = true;
   state.paused = false;
   state.stopped = false;
+
+  await startAutomationRunLedger(selectedSiteIds);
 
   await replaceActiveBatchRun({
       version: 3,
@@ -1265,6 +1452,9 @@ async function restoreActiveBatchRun() {
   for (const taskId of state.parkedTaskIds) {
     const task = state.tasks.find((item) => item.id === taskId);
     if (!task) continue;
+    // Batches saved before confirmation nonces were introduced still need a
+    // side-panel-only confirmation path after the extension upgrades.
+    task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
     const tab = tabs.find((item) => {
       if (!item?.id || claimedTabIds.has(item.id)) return false;
       try {
@@ -1329,6 +1519,8 @@ function serializeBatchTasks(tasks = []) {
     task.evidenceUrl || "",
     task.isDofollow === true ? 1 : 0,
     task.relResult || "",
+    Math.max(0, Number(task._attempt) || 0),
+    task.confirmationNonce || "",
   ]);
 }
 
@@ -1392,6 +1584,8 @@ function hydratePersistedTask(rawTask, destinations) {
     evidenceUrl: rawTask[11] || "",
     isDofollow: rawTask[12] === 1,
     relResult: rawTask[13] || "",
+    _attempt: Math.max(0, Number(rawTask[14]) || 0),
+    confirmationNonce: rawTask[15] || "",
   };
 }
 
@@ -1407,6 +1601,8 @@ function summarizeTaskForUi(task = {}) {
     skipReason: task.skipReason || "",
     groupJobIndex: task.groupJobIndex,
     groupJobCount: task.groupJobCount,
+    runId: state.runId,
+    confirmationNonce: task.confirmationNonce || "",
   };
 }
 
@@ -1719,6 +1915,16 @@ async function handleSidepanelFill(msg) {
           publicationStatus,
           publicUrl: agentResult.publicUrl || "",
           evidenceUrl: agentResult.evidenceUrl || "",
+          successProof: {
+            source: "deterministic_submit",
+            actionObserved: true,
+            evidenceSignals: agentResult.evidenceSignals || [{
+              type: publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+              text: evidence,
+              url: pageUrl,
+              matched: true,
+            }],
+          },
         });
       }
     }
@@ -1849,6 +2055,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     return { error: `资料与当前网站不一致（${mismatch}），已阻止提交`, fillOnly: true };
   }
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
+  const beforeEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   let submitResult = {};
   try {
     submitResult = await sendTabMessage(tabId, {
@@ -1863,6 +2070,16 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       matched: false,
       reason: err.message,
     }));
+    const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
+    const afterText = String(submitResult?.evidence || "").replace(/\s+/g, " ").trim();
+    submitResult = {
+      ...submitResult,
+      submitted: true,
+      clickedSubmit: true,
+      matched: Boolean(submitResult?.matched && afterText && afterText !== beforeText),
+      evidence: afterText && afterText !== beforeText ? submitResult.evidence : "",
+      evidenceSignals: afterText && afterText !== beforeText ? submitResult.evidenceSignals || [] : [],
+    };
   }
 
   if (submitResult?.captcha) {
@@ -1933,6 +2150,11 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     };
   }
 
+  if (submitResult?.stageAdvanced) {
+    broadcastAutoFillUpdate({ tabId, status: "filling", message: "已进入下一步，继续识别并填写表单…" });
+    return { stageAdvanced: true, submitted: false, matched: false };
+  }
+
   if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
     const pageUrl = await getTabUrlSafe(tabId);
     if (pageUrl && options.recordLedger !== false) {
@@ -1943,6 +2165,16 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
         confirmedBy: "agent",
         successEvidence: submitResult.evidence,
         publicationStatus: submitResult.publicationStatus || "submitted",
+        successProof: {
+          source: "deterministic_submit",
+          actionObserved: true,
+          evidenceSignals: submitResult.evidenceSignals || [{
+            type: submitResult.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+            text: submitResult.evidence,
+            url: pageUrl,
+            matched: true,
+          }],
+        },
       });
     }
     const doneMsg =
@@ -2081,7 +2313,9 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
 async function submitUntilAccepted(tabId, config, profile, platformType, options = {}) {
   let lastEmpty = options.lastEmpty || { emptyCount: 0, invalidCount: 0 };
   let lastIssues = [];
-  for (let attempt = 0; attempt < MAX_VALIDATION_RETRIES; attempt++) {
+  let validationAttempt = 0;
+  let stageCount = 0;
+  while (validationAttempt < MAX_VALIDATION_RETRIES && stageCount < 6) {
     const submitted = await tryAutoSubmitFilledForm(
       tabId,
       config,
@@ -2090,13 +2324,24 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
       options,
     );
     if (!submitted) return null;
+    if (submitted.stageAdvanced) {
+      stageCount += 1;
+      await sleep(900);
+      const filled = await fillFormUntilReady(tabId, config, platformType, options);
+      lastEmpty = filled.lastEmpty;
+      if (filled.agentResult?.needs_manual || filled.agentResult?.captcha || filled.agentResult?.blocked) {
+        return filled.agentResult;
+      }
+      continue;
+    }
     if (!submitted.validationFailed) return { ...submitted, lastEmpty, issues: lastIssues };
+    validationAttempt += 1;
     lastIssues = submitted.issues || [];
     lastEmpty = {
       emptyCount: submitted.emptyCount || 0,
       invalidCount: submitted.invalidCount || 0,
     };
-    if (attempt >= MAX_VALIDATION_RETRIES - 1) {
+    if (validationAttempt >= MAX_VALIDATION_RETRIES) {
       broadcastAutoFillUpdate({
         tabId,
         status: "manual",
@@ -2353,6 +2598,19 @@ async function recordSubmittedProject(task) {
   const url = task.url.startsWith("http") ? task.url : `https://${task.url}`;
   const profileId = task.profileId || task.projectKey || task.config?.projectKey || "";
   if (!profileId) return;
+  const proof = self.ExtLinkAutomationLedger.validateSuccessProof({
+    confirmedBy: task.confirmedBy || "agent",
+    evidence: task.successEvidence || "",
+    source: task.successProof?.source || "",
+    actionObserved: task.successProof?.actionObserved === true,
+    evidenceSignals: task.successProof?.evidenceSignals || [],
+    networkEvidence: task.successProof?.networkEvidence || null,
+    publicationStatus: task.publicationStatus,
+    publicUrl: task.publicUrl || "",
+    destinationUrl: url,
+    evidenceUrl: task.evidenceUrl || "",
+  });
+  if (!proof.ok) throw new Error(`成功证据未通过硬闸门: ${proof.reason}`);
   const destinationKey = siteKeyForUrl(url);
   const storage = await chrome.storage.local.get(["submissionRecords"]);
   const records = storage.submissionRecords || {};
@@ -2363,11 +2621,14 @@ async function recordSubmittedProject(task) {
     profileId,
     profileName: task.profileName || task.config?.brandName || profileId,
     confirmedBy: task.confirmedBy || "agent",
-    evidence: task.successEvidence || "judge confirmed submission success",
+    evidence: proof.evidence,
     publicUrl: task.publicUrl || "",
-    evidenceUrl: task.evidenceUrl || "",
+    evidenceUrl: proof.evidenceUrl || task.evidenceUrl || "",
     publicationStatus: task.publicationStatus,
   });
+  record.evidenceType = proof.evidenceType;
+  record.runId = state.runId || "";
+  record.taskId = task.id || "";
   records[key] = record;
   await chrome.storage.local.set({
     submissionRecords: records,
@@ -3437,7 +3698,11 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
       return { error: plan.reason || "无可用填表动作" };
     }
 
-    await executeTabActions(tabId, plan.actions);
+    try {
+      await executeTabActions(tabId, plan.actions);
+    } catch (actionError) {
+      await executeVisualFallback(tabId, fakeTask, snapshot, actionError.message);
+    }
     await sleep(AGENT_ACTION_SETTLE_MS);
     snapshot = await getTabSnapshot(tabId);
   }
@@ -3518,6 +3783,14 @@ async function refreshBatchRunStatus() {
   if (finalStatus === "stopped") log("任务已停止", "warn", { event: "run_stopped" });
   else if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
   else log("✅ 所有任务处理完毕", "ok", { event: "run_finished" });
+  if (["finished", "stopped"].includes(finalStatus)) await finishAutomationRunLedger(finalStatus);
+  else if (finalStatus === "waiting_manual") {
+    await recordAutomationEvent(null, {
+      taskId: "run-event",
+      type: "run_waiting_manual",
+      status: "waiting_manual",
+    }, { runStatus: "waiting_manual" });
+  }
   await flushBatchLogEntries();
 }
 
@@ -3531,6 +3804,7 @@ async function processOne(group) {
     }
     task = (group?.tasks || []).find((item) => item.status === "pending");
     if (!task) return;
+    task._attempt = Math.max(0, Number(task._attempt) || 0) + 1;
     const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
     log(`[${task.index}/${state.tasks.length}] 打开 ${task.domain} · ${task.profileName}`, "", {
       event: "task_opening",
@@ -3541,6 +3815,11 @@ async function processOne(group) {
     });
     task.status = "running";
     broadcastTaskUpdate(task);
+    await recordAutomationEvent(task, {
+      type: "task_opened",
+      status: "running",
+      result: url,
+    });
 
     const tab = await chrome.tabs.create({ url, active: false });
     if (state.runId !== batchRunId || state.stopped || !state.running) {
@@ -3910,26 +4189,22 @@ function handleManualSkip(msg) {
 }
 
 async function confirmSubmissionSuccess(msg) {
-  let task =
+  const task =
     state.tasks.find((item) => item.index === msg.taskIndex || item.id === msg.taskId) || null;
-  if (!task) {
-    if (!msg.url || !msg.profileId) throw new Error("缺少待确认的外链站或项目");
-    task = {
-      id: self.ExtLinkQueue.submissionRecordKey(siteKeyForUrl(msg.url), msg.profileId),
-      url: msg.url,
-      domain: self.ExtLinkQueue.extractDomain(msg.url),
-      destinationGroupKey: siteKeyForUrl(msg.url),
-      profileId: msg.profileId,
-      profileName: msg.profileName || msg.profileId,
-      projectKey: msg.profileId,
-      config: { projectKey: msg.profileId, brandName: msg.profileName || msg.profileId },
-    };
+  if (!task) throw new Error("待确认任务不存在或已过期");
+  if (msg.runId !== state.runId) throw new Error("批次已变化，请刷新待人工列表后重试");
+  if (!task.confirmationNonce || msg.confirmationNonce !== task.confirmationNonce) {
+    throw new Error("人工确认凭证无效，请刷新待人工列表后重试");
+  }
+  if (!state.parkedTaskIds.has(task.id) || !["needs_manual", "needs_captcha", "needs_login", "captcha", "filled", "submitted_unconfirmed"].includes(task.status)) {
+    throw new Error("该任务当前不在待人工确认状态");
   }
 
   task.status = "ok";
   task.skipReason = "";
   task.confirmedBy = "manual";
   task.successEvidence = msg.evidence || "user confirmed submission success";
+  task.confirmationNonce = "";
   await recordSubmittedProject(task);
   broadcastTaskUpdate(task);
   if (task.id && state.parkedTaskIds.delete(task.id)) await persistParkedTaskIds();
@@ -4168,6 +4443,7 @@ async function callCloudAgent(endpoint, payload) {
   const mapped = {
     "/comment": "/v1/ai/comment",
     "/plan": "/v1/ai/plan",
+    "/vision-plan": "/v1/ai/vision-plan",
     "/judge": "/v1/ai/judge",
     "/validate-fill": "/v1/ai/validate-fill",
     "/extract-site": "/v1/ai/extract-site",
@@ -4232,6 +4508,93 @@ async function executeTabActions(tabId, actions) {
     );
   }
   return result;
+}
+
+async function sha256Hex(bytes) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function uploadAutomationArtifact(dataUrl, task, kind = "screenshot") {
+  const response = await fetch(dataUrl);
+  const bytes = await response.arrayBuffer();
+  const contentType = response.headers.get("content-type") || "image/jpeg";
+  const safeTask = String(task?.id || "task").replace(/[^a-z0-9._-]+/gi, "-").slice(0, 80);
+  const sha256 = await sha256Hex(bytes);
+  const artifactId = `${String(state.runId).replace(/[^a-z0-9._-]+/gi, "-")}-${safeTask}-${sha256.slice(0, 24)}.jpg`;
+  const result = await cloudRequest(`/v1/automation/artifacts/${artifactId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+      "X-Asset-Sha256": sha256,
+      "X-Run-Id": state.runId,
+      "X-Task-Id": task?.id || "",
+      "X-Artifact-Kind": kind,
+    },
+    body: bytes,
+  });
+  return result.ref || `cloud-artifact://${artifactId}`;
+}
+
+async function captureTaskVisualContext(tabId, task) {
+  const prepared = await chrome.tabs.sendMessage(tabId, { action: "prepareVisualSnapshot" });
+  if (!prepared?.ok || !prepared.elements?.length) throw new Error("页面没有可供视觉兜底识别的控件");
+  const tab = await chrome.tabs.get(tabId);
+  const [previous] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
+  try {
+    if (!tab.active) {
+      await chrome.tabs.update(tabId, { active: true });
+      await sleep(180);
+    }
+    const screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 65 });
+    let artifactRef = "";
+    try {
+      artifactRef = await uploadAutomationArtifact(screenshot, task, "visual_fallback");
+    } catch (err) {
+      console.warn("ExternalLink visual artifact upload failed", err?.message || err);
+    }
+    return { screenshot, elements: prepared.elements, viewport: prepared.viewport, artifactRef };
+  } finally {
+    await chrome.tabs.sendMessage(tabId, { action: "clearVisualSnapshot" }).catch(() => {});
+    if (previous?.id && previous.id !== tabId) await chrome.tabs.update(previous.id, { active: true }).catch(() => {});
+  }
+}
+
+function safeVisualActions(actions, elements) {
+  const bySelector = new Map((elements || []).map((element) => [element.selector, element]));
+  return (actions || []).filter((action) => {
+    if (action.type === "wait") return true;
+    if (action.type === "click") return false;
+    const element = bySelector.get(action.selector);
+    if (!element) return false;
+    const label = `${element.label || ""} ${element.type || ""} ${element.role || ""}`.toLowerCase();
+    if (action.type === "click" && /submit|publish|launch|pay|checkout|sign in|log in|agree|提交|发布|付款|登录|同意/.test(label)) return false;
+    return true;
+  });
+}
+
+async function executeVisualFallback(tabId, task, snapshot, failure) {
+  const visual = await captureTaskVisualContext(tabId, task);
+  const plan = await callCloudAgent("/vision-plan", {
+    ...agentPayload(task, snapshot, { visualFallback: true }),
+    screenshot: visual.screenshot,
+    elements: visual.elements,
+    viewport: visual.viewport,
+    failure,
+  });
+  const actions = safeVisualActions(plan.actions, visual.elements);
+  await recordAutomationEvent(task, {
+    type: "vision_plan",
+    status: plan.status,
+    action: summarizePlanActions(actions),
+    result: plan.reason || failure || "",
+    artifactRef: visual.artifactRef,
+  });
+  task.artifactRef = visual.artifactRef || task.artifactRef || "";
+  if (plan.status !== "act" || !actions.length) {
+    throw new Error(plan.reason || "视觉兜底未返回安全可执行动作");
+  }
+  return executeTabActions(tabId, actions);
 }
 
 function getTaskConfig(task, extraConfig = {}) {
@@ -4300,15 +4663,35 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
 
   try {
     task.status = "running";
+    task._attempt = Math.max(1, Number(task._attempt) || 1);
     broadcastTaskUpdate(task);
 
     let snapshot = await getTabSnapshot(tabId);
+    await recordAutomationEvent(task, {
+      type: "snapshot",
+      status: "running",
+      before: snapshot,
+      result: "initial stable snapshot",
+    });
     assertRunCurrent(tabId, entry, runId);
     let judge = await callCloudAgent("/judge", agentPayload(task, snapshot, extra));
+    await recordAutomationEvent(task, {
+      type: "judge",
+      status: judge.status,
+      before: snapshot,
+      result: judge.reason || judge.message || "",
+      evidenceType: snapshot.evidenceSignals?.[0]?.type || "",
+    });
     assertRunCurrent(tabId, entry, runId);
     if (judge.status === "success") {
-      completeTaskFromJudge(tabId, task, judge);
-      return;
+      const completed = completeTaskFromJudge(tabId, task, {
+        ...judge,
+        phase: "initial",
+        evidenceSignals: snapshot.evidenceSignals || [],
+        evidenceUrl: judge.evidenceUrl || snapshot.url || "",
+      });
+      if (completed) return;
+      judge = { ...judge, status: "incomplete", reason: "模型成功判断未通过硬证据闸门，继续执行" };
     }
     if (handleTerminalJudge(tabId, task, entry, judge)) return;
 
@@ -4351,8 +4734,32 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         `${task.domain}: 云端 AI 执行第 ${loop + 1} 轮动作 - ${summarizePlanActions(plan.actions)}`,
         "",
       );
-      const actionResult = await executeTabActions(tabId, plan.actions);
+      await recordAutomationEvent(task, {
+        type: "plan",
+        status: plan.status,
+        before: snapshot,
+        action: summarizePlanActions(plan.actions),
+        result: plan.reason || "",
+      });
+      const previousSnapshotHash = snapshot.domHash || "";
+      let actionResult;
+      try {
+        actionResult = await executeTabActions(tabId, plan.actions);
+      } catch (actionError) {
+        entry.actionFailures = Math.max(0, Number(entry.actionFailures) || 0) + 1;
+        if (entry.visualFallbackUsed || entry.actionFailures < VISION_FALLBACK_AFTER_FAILURES) throw actionError;
+        entry.visualFallbackUsed = true;
+        log(`${task.domain}: DOM 动作失败，启用截图标注 + 多模态兜底`, "warn");
+        actionResult = await executeVisualFallback(tabId, task, snapshot, actionError.message);
+      }
+      if (actionResult.results?.some((item) => item?.submitted)) entry.submissionAttempted = true;
       log(`${task.domain}: 第 ${loop + 1} 轮结果 - ${summarizeActionResults(actionResult)}`, "");
+      await recordAutomationEvent(task, {
+        type: "action_result",
+        status: actionResult.ok ? "ok" : "failed",
+        action: summarizePlanActions(plan.actions),
+        result: summarizeActionResults(actionResult),
+      });
       assertRunCurrent(tabId, entry, runId);
       await sleep(AGENT_ACTION_SETTLE_MS);
       assertRunCurrent(tabId, entry, runId);
@@ -4369,18 +4776,55 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         throw err;
       }
       assertRunCurrent(tabId, entry, runId);
+
+      const expectedMutation = plan.actions?.some((action) => ["fill", "select", "check"].includes(action?.type));
+      if (expectedMutation && snapshot.domHash && snapshot.domHash === previousSnapshotHash && !entry.visualFallbackUsed) {
+        entry.visualFallbackUsed = true;
+        log(`${task.domain}: DOM 动作无可见状态变化，启用截图标注 + 多模态兜底`, "warn");
+        const visualResult = await executeVisualFallback(
+          tabId,
+          task,
+          snapshot,
+          "DOM action reported success but snapshot state did not change",
+        );
+        await recordAutomationEvent(task, {
+          type: "vision_action_result",
+          status: visualResult.ok ? "ok" : "failed",
+          result: summarizeActionResults(visualResult),
+        });
+        await sleep(AGENT_ACTION_SETTLE_MS);
+        snapshot = await getTabSnapshot(tabId);
+      }
+
+      const terminalSubmit = await tryAgentDeterministicSubmit(tabId, task, entry, snapshot);
+      if (terminalSubmit) return;
+      assertRunCurrent(tabId, entry, runId);
+
       judge = await callCloudAgent(
         "/judge",
         agentPayload(task, snapshot, { ...extra, plan, loop }),
       );
+      await recordAutomationEvent(task, {
+        type: "judge",
+        status: judge.status,
+        after: snapshot,
+        result: judge.reason || judge.message || "",
+        evidenceType: snapshot.evidenceSignals?.[0]?.type || "",
+      });
       assertRunCurrent(tabId, entry, runId);
       log(
         `${task.domain}: 第 ${loop + 1} 轮判断 - ${judge.status}: ${judge.reason || judge.message || ""}`,
         "",
       );
       if (judge.status === "success") {
-        completeTaskFromJudge(tabId, task, judge);
-        return;
+        const completed = completeTaskFromJudge(tabId, task, {
+          ...judge,
+          phase: "after_action",
+          evidenceSignals: snapshot.evidenceSignals || [],
+          evidenceUrl: judge.evidenceUrl || snapshot.url || "",
+        });
+        if (completed) return;
+        judge = { ...judge, status: "incomplete", reason: "模型成功判断未通过硬证据闸门" };
       }
       if (handleTerminalJudge(tabId, task, entry, judge)) return;
     }
@@ -4411,6 +4855,56 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
     entry.agentRunning = false;
     resumePendingRejudgeAfterRun(tabId, task, entry);
   }
+}
+
+async function tryAgentDeterministicSubmit(tabId, task, entry, snapshot) {
+  const config = getTaskConfig(task);
+  const formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(() => null);
+  const empty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => null);
+  const ready = formState?.validationFailed === false
+    && Number(empty?.emptyCount || 0) === 0
+    && Number(empty?.invalidCount || 0) === 0;
+  if (!ready) return false;
+
+  if (config.fillOnly || config.autoSubmitDirectory === false) {
+    markTaskFilled(tabId, task, entry, "AI 已完成表单填写，请检查内容后手动点击提交");
+    return true;
+  }
+
+  await recordAutomationEvent(task, {
+    type: "submit_preflight",
+    status: "ready",
+    before: snapshot,
+    result: "required fields complete; deterministic submit authorized",
+  });
+  const result = await sendTabMessage(tabId, {
+    action: "submitFilledForm",
+    config,
+    platform: task.platformType || "directory",
+  });
+  if (result?.captcha) {
+    markTaskNeedsManual(tabId, task, entry, "验证码已出现 — 页签留下，请完成后继续", "needs_captcha");
+    return true;
+  }
+  if (result?.needs_manual) {
+    markTaskNeedsManual(tabId, task, entry, result.reason || "需要人工处理");
+    return true;
+  }
+  if (result?.blocked) {
+    markTaskBlocked(tabId, task, entry, result.reason || "无法提交");
+    return true;
+  }
+  if (result?.validationFailed) return false;
+  if (result?.submitted) entry.submissionAttempted = true;
+  if (result?.submitted && result?.matched && result?.evidence) {
+    completeTaskFromSubmit(tabId, task, result);
+    return true;
+  }
+  if (result?.submitted) {
+    markTaskUnconfirmed(tabId, task, entry, "已代点提交，但站点未返回可核验回执");
+    return true;
+  }
+  return false;
 }
 
 function summarizePlanActions(actions) {
@@ -4480,22 +4974,58 @@ function handleTerminalJudge(tabId, task, entry, judge) {
 
 function completeTaskFromSubmit(tabId, task, result) {
   completeTaskFromJudge(tabId, task, {
+    evidence: result.evidence || "",
     reason: result.evidence || "directory auto-submit evidence",
     publicationStatus: result.publicationStatus || "submitted",
     publicUrl: result.publicUrl || "",
     evidenceUrl: result.evidenceUrl || "",
+    source: "deterministic_submit",
+    actionObserved: result.clickedSubmit === true || result.submitted === true,
+    evidenceSignals: result.evidenceSignals || [{
+      type: result.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+      text: result.evidence || "",
+      url: result.evidenceUrl || result.publicUrl || task.url || "",
+      matched: Boolean(result.evidence),
+    }],
   });
 }
 
 function completeTaskFromJudge(tabId, task, judge) {
   const entry = state.activeTabs.get(tabId);
+  const proof = self.ExtLinkAutomationLedger.validateSuccessProof({
+    confirmedBy: "agent",
+    evidence: judge.evidence || "",
+    source: judge.source || "judge",
+    actionObserved: judge.actionObserved === true || entry?.submissionAttempted === true,
+    evidenceSignals: judge.evidenceSignals || [],
+    networkEvidence: judge.networkEvidence || null,
+    publicationStatus: judge.publicationStatus,
+    publicUrl: judge.publicUrl || "",
+    destinationUrl: task.url || "",
+    evidenceUrl: judge.evidenceUrl || "",
+  });
+  if (!proof.ok) {
+    if (entry?.submissionAttempted !== true && judge.source !== "deterministic_submit") {
+      log(`${task.domain}: 模型成功判断未通过硬证据闸门，继续执行 - ${proof.reason}`, "warn");
+      recordAutomationEvent(task, {
+        type: "success_rejected",
+        status: "incomplete",
+        result: proof.reason || "模型成功判断缺少证据",
+        errorCode: "success_without_proof",
+      });
+      return false;
+    }
+    markTaskUnconfirmed(tabId, task, entry, proof.reason || "未取得可信提交证据");
+    return true;
+  }
   if (entry) {
     entry.agentDone = true;
     entry.pendingRejudge = false;
   }
-  task.status = "ok";
+  task.status = "verifying";
   task.skipReason = "";
-  task.successEvidence = judge.reason || judge.message || "judge success";
+  task.successEvidence = proof.evidence;
+  task.evidenceType = proof.evidenceType;
   task.confirmedBy = "agent";
   task.publicationStatus = self.ExtLinkQueue.inferPublicationStatus({
     evidence: task.successEvidence,
@@ -4504,10 +5034,27 @@ function completeTaskFromJudge(tabId, task, judge) {
     publicationStatus: judge.publicationStatus,
   });
   task.publicUrl = judge.publicUrl || task.publicUrl || "";
-  task.evidenceUrl = judge.evidenceUrl || "";
-  log(`${task.domain}: 提交成功 - ${judge.reason || judge.message || "judge success"}`, "ok");
+  task.evidenceUrl = proof.evidenceUrl || judge.evidenceUrl || "";
+  task.successProof = {
+    source: judge.source || "judge",
+    actionObserved: judge.actionObserved === true || entry?.submissionAttempted === true,
+    evidenceSignals: judge.evidenceSignals || [],
+    networkEvidence: judge.networkEvidence || null,
+  };
+  log(`${task.domain}: 已取得证据，正在写入成功账本 - ${proof.evidence}`, "ok");
   recordSubmittedProject(task)
-    .then(() => advanceDestinationGroup(tabId, task))
+    .then(() => {
+      task.status = "ok";
+      recordAutomationEvent(task, {
+        type: "success_recorded",
+        status: "ok",
+        result: proof.evidence,
+        evidenceType: proof.evidenceType,
+        artifactRef: task.artifactRef || "",
+      });
+      broadcastTaskUpdate(task);
+      return advanceDestinationGroup(tabId, task);
+    })
     .catch((err) => {
       task.status = "err";
       task.skipReason = `成功记录写入失败: ${err.message}`;
@@ -4518,6 +5065,31 @@ function completeTaskFromJudge(tabId, task, judge) {
     pingIndexNow(task.url);
   }
   broadcastTaskUpdate(task);
+  return true;
+}
+
+function markTaskUnconfirmed(tabId, task, entry, reason) {
+  if (entry) {
+    entry.agentPaused = true;
+    entry.pendingRejudge = false;
+    entry.slotActive = false;
+    clearEntryTimeout(entry);
+  }
+  task.status = "submitted_unconfirmed";
+  task.skipReason = reason;
+  parkTaskEntry(tabId, entry, reason);
+  log(`${task.domain}: 已执行但未取得可信回执，未写成功账本 - ${reason}`, "warn");
+  broadcastTaskUpdate(task);
+  if (tabId) {
+    chrome.tabs.sendMessage(tabId, {
+      action: "showManualWaitBanner",
+      taskIndex: task.index,
+      reason: `已执行但未取得可信回执：${reason}`,
+      timeoutSec: 0,
+      config: getTaskConfig(task),
+      platformType: task.platformType,
+    }).catch(() => {});
+  }
 }
 
 function findGroupForTask(task) {
@@ -4534,7 +5106,10 @@ function parkTaskEntry(tabId, entry, reason) {
   clearManualWaitTimer(entry);
   if (reason) entry.parkedReason = reason;
   const task = state.tasks.find((item) => item.index === entry.taskIndex);
-  if (task?.id) state.parkedTaskIds.add(task.id);
+  if (task?.id) {
+    task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+    state.parkedTaskIds.add(task.id);
+  }
   if (tabId) {
     updateActiveBatchRun((activeBatchRun) => ({
       ...activeBatchRun,
@@ -5032,6 +5607,16 @@ function broadcastTaskUpdate(task) {
         profileId: task.profileId,
       },
     );
+    const terminalAttempt = ["ok", "err", "skip"].includes(task.status);
+    recordAutomationEvent(task, {
+      type: "task_status",
+      status: task.status,
+      ...(terminalAttempt ? { finishedAt: new Date().toISOString() } : {}),
+      result: task.skipReason || task.successEvidence || "",
+      errorCode: task.status === "err" ? "task_failed" : "",
+      evidenceType: task.evidenceType || "",
+      artifactRef: task.artifactRef || "",
+    });
   }
   chrome.runtime
     .sendMessage({

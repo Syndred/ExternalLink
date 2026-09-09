@@ -1944,7 +1944,7 @@
   function batchRunStatusForLog(status) {
     return {
       running: "running",
-      paused: "running",
+      paused: "paused",
       waiting_manual: "waiting_manual",
       stopped: "stopped",
       finished: "finished",
@@ -1954,6 +1954,7 @@
   function batchLogStatusLabel(status) {
     return {
       running: "运行中",
+      paused: "已暂停",
       stopped: "已停止",
       finished: "已完成",
       waiting_manual: "等待人工处理",
@@ -1974,6 +1975,29 @@
       showToast(`已复制 ${logLines.length} 条日志`);
     } catch (err) {
       showToast(`复制失败：${err.message}`, true);
+    }
+  });
+
+  $("btnExportAutomationRun")?.addEventListener("click", async () => {
+    try {
+      const stored = await chrome.storage.local.get("automationRunLedger");
+      const ledger = stored.automationRunLedger || { schemaVersion: 1, order: [], runs: {} };
+      const latestId = ledger.order?.[0];
+      const payload = latestId ? ledger.runs?.[latestId] : null;
+      if (!payload) {
+        showToast("当前没有可导出的执行记录", true);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `externallink-${latestId}-执行记录.json`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(`已导出 ${payload.events?.length || 0} 条执行事件`);
+    } catch (err) {
+      showToast(`导出失败：${err.message}`, true);
     }
   });
 
@@ -2001,6 +2025,8 @@
       needs_otp: "🔑人工",
       needs_manual: "🤖人工",
       filled: "✏️已填",
+      verifying: "🔎验",
+      submitted_unconfirmed: "🧾待证",
     };
     return map[s] || s;
   }
@@ -2230,6 +2256,8 @@
         await chrome.runtime.sendMessage({
           action: "confirmSubmissionSuccess",
           taskIndex: task.index,
+          runId: task.runId,
+          confirmationNonce: task.confirmationNonce,
           evidence: "user confirmed from side panel",
         });
         syncTasksFromBackground();

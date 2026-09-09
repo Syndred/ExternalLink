@@ -45,8 +45,9 @@
   };
   const SNAPSHOT_SELECTOR_ATTR = "data-extlink-selector";
   const SNAPSHOT_SELECTOR_PREFIX = "extlink";
-  const SNAPSHOT_TEXT_LIMIT = 1500;
+  const SNAPSHOT_TEXT_LIMIT = 6000;
   const ACTION_WAIT_LIMIT_MS = 5000;
+  const VISUAL_OVERLAY_ATTR = "data-extlink-visual-overlay";
   const SENSITIVE_URL_PARAM_PATTERN = /token|key|secret|code|session|csrf|nonce/i;
 
   // ─── Message Handler (registered at end of IIFE) ───
@@ -152,6 +153,15 @@
         .catch((err) => {
           sendResponse({ ok: false, results: [], error: err.message });
         });
+      return true;
+    }
+    if (msg.action === "prepareVisualSnapshot") {
+      sendResponse(prepareVisualSnapshot());
+      return true;
+    }
+    if (msg.action === "clearVisualSnapshot") {
+      clearVisualSnapshot();
+      sendResponse({ ok: true });
       return true;
     }
     if (msg.action === "executeSubmit") {
@@ -636,10 +646,6 @@
           background: #2563eb; border: none; color: #fff;
           padding: 8px 22px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;
         }
-        #__extlink_manual_banner .__extlink_success {
-          background: #15803d; border: none; color: #fff;
-          padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;
-        }
       </style>
       <div class="__extlink_msg">
         ⏸ <strong>需要人工处理</strong>：<span id="__extlink_manual_reason"></span><br>
@@ -647,7 +653,6 @@
       </div>
       <div class="__extlink_countdown" id="__extlink_manual_countdown"></div>
       <button class="__extlink_skip" id="__extlink_manual_skip_btn">跳过</button>
-      <button class="__extlink_success" id="__extlink_manual_success_btn">✓ 确认已提交成功</button>
       <button class="__extlink_go" id="__extlink_manual_go_btn">▶ 继续下一步</button>
     `;
     document.body.appendChild(banner);
@@ -685,14 +690,6 @@
     });
     document.getElementById("__extlink_manual_skip_btn")?.addEventListener("click", () => {
       chrome.runtime.sendMessage({ action: "manualSkip", taskIndex: taskIndex }).catch(() => {});
-      removeManualWaitBanner();
-    });
-    document.getElementById("__extlink_manual_success_btn")?.addEventListener("click", () => {
-      chrome.runtime.sendMessage({
-        action: "confirmSubmissionSuccess",
-        taskIndex: taskIndex,
-        evidence: "user confirmed from page banner",
-      }).catch(() => {});
       removeManualWaitBanner();
     });
   }
@@ -744,6 +741,52 @@
     ]);
     if (!submitBtn) {
       if (!shouldAutoSubmitListing(config, platform)) return returnAfterFill(config, platform);
+      const precheck = collectFormValidationState();
+      if (precheck.validationFailed) {
+        return {
+          validationFailed: true,
+          submitted: false,
+          clickedSubmit: false,
+          issues: precheck.issues,
+          emptyCount: precheck.emptyCount,
+          invalidCount: precheck.invalidCount,
+          platform,
+          ...fillResult,
+        };
+      }
+      const advanceBtn = findSafeAdvanceButton();
+      if (advanceBtn) {
+        const beforeUrl = location.href;
+        const beforeEvidence = classifyVisibleEvidence();
+        const beforeStage = formStageSignature();
+        advanceBtn.click();
+        await sleep(900);
+        const afterEvidence = classifyVisibleEvidence();
+        const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
+        const afterText = String(afterEvidence?.evidence || "").replace(/\s+/g, " ").trim();
+        if (afterEvidence?.matched && afterText && afterText !== beforeText) {
+          return {
+            ok: true,
+            platform,
+            clickedSubmit: true,
+            submitted: true,
+            matched: true,
+            evidence: afterEvidence.evidence,
+            publicationStatus: afterEvidence.publicationStatus || "submitted",
+            evidenceSignals: [{
+              type: afterEvidence.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+              text: afterEvidence.evidence,
+              url: redactSnapshotUrl(location.href),
+              matched: true,
+            }],
+            ...fillResult,
+          };
+        }
+        const stageChanged = location.href !== beforeUrl || formStageSignature() !== beforeStage;
+        if (stageChanged) {
+          return { ok: true, platform, stageAdvanced: true, submitted: false, matched: false, ...fillResult };
+        }
+      }
       logStep("⚠️ 未找到提交按钮，已填字段请手动提交");
       return { manual: true, platform, reason: "no_submit_button", ...fillResult };
     }
@@ -768,13 +811,11 @@
 
     logStep("🚀 无验证码，代点提交…");
     const beforeUrl = location.href;
+    const beforeEvidence = classifyVisibleEvidence();
     submitBtn.click();
-    await sleep(3500);
-    const classified = classifyVisibleEvidence();
+    const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
     const urlChanged = location.href !== beforeUrl;
-    const pageHint = `${location.href} ${document.title || ""}`;
-    const urlLooksDone = /thank|success|submitted|queue|review|confirm|done/i.test(pageHint);
-    const matched = classified.matched === true || (urlChanged && urlLooksDone);
+    const matched = classified.matched === true && Boolean(classified.evidence);
     if (matched) {
       return {
         ok: true,
@@ -782,7 +823,16 @@
         clickedSubmit: true,
         submitted: true,
         publicationStatus: classified.publicationStatus || "submitted",
-        evidence: classified.evidence || document.title || "",
+        evidence: classified.evidence,
+        evidenceSignals: classified.evidence
+          ? [{
+              type: classified.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+              text: classified.evidence,
+              url: redactSnapshotUrl(location.href),
+              publicationStatus: classified.publicationStatus,
+              matched: true,
+            }]
+          : [],
         matched: true,
         urlChanged,
         ...fillResult,
@@ -823,9 +873,33 @@
       submitted: true,
       publicationStatus: classified.publicationStatus || "submitted",
       evidence: classified.evidence || "",
+      evidenceSignals: [],
       matched: false,
       urlChanged,
       ...fillResult,
+    };
+  }
+
+  async function waitForSubmissionEvidence(beforeUrl, baseline = {}, timeoutMs = 15000) {
+    const deadline = Date.now() + timeoutMs;
+    let last = classifyVisibleEvidence();
+    const baselineEvidence = String(baseline?.evidence || "").replace(/\s+/g, " ").trim();
+    while (Date.now() < deadline) {
+      last = classifyVisibleEvidence();
+      const currentEvidence = String(last?.evidence || "").replace(/\s+/g, " ").trim();
+      if (last?.matched && currentEvidence && currentEvidence !== baselineEvidence) return last;
+      const titleAndText = `${document.title || ""} ${document.body?.innerText || ""}`.slice(0, 1000);
+      const stillLoading = /请稍候|just a moment|\bloading\b|正在加载/i.test(titleAndText);
+      if (!stillLoading && location.href !== beforeUrl && document.readyState === "complete") {
+        // A URL change alone is never proof. Keep polling for a receipt until the deadline.
+      }
+      await sleep(500);
+    }
+    return {
+      ...(last || {}),
+      publicationStatus: last?.publicationStatus || "submitted",
+      evidence: "",
+      matched: false,
     };
   }
 
@@ -882,6 +956,10 @@
       "github",
       "discord",
       "rss",
+      "try free",
+      "free trial",
+      "start trial",
+      "book a demo",
     ];
     if (negativeTerms.some((term) => haystack.includes(term))) return null;
 
@@ -919,14 +997,24 @@
     ];
 
     let score = 0;
+    let strongMatches = 0;
     for (const term of strongTerms) {
-      if (haystack.includes(term)) score += 20;
+      if (haystack.includes(term)) {
+        score += 20;
+        strongMatches += 1;
+      }
     }
     for (const term of mediumTerms) {
       if (haystack.includes(term)) score += 5;
     }
+    const explicitPath = /\/(?:submit|submission|add-(?:tool|product|startup)|get-listed|contribute|publish)(?:[/?#-]|$)/i.test(url.pathname);
     if (url.origin === location.origin) score += 3;
-    if (/submit|add|list|get-listed|contribute|publish|new/i.test(url.pathname)) score += 8;
+    if (explicitPath) score += 8;
+
+    // Generic marketplace/marketing links such as "Try Free" or /new-project
+    // are not submission routes. Cross-origin routes need explicit link copy.
+    if (!strongMatches && !explicitPath) return null;
+    if (url.origin !== location.origin && !strongMatches) return null;
 
     if (score < 8) return null;
 
@@ -1312,8 +1400,11 @@
   function getPageSnapshot() {
     assignStableSelectors();
 
-    const fields = Array.from(document.querySelectorAll("input, textarea, select"))
+    const fields = Array.from(document.querySelectorAll(
+      'input, textarea, select, [contenteditable="true"], [role="textbox"], [data-lexical-editor="true"], .ProseMirror, .ql-editor',
+    ))
       .filter(isRelevantSnapshotElement)
+      .slice(0, 120)
       .map(snapshotField);
     const comboboxFields = Array.from(
       document.querySelectorAll('[role="combobox"], [aria-haspopup="listbox"]'),
@@ -1326,6 +1417,12 @@
         type: "combobox",
       }));
     fields.push(...comboboxFields);
+    const widgets = Array.from(document.querySelectorAll(
+      '[role="listbox"], [role="option"], [role="radio"], [role="checkbox"], [role="switch"], [aria-haspopup], [aria-expanded], [data-radix-collection-item]',
+    ))
+      .filter(isRelevantSnapshotElement)
+      .slice(0, 100)
+      .map(snapshotWidget);
     const buttons = Array.from(
       document.querySelectorAll(
         'button, input[type="button"], input[type="submit"], input[type="reset"], a[href], [role="button"]',
@@ -1360,13 +1457,34 @@
         };
       });
 
+    const evidence = classifyVisibleEvidence();
+    const pageText = compactText(document.body ? document.body.innerText : "", SNAPSHOT_TEXT_LIMIT);
+    const evidenceSignals = evidence.matched && evidence.evidence
+      ? [{
+          type: evidence.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+          text: evidence.evidence,
+          url: redactSnapshotUrl(location.href),
+          publicationStatus: evidence.publicationStatus,
+          playbookId: evidence.playbookId || "",
+          matched: true,
+        }]
+      : [];
     return {
       url: redactSnapshotUrl(location.href),
       title: document.title || "",
-      text: compactText(document.body ? document.body.innerText : "", SNAPSHOT_TEXT_LIMIT),
+      text: pageText,
+      domHash: hashSnapshot(`${location.href}\n${document.title}\n${pageText}\n${JSON.stringify(fields)}`),
       forms,
       fields,
       buttons,
+      widgets,
+      frames: Array.from(document.querySelectorAll("iframe")).slice(0, 20).map((frame) => ({
+        selector: extSelector(frame),
+        title: frame.title || "",
+        src: redactSnapshotUrl(frame.src || ""),
+        visible: isVisible(frame),
+      })),
+      evidenceSignals,
       meta: {
         platform: identifyPlatform() || "unknown",
         hasCaptcha: detectCaptcha(),
@@ -1380,7 +1498,7 @@
   function assignStableSelectors() {
     const elements = Array.from(
       document.querySelectorAll(
-        'form, input, textarea, select, button, input[type="button"], input[type="submit"], input[type="reset"], a[href], [role="button"]',
+        'form, input, textarea, select, button, iframe, [contenteditable="true"], [role], [aria-haspopup], [aria-expanded], [data-lexical-editor="true"], .ProseMirror, .ql-editor, a[href]',
       ),
     );
     let counter = 1;
@@ -1425,7 +1543,19 @@
     const tag = element.tagName.toLowerCase();
     const type = (element.getAttribute("type") || tag).toLowerCase();
     const label = getSnapshotLabel(element);
-    const valueInfo = getSnapshotValueInfo(element, type);
+    const valueInfo = type === "file"
+      ? {
+          present: Boolean(element.files?.length),
+          kind: "file",
+          files: Array.from(element.files || []).slice(0, 6).map((file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          })),
+          accept: element.accept || "",
+          multiple: Boolean(element.multiple),
+        }
+      : getSnapshotValueInfo(element, type);
 
     return {
       selector: extSelector(element),
@@ -1474,6 +1604,21 @@
     };
   }
 
+  function snapshotWidget(element) {
+    const rect = element.getBoundingClientRect();
+    return {
+      selector: extSelector(element),
+      tag: element.tagName.toLowerCase(),
+      role: element.getAttribute("role") || "",
+      label: getSnapshotLabel(element),
+      expanded: element.getAttribute("aria-expanded") || "",
+      selected: element.getAttribute("aria-selected") || "",
+      checked: element.getAttribute("aria-checked") || "",
+      disabled: element.getAttribute("aria-disabled") === "true" || Boolean(element.disabled),
+      rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
+    };
+  }
+
   function isRelevantSnapshotElement(element) {
     if (!element || !element.matches) return false;
     if (element.closest('[aria-hidden="true"], [hidden]')) return false;
@@ -1496,7 +1641,63 @@
     if (tag !== "input") return false;
 
     const type = (element.getAttribute("type") || "text").toLowerCase();
-    return !["hidden", "image", "file"].includes(type);
+    return !["hidden", "image"].includes(type);
+  }
+
+  function hashSnapshot(value) {
+    let hash = 2166136261;
+    const text = String(value || "");
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+  }
+
+  function clearVisualSnapshot() {
+    document.querySelectorAll(`[${VISUAL_OVERLAY_ATTR}]`).forEach((element) => element.remove());
+  }
+
+  function prepareVisualSnapshot() {
+    clearVisualSnapshot();
+    assignStableSelectors();
+    const candidates = Array.from(document.querySelectorAll(
+      'input, textarea, select, button, [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
+    )).filter(isRelevantSnapshotElement).slice(0, 60);
+    const elements = [];
+    candidates.forEach((element, index) => {
+      const rect = element.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return;
+      const badge = document.createElement("span");
+      badge.setAttribute(VISUAL_OVERLAY_ATTR, "true");
+      badge.textContent = String(index + 1);
+      Object.assign(badge.style, {
+        position: "fixed",
+        left: `${Math.max(0, Math.min(window.innerWidth - 24, rect.left))}px`,
+        top: `${Math.max(0, Math.min(window.innerHeight - 20, rect.top))}px`,
+        zIndex: "2147483647",
+        background: "#e11d48",
+        color: "white",
+        border: "1px solid white",
+        borderRadius: "4px",
+        padding: "1px 4px",
+        font: "bold 11px/16px system-ui, sans-serif",
+        pointerEvents: "none",
+        boxShadow: "0 1px 4px rgba(0,0,0,.45)",
+      });
+      document.documentElement.append(badge);
+      elements.push({
+        badge: index + 1,
+        selector: extSelector(element),
+        tag: element.tagName.toLowerCase(),
+        type: element.getAttribute("type") || "",
+        role: element.getAttribute("role") || "",
+        label: getSnapshotLabel(element),
+        value: getSnapshotValueInfo(element, element.getAttribute("type") || element.tagName.toLowerCase()),
+      });
+    });
+    return { ok: true, elements, viewport: { width: window.innerWidth, height: window.innerHeight, scrollX, scrollY } };
   }
 
   async function executeActionPlan(actions) {
@@ -1544,15 +1745,7 @@
         return { ok: true, selector: action.selector };
       }
       case "click": {
-        const element = resolveActionElement(action);
-        if (!element) return actionFailure(action, "selector not found");
-        if (!isActionElementAllowed(element, action.type))
-          return actionFailure(action, "action target is not allowed");
-        if (element.disabled || element.getAttribute("aria-disabled") === "true")
-          return actionFailure(action, "element is disabled");
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-        element.click();
-        return { ok: true, selector: action.selector };
+        return actionFailure(action, "AI click capability is disabled; deterministic controls own navigation and submission");
       }
       case "select": {
         const element = resolveActionElement(action);
@@ -1608,26 +1801,7 @@
         return { ok: true, selector: action.selector };
       }
       case "submit": {
-        const element = resolveActionElement(action);
-        if (!element) return actionFailure(action, "selector not found");
-        if (!isActionElementAllowed(element, action.type))
-          return actionFailure(action, "action target is not allowed");
-        const form = element.tagName.toLowerCase() === "form" ? element : element.closest("form");
-        if (form && typeof form.requestSubmit === "function") {
-          form.requestSubmit(isSubmitControl(element) ? element : undefined);
-          return { ok: true, selector: action.selector, submitted: "requestSubmit" };
-        }
-        if (form && element === form) {
-          const submitter = form.querySelector(
-            'button[type="submit"], input[type="submit"], button:not([type])',
-          );
-          if (submitter) {
-            submitter.click();
-            return { ok: true, selector: action.selector, submitted: "click" };
-          }
-        }
-        element.click();
-        return { ok: true, selector: action.selector, submitted: "click" };
+        return actionFailure(action, "AI action plans cannot submit; deterministic preflight owns submission");
       }
       case "wait": {
         const requestedMs = action.timeout_ms ?? action.ms ?? action.duration ?? 0;
@@ -1704,10 +1878,29 @@
 
   function setFieldValue(element, value) {
     if (isContentEditableField(element)) {
-      const paragraph = document.createElement("p");
-      paragraph.textContent = String(value);
-      element.replaceChildren(paragraph);
+      const text = String(value);
+      element.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      let inserted = false;
+      try {
+        inserted = document.execCommand("insertText", false, text);
+      } catch {
+        inserted = false;
+      }
+      if (!inserted || compactText(element.textContent, text.length + 10) !== compactText(text, text.length + 10)) {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = text;
+        element.replaceChildren(paragraph);
+      }
       element.classList?.remove("ql-blank");
+      element.dispatchEvent(new InputEvent("beforeinput", { bubbles: true, inputType: "insertText", data: text }));
+      element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+      element.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
       return;
     }
     const nativeSetter = getNativeValueSetter(element);
@@ -1832,14 +2025,7 @@
       return tag === "input" && ["checkbox", "radio"].includes((element.type || "").toLowerCase());
     if (actionType === "submit")
       return tag === "form" || isSubmitControl(element) || !!element.closest("form");
-    if (actionType === "click") {
-      return (
-        tag === "button" ||
-        tag === "a" ||
-        element.getAttribute("role") === "button" ||
-        ["button", "submit", "reset"].includes((element.type || "").toLowerCase())
-      );
-    }
+    if (actionType === "click") return false;
 
     return false;
   }
@@ -3414,6 +3600,29 @@
         return labels.some((text) => label.includes(text));
       }) || null
     );
+  }
+
+  function findSafeAdvanceButton() {
+    const candidates = Array.from(document.querySelectorAll(
+      'button[type="button"], input[type="button"], [role="button"]',
+    ));
+    return candidates.find((element) => {
+      if (!isVisible(element) || element.disabled || element.getAttribute("aria-disabled") === "true") return false;
+      const label = getElementLabel(element).replace(/\s+/g, " ").trim();
+      if (/submit|publish|launch|finish|done|save|send|create|post|confirm|pay|checkout|sign in|log in|agree|提交|发布|完成|保存|发送|创建|确认|付款|登录|同意/i.test(label)) return false;
+      return /^(next|continue|proceed|下一步|继续)(?:\s|$|[>→»])/i.test(label);
+    }) || null;
+  }
+
+  function formStageSignature() {
+    return hashSnapshot(Array.from(document.querySelectorAll(
+      'input:not([type="hidden"]), textarea, select, [contenteditable="true"], button, [role="button"], [role="combobox"]',
+    )).filter(isVisible).slice(0, 120).map((element) => [
+      element.tagName,
+      element.getAttribute("name") || "",
+      element.getAttribute("role") || "",
+      getElementLabel(element),
+    ].join("|")).join("\n"));
   }
 
   function safeQuerySelector(selector, root = document) {

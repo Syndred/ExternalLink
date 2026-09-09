@@ -48,3 +48,60 @@ create table if not exists externallink_media_assets (
 
 create index if not exists externallink_media_assets_profile_idx
   on externallink_media_assets (workspace_id, profile_id, media_kind, media_index);
+
+create table if not exists externallink_automation_runs (
+  workspace_id text not null references externallink_workspaces(workspace_id) on delete cascade,
+  run_id text not null,
+  status text not null,
+  selected_profile_ids jsonb not null default '[]'::jsonb,
+  config jsonb not null default '{}'::jsonb,
+  task_total integer not null default 0,
+  destination_total integer not null default 0,
+  started_at timestamptz not null,
+  updated_at timestamptz not null default now(),
+  finished_at timestamptz,
+  primary key (workspace_id, run_id)
+);
+
+create table if not exists externallink_automation_attempts (
+  workspace_id text not null,
+  attempt_id text not null,
+  run_id text not null,
+  task_id text not null,
+  destination_key text not null,
+  profile_id text not null,
+  attempt_no integer not null default 1,
+  status text not null,
+  recovery_point text not null default '',
+  started_at timestamptz not null,
+  updated_at timestamptz not null default now(),
+  finished_at timestamptz,
+  primary key (workspace_id, attempt_id),
+  unique (workspace_id, run_id, attempt_id),
+  foreign key (workspace_id, run_id) references externallink_automation_runs(workspace_id, run_id) on delete cascade
+);
+
+create table if not exists externallink_automation_steps (
+  workspace_id text not null,
+  step_id text not null,
+  attempt_id text not null,
+  run_id text not null,
+  task_id text not null,
+  step_type text not null,
+  status text not null default '',
+  action text not null default '',
+  target text not null default '',
+  before_state jsonb,
+  after_state jsonb,
+  result text not null default '',
+  error_code text not null default '',
+  evidence_type text not null default '',
+  artifact_ref text not null default '',
+  occurred_at timestamptz not null,
+  primary key (workspace_id, step_id),
+  foreign key (workspace_id, run_id, attempt_id)
+    references externallink_automation_attempts(workspace_id, run_id, attempt_id) on delete cascade
+);
+
+create index if not exists externallink_automation_steps_run_idx
+  on externallink_automation_steps (workspace_id, run_id, occurred_at);

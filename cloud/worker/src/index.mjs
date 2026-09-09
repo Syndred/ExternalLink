@@ -1,9 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 import {
+  artifactObjectKey,
   migrationConflictKeys,
   mediaObjectKey,
   normalizeDocuments,
-  normalizeWorkspaceId,
   parseBearerToken,
   secureEqual,
   STATE_DOCUMENT_KEYS,
@@ -13,6 +13,8 @@ import {
 const MAX_MEDIA_BYTES = 6 * 1024 * 1024;
 const MAX_PAGE_TEXT_CHARS = 18000;
 const MAX_AI_ACTIONS = 24;
+const MAX_AUTOMATION_ARTIFACT_BYTES = 3 * 1024 * 1024;
+const MAX_VISION_DATA_URL_CHARS = 4 * 1024 * 1024;
 
 function json(payload, init = {}) {
   const headers = new Headers(init.headers || {});
@@ -30,7 +32,7 @@ function corsHeaders(request, env) {
   const origin = requestOrigin(request, env);
   const headers = {
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Asset-Name, X-Asset-Sha256, X-Profile-Id, X-Media-Kind, X-Media-Index",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Asset-Name, X-Asset-Sha256, X-Profile-Id, X-Media-Kind, X-Media-Index, X-Run-Id, X-Task-Id, X-Artifact-Kind",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -95,8 +97,29 @@ async function listSnapshot(sql, workspaceId) {
 
 function normaliseContentType(value) {
   const type = String(value || "").split(";", 1)[0].trim().toLowerCase();
-  if (!type.startsWith("image/")) throw new Error("媒体必须是图片格式");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(type)) {
+    throw new Error("媒体只支持 JPEG、PNG 或 WebP");
+  }
   return type;
+}
+
+function verifyImageSignature(bytes, contentType) {
+  const data = new Uint8Array(bytes);
+  const jpeg = data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff;
+  const png = data.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    .every((value, index) => data[index] === value);
+  const webp = data.length >= 12
+    && String.fromCharCode(...data.slice(0, 4)) === "RIFF"
+    && String.fromCharCode(...data.slice(8, 12)) === "WEBP";
+  const valid = contentType === "image/jpeg" ? jpeg : contentType === "image/png" ? png : webp;
+  if (!valid) throw new Error("媒体文件头与 Content-Type 不匹配");
+}
+
+function authorisedWorkspaceId(raw, env) {
+  const requested = String(raw || "default").trim();
+  const allowed = String(env.ALLOWED_WORKSPACE_ID || "default").trim();
+  if (!/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(requested) || requested !== allowed) return "";
+  return requested;
 }
 
 function safeAssetName(value, fallback) {
@@ -163,6 +186,34 @@ async function callDeepSeek(env, system, user) {
   return parseModelJson(data?.choices?.[0]?.message?.content);
 }
 
+async function callDeepSeekVision(env, system, user, imageDataUrl) {
+  const key = String(env.DEEPSEEK_API_KEY || "").trim();
+  if (!key) throw new Error("Worker 未配置 DEEPSEEK_API_KEY");
+  const base = String(env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
+  const response = await fetch(`${base}/chat/completions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: String(env.DEEPSEEK_VISION_MODEL || "deepseek-v4-flash-vision-exp"),
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: user },
+            { type: "image_url", image_url: { url: imageDataUrl } },
+          ],
+        },
+      ],
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.error?.message || `DeepSeek Vision HTTP ${response.status}`);
+  return parseModelJson(data?.choices?.[0]?.message?.content);
+}
+
 function normaliseDrafts(value, maxChars) {
   const drafts = Array.isArray(value?.drafts) ? value.drafts : [];
   const seen = new Set();
@@ -216,9 +267,139 @@ async function handlePlan(request, env) {
       fillOnly: input.fillOnly === true,
     }).slice(0, 60000),
   );
-  const actions = Array.isArray(result.actions) ? result.actions.slice(0, MAX_AI_ACTIONS) : [];
+  const allowedTypes = new Set(["fill", "select", "check", "wait"]);
+  const actions = (Array.isArray(result.actions) ? result.actions : [])
+    .filter((action) => allowedTypes.has(action?.type))
+    .slice(0, MAX_AI_ACTIONS);
   const status = ["act", "needs_manual", "blocked"].includes(result.status) ? result.status : "needs_manual";
   return { status, reason: String(result.reason || ""), actions };
+}
+
+async function handleVisionPlan(request, env) {
+  const input = await requestJson(request);
+  const screenshot = String(input.screenshot || "");
+  if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(screenshot)) throw new Error("视觉兜底缺少有效截图");
+  if (screenshot.length > MAX_VISION_DATA_URL_CHARS) throw new Error("视觉截图过大");
+  const result = await callDeepSeekVision(
+    env,
+    "You are a cautious visual browser form-filling planner. Colored numbered badges in the screenshot map to the supplied elements. Return JSON only: {status:'act'|'needs_manual'|'blocked',reason:string,actions:[{type:'fill'|'select'|'check'|'click'|'wait',selector:string,value?:string,checked?:boolean,timeout_ms?:number}]}. Use only supplied selectors. Never submit, log in, solve CAPTCHA, accept legal terms, pay, upload an unprovided file, or bypass access controls. At most 12 actions.",
+    compactJson({
+      task: input.task || {},
+      config: input.config || {},
+      snapshot: input.snapshot || {},
+      elements: input.elements || [],
+      failure: String(input.failure || "").slice(0, 1000),
+    }),
+    screenshot,
+  );
+  const allowedTypes = new Set(["fill", "select", "check", "wait"]);
+  const allowedSelectors = new Set((input.elements || []).map((item) => String(item?.selector || "")).filter(Boolean));
+  const actions = (Array.isArray(result.actions) ? result.actions : [])
+    .filter((action) => allowedTypes.has(action?.type))
+    .filter((action) => action.type === "wait" || allowedSelectors.has(String(action.selector || "")))
+    .slice(0, 12);
+  const status = ["act", "needs_manual", "blocked"].includes(result.status) ? result.status : "needs_manual";
+  return { status, reason: String(result.reason || ""), actions, model: String(env.DEEPSEEK_VISION_MODEL || "deepseek-v4-flash-vision-exp") };
+}
+
+async function ensureAutomationSchema(sql) {
+  await sql.transaction([
+    sql`create table if not exists externallink_automation_runs (
+      workspace_id text not null references externallink_workspaces(workspace_id) on delete cascade,
+      run_id text not null, status text not null, selected_profile_ids jsonb not null default '[]'::jsonb,
+      config jsonb not null default '{}'::jsonb, task_total integer not null default 0,
+      destination_total integer not null default 0, started_at timestamptz not null,
+      updated_at timestamptz not null default now(), finished_at timestamptz,
+      primary key (workspace_id, run_id))`,
+    sql`create table if not exists externallink_automation_attempts (
+      workspace_id text not null, attempt_id text not null, run_id text not null, task_id text not null,
+      destination_key text not null, profile_id text not null, attempt_no integer not null default 1,
+      status text not null, recovery_point text not null default '', started_at timestamptz not null,
+      updated_at timestamptz not null default now(), finished_at timestamptz,
+      primary key (workspace_id, attempt_id),
+      unique (workspace_id, run_id, attempt_id),
+      foreign key (workspace_id, run_id) references externallink_automation_runs(workspace_id, run_id) on delete cascade)`,
+    sql`create table if not exists externallink_automation_steps (
+      workspace_id text not null, step_id text not null, attempt_id text not null, run_id text not null,
+      task_id text not null, step_type text not null, status text not null default '', action text not null default '',
+      target text not null default '', before_state jsonb, after_state jsonb, result text not null default '',
+      error_code text not null default '', evidence_type text not null default '', artifact_ref text not null default '',
+      occurred_at timestamptz not null, primary key (workspace_id, step_id),
+      foreign key (workspace_id, run_id, attempt_id)
+        references externallink_automation_attempts(workspace_id, run_id, attempt_id) on delete cascade)`,
+    sql`create index if not exists externallink_automation_steps_run_idx
+      on externallink_automation_steps (workspace_id, run_id, occurred_at)`,
+  ]);
+}
+
+function safeAutomationId(value, label) {
+  const id = String(value || "").trim();
+  if (!/^[a-z0-9][a-z0-9._:\/-]{0,500}$/i.test(id)) throw new Error(`无效的${label}`);
+  return id;
+}
+
+async function handleAutomationEvent(request, sql, workspaceId) {
+  const input = await requestJson(request);
+  const run = input.run && typeof input.run === "object" ? input.run : {};
+  const event = input.event && typeof input.event === "object" ? input.event : {};
+  const runId = safeAutomationId(event.runId || run.runId, "运行 ID");
+  const taskId = safeAutomationId(event.taskId || "run-event", "任务 ID");
+  const attemptNo = Math.max(1, Number(event.attempt) || 1);
+  const attemptId = safeAutomationId(`${runId}:${taskId}:a${attemptNo}`, "尝试 ID");
+  const stepId = safeAutomationId(event.id || `evt-${crypto.randomUUID()}`, "步骤 ID");
+  const occurredAt = event.at || new Date().toISOString();
+  await ensureWorkspace(sql, workspaceId);
+  await ensureAutomationSchema(sql);
+  await sql.transaction([
+    sql`insert into externallink_automation_runs
+      (workspace_id, run_id, status, selected_profile_ids, config, task_total, destination_total, started_at, updated_at, finished_at)
+      values (${workspaceId}, ${runId}, ${String(run.status || event.runStatus || "running")},
+        ${JSON.stringify(run.selectedProfileIds || [])}::jsonb, ${JSON.stringify(run.config || {})}::jsonb,
+        ${Math.max(0, Number(run.taskTotal) || 0)}, ${Math.max(0, Number(run.destinationTotal) || 0)},
+        ${run.startedAt || occurredAt}::timestamptz, ${occurredAt}::timestamptz,
+        ${run.finishedAt || null}::timestamptz)
+      on conflict (workspace_id, run_id) do update set status = case
+        when externallink_automation_runs.status in ('finished', 'stopped', 'failed')
+          then externallink_automation_runs.status
+        else excluded.status end,
+        task_total = greatest(externallink_automation_runs.task_total, excluded.task_total),
+        destination_total = greatest(externallink_automation_runs.destination_total, excluded.destination_total),
+        updated_at = greatest(externallink_automation_runs.updated_at, excluded.updated_at),
+        finished_at = coalesce(externallink_automation_runs.finished_at, excluded.finished_at)`,
+    sql`insert into externallink_automation_attempts
+      (workspace_id, attempt_id, run_id, task_id, destination_key, profile_id, attempt_no, status, recovery_point, started_at, updated_at, finished_at)
+      values (${workspaceId}, ${attemptId}, ${runId}, ${taskId}, ${String(event.destinationKey || "")},
+        ${String(event.profileId || "")}, ${attemptNo}, ${String(event.status || "running")},
+        ${String(event.recoveryPoint || "")}, ${occurredAt}::timestamptz, ${occurredAt}::timestamptz,
+        ${event.finishedAt || null}::timestamptz)
+      on conflict (workspace_id, attempt_id) do update set status = case
+        when externallink_automation_attempts.status in ('ok', 'err', 'skip', 'failed')
+          then externallink_automation_attempts.status
+        else excluded.status end,
+        recovery_point = excluded.recovery_point,
+        updated_at = greatest(externallink_automation_attempts.updated_at, excluded.updated_at),
+        finished_at = coalesce(externallink_automation_attempts.finished_at, excluded.finished_at)`,
+    sql`insert into externallink_automation_steps
+      (workspace_id, step_id, attempt_id, run_id, task_id, step_type, status, action, target,
+       before_state, after_state, result, error_code, evidence_type, artifact_ref, occurred_at)
+      values (${workspaceId}, ${stepId}, ${attemptId}, ${runId}, ${taskId}, ${String(event.type || "event")},
+        ${String(event.status || "")}, ${String(event.action || "")}, ${String(event.target || "")},
+        ${event.before ? JSON.stringify(event.before) : null}::jsonb,
+        ${event.after ? JSON.stringify(event.after) : null}::jsonb,
+        ${String(event.result || "")}, ${String(event.errorCode || "")},
+        ${String(event.evidenceType || "")}, ${String(event.artifactRef || "")}, ${occurredAt}::timestamptz)
+      on conflict (workspace_id, step_id) do nothing`,
+  ]);
+  console.log({
+    event: "automation_step_recorded",
+    workspaceId,
+    runId,
+    taskId,
+    stepId,
+    stepType: String(event.type || "event"),
+    status: String(event.status || ""),
+  });
+  return { ok: true, runId, attemptId, stepId };
 }
 
 function compactJson(value, maxChars = 60000) {
@@ -357,7 +538,8 @@ async function router(request, env) {
   if (!(await isAuthorised(request, env))) return unauthorized(request, env);
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
-  const workspaceId = normalizeWorkspaceId(url.searchParams.get("workspace"));
+  const workspaceId = authorisedWorkspaceId(url.searchParams.get("workspace"), env);
+  if (!workspaceId) return json({ ok: false, error: "工作区未授权" }, { status: 403 });
   const sql = sqlFor(env);
 
   if (request.method === "GET" && path === "/v1/health") {
@@ -513,6 +695,7 @@ async function router(request, env) {
     const bytes = await request.arrayBuffer();
     if (!bytes.byteLength || bytes.byteLength > MAX_MEDIA_BYTES) throw new Error("媒体必须介于 1 字节和 6MB 之间");
     const contentType = normaliseContentType(request.headers.get("Content-Type"));
+    verifyImageSignature(bytes, contentType);
     const fileName = safeAssetName(request.headers.get("X-Asset-Name"), assetId);
     const sha256 = String(request.headers.get("X-Asset-Sha256") || "").trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error("媒体缺少有效的 SHA-256 校验值");
@@ -554,12 +737,72 @@ async function router(request, env) {
         "Content-Length": String(asset.byte_length),
         "Content-Disposition": `inline; filename="${asset.file_name.replace(/"/g, "")}"`,
         "Cache-Control": "private, max-age=3600",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   }
 
+  const artifactMatch = path.match(/^\/v1\/automation\/artifacts\/([a-zA-Z0-9._-]+)$/);
+  if (artifactMatch && request.method === "PUT") {
+    const artifactId = artifactMatch[1];
+    const declaredLength = Number(request.headers.get("Content-Length") || 0);
+    if (declaredLength > MAX_AUTOMATION_ARTIFACT_BYTES) {
+      throw new Error("自动化证据附件必须介于 1 字节和 3MB 之间");
+    }
+    const bytes = await request.arrayBuffer();
+    if (!bytes.byteLength || bytes.byteLength > MAX_AUTOMATION_ARTIFACT_BYTES) {
+      throw new Error("自动化证据附件必须介于 1 字节和 3MB 之间");
+    }
+    const contentType = normaliseContentType(request.headers.get("Content-Type"));
+    verifyImageSignature(bytes, contentType);
+    const sha256 = String(request.headers.get("X-Asset-Sha256") || "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(sha256) || (await sha256Hex(bytes)) !== sha256) {
+      throw new Error("自动化证据附件 SHA-256 校验失败");
+    }
+    const objectKey = artifactObjectKey(workspaceId, artifactId);
+    const existing = await env.MEDIA_BUCKET.head(objectKey);
+    if (existing) {
+      if (existing.customMetadata?.sha256 !== sha256) {
+        throw new Error("自动化证据附件已存在且摘要不同，拒绝覆盖");
+      }
+      return json({
+        ok: true,
+        artifactId,
+        ref: `cloud-artifact://${artifactId}`,
+        byteLength: existing.size,
+        contentType,
+        immutable: true,
+      });
+    }
+    await env.MEDIA_BUCKET.put(objectKey, bytes, {
+      httpMetadata: { contentType, cacheControl: "private, max-age=3600" },
+      customMetadata: {
+        runId: String(request.headers.get("X-Run-Id") || "").slice(0, 180),
+        taskId: String(request.headers.get("X-Task-Id") || "").slice(0, 180),
+        kind: String(request.headers.get("X-Artifact-Kind") || "screenshot").slice(0, 60),
+        sha256,
+      },
+    });
+    return json({ ok: true, artifactId, ref: `cloud-artifact://${artifactId}`, byteLength: bytes.byteLength, contentType });
+  }
+  if (artifactMatch && request.method === "GET") {
+    const object = await env.MEDIA_BUCKET.get(artifactObjectKey(workspaceId, artifactMatch[1]));
+    if (!object) return json({ ok: false, error: "自动化证据附件不存在" }, { status: 404 });
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("Cache-Control", "private, max-age=3600");
+    headers.set("Content-Length", String(object.size));
+    headers.set("X-Content-Type-Options", "nosniff");
+    return new Response(object.body, { headers });
+  }
+
+  if (request.method === "POST" && path === "/v1/automation/events") {
+    return json(await handleAutomationEvent(request, sql, workspaceId));
+  }
+
   if (request.method === "POST" && path === "/v1/ai/comment") return json(await handleComment(request, env));
   if (request.method === "POST" && path === "/v1/ai/plan") return json(await handlePlan(request, env));
+  if (request.method === "POST" && path === "/v1/ai/vision-plan") return json(await handleVisionPlan(request, env));
   if (request.method === "POST" && path === "/v1/ai/extract-site") return json(await handleExtractSite(request, env));
   if (request.method === "POST" && path === "/v1/ai/generate-site") return json(await handleGenerateSite(request, env));
   if (request.method === "POST" && path === "/v1/ai/judge") return json(await handleJudge(request, env));
@@ -574,6 +817,12 @@ export default {
     try {
       return withCors(await router(request, env), request, env);
     } catch (error) {
+      console.error({
+        event: "worker_request_failed",
+        method: request.method,
+        path: new URL(request.url).pathname,
+        message: error?.message || "云端请求失败",
+      });
       return withCors(json({ ok: false, error: error?.message || "云端请求失败" }, { status: 500 }), request, env);
     }
   },

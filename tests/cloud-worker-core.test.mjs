@@ -64,6 +64,14 @@ assert.equal(
   "workspaces/default/media/sha256-abc.png",
 );
 assert.throws(() => Core.mediaObjectKey("default", "../secret"), /invalid media asset/i);
+assert.equal(
+  Core.artifactObjectKey("default", "run-1-step-1.jpg"),
+  "workspaces/default/automation-artifacts/run-1-step-1.jpg",
+);
+assert.throws(() => Core.artifactObjectKey("default", "../trace"), /invalid automation artifact/i);
+assert.ok(!Core.STATE_DOCUMENT_KEYS.includes("automationRunLedger"),
+  "high-volume automation steps must use normalized tables rather than state documents");
+assert.ok(Core.STATE_DOCUMENT_KEYS.includes("autoSubmitDirectoryListings"));
 
 assert.equal(await Core.secureEqual("same-access-token", "same-access-token"), true);
 assert.equal(await Core.secureEqual("same-access-token", "different-token"), false);
@@ -74,5 +82,7 @@ assert.match(workerSource, /sha256Hex\(bytes\).*!== sha256/s, "media uploads mus
 assert.match(workerSource, /where externallink_workspace_documents\.revision = \$\{expectedRevision\}/, "state writes must use an atomic revision predicate");
 assert.match(workerSource, /await sql\.transaction\(queries\)/, "migration queries must use one Neon HTTP transaction");
 assert.match(workerSource, /jsonb_to_recordset/, "migration and timeline writes must be batched in PostgreSQL");
+assert.match(workerSource, /\/v1\/automation\/events/, "automation events must have a durable cloud endpoint");
+assert.match(workerSource, /\/v1\/ai\/vision-plan/, "complex controls must have a multimodal fallback endpoint");
 
 console.log("cloud worker core tests passed");

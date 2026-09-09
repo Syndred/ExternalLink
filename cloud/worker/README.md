@@ -1,6 +1,8 @@
 # ExternalLink 云端数据层
 
-本目录是 Chrome 插件唯一云端数据源：Neon 存结构化状态与时间线修订，R2 存私有 Logo/截图，Worker 代理数据库、媒体和 DeepSeek。
+本目录是 Chrome 插件唯一云端数据源：Neon 存结构化状态、时间线修订与自动化 run/attempt/step，R2 存私有 Logo、截图和自动化证据附件，Worker 代理数据库、媒体和 DeepSeek。
+
+文本规划使用 `deepseek-v4-pro`。复杂自定义控件失败后，视觉兜底使用同一密钥调用 `deepseek-v4-flash-vision-exp`；多模态只能生成受限填表动作，不能授权成功入账。
 
 ## 首次部署
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const content = readFileSync(resolve(root, "extension/content.js"), "utf8");
 const background = readFileSync(resolve(root, "extension/background.js"), "utf8");
+const sidepanel = readFileSync(resolve(root, "extension/sidepanel.js"), "utf8");
 const popup = readFileSync(resolve(root, "extension/popup.js"), "utf8");
 const readme = readFileSync(resolve(root, "extension/README.md"), "utf8");
 const envExample = readFileSync(resolve(root, ".env.example"), "utf8");
@@ -125,10 +126,12 @@ assert.match(
   "manual task banners should explain that parked tabs are not closed by a timeout",
 );
 assert.match(
-  content,
+  sidepanel,
   /action:\s*["']confirmSubmissionSuccess["']/,
-  "manual task banners should let the user confirm a real submission success",
+  "the trusted extension side panel should let the user confirm a real submission success",
 );
+assert.doesNotMatch(content, /action:\s*["']confirmSubmissionSuccess["']/,
+  "target pages must not be able to trigger trusted success confirmation");
 assert.match(
   background,
   /countProcessingSlots\(state\.activeTabs\)/,

@@ -17,6 +17,7 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
   "linkMonitorSchedule",
   "activeBatchRun",
   "autoSubmitStandardWpComments",
+  "autoSubmitDirectoryListings",
   "cfgEmail",
   "cfgName",
   "cfgCommentTemplate",
@@ -118,6 +119,15 @@ export function mediaObjectKey(workspaceId, assetId) {
     throw new Error("invalid media asset id");
   }
   return `workspaces/${workspace}/media/${asset}`;
+}
+
+export function artifactObjectKey(workspaceId, artifactId) {
+  const workspace = normalizeWorkspaceId(workspaceId);
+  const artifact = String(artifactId || "").trim();
+  if (!/^[a-z0-9][a-z0-9._-]{0,180}$/i.test(artifact)) {
+    throw new Error("invalid automation artifact id");
+  }
+  return `workspaces/${workspace}/automation-artifacts/${artifact}`;
 }
 
 export function parseBearerToken(header) {

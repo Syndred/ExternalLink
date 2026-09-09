@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "externallink-cloud",
   "main": "src/index.mjs",
-  "compatibility_date": "2026-09-06",
+  "compatibility_date": "2026-09-09",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "observability": {
@@ -11,8 +11,10 @@
   },
   "vars": {
     "ALLOWED_ORIGIN": "chrome-extension://pbddnjpahdahahnpkhgjoeiionagmaia",
+    "ALLOWED_WORKSPACE_ID": "default",
     "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
-    "DEEPSEEK_MODEL": "deepseek-v4-pro"
+    "DEEPSEEK_MODEL": "deepseek-v4-pro",
+    "DEEPSEEK_VISION_MODEL": "deepseek-v4-flash-vision-exp"
   },
   "r2_buckets": [
     {

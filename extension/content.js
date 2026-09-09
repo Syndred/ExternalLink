@@ -1082,6 +1082,7 @@
         element.getAttribute?.("aria-label"),
         element.getAttribute?.("placeholder"),
         element.getAttribute?.("data-placeholder"),
+        element.getAttribute?.("data-test"),
       ]
         .filter(Boolean)
         .join(" "),
@@ -1449,7 +1450,7 @@
     const wanted = pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i");
     return productHuntQueryVisible(
       scope,
-      'input[type="checkbox"], input[type="radio"], input[name="topics" i], input[id="topics" i], select, [role="combobox"], [aria-haspopup="listbox"]',
+      'input[type="checkbox"], input[type="radio"], input[name="topics" i], input[id="topics" i], input[data-test*="maker" i], select, [role="combobox"], [aria-haspopup="listbox"]',
     ).filter((element) => wanted.test(productHuntFieldHint(element)) || wanted.test(productHuntChoiceLabel(element)));
   }
 
@@ -1457,7 +1458,7 @@
     const wanted = pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i");
     const selected = productHuntQueryVisible(
       scope,
-      'input[type="checkbox"], input[type="radio"], option:checked, [aria-checked="true"], [aria-selected="true"], [data-state="checked"], [data-selected="true"]',
+      'input[type="checkbox"], input[type="radio"], option:checked, [aria-checked="true"], [aria-selected="true"], [data-state="checked"], [data-selected="true"], [data-test^="maker-" i]',
     );
     return selected
       .map((element) => productHuntChoiceLabel(element))
@@ -1579,7 +1580,7 @@
         control.focus?.();
         control.click?.();
         if (
-          control.matches?.('input[name="topics" i], input[id="topics" i], [role="combobox"]') &&
+          control.matches?.('input[name="topics" i], input[id="topics" i], input[data-test*="maker" i], [role="combobox"]') &&
           String(control.type || "text").toLowerCase() !== "checkbox" &&
           String(control.type || "text").toLowerCase() !== "radio"
         ) {
@@ -1639,10 +1640,24 @@
 
     let makerResult = { ok: !values.makerHandle, selected: [] };
     if (values.makerHandle) {
-      await waitForProductHuntMakerControls(scope);
-      makerResult = await productHuntSelectExact(scope, /maker|founder|creator|who.*mak/, [values.makerHandle], {
-        requireExact: true,
-      });
+      const makerPattern = /maker|founder|creator|who.*mak/;
+      // Product Hunt keeps already-added makers in a data-test chip without
+      // aria-selected/checked state. Treat that visible identity as selected
+      // before typing into the search box, otherwise every retry re-enters the
+      // same handle and the workflow never reaches Company info.
+      if (productHuntSelectionConfirmed(scope, makerPattern, values.makerHandle)) {
+        makerResult = {
+          ok: true,
+          selected: [values.makerHandle],
+          selectedAfter: productHuntSelectedLabels(scope, makerPattern),
+          missing: [],
+        };
+      } else {
+        await waitForProductHuntMakerControls(scope);
+        makerResult = await productHuntSelectExact(scope, makerPattern, [values.makerHandle], {
+          requireExact: true,
+        });
+      }
       if (!makerResult.ok || !(await waitForProductHuntMakerIdentity(scope, values.makerHandle))) {
         return {
           ok: false,

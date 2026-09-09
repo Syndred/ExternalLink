@@ -1464,6 +1464,21 @@
       }
       return;
     }
+    if (result?.platform === "product_hunt") {
+      if (result.ready_to_create) {
+        setAutoFillStatus(
+          "Product Hunt 必填项已完成，等待确认 Create draft（不会排期或购买推广）",
+          "warn",
+        );
+      } else if (result.stage) {
+        setAutoFillStatus(`Product Hunt 已处理至 ${result.stage}，页签已保留`, "warn");
+      } else {
+        setAutoFillStatus("Product Hunt 当前步骤未推进，页签已保留", "warn");
+      }
+      await loadClassifiedList();
+      await loadSubmissionQueue(currentPageUrl);
+      return;
+    }
     if (result?.needs_manual || result?.captcha || result?.blocked) {
       const label =
         SITE_STATUS_MAP[result.classified]?.label ||
@@ -1837,6 +1852,10 @@
 
   // ─── Fill ───
   async function fillPage(mode) {
+    // chrome.tabs.onActivated can lag behind rapid tab switches. Resolve the
+    // real active tab again at action time so one Product Hunt draft never
+    // drives another same-title tab in the background.
+    await refreshActiveTab();
     if (!activeTabId) {
       showToast("没有活动标签页", true);
       return;

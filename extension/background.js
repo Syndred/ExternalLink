@@ -1834,7 +1834,7 @@ async function handleSidepanelFill(msg) {
         status: "manual",
         message: "Product Hunt 当前步骤未推进，页签已保留",
       });
-      return { ok: false, keepTab: true, fillOnly: true };
+      return { ok: false, platform: "product_hunt", keepTab: true, fillOnly: true };
     }
     if (result.submittedAttempt && result.matched && result.evidence) {
       await recordSubmittedProject({
@@ -1864,7 +1864,7 @@ async function handleSidepanelFill(msg) {
           ? "Product Hunt 草稿已创建并看到公开回执"
           : "Product Hunt 草稿已创建并记入账本",
       });
-      return { ...result, ok: true, submitted: true, advance: true };
+      return { ...result, ok: true, platform: "product_hunt", submitted: true, advance: true };
     }
     if (result.ready_to_create) {
       broadcastAutoFillUpdate({
@@ -1872,7 +1872,7 @@ async function handleSidepanelFill(msg) {
         status: "manual",
         message: "Product Hunt 必填项已完成，等待确认 Create draft（不会排期或购买推广）",
       });
-      return { ...result, ok: true, keepTab: true, fillOnly: true };
+      return { ...result, ok: true, platform: "product_hunt", keepTab: true, fillOnly: true };
     }
     const gateStatus = productHuntGateStatus(result);
     broadcastAutoFillUpdate({
@@ -1881,7 +1881,7 @@ async function handleSidepanelFill(msg) {
       message: result.reason || "Product Hunt 当前步骤需要人工处理",
       keepTab: true,
     });
-    return { ...result, keepTab: true, fillOnly: true };
+    return { ...result, platform: "product_hunt", keepTab: true, fillOnly: true };
   }
 
   let smartTotal = 0;
@@ -2451,6 +2451,8 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
 async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
   let step = 0;
   let waitingRetries = 0;
+  let lastWaitingSignature = "";
+  let stableWaitingRetries = 0;
   while (step < PRODUCT_HUNT_MAX_STEPS && waitingRetries < PRODUCT_HUNT_MAX_WAIT_RETRIES) {
     const result = await sendTabMessage(tabId, {
       action: "runProductHuntStep",
@@ -2470,6 +2472,28 @@ async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
       throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
     }
     if (result.waiting) {
+      const waitingSignature = [
+        result.stage || "unknown",
+        JSON.stringify(result.missing || result.requiredUnchecked || []),
+        result.reason || "",
+      ].join("|");
+      if (waitingSignature === lastWaitingSignature) stableWaitingRetries += 1;
+      else {
+        lastWaitingSignature = waitingSignature;
+        stableWaitingRetries = 0;
+      }
+      // A loaded pane with the same missing prerequisite is not a loading
+      // screen. Stop after a short bounded retry window and preserve the tab,
+      // instead of spinning for the full 60-retry load budget.
+      if (result.stage && result.stage !== "unknown" && result.missing?.length && stableWaitingRetries >= 5) {
+        return {
+          ...result,
+          platform: "product_hunt",
+          needs_manual: true,
+          keepTab: true,
+          reason: `Product Hunt ${result.stage} 仍缺少：${result.missing.join("、")}`,
+        };
+      }
       waitingRetries += 1;
       const retryAfterMs = Number(result.retryAfterMs);
       const delayMs = Number.isFinite(retryAfterMs)
@@ -4270,6 +4294,8 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
     }
     let step = 0;
     let waitingRetries = 0;
+    let lastWaitingSignature = "";
+    let stableWaitingRetries = 0;
     while (step < PRODUCT_HUNT_MAX_STEPS && waitingRetries < PRODUCT_HUNT_MAX_WAIT_RETRIES) {
       assertRunCurrent(tabId, entry, runId);
       const result = await sendTabMessage(tabId, {
@@ -4303,6 +4329,25 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
       }
       if (result.waiting) {
+        const waitingSignature = [
+          result.stage || "unknown",
+          JSON.stringify(result.missing || result.requiredUnchecked || []),
+          result.reason || "",
+        ].join("|");
+        if (waitingSignature === lastWaitingSignature) stableWaitingRetries += 1;
+        else {
+          lastWaitingSignature = waitingSignature;
+          stableWaitingRetries = 0;
+        }
+        if (result.stage && result.stage !== "unknown" && result.missing?.length && stableWaitingRetries >= 5) {
+          parkProductHuntTask(
+            tabId,
+            task,
+            entry,
+            `Product Hunt ${result.stage} 仍缺少：${result.missing.join("、")}`,
+          );
+          return;
+        }
         waitingRetries += 1;
         const retryAfterMs = Number(result.retryAfterMs);
         const delayMs = Number.isFinite(retryAfterMs)

@@ -7,6 +7,7 @@ import vm from "node:vm";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const content = readFileSync(resolve(root, "extension/content.js"), "utf8");
 const background = readFileSync(resolve(root, "extension/background.js"), "utf8");
+const sidepanel = readFileSync(resolve(root, "extension/sidepanel.js"), "utf8");
 
 function loadProductHuntHooks() {
   const runtime = {
@@ -254,6 +255,35 @@ assert.match(
   background,
   /async function\s+runProductHuntSidepanelLoop[\s\S]*?runProductHuntStep[\s\S]*?retryAfterMs[\s\S]*?continue;/,
   "single-site Product Hunt runs must retry loading states inside the dedicated adapter",
+);
+assert.match(
+  background,
+  /runProductHuntSidepanelLoop[\s\S]*?stableWaitingRetries[\s\S]*?result\.missing\?\.length[\s\S]*?needs_manual/,
+  "a loaded Product Hunt pane with stable missing prerequisites must stop quickly instead of using the loading budget",
+);
+assert.match(
+  productHuntLoop,
+  /stableWaitingRetries[\s\S]*?result\.missing\?\.length[\s\S]*?parkProductHuntTask/,
+  "batch Product Hunt runs must use the same bounded stable-missing guard",
+);
+assert.match(
+  content,
+  /\[data-test\^=["']maker-[\s\S]*?productHuntSelectionConfirmed/,
+  "an already-selected Product Hunt maker chip must count as selected",
+);
+const handleFillResult = sidepanel.match(
+  /async function\s+handleFillResult[\s\S]*?\n  }\n\n  async function\s+refreshSiteAnnotation/,
+)?.[0] || "";
+assert.ok(
+  handleFillResult.indexOf('result?.platform === "product_hunt"') >= 0 &&
+    handleFillResult.indexOf('result?.platform === "product_hunt"') <
+      handleFillResult.indexOf("result?.needs_manual"),
+  "Product Hunt manual-stage results must render their stage before the generic manual branch",
+);
+assert.match(
+  sidepanel,
+  /async function\s+fillPage\(mode\)[\s\S]*?await refreshActiveTab\(\)/,
+  "single-site actions must resolve the real active tab again at click time",
 );
 assert.match(
   content,

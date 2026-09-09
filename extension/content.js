@@ -1052,8 +1052,8 @@
       firstComment: first(
         nested.firstComment,
         nested.shoutout,
-        config.firstComment,
         pf["Product Hunt First Comment"],
+        config.firstComment,
         config.commentTemplate,
       ),
       investors: list(first(nested.investors, config.investors, pf.Investors)),
@@ -1446,6 +1446,30 @@
     return false;
   }
 
+  function productHuntMakerIdentityMatches(candidate = {}, expected) {
+    const wanted = normalizeProductHuntText(expected).replace(/^@/, "");
+    if (!wanted) return false;
+    const dataTest = normalizeProductHuntText(candidate.dataTest || "")
+      .replace(/^maker-/, "")
+      .replace(/^@/, "");
+    if (dataTest === wanted) return true;
+    const text = normalizeProductHuntText(candidate.text || "");
+    const escaped = wanted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?:^|\\s)@?${escaped}(?:$|\\s)`, "i").test(text);
+  }
+
+  function productHuntHasExistingMaker(scope, expected) {
+    return productHuntQueryVisible(scope, '[data-test^="maker-" i]').some((element) =>
+      productHuntMakerIdentityMatches(
+        {
+          dataTest: element.getAttribute?.("data-test"),
+          text: element.innerText || element.textContent,
+        },
+        expected,
+      ),
+    );
+  }
+
   function productHuntChoiceControls(scope, pattern) {
     const wanted = pattern instanceof RegExp ? pattern : new RegExp(String(pattern), "i");
     return productHuntQueryVisible(
@@ -1468,6 +1492,7 @@
   function productHuntSelectionConfirmed(scope, pattern, expected) {
     const wanted = String(expected || "").trim();
     if (!wanted) return false;
+    if (productHuntHasExistingMaker(scope, wanted)) return true;
     // Selected chips often expose only their own label (without the word
     // "topic" or "maker"), so apply the exact-value check independently of
     // the field hint after the requested control has been interacted with.
@@ -2542,6 +2567,7 @@
     fieldSnapshotChecked: productHuntFieldSnapshotChecked,
     requiredUncheckedFromSnapshot: productHuntRequiredUncheckedFromSnapshot,
     pricingValue: productHuntPricingValue,
+    makerIdentityMatches: productHuntMakerIdentityMatches,
     classifyResult: classifyProductHuntResult,
   };
   self.__extLinkProductHuntTestHooks = self.__extLinkProductHunt;

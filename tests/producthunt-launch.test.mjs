@@ -187,6 +187,22 @@ assert.equal(hooks.shouldClickCreateDraft(true, true, "Create draft"), true);
 assert.equal(hooks.pricingValue("Freemium with pay-as-you-go credits"), "free_options");
 assert.equal(hooks.pricingValue("Completely free"), "free");
 assert.equal(hooks.pricingValue("Paid only"), "payment_required");
+assert.equal(
+  hooks.makerIdentityMatches(
+    { dataTest: "maker-syndred", text: "Syndred @syndred" },
+    "@syndred",
+  ),
+  true,
+  "a live Product Hunt maker data-test chip must confirm the configured handle",
+);
+assert.equal(
+  hooks.makerIdentityMatches(
+    { dataTest: "maker-support@oldphotoliveai.com", text: "support@oldphotoliveai.com Pending" },
+    "@syndred",
+  ),
+  false,
+  "a pending email maker chip must not confirm a different configured handle",
+);
 
 assert.equal(hooks.detectGate({ text: "Please log in to continue" }), "login");
 assert.equal(
@@ -268,8 +284,13 @@ assert.match(
 );
 assert.match(
   content,
-  /\[data-test\^=["']maker-[\s\S]*?productHuntSelectionConfirmed/,
+  /productHuntHasExistingMaker[\s\S]*?\[data-test\^=["']maker-[\s\S]*?productHuntSelectionConfirmed/,
   "an already-selected Product Hunt maker chip must count as selected",
+);
+assert.match(
+  content,
+  /pf\["Product Hunt First Comment"\][\s\S]*?config\.firstComment/,
+  "Product Hunt-specific first-comment copy must win over the generic comment template",
 );
 const handleFillResult = sidepanel.match(
   /async function\s+handleFillResult[\s\S]*?\n  }\n\n  async function\s+refreshSiteAnnotation/,

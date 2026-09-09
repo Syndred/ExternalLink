@@ -67,6 +67,19 @@ function loadProductHuntHooks() {
 
 const hooks = loadProductHuntHooks();
 assert.ok(hooks, "content.js should expose the Product Hunt safety test surface");
+assert.equal(
+  hooks.fieldSnapshotChecked({ checked: false, value: "on" }),
+  false,
+  "an unchecked radio/checkbox value=on must not be treated as selected",
+);
+assert.equal(hooks.fieldSnapshotChecked({ checked: true, value: "on" }), true);
+assert.deepEqual(
+  [...hooks.requiredUncheckedFromSnapshot([
+    { name: "acceptTerms", label: "Accept terms", type: "checkbox", required: true, checked: false, value: "on", hidden: true },
+  ])],
+  ["accept terms acceptterms"],
+  "hidden required legal controls must block the final Product Hunt action",
+);
 assert.deepEqual([...hooks.stages], [
   "entry",
   "main_info",

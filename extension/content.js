@@ -788,7 +788,6 @@
   function productHuntFieldSnapshotChecked(field) {
     if (!field) return false;
     if (field.checked === true || field.selected === true) return true;
-    if (/^(?:true|checked|on|yes|1)$/i.test(String(field.value || "").trim())) return true;
     if (field.value && typeof field.value === "object") {
       return field.value.checked === true || field.value.selected === true;
     }
@@ -2032,18 +2031,28 @@
     };
   }
 
+  function productHuntRequiredUncheckedFromSnapshot(fields = []) {
+    return (Array.isArray(fields) ? fields : [])
+      .filter((field) => /checkbox|radio/.test(String(field?.type || field?.role || "").toLowerCase()))
+      .filter((field) => {
+        const label = productHuntFieldSnapshotHint(field);
+        return !productHuntFieldSnapshotChecked(field) &&
+          (/required|must|terms|privacy|legal|agree|accept/.test(label) || field?.required === true);
+      })
+      .map((field) => productHuntFieldSnapshotHint(field) || "required legal control");
+  }
+
   function productHuntChecklistStatus(scope, values) {
     const text = productHuntVisibleText(scope);
     const progress = productHuntQueryVisible(scope, '[role="progressbar"], progress, [aria-valuenow], [data-progress]')
       .map((element) => Number(element.getAttribute?.("aria-valuenow") || element.value || element.getAttribute?.("data-progress") || ""))
       .find((value) => Number.isFinite(value));
     const textProgress = text.match(/\b(100)\s*%\b/);
-    const requiredUnchecked = productHuntQueryVisible(scope, 'input[type="checkbox"], [role="checkbox"]')
-      .filter((element) => {
-        const label = normalizeProductHuntText(productHuntChoiceLabel(element));
-        return !productHuntFieldSnapshotChecked({ checked: !!element.checked, value: element.value }) &&
-          (/required|must|terms|privacy|legal|agree|accept/.test(label) || element.required);
-      });
+    const visibleLegal = productHuntQueryVisible(scope, 'input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="radio"]');
+    const hiddenLegal = productHuntHiddenStateControls(scope);
+    const legalControls = [...new Set([...visibleLegal, ...hiddenLegal])]
+      .map((element) => productHuntSnapshotField(element, !visibleLegal.includes(element)));
+    const requiredUnchecked = productHuntRequiredUncheckedFromSnapshot(legalControls);
     const unresolved = /\b(?:incomplete|missing|required field|not ready|fix (?:this|these)|add (?:a|an)?)\b/i.test(text);
     const ready = (progress === 100 || !!textProgress || /all (?:steps|requirements) complete|ready to create/.test(normalizeProductHuntText(text))) &&
       !requiredUnchecked.length && !unresolved;
@@ -2054,7 +2063,7 @@
       ready,
       progress: progress ?? (textProgress ? 100 : null),
       missing,
-      requiredUnchecked: requiredUnchecked.map((element) => productHuntChoiceLabel(element)),
+      requiredUnchecked,
       createButton,
       productName: values.productName,
     };
@@ -2406,6 +2415,8 @@
     detectGate: productHuntGateFromSnapshot,
     buttonPolicy: productHuntButtonPolicy,
     shouldClickCreateDraft: productHuntShouldClickCreateDraft,
+    fieldSnapshotChecked: productHuntFieldSnapshotChecked,
+    requiredUncheckedFromSnapshot: productHuntRequiredUncheckedFromSnapshot,
     pricingValue: productHuntPricingValue,
     classifyResult: classifyProductHuntResult,
   };

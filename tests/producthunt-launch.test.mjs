@@ -85,6 +85,7 @@ assert.deepEqual([...hooks.stages], [
   "main_info",
   "images",
   "makers",
+  "company_info",
   "shoutouts",
   "extras",
   "investors",
@@ -122,6 +123,22 @@ assert.equal(
   ]),
   "makers",
 );
+assert.equal(
+  stage([{ name: "isMaker", type: "checkbox", label: "I am a maker" }], [
+    { text: "Next step: Company info" },
+  ]),
+  "makers",
+  "the live Makers action may use the Company info label",
+);
+assert.equal(
+  stage([
+    { name: "bootstrapped", type: "checkbox", label: "Bootstrapped Have not raised VC funding", hidden: true },
+    { name: "teamSize", type: "text", label: "Team size" },
+    { name: "crunchbaseUrl", type: "text", label: "Crunchbase URL" },
+  ], [{ text: "Next step: Shoutouts" }]),
+  "company_info",
+  "Company info must win over the next-step label for the following Shoutouts page",
+);
 assert.equal(stage([], [{ text: "Next step: Extras" }]), "shoutouts");
 assert.equal(stage([{ name: "pricingType", type: "select", label: "Pricing" }]), "extras");
 assert.equal(
@@ -158,6 +175,7 @@ assert.equal(hooks.buttonPolicy("Schedule launch", "create"), false);
 assert.equal(hooks.buttonPolicy("Create draft and schedule launch", "create"), false);
 assert.equal(hooks.buttonPolicy("Promote", "create"), false);
 assert.equal(hooks.buttonPolicy("Next step: Shoutouts", "advance"), true);
+assert.equal(hooks.buttonPolicy("Next step: Company info", "advance"), true);
 assert.equal(hooks.buttonPolicy("Next step: Schedule launch", "advance"), false);
 assert.equal(hooks.buttonPolicy("Next", "advance"), true);
 assert.equal(hooks.buttonPolicy("Skip for now", "skip"), true);
@@ -246,6 +264,11 @@ assert.match(
   content,
   /connect with investors[\s\S]*?return ["']extras["']/i,
   "Connect with Investors is the Extras step boundary, not an unknown stage",
+);
+assert.match(
+  content,
+  /stage === ["']company_info["'][\s\S]*?fillProductHuntCompanyInfo/,
+  "Company info must have a dedicated adapter step instead of reusing Makers",
 );
 assert.doesNotMatch(
   content,

@@ -54,6 +54,7 @@
     "main_info",
     "images",
     "makers",
+    "company_info",
     "shoutouts",
     "extras",
     "investors",
@@ -913,6 +914,16 @@
     // controls that may remain mounted while React transitions between panes.
     if (hasButton(/^next step: images and media$/)) return "main_info";
     if (hasButton(/^next step: makers$/)) return "images";
+    if (hasButton(/^next step: company info$/)) return "makers";
+    // Product Hunt currently exposes Company info as a separate pane but
+    // keeps the next action labelled “Next step: Shoutouts”. Detect its
+    // authoritative hidden state controls before applying the navigation label
+    // so we do not run the Makers filler twice on this intermediate step.
+    if (
+      hasField(/(?:^|\b)(?:bootstrapped|yccompany|have raised vc funding|haveraisedvcfunding|team size|teamsize|crunchbase url|crunchbaseurl)(?:\b|$)/)
+    ) {
+      return "company_info";
+    }
     if (hasButton(/^next step: shoutouts$/)) return "makers";
     if (hasButton(/^next step: extras$/)) return "shoutouts";
     if (hasButton(/^next step: connect with investors$/)) return "extras";
@@ -942,7 +953,7 @@
     if (kind === "skip") {
       return /^(?:skip|skip for now|not now|no thanks|later|跳过|暂不|以后再说)$/.test(normalized);
     }
-    if (/^next step: (?:images and media|makers|shoutouts|extras|connect with investors|launch checklist)$/.test(normalized)) {
+    if (/^next step: (?:images and media|makers|company info|shoutouts|extras|connect with investors|launch checklist)$/.test(normalized)) {
       return true;
     }
     if (/schedule launch|promote|boost|pay|checkout|upgrade|buy|sponsor|create draft|agree|accept|log in|sign in|publish|launch/.test(normalized)) {
@@ -1022,6 +1033,22 @@
         /^(?:true|yes|y|是|1)$/i.test(String(nested.soloMaker || nested.solo || config.soloMaker || pf["Solo Maker"] || "").trim()),
       pricing: first(nested.freeOptions, nested.pricing, config.pricing, pf["PRICING TYPE"], pf.Pricing, "free"),
       launchDate: first(nested.launchDate, config.launchDate, pf["Launch Date"], pf["Launch date"], pf["Release Date"]),
+      funding: first(
+        nested.funding,
+        nested.fundingStatus,
+        config.productHuntFunding,
+        config.fundingStatus,
+        pf["Funding"],
+        pf["Funding status"],
+      ),
+      teamSize: first(nested.teamSize, config.productHuntTeamSize, config.teamSize, pf["Team size"]),
+      crunchbaseUrl: first(
+        nested.crunchbaseUrl,
+        nested.crunchbase,
+        config.productHuntCrunchbaseUrl,
+        config.crunchbaseUrl,
+        pf["Crunchbase URL"],
+      ),
       firstComment: first(
         nested.firstComment,
         nested.shoutout,
@@ -1108,6 +1135,9 @@
     'input[name="is_maker" i]',
     'input[name="soloMaker" i]',
     'input[name="solo_maker" i]',
+    'input[name="bootstrapped" i]',
+    'input[name="ycCompany" i]',
+    'input[name="haveRaisedVcFunding" i]',
     'input[name="pricingType" i]',
     'input[name="pricing_type" i]',
     'input[name*="legal" i]',
@@ -1667,6 +1697,83 @@
       missing: makerResult.missing,
       selectedAfter: makerResult.selectedAfter,
     };
+  }
+
+  async function fillProductHuntCompanyInfo(scope, values) {
+    const filled = [];
+    const missing = [];
+    const fundingControls = productHuntRawControls(
+      scope,
+      'input[name="bootstrapped" i], input[name="ycCompany" i], input[name="haveRaisedVcFunding" i]',
+    );
+    if (values.funding) {
+      const desired = normalizeProductHuntText(values.funding);
+      const fundingMap = [
+        { name: "bootstrapped", pattern: /bootstrapped|self[- ]?fund|未融资|自筹/ },
+        { name: "ycCompany", pattern: /y\s*combinator|\byc\b/ },
+        { name: "haveRaisedVcFunding", pattern: /venture|raised|vc|funded|风险投资/ },
+      ];
+      const wanted = fundingMap.find((item) => item.pattern.test(desired));
+      const control = wanted && fundingControls.find((item) => item.name === wanted.name);
+      if (!control) {
+        missing.push("funding");
+      } else {
+        fundingControls
+          .filter((item) => item !== control && productHuntBooleanControlChecked(item))
+          .forEach((item) => {
+            setCheckedValue(item, false);
+            item.setAttribute?.("aria-checked", "false");
+            item.dispatchEvent(new Event("input", { bubbles: true }));
+            item.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+        if (!productHuntBooleanControlChecked(control)) productHuntClickAssociatedLabel(control);
+        if (await waitForProductHuntSelection(scope, new RegExp(wanted.name, "i"), wanted.name, 800) || productHuntBooleanControlChecked(control)) {
+          filled.push("funding");
+        } else {
+          missing.push("funding");
+        }
+      }
+    } else if (fundingControls.some(fieldIsRequired) && !fundingControls.some(productHuntBooleanControlChecked)) {
+      missing.push("funding");
+    }
+
+    const teamField = productHuntFindField(scope, [/team\s*size/, /teamsize/]);
+    if (values.teamSize) {
+      if (!teamField) {
+        missing.push("teamSize");
+      } else if (productHuntValueMatches(teamField, values.teamSize)) {
+        filled.push("teamSize");
+      } else {
+        teamField.focus?.();
+        teamField.click?.();
+        await sleep(180);
+        const expected = normalizeProductHuntText(values.teamSize);
+        const option = productHuntOptionElements(scope).find((item) =>
+          productHuntChoiceMatches(productHuntControlLabel(item), expected),
+        );
+        if (option) option.click?.();
+        await sleep(180);
+        if (productHuntValueMatches(teamField, values.teamSize)) filled.push("teamSize");
+        else missing.push("teamSize");
+      }
+    } else if (teamField && fieldIsRequired(teamField) && !getElementFillValue(teamField)) {
+      missing.push("teamSize");
+    }
+
+    const crunchbaseField = productHuntFindField(scope, [/crunchbase\s*url/, /crunchbaseurl/]);
+    if (values.crunchbaseUrl) {
+      if (!crunchbaseField) {
+        missing.push("crunchbaseUrl");
+      } else {
+        const result = await productHuntFillField(crunchbaseField, values.crunchbaseUrl);
+        if (result.ok) filled.push("crunchbaseUrl");
+        else if (fieldIsRequired(crunchbaseField)) missing.push("crunchbaseUrl");
+      }
+    } else if (crunchbaseField && fieldIsRequired(crunchbaseField) && !getElementFillValue(crunchbaseField)) {
+      missing.push("crunchbaseUrl");
+    }
+
+    return { ok: missing.length === 0, filled, missing };
   }
 
   function productHuntMediaSource(value) {
@@ -2362,6 +2469,8 @@
       stageResult = await fillProductHuntImages(scope, values, config);
     } else if (stage === "makers") {
       stageResult = await fillProductHuntMaker(scope, values);
+    } else if (stage === "company_info") {
+      stageResult = await fillProductHuntCompanyInfo(scope, values);
     } else if (stage === "shoutouts") {
       stageResult = await fillProductHuntShoutouts(scope, values);
       stageResult.ok = stageResult.ok !== false;

@@ -91,6 +91,12 @@ const P = playbookSelf.ExtLinkPlaybooks;
   assert.equal(unknown, null);
   const fallback = P.classifyEvidence("Thanks for the comment, it is awaiting moderation", null);
   assert.equal(fallback.publicationStatus, "pending_moderation");
+  const received = P.classifyEvidence(
+    "Thank you! Your submission has been received! Follow us on twitter to be notified if you get featured",
+    null,
+  );
+  assert.equal(received.matched, true, "Webflow success receipts must be recognized");
+  assert.equal(received.publicationStatus, "submitted");
   const unmatched = P.classifyEvidence("Just a long blog post about tools and comments", null);
   assert.equal(unmatched.matched, false);
   assert.equal(unmatched.evidence, "", "unmatched page text must not become success evidence");

@@ -144,7 +144,7 @@
   const GENERIC_PENDING =
     /awaiting moderation|held for moderation|pending moderation|comment is awaiting|under review|in queue|submitted for review|pending review|waiting line/;
   const GENERIC_THANKS =
-    /thank you for (submitting|applying|listing)|thanks for (your )?(submission|applying)|we'll be in touch|we will be in touch|submission received|successfully submitted|your (tool|product|startup) (has been|was) submitted/;
+    /thank you(?:!|\s)*(?:for (submitting|applying|listing)|your submission has been received)|thanks for (your )?(submission|applying)|we'll be in touch|we will be in touch|submission (?:has been )?received|successfully submitted|your (tool|product|startup) (has been|was) submitted/;
 
   function snippetAround(text, needle) {
     const blob = String(text || "");

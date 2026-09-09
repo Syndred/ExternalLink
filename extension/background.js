@@ -1808,6 +1808,82 @@ async function handleSidepanelFill(msg) {
 
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "正在填写表单…" });
 
+  const pageUrl = await getTabUrlSafe(tabId);
+  if (msg.mode !== "comment" && isCustomLaunchUrl(pageUrl)) {
+    const mismatch = self.ExtLinkProfiles.fillIdentityMismatch(config, profile);
+    if (mismatch) {
+      broadcastAutoFillUpdate({
+        tabId,
+        status: "error",
+        message: `资料与当前网站不一致（${mismatch}），已阻止提交`,
+      });
+      return { error: `资料与当前网站不一致（${mismatch}），已阻止提交`, fillOnly: true };
+    }
+
+    broadcastAutoFillUpdate({
+      tabId,
+      status: "filling",
+      message: "Product Hunt 专用状态机正在逐步填写并校验…",
+    });
+    const result = await runProductHuntSidepanelLoop(tabId, config, {
+      confirmCreate: msg.confirmProductHuntCreate === true,
+    });
+    if (!result) {
+      broadcastAutoFillUpdate({
+        tabId,
+        status: "manual",
+        message: "Product Hunt 当前步骤未推进，页签已保留",
+      });
+      return { ok: false, keepTab: true, fillOnly: true };
+    }
+    if (result.submittedAttempt && result.matched && result.evidence) {
+      await recordSubmittedProject({
+        url: pageUrl,
+        profileId: profile.id,
+        profileName: profile.name || profile.id,
+        confirmedBy: "agent",
+        successEvidence: result.evidence,
+        publicationStatus: result.publicationStatus || "submitted",
+        publicUrl: result.publicUrl || "",
+        evidenceUrl: result.evidenceUrl || "",
+        successProof: {
+          source: "deterministic_submit",
+          actionObserved: true,
+          evidenceSignals: result.evidenceSignals || [{
+            type: result.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+            text: result.evidence,
+            url: pageUrl,
+            matched: true,
+          }],
+        },
+      });
+      broadcastAutoFillUpdate({
+        tabId,
+        status: "done",
+        message: result.publicationStatus === "published"
+          ? "Product Hunt 草稿已创建并看到公开回执"
+          : "Product Hunt 草稿已创建并记入账本",
+      });
+      return { ...result, ok: true, submitted: true, advance: true };
+    }
+    if (result.ready_to_create) {
+      broadcastAutoFillUpdate({
+        tabId,
+        status: "manual",
+        message: "Product Hunt 必填项已完成，等待确认 Create draft（不会排期或购买推广）",
+      });
+      return { ...result, ok: true, keepTab: true, fillOnly: true };
+    }
+    const gateStatus = productHuntGateStatus(result);
+    broadcastAutoFillUpdate({
+      tabId,
+      status: gateStatus === "needs_captcha" ? "captcha" : "manual",
+      message: result.reason || "Product Hunt 当前步骤需要人工处理",
+      keepTab: true,
+    });
+    return { ...result, keepTab: true, fillOnly: true };
+  }
+
   let smartTotal = 0;
   let skippedFiles = [];
   let inferredFields = [];
@@ -2370,6 +2446,51 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
     }
   }
   return null;
+}
+
+async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
+  let step = 0;
+  let waitingRetries = 0;
+  while (step < PRODUCT_HUNT_MAX_STEPS && waitingRetries < PRODUCT_HUNT_MAX_WAIT_RETRIES) {
+    const result = await sendTabMessage(tabId, {
+      action: "runProductHuntStep",
+      config,
+      confirmCreate: options.confirmCreate === true,
+    });
+    if (!result || typeof result !== "object") {
+      throw new Error("Product Hunt 步骤返回无效");
+    }
+    if (result.status === "gate" || result.needs_manual || result.captcha || /^needs_/.test(result.status || "")) {
+      return result;
+    }
+    if (result.submittedAttempt || result.ready_to_create === true || result.status === "ready_to_create") {
+      return result;
+    }
+    if (result.status === "error" || result.error) {
+      throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
+    }
+    if (result.waiting) {
+      waitingRetries += 1;
+      const retryAfterMs = Number(result.retryAfterMs);
+      const delayMs = Number.isFinite(retryAfterMs)
+        ? Math.max(150, Math.min(retryAfterMs, 5000))
+        : 800;
+      await sleep(delayMs);
+      continue;
+    }
+    if (!(result.advanced || result.stageAdvanced || result.stageCompleted || result.entryOpened)) {
+      return { ...result, waiting: true, retryAfterMs: 800 };
+    }
+    step += 1;
+    waitingRetries = 0;
+    await sleep(900);
+  }
+  return {
+    ok: false,
+    waiting: true,
+    keepTab: true,
+    reason: "Product Hunt 步骤超过安全上限，页签已保留",
+  };
 }
 
 async function runValidateAndFixFill(tabId, config) {

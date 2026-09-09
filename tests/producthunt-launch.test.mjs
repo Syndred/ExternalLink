@@ -216,6 +216,27 @@ assert.match(
   /async function\s+resumeAfterCaptcha[\s\S]*?isCustomLaunchTask\(task\)[\s\S]*?runProductHuntLaunchLoop/,
   "captcha recovery on Product Hunt must return to the dedicated launch loop",
 );
+const sidepanelFill = background.match(
+  /async function\s+handleSidepanelFill[\s\S]*?\n}\n\nasync function\s+persistFillLearnings/,
+)?.[0] || "";
+const productHuntSidepanelBranch = sidepanelFill.indexOf("isCustomLaunchUrl");
+const genericFillBranch = sidepanelFill.indexOf("fillFormUntilReady");
+assert.ok(
+  productHuntSidepanelBranch >= 0 &&
+    genericFillBranch >= 0 &&
+    productHuntSidepanelBranch < genericFillBranch,
+  "single-site Product Hunt runs must enter the dedicated adapter before generic AI validation",
+);
+assert.match(
+  sidepanelFill,
+  /isCustomLaunchUrl[\s\S]*?runProductHuntSidepanelLoop/,
+  "the Product Hunt sidepanel path must use the multi-stage submit loop without generic form validation",
+);
+assert.match(
+  background,
+  /async function\s+runProductHuntSidepanelLoop[\s\S]*?runProductHuntStep[\s\S]*?retryAfterMs[\s\S]*?continue;/,
+  "single-site Product Hunt runs must retry loading states inside the dedicated adapter",
+);
 assert.match(
   content,
   /productHuntFormSnapshot[\s\S]*?(?:hidden|RawControls|input\[name=[^\n]*(?:isMaker|soloMaker|pricingType|legal|terms|consent))/i,

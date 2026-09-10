@@ -151,6 +151,19 @@ assert.deepEqual(
 );
 assert.deepEqual(T.append(afterFirst, first), afterFirst, "same event id is idempotent");
 
+const duplicateAgentReceipt = T.normalizeEvent({
+  ...first,
+  id: "event-duplicate",
+  occurredAt: "2026-09-01T10:00:20+08:00",
+});
+assert.equal(
+  T.normalizeTimeline({
+    "example.com/submit::RainbowPetAI": [first, duplicateAgentReceipt],
+  })["example.com/submit::RainbowPetAI"].length,
+  1,
+  "identical agent receipts created within one automation run must collapse",
+);
+
 const second = T.normalizeEvent({
   id: "event-2",
   destinationKey: "example.com/submit",

@@ -195,6 +195,16 @@
     return Object.values(groups).some((events) => events.some((event) => text(event?.id) === id));
   }
 
+  function isDuplicateAutomationEvent(previous, current) {
+    if (previous?.source !== "agent" || current?.source !== "agent") return false;
+    if (previous.type !== current.type || previous.note !== current.note) return false;
+    if ((previous.evidenceUrl || "") !== (current.evidenceUrl || "")) return false;
+    if ((previous.publicUrl || "") !== (current.publicUrl || "")) return false;
+    const previousTime = eventTime(previous);
+    const currentTime = eventTime(current);
+    return Number.isFinite(previousTime) && Number.isFinite(currentTime) && currentTime - previousTime <= 60_000;
+  }
+
   function normalizeTimeline(timeline, { strict = false } = {}) {
     const normalized = {};
     for (const [storedKey, rawEvents] of Object.entries(readTimelineGroups(timeline))) {
@@ -224,6 +234,9 @@
     }
     for (const events of Object.values(normalized)) {
       events.sort(compareEvents);
+      for (let index = events.length - 1; index > 0; index -= 1) {
+        if (isDuplicateAutomationEvent(events[index - 1], events[index])) events.splice(index, 1);
+      }
     }
     return normalized;
   }

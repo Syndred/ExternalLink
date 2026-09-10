@@ -251,6 +251,8 @@ assert.match(content, /function\s+isLikelyCustomClickTarget\s*\(/,
   "visual snapshots must discover framework custom controls that omit native input and ARIA roles");
 assert.match(content, /getComputedStyle\(element\)\.cursor\s*!==\s*["']pointer["']/,
   "generic custom-control discovery should recognize visible pointer-style cards");
+assert.match(content, /element\.matches\(["']label["']\)[\s\S]*querySelector\(["']input\[type=[^\n]+radio[^\n]+checkbox/,
+  "visual snapshots must expose label cards that wrap hidden radio or checkbox controls");
 assert.match(content, /collectVisualSnapshotCandidates\(\)/,
   "the annotated screenshot must use the shared custom-control candidate collector");
 assert.match(content, /return\s+\[\.\.\.customCandidates,\s*\.\.\.nativeCandidates\][\s\S]*filter\(isInVisualViewport\)[\s\S]*slice\(0,\s*80\)/,

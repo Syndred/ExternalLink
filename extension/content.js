@@ -3516,15 +3516,17 @@
   }
 
   function isLikelyCustomClickTarget(element) {
-    if (!element || !element.matches || !element.matches("div, span, li, section")) return false;
+    if (!element || !element.matches || !element.matches("div, span, li, section, label")) return false;
     if (!isRelevantSnapshotElement(element)) return false;
-    if (getComputedStyle(element).cursor !== "pointer") return false;
+    const wrapsChoice = element.matches("label") &&
+      !!element.querySelector('input[type="radio"], input[type="checkbox"]');
+    if (getComputedStyle(element).cursor !== "pointer" && !wrapsChoice) return false;
     const rect = element.getBoundingClientRect();
     if (rect.width < 18 || rect.height < 18 || rect.width > window.innerWidth * 0.98) return false;
     const label = compactText(getSnapshotLabel(element), 180);
     if (!label || label.length > 180) return false;
     return !Array.from(element.children || []).some((child) => (
-      child.matches?.("div, span, li, section") &&
+      child.matches?.("div, span, li, section, label") &&
       isVisible(child) &&
       getComputedStyle(child).cursor === "pointer" &&
       compactText(getSnapshotLabel(child), 180) === label
@@ -3544,7 +3546,7 @@
       'input, textarea, select, button, label[for], [onclick], [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [role="option"], [role="tab"], [role="menuitem"], [role="link"], [role="switch"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
     )).filter(isRelevantSnapshotElement);
     const seen = new Set(nativeCandidates);
-    const customCandidates = Array.from(document.querySelectorAll("div, span, li, section"))
+    const customCandidates = Array.from(document.querySelectorAll("div, span, li, section, label"))
       .slice(0, 4000)
       .filter((element) => !seen.has(element) && isLikelyCustomClickTarget(element))
       .slice(0, 40);

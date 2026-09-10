@@ -1252,6 +1252,7 @@ async function resumeBatchRun() {
   }
   await persistActiveBatchStatus("running", { resumedAt: new Date().toISOString() });
   await recordAutomationEvent(null, { taskId: "run-event", type: "run_resumed", status: "running" }, { runStatus: "running" });
+  await scheduleUnattendedWatchdog();
   broadcastStatus();
   log("批量已继续", "ok", { event: "run_resumed" });
   scheduleQueueProcessing();
@@ -1597,8 +1598,6 @@ async function startBatchRun(msg) {
   await initializationPromise;
   const lifecycleVersion = state.lifecycleVersion + 1;
   state.lifecycleVersion = lifecycleVersion;
-  state.stopped = false;
-  state.automationFinalStatus = "";
   const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
     ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
     : [];
@@ -1608,6 +1607,15 @@ async function startBatchRun(msg) {
 
   const previousStorage = await chrome.storage.local.get(["activeBatchRun"]);
   const previousBatch = previousStorage.activeBatchRun;
+  const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
+  if (state.lifecycleVersion !== lifecycleVersion) {
+    throw new Error("批次启动已取消");
+  }
+  if (!pending.tasks.length) {
+    throw new Error("所选网站没有新的待提交组合；原批次记录和待办已保留");
+  }
+  state.stopped = false;
+  state.automationFinalStatus = "";
   const selectedProfiles = new Set(selectedSiteIds);
   const unresolvedStatuses = new Set([
     "running",
@@ -1628,25 +1636,7 @@ async function startBatchRun(msg) {
     selectedSiteIds,
   });
   await chrome.storage.local.set({ selectedSiteIds });
-  const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
   assertBatchStartCurrent(lifecycleVersion);
-  if (!pending.tasks.length) {
-    state.running = false;
-    state.tasks = [];
-    state.groups = [];
-    state.queue = [];
-    state.profileConfigs = {};
-    broadcastStatus();
-    log("所选网站没有待提交组合", "warn", { event: "queue_empty" });
-    return {
-      ok: true,
-      empty: true,
-      tasks: [],
-      groups: [],
-      meta: pending.meta,
-      message: "所选网站没有待提交组合",
-    };
-  }
 
   const storedFlags = await chrome.storage.local.get([
     "autoSubmitStandardWpComments",
@@ -1709,11 +1699,11 @@ async function startBatchRun(msg) {
     if (!groupIndexes.has(groupKey)) groupIndexes.set(groupKey, groupIndexes.size + 1);
   }
   const groupCounts = new Map();
-  for (const task of nextTasks) {
+  for (const [taskIndex, task] of nextTasks.entries()) {
     const groupKey = task.destinationGroupKey || task.destinationKey || task.key || task.domain;
     const nextIndex = (groupCounts.get(groupKey) || 0) + 1;
     groupCounts.set(groupKey, nextIndex);
-    task.index = nextTasks.indexOf(task) + 1;
+    task.index = taskIndex + 1;
     task.destinationGroupIndex = groupIndexes.get(groupKey);
     task.groupJobIndex = nextIndex;
     task.groupJobCount = 0;
@@ -1945,7 +1935,9 @@ async function restoreActiveBatchRun() {
     };
   });
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
-  state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
+  state.concurrency = state.config.unattended
+    ? 1
+    : Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.paused = batch.status === "paused";
   state.stopped = batch.status === "stopped";
   state.parkedTaskIds = new Set([...(batch.parkedTaskIds || []), ...interruptedTaskIds]);
@@ -5733,7 +5725,7 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     if (submitted?.submitted && !submitted?.matched) {
-      markTaskFilled(tabId, task, entry, "已代点提交，未见回执，请人工确认");
+      markTaskUnconfirmed(tabId, task, entry, "已代点提交，未见回执，请人工核验");
       return;
     }
 
@@ -5746,6 +5738,12 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       return;
     }
     const reason = err?.message || "确定性流程执行异常";
+    if (err?.unattendedBudget) return;
+    if (unattendedEnabled() && task.submissionAttempted) {
+      markTaskUnconfirmed(tabId, task, entry, `提交动作后发生异常：${reason}`);
+      await recordUnattendedFailure(reason);
+      return;
+    }
     if (shouldEscalateToVisualAgent(reason, { fillOnly: fillConfig.fillOnly })) {
       await handOffToVisualAgent(tabId, task, entry, extra, reason);
       return;
@@ -6319,6 +6317,11 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
     if (err && err.staleRun) return;
     if (err && err.batchPaused) {
       pauseEntryForBatch(tabId, task, entry);
+      return;
+    }
+    if (unattendedEnabled() && task.submissionAttempted) {
+      markTaskUnconfirmed(tabId, task, entry, `提交动作后发生异常：${err.message || "未知异常"}`);
+      await recordUnattendedFailure(err.message || "提交后异常");
       return;
     }
     if (isAgentUnavailableError(err)) {

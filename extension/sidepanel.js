@@ -2279,7 +2279,7 @@
       setBatchStatus(stats.total > 0 ? "running" : "finished");
       updateBatchPreview();
     } catch (err) {
-      setBatchStatus("idle");
+      await syncTasksFromBackground();
       showToast(err.message, true);
     } finally {
       startButton.disabled = false;

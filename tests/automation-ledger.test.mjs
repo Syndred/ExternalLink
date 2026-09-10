@@ -78,6 +78,13 @@ const manual = A.validateSuccessProof({
 });
 assert.equal(manual.ok, true);
 
+const background = readFileSync("extension/background.js", "utf8");
+assert.match(
+  background,
+  /existing\?\.status\s*===\s*["']success["'][\s\S]*existing\.publicUrl[\s\S]*return existing/,
+  "recording the same success receipt repeatedly must be idempotent",
+);
+
 const capped = Array.from({ length: 240 }, (_, index) => ({
   runId: `old-${index}`,
   startedAt: new Date(2026, 0, 1, 0, index).toISOString(),

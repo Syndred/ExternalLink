@@ -2876,6 +2876,15 @@ async function recordSubmittedProject(task) {
   const storage = await chrome.storage.local.get(["submissionRecords"]);
   const records = storage.submissionRecords || {};
   const key = self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId);
+  const existing = records[key] || null;
+  if (
+    existing?.status === "success" &&
+    String(existing.publicUrl || "") === String(task.publicUrl || "") &&
+    String(existing.evidence || "") === String(proof.evidence || "") &&
+    String(existing.publicationStatus || "submitted") === String(task.publicationStatus || "submitted")
+  ) {
+    return existing;
+  }
   const record = self.ExtLinkQueue.buildSuccessRecord({
     destinationKey,
     destinationUrl: url,
@@ -2908,6 +2917,7 @@ async function recordSubmittedProject(task) {
     source: record.confirmedBy === "manual" ? "manual" : "agent",
     syncRecord: false,
   });
+  return record;
 }
 
 async function addToUrlList(msg) {

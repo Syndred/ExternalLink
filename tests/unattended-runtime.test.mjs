@@ -449,6 +449,13 @@ function serializedTask(item) {
     item.productHuntStageAttempt || 0,
     item.productHuntExpectedNext || "",
     item.productHuntLastTransitionAt || "",
+    item.submissionAttempted === true ? 1 : 0,
+    item.executionPhase || "",
+    Math.max(0, Number(item.taskDeadlineAt) || 0),
+    item.manualTodoAt || "",
+    item.unattendedClaimed === true ? 1 : 0,
+    Number(item.manualTabId) > 0 ? Number(item.manualTabId) : 0,
+    item.manualTabUrl || "",
   ];
 }
 
@@ -459,7 +466,7 @@ function unattendedConfig(extra = {}) {
     unattendedMaxTasks: 100,
     unattendedMaxAgentCalls: 200,
     unattendedMaxConsecutiveFailures: 5,
-    unattendedMaxManualTabs: 2,
+    unattendedMaxManualTabs: 20,
     unattendedWatchdogMinutes: 1,
     ...extra,
   };
@@ -476,7 +483,7 @@ function batchStorage({ status = "running", tasks, parkedTaskIds = [], config = 
     maxTasks: config.unattendedMaxTasks || 100,
     maxAgentCalls: config.unattendedMaxAgentCalls || 200,
     maxConsecutiveFailures: config.unattendedMaxConsecutiveFailures || 5,
-    maxManualTabs: config.unattendedMaxManualTabs ?? 2,
+    maxManualTabs: config.unattendedMaxManualTabs ?? 20,
     watchdogMinutes: config.unattendedWatchdogMinutes || 1,
     taskMaxMinutes: config.unattendedTaskMaxMinutes || 5,
     taskBudgetUsed: config.taskBudgetUsed || 0,
@@ -515,6 +522,78 @@ async function stopIfNeeded(runtime) {
     if (entry.timeoutId) clearTimeout(entry.timeoutId);
     if (entry.manualWaitTimeoutId) clearTimeout(entry.manualWaitTimeoutId);
   }
+}
+
+async function setupManualCapacityRuntime({ maxManualTabs = 2 } = {}) {
+  const manualTasks = [
+    task({ index: 1, profileId: "P1", status: "filled" }),
+    task({ index: 2, profileId: "P2", status: "needs_captcha" }),
+  ];
+  const pending = task({
+    index: 3,
+    profileId: "P3",
+    status: "needs_manual",
+    destinationKey: "next.example/submit",
+  });
+  const config = unattendedConfig({ unattendedMaxManualTabs: maxManualTabs });
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      tasks: [...manualTasks, pending],
+      parkedTaskIds: manualTasks.map((item) => item.id),
+      config,
+    }),
+    tabs: [
+      { id: 101, url: manualTasks[0].url, status: "complete" },
+      { id: 102, url: manualTasks[1].url, status: "complete" },
+    ],
+  });
+  pending.status = "pending";
+  runtime.hooks.state.config = config;
+  runtime.hooks.state.unattended = runtime.context.ExtLinkUnattended.createCheckpoint(
+    config,
+    runtime.clock.now,
+    runtime.mock.storageData.activeBatchRun.unattendedState,
+  );
+  runtime.hooks.state.unattended.manualTodoIds = manualTasks.map((item) => item.id);
+  runtime.hooks.state.running = true;
+  runtime.hooks.state.paused = false;
+  runtime.hooks.state.stopped = false;
+  runtime.hooks.state.tasks = [...manualTasks, pending];
+  const manualGroups = manualTasks.map((item) => ({
+    key: item.destinationKey,
+    url: item.url,
+    domain: item.domain,
+    tasks: [item],
+  }));
+  const pendingGroup = {
+    key: pending.destinationKey,
+    url: pending.url,
+    domain: pending.domain,
+    tasks: [pending],
+  };
+  runtime.hooks.state.groups = [...manualGroups, pendingGroup];
+  runtime.hooks.state.queue = [pendingGroup];
+  runtime.hooks.state.parkedTaskIds = new Set(manualTasks.map((item) => item.id));
+  runtime.hooks.state.activeTabs = new Map([
+    [101, { taskIndex: 1, taskId: manualTasks[0].id, runId: 0, slotActive: false, agentDone: true, agentPaused: true, parkedAt: 1 }],
+    [102, { taskIndex: 2, taskId: manualTasks[1].id, runId: 0, slotActive: false, agentDone: true, agentPaused: true, parkedAt: 2 }],
+  ]);
+  return { runtime, manualTasks, pending, pendingGroup };
+}
+
+// The unattended manual-page capacity defaults to 20 and remains configurable
+// within the documented 1..100 range.
+{
+  // The helper is loaded in a VM below; keep the assertions in the first
+  // runtime so this test exercises the shipped normalizer rather than a copy.
+  const runtime = await loadRuntime();
+  const normalizeConfig = runtime.context.ExtLinkUnattended.normalizeConfig;
+  assert.equal(normalizeConfig({ unattended: true }).unattendedMaxManualTabs, 20);
+  assert.equal(normalizeConfig({ unattendedMaxManualTabs: 1 }).unattendedMaxManualTabs, 1);
+  assert.equal(normalizeConfig({ unattendedMaxManualTabs: 100 }).unattendedMaxManualTabs, 100);
+  assert.equal(normalizeConfig({ unattendedMaxManualTabs: 0 }).unattendedMaxManualTabs, 1);
+  assert.equal(normalizeConfig({ unattendedMaxManualTabs: 101 }).unattendedMaxManualTabs, 100);
+  await stopIfNeeded(runtime);
 }
 
 // Restoring a finished batch must keep its result visible after a worker restart.
@@ -593,7 +672,8 @@ async function stopIfNeeded(runtime) {
   await stopIfNeeded(runtime);
 }
 
-// Manual pages are bounded, while every overflow remains in the durable TODO list.
+// Manual pages are bounded for admission, while existing pages are never
+// closed or navigated away when the configured capacity is full.
 {
   const todoTasks = [
     task({ index: 1, profileId: "P1", status: "needs_manual" }),
@@ -628,17 +708,89 @@ async function stopIfNeeded(runtime) {
   );
   await runtime.hooks.trimUnattendedManualTabs();
   const openManualTabs = [...runtime.hooks.state.activeTabs.values()].filter((entry) => entry.slotActive === false);
-  assert.equal(openManualTabs.length, 2, "unattended mode must keep at most two manual tabs open");
+  assert.equal(openManualTabs.length, 3, "unattended mode must retain every already-open manual tab");
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0, "capacity enforcement must never close an existing manual tab");
+  assert.equal(runtime.mock.calls.tabsUpdate.length, 0, "capacity enforcement must never navigate an existing manual tab");
+  for (const tabId of [11, 12, 13]) {
+    assert.equal(runtime.mock.tabMap.has(tabId), true, `manual tab ${tabId} must remain open`);
+  }
   assert.deepEqual(
     [...runtime.hooks.state.parkedTaskIds].sort(),
     todoTasks.map((item) => item.id).sort(),
-    "closing an overflow manual tab must preserve its task as a TODO",
+    "all retained manual pages must remain durable TODOs",
   );
-  assert.deepEqual(
-    [...runtime.hooks.state.unattended.manualTodoIds],
-    [todoTasks[0].id],
-    "the overflow page must be retained in the unattended manual TODO list",
+  await stopIfNeeded(runtime);
+}
+
+// When manual capacity is full, the pending automatic site stays queued. The
+// existing filled/CAPTCHA pages remain untouched, and releasing one slot
+// resumes the queue automatically.
+{
+  const { runtime, manualTasks, pending, pendingGroup } = await setupManualCapacityRuntime();
+
+  await runtime.hooks.trimUnattendedManualTabs();
+  await runtime.hooks.processOne(pendingGroup);
+  await settle(25);
+  assert.equal(runtime.mock.calls.tabsCreate.length, 0, "a full manual capacity must block a new automatic tab");
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0, "capacity blocking must not close a manual tab");
+  assert.equal(runtime.mock.calls.tabsUpdate.length, 0, "capacity blocking must not navigate a manual tab");
+  assert.equal(pending.status, "pending");
+  assert.ok(runtime.hooks.state.queue.includes(pendingGroup), "the blocked task must remain queued");
+  assert.equal(runtime.hooks.state.unattended.waitReason, "manual_capacity");
+  assert.equal(runtime.hooks.state.unattended.manualTabCount, 2);
+  assert.equal(runtime.mock.storageData.activeBatchRun.status, "running");
+  assert.equal(runtime.mock.storageData.activeBatchRun.unattendedState.waitReason, "manual_capacity");
+  assert.equal(runtime.mock.storageData.activeBatchRun.unattendedState.manualTabCount, 2);
+  assert.equal((await runtime.hooks.getRuntimeState()).status, "running", "capacity wait must stay visible as running");
+  assert.equal(runtime.mock.tabMap.has(101), true);
+  assert.equal(runtime.mock.tabMap.has(102), true);
+
+  await runtime.mock.chrome.tabs.remove(101);
+  await settle(60);
+  assert.equal(runtime.mock.calls.tabsCreate.length, 1, "releasing a manual slot must resume the queued task");
+  assert.equal(runtime.mock.calls.tabsCreate[0].url, pending.url);
+  assert.equal(runtime.mock.tabMap.has(102), true, "the other manual page must remain open");
+  assert.equal(runtime.hooks.state.unattended.waitReason || "", "");
+  assert.equal(runtime.hooks.state.unattended.manualTabCount, 1);
+  assert.equal(runtime.mock.storageData.activeBatchRun.unattendedState.waitReason || "", "");
+  assert.equal((await runtime.hooks.getRuntimeState()).status, "running");
+  await stopIfNeeded(runtime);
+}
+
+// Releasing capacity must still respect an explicit user pause or stop.
+for (const action of ["pause", "stop"]) {
+  const { runtime, pending, pendingGroup } = await setupManualCapacityRuntime();
+  await runtime.hooks.processOne(pendingGroup);
+  assert.equal(runtime.mock.calls.tabsCreate.length, 0);
+  if (action === "pause") {
+    await runtime.hooks.pauseBatchRun();
+    assert.equal(runtime.hooks.state.paused, true);
+  } else {
+    await runtime.hooks.stopBatchRun();
+    assert.equal(runtime.hooks.state.stopped, true);
+  }
+  await runtime.mock.chrome.tabs.remove(101);
+  await settle(60);
+  assert.equal(
+    runtime.mock.calls.tabsCreate.length,
+    0,
+    `${action} must prevent a released manual slot from resuming automation`,
   );
+  assert.equal(pending.status, "pending");
+  await stopIfNeeded(runtime);
+}
+
+// A deadline pause has the same boundary: releasing a manual page cannot
+// restart an automatic task after the watchdog has expired the run.
+{
+  const { runtime, pending } = await setupManualCapacityRuntime();
+  runtime.hooks.state.unattended.runDeadlineAt = runtime.clock.now - 1;
+  await runtime.hooks.watchdogUnattendedBatch();
+  assert.equal(runtime.hooks.state.paused, true);
+  await runtime.mock.chrome.tabs.remove(101);
+  await settle(60);
+  assert.equal(runtime.mock.calls.tabsCreate.length, 0, "an expired run must not resume after manual capacity is released");
+  assert.equal(pending.status, "pending");
   await stopIfNeeded(runtime);
 }
 
@@ -946,6 +1098,208 @@ for (const action of ["pause", "stop"]) {
   );
   await stopIfNeeded(runtime);
   await stopIfNeeded(restarted);
+}
+
+// Starting a later batch keeps the previous manual tab and rebinds it by
+// taskId after the task indexes are rebuilt. The old lifecycle is invalidated,
+// while the newly selected Profile is the only automatic tab opened.
+{
+  const previous = task({
+    index: 1,
+    profileId: "P1",
+    status: "needs_manual",
+    destinationKey: "previous.example/submit",
+  });
+  previous.confirmationNonce = "nonce-p1-cross-batch";
+  previous.manualTabId = 71;
+  previous.manualTabUrl = previous.url;
+  const candidate = task({
+    index: 1,
+    profileId: "P2",
+    status: "pending",
+    destinationKey: "next.example/submit",
+  });
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "waiting_manual",
+      tasks: [previous],
+      parkedTaskIds: [previous.id],
+      config: unattendedConfig({ unattendedMaxManualTabs: 2 }),
+    }),
+    tabs: [{ id: 71, url: previous.url, status: "complete" }],
+  });
+  const oldEntry = runtime.hooks.state.activeTabs.get(71);
+  assert.ok(oldEntry, "the prior manual tab must be restored before the next batch starts");
+  oldEntry.runId = 4;
+  const oldRunId = oldEntry.runId;
+  const oldLifecycleVersion = runtime.hooks.state.lifecycleVersion;
+  const oldBatchRunId = runtime.hooks.state.runId;
+  let releaseOldEvidence;
+  const oldEvidenceHeld = new Promise((resolvePromise) => {
+    releaseOldEvidence = resolvePromise;
+  });
+  let oldClassifyStarted;
+  const oldClassifyEntered = new Promise((resolvePromise) => {
+    oldClassifyStarted = resolvePromise;
+  });
+  runtime.mock.setTabMessageHandler(async (_tabId, message) => {
+    if (message.action === "classifySubmitEvidence") {
+      oldClassifyStarted();
+      await oldEvidenceHeld;
+      return { matched: false, evidence: "" };
+    }
+    if (message.action === "submitFilledForm") {
+      throw new Error("the old batch must not submit after rebinding");
+    }
+    return { ok: true };
+  });
+  oldEntry.slotActive = true;
+  previous.status = "running";
+  const oldSubmitPromise = runtime.hooks.tryAutoSubmitFilledForm(
+    71,
+    { projectKey: "P1", brandName: "P1", targetDomain: "" },
+    { id: "P1", name: "P1" },
+    "directory",
+  );
+  await oldClassifyEntered;
+  oldEntry.slotActive = false;
+  previous.status = "needs_manual";
+  runtime.context.__fixedPending = clone({
+    tasks: [candidate],
+    groups: [],
+    selectedProfileIds: ["P2"],
+    meta: { total: 1, destinationTotal: 1, selectedProfileTotal: 1 },
+  });
+  vm.runInContext(
+    "loadPendingSubmissionTasks = async () => self.__fixedPending",
+    runtime.context,
+  );
+
+  const result = await runtime.hooks.startBatchRunOnce({
+    selectedSiteIds: ["P2"],
+    config: unattendedConfig({ unattendedMaxManualTabs: 2 }),
+  });
+  assert.equal(result.ok, true);
+  await settle(40);
+  const inherited = runtime.hooks.state.tasks.find((item) => item.id === previous.id);
+  const rebound = runtime.hooks.state.activeTabs.get(71);
+  assert.ok(inherited);
+  assert.ok(rebound, "the old manual tab must remain owned by the new batch");
+  assert.equal(rebound.taskId, previous.id, "the old tab must be rebound by taskId");
+  assert.equal(rebound.taskIndex, inherited.index, "the old tab must follow the rebuilt task index");
+  assert.equal(inherited.manualTabId, 71, "the rebinding tab id must survive in the task object");
+  assert.ok(
+    runtime.hooks.state.runId !== oldBatchRunId ||
+      runtime.hooks.state.lifecycleVersion > oldLifecycleVersion ||
+      rebound.runId > oldRunId,
+    "the previous batch lifecycle must be invalidated before the new batch runs",
+  );
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0, "starting a new batch must not close the old manual tab");
+  assert.equal(runtime.mock.calls.tabsUpdate.length, 0, "rebinding must not navigate the old manual tab");
+  assert.equal(runtime.mock.tabMap.has(71), true);
+  const persistedInherited = runtime.mock.storageData.activeBatchRun.tasks.find((row) => row[2] === "P1");
+  assert.equal(persistedInherited?.[25], 71, "manualTabId must persist in tuple field 25");
+  const reboundRuntimeState = await runtime.hooks.getRuntimeState();
+  assert.ok(reboundRuntimeState.parkedTasks.length >= 1);
+  for (const parked of reboundRuntimeState.parkedTasks) {
+    assert.equal(parked.runId, runtime.hooks.state.runId, "sidebar parked tasks must carry the current batch runId");
+    assert.equal(parked.taskId, parked.id, "sidebar parked tasks must carry their canonical taskId");
+    assert.ok(parked.confirmationNonce, "sidebar parked tasks must carry a confirmation nonce");
+  }
+  const reboundParked = reboundRuntimeState.parkedTasks.find((item) => item.taskId === previous.id);
+  assert.equal(reboundParked?.confirmationNonce, inherited.confirmationNonce);
+  assert.equal(runtime.mock.calls.tabsCreate.length, 1);
+  assert.equal(runtime.mock.calls.tabsCreate[0].url, candidate.url);
+  releaseOldEvidence();
+  await assert.rejects(oldSubmitPromise, /stale agent run/);
+  assert.equal(
+    runtime.mock.calls.sendMessage.filter((item) => item.message?.action === "submitFilledForm").length,
+    0,
+    "an async action from the previous batch must not submit after tab rebinding",
+  );
+  await stopIfNeeded(runtime);
+}
+
+// Worker restart rebinds a persisted manual task to its existing tab without
+// closing or navigating that tab.
+{
+  const manual = task({
+    index: 1,
+    profileId: "P1",
+    status: "filled",
+    destinationKey: "manual.example/submit",
+  });
+  manual.confirmationNonce = "nonce-restart-manual";
+  manual.manualTabId = 91;
+  manual.manualTabUrl = manual.url;
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "waiting_manual",
+      tasks: [manual],
+      parkedTaskIds: [manual.id],
+      config: unattendedConfig({ unattendedMaxManualTabs: 2 }),
+    }),
+    tabs: [{ id: 91, url: manual.url, status: "complete" }],
+  });
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0);
+  const entry = runtime.hooks.state.activeTabs.get(91);
+  assert.equal(entry?.taskId, manual.id);
+  assert.equal(entry?.slotActive, false);
+  assert.equal(runtime.mock.tabMap.has(91), true);
+  assert.equal(runtime.hooks.state.tasks[0]?.manualTabId, 91);
+  await stopIfNeeded(runtime);
+}
+
+// When two Profiles share one host, persisted manualTabId is the only safe
+// binding; destination-only fallback must not swap their tabs.
+{
+  const first = task({ index: 1, profileId: "P1", status: "needs_captcha", destinationKey: "same.example/submit" });
+  const second = task({ index: 2, profileId: "P2", status: "filled", destinationKey: "same.example/submit" });
+  first.manualTabId = 91;
+  second.manualTabId = 92;
+  first.manualTabUrl = first.url;
+  second.manualTabUrl = second.url;
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "waiting_manual",
+      tasks: [first, second],
+      parkedTaskIds: [first.id, second.id],
+      config: unattendedConfig({ unattendedMaxManualTabs: 2 }),
+    }),
+    tabs: [
+      { id: 92, url: second.url, status: "complete" },
+      { id: 91, url: first.url, status: "complete" },
+    ],
+  });
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0);
+  assert.equal(runtime.mock.calls.tabsUpdate.length, 0);
+  assert.equal(runtime.hooks.state.activeTabs.get(91)?.taskId, first.id);
+  assert.equal(runtime.hooks.state.activeTabs.get(92)?.taskId, second.id);
+  assert.equal(runtime.hooks.state.tasks.find((item) => item.id === first.id)?.manualTabId, 91);
+  assert.equal(runtime.hooks.state.tasks.find((item) => item.id === second.id)?.manualTabId, 92);
+  await stopIfNeeded(runtime);
+}
+
+// A stale slot marker on a completed task must not turn the successful task
+// back into a manual review item during recovery.
+{
+  const completed = task({ index: 1, profileId: "P1", status: "ok", destinationKey: "done.example/submit" });
+  completed.manualTabId = 93;
+  completed.manualTabUrl = completed.url;
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "waiting_manual",
+      tasks: [completed],
+      parkedTaskIds: [completed.id],
+      config: unattendedConfig({ unattendedMaxManualTabs: 2 }),
+    }),
+    tabs: [{ id: 93, url: completed.url, status: "complete" }],
+  });
+  assert.equal(runtime.hooks.state.tasks[0]?.status, "ok");
+  assert.equal(runtime.hooks.state.activeTabs.get(93)?.taskId, completed.id);
+  assert.equal(runtime.hooks.state.activeTabs.get(93)?.slotActive, false);
+  assert.equal(runtime.mock.calls.tabsRemove.length, 0);
+  await stopIfNeeded(runtime);
 }
 
 // A stale submission-evidence response must not cross the lifecycle boundary

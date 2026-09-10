@@ -189,8 +189,8 @@ assert.match(
 );
 assert.match(
   background,
-  /async function\s+startBatchRun\(msg\)[\s\S]*?closeAllTabs\(\)[\s\S]*?state\.tasks =/,
-  "a fresh batch run should clear existing active tabs before replacing task state",
+  /async function\s+startBatchRun\(msg\)[\s\S]*?const preservedManualTabs = preserveManualTabsForNewBatch\(\)[\s\S]*?state\.tasks =/,
+  "a fresh batch run should preserve manual-review tabs before replacing task state",
 );
 assert.match(
   background,

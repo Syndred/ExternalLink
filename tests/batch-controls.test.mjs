@@ -34,8 +34,13 @@ assert.match(background, /async function\s+stopBatchRun[\s\S]*?await markActiveB
 assert.match(background, /function\s+markActiveBatchStopped[\s\S]*?parkedTaskIds:\s*\[\.\.\.state\.parkedTaskIds\]/, "stopped persistence must retain parked task ids");
 assert.match(
   background,
-  /normalizeDestinationKey\(item\.url \|\| ""\) === task\.destinationKey/,
-  "restoring parked tabs must use the same host-scoped destination key as queue construction",
+  /const exactTab = task\.manualTabId\s*\?\s*tabsById\.get\(Number\(task\.manualTabId\)\)/,
+  "restoring parked tabs must first honor the persisted task-to-tab binding",
+);
+assert.match(
+  background,
+  /sameDestinationTasks\.length === 1 && candidates\.length === 1/,
+  "legacy parked tabs may use a destination fallback only when the host mapping is unambiguous",
 );
 assert.equal(
   [...background.matchAll(/log\("任务已停止"/g)].length,

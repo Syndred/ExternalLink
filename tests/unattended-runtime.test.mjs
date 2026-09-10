@@ -365,6 +365,7 @@ async function loadRuntime(options = {}) {
     `({
       state,
       initializationPromise,
+      startBatchRunOnce,
       restoreActiveBatchRun,
       processQueue,
       processOne,
@@ -376,6 +377,7 @@ async function loadRuntime(options = {}) {
       stopBatchRun,
       replaceActiveBatchRun,
       updateActiveBatchRun,
+      tryAutoSubmitFilledForm,
       markTaskUnconfirmed,
       parkTaskEntry,
       persistParkedTaskIds,
@@ -855,6 +857,153 @@ for (const action of ["pause", "stop"]) {
   assert.ok(runtime.hooks.state.parkedTaskIds.has(expired.id));
   assert.equal(runtime.mock.calls.tabsCreate.length, 1, "the next queued task must continue after one task expires");
   assert.equal(runtime.mock.calls.tabsCreate[0].url, pending.url);
+  await stopIfNeeded(runtime);
+}
+
+// A new run carries an unresolved prior Profile as manual-only work, while the
+// newly selected Profile is the only pending task opened automatically. The
+// rebuilt indexes and destinations must remain unambiguous across reload.
+{
+  const previous = task({
+    index: 1,
+    profileId: "P1",
+    status: "submitted_unconfirmed",
+    destinationKey: "previous.example/submit",
+  });
+  previous.confirmationNonce = "nonce-p1";
+  const candidate = task({
+    index: 1,
+    profileId: "P2",
+    status: "pending",
+    destinationKey: "next.example/submit",
+  });
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "finished",
+      tasks: [previous],
+      parkedTaskIds: [previous.id],
+      config: unattendedConfig(),
+    }),
+  });
+  runtime.context.__fixedPending = clone({
+    tasks: [candidate],
+    groups: [],
+    selectedProfileIds: ["P2"],
+    meta: { total: 1, destinationTotal: 1, selectedProfileTotal: 1 },
+  });
+  vm.runInContext(
+    "loadPendingSubmissionTasks = async () => self.__fixedPending",
+    runtime.context,
+  );
+
+  const result = await runtime.hooks.startBatchRunOnce({
+    selectedSiteIds: ["P2"],
+    config: unattendedConfig({ unattendedMaxTasks: 2 }),
+  });
+  assert.equal(result.ok, true);
+  await settle(40);
+
+  const byProfile = new Map(runtime.hooks.state.tasks.map((item) => [item.profileId, item]));
+  assert.deepEqual([...byProfile.keys()].sort(), ["P1", "P2"]);
+  assert.equal(byProfile.get("P1")?.status, "submitted_unconfirmed");
+  assert.equal(byProfile.get("P1")?.executionPhase, "manual_review");
+  assert.ok(runtime.hooks.state.parkedTaskIds.has(previous.id));
+  assert.equal(
+    runtime.mock.calls.tabsCreate.length,
+    1,
+    "the inherited uncertain Profile must remain manual while the selected Profile runs",
+  );
+  assert.equal(runtime.mock.calls.tabsCreate[0].url, candidate.url);
+  assert.equal(byProfile.get("P2")?.status, "running");
+
+  const indexes = runtime.hooks.state.tasks.map((item) => item.index);
+  const groupIndexes = runtime.hooks.state.tasks.map((item) => item.destinationGroupIndex);
+  assert.equal(new Set(indexes).size, 2, "new task indexes must not collide with inherited indexes");
+  assert.equal(new Set(groupIndexes).size, 2, "destination group indexes must not collide");
+  const persisted = runtime.mock.storageData.activeBatchRun;
+  const persistedDestinations = new Map(
+    persisted.destinations.map((row) => [Number(row[0]), row[1]]),
+  );
+  for (const row of persisted.tasks) {
+    const expectedDestination = row[2] === "P1" ? previous.destinationKey : candidate.destinationKey;
+    assert.equal(persistedDestinations.get(Number(row[1])), expectedDestination);
+  }
+
+  const openTabs = await runtime.mock.chrome.tabs.query({});
+  const restarted = await loadRuntime({
+    storage: runtime.mock.storageData,
+    tabs: openTabs,
+  });
+  const restoredByProfile = new Map(
+    restarted.hooks.state.tasks.map((item) => [item.profileId, item]),
+  );
+  assert.equal(restoredByProfile.get("P1")?.destinationKey, previous.destinationKey);
+  assert.equal(restoredByProfile.get("P2")?.destinationKey, candidate.destinationKey);
+  assert.equal(
+    restarted.mock.calls.tabsCreate.length,
+    0,
+    "reloading the persisted run must not submit either Profile again or cross-wire destinations",
+  );
+  await stopIfNeeded(runtime);
+  await stopIfNeeded(restarted);
+}
+
+// A stale submission-evidence response must not cross the lifecycle boundary
+// and send a submit action after the entry has been parked or invalidated.
+{
+  const runtime = await loadRuntime({
+    tabs: [{ id: 41, url: "https://example.com/submit", status: "complete" }],
+  });
+  const current = task({ index: 1, profileId: "P1", status: "running" });
+  const entry = {
+    taskIndex: current.index,
+    taskId: current.id,
+    runId: 0,
+    slotActive: true,
+    timeoutId: null,
+  };
+  runtime.hooks.state.running = true;
+  runtime.hooks.state.stopped = false;
+  runtime.hooks.state.paused = false;
+  runtime.hooks.state.tasks = [current];
+  runtime.hooks.state.activeTabs = new Map([[41, entry]]);
+
+  let releaseEvidence;
+  const evidenceHeld = new Promise((resolvePromise) => {
+    releaseEvidence = resolvePromise;
+  });
+  let classifyStarted;
+  const classifyEntered = new Promise((resolvePromise) => {
+    classifyStarted = resolvePromise;
+  });
+  runtime.mock.setTabMessageHandler(async (_tabId, message) => {
+    if (message.action === "classifySubmitEvidence") {
+      classifyStarted();
+      await evidenceHeld;
+      return { matched: false, evidence: "" };
+    }
+    if (message.action === "submitFilledForm") {
+      throw new Error("stale run must not send submitFilledForm");
+    }
+    return { ok: true };
+  });
+
+  const submitPromise = runtime.hooks.tryAutoSubmitFilledForm(
+    41,
+    { projectKey: "P1", brandName: "P1", targetDomain: "" },
+    { id: "P1", name: "P1" },
+    "directory",
+  );
+  await classifyEntered;
+  entry.runId += 1;
+  entry.slotActive = false;
+  releaseEvidence();
+  await assert.rejects(submitPromise, /stale agent run/);
+  assert.equal(
+    runtime.mock.calls.sendMessage.filter((item) => item.message?.action === "submitFilledForm").length,
+    0,
+    "an invalidated entry must never send submitFilledForm after awaiting evidence",
+  );
   await stopIfNeeded(runtime);
 }
 

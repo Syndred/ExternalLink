@@ -6,6 +6,7 @@ importScripts(
   "lib/queue.js",
   "lib/playbooks.js",
   "lib/batch-controls.js",
+  "lib/unattended.js",
   "lib/scheduler.js",
   "lib/submission-timeline.js",
   "lib/backup.js",
@@ -31,6 +32,7 @@ let state = {
   stopped: false,
   lifecycleVersion: 0,
   automationFinalStatus: "",
+  unattended: null,
 };
 
 const PAGE_LOAD_TIMEOUT_MS = 45000;
@@ -67,6 +69,8 @@ const AUTOMATION_OUTBOX_KEY = "automationEventOutbox";
 const AUTOMATION_OUTBOX_ALARM = "externallink-automation-outbox";
 const AUTOMATION_OUTBOX_LIMIT = 3000;
 const VISION_FALLBACK_AFTER_FAILURES = 1;
+const UNATTENDED_WATCHDOG_ALARM = "externallink-unattended-watchdog";
+const CLOUD_REQUEST_TIMEOUT_MS = 30000;
 
 const commentDraftCache = new Map();
 
@@ -84,6 +88,7 @@ let batchLogWritePromise = Promise.resolve();
 let pendingBatchLogEntries = [];
 let batchLogFlushTimer = null;
 let processQueuePromise = null;
+let queueDispatchCount = 0;
 let startBatchPromise = null;
 let automationCloudWritePromise = Promise.resolve();
 let automationLedgerWritePromise = Promise.resolve();
@@ -91,8 +96,15 @@ let initializationPromise = restoreActiveBatchRun()
   .catch((err) => {
     log(`恢复上次批次失败: ${err.message}`, "warn");
   })
-  .then(() => flushAutomationOutbox().catch((err) => {
-    log(`自动化记录补传失败: ${err.message}`, "warn");
+  .then(() => {
+    // Outbox replay is deliberately fire-and-forget. A large backlog or a
+    // sleeping Worker must never block local batch recovery and UI state.
+    flushAutomationOutbox().catch((err) => {
+      log(`自动化记录补传失败: ${err.message}`, "warn");
+    });
+  })
+  .then(() => scheduleUnattendedWatchdog().catch((err) => {
+    log(`无人值守 watchdog 初始化失败: ${err.message}`, "warn");
   }));
 
 self.addEventListener?.("unhandledrejection", (event) => {
@@ -115,6 +127,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
   }
   configureScheduledChecks().catch(() => {});
+  initializationPromise.then(() => scheduleUnattendedWatchdog()).catch(() => {});
   chrome.alarms.create(AUTOMATION_OUTBOX_ALARM, { periodInMinutes: 5 });
 });
 
@@ -125,6 +138,7 @@ chrome.contextMenus?.onClicked.addListener((info) => {
 chrome.runtime.onStartup.addListener(() => {
   configureScheduledChecks().catch(() => {});
   chrome.alarms.create(AUTOMATION_OUTBOX_ALARM, { periodInMinutes: 5 });
+  initializationPromise.then(() => scheduleUnattendedWatchdog()).catch(() => {});
   flushAutomationOutbox().catch(() => {});
 });
 
@@ -147,6 +161,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
   if (alarm.name === AUTOMATION_OUTBOX_ALARM) {
     flushAutomationOutbox().catch(() => {});
+  }
+  if (alarm.name === UNATTENDED_WATCHDOG_ALARM) {
+    watchdogUnattendedBatch().catch((err) =>
+      log(`无人值守 watchdog 失败: ${err.message}`, "err", {
+        event: "unattended_watchdog_failed",
+        stack: err.stack,
+      }),
+    );
   }
 });
 
@@ -525,6 +547,16 @@ function cloudUrl(config, pathname) {
   return url.href;
 }
 
+function mergeAbortSignals(primary, timeoutSignal, timeoutController = null) {
+  if (!primary) return timeoutSignal;
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
+    return AbortSignal.any([primary, timeoutSignal]);
+  }
+  if (primary.aborted) return primary;
+  primary.addEventListener("abort", () => timeoutController?.abort(), { once: true });
+  return timeoutSignal;
+}
+
 async function cloudRequest(pathname, options = {}, configOverride = null) {
   const config = configOverride || (await getCloudConfig());
   if (!config.configured) throw new Error("云端数据中心尚未连接，请先在设置中填写 Worker 地址和设备密钥");
@@ -533,29 +565,60 @@ async function cloudRequest(pathname, options = {}, configOverride = null) {
   if (options.body !== undefined && !headers.has("Content-Type") && !(options.body instanceof ArrayBuffer)) {
     headers.set("Content-Type", "application/json");
   }
-  const response = await fetch(cloudUrl(config, pathname), {
-    ...options,
-    headers,
-    body:
-      options.body !== undefined && typeof options.body !== "string" && !(options.body instanceof ArrayBuffer)
-        ? JSON.stringify(options.body)
-        : options.body,
-  });
-  if (options.raw === true) {
-    if (!response.ok) {
-      const message = await response.text().catch(() => "");
-      throw new Error(message || `云端请求失败: HTTP ${response.status}`);
+  const controller = new AbortController();
+  const timeoutMs = Number.isFinite(Number(options.timeoutMs))
+    ? Math.max(1000, Number(options.timeoutMs))
+    : CLOUD_REQUEST_TIMEOUT_MS;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const requestOptions = { ...options };
+  delete requestOptions.raw;
+  delete requestOptions.timeoutMs;
+  requestOptions.signal = mergeAbortSignals(requestOptions.signal, controller.signal, controller);
+  try {
+    const response = await fetch(cloudUrl(config, pathname), {
+      ...requestOptions,
+      headers,
+      body:
+        options.body !== undefined && typeof options.body !== "string" && !(options.body instanceof ArrayBuffer)
+          ? JSON.stringify(options.body)
+          : options.body,
+    });
+    if (options.raw === true) {
+      if (!response.ok) {
+        const message = await response.text().catch(() => "");
+        throw new Error(message || `云端请求失败: HTTP ${response.status}`);
+      }
+      // Consume the body while the AbortController is still armed, then
+      // return a fresh Response for callers that need blob()/arrayBuffer().
+      const body = await response.arrayBuffer();
+      return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
     }
-    return response;
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      if (err?.name === "AbortError") throw err;
+      throw new Error("云端返回无效 JSON");
+    }
+    if (!response.ok || data?.ok === false) {
+      const error = new Error(data?.error || `云端请求失败: HTTP ${response.status}`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+    return data;
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw new Error(`云端请求超时（${Math.round(timeoutMs / 1000)} 秒）`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data?.ok === false) {
-    const error = new Error(data?.error || `云端请求失败: HTTP ${response.status}`);
-    error.status = response.status;
-    error.data = data;
-    throw error;
-  }
-  return data;
 }
 
 function automationRunSummary(status = "running") {
@@ -1148,6 +1211,7 @@ async function stopBatchRun() {
   closeAutomatedTabs();
   await markActiveBatchStopped();
   await finishAutomationRunLedger("stopped");
+  await clearUnattendedWatchdog();
   broadcastStatus();
   log("已请求停止，正在保留人工页签并关闭自动页签", "warn", { event: "run_stop_requested" });
   return { ok: true, status: "stopped" };
@@ -1157,6 +1221,9 @@ async function resumeBatchRun() {
   await initializationPromise;
   if (!state.paused || state.stopped) {
     return { ok: false, error: "当前没有已暂停的批量任务" };
+  }
+  if (state.unattended?.enabled && self.ExtLinkUnattended.isExpired(state.unattended)) {
+    return { ok: false, error: "无人值守截止时间已到，请重新开始批次" };
   }
   state.paused = false;
   state.running = true;
@@ -1198,6 +1265,7 @@ async function persistActiveBatchStatus(status, extra = {}) {
     status,
     tasks: serializeBatchTasks(state.tasks),
     parkedTaskIds: [...state.parkedTaskIds],
+    unattendedState: state.unattended ? { ...state.unattended } : activeBatchRun.unattendedState,
   }));
 }
 
@@ -1208,9 +1276,15 @@ function updateActiveBatchRun(updater) {
     const current = stored.activeBatchRun;
     const next = updater(current);
     if (!next) return null;
+    if (state.unattended && !next.unattendedState) {
+      next.unattendedState = { ...state.unattended };
+    }
     if (current.status === "stopped" && next.status !== "stopped") {
       next.status = "stopped";
       next.stoppedAt = current.stoppedAt || next.stoppedAt || new Date().toISOString();
+    }
+    if (current.status === "paused" && next.status === "running") {
+      next.status = "paused";
     }
     await chrome.storage.local.set({ activeBatchRun: next });
     return next;
@@ -1224,19 +1298,328 @@ function replaceActiveBatchRun(activeBatchRun) {
   });
 }
 
+function unattendedEnabled() {
+  return state.config?.unattended === true && state.unattended?.enabled === true;
+}
+
+async function scheduleUnattendedWatchdog() {
+  if (!chrome.alarms?.get || !chrome.alarms?.create) return;
+  const existing = await chrome.alarms.get(UNATTENDED_WATCHDOG_ALARM).catch(() => null);
+  if (!unattendedEnabled() || state.stopped || state.paused || !state.running || self.ExtLinkUnattended.isExpired(state.unattended)) {
+    if (existing && chrome.alarms.clear) await chrome.alarms.clear(UNATTENDED_WATCHDOG_ALARM).catch(() => {});
+    return;
+  }
+  if (existing) return;
+  const periodInMinutes = Math.max(1, Math.min(5, Number(state.unattended.watchdogMinutes) || 1));
+  await chrome.alarms.create(UNATTENDED_WATCHDOG_ALARM, { periodInMinutes });
+}
+
+async function clearUnattendedWatchdog() {
+  if (chrome.alarms?.clear) await chrome.alarms.clear(UNATTENDED_WATCHDOG_ALARM).catch(() => {});
+}
+
+function unattendedTaskForEntry(entry) {
+  return state.tasks.find((task) => task.index === entry?.taskIndex) || null;
+}
+
+function manualTabEntries() {
+  return [...state.activeTabs.entries()]
+    .filter(([, entry]) => entry?.slotActive === false && entry?.taskId)
+    .sort((left, right) => Number(left[1].parkedAt || 0) - Number(right[1].parkedAt || 0));
+}
+
+function trimUnattendedManualTabs(preferredTabId = null) {
+  if (!unattendedEnabled()) return;
+  const maxTabs = Math.max(0, Number(state.unattended.maxManualTabs) || 0);
+  const entries = manualTabEntries();
+  if (entries.length <= maxTabs) return;
+  const overflow = entries.slice(0, Math.max(0, entries.length - maxTabs));
+  // Keep the newest manual pages available; the closed pages remain durable TODOs.
+  for (const [tabId, entry] of overflow) {
+    const task = unattendedTaskForEntry(entry);
+    if (task?.id) {
+      state.parkedTaskIds.add(task.id);
+      state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
+      task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
+      task.skipReason = task.skipReason || "待人工页签上限已达 2，已保留为待办";
+      broadcastTaskUpdate(task);
+    }
+    bumpEntryRunId(entry);
+    clearEntryTimeout(entry);
+    clearManualWaitTimer(entry);
+    state.activeTabs.delete(tabId);
+    chrome.tabs.remove(tabId).catch(() => {});
+    log(`${task?.domain || "任务"}: 人工页签达到上限，已关闭页签并保留待办`, "warn", {
+      event: "manual_tab_capped",
+      taskIndex: task?.index,
+      taskId: task?.id,
+      preferredTabId,
+    });
+  }
+  persistParkedTaskIds();
+}
+
+function markInterruptedTask(task, reason = "后台中断，提交结果不确定，请人工核验", entry = null) {
+  if (!task) return;
+  if (entry?.submissionAttempted === true) task.submissionAttempted = true;
+  const interrupted = self.ExtLinkUnattended.interruptedTaskStatus({
+    ...task,
+    status: "running",
+  });
+  task.status = interrupted?.status || "needs_manual";
+  task.skipReason = reason || interrupted?.reason || "后台中断，请人工核验";
+  task.executionPhase = "manual_review";
+  task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+  if (task.id) {
+    state.parkedTaskIds.add(task.id);
+    state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
+  }
+}
+
+async function updateUnattendedCheckpoint(updater, options = {}) {
+  if (!unattendedEnabled() || typeof updater !== "function") return state.unattended;
+  return runActiveBatchWrite(async () => {
+    const stored = await chrome.storage.local.get(["activeBatchRun"]);
+    const current = stored.activeBatchRun;
+    if (!current) return state.unattended;
+    const currentState = self.ExtLinkUnattended.createCheckpoint(
+      state.config,
+      Date.now(),
+      current.unattendedState || state.unattended,
+    );
+    const nextState = updater(currentState) || currentState;
+    state.unattended = nextState;
+    const next = {
+      ...current,
+      unattendedState: nextState,
+      ...(options.status ? { status: options.status } : {}),
+      tasks: serializeBatchTasks(state.tasks),
+      parkedTaskIds: [...state.parkedTaskIds],
+    };
+    await chrome.storage.local.set({ activeBatchRun: next });
+    return nextState;
+  });
+}
+
+async function pauseUnattendedBatch(reason, options = {}) {
+  if (!unattendedEnabled() || state.stopped) return false;
+  state.lifecycleVersion += 1;
+  state.paused = true;
+  state.running = true;
+  state.unattended = {
+    ...state.unattended,
+    stopReason: String(reason || "无人值守批次已暂停"),
+    lastWatchdogAt: Date.now(),
+  };
+  // A running page has an unknown side effect boundary. Preserve it for review
+  // instead of resetting it to pending and allowing a future duplicate submit.
+  for (const [tabId, entry] of [...state.activeTabs.entries()]) {
+    if (entry.slotActive === false) continue;
+    const task = unattendedTaskForEntry(entry);
+    if (!task || ["ok", "skip", "err"].includes(task.status)) continue;
+    bumpEntryRunId(entry);
+    markInterruptedTask(task, reason || "无人值守批次已暂停，结果不确定", entry);
+    entry.agentDone = true;
+    entry.agentPaused = true;
+    entry.slotActive = false;
+    entry.parkedReason = task.skipReason;
+    clearEntryTimeout(entry);
+    broadcastTaskUpdate(task);
+  }
+  trimUnattendedManualTabs();
+  await persistActiveBatchStatus("paused", {
+    unattendedState: state.unattended,
+    unattendedStopReason: state.unattended.stopReason,
+    unattendedPausedAt: new Date().toISOString(),
+  });
+  await recordAutomationEvent(null, {
+    taskId: "run-event",
+    type: options.deadline ? "run_deadline_reached" : "run_unattended_paused",
+    status: "paused",
+    result: state.unattended.stopReason,
+  }, { runStatus: "paused" });
+  await clearUnattendedWatchdog();
+  broadcastStatus();
+  log(state.unattended.stopReason, "warn", {
+    event: options.deadline ? "unattended_deadline_reached" : "unattended_paused",
+  });
+  return true;
+}
+
+async function watchdogUnattendedBatch() {
+  await initializationPromise;
+  if (!unattendedEnabled() || state.stopped || !state.running) {
+    await clearUnattendedWatchdog();
+    return { ok: true, active: false };
+  }
+  const now = Date.now();
+  state.unattended = self.ExtLinkUnattended.createCheckpoint(
+    state.config,
+    now,
+    state.unattended,
+  );
+  if (self.ExtLinkUnattended.isExpired(state.unattended, now)) {
+    await pauseUnattendedBatch("无人值守运行已达到截止时间，已暂停并保留待人工任务", { deadline: true });
+    return { ok: true, status: "paused", reason: "deadline" };
+  }
+  if (state.paused) return { ok: true, status: "paused" };
+  let taskTimedOut = false;
+  for (const [tabId, entry] of [...state.activeTabs.entries()]) {
+    if (entry.slotActive === false || !entry.taskDeadlineAt || Number(entry.taskDeadlineAt) > now) continue;
+    const task = unattendedTaskForEntry(entry);
+    if (!task || ["ok", "skip", "err"].includes(task.status)) continue;
+    bumpEntryRunId(entry);
+    markInterruptedTask(task, "单个组合超过无人值守处理时限，提交结果不确定，请人工核验", entry);
+    entry.agentDone = true;
+    entry.agentPaused = true;
+    entry.slotActive = false;
+    entry.parkedReason = task.skipReason;
+    clearEntryTimeout(entry);
+    broadcastTaskUpdate(task);
+    state.parkedTaskIds.add(task.id);
+    taskTimedOut = true;
+  }
+  trimUnattendedManualTabs();
+  state.unattended.lastWatchdogAt = now;
+  await persistActiveBatchStatus(state.paused ? "paused" : "running", {
+    unattendedState: state.unattended,
+    unattendedWatchdogAt: new Date(now).toISOString(),
+  });
+  if (taskTimedOut && !state.paused) {
+    await recordUnattendedFailure("单个组合超过处理时限");
+    await refreshBatchRunStatus();
+    scheduleQueueProcessing();
+  }
+  broadcastStatus();
+  return { ok: true, status: getBatchStatus() };
+}
+
+function recordUnattendedFailure(reason) {
+  if (!unattendedEnabled()) return Promise.resolve(null);
+  let shouldPause = false;
+  return updateUnattendedCheckpoint((checkpoint) => {
+    const update = self.ExtLinkUnattended.noteFailure(checkpoint, reason, Date.now());
+    shouldPause = update.pause;
+    return update.next;
+  }).then(() => {
+    if (shouldPause) {
+      return pauseUnattendedBatch(
+        `连续自动化失败已达到 ${state.unattended.maxConsecutiveFailures} 次，已暂停并保留待办`,
+      );
+    }
+    return null;
+  }).catch(() => null);
+}
+
+function recordUnattendedSuccess() {
+  if (!unattendedEnabled()) return Promise.resolve(null);
+  return updateUnattendedCheckpoint((checkpoint) => self.ExtLinkUnattended.noteSuccess(checkpoint)).catch(() => null);
+}
+
+class UnattendedBudgetError extends Error {
+  constructor(reason) {
+    super(`无人值守预算不足: ${reason}`);
+    this.name = "UnattendedBudgetError";
+    this.unattendedBudget = reason;
+  }
+}
+
+async function reserveUnattendedModelCall(endpoint) {
+  if (!unattendedEnabled()) return;
+  let denied = "";
+  await updateUnattendedCheckpoint((checkpoint) => {
+    const result = self.ExtLinkUnattended.reserveModelCall(checkpoint, Date.now());
+    if (!result.ok) {
+      denied = result.reason;
+      return checkpoint;
+    }
+    return result.next;
+  });
+  if (denied) {
+    await pauseUnattendedBatch(
+      denied === "deadline"
+        ? "无人值守截止时间已到，已暂停并保留待办"
+        : `模型调用预算已用尽（${state.unattended.maxAgentCalls} 次），已暂停并保留待办`,
+    );
+    throw new UnattendedBudgetError(denied);
+  }
+  log(`无人值守模型预算预扣 1 次: ${endpoint}`, "", {
+    event: "unattended_model_reserved",
+    endpoint,
+    modelCallsUsed: state.unattended.modelCallsUsed,
+    modelCallsLimit: state.unattended.maxAgentCalls,
+  });
+}
+
+async function claimUnattendedTask(task) {
+  if (!unattendedEnabled()) return true;
+  const now = Date.now();
+  if (self.ExtLinkUnattended.taskAlreadyClaimed(task)) {
+    const decision = self.ExtLinkUnattended.canStartTask(state.unattended, now);
+    if (!decision.ok) {
+      await pauseUnattendedBatch(
+        decision.reason === "deadline"
+          ? "无人值守截止时间已到，已暂停并保留待办"
+          : `无人值守任务上限已达到 ${state.unattended.maxTasks} 个组合，已暂停并保留待办`,
+        { deadline: decision.reason === "deadline" },
+      );
+      return false;
+    }
+    task.taskDeadlineAt = self.ExtLinkUnattended.taskDeadline(state.unattended, now);
+    return true;
+  }
+  let denied = "";
+  await updateUnattendedCheckpoint((checkpoint) => {
+    const result = self.ExtLinkUnattended.claimTask(checkpoint, now);
+    if (!result.ok) {
+      denied = result.reason;
+      return checkpoint;
+    }
+    task.unattendedClaimed = true;
+    task.taskDeadlineAt = self.ExtLinkUnattended.taskDeadline(result.next, now);
+    return result.next;
+  });
+  if (denied) {
+    await pauseUnattendedBatch(
+      denied === "deadline"
+        ? "无人值守截止时间已到，已暂停并保留待办"
+        : `无人值守任务上限已达到 ${state.unattended.maxTasks} 个组合，已暂停并保留待办`,
+      { deadline: denied === "deadline" },
+    );
+    return false;
+  }
+  task.unattendedClaimed = true;
+  task.taskDeadlineAt = self.ExtLinkUnattended.taskDeadline(state.unattended, now);
+  return true;
+}
+
 async function startBatchRun(msg) {
   await initializationPromise;
   const lifecycleVersion = state.lifecycleVersion + 1;
   state.lifecycleVersion = lifecycleVersion;
   state.stopped = false;
   state.automationFinalStatus = "";
-  closeAllTabs();
   const selectedSiteIds = Array.isArray(msg.selectedSiteIds)
     ? [...new Set(msg.selectedSiteIds.filter(Boolean))]
     : [];
   if (!selectedSiteIds.length) {
     throw new Error("请至少选择一个要提交的自家网站");
   }
+
+  const previousStorage = await chrome.storage.local.get(["activeBatchRun"]);
+  const previousBatch = previousStorage.activeBatchRun;
+  const selectedProfiles = new Set(selectedSiteIds);
+  const unresolvedStatuses = new Set([
+    "running",
+    "submitted_unconfirmed",
+    "needs_manual",
+    "needs_login",
+    "needs_captcha",
+    "needs_otp",
+    "captcha",
+    "filled",
+  ]);
+  closeAllTabs();
 
   state.runId = `run-${Date.now().toString(36)}`;
   await resetBatchLog(state.runId, selectedSiteIds);
@@ -1277,17 +1660,106 @@ async function startBatchRun(msg) {
       storedFlags.autoSubmitDirectoryListings !== false && msg.config?.fillOnly !== true,
     autoSubmitStandardWpComments: storedFlags.autoSubmitStandardWpComments === true,
   };
-  state.profileConfigs = collectProfileConfigs(pending.tasks);
-  state.tasks = pending.tasks.map((task) => stripTaskConfig({ ...task, status: "pending" }));
+  state.config = self.ExtLinkUnattended.normalizeConfig(state.config);
+  state.profileConfigs = {
+    ...(previousBatch?.profileConfigs || {}),
+    ...collectProfileConfigs(pending.tasks),
+  };
+  const previousDestinations = hydrateBatchDestinations(previousBatch?.destinations || []);
+  const previousTasks = Array.isArray(previousBatch?.tasks)
+    ? previousBatch.tasks.map((rawTask) => hydratePersistedTask(rawTask, previousDestinations))
+    : [];
+  const previousById = new Map(previousTasks.map((task) => [task.id, task]));
+  const nextTasks = pending.tasks.map((task) => {
+    const previous = previousById.get(task.id);
+    if (!previous || !selectedProfiles.has(task.profileId) || !unresolvedStatuses.has(previous.status)) {
+      return stripTaskConfig({ ...task, status: "pending" });
+    }
+    const inherited = previous.status === "running"
+      ? self.ExtLinkUnattended.interruptedTaskStatus(previous)
+      : null;
+    return stripTaskConfig({
+      ...task,
+      status: inherited?.status || previous.status,
+      skipReason: inherited?.reason || previous.skipReason || "上轮批次待人工核验",
+      confirmationNonce: previous.confirmationNonce || crypto.randomUUID(),
+      submissionAttempted: previous.submissionAttempted === true,
+      executionPhase: "manual_review",
+      manualTodoAt: previous.manualTodoAt || new Date().toISOString(),
+    });
+  });
+  const nextTaskIds = new Set(nextTasks.map((task) => task.id));
+  for (const previous of previousTasks) {
+    if (!unresolvedStatuses.has(previous.status) || nextTaskIds.has(previous.id)) continue;
+    const inherited = previous.status === "running"
+      ? self.ExtLinkUnattended.interruptedTaskStatus(previous)
+      : null;
+    nextTasks.push(stripTaskConfig({
+      ...previous,
+      status: inherited?.status || previous.status,
+      skipReason: inherited?.reason || previous.skipReason || "上轮批次待人工核验",
+      confirmationNonce: previous.confirmationNonce || crypto.randomUUID(),
+      executionPhase: "manual_review",
+      manualTodoAt: previous.manualTodoAt || new Date().toISOString(),
+    }));
+  }
+  const groupIndexes = new Map();
+  for (const task of nextTasks) {
+    const groupKey = task.destinationGroupKey || task.destinationKey || task.key || task.domain;
+    if (!groupIndexes.has(groupKey)) groupIndexes.set(groupKey, groupIndexes.size + 1);
+  }
+  const groupCounts = new Map();
+  for (const task of nextTasks) {
+    const groupKey = task.destinationGroupKey || task.destinationKey || task.key || task.domain;
+    const nextIndex = (groupCounts.get(groupKey) || 0) + 1;
+    groupCounts.set(groupKey, nextIndex);
+    task.index = nextTasks.indexOf(task) + 1;
+    task.destinationGroupIndex = groupIndexes.get(groupKey);
+    task.groupJobIndex = nextIndex;
+    task.groupJobCount = 0;
+  }
+  for (const task of nextTasks) {
+    const groupKey = task.destinationGroupKey || task.destinationKey || task.key || task.domain;
+    task.groupJobCount = groupCounts.get(groupKey) || 1;
+  }
+  state.tasks = nextTasks;
   state.groups = self.ExtLinkScheduler.groupTasksByDestination(state.tasks);
-  state.queue = [...state.groups];
-  state.parkedTaskIds.clear();
-  state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
+  state.parkedTaskIds = new Set(
+    state.tasks
+      .filter((task) => unresolvedStatuses.has(task.status))
+      .map((task) => task.id)
+      .filter(Boolean),
+  );
+  state.queue = self.ExtLinkUnattended.pendingGroups(state.groups, state.parkedTaskIds);
+  state.concurrency = state.config.unattended
+    ? 1
+    : Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.running = true;
   state.paused = false;
   state.stopped = false;
+  state.unattended = null;
+
+  if (previousBatch?.runId) {
+    await chrome.storage.local.set({
+      lastBatchReportBackup: {
+        runId: previousBatch.runId,
+        savedAt: new Date().toISOString(),
+        status: previousBatch.status || "unknown",
+        startedAt: previousBatch.startedAt || "",
+        finishedAt: previousBatch.finishedAt || "",
+        tasks: previousBatch.tasks || [],
+        destinations: previousBatch.destinations || [],
+        unattendedState: previousBatch.unattendedState || null,
+        parkedTaskIds: previousBatch.parkedTaskIds || [],
+      },
+    });
+  }
 
   await startAutomationRunLedger(selectedSiteIds);
+  state.unattended = self.ExtLinkUnattended.createCheckpoint(
+    state.config,
+    Date.parse(state.startedAt || "") || Date.now(),
+  );
 
   await replaceActiveBatchRun({
       version: 3,
@@ -1297,9 +1769,10 @@ async function startBatchRun(msg) {
       config: state.config,
       profileConfigs: state.profileConfigs,
       destinations: serializeBatchDestinations(state.groups),
-      parkedTaskIds: [],
+      parkedTaskIds: [...state.parkedTaskIds],
       startedAt: new Date().toISOString(),
       tasks: serializeBatchTasks(state.tasks),
+      unattendedState: state.unattended,
   });
   assertBatchStartCurrent(lifecycleVersion);
   broadcastStatus();
@@ -1313,6 +1786,11 @@ async function startBatchRun(msg) {
     },
   );
   scheduleQueueProcessing();
+  scheduleUnattendedWatchdog().catch((err) =>
+    log(`无人值守 watchdog 启动失败: ${err.message}`, "warn", {
+      event: "unattended_watchdog_schedule_failed",
+    }),
+  );
   const taskWindow = buildTaskWindow(state.tasks);
   return {
     ok: true,
@@ -1329,6 +1807,14 @@ function assertBatchStartCurrent(lifecycleVersion) {
   const err = new Error("批次启动期间已停止，已取消本次启动");
   err.staleRun = true;
   throw err;
+}
+
+function queueOperationCurrent(batchRunId, lifecycleVersion) {
+  return (
+    state.runId === batchRunId &&
+    state.lifecycleVersion === lifecycleVersion &&
+    self.ExtLinkBatchControls.shouldProcessQueue(state)
+  );
 }
 
 function markActiveBatchStopped() {
@@ -1404,11 +1890,17 @@ async function restoreActiveBatchRun() {
     "deletedSubmissionKeys",
   ]);
   const batch = storage.activeBatchRun;
-  if (!batch || !["running", "waiting_manual", "paused", "stopped"].includes(batch.status)) return;
+  if (!batch || !["running", "waiting_manual", "paused", "stopped", "finished"].includes(batch.status)) return;
   if (!Array.isArray(batch.tasks) || !batch.tasks.length) return;
 
-  state.config = batch.config || {};
+  state.config = self.ExtLinkUnattended.normalizeConfig(batch.config || {});
   state.runId = batch.runId || `restored-${Date.now().toString(36)}`;
+  state.startedAt = batch.startedAt || "";
+  state.unattended = self.ExtLinkUnattended.createCheckpoint(
+    state.config,
+    Date.parse(batch.startedAt || "") || Date.now(),
+    batch.unattendedState || {},
+  );
   state.profileConfigs = {
     ...(batch.profileConfigs || {}),
     ...collectProfileConfigs(batch.tasks),
@@ -1417,6 +1909,7 @@ async function restoreActiveBatchRun() {
   const submissionRecords = storage.submissionRecords || {};
   const annotations = storage.siteAnnotations || {};
   const deletedKeys = new Set(storage.deletedSubmissionKeys || []);
+  const interruptedTaskIds = [];
   state.tasks = batch.tasks.map((rawTask) => {
     const task = hydratePersistedTask(rawTask, persistedDestinations);
     const successful = self.ExtLinkQueue.isSubmissionSuccessful(
@@ -1430,13 +1923,22 @@ async function restoreActiveBatchRun() {
       task.domain,
     );
     const deleted = self.ExtLinkQueue.hasStoredDestinationKey(deletedKeys, task.destinationKey);
+    const interruption = self.ExtLinkUnattended.interruptedTaskStatus(task);
     const restoredStatus = successful
       ? "ok"
       : deleted || self.ExtLinkQueue.isDeadEndStatus(annotation?.status)
         ? "skip"
-        : task.status === "running"
-          ? "pending"
-          : task.status;
+        : interruption?.status || task.status;
+    if (interruption && !successful) {
+      task.skipReason = interruption.reason;
+      task.executionPhase = "manual_review";
+      task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+      interruptedTaskIds.push(task.id);
+    }
+    if (["needs_manual", "needs_login", "needs_captcha", "needs_otp", "captcha", "filled", "submitted_unconfirmed"].includes(restoredStatus)) {
+      task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+      if (task.id) interruptedTaskIds.push(task.id);
+    }
     return {
       ...stripTaskConfig(task),
       status: restoredStatus,
@@ -1446,7 +1948,17 @@ async function restoreActiveBatchRun() {
   state.concurrency = Math.max(1, parseInt(state.config.concurrency, 10) || 1);
   state.paused = batch.status === "paused";
   state.stopped = batch.status === "stopped";
-  state.parkedTaskIds = new Set(batch.parkedTaskIds || []);
+  state.parkedTaskIds = new Set([...(batch.parkedTaskIds || []), ...interruptedTaskIds]);
+
+  if (
+    state.unattended.enabled &&
+    !state.stopped &&
+    batch.status !== "finished" &&
+    self.ExtLinkUnattended.isExpired(state.unattended)
+  ) {
+    state.paused = true;
+    state.unattended.stopReason = "无人值守运行已达到截止时间，已暂停并保留待人工任务";
+  }
 
   const tabs = await chrome.tabs.query({});
   const claimedTabIds = new Set();
@@ -1474,15 +1986,27 @@ async function restoreActiveBatchRun() {
       slotActive: false,
       taskId: task.id,
       agentPaused: true,
+      agentDone: true,
       parkedReason: task.skipReason || "恢复的待人工任务",
     });
   }
 
   state.queue = self.ExtLinkScheduler.buildRestoredQueue(
     state.groups,
-    state.parkedTaskIds,
+    [],
   );
-  state.running = !state.stopped && (state.paused || state.queue.length > 0);
+  // A parked task must not swallow pending siblings in the same destination.
+  // The scheduler's legacy helper intentionally did that for manual-first
+  // runs; unattended recovery needs the remaining combinations to continue.
+  state.queue = self.ExtLinkUnattended.pendingGroups(state.groups, state.parkedTaskIds);
+  state.running = batch.status !== "finished" && !state.stopped && (state.paused || state.queue.length > 0);
+  trimUnattendedManualTabs();
+  if (state.paused && state.unattended.enabled && batch.status !== "finished") {
+    await persistActiveBatchStatus("paused", {
+      pauseReason: state.unattended.stopReason || batch.pauseReason || "批次已暂停",
+      unattendedState: state.unattended,
+    });
+  }
   if (state.running && !state.paused) {
     log("已恢复上次未完成批次", "warn", { event: "run_restored" });
     scheduleQueueProcessing();
@@ -1526,6 +2050,11 @@ function serializeBatchTasks(tasks = []) {
     Math.max(0, Number(task.productHuntStageAttempt) || 0),
     task.productHuntExpectedNext || "",
     task.productHuntLastTransitionAt || "",
+    task.submissionAttempted === true ? 1 : 0,
+    task.executionPhase || "",
+    Math.max(0, Number(task.taskDeadlineAt) || 0),
+    task.manualTodoAt || "",
+    task.unattendedClaimed === true ? 1 : 0,
   ]);
 }
 
@@ -1595,6 +2124,11 @@ function hydratePersistedTask(rawTask, destinations) {
     productHuntStageAttempt: Math.max(0, Number(rawTask[17]) || 0),
     productHuntExpectedNext: rawTask[18] || "",
     productHuntLastTransitionAt: rawTask[19] || "",
+    submissionAttempted: rawTask[20] === 1,
+    executionPhase: rawTask[21] || "",
+    taskDeadlineAt: Math.max(0, Number(rawTask[22]) || 0),
+    manualTodoAt: rawTask[23] || "",
+    unattendedClaimed: rawTask[24] === 1,
   };
 }
 
@@ -1857,6 +2391,13 @@ async function handleSidepanelFill(msg) {
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "正在填写表单…" });
 
   const pageUrl = await getTabUrlSafe(tabId);
+  if (msg.auto === true && isParkedUnattendedTarget(pageUrl, profile.id)) {
+    return {
+      ok: false,
+      error: "该组合已进入无人值守待人工队列，自动填表已阻止；请先人工核验提交结果",
+      keepTab: true,
+    };
+  }
   if (msg.mode !== "comment" && isCustomLaunchUrl(pageUrl)) {
     const mismatch = self.ExtLinkProfiles.fillIdentityMismatch(config, profile);
     if (mismatch) {
@@ -2184,7 +2725,13 @@ async function persistFillLearnings(tabId, profileId, config) {
 }
 
 async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, options = {}) {
+  const batchEntry = state.activeTabs.get(tabId);
+  const batchEntryRunId = batchEntry?.runId;
+  const assertBatchCurrent = () => {
+    if (batchEntry) assertRunCurrent(tabId, batchEntry, batchEntryRunId);
+  };
   const currentUrl = await getTabUrlSafe(tabId);
+  assertBatchCurrent();
   if (isCustomLaunchUrl(currentUrl)) {
     return sendTabMessage(tabId, {
       action: "runProductHuntStep",
@@ -2203,6 +2750,16 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   }
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
   const beforeEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+  assertBatchCurrent();
+  if (batchEntry) {
+    const task = unattendedTaskForEntry(batchEntry);
+    if (task) {
+      task.submissionAttempted = true;
+      task.executionPhase = "submit_pending";
+      await persistActiveBatchStatus("running");
+    }
+    assertBatchCurrent();
+  }
   let submitResult = {};
   try {
     submitResult = await sendTabMessage(tabId, {
@@ -2499,11 +3056,17 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
 }
 
 async function submitUntilAccepted(tabId, config, profile, platformType, options = {}) {
+  const batchEntry = state.activeTabs.get(tabId);
+  const batchEntryRunId = batchEntry?.runId;
+  const assertBatchCurrent = () => {
+    if (batchEntry) assertRunCurrent(tabId, batchEntry, batchEntryRunId);
+  };
   let lastEmpty = options.lastEmpty || { emptyCount: 0, invalidCount: 0 };
   let lastIssues = [];
   let validationAttempt = 0;
   let stageCount = 0;
   while (validationAttempt < MAX_VALIDATION_RETRIES && stageCount < 6) {
+    assertBatchCurrent();
     const submitted = await tryAutoSubmitFilledForm(
       tabId,
       config,
@@ -2515,6 +3078,7 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
     if (submitted.stageAdvanced) {
       stageCount += 1;
       await sleep(900);
+      assertBatchCurrent();
       const filled = await fillFormUntilReady(tabId, config, platformType, options);
       lastEmpty = filled.lastEmpty;
       if (filled.agentResult?.needs_manual || filled.agentResult?.captcha || filled.agentResult?.blocked) {
@@ -2546,6 +3110,7 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
       };
     }
     log(`表单校验未通过，AI 再补一轮: ${lastIssues[0] || "漏填"}`, "warn");
+    assertBatchCurrent();
     const filled = await fillFormUntilReady(tabId, config, platformType, options);
     lastEmpty = filled.lastEmpty;
     if (filled.agentResult?.needs_manual || filled.agentResult?.captcha || filled.agentResult?.blocked) {
@@ -3861,6 +4426,22 @@ function isSidepanelSender(sender, msg) {
   return String(sender?.url || "").includes("sidepanel.html");
 }
 
+function isParkedUnattendedTarget(url, profileId) {
+  if (!unattendedEnabled() || !url || !profileId) return false;
+  let destinationKey = "";
+  try {
+    destinationKey = self.ExtLinkQueue.normalizeDestinationKey(url);
+  } catch {
+    return false;
+  }
+  return state.tasks.some((task) =>
+    task.profileId === profileId &&
+    state.parkedTaskIds.has(task.id) &&
+    task.destinationKey === destinationKey &&
+    ["needs_manual", "needs_login", "needs_captcha", "needs_otp", "captcha", "filled", "submitted_unconfirmed"].includes(task.status),
+  );
+}
+
 async function handleRequestAutoFill(msg, sender) {
   const tabId = msg.tabId || sender?.tab?.id;
   if (!tabId) return;
@@ -3891,6 +4472,7 @@ async function handleRequestAutoFill(msg, sender) {
     }
   }
   if (!/^https?:\/\//i.test(tabUrl)) return;
+  if (isParkedUnattendedTarget(tabUrl, profile.id)) return;
 
   const { tasks: pendingTasks } = await loadPendingSubmissionTasks();
   const matched = self.ExtLinkQueue.matchSubmissionTarget(tabUrl, pendingTasks, profile.id);
@@ -4101,7 +4683,7 @@ function scheduleQueueProcessing() {
 }
 
 async function refreshBatchRunStatus() {
-  const hasProcessing = countProcessingTabs() > 0;
+  const hasProcessing = countProcessingTabs() > 0 || queueDispatchCount > 0;
   const hasQueuedGroups = state.queue.some((group) =>
     (group.tasks || []).some((task) => task.status === "pending"),
   );
@@ -4135,6 +4717,7 @@ async function refreshBatchRunStatus() {
   else if (hasParkedTasks) log("自动队列已跑完，仍有停放任务等待人工处理", "warn");
   else log("✅ 所有任务处理完毕", "ok", { event: "run_finished" });
   if (["finished", "stopped"].includes(finalStatus)) await finishAutomationRunLedger(finalStatus);
+  if (["finished", "stopped"].includes(finalStatus)) await clearUnattendedWatchdog();
   else if (finalStatus === "waiting_manual") {
     await recordAutomationEvent(null, {
       taskId: "run-event",
@@ -4147,14 +4730,33 @@ async function refreshBatchRunStatus() {
 
 async function processOne(group) {
   let task = null;
+  queueDispatchCount += 1;
   const batchRunId = state.runId;
+  const lifecycleVersion = state.lifecycleVersion;
+  async function retainUnopenedTask() {
+    if (state.runId !== batchRunId || !task) return;
+    task.status = "pending";
+    task.executionPhase = "";
+    task.skipReason = "批次已暂停或停止，尚未创建页签";
+    if (!state.stopped && !state.queue.includes(group)) state.queue.unshift(group);
+    await persistActiveBatchStatus(getBatchStatus());
+    broadcastTaskUpdate(task);
+  }
   try {
-    if (!self.ExtLinkBatchControls.shouldProcessQueue(state)) {
+    if (!queueOperationCurrent(batchRunId, lifecycleVersion)) {
       state.queue.unshift(group);
       return;
     }
     task = (group?.tasks || []).find((item) => item.status === "pending");
     if (!task) return;
+    if (!(await claimUnattendedTask(task))) {
+      state.queue.unshift(group);
+      return;
+    }
+    if (!queueOperationCurrent(batchRunId, lifecycleVersion)) {
+      await retainUnopenedTask();
+      return;
+    }
     task._attempt = Math.max(0, Number(task._attempt) || 0) + 1;
     const configuredUrl = task.url.startsWith("http") ? task.url : "https://" + task.url;
     const url = isCustomLaunchTask(task)
@@ -4168,18 +4770,30 @@ async function processOne(group) {
       profileId: task.profileId,
     });
     task.status = "running";
+    task.executionPhase = "opening";
+    task.skipReason = "";
+    await persistActiveBatchStatus("running");
+    if (!queueOperationCurrent(batchRunId, lifecycleVersion)) {
+      await retainUnopenedTask();
+      return;
+    }
     broadcastTaskUpdate(task);
     await recordAutomationEvent(task, {
       type: "task_opened",
       status: "running",
       result: url,
     });
-
+    if (!queueOperationCurrent(batchRunId, lifecycleVersion)) {
+      await retainUnopenedTask();
+      return;
+    }
     const tab = await chrome.tabs.create({ url, active: false });
-    if (state.runId !== batchRunId || state.stopped || !state.running) {
-      if (state.runId === batchRunId && state.stopped && task) {
+    if (state.runId !== batchRunId || state.lifecycleVersion !== lifecycleVersion || state.stopped || !state.running || state.paused) {
+      if (state.runId === batchRunId && (state.stopped || state.paused) && task) {
         task.status = "pending";
-        task.skipReason = "停止后自动任务未开始执行";
+        task.executionPhase = "";
+        task.skipReason = state.paused ? "批次暂停，自动任务未开始执行" : "停止后自动任务未开始执行";
+        if (state.paused && !state.queue.includes(group)) state.queue.unshift(group);
         broadcastTaskUpdate(task);
       }
       await chrome.tabs.remove(tab.id).catch(() => {});
@@ -4198,6 +4812,7 @@ async function processOne(group) {
       runId: 0,
       slotActive: true,
       taskId: task.id,
+      taskDeadlineAt: task.taskDeadlineAt || 0,
       tabLoadComplete: tab.status === "complete",
       lastContentReady: null,
       readyProbe: null,
@@ -4205,6 +4820,7 @@ async function processOne(group) {
     state.activeTabs.set(tab.id, entry);
     resetEntryTimeout(entry, tab.id, PAGE_LOAD_TIMEOUT_MS);
   } catch (err) {
+    if (state.runId !== batchRunId) return;
     log(`创建标签页失败: ${group?.domain || group?.key || "unknown"} - ${err.message}`, "err");
     for (const task of group?.tasks || []) {
       if (!["pending", "running"].includes(task.status)) continue;
@@ -4212,6 +4828,10 @@ async function processOne(group) {
       task.skipReason = err.message;
       broadcastTaskUpdate(task);
     }
+    await persistActiveBatchStatus(getBatchStatus());
+    await recordUnattendedFailure(err.message || "创建页签失败");
+  } finally {
+    queueDispatchCount = Math.max(0, queueDispatchCount - 1);
   }
 }
 
@@ -4370,6 +4990,12 @@ async function handleStableContentReady(tab, data) {
   if (!entry || state.stopped || entry.agentDone) return;
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (!task) return;
+  if (unattendedEnabled() && (entry.slotActive === false || state.parkedTaskIds.has(task.id))) {
+    // A parked or interrupted unattended task can only resume through an
+    // explicit manual action. Navigation/contentReady is never authorization
+    // to retry a submission whose side effect is uncertain.
+    return;
+  }
 
   if (isCustomLaunchTask(task)) {
     if (state.paused) {
@@ -4552,6 +5178,8 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
   entry.agentPaused = false;
   entry.pendingRejudge = false;
   task.status = "running";
+  task.executionPhase = "product_hunt_step";
+  await persistActiveBatchStatus("running");
   task.skipReason = "";
   broadcastTaskUpdate(task);
   try {
@@ -4567,6 +5195,12 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
     let stableWaitingRetries = 0;
     while (step < PRODUCT_HUNT_MAX_STEPS && waitingRetries < PRODUCT_HUNT_MAX_WAIT_RETRIES) {
       assertRunCurrent(tabId, entry, runId);
+      if (options.confirmCreate === true) {
+        task.submissionAttempted = true;
+        task.executionPhase = "submit_pending";
+        await persistActiveBatchStatus("running");
+        assertRunCurrent(tabId, entry, runId);
+      }
       const result = await sendTabMessage(tabId, {
         action: "runProductHuntStep",
         config,
@@ -4716,8 +5350,14 @@ function handleTimeout(tabId) {
   const task = state.tasks.find((t) => t.index === entry.taskIndex);
   if (task) {
     bumpEntryRunId(entry);
-    task.status = "err";
-    task.skipReason = "timeout";
+    task.submissionAttempted = task.submissionAttempted === true || entry.submissionAttempted === true;
+    if (unattendedEnabled()) {
+      markInterruptedTask(task, "云端 AI 循环超时，提交结果不确定，请人工核验", entry);
+      recordUnattendedFailure("云端 AI 循环超时");
+    } else {
+      task.status = "err";
+      task.skipReason = "timeout";
+    }
     parkTaskEntry(tabId, entry, "云端 AI 循环超时");
     log(`${task.domain}: 云端 AI 循环超时，请手动检查`, "warn");
     broadcastTaskUpdate(task);
@@ -4752,7 +5392,12 @@ async function handleManualSubmit(msg) {
     clearManualWaitTimer(entry);
     entry.slotActive = true;
     entry.agentDone = false;
+    task.taskDeadlineAt = unattendedEnabled()
+      ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
+      : task.taskDeadlineAt;
+    entry.taskDeadlineAt = task.taskDeadlineAt || 0;
     state.parkedTaskIds.delete(task.id);
+    if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
     await persistParkedTaskIds();
     await chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
     await runProductHuntLaunchLoop(tabId, task, entry, {
@@ -4763,7 +5408,12 @@ async function handleManualSubmit(msg) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  task.taskDeadlineAt = unattendedEnabled()
+    ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
+    : task.taskDeadlineAt;
+  entry.taskDeadlineAt = task.taskDeadlineAt || 0;
   state.parkedTaskIds.delete(task.id);
+  if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
   persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
@@ -4821,8 +5471,12 @@ async function confirmSubmissionSuccess(msg) {
   task.successEvidence = msg.evidence || "user confirmed submission success";
   task.confirmationNonce = "";
   await recordSubmittedProject(task);
+  await recordUnattendedSuccess();
   broadcastTaskUpdate(task);
-  if (task.id && state.parkedTaskIds.delete(task.id)) await persistParkedTaskIds();
+  if (task.id && state.parkedTaskIds.delete(task.id)) {
+    if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
+    await persistParkedTaskIds();
+  }
 
   for (const [tabId, entry] of state.activeTabs) {
     if (entry.taskIndex !== task.index) continue;
@@ -4844,7 +5498,12 @@ async function resumeAfterCaptcha(tabId, data) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  task.taskDeadlineAt = unattendedEnabled()
+    ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
+    : task.taskDeadlineAt;
+  entry.taskDeadlineAt = task.taskDeadlineAt || 0;
   state.parkedTaskIds.delete(task.id);
+  if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
   await persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
@@ -4905,6 +5564,9 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
 
   try {
     task.status = "running";
+    task.executionPhase = "deterministic_fill";
+    await persistActiveBatchStatus("running");
+    assertRunCurrent(tabId, entry, runId);
     broadcastTaskUpdate(task);
 
     const prepareConfig = { ...fillConfig, deferSubmit: true };
@@ -5088,6 +5750,7 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
       await handOffToVisualAgent(tabId, task, entry, extra, reason);
       return;
     }
+    await recordUnattendedFailure(reason);
     task.status = "err";
     task.skipReason = reason;
     parkTaskEntry(tabId, entry, reason);
@@ -5144,6 +5807,7 @@ async function callCloudAgent(endpoint, payload) {
     "/domain/metrics": "/v1/domain/metrics",
   }[path];
   if (!mapped) throw new Error(`不支持的云端助手能力: ${path}`);
+  await reserveUnattendedModelCall(path);
   return cloudRequest(mapped, { method: "POST", body: payload });
 }
 
@@ -5413,7 +6077,9 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
 
   try {
     task.status = "running";
+    task.executionPhase = "visual_agent";
     task._attempt = Math.max(1, Number(task._attempt) || 1);
+    await persistActiveBatchStatus("running");
     broadcastTaskUpdate(task);
 
     let snapshot = await getTabSnapshot(tabId);
@@ -5535,6 +6201,12 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       const previousSnapshotHash = snapshot.domHash || "";
       let actionResult;
       try {
+        if (!visualFillOnly && plan.actions?.some((action) => action?.type === "click")) {
+          task.submissionAttempted = true;
+          task.executionPhase = "submit_pending";
+          await persistActiveBatchStatus("running");
+          assertRunCurrent(tabId, entry, runId);
+        }
         actionResult = await executeTabActions(tabId, plan.actions);
       } catch (actionError) {
         entry.actionFailures = Math.max(0, Number(entry.actionFailures) || 0) + 1;
@@ -5658,6 +6330,10 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       );
       return;
     }
+    if (err?.unattendedBudget) {
+      return;
+    }
+    await recordUnattendedFailure(err.message || "AI 执行异常");
     markTaskNeedsManual(tabId, task, entry, err.message || "AI 执行异常，请手动处理后继续");
   } finally {
     entry.agentRunning = false;
@@ -5666,6 +6342,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
 }
 
 async function tryAgentDeterministicSubmit(tabId, task, entry, snapshot) {
+  const runId = entry.runId;
   const config = getTaskConfig(task);
   const formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(() => null);
   const empty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => null);
@@ -5685,6 +6362,10 @@ async function tryAgentDeterministicSubmit(tabId, task, entry, snapshot) {
     before: snapshot,
     result: "required fields complete; deterministic submit authorized",
   });
+  task.submissionAttempted = true;
+  task.executionPhase = "submit_pending";
+  await persistActiveBatchStatus("running");
+  assertRunCurrent(tabId, entry, runId);
   const result = await sendTabMessage(tabId, {
     action: "submitFilledForm",
     config,
@@ -5878,6 +6559,9 @@ function completeTaskFromJudge(tabId, task, judge) {
         evidenceType: proof.evidenceType,
         artifactRef: task.artifactRef || "",
       });
+      task.executionPhase = "";
+      task.taskDeadlineAt = 0;
+      recordUnattendedSuccess();
       broadcastTaskUpdate(task);
       return advanceDestinationGroup(tabId, task);
     })
@@ -5931,10 +6615,14 @@ function parkTaskEntry(tabId, entry, reason) {
   clearEntryTimeout(entry);
   clearManualWaitTimer(entry);
   if (reason) entry.parkedReason = reason;
+  entry.parkedAt = Date.now();
   const task = state.tasks.find((item) => item.index === entry.taskIndex);
   if (task?.id) {
     task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+    task.executionPhase = "manual_review";
+    task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
     state.parkedTaskIds.add(task.id);
+    if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
   }
   if (tabId) {
     updateActiveBatchRun((activeBatchRun) => ({
@@ -5942,8 +6630,10 @@ function parkTaskEntry(tabId, entry, reason) {
       status: state.paused && !state.stopped ? "paused" : "waiting_manual",
       tasks: serializeBatchTasks(state.tasks),
       parkedTaskIds: [...state.parkedTaskIds],
+      unattendedState: state.unattended || activeBatchRun.unattendedState,
     })).catch(() => {});
   }
+  trimUnattendedManualTabs(tabId);
 }
 
 function persistParkedTaskIds() {
@@ -5951,6 +6641,7 @@ function persistParkedTaskIds() {
     ...activeBatchRun,
     parkedTaskIds: [...state.parkedTaskIds],
     tasks: serializeBatchTasks(state.tasks),
+    unattendedState: state.unattended || activeBatchRun.unattendedState,
   })).catch(() => null);
 }
 
@@ -5970,6 +6661,13 @@ async function advanceDestinationGroup(tabId, completedTask) {
     return;
   }
 
+  if (unattendedEnabled()) {
+    if (!(await claimUnattendedTask(nextTask))) {
+      if (group && !state.queue.includes(group)) state.queue.unshift(group);
+      return;
+    }
+  }
+
   entry.taskIndex = nextTask.index;
   entry.taskId = nextTask.id;
   entry.agentDone = false;
@@ -5983,8 +6681,16 @@ async function advanceDestinationGroup(tabId, completedTask) {
   entry.readyProbe = null;
   entry.customLaunchGateRequested = false;
   entry.slotActive = true;
+  entry.taskDeadlineAt = nextTask.taskDeadlineAt || 0;
   nextTask.status = "pending";
   nextTask.skipReason = "";
+  nextTask.executionPhase = "navigation";
+  await persistActiveBatchStatus("running");
+  if (state.stopped || state.paused) {
+    nextTask.executionPhase = "";
+    if (group && !state.queue.includes(group)) state.queue.unshift(group);
+    return;
+  }
   log(
     `${nextTask.domain} [${nextTask.profileName || nextTask.profileId}]: 准备本站下一项目 ${nextTask.groupJobIndex}/${nextTask.groupJobCount}`,
     "",
@@ -6255,7 +6961,7 @@ function bumpEntryRunId(entry) {
 }
 
 function assertRunCurrent(tabId, entry, runId) {
-  if (state.stopped || !state.activeTabs.has(tabId) || entry.runId !== runId) {
+  if (state.stopped || state.activeTabs.get(tabId) !== entry || entry.slotActive === false || entry.runId !== runId) {
     const err = new Error("stale agent run");
     err.staleRun = true;
     throw err;
@@ -6278,6 +6984,9 @@ function clearEntryTimeout(entry) {
 function resetEntryTimeout(entry, tabId, timeoutMs = PAGE_LOAD_TIMEOUT_MS) {
   if (!entry) return;
   clearEntryTimeout(entry);
+  if (unattendedEnabled() && entry.taskDeadlineAt) {
+    timeoutMs = Math.min(timeoutMs, Math.max(1, Number(entry.taskDeadlineAt) - Date.now()));
+  }
   entry.timeoutId = setTimeout(() => {
     if (state.activeTabs.has(tabId)) {
       handleTimeout(tabId);
@@ -6338,6 +7047,17 @@ function closeAllTabs() {
 function closeAutomatedTabs() {
   for (const [tabId, entry] of [...state.activeTabs.entries()]) {
     const task = state.tasks.find((item) => item.index === entry.taskIndex);
+    if (unattendedEnabled() && task && entry.slotActive !== false && task.status === "running") {
+      task.submissionAttempted = task.submissionAttempted === true || entry.submissionAttempted === true;
+      bumpEntryRunId(entry);
+      markInterruptedTask(task, "批次停止时任务结果不确定，请人工核验");
+      entry.agentDone = true;
+      entry.agentPaused = true;
+      entry.slotActive = false;
+      entry.parkedReason = task.skipReason;
+      clearEntryTimeout(entry);
+      broadcastTaskUpdate(task);
+    }
     const customLaunch = isCustomLaunchTask(task);
     const disposition = self.ExtLinkBatchControls.stopTabDisposition({
       entry,

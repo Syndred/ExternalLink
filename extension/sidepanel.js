@@ -168,7 +168,7 @@
         if ($("unattendedOptions")) $("unattendedOptions").hidden = unattendedPrefs.enabled !== true;
         if (
           activeRun?.tasks?.length &&
-          ["running", "waiting_manual", "paused", "stopped"].includes(activeRun.status)
+          ["running", "waiting_manual", "paused", "stopped", "finished"].includes(activeRun.status)
         ) {
           // Persisted v3 rows are compact tuples. Ask the background for the
           // current UI window instead of expanding the entire batch here.

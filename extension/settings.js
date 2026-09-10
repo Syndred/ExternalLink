@@ -886,6 +886,9 @@
     const title = document.createElement("div");
     title.className = "library-mark-title";
     title.textContent = "站点标记";
+    const scope = document.createElement("p");
+    scope.className = "library-mark-scope";
+    scope.textContent = "按外链站保存，与自家网站 Profile 无关；切换 A/B 后仍保留。";
     const btns = document.createElement("div");
     btns.className = "library-mark-btns";
     const current = item.annotation?.status || "";
@@ -907,7 +910,7 @@
       });
       btns.append(btn);
     }
-    wrap.append(title, btns);
+    wrap.append(title, scope, btns);
     return wrap;
   }
 

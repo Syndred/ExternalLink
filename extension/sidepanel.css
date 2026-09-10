@@ -896,6 +896,12 @@ body {
 .collapsible > :not(summary) {
   padding: 0 12px 12px;
 }
+.site-mark-scope {
+  margin: 0 12px 8px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+}
 .mark-btns {
   display: flex;
   flex-wrap: wrap;

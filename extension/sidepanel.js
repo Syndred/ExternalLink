@@ -208,6 +208,8 @@
           resetCommentStudio({ clearHistory: true });
           resetMediaUploadState();
           loadCommentTemplate({ force: true });
+          // The marker belongs to the destination site, not the selected Profile.
+          refreshSiteAnnotation(currentPageUrl).catch(() => {});
         }
         loadMediaPreflight().catch(() => {});
       });
@@ -215,6 +217,7 @@
     if (changes.deletedSubmissionKeys || changes.siteAnnotations || changes.urlList) {
       loadSubmissionQueue(currentPageUrl);
       loadClassifiedList();
+      refreshSiteAnnotation(currentPageUrl).catch(() => {});
     }
     if (changes.submissionRecords || changes.submissionTimeline) {
       loadSidepanelTimeline(currentPageUrl).catch(() => {});
@@ -306,6 +309,8 @@
     updateProfileStatus();
     loadCommentTemplate({ force: true });
     loadMediaPreflight().catch(() => {});
+    // Re-read the destination marker after switching between Profile A/B.
+    refreshSiteAnnotation(currentPageUrl).catch(() => {});
   });
 
   async function loadSubmissionQueue(syncUrl) {

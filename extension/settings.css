@@ -815,6 +815,13 @@
   margin-bottom: 8px;
 }
 
+#panel-library .library-mark-scope {
+  margin: 4px 0 10px;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 #panel-library .library-mark-btns {
   display: flex;
   flex-wrap: wrap;

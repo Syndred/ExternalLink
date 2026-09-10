@@ -385,6 +385,8 @@ async function loadRuntime(options = {}) {
       trimUnattendedManualTabs,
       pauseUnattendedBatch,
       watchdogUnattendedBatch,
+      reserveUnattendedModelCall,
+      claimUnattendedTask,
       ensureUnattendedWatchdog: typeof ensureUnattendedWatchdog === "function" ? ensureUnattendedWatchdog : null,
       scheduleUnattendedWatchdog: typeof scheduleUnattendedWatchdog === "function" ? scheduleUnattendedWatchdog : null,
       armUnattendedWatchdog: typeof armUnattendedWatchdog === "function" ? armUnattendedWatchdog : null,
@@ -740,6 +742,119 @@ for (const action of ["pause", "stop"]) {
     0,
     `${action} during a ledger write must prevent the later tab create`,
   );
+  await stopIfNeeded(runtime);
+}
+
+// Model-call reservations are serialized and survive a worker restart without restoring quota.
+{
+  const config = unattendedConfig({ unattendedMaxAgentCalls: 1 });
+  const parked = task({ index: 1, profileId: "P1", status: "needs_manual" });
+  const storage = batchStorage({
+    status: "running",
+    tasks: [parked],
+    parkedTaskIds: [parked.id],
+    config,
+  });
+  const firstRuntime = await loadRuntime({ storage });
+  await firstRuntime.hooks.reserveUnattendedModelCall("/judge");
+  assert.equal(
+    firstRuntime.hooks.state.unattended.modelCallsUsed,
+    1,
+    "a model call must be reserved before the cloud request starts",
+  );
+  assert.equal(
+    firstRuntime.mock.storageData.activeBatchRun.unattendedState.modelCallsUsed,
+    1,
+  );
+
+  const restarted = await loadRuntime({ storage: firstRuntime.mock.storageData });
+  assert.equal(
+    restarted.hooks.state.unattended.modelCallsUsed,
+    1,
+    "a worker restart must restore consumed model budget",
+  );
+  await assert.rejects(
+    () => restarted.hooks.reserveUnattendedModelCall("/judge"),
+    /预算不足/,
+    "a restart must not restore an already consumed model-call slot",
+  );
+  assert.equal(restarted.mock.storageData.activeBatchRun.unattendedState.modelCallsUsed, 1);
+  await stopIfNeeded(firstRuntime);
+  await stopIfNeeded(restarted);
+}
+
+{
+  const config = unattendedConfig({ unattendedMaxAgentCalls: 1 });
+  const parked = task({ index: 1, profileId: "P1", status: "needs_manual" });
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "running",
+      tasks: [parked],
+      parkedTaskIds: [parked.id],
+      config,
+    }),
+  });
+  const results = await Promise.allSettled([
+    runtime.hooks.reserveUnattendedModelCall("/judge"),
+    runtime.hooks.reserveUnattendedModelCall("/judge"),
+  ]);
+  assert.equal(
+    results.filter((result) => result.status === "fulfilled").length,
+    1,
+    "concurrent reservations must grant exactly one slot when the limit is one",
+  );
+  assert.equal(
+    results.filter((result) => result.status === "rejected").length,
+    1,
+    "the second concurrent reservation must be denied",
+  );
+  assert.equal(runtime.hooks.state.unattended.modelCallsUsed, 1);
+  assert.equal(runtime.mock.storageData.activeBatchRun.unattendedState.modelCallsUsed, 1);
+  await stopIfNeeded(runtime);
+}
+
+// A single-task deadline invalidates the old entry and lets another queued task continue.
+{
+  const expired = task({ index: 1, profileId: "P1", status: "needs_manual" });
+  const pending = task({ index: 2, profileId: "P2", status: "needs_manual", destinationKey: "other.example/submit" });
+  const runtime = await loadRuntime({
+    storage: batchStorage({
+      status: "running",
+      tasks: [expired, pending],
+      parkedTaskIds: [expired.id],
+      config: unattendedConfig(),
+    }),
+    tabs: [{ id: 21, url: expired.url, status: "complete" }],
+  });
+  expired.status = "running";
+  pending.status = "pending";
+  runtime.hooks.state.parkedTaskIds = new Set([expired.id]);
+  const expiredEntry = {
+    taskIndex: expired.index,
+    taskId: expired.id,
+    runId: 7,
+    slotActive: true,
+    taskDeadlineAt: runtime.clock.now - 1,
+    timeoutId: null,
+  };
+  runtime.hooks.state.running = true;
+  runtime.hooks.state.paused = false;
+  runtime.hooks.state.stopped = false;
+  runtime.hooks.state.tasks = [expired, pending];
+  runtime.hooks.state.groups = [
+    { key: expired.destinationKey, url: expired.url, domain: expired.domain, tasks: [expired] },
+    { key: pending.destinationKey, url: pending.url, domain: pending.domain, tasks: [pending] },
+  ];
+  runtime.hooks.state.queue = [runtime.hooks.state.groups[1]];
+  runtime.hooks.state.activeTabs = new Map([[21, expiredEntry]]);
+  const previousRunId = expiredEntry.runId;
+  await runtime.hooks.watchdogUnattendedBatch();
+  await settle(25);
+  assert.ok(expiredEntry.runId > previousRunId, "task deadline must invalidate the old entry run id");
+  assert.equal(expiredEntry.slotActive, false, "expired task must release its processing slot");
+  assert.ok(runtime.hooks.state.parkedTaskIds.has(expired.id));
+  assert.equal(runtime.mock.calls.tabsCreate.length, 1, "the next queued task must continue after one task expires");
+  assert.equal(runtime.mock.calls.tabsCreate[0].url, pending.url);
   await stopIfNeeded(runtime);
 }
 

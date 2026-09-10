@@ -372,5 +372,9 @@ assert.match(
   /const beforeEvidence = normalizeProductHuntText\(baseline\.evidence \|\| ""\)[\s\S]*?const newEvidence = [\s\S]*?beforeEvidence[\s\S]*?const publicChanged = [\s\S]*?baseline\.publicUrl/,
   "Product Hunt receipt evidence must be new relative to the pre-click baseline",
 );
+assert.match(content, /productHuntReceipt[\s\S]*?this product is a draft/i,
+  "a Product Hunt draft success page must expose a recoverable receipt");
+assert.match(background, /success_page_recovery[\s\S]*?recordSubmittedProject/,
+  "detecting a matching Product Hunt draft page must recover the ledger record");
 
 console.log("Product Hunt stage, gate, media, and final-action safety tests passed");

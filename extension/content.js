@@ -128,6 +128,22 @@
           self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
             ? self.ExtLinkPlaybooks.lookup(location.href)
             : null;
+        const productHuntReceipt = (() => {
+          const match = location.pathname.match(/^\/products\/([^/?#]+)/i);
+          if (!match) return null;
+          const text = productHuntVisibleText(document);
+          const draft = text.match(/this product is a draft[^.]*\.?/i)?.[0] || "";
+          const heading = compactText(document.querySelector("h1")?.textContent || "", 160);
+          if (!draft || !heading) return null;
+          return {
+            matched: true,
+            productName: heading,
+            slug: match[1],
+            publicUrl: `${location.origin}/products/${match[1]}`,
+            evidence: compactText(draft, 240),
+            publicationStatus: "submitted",
+          };
+        })();
         sendResponse({
           url: location.href,
           hostname: location.hostname,
@@ -135,6 +151,7 @@
           operable,
           commentFound: hasComment,
           standardWpComment: inspectStandardWpCommentForm().ok,
+          productHuntReceipt,
           playbook: playbook
             ? { id: playbook.id, title: playbook.title, notes: playbook.notes, hints: playbook.hints || [] }
             : null,

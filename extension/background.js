@@ -1711,6 +1711,36 @@ async function handleSidepanelDetect(tabId) {
   try {
     const result = await sendTabMessage(targetTabId, { action: "detectPage" });
     if (result?.error) return { ok: false, error: result.error };
+    const receipt = result?.productHuntReceipt;
+    if (receipt?.matched) {
+      const storage = await chrome.storage.local.get(["siteProfiles", "activeSiteId"]);
+      const profile = self.ExtLinkProfiles.getActiveProfile(storage);
+      const expectedName = String(profile?.name || profile?.productName || "").trim().toLowerCase();
+      const receivedName = String(receipt.productName || "").trim().toLowerCase();
+      if (profile?.id && expectedName && receivedName === expectedName) {
+        await recordSubmittedProject({
+          url: receipt.publicUrl,
+          profileId: profile.id,
+          profileName: profile.name || profile.id,
+          confirmedBy: "agent",
+          successEvidence: receipt.evidence,
+          publicationStatus: receipt.publicationStatus || "submitted",
+          publicUrl: receipt.publicUrl,
+          evidenceUrl: receipt.publicUrl,
+          successProof: {
+            source: "success_page_recovery",
+            actionObserved: true,
+            evidenceSignals: [{
+              type: "visible_confirmation",
+              text: receipt.evidence,
+              url: receipt.publicUrl,
+              matched: true,
+            }],
+          },
+        });
+        result.submissionRecovered = true;
+      }
+    }
     return { ok: true, tabId: targetTabId, ...result };
   } catch (err) {
     return { ok: false, error: err.message };

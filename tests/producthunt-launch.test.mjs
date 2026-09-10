@@ -378,7 +378,7 @@ assert.match(background, /success_page_recovery[\s\S]*?recordSubmittedProject/,
   "detecting a matching Product Hunt draft page must recover the ledger record");
 assert.match(
   background,
-  /Object\.values\(storage\.siteProfiles\s*\|\|\s*\{\}\)\.find\(matchesReceipt\)/,
+  /ensureProfilesFromTable[\s\S]*Object\.values\(seeded\.profiles\s*\|\|\s*\{\}\)\.find\(matchesReceipt\)/,
   "success-page recovery should find the matching profile even when another profile is active",
 );
 assert.match(

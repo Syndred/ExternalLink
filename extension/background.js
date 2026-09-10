@@ -1713,17 +1713,27 @@ async function handleSidepanelDetect(tabId) {
     if (result?.error) return { ok: false, error: result.error };
     const receipt = result?.productHuntReceipt;
     if (receipt?.matched) {
-      const storage = await chrome.storage.local.get(["siteProfiles", "activeSiteId"]);
+      const storage = await chrome.storage.local.get(["siteProfiles", "activeSiteId", "selectedSiteIds"]);
+      const tableData = await loadTableLibrary();
+      const seeded = await ensureProfilesFromTable(
+        tableData,
+        storage.siteProfiles || {},
+        storage.activeSiteId || "",
+        storage.selectedSiteIds || [],
+      );
       const receivedName = String(receipt.productName || "").trim().toLowerCase();
       const matchesReceipt = (candidate) => {
         const expectedName = String(candidate?.fields?.Name || candidate?.name || candidate?.productName || "").trim().toLowerCase();
         const expectedSlug = expectedName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
         return !!expectedName && (receivedName === expectedName || receipt.slug === expectedSlug);
       };
-      const activeProfile = self.ExtLinkProfiles.getActiveProfile(storage);
+      const activeProfile = self.ExtLinkProfiles.getActiveProfile({
+        siteProfiles: seeded.profiles,
+        activeSiteId: seeded.activeSiteId,
+      });
       const profile = matchesReceipt(activeProfile)
         ? activeProfile
-        : Object.values(storage.siteProfiles || {}).find(matchesReceipt) || null;
+        : Object.values(seeded.profiles || {}).find(matchesReceipt) || null;
       if (profile?.id) {
         await recordSubmittedProject({
           url: "https://www.producthunt.com/posts/new/submission",

@@ -1715,9 +1715,10 @@ async function handleSidepanelDetect(tabId) {
     if (receipt?.matched) {
       const storage = await chrome.storage.local.get(["siteProfiles", "activeSiteId"]);
       const profile = self.ExtLinkProfiles.getActiveProfile(storage);
-      const expectedName = String(profile?.name || profile?.productName || "").trim().toLowerCase();
+      const expectedName = String(profile?.fields?.Name || profile?.name || profile?.productName || "").trim().toLowerCase();
       const receivedName = String(receipt.productName || "").trim().toLowerCase();
-      if (profile?.id && expectedName && receivedName === expectedName) {
+      const expectedSlug = expectedName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      if (profile?.id && expectedName && (receivedName === expectedName || receipt.slug === expectedSlug)) {
         await recordSubmittedProject({
           url: "https://www.producthunt.com/posts/new/submission",
           profileId: profile.id,

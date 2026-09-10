@@ -378,5 +378,7 @@ assert.match(background, /success_page_recovery[\s\S]*?recordSubmittedProject/,
   "detecting a matching Product Hunt draft page must recover the ledger record");
 assert.match(background, /productHuntReceipt[\s\S]*?confirmedBy:\s*"manual"/,
   "success-page recovery must not pretend the extension observed the submit action");
+assert.match(sidepanel, /submissionRecovered[\s\S]*?loadSidepanelTimeline/,
+  "success-page recovery must immediately refresh the visible ledger timeline");
 
 console.log("Product Hunt stage, gate, media, and final-action safety tests passed");

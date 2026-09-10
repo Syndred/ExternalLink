@@ -1837,8 +1837,12 @@
       renderPageMetrics(pagePrescan, metrics);
       await refreshCommentFieldInfo();
       await refreshSiteAnnotation(currentPageUrl);
+      if (detectResult.submissionRecovered) {
+        await loadSidepanelTimeline(currentPageUrl);
+        showToast("已从 Product Hunt 成功页恢复提交记录");
+      }
       setWorkflowStep(detectResult.operable ? "fill" : "detect");
-      showToast("检测完成");
+      if (!detectResult.submissionRecovered) showToast("检测完成");
     } catch (err) {
       showToast(err.message, true);
     } finally {

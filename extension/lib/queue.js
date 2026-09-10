@@ -571,7 +571,9 @@
       /(?:是否|有没有|有无|未说明|没有说明|未提及|没有表明|不确定|无法判断|不清楚|no\s+(?:indication|evidence)|not\s+(?:stated|specified|clear)|unknown|unclear|cannot tell|not clear).{0,50}(?:付费|订阅|收费|支付|付款|payment|paid|fee|charge|cost)|(?:付费|订阅|收费|支付|付款|payment|paid|fee|charge|cost).{0,50}(?:是否|有没有|有无|未说明|没有说明|未提及|没有表明|不确定|无法判断|不清楚|no\s+(?:indication|evidence)|not\s+(?:stated|specified|clear)|unknown|unclear|cannot tell|not clear)/.test(
         text,
       );
-    if (productPricingField || uncertainPayment) {
+    const negatedPayment =
+      /(?:does?\s+not|doesn't|do\s+not|don't|not)\s+(?:require|need|charge)\w*.{0,35}(?:pay|fee|charge|cost)|(?:no|without)\s+(?:a\s+)?(?:payment|submission fee|listing fee)|(?:不需要|无需|不必|不用|不要求).{0,20}(?:付费|收费|支付|付款)|(?:不是|并非).{0,20}(?:提交|收录).{0,10}(?:收费|付费)|(?:提交|收录).{0,10}(?:免费|不收费)/.test(text);
+    if (productPricingField || uncertainPayment || negatedPayment) {
       return "needs_manual";
     }
     const submissionFee = new RegExp(

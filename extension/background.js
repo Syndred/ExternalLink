@@ -3107,7 +3107,11 @@ async function understandFormBeforeFill(tabId, config, platformType) {
   if (actions.length) {
     const result = await executeTabActions(tabId, actions);
     await assertCurrent();
-    if (result?.needs_manual) return { ...result, semanticReview: true };
+    const gate = result?.results?.find((item) => item?.needs_manual);
+    if (result?.needs_manual || gate) return {
+      needs_manual: true, reason: gate?.error || result.reason || "字段动作需要人工处理",
+      semanticReview: true, paymentEvidence: gate?.paymentEvidence || result.paymentEvidence,
+    };
   }
   understoodForms.set(tabId, identity + schema);
   if (understoodForms.size > 100) understoodForms.delete(understoodForms.keys().next().value);
@@ -3121,8 +3125,10 @@ async function persistFillLearnings(tabId, profileId, config) {
   const hostname = new URL(tab.url).hostname;
   const learned = await sendTabMessage(tabId, { action: "collectFillLearnings", config: config || {} });
   if (!learned?.mappings) return [];
-  await mergeLearnedMappings(profileId, hostname, learned.mappings);
   const snapshot = await getTabSnapshot(tabId).catch(() => null);
+  const currentTab = await chrome.tabs.get(tabId);
+  if (new URL(currentTab.url).hostname !== hostname || (snapshot && new URL(snapshot.url).hostname !== hostname)) return [];
+  await mergeLearnedMappings(profileId, hostname, learned.mappings);
   await persistDestinationFormKnowledge(tab.url, learned.mappings, snapshot ? destinationFormSchema(snapshot) : null);
   const latest = await chrome.storage.local.get("siteProfiles");
   const profiles = latest.siteProfiles || {};
@@ -3163,6 +3169,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
   const beforeEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   assertBatchCurrent();
+  const priorSubmissionAttempted = batchEntry ? unattendedTaskForEntry(batchEntry)?.submissionAttempted === true : false;
   if (batchEntry) {
     const task = unattendedTaskForEntry(batchEntry);
     if (task) {
@@ -3196,6 +3203,12 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       evidence: afterText && afterText !== beforeText ? submitResult.evidence : "",
       evidenceSignals: afterText && afterText !== beforeText ? submitResult.evidenceSignals || [] : [],
     };
+  }
+
+  assertBatchCurrent();
+  if (submitResult?.semanticReview && !submitResult.submitted && !submitResult.clickedSubmit && batchEntry) {
+    const task = unattendedTaskForEntry(batchEntry);
+    if (task) task.submissionAttempted = priorSubmissionAttempted;
   }
 
   // A normal form submit can replace the document without changing the URL.
@@ -3262,6 +3275,9 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     });
     return {
       needs_manual: true,
+      semanticReview: submitResult.semanticReview === true,
+      paymentClassification: submitResult.paymentClassification,
+      paymentEvidence: submitResult.paymentEvidence,
       reason: submitResult.reason,
       classified: classified?.status,
       advance: true,
@@ -6740,6 +6756,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       });
       const previousSnapshotHash = snapshot.domHash || "";
       let actionResult;
+      const priorSubmissionAttempted = task.submissionAttempted === true;
       try {
         if (!visualFillOnly && plan.actions?.some((action) => action?.type === "click")) {
           task.submissionAttempted = true;
@@ -6756,8 +6773,13 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       }
       const humanGate = actionResult.results?.find((item) => item?.needs_manual);
       if (humanGate) {
+        if (!actionResult.results?.some((item) => item?.ok && (item.submitted || item.type === "click"))) {
+          task.submissionAttempted = priorSubmissionAttempted;
+        }
         const status = humanGate.humanGate === "captcha" ? "needs_captcha" : "needs_manual";
-        markTaskNeedsManual(tabId, task, entry, humanGate.error || "当前动作需要人工处理", status);
+        markTaskNeedsManual(tabId, task, entry, humanGate.error || "当前动作需要人工处理", status, {
+          semanticReview: humanGate.semanticReview === true || humanGate.uncertain === true || humanGate.humanGate === "payment_uncertain",
+        });
         return;
       }
       const submitAction = actionResult.results?.find((item) => item?.submitted);
@@ -6907,6 +6929,7 @@ async function tryAgentDeterministicSubmit(tabId, task, entry, snapshot) {
     before: snapshot,
     result: "required fields complete; deterministic submit authorized",
   });
+  const priorSubmissionAttempted = task.submissionAttempted === true;
   task.submissionAttempted = true;
   task.executionPhase = "submit_pending";
   await persistActiveBatchStatus("running");
@@ -6916,6 +6939,8 @@ async function tryAgentDeterministicSubmit(tabId, task, entry, snapshot) {
     config,
     platform: task.platformType || "directory",
   });
+  assertRunCurrent(tabId, entry, runId);
+  if (result?.semanticReview && !result.submitted && !result.clickedSubmit) task.submissionAttempted = priorSubmissionAttempted;
   if (result?.captcha) {
     markTaskNeedsManual(tabId, task, entry, "验证码已出现 — 页签留下，请完成后继续", "needs_captcha");
     return true;

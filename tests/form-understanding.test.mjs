@@ -72,7 +72,7 @@ function baseSnapshot(overrides = {}) {
   };
 }
 
-function makeHarness({ plans = [], snapshots = [], activeSiteId = "A", onPlan } = {}) {
+function makeHarness({ plans = [], snapshots = [], activeSiteId = "A", onPlan, actionResult } = {}) {
   const state = { activeTabs: new Map(), lifecycleVersion: 0 };
   const events = [];
   const cloudCalls = [];
@@ -101,7 +101,7 @@ function makeHarness({ plans = [], snapshots = [], activeSiteId = "A", onPlan } 
       async sendMessage(tabId, message) {
         messages.push({ tabId, message: clone(message) });
         events.push(`message:${message.action}`);
-        return { ok: true, results: [] };
+        return clone(actionResult || { ok: true, results: [] });
       },
     },
   };
@@ -333,6 +333,50 @@ function runtimeSchemaKey(snapshot) {
   assert.equal(payload.config.destinationFormStages, undefined);
   assert.equal(payload.config.projectFields.Name, "Product B");
   assert.equal(current.logoDataUrl, "data:image/png;base64,AAA", "upload config must remain intact");
+}
+
+{
+  const runtime = makeHarness({
+    plans: [{ status: "act", actions: [{ type: "check", selector: "#agree" }] }],
+    actionResult: { ok: false, results: [{ ok: false, needs_manual: true, error: "legal consent", humanGate: "legal" }] },
+  });
+  const result = await runtime.hooks.understandFormBeforeFill(7, config("A"), "directory");
+  assert.equal(result.needs_manual, true);
+  assert.equal(result.semanticReview, true);
+  assert.equal(runtime.hooks.understoodForms.size, 0, "a blocked action cannot certify form understanding as executed");
+}
+
+{
+  const gate = { needs_manual: true, semanticReview: true, reason: "payment meaning unclear", paymentClassification: "uncertain_payment", paymentEvidence: { label: "Paid" } };
+  const ctx = {
+    state: { activeTabs: new Map() },
+    getTabUrlSafe: async () => "https://directory.example/submit",
+    isCustomLaunchUrl: () => false,
+    self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" }, ExtLinkQueue: { isDeadEndStatus: () => false } },
+    sendTabMessage: async (_id, msg) => msg.action === "submitFilledForm" ? gate : {},
+    broadcastAutoFillUpdate() {},
+    autoClassifySite() { throw new Error("uncertainty must not classify a destination"); },
+  };
+  vm.createContext(ctx);
+  vm.runInContext(sourceBetween("async function tryAutoSubmitFilledForm(", "async function fillFormUntilReady("), ctx);
+  const result = await ctx.tryAutoSubmitFilledForm(7, {}, {}, "directory");
+  assert.equal(result.semanticReview, true);
+  assert.equal(result.paymentClassification, "uncertain_payment");
+  assert.equal(result.paymentEvidence.label, "Paid");
+  let parkedOptions;
+  Object.assign(ctx, {
+    getTaskConfig: () => ({}), recordAutomationEvent: async () => {},
+    persistActiveBatchStatus: async () => {}, assertRunCurrent() {},
+    sendTabMessage: async (_id, msg) => msg.action === "collectFormValidation"
+      ? { validationFailed: false } : msg.action === "countEmptyFields"
+        ? { emptyCount: 0, invalidCount: 0 } : gate,
+    markTaskNeedsManual: (...args) => { parkedOptions = args[5]; },
+  });
+  vm.runInContext(sourceBetween("async function tryAgentDeterministicSubmit(", "function summarizePlanActions("), ctx);
+  const task = { submissionAttempted: false };
+  assert.equal(await ctx.tryAgentDeterministicSubmit(7, task, { runId: 1 }, {}), true);
+  assert.equal(task.submissionAttempted, false, "a confirmed pre-click gate is not a submission attempt");
+  assert.equal(parkedOptions.semanticReview, true);
 }
 
 console.log("form understanding runtime tests passed");

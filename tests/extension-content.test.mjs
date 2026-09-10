@@ -293,7 +293,9 @@ assert.doesNotMatch(
 );
 
 assert.ok(
-  Array.isArray(manifest.host_permissions) && manifest.host_permissions.includes("https://*/*"),
+  Array.isArray(manifest.host_permissions) && (
+    manifest.host_permissions.includes("https://*/*") || manifest.host_permissions.includes("<all_urls>")
+  ),
   "manifest.json should allow the extension service worker to fetch its HTTPS Worker",
 );
 assert.equal(

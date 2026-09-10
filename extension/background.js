@@ -5070,6 +5070,19 @@ async function captureTaskVisualContext(tabId, task) {
   const prepared = await chrome.tabs.sendMessage(tabId, { action: "prepareVisualSnapshot" });
   if (!prepared?.ok) throw new Error("页面视觉快照准备失败");
   const tab = await chrome.tabs.get(tabId);
+  let pageUrl;
+  try {
+    pageUrl = new URL(tab.url || "");
+  } catch {
+    throw new Error("视觉接管只能在有效的任务页面运行");
+  }
+  // Chrome Side Panel does not grant activeTab to an asynchronous worker call.
+  // The manifest therefore declares <all_urls> for captureVisibleTab, but the
+  // automation runtime itself must never capture browser, extension, file, or
+  // data pages. Content-script preparation above is intentionally required too.
+  if (!["http:", "https:"].includes(pageUrl.protocol)) {
+    throw new Error("视觉接管仅支持 HTTP(S) 任务页签");
+  }
   const [previous] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
   try {
     if (!tab.active) {

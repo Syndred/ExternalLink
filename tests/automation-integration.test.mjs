@@ -6,6 +6,7 @@ const content = readFileSync("extension/content.js", "utf8");
 const worker = readFileSync("cloud/worker/src/index.mjs", "utf8");
 const schema = readFileSync("cloud/worker/schema.sql", "utf8");
 const sidepanel = readFileSync("extension/sidepanel.js", "utf8");
+const manifest = JSON.parse(readFileSync("extension/manifest.json", "utf8"));
 
 const recorder = background.match(/async function recordSubmittedProject[\s\S]*?\n}\n\nasync function addToUrlList/)?.[0] || "";
 assert.match(recorder, /validateSuccessProof/, "every permanent success write must use the hard evidence gate");
@@ -45,6 +46,10 @@ assert.match(content, /if \(!strongMatches && !explicitPath\) return null/,
   "generic marketing links must not be mistaken for submission routes");
 
 assert.match(background, /captureVisibleTab/);
+assert.ok(manifest.host_permissions.includes("<all_urls>"),
+  "Chrome Side Panel screenshot supervision needs the literal <all_urls> host permission; activeTab is not inherited by the side panel");
+assert.match(background, /视觉接管仅支持 HTTP\(S\) 任务页签/,
+  "broad capture permission must still be limited to controlled web task tabs");
 assert.match(background, /cloud-artifact:\/\//);
 assert.match(background, /executeVisualFallback/);
 assert.match(background, /runProductHuntLaunchLoop/);

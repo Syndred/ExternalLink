@@ -78,6 +78,49 @@
         <div class="sidepanel-timeline-list" id="sidepanelTimelineList" aria-live="polite">
           <div class="empty-state compact-empty">尚未读取当前外链站时间线</div>
         </div>
+        <div class="sidepanel-timeline-actions">
+          <button type="button" class="btn btn-ghost btn-block" id="btnAddTimelineEvent" hidden>登记外链动态</button>
+        </div>
+        <form class="timeline-editor" id="timelineEditor" hidden>
+          <div class="timeline-editor-context">
+            <span>当前外链站</span>
+            <strong id="timelineDestinationLabel">—</strong>
+          </div>
+          <label class="timeline-editor-field">
+            <span>Profile（必选）</span>
+            <select id="timelineProfileSelect" required></select>
+          </label>
+          <label class="timeline-editor-field">
+            <span>动态</span>
+            <select id="timelineEventType">
+              <option value="submitted">已提交</option>
+              <option value="pending_moderation">待审核</option>
+              <option value="published">已上线</option>
+              <option value="note">笔记</option>
+            </select>
+          </label>
+          <label class="timeline-editor-field">
+            <span>发生时间</span>
+            <input id="timelineOccurredAt" type="datetime-local" required />
+          </label>
+          <label class="timeline-editor-field">
+            <span>备注</span>
+            <textarea id="timelineNote" rows="3" placeholder="例如：页面提示已提交，等待审核"></textarea>
+          </label>
+          <label class="timeline-editor-field">
+            <span>公开链接（可选）</span>
+            <input id="timelinePublicUrl" type="url" placeholder="https://…" />
+          </label>
+          <label class="timeline-editor-field">
+            <span>证据链接（可选）</span>
+            <input id="timelineEvidenceUrl" type="url" placeholder="https://…" />
+          </label>
+          <p class="timeline-editor-note">按你的确认登记所选项目；提交、审核和上线状态会更新提交记录，笔记只追加动态。</p>
+          <div class="timeline-editor-actions">
+            <button type="submit" class="btn btn-primary" id="btnSaveTimelineEvent">保存人工动态</button>
+            <button type="button" class="btn btn-ghost" id="btnCancelTimelineEvent">取消</button>
+          </div>
+        </form>
       </section>
 
       <section class="workflow-card">
@@ -91,12 +134,12 @@
         <div class="toolbar" role="toolbar" aria-label="页面操作">
           <button type="button" class="tool-btn" id="btnDetect">检测</button>
           <button type="button" class="tool-btn tool-primary" id="btnFillForm">填表</button>
-          <button type="button" class="tool-btn" id="btnFillComment">填入评论</button>
+          <button type="button" class="tool-btn" id="btnFillComment" hidden>填入评论</button>
           <button type="button" class="tool-btn tool-accent" id="btnLaunchNext" title="打开队列中的下一站">下一站</button>
         </div>
       </section>
 
-      <section class="card comment-studio">
+      <section class="card comment-studio" id="commentStudioCard">
         <div class="card-head-row">
           <h2 class="card-title">评论草稿</h2>
           <div class="comment-controls">
@@ -106,26 +149,29 @@
               <option value="casual">轻松</option>
               <option value="enthusiastic">热情</option>
             </select>
-            <button type="button" class="btn-link" id="btnRegenComment">生成 3 条</button>
+            <button type="button" class="btn-link" id="btnRegenComment" hidden>生成 3 条</button>
           </div>
         </div>
-        <p class="card-desc">先生成候选，再选择并编辑；确认后点击「填入评论」。</p>
-        <div class="comment-draft-list" id="commentDraftList" role="listbox" aria-label="评论候选">
-          <div class="empty-state compact-empty">点击「生成 3 条」获取候选评论</div>
-        </div>
-        <textarea id="spCommentText" rows="4" placeholder="选择候选或直接编辑评论…"></textarea>
-        <div class="comment-meta" aria-live="polite">
-          <span id="commentCharCount">0 字</span>
-          <span id="commentCharLimit">上限未检测</span>
-          <span id="commentRemaining">剩余 —</span>
-        </div>
-        <p class="comment-length-hint" id="commentLengthHint" role="status">正在读取评论字段限制…</p>
-        <div class="comment-history-head">
-          <span>历史版本</span>
-          <button type="button" class="btn-link" id="btnRestoreComment" disabled>恢复上一版</button>
-        </div>
-        <div class="comment-history" id="commentHistory" role="list" aria-label="评论历史">
-          <div class="empty-state compact-empty">生成或编辑后，这里会保留上一版</div>
+        <p class="comment-availability" id="commentAvailability" role="status">先点击「检测」确认当前页面是否有真实博客评论表单。</p>
+        <div id="commentStudioBody" hidden>
+          <p class="card-desc">先生成候选，再选择并编辑；确认后点击「填入评论」。</p>
+          <div class="comment-draft-list" id="commentDraftList" role="listbox" aria-label="评论候选">
+            <div class="empty-state compact-empty">点击「生成 3 条」获取候选评论</div>
+          </div>
+          <textarea id="spCommentText" rows="4" placeholder="选择候选或直接编辑评论…"></textarea>
+          <div class="comment-meta" aria-live="polite">
+            <span id="commentCharCount">0 字</span>
+            <span id="commentCharLimit">上限未检测</span>
+            <span id="commentRemaining">剩余 —</span>
+          </div>
+          <p class="comment-length-hint" id="commentLengthHint" role="status">正在读取评论字段限制…</p>
+          <div class="comment-history-head">
+            <span>历史版本</span>
+            <button type="button" class="btn-link" id="btnRestoreComment" disabled>恢复上一版</button>
+          </div>
+          <div class="comment-history" id="commentHistory" role="list" aria-label="评论历史">
+            <div class="empty-state compact-empty">生成或编辑后，这里会保留上一版</div>
+          </div>
         </div>
       </section>
 

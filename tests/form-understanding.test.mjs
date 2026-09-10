@@ -125,6 +125,7 @@ function makeHarness({ plans = [], snapshots = [], activeSiteId = "A", onPlan, a
     understoodForms: new Map(),
     applyDestinationFormKnowledge: async () => {},
     assertRunCurrent() {},
+    assertFillContext: async () => {},
     broadcastAutoFillUpdate() {},
     log() {},
     getTabSnapshot: async () => {

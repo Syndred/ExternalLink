@@ -71,6 +71,25 @@ assert.match(
   /function\s+detectArticleComment\s*\([\s\S]*commentField\s*&&\s*submit/,
   "generic POST/search forms must not be misclassified as comment forms",
 );
+assert.match(
+  content,
+  /function\s+isArticleCommentForm\s*\([\s\S]*actionSignal[\s\S]*identitySignal[\s\S]*listingField/,
+  "article comment detection should require local comment context and reject generic listing POST forms",
+);
+const genericSubmitSource = content.slice(
+  content.indexOf("async function submitGenericForm"),
+  content.indexOf("// ─── Finalize After Captcha", content.indexOf("async function submitGenericForm")),
+);
+assert.match(
+  genericSubmitSource,
+  /isArticleCommentField\(ta\)[\s\S]*await generateComment\(config/,
+  "generic submission should generate comments only for a confirmed article comment field",
+);
+assert.doesNotMatch(
+  genericSubmitSource,
+  /if\s*\(name\.includes\(["']comment["']\)\s*\|\|\s*name\.includes\(["']body["']\)\s*\|\|\s*name\.includes\(["']message["']\)\)/,
+  "generic message/body textareas must not be treated as comments by name alone",
+);
 
 assert.match(
   content,

@@ -15,6 +15,7 @@ function loadHooks() {
     },
   };
   const document = {
+    addEventListener() {},
     body: { innerText: "", textContent: "" },
     querySelector() {
       return null;

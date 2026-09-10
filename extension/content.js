@@ -63,7 +63,36 @@
   const PRODUCT_HUNT_OPTIONAL_STAGES = new Set(["shoutouts", "investors"]);
 
   // ─── Message Handler (registered at end of IIFE) ───
+  let manualSubmissionWatch = null;
+  function observeManualSubmission(event) {
+    if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch) return;
+    const control = event.target?.closest?.('button, input[type="submit"]');
+    if (event.type !== "submit" && (!control || !isSubmitControl(control))) return;
+    const scope = event.type === "submit" ? event.target : control?.form || control?.closest("form");
+    if (!scope || !scope.querySelector('textarea, input[type="url"]')) return;
+    const expected = String(manualSubmissionWatch.targetDomain || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const matchingUrl = [...scope.querySelectorAll("input")].some((input) =>
+      expected && String(input.value || "").replace(/^https?:\/\//, "").replace(/\/$/, "") === expected,
+    );
+    if (!matchingUrl) return;
+    const watch = manualSubmissionWatch;
+    manualSubmissionWatch = null;
+    chrome.runtime.sendMessage({ action: "manualSubmissionClicked", token: watch.token }).catch(() => {});
+  }
+  if (window.__extLinkManualSubmitHandler) {
+    document.removeEventListener("click", window.__extLinkManualSubmitHandler, true);
+    document.removeEventListener("submit", window.__extLinkManualSubmitHandler, true);
+  }
+  window.__extLinkManualSubmitHandler = observeManualSubmission;
+  document.addEventListener("click", observeManualSubmission, true);
+  document.addEventListener("submit", observeManualSubmission, true);
+
   function onExtensionMessage(msg, sender, sendResponse) {
+    if (msg.action === "watchManualSubmission") {
+      manualSubmissionWatch = { token: msg.token, targetDomain: msg.targetDomain };
+      sendResponse({ ok: true });
+      return true;
+    }
     if (msg.action === "ping") {
       sendResponse({ ok: true });
       return true;
@@ -267,6 +296,7 @@
   chrome.runtime.onMessage.addListener(onExtensionMessage);
 
   function maybeRequestAutoFill() {
+    if (!chrome.runtime?.id) return null;
     const mode = identifyPlatform();
     const hasForm =
       !!mode ||
@@ -281,6 +311,7 @@
 
   function onPageNavigation() {
     setTimeout(() => {
+      if (!chrome.runtime?.id) return;
       if (manualIconsEnabled) scheduleManualIconSync();
       else initManualIcons().catch(() => {});
       const mode = identifyPlatform();
@@ -293,6 +324,7 @@
     }, 500);
   }
 
+  window.__extLinkOnPageNavigation = onPageNavigation;
   if (!window.__extLinkBootstrapped) {
     window.__extLinkBootstrapped = true;
     onPageNavigation();
@@ -303,14 +335,14 @@
     const pushState = history.pushState;
     history.pushState = function (...args) {
       pushState.apply(this, args);
-      onPageNavigation();
+      window.__extLinkOnPageNavigation?.();
     };
     const replaceState = history.replaceState;
     history.replaceState = function (...args) {
       replaceState.apply(this, args);
-      onPageNavigation();
+      window.__extLinkOnPageNavigation?.();
     };
-    window.addEventListener("popstate", onPageNavigation);
+    window.addEventListener("popstate", () => window.__extLinkOnPageNavigation?.());
   }
 
   // ─── Main Execution ───
@@ -590,22 +622,98 @@
     return false;
   }
 
-  function detectArticleComment() {
-    // Article/blog comment forms (non-WP)
-    const candidates = Array.from(
-      document.querySelectorAll(
-        'form[action*="comment"], form[action*="post"], ' +
-          ".comment-form:not(.wp-block-comments), " +
-          "#comment-form:not(#commentform)",
-      ),
+  function articleCommentField(form) {
+    if (!form?.querySelector) return null;
+    // Prefer an explicit comment/reply field over a generic body/message
+    // editor. Directory forms sometimes render a description textarea first.
+    for (const selector of [
+      'textarea[name*="comment" i], textarea[id*="comment" i]',
+      'textarea[name*="reply" i], textarea[id*="reply" i]',
+      'textarea[name*="message" i], textarea[id*="message" i], ' +
+        'textarea[name*="body" i], textarea[id*="body" i], ' +
+        '[contenteditable="true"], [role="textbox"][contenteditable]',
+    ]) {
+      const field = form.querySelector(selector);
+      if (field) return field;
+    }
+    return null;
+  }
+
+  function articleCommentSubmit(form) {
+    return form?.querySelector?.('button[type="submit"], input[type="submit"]');
+  }
+
+  function isArticleCommentForm(form) {
+    if (!form) return false;
+    const commentField = articleCommentField(form);
+    const submit = articleCommentSubmit(form);
+    if (!commentField || !submit) return false;
+
+    // A plain `form[action*=post]` is common on directory/listing forms. It is
+    // a comment form only when the form itself, its action, or its local copy
+    // explicitly identifies a comment/reply interaction.
+    const action = String(form.getAttribute?.("action") || "").toLowerCase();
+    const identity = [
+      form.id,
+      form.className,
+      form.getAttribute?.("name"),
+      form.getAttribute?.("aria-label"),
+      form.getAttribute?.("data-testid"),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    const localText = compactText(
+      [
+        form.innerText || form.textContent || "",
+        ...Array.from(form.querySelectorAll?.("button, input[type=submit], label") || []).map(
+          (element) => element.innerText || element.textContent || element.value || "",
+        ),
+      ].join(" "),
+      1200,
+    ).toLowerCase();
+    const commentContextPattern = /(?:^|[^a-z])(comments?|repl(?:y|ies))(?=$|[^a-z])|留言|评论|回复/;
+    const actionSignal = commentContextPattern.test(action);
+    const identitySignal = commentContextPattern.test(identity);
+    const textSignal = commentContextPattern.test(localText);
+    if (!actionSignal && !identitySignal && !textSignal) return false;
+
+    // When a generic POST form also has listing fields, a message/body
+    // textarea is product copy. Do not let that form become a comment target
+    // unless the form/action has an explicit comment identity.
+    const listingField = form.querySelector?.(
+      'input[type="url"], input[name*="url" i], input[name*="website" i], ' +
+        'input[name*="product" i], input[name*="title" i], input[id*="product" i], input[id*="title" i], ' +
+        'textarea[name*="description" i], textarea[id*="description" i], textarea[name*="summary" i], textarea[id*="summary" i]',
     );
-    return candidates.some((form) => {
-      const commentField = form.querySelector(
-        'textarea[name*="comment" i], textarea[id*="comment" i], ' +
-          'textarea[name*="message" i], [contenteditable="true"], [role="textbox"][contenteditable]',
-      );
-      const submit = form.querySelector('button[type="submit"], input[type="submit"]');
-      return !!(commentField && submit);
+    if (listingField && !actionSignal && !identitySignal) return false;
+    return true;
+  }
+
+  function isArticleCommentField(element) {
+    const form = element?.closest?.("form");
+    if (!form || form.contains?.(element) === false || !isArticleCommentForm(form)) return false;
+    if (articleCommentField(form) === element) return true;
+    const hint = [
+      element.name,
+      element.id,
+      element.getAttribute?.("aria-label"),
+      element.getAttribute?.("placeholder"),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return /(?:^|[^a-z])(comments?|repl(?:y|ies))(?=$|[^a-z])|留言|评论|回复/.test(hint);
+  }
+
+  function detectArticleComment() {
+    // Article/blog comment forms (non-WP). Inspect every form so a plain
+    // `/post` action can still work when its local heading says "Leave a
+    // comment", while generic directory POST forms fail the context check.
+    return Array.from(document.querySelectorAll("form")).some((form) => {
+      const commentField = articleCommentField(form);
+      const submit = articleCommentSubmit(form);
+      return !!(commentField && submit && isArticleCommentForm(form));
     });
   }
 
@@ -2675,6 +2783,11 @@
     resolveSharedLearnedProfileValue,
     normalizeLearnedFieldText,
   };
+  self.__extLinkCommentTestHooks = {
+    detectArticleComment,
+    isArticleCommentForm,
+    isArticleCommentField,
+  };
 
   async function submitFilledForm(config, platform = "directory", fillResult = {}) {
     const blocker = detectSubmitBlockers();
@@ -3345,7 +3458,16 @@
     for (const ta of textareas) {
       if (!isFillableField(ta)) continue;
       const name = getFieldHint(ta);
-      if (name.includes("comment") || name.includes("body") || name.includes("message")) {
+      const isRealCommentField = isArticleCommentField(ta);
+      const isDescriptionField =
+        name.includes("desc") ||
+        name.includes("summary") ||
+        (/message|body|content|about|details/.test(name) &&
+          !!ta.closest?.("form")?.querySelector?.(
+            'input[type="url"], input[name*="url" i], input[name*="website" i], ' +
+              'input[name*="product" i], input[name*="title" i], textarea[name*="description" i], textarea[name*="summary" i]',
+          ));
+      if (isRealCommentField) {
         const commentText = await generateComment(config, {
           maxChars: getCommentCharBudget(ta),
         });
@@ -3353,7 +3475,7 @@
           await simulateTyping(ta, commentText);
           filledCount++;
         }
-      } else if (name.includes("desc") || name.includes("summary")) {
+      } else if (isDescriptionField) {
         await simulateTyping(ta, config.commentTemplate || generateDescription(config));
         filledCount++;
       }
@@ -6687,6 +6809,10 @@
   // Check periodically if captcha is gone (user solved it)
   if (detectCaptcha()) {
     const checkInterval = setInterval(() => {
+      if (!chrome.runtime?.id) {
+        clearInterval(checkInterval);
+        return;
+      }
       if (!detectCaptcha()) {
         clearInterval(checkInterval);
         // Notify background that captcha is resolved

@@ -54,10 +54,12 @@
       const rightTime = Number.isFinite(right.timestamp) ? right.timestamp : -Infinity;
       return rightTime - leftTime;
     });
+    const latestWithTime = events.find((event) => Number.isFinite(event.timestamp));
+    const fallbackTime = String(item.time || "").trim();
     return {
       events,
       profileCount: new Set(events.map((event) => event.profileId)).size,
-      latestAt: events[0]?.occurredAt || String(item.time || "").trim(),
+      latestAt: latestWithTime?.occurredAt || fallbackTime,
     };
   }
 
@@ -89,6 +91,7 @@
   let submissionTasks = [];
   let submissionIndex = 0;
   let submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
+  let currentTimelineItem = null;
   let currentPageUrl = "";
   let selectedSiteIds = [];
   let parkedTasks = [];
@@ -96,6 +99,10 @@
   let workflowStep = "detect";
   let commentDrafts = [];
   let selectedCommentDraft = -1;
+  let commentAvailability = {
+    available: false,
+    reason: "先点击「检测」确认当前页面是否有真实博客评论表单。",
+  };
   let commentHistory = [];
   let commentFieldInfo = {
     maxLength: null,
@@ -112,6 +119,13 @@
   };
   let mediaLoadToken = 0;
   let timelineLoadToken = 0;
+  let timelineSaveInProgress = false;
+  let timelineEditorUrl = "";
+  let detectionRequestId = 0;
+  let sidepanelFillRequestId = 0;
+  const sidepanelFillRequests = new Map();
+  const SIDEPANEL_FILL_TIMEOUT_MS = 30_000;
+  const SIDEPANEL_FILL_STALE_MS = 90_000;
   let productHuntReadyToCreateTabId = null;
 
   const SITE_STATUS_MAP = {
@@ -182,6 +196,7 @@
         hydrateBatchLog(items.batchRunLog, batchRunStatusForLog(activeRun?.status));
         renderSiteSelect();
         renderBatchSiteChoices();
+        renderTimelineProfileOptions();
         updateProfileStatus();
         cb?.(items);
       },
@@ -204,6 +219,7 @@
         if (!selectedSiteIds.length && activeSiteId) selectedSiteIds = [activeSiteId];
         renderSiteSelect();
         renderBatchSiteChoices();
+        renderTimelineProfileOptions();
         updateProfileStatus();
         if (previousActiveSiteId !== activeSiteId) {
           resetCommentStudio({ clearHistory: true });
@@ -308,6 +324,7 @@
     resetCommentStudio({ clearHistory: true });
     resetMediaUploadState();
     updateProfileStatus();
+    renderCurrentQueueQuality();
     loadCommentTemplate({ force: true });
     loadMediaPreflight().catch(() => {});
     // Re-read the destination marker after switching between Profile A/B.
@@ -373,15 +390,35 @@
       skip: "已跳过",
       err: "失败",
     };
-    const profileSummary = statuses
-      .map((profile) => {
-        const name = profile.profileName || profile.profileId || "项目";
-        return `${name}·${statusText[profile.status] || profile.status || "待提交"}`;
-      })
-      .join("  ");
-    statusEl.textContent = profileSummary || `项目 ${task.profileTotal || task.profileIds?.length || 0} 个`;
+    const activeProfile = statuses.find((profile) => String(profile?.profileId || "") === activeSiteId);
+    const profileName =
+      activeProfile?.profileName || siteProfiles[activeSiteId]?.name || activeSiteId || "当前 Profile";
+    const profileSummary = activeProfile
+      ? `${profileName}·${statusText[activeProfile.status] || activeProfile.status || "待提交"}`
+      : `${profileName}·未纳入该站队列`;
+    statusEl.textContent = profileSummary;
     statusEl.title = profileSummary;
     wrap.removeAttribute("hidden");
+  }
+
+  function queueTaskMatchesCurrentPage(task, pageUrl = currentPageUrl) {
+    if (!task || !pageUrl) return false;
+    const normalizeDestination = typeof Q?.normalizeDestinationKey === "function"
+      ? Q.normalizeDestinationKey
+      : typeof Q?.normalizeUrlKey === "function"
+        ? Q.normalizeUrlKey
+        : (value) => String(value || "").trim().toLowerCase().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    const pageKey = normalizeDestination(pageUrl);
+    const taskKey = String(task.key || task.destinationKey || "").trim();
+    if (taskKey && (taskKey === pageKey || normalizeDestination(taskKey) === pageKey)) return true;
+    const pageDomain = typeof Q?.extractDomain === "function" ? Q.extractDomain(pageUrl) : "";
+    const taskDomain = String(task.domain || (typeof Q?.extractDomain === "function" ? Q.extractDomain(task.url) : "") || "").trim();
+    return !!pageDomain && !!taskDomain && pageDomain.toLowerCase() === taskDomain.toLowerCase();
+  }
+
+  function renderCurrentQueueQuality() {
+    const currentTask = submissionTasks.find((task) => queueTaskMatchesCurrentPage(task));
+    renderQueueQuality(currentTask || null);
   }
 
   const SIDEPANEL_TIMELINE_LABELS = {
@@ -400,9 +437,10 @@
   };
 
   function formatSidepanelTimelineTime(value) {
-    if (!value) return "时间未知";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
+    const raw = String(value || "").trim();
+    if (!raw || /^(?:unknown|null|undefined|n\/a|na|未(?:知|记录)|时间未知)$/i.test(raw)) return "时间未知";
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return "时间未知";
     return new Intl.DateTimeFormat("zh-CN", {
       year: "numeric",
       month: "2-digit",
@@ -434,6 +472,10 @@
     const summary = $("sidepanelTimelineSummary");
     const list = $("sidepanelTimelineList");
     if (!summary || !list) return;
+    currentTimelineItem = item || null;
+    const addButton = $("btnAddTimelineEvent");
+    if (addButton) addButton.hidden = !/^https?:\/\//i.test(currentPageUrl || "");
+    if (timelineEditorUrl && timelineEditorUrl !== currentPageUrl) closeTimelineEditor();
     list.replaceChildren();
     if (options.loading) {
       summary.textContent = "正在读取当前外链站动态…";
@@ -538,6 +580,174 @@
     }
   }
 
+  function toDateTimeLocal(value = new Date()) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (number) => String(number).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  function timelineEditorTypeLabel(type) {
+    return {
+      submitted: "已提交",
+      pending_moderation: "待审核",
+      published: "已上线",
+      note: "笔记",
+    }[String(type || "").trim()] || "动态";
+  }
+
+  function renderTimelineProfileOptions() {
+    const select = $("timelineProfileSelect");
+    if (!select) return;
+    const previous = select.value || activeSiteId;
+    const ids = Object.keys(siteProfiles);
+    select.replaceChildren();
+    if (!ids.length) {
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "未配置 Profile";
+      empty.disabled = true;
+      empty.selected = true;
+      select.append(empty);
+      return;
+    }
+    for (const id of ids) {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = siteProfiles[id]?.name || id;
+      select.append(option);
+    }
+    select.value = ids.includes(previous) ? previous : ids.includes(activeSiteId) ? activeSiteId : ids[0];
+  }
+
+  function closeTimelineEditor() {
+    timelineEditorUrl = "";
+    const editor = $("timelineEditor");
+    if (editor) editor.hidden = true;
+    const addButton = $("btnAddTimelineEvent");
+    if (addButton) addButton.hidden = !/^https?:\/\//i.test(currentPageUrl || "");
+  }
+
+  function openTimelineEditor() {
+    if (!/^https?:\/\//i.test(currentPageUrl || "")) {
+      showToast("当前页不是可登记的网页", true);
+      return;
+    }
+    timelineEditorUrl = currentPageUrl;
+    renderTimelineProfileOptions();
+    const profileSelect = $("timelineProfileSelect");
+    if (profileSelect && [...profileSelect.options].some((option) => option.value === activeSiteId)) {
+      // A/B switching must affect a newly opened record immediately; do not
+      // carry the Profile selected in the previous editor session.
+      profileSelect.value = activeSiteId;
+    }
+    const destination = $("timelineDestinationLabel");
+    if (destination) destination.textContent = currentTimelineItem?.domain || currentPageUrl;
+    const occurredAt = $("timelineOccurredAt");
+    if (occurredAt) occurredAt.value = toDateTimeLocal(new Date());
+    const type = $("timelineEventType");
+    if (type) type.value = "submitted";
+    ["timelineNote", "timelinePublicUrl", "timelineEvidenceUrl"].forEach((id) => {
+      const field = $(id);
+      if (field) field.value = "";
+    });
+    const editor = $("timelineEditor");
+    if (editor) editor.hidden = false;
+    profileSelect?.focus();
+  }
+
+  function parseTimelineEditorTime(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return new Date().toISOString();
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) throw new Error("动态时间格式无效");
+    return date.toISOString();
+  }
+
+  function validateTimelineLink(value, label) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (!/^https?:\/\//i.test(raw)) throw new Error(`${label}必须以 http:// 或 https:// 开头`);
+    try {
+      new URL(raw);
+    } catch {
+      throw new Error(`${label}格式无效`);
+    }
+    return raw;
+  }
+
+  async function saveTimelineEvent(event) {
+    event?.preventDefault();
+    if (timelineSaveInProgress) return;
+    // Capture the page item before any awaited refresh can replace it. The
+    // saved event must stay bound to the page/Profile the user reviewed.
+    const timelineItem = currentTimelineItem;
+    const destinationUrl = timelineEditorUrl || timelineItem?.url || currentPageUrl;
+    if (!/^https?:\/\//i.test(destinationUrl || "")) {
+      showToast("当前页不是可登记的网页", true);
+      return;
+    }
+    const profileId = String($("timelineProfileSelect")?.value || "").trim();
+    const profile = profileId ? siteProfiles[profileId] : null;
+    if (!profileId || !profile) {
+      showToast("请选择要记录的 Profile", true);
+      return;
+    }
+    const type = String($("timelineEventType")?.value || "note").trim() || "note";
+    const note = String($("timelineNote")?.value || "").trim();
+    let publicUrl = "";
+    let evidenceUrl = "";
+    try {
+      publicUrl = validateTimelineLink($("timelinePublicUrl")?.value, "公开链接");
+      evidenceUrl = validateTimelineLink($("timelineEvidenceUrl")?.value, "证据链接");
+    } catch (err) {
+      showToast(err.message || "链接格式无效", true);
+      return;
+    }
+    const destinationKey = timelineItem?.key ||
+      (typeof Q?.normalizeDestinationKey === "function"
+        ? Q.normalizeDestinationKey(destinationUrl)
+        : typeof Q?.normalizeUrlKey === "function"
+          ? Q.normalizeUrlKey(destinationUrl)
+          : destinationUrl);
+    const saveButton = $("btnSaveTimelineEvent");
+    const cancelButton = $("btnCancelTimelineEvent");
+    timelineSaveInProgress = true;
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.textContent = "保存中…";
+    }
+    if (cancelButton) cancelButton.disabled = true;
+    try {
+      const result = await chrome.runtime.sendMessage({
+        action: "addSubmissionTimelineEvent",
+        destinationKey,
+        destinationUrl: timelineItem?.url || destinationUrl,
+        profileId,
+        profileName: profile.name || profileId,
+        occurredAt: parseTimelineEditorTime($("timelineOccurredAt")?.value),
+        type,
+        note,
+        publicUrl,
+        evidenceUrl,
+        source: "manual",
+      });
+      if (!result?.ok) throw new Error(result?.error || "保存外链动态失败");
+      closeTimelineEditor();
+      await loadSidepanelTimeline(currentPageUrl);
+      showToast(`已登记 ${timelineEditorTypeLabel(type)}（人工记录）`);
+    } catch (err) {
+      showToast(err.message || "保存外链动态失败", true);
+    } finally {
+      timelineSaveInProgress = false;
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = "保存人工动态";
+      }
+      if (cancelButton) cancelButton.disabled = false;
+    }
+  }
+
   function renderSubmissionNav() {
     const el = $("submissionNavInfo");
     const metaEl = $("submissionNavMeta");
@@ -568,7 +778,9 @@
     const src = task.source === "table" ? "表" : task.source === "library" ? "库" : "";
     el.textContent = `${submissionIndex + 1} / ${submissionTasks.length} · ${task.domain || task.url}${src ? ` · ${src}` : ""}`;
     el.title = task.url || "";
-    renderQueueQuality(task);
+    // The nav cursor may point at another queue item. The insight card must
+    // describe the page currently open in this tab and the selected Profile.
+    renderCurrentQueueQuality();
   }
 
   async function cycleSubmission(delta, options = {}) {
@@ -830,7 +1042,8 @@
         .join(" ")
         .toLowerCase();
       const type = String(field?.type || field?.tag || "").toLowerCase();
-      return type === "textarea" || /comment|reply|message|feedback|body|评论|回复/.test(hint);
+      const isTextControl = type === "textarea" || type === "text" || type === "div" || type === "contenteditable";
+      return isTextControl && /comment|reply|review|message|feedback|body|thoughts|评论|回复|留言|正文/.test(hint);
     });
     candidates.sort((a, b) => {
       const score = (field) => {
@@ -845,6 +1058,56 @@
       return score(b) - score(a);
     });
     return candidates[0] || null;
+  }
+
+  function updateCommentAvailability(snapshot = null) {
+    const formSignal =
+      detection?.standardWpComment === true ||
+      detection?.commentFound === true ||
+      pagePrescan?.hasCommentForm === true;
+    const field = chooseCommentField(snapshot);
+    const hasKnownField = !!field || !!String(pagePrescan?.commentFieldLabel || "").trim();
+    let reason = "当前页面未识别为真实博客评论表单，已隐藏评论生成与填入。";
+    if (!detection && !pagePrescan) {
+      reason = "先点击「检测」确认当前页面是否有真实博客评论表单。";
+    } else if (!formSignal) {
+      reason = "当前页面没有真实博客评论表单，产品 Description 等目录字段不会当作评论。";
+    } else if (!hasKnownField) {
+      reason = "已发现评论区域，但没有找到可填写的评论字段；请手动检查页面。";
+    }
+    commentAvailability = { available: formSignal && hasKnownField, reason };
+    const unavailable = $("commentAvailability");
+    if (unavailable) {
+      unavailable.textContent = commentAvailability.available
+        ? "已确认当前页面有真实博客评论表单；评论只会填入评论字段。"
+        : commentAvailability.reason;
+      unavailable.className = "comment-availability" + (commentAvailability.available ? " ok" : "");
+    }
+    const body = $("commentStudioBody");
+    if (body) body.hidden = !commentAvailability.available;
+    const card = $("commentStudioCard");
+    if (card) {
+      card.dataset.commentAvailable = commentAvailability.available ? "true" : "false";
+      // Directory and product pages should not reserve a large comment-draft
+      // card. Keep the card only when detection found a blog comment area but
+      // its field still needs human review, so that explanation remains visible.
+      card.hidden = !!(detection || pagePrescan) && !commentAvailability.available && !formSignal;
+    }
+    const button = $("btnFillComment");
+    if (button) {
+      button.hidden = !commentAvailability.available;
+      button.disabled = !commentAvailability.available;
+      button.title = commentAvailability.available ? "填入当前页面评论字段" : commentAvailability.reason;
+    }
+    const regenerate = $("btnRegenComment");
+    if (regenerate) {
+      regenerate.hidden = !commentAvailability.available;
+      regenerate.disabled = !commentAvailability.available;
+      regenerate.title = commentAvailability.available ? "生成当前文章的评论候选" : commentAvailability.reason;
+    }
+    const tone = $("commentTone");
+    if (tone) tone.disabled = !commentAvailability.available;
+    return commentAvailability;
   }
 
   async function getActivePageSnapshot() {
@@ -882,7 +1145,10 @@
         : Number.isFinite(prescanMax) && prescanMax > 0
           ? prescanMax
           : null;
-    if (!field && effectiveMax != null) return snapshot;
+    if (!field && effectiveMax != null) {
+      updateCommentAvailability(snapshot);
+      return snapshot;
+    }
     commentFieldInfo = {
       maxLength: effectiveMax,
       minLength: Number.isFinite(minLength) && minLength > 0 ? minLength : null,
@@ -890,6 +1156,7 @@
       source: field ? "page snapshot" : "unknown",
     };
     updateCommentCharCount();
+    updateCommentAvailability(snapshot);
     return snapshot;
   }
 
@@ -1201,6 +1468,9 @@
   $("btnRefreshSidepanelTimeline")?.addEventListener("click", () => {
     loadSidepanelTimeline(currentPageUrl).catch(() => {});
   });
+  $("btnAddTimelineEvent")?.addEventListener("click", openTimelineEditor);
+  $("timelineEditor")?.addEventListener("submit", saveTimelineEvent);
+  $("btnCancelTimelineEvent")?.addEventListener("click", closeTimelineEditor);
 
   $("spCommentText")?.addEventListener("input", handleCommentTextInput);
   $("commentDraftList")?.addEventListener("click", (event) => {
@@ -1334,6 +1604,10 @@
   }
 
   async function generateCommentCandidates() {
+    if (!commentAvailability.available) {
+      showToast(commentAvailability.reason, true);
+      return;
+    }
     if (!activeTabId || !currentPageUrl?.startsWith("http")) {
       showToast("请先打开目标文章页", true);
       return;
@@ -1343,6 +1617,11 @@
       showToast("请先在设置页配置网站资料", true);
       return;
     }
+    const requestedTabId = activeTabId;
+    const requestedUrl = currentPageUrl;
+    const requestedProfileId = activeSiteId;
+    const isCurrentCommentContext = () =>
+      isCurrentFillContext(requestedTabId, requestedUrl, requestedProfileId);
     const btn = $("btnRegenComment");
     const tone = $("commentTone")?.value || "helpful";
     if (btn) {
@@ -1351,6 +1630,10 @@
     }
     try {
       const snapshot = await refreshCommentFieldInfo();
+      if (!isCurrentCommentContext()) {
+        setAutoFillStatus("页面或 Profile 已切换，已放弃旧评论草稿", "warn");
+        return;
+      }
       const cfg = P.buildAgentConfigFromProfile(profile, {});
       cfg.blogRules = { ...(cfg.blogRules || {}), tone };
 
@@ -1383,6 +1666,11 @@
         result = fallback?.ok && fallback.text
           ? { ok: true, drafts: [{ text: fallback.text, angle: "页面兜底" }] }
           : fallback;
+      }
+
+      if (!isCurrentCommentContext()) {
+        setAutoFillStatus("页面或 Profile 已切换，已放弃旧评论草稿", "warn");
+        return;
       }
 
       const drafts = (result?.drafts || [])
@@ -1422,6 +1710,10 @@
 
   $("btnRegenComment")?.addEventListener("click", generateCommentCandidates);
   $("btnFillComment")?.addEventListener("click", () => {
+    if (!commentAvailability.available) {
+      showToast(commentAvailability.reason, true);
+      return;
+    }
     const ta = $("spCommentText");
     if (ta && !ta.value.trim()) {
       showToast("请先生成或编辑评论，再点击填入评论", true);
@@ -1454,23 +1746,154 @@
       : "填表";
   }
 
-  async function triggerAutoFillForCurrentTab() {
-    if (!activeTabId) return;
-    const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
-    if (!P.profileConfigured(profile)) return;
-    resetMediaUploadState();
-    setAutoFillStatus("正在填写…");
-    try {
-      const result = await chrome.runtime.sendMessage({
-        action: "sidepanelFill",
-        tabId: activeTabId,
-        mode: "form",
-        useAgent: true,
-      });
-      handleFillResult(result, "form");
-    } catch (err) {
-      setAutoFillStatus(err.message, "err");
+  function isCurrentFillContext(tabId, expectedUrl, profileId) {
+    return activeTabId === tabId && currentPageUrl === expectedUrl && activeSiteId === profileId;
+  }
+
+  function getSidepanelFillRequest(tabId, expectedUrl, profileId) {
+    return [...sidepanelFillRequests.values()].find(
+      (request) =>
+        !request.detached &&
+        request.tabId === tabId &&
+        request.expectedUrl === expectedUrl &&
+        request.profileId === profileId,
+    ) || null;
+  }
+
+  function releaseSidepanelFillRequest(request) {
+    if (!request) return;
+    clearTimeout(request.timeoutTimer);
+    clearTimeout(request.staleTimer);
+    if (sidepanelFillRequests.get(request.id) === request) sidepanelFillRequests.delete(request.id);
+  }
+
+  async function runSidepanelFill(options = {}) {
+    const tabId = options.tabId;
+    const expectedUrl = String(options.expectedUrl || "").trim();
+    const profileId = String(options.profileId || "").trim();
+    const mode = options.mode || "form";
+    if (!tabId || !/^https?:\/\//i.test(expectedUrl) || !profileId) {
+      return { error: "缺少当前网页或 Profile，已停止填表" };
     }
+    const existing = getSidepanelFillRequest(tabId, expectedUrl, profileId);
+    if (existing) {
+      if (isCurrentFillContext(tabId, expectedUrl, profileId)) {
+        setAutoFillStatus(
+          existing.timedOut
+            ? "当前填表仍在后台处理，请等待页面结果，不要重复点击"
+            : "当前填表正在处理，请稍候，不要重复点击",
+          "warn",
+        );
+      }
+      return { busy: true, error: "当前网页的填表仍在处理，请等待结果" };
+    }
+
+    const request = {
+      id: ++sidepanelFillRequestId,
+      tabId,
+      expectedUrl,
+      profileId,
+      mode,
+      timedOut: false,
+      detached: false,
+      settled: false,
+      timeoutTimer: null,
+      staleTimer: null,
+    };
+    sidepanelFillRequests.set(request.id, request);
+
+    let responsePromise;
+    try {
+      responsePromise = chrome.runtime.sendMessage({
+        action: "sidepanelFill",
+        tabId,
+        mode,
+        useAgent: true,
+        fillOnly: true,
+        profileId,
+        expectedUrl,
+        commentText: options.commentText || "",
+        confirmProductHuntCreate: options.confirmProductHuntCreate === true,
+      });
+    } catch (err) {
+      releaseSidepanelFillRequest(request);
+      return { error: err.message || "填表请求发送失败" };
+    }
+
+    const observed = Promise.resolve(responsePromise).then(
+      async (result) => {
+        request.settled = true;
+        clearTimeout(request.timeoutTimer);
+        try {
+          if (request.timedOut && !request.detached && isCurrentFillContext(tabId, expectedUrl, profileId)) {
+            await handleFillResult(result, mode);
+          }
+        } finally {
+          releaseSidepanelFillRequest(request);
+        }
+        return result;
+      },
+      (err) => {
+        request.settled = true;
+        clearTimeout(request.timeoutTimer);
+        releaseSidepanelFillRequest(request);
+        if (request.timedOut && isCurrentFillContext(tabId, expectedUrl, profileId)) {
+          setAutoFillStatus(err.message || "填表请求失败", "err");
+        }
+        throw err;
+      },
+    );
+    request.staleTimer = setTimeout(() => {
+      request.detached = true;
+      releaseSidepanelFillRequest(request);
+    }, SIDEPANEL_FILL_STALE_MS);
+    const timeout = new Promise((resolve) => {
+      request.timeoutTimer = setTimeout(() => {
+        if (request.settled) return;
+        request.timedOut = true;
+        const timeoutResult = {
+          timedOut: true,
+          error: "填表响应超过 30 秒，后台可能仍在处理；请查看页面结果后再继续，不要重复点击",
+        };
+        if (isCurrentFillContext(tabId, expectedUrl, profileId)) {
+          setAutoFillStatus(timeoutResult.error, "warn");
+        }
+        resolve(timeoutResult);
+      }, SIDEPANEL_FILL_TIMEOUT_MS);
+    });
+    try {
+      const result = await Promise.race([observed, timeout]);
+      if (!isCurrentFillContext(tabId, expectedUrl, profileId)) {
+        return {
+          ...(result && typeof result === "object" ? result : {}),
+          stale: true,
+        };
+      }
+      return result;
+    } catch (err) {
+      return { error: err.message || "填表请求失败" };
+    }
+  }
+
+  async function triggerAutoFillForCurrentTab(options = {}) {
+    const tabId = options.tabId || activeTabId;
+    const expectedUrl = String(options.expectedUrl || currentPageUrl || "").trim();
+    const profileId = String(options.profileId || activeSiteId || "").trim();
+    if (!tabId || !expectedUrl || !profileId) return;
+    if (!isCurrentFillContext(tabId, expectedUrl, profileId)) return { stale: true };
+    const profile = siteProfiles[profileId];
+    if (!P.profileConfigured(profile)) return { error: "请先在设置页配置网站资料" };
+    resetMediaUploadState();
+    setAutoFillStatus("检测完成，正在自动填写…");
+    const result = await runSidepanelFill({
+      tabId,
+      expectedUrl,
+      profileId,
+      mode: "form",
+    });
+    if (result?.timedOut || result?.busy || result?.stale) return result;
+    await handleFillResult(result, "form");
+    return result;
   }
 
   async function handleFillResult(result, mode) {
@@ -1768,6 +2191,7 @@
       await refreshSiteAnnotation("");
       renderSidepanelTimeline(null);
     }
+    renderCurrentQueueQuality();
     renderPageMetrics(pagePrescan, {});
     updateProductHuntFillButton();
   }
@@ -1808,9 +2232,12 @@
     });
     $("detectResult")?.setAttribute("hidden", "");
     pagePrescan = null;
+    detection = null;
+    updateCommentAvailability(null);
     renderPageMetrics(null, {});
     $("pageTdk")?.setAttribute("hidden", "");
     resetCommentStudio({ clearHistory: true });
+    closeTimelineEditor();
     resetMediaUploadState();
     renderSidepanelTimeline(null, { loading: true });
     setWorkflowStep("detect");
@@ -1826,11 +2253,28 @@
     showToast._timer = setTimeout(() => t.setAttribute("hidden", ""), 3500);
   }
 
+  function shouldAutoFillAfterDetection(result = {}) {
+    const platform = String(result.platform || "").trim().toLowerCase();
+    if (!result.operable || Number(result.formFieldCount || 0) <= 0) return false;
+    // A blog comment form is operable, but its Description-like textarea must
+    // never receive the selected Profile's directory copy automatically.
+    if (platform === "wp_comment" || platform === "article") return false;
+    return true;
+  }
+
   // ─── Detect ───
   async function detectCurrentPage() {
     await refreshActiveTab();
     if (!activeTabId) {
       showToast("没有活动标签页，请先打开目标网页", true);
+      return;
+    }
+    const requestId = ++detectionRequestId;
+    const requestedTabId = activeTabId;
+    const requestedUrl = currentPageUrl;
+    const requestedProfileId = activeSiteId;
+    if (!requestedUrl?.startsWith("http")) {
+      showToast("当前页不是可检测的网页", true);
       return;
     }
     const btn = $("btnDetect");
@@ -1847,36 +2291,63 @@
         /* ignore */
       }
 
-      const [detectResult, prescanResult, metrics] = await Promise.all([
-        chrome.runtime.sendMessage({ action: "sidepanelDetect", tabId: activeTabId }),
-        chrome.runtime.sendMessage({ action: "prescanPage", tabId: activeTabId }).catch(() => null),
-        fetchDomainMetricsForHost(hostname),
-      ]);
+      const prescanPromise = chrome.runtime
+        .sendMessage({ action: "prescanPage", tabId: requestedTabId })
+        .catch(() => null);
+      const metricsPromise = fetchDomainMetricsForHost(hostname);
+      const detectResult = await chrome.runtime.sendMessage({
+        action: "sidepanelDetect",
+        tabId: requestedTabId,
+      });
 
       if (!detectResult?.ok) throw new Error(detectResult?.error || "检测失败");
+      if (requestId !== detectionRequestId || activeTabId !== requestedTabId || currentPageUrl !== requestedUrl) return;
       if (detectResult.tabId) activeTabId = detectResult.tabId;
-
-      if (prescanResult?.ok) {
-        pagePrescan = prescanResult;
-        renderPageTdk(prescanResult);
-        setStatusItem(
-          "stComment",
-          prescanResult.hasCommentForm ? "找到了" : "未找到",
-          prescanResult.hasCommentForm ? "ok" : "",
-        );
-      }
 
       detection = detectResult;
       renderDetection(detectResult);
-      renderPageMetrics(pagePrescan, metrics);
-      await refreshCommentFieldInfo();
-      await refreshSiteAnnotation(currentPageUrl);
-      if (detectResult.submissionRecovered) {
-        await loadSidepanelTimeline(currentPageUrl);
-        showToast("已从 Product Hunt 成功页恢复提交记录");
-      }
+      updateCommentAvailability(null);
       setWorkflowStep(detectResult.operable ? "fill" : "detect");
-      if (!detectResult.submissionRecovered) showToast("检测完成");
+
+      // Detection should hand off to the deterministic fill path immediately.
+      // Quality metrics and the richer page snapshot are background decoration
+      // and must not make the user wait before fields start filling.
+      if (shouldAutoFillAfterDetection(detectResult)) {
+        setAutoFillStatus("检测成功，自动填写准备中…");
+        triggerAutoFillForCurrentTab({
+          tabId: requestedTabId,
+          expectedUrl: requestedUrl,
+          profileId: requestedProfileId,
+        }).catch((err) => {
+          if (requestId === detectionRequestId && currentPageUrl === requestedUrl) {
+            setAutoFillStatus(err.message || "自动填表失败", "err");
+          }
+        });
+      } else if (!detectResult.submissionRecovered) {
+        showToast("检测完成");
+      }
+
+      Promise.allSettled([prescanPromise, metricsPromise]).then((results) => {
+        if (requestId !== detectionRequestId || activeTabId !== requestedTabId || currentPageUrl !== requestedUrl) return;
+        const prescanResult = results[0]?.status === "fulfilled" ? results[0].value : null;
+        const metrics = results[1]?.status === "fulfilled" ? results[1].value : {};
+        if (prescanResult?.ok) {
+          pagePrescan = prescanResult;
+          renderPageTdk(prescanResult);
+          setStatusItem(
+            "stComment",
+            prescanResult.hasCommentForm ? "找到了" : "未找到",
+            prescanResult.hasCommentForm ? "ok" : "",
+          );
+        }
+        renderPageMetrics(pagePrescan, metrics);
+        refreshCommentFieldInfo().catch(() => updateCommentAvailability(null));
+        refreshSiteAnnotation(currentPageUrl).catch(() => {});
+        if (detectResult.submissionRecovered) {
+          loadSidepanelTimeline(currentPageUrl).catch(() => {});
+          showToast("已从 Product Hunt 成功页恢复提交记录");
+        }
+      });
     } catch (err) {
       showToast(err.message, true);
     } finally {
@@ -1929,6 +2400,13 @@
       showToast("没有活动标签页", true);
       return;
     }
+    if (mode === "comment" && !commentAvailability.available) {
+      showToast(commentAvailability.reason, true);
+      return;
+    }
+    const requestedTabId = activeTabId;
+    const requestedUrl = currentPageUrl;
+    const requestedProfileId = activeSiteId;
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
     if (!P.profileConfigured(profile)) {
       showToast("请先在设置页配置网站资料", true);
@@ -1948,20 +2426,21 @@
 
     try {
       const commentOverride = ($("spCommentText")?.value || "").trim();
-      const result = await chrome.runtime.sendMessage({
-        action: "sidepanelFill",
-        tabId: activeTabId,
+      const result = await runSidepanelFill({
+        tabId: requestedTabId,
+        expectedUrl: requestedUrl,
+        profileId: requestedProfileId,
         mode,
         commentText: commentOverride,
-        useAgent: true,
-        profileId: activeSiteId,
         confirmProductHuntCreate,
       });
 
-      handleFillResult(result, mode);
-      if (mode === "form" && result?.submitted && result?.matched) setWorkflowStep("done");
-      else if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
-      else if (mode === "comment" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
+      if (!result?.timedOut && !result?.busy && !result?.stale) {
+        await handleFillResult(result, mode);
+        if (mode === "form" && result?.submitted && result?.matched) setWorkflowStep("done");
+        else if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
+        else if (mode === "comment" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
+      }
     } catch (err) {
       setAutoFillStatus(err.message, "err");
       showToast(err.message, true);
@@ -2486,7 +2965,18 @@
           renderSubmissionNav();
         }
       }
-      if (msg.status === "filling") setAutoFillStatus(msg.message || "正在自动填写…");
+      if (msg.status === "filling") {
+        const request = msg.tabId
+          ? [...sidepanelFillRequests.values()].find(
+              (item) => !item.detached && item.tabId === msg.tabId,
+            )
+          : null;
+        const message = msg.message || "正在自动填写…";
+        setAutoFillStatus(
+          request?.timedOut ? `${message}（已超过 30 秒，后台仍在处理）` : message,
+          request?.timedOut ? "warn" : undefined,
+        );
+      }
       else if (msg.status === "done") {
         const cls =
           msg.submitReady === false || msg.invalidCount > 0 || msg.emptyCount > 0 ? "warn" : "ok";

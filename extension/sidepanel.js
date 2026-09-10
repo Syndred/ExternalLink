@@ -189,6 +189,11 @@
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
+    if (changes.activeBatchRun) {
+      const batch = changes.activeBatchRun.newValue;
+      if (batch?.status) setBatchStatus(batch.status, false);
+      refreshUnattendedSummary(batch || null).catch(() => {});
+    }
     if (changes.siteProfiles || changes.activeSiteId) {
       const previousActiveSiteId = activeSiteId;
       chrome.storage.local.get(["siteProfiles", "activeSiteId"], (items) => {
@@ -2056,10 +2061,12 @@
     });
   }
 
-  async function refreshUnattendedSummary() {
+  async function refreshUnattendedSummary(savedBatch) {
     const element = $("unattendedRunSummary");
     if (!element) return;
-    const { activeBatchRun: batch } = await chrome.storage.local.get("activeBatchRun");
+    const batch = savedBatch === undefined
+      ? (await chrome.storage.local.get("activeBatchRun")).activeBatchRun
+      : savedBatch;
     element.hidden = batch?.config?.unattended !== true;
     if (element.hidden) return;
     const report = self.ExtLinkBatchReport.build(batch);

@@ -2067,6 +2067,8 @@
     element.textContent = `本轮：取得回执 ${counts.success} · 待人工 ${counts.manual} · 失败 ${counts.failed} · 跳过 ${counts.skipped} · 剩余 ${counts.remaining}`;
     if (report.deadlineAt) element.textContent += ` · 截止 ${new Date(report.deadlineAt).toLocaleString()}`;
     element.textContent += ` · 模型调用 ${report.modelCallsUsed}`;
+    element.textContent += ` · 保留人工页面 ${report.manualTabCount}/${report.maxManualTabs}`;
+    if (report.waitReason === "manual_capacity") element.textContent += " · 已达容量，等待人工处理后继续";
     if (report.stopReason) element.textContent += ` · ${report.stopReason}`;
   }
 

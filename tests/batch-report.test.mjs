@@ -23,4 +23,13 @@ assert.doesNotMatch(JSON.stringify(report), /never-export/);
 assert.match(markdown(report), /https:\/\/example.test\/receipt/);
 assert.match(markdown(report), /取得回执（1）/);
 assert.throws(() => build(null), /没有批次/);
+const capacityReport = build({ ...batch, status: "running", unattendedState: {
+  waitReason: "manual_capacity", manualTabCount: 2, maxManualTabs: 2,
+} });
+assert.equal(capacityReport.status, "running");
+assert.equal(capacityReport.groups.remaining.length, 1, "capacity waiting must preserve queued work in the report");
+assert.match(markdown(capacityReport), /等待人工处理：已保留 2\/2 个页面/);
+assert.doesNotMatch(markdown(capacityReport), /暂停原因/);
+const resumedReport = build({ ...batch, unattendedState: { waitReason: "", manualTabCount: 1, maxManualTabs: 2 } });
+assert.doesNotMatch(markdown(resumedReport), /等待人工处理/);
 console.log("batch report tests passed");

@@ -26,6 +26,9 @@
       finishedAt: batch.finishedAt || batch.stoppedAt || null, generatedAt: new Date().toISOString(),
       unattended: batch.config?.unattended === true,
       stopReason: batch.unattendedState?.stopReason || batch.pauseReason || "",
+      waitReason: batch.unattendedState?.waitReason || "",
+      manualTabCount: Number(batch.unattendedState?.manualTabCount) || 0,
+      maxManualTabs: Number(batch.unattendedState?.maxManualTabs) || 20,
       deadlineAt: batch.unattendedState?.runDeadlineAt || null,
       modelCallsUsed: Number(batch.unattendedState?.modelCallsUsed) || 0,
       summary, groups };
@@ -35,6 +38,7 @@
     const lines = ["# 外链批次报告", "", `批次 ${report.runId} · 状态 ${report.status}`, "",
       "已提交不代表已收录，发布状态和回执见下表。", ""];
     if (report.stopReason) lines.push(`暂停原因：${clean(report.stopReason)}`, "");
+    if (report.waitReason === "manual_capacity") lines.push(`等待人工处理：已保留 ${report.manualTabCount}/${report.maxManualTabs} 个页面，释放容量后继续。`, "");
     if (report.unattended) lines.push(`本轮模型调用：${report.modelCallsUsed}`, "");
     const labels = { success: "取得回执", manual: "待人工 / 待核验", failed: "失败", skipped: "跳过", remaining: "剩余" };
     for (const [key, tasks] of Object.entries(report.groups)) {

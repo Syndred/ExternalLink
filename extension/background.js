@@ -5103,9 +5103,23 @@ async function captureTaskVisualContext(tabId, task) {
   }
 }
 
+function resolveVisualCoordinateTarget(action, elements) {
+  if (action?.type !== "click" || action.selector) return action;
+  const x = Number(action.x);
+  const y = Number(action.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return action;
+  const matches = (elements || []).filter((element) => {
+    const rect = element?.rect;
+    return rect && x >= rect.x && y >= rect.y &&
+      x <= rect.x + rect.width && y <= rect.y + rect.height;
+  }).sort((left, right) =>
+    (left.rect.width * left.rect.height) - (right.rect.width * right.rect.height));
+  return matches[0]?.selector ? { ...action, selector: matches[0].selector } : action;
+}
+
 function safeVisualActions(actions, elements) {
   const bySelector = new Map((elements || []).map((element) => [element.selector, element]));
-  return (actions || []).filter((action) => {
+  return (actions || []).map((action) => resolveVisualCoordinateTarget(action, elements)).filter((action) => {
     if (["wait", "scroll"].includes(action.type)) return true;
     if (action.type === "click" && !action.selector) {
       return Number.isFinite(Number(action.x)) && Number.isFinite(Number(action.y));

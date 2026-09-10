@@ -245,6 +245,8 @@ assert.match(background, /visualEscalation:\s*true/,
   "only an explicit handoff may enter the visual execution loop");
 assert.match(background, /function\s+isVisualSubmissionAction\s*\(/,
   "fill-only visual supervision must filter final submission clicks");
+assert.match(background, /function\s+resolveVisualCoordinateTarget\s*\([\s\S]*\.rect[\s\S]*selector/,
+  "coordinate plans must resolve to annotated controls before fill-only safety filtering");
 assert.match(content, /function\s+isAutomatableFileInput\s*\(/,
   "visible upload dropzones should expose their hidden file control for DataTransfer injection");
 assert.match(content, /function\s+isLikelyCustomClickTarget\s*\(/,

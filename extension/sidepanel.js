@@ -165,6 +165,7 @@
         if ($("cfgUnattended")) $("cfgUnattended").checked = unattendedPrefs.enabled === true;
         if ($("cfgUnattendedHours")) $("cfgUnattendedHours").value = unattendedPrefs.hours || 8;
         if ($("cfgUnattendedTasks")) $("cfgUnattendedTasks").value = unattendedPrefs.tasks || 100;
+        if ($("cfgUnattendedManualTabs")) $("cfgUnattendedManualTabs").value = unattendedPrefs.manualTabs || 20;
         if ($("unattendedOptions")) $("unattendedOptions").hidden = unattendedPrefs.enabled !== true;
         if (
           activeRun?.tasks?.length &&
@@ -2042,7 +2043,7 @@
     }
   });
 
-  for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks"]) {
+  for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs"]) {
     $(id)?.addEventListener("change", () => {
       const enabled = $("cfgUnattended")?.checked === true;
       $("unattendedOptions").hidden = !enabled;
@@ -2050,6 +2051,7 @@
         enabled,
         hours: Math.max(1, Math.min(12, Number($("cfgUnattendedHours").value) || 8)),
         tasks: Math.max(1, Math.min(500, Number($("cfgUnattendedTasks").value) || 100)),
+        manualTabs: Math.max(1, Math.min(100, Number($("cfgUnattendedManualTabs").value) || 20)),
       } });
     });
   }
@@ -2189,7 +2191,7 @@
       toggle.classList.toggle("btn-ghost", batchStatus !== "paused");
     }
     if ($("btnStop")) $("btnStop").hidden = visibility.stopHidden;
-    for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgFillOnly"]) {
+    for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs", "cfgFillOnly"]) {
       if ($(id)) $(id).disabled = ["running", "paused"].includes(batchStatus);
     }
   }
@@ -2268,6 +2270,7 @@
           unattended: $("cfgUnattended")?.checked === true,
           unattendedMaxHours: Math.max(1, Math.min(12, Number($("cfgUnattendedHours")?.value) || 8)),
           unattendedMaxTasks: Math.max(1, Math.min(500, Number($("cfgUnattendedTasks")?.value) || 100)),
+          unattendedMaxManualTabs: Math.max(1, Math.min(100, Number($("cfgUnattendedManualTabs")?.value) || 20)),
         },
       });
       if (!result?.ok) throw new Error(result?.error || "启动失败");

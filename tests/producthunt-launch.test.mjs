@@ -376,5 +376,7 @@ assert.match(content, /productHuntReceipt[\s\S]*?this product is a draft/i,
   "a Product Hunt draft success page must expose a recoverable receipt");
 assert.match(background, /success_page_recovery[\s\S]*?recordSubmittedProject/,
   "detecting a matching Product Hunt draft page must recover the ledger record");
+assert.match(background, /productHuntReceipt[\s\S]*?confirmedBy:\s*"manual"/,
+  "success-page recovery must not pretend the extension observed the submit action");
 
 console.log("Product Hunt stage, gate, media, and final-action safety tests passed");

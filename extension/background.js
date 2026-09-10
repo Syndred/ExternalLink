@@ -1719,17 +1719,17 @@ async function handleSidepanelDetect(tabId) {
       const receivedName = String(receipt.productName || "").trim().toLowerCase();
       if (profile?.id && expectedName && receivedName === expectedName) {
         await recordSubmittedProject({
-          url: receipt.publicUrl,
+          url: "https://www.producthunt.com/posts/new/submission",
           profileId: profile.id,
           profileName: profile.name || profile.id,
-          confirmedBy: "agent",
+          confirmedBy: "manual",
           successEvidence: receipt.evidence,
           publicationStatus: receipt.publicationStatus || "submitted",
           publicUrl: receipt.publicUrl,
           evidenceUrl: receipt.publicUrl,
           successProof: {
             source: "success_page_recovery",
-            actionObserved: true,
+            actionObserved: false,
             evidenceSignals: [{
               type: "visible_confirmation",
               text: receipt.evidence,

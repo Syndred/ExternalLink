@@ -68,6 +68,8 @@ const AUTOMATION_LEDGER_KEY = "automationRunLedger";
 const AUTOMATION_OUTBOX_KEY = "automationEventOutbox";
 const AUTOMATION_OUTBOX_ALARM = "externallink-automation-outbox";
 const AUTOMATION_OUTBOX_LIMIT = 3000;
+const CLOUD_SYNC_PENDING_STORAGE_KEY = "cloudSyncPendingKeys";
+const CLOUD_SYNC_CONFLICT_STORAGE_KEY = "cloudSyncConflictKeys";
 const VISION_FALLBACK_AFTER_FAILURES = 1;
 const UNATTENDED_WATCHDOG_ALARM = "externallink-unattended-watchdog";
 const CLOUD_REQUEST_TIMEOUT_MS = 30000;
@@ -88,8 +90,11 @@ const autoFillInProgress = new Set();
 let sidePanelOpen = false;
 let cloudSyncTimer = null;
 let cloudSyncFlushPromise = null;
-let cloudSyncMute = false;
 const cloudSyncPendingKeys = new Set();
+const cloudSyncConflictKeys = new Set();
+const cloudSyncMutationVersions = new Map();
+let cloudSyncPendingPersistence = Promise.resolve();
+let cloudPullPromise = null;
 const runActiveBatchWrite = self.ExtLinkBatchControls.createSerialExecutor();
 const runSiteAnnotationWrite = self.ExtLinkBatchControls.createSerialExecutor();
 // Chrome storage writes are whole-value replacements. Keep every submission
@@ -118,6 +123,9 @@ let initializationPromise = restoreActiveBatchRun()
   .catch((err) => {
     log(`恢复上次批次失败: ${err.message}`, "warn");
   })
+  .then(() => restoreCloudSyncQueue().catch((err) => {
+    log(`恢复云端待同步队列失败: ${err.message}`, "warn");
+  }))
   .then(() => {
     // Outbox replay is deliberately fire-and-forget. A large backlog or a
     // sleeping Worker must never block local batch recovery and UI state.
@@ -165,8 +173,12 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || cloudSyncMute) return;
-  const keys = self.ExtLinkCloudSync.stateKeysFromChanges(changes).filter((key) => {
+  if (area !== "local") return;
+  const changedKeys = self.ExtLinkCloudSync.stateKeysFromChanges(changes);
+  for (const key of changedKeys) {
+    cloudSyncMutationVersions.set(key, (cloudSyncMutationVersions.get(key) || 0) + 1);
+  }
+  const keys = changedKeys.filter((key) => {
     if (!cloudSyncIgnoredValues.has(key)) return true;
     const pulledValue = cloudSyncIgnoredValues.get(key);
     cloudSyncIgnoredValues.delete(key);
@@ -174,6 +186,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   });
   if (!keys.length) return;
   for (const key of keys) cloudSyncPendingKeys.add(key);
+  persistCloudSyncQueue().catch((err) => {
+    log(`保存云端待同步队列失败: ${err.message}`, "warn");
+  });
   scheduleCloudSync();
 });
 
@@ -383,7 +398,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "cloudSyncPull":
-      pullCloudState()
+      pullCloudState(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -568,6 +583,52 @@ async function fetchSubmissionMedia(rawUrl) {
 }
 
 // ─── Cloud data source (Neon + Worker + R2) ───
+function cloudSyncQueueSnapshot() {
+  return {
+    [CLOUD_SYNC_PENDING_STORAGE_KEY]: [...cloudSyncPendingKeys],
+    [CLOUD_SYNC_CONFLICT_STORAGE_KEY]: [...cloudSyncConflictKeys],
+  };
+}
+
+function persistCloudSyncQueue() {
+  const write = cloudSyncPendingPersistence
+    .catch(() => null)
+    .then(() => chrome.storage.local.set(cloudSyncQueueSnapshot()));
+  cloudSyncPendingPersistence = write;
+  return write;
+}
+
+async function restoreCloudSyncQueue() {
+  const stored = await chrome.storage.local.get([
+    CLOUD_SYNC_PENDING_STORAGE_KEY,
+    CLOUD_SYNC_CONFLICT_STORAGE_KEY,
+  ]);
+  const validKeys = new Set(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+  for (const key of Array.isArray(stored[CLOUD_SYNC_PENDING_STORAGE_KEY]) ? stored[CLOUD_SYNC_PENDING_STORAGE_KEY] : []) {
+    if (validKeys.has(key)) cloudSyncPendingKeys.add(key);
+  }
+  for (const key of Array.isArray(stored[CLOUD_SYNC_CONFLICT_STORAGE_KEY]) ? stored[CLOUD_SYNC_CONFLICT_STORAGE_KEY] : []) {
+    if (validKeys.has(key)) cloudSyncConflictKeys.add(key);
+  }
+  if (cloudSyncPendingKeys.size) scheduleCloudSync(0, false);
+}
+
+function markCloudSyncConflict(key) {
+  // Keep the write pending as well as marking it conflicted.  A conflict is
+  // still unsaved local data; dropping the pending marker would let a later
+  // automatic pull replace the local value before the user resolves it.
+  cloudSyncPendingKeys.add(key);
+  cloudSyncConflictKeys.add(key);
+  return persistCloudSyncQueue();
+}
+
+function clearCloudSyncConflict(key) {
+  const changed = cloudSyncConflictKeys.delete(key);
+  if (!changed) return Promise.resolve();
+  cloudSyncPendingKeys.delete(key);
+  return persistCloudSyncQueue();
+}
+
 async function getCloudConfig() {
   const stored = await chrome.storage.local.get([self.ExtLinkCloudSync.CONFIG_KEY]);
   return self.ExtLinkCloudSync.normalizeConfig(stored[self.ExtLinkCloudSync.CONFIG_KEY] || {});
@@ -844,39 +905,159 @@ async function connectCloudSync(rawConfig) {
     connectedAt: new Date().toISOString(),
     lastError: "",
   });
+  if (cloudSyncPendingKeys.size) scheduleCloudSync(0, false);
   return { ok: true, config: saved };
 }
 
-async function applyCloudSnapshot(snapshot) {
+async function applyCloudSnapshot(snapshot, options = {}) {
   const nextState = self.ExtLinkCloudSync.documentsToState(snapshot.documents || {});
+  const stored = options.metadata
+    ? { cloudSyncMetadata: options.metadata }
+    : await chrome.storage.local.get("cloudSyncMetadata");
   Object.entries(nextState).forEach(([key, value]) => {
     cloudSyncIgnoredValues.set(key, JSON.stringify(value));
   });
-  cloudSyncMute = true;
   try {
     await chrome.storage.local.set({
       ...nextState,
       cloudSyncMetadata: {
+        ...(stored.cloudSyncMetadata && typeof stored.cloudSyncMetadata === "object"
+          ? stored.cloudSyncMetadata
+          : {}),
         revisions: snapshot.revisions || {},
+        ...(options.configIdentity ? { configIdentity: options.configIdentity } : {}),
         pulledAt: new Date().toISOString(),
       },
     });
   } finally {
-    cloudSyncMute = false;
+    for (const key of Object.keys(nextState)) {
+      if (cloudSyncIgnoredValues.get(key) === JSON.stringify(nextState[key])) {
+        cloudSyncIgnoredValues.delete(key);
+      }
+    }
   }
+  const resolvedConflicts = [...cloudSyncConflictKeys].filter((key) =>
+    Object.prototype.hasOwnProperty.call(nextState, key),
+  );
+  for (const key of resolvedConflicts) {
+    cloudSyncConflictKeys.delete(key);
+    cloudSyncPendingKeys.delete(key);
+  }
+  if (resolvedConflicts.length) await persistCloudSyncQueue();
   return nextState;
 }
 
-async function pullCloudState() {
-  const snapshot = await cloudRequest("/v1/snapshot");
-  const state = await applyCloudSnapshot(snapshot);
-  await updateCloudMetadata({ lastPullAt: new Date().toISOString(), lastError: "" });
-  return {
-    ok: true,
-    documentCount: Object.keys(snapshot.documents || {}).length,
-    state,
-    revisions: snapshot.revisions || {},
-  };
+async function pullCloudState(options = {}) {
+  if (cloudPullPromise) return cloudPullPromise;
+  const request = (async () => {
+    if (typeof initializationPromise !== "undefined") await initializationPromise;
+    const resolveConflicts = options.resolveConflicts === true;
+    const baselineStorage = await chrome.storage.local.get([
+      ...self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS,
+      "cloudSyncMetadata",
+    ]);
+    const baselineVersions = new Map(
+      self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.map((key) => [key, cloudSyncMutationVersions.get(key) || 0]),
+    );
+    const baselinePending = new Set(cloudSyncPendingKeys);
+    const baselineConflicts = new Set(cloudSyncConflictKeys);
+    const conflictKeys = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.filter((key) => baselineConflicts.has(key));
+    const pendingNonConflicts = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.filter(
+      (key) => baselinePending.has(key) && !baselineConflicts.has(key),
+    );
+    if (conflictKeys.length && !resolveConflicts) {
+      return {
+        ok: true,
+        applied: false,
+        status: "conflict",
+        conflictKeys,
+        message: "云端存在未解决冲突，已保留本地数据；请先明确处理冲突后再回读。",
+        documentCount: 0,
+        state: {},
+        revisions: baselineStorage.cloudSyncMetadata?.revisions || {},
+      };
+    }
+    if (pendingNonConflicts.length || (baselinePending.size && !resolveConflicts && !conflictKeys.length)) {
+      return {
+        ok: true,
+        applied: false,
+        status: "pending",
+        message: "本地有待保存的云端修改，暂不覆盖本地数据。",
+        documentCount: 0,
+        state: {},
+        revisions: baselineStorage.cloudSyncMetadata?.revisions || {},
+      };
+    }
+    const config = await getCloudConfig();
+    const configFingerprint = submissionLedgerCloudConfigFingerprint(config);
+    const snapshot = await cloudRequest("/v1/snapshot", {}, config);
+    const latestStorage = await chrome.storage.local.get(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+    const currentConfig = await getCloudConfig();
+    const changed = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.some((key) =>
+      JSON.stringify(latestStorage[key]) !== JSON.stringify(baselineStorage[key]) ||
+      (cloudSyncMutationVersions.get(key) || 0) !== (baselineVersions.get(key) || 0),
+    );
+    const pendingChanged = [...cloudSyncPendingKeys].some((key) => !baselinePending.has(key));
+    if (
+      changed ||
+      pendingChanged ||
+      submissionLedgerCloudConfigFingerprint(currentConfig) !== configFingerprint
+    ) {
+      return {
+        ok: true,
+        applied: false,
+        status: "changed",
+        message: "本地数据或云端配置在回读期间发生变化，暂不覆盖本地数据。",
+        documentCount: Object.keys(snapshot.documents || {}).length,
+        state: {},
+        revisions: snapshot.revisions || {},
+      };
+    }
+    const applyStorage = await chrome.storage.local.get(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+    const applyConfig = await getCloudConfig();
+    const applyChanged = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.some((key) =>
+      JSON.stringify(applyStorage[key]) !== JSON.stringify(baselineStorage[key]) ||
+      (cloudSyncMutationVersions.get(key) || 0) !== (baselineVersions.get(key) || 0),
+    );
+    if (
+      applyChanged ||
+      [...cloudSyncPendingKeys].some((key) => !baselinePending.has(key)) ||
+      submissionLedgerCloudConfigFingerprint(applyConfig) !== configFingerprint
+    ) {
+      return {
+        ok: true,
+        applied: false,
+        status: "changed",
+        message: "本地数据或云端配置在回读期间发生变化，暂不覆盖本地数据。",
+        documentCount: Object.keys(snapshot.documents || {}).length,
+        state: {},
+        revisions: snapshot.revisions || {},
+      };
+    }
+    const state = await applyCloudSnapshot(snapshot, {
+      metadata: baselineStorage.cloudSyncMetadata,
+      configIdentity: cloudSyncConfigIdentity(config),
+    });
+    const resolvedConflicts = conflictKeys.filter((key) =>
+      Object.prototype.hasOwnProperty.call(snapshot.documents || {}, key),
+    );
+    await updateCloudMetadata({ lastPullAt: new Date().toISOString(), lastError: "" });
+    return {
+      ok: true,
+      applied: true,
+      status: "applied",
+      documentCount: Object.keys(snapshot.documents || {}).length,
+      state,
+      revisions: snapshot.revisions || {},
+      resolvedConflicts,
+    };
+  })();
+  cloudPullPromise = request;
+  try {
+    return await request;
+  } finally {
+    if (cloudPullPromise === request) cloudPullPromise = null;
+  }
 }
 
 function submissionLedgerValuesEqual(left, right) {
@@ -884,7 +1065,9 @@ function submissionLedgerValuesEqual(left, right) {
 }
 
 function submissionLedgerHasPendingWrites() {
-  return SUBMISSION_LEDGER_CLOUD_KEYS.some((key) => cloudSyncPendingKeys.has(key));
+  return SUBMISSION_LEDGER_CLOUD_KEYS.some(
+    (key) => cloudSyncPendingKeys.has(key) || cloudSyncConflictKeys.has(key),
+  );
 }
 
 function submissionLedgerSyncResult(status, message, extra = {}) {
@@ -905,10 +1088,18 @@ function submissionLedgerCloudConfigFingerprint(config = {}) {
   return [config.endpoint, config.workspaceId, config.accessToken].map((value) => String(value || "")).join("\u0000");
 }
 
+function cloudSyncConfigIdentity(config = {}) {
+  // Revisions are scoped to endpoint + workspace. Keep the access token in
+  // the in-memory fingerprint used for race checks, but never persist it in
+  // cloudSyncMetadata.
+  return [config.endpoint, config.workspaceId].map((value) => String(value || "")).join("\u0000");
+}
+
 async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
   if (submissionLedgerPullPromise) return submissionLedgerPullPromise;
 
   const request = (async () => {
+    if (typeof initializationPromise !== "undefined") await initializationPromise;
     const initial = await chrome.storage.local.get([
       ...SUBMISSION_LEDGER_CLOUD_KEYS,
       "cloudSyncMetadata",
@@ -917,6 +1108,18 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       submissionRecords: initial.submissionRecords,
       submissionTimeline: initial.submissionTimeline,
     };
+
+    const conflictKeys = SUBMISSION_LEDGER_CLOUD_KEYS.filter((key) => cloudSyncConflictKeys.has(key));
+    if (conflictKeys.length) {
+      return {
+        baseline,
+        sync: submissionLedgerSyncResult(
+          "conflict",
+          "本地外链动态存在未解决云端冲突，已保留本地记录；请先明确处理冲突后再回读。",
+          { conflictKeys },
+        ),
+      };
+    }
 
     if (submissionLedgerHasPendingWrites()) {
       return {
@@ -933,6 +1136,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       return {
         baseline,
         configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        configIdentity: cloudSyncConfigIdentity(config),
         sync: submissionLedgerSyncResult(
           "unconfigured",
           "云端尚未连接，当前显示本地动态。",
@@ -949,6 +1153,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       return {
         baseline,
         configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        configIdentity: cloudSyncConfigIdentity(config),
         sync: submissionLedgerSyncResult(
           cachedError ? "error_cached" : "recent",
           cachedError
@@ -963,7 +1168,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       // The Worker currently exposes a single snapshot read endpoint. Keep
       // the reconciliation surface deliberately narrow: only these two
       // documents may leave this helper or be applied by its consumer.
-      const snapshot = await cloudRequest("/v1/snapshot");
+      const snapshot = await cloudRequest("/v1/snapshot", {}, config);
       const documents = snapshot?.documents && typeof snapshot.documents === "object"
         ? snapshot.documents
         : {};
@@ -974,6 +1179,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       return {
         baseline,
         configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        configIdentity: cloudSyncConfigIdentity(config),
         documents: pulled,
         revisions: Object.fromEntries(
           SUBMISSION_LEDGER_CLOUD_KEYS
@@ -987,6 +1193,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
       return {
         baseline,
         configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        configIdentity: cloudSyncConfigIdentity(config),
         attemptedAt: new Date(submissionLedgerPullStartedAt).toISOString(),
         sync: submissionLedgerSyncResult(
           "error",
@@ -1028,6 +1235,7 @@ async function applySubmissionLedgerCloudPull(prepared) {
       cloudSyncMetadata: {
         ...metadata,
         ...metadataPatch,
+        ...(prepared.configIdentity ? { configIdentity: prepared.configIdentity } : {}),
         submissionLedgerPullStatus: sync?.status || metadataPatch.submissionLedgerPullStatus,
         ...(sync?.status === "applied" || sync?.status === "up_to_date"
           ? { submissionLedgerPulledAt: new Date().toISOString() }
@@ -1113,14 +1321,23 @@ async function applySubmissionLedgerCloudPull(prepared) {
   const nextMetadata = {
     ...metadata,
     ...metadataPatch,
+    ...(prepared.configIdentity ? { configIdentity: prepared.configIdentity } : {}),
     revisions,
     submissionLedgerPullStatus: sync.status,
     submissionLedgerPullError: sync.status === "stale" ? sync.message : "",
     ...(sync.status === "stale" ? {} : { submissionLedgerPulledAt: new Date().toISOString() }),
   };
+  const resolvedConflicts = SUBMISSION_LEDGER_CLOUD_KEYS.filter((key) =>
+    Object.prototype.hasOwnProperty.call(prepared.documents || {}, key) && !staleKeys.includes(key),
+  ).filter((key) => cloudSyncConflictKeys.has(key));
 
   if (!Object.keys(patch).length) {
     await chrome.storage.local.set({ cloudSyncMetadata: nextMetadata });
+    for (const key of resolvedConflicts) {
+      cloudSyncConflictKeys.delete(key);
+      cloudSyncPendingKeys.delete(key);
+    }
+    if (resolvedConflicts.length) await persistCloudSyncQueue();
     return sync;
   }
 
@@ -1128,6 +1345,11 @@ async function applySubmissionLedgerCloudPull(prepared) {
     cloudSyncIgnoredValues.set(key, JSON.stringify(value));
   }
   await chrome.storage.local.set({ ...patch, cloudSyncMetadata: nextMetadata });
+  for (const key of resolvedConflicts) {
+    cloudSyncConflictKeys.delete(key);
+    cloudSyncPendingKeys.delete(key);
+  }
+  if (resolvedConflicts.length) await persistCloudSyncQueue();
   return sync;
 }
 
@@ -1146,14 +1368,24 @@ async function migrateLocalStateToCloud() {
   return { ...result, pulledDocuments: pulled.documentCount };
 }
 
-async function ensureCloudRevisions() {
+async function ensureCloudRevisions(configOverride = null) {
   const stored = await chrome.storage.local.get("cloudSyncMetadata");
   const known = stored.cloudSyncMetadata?.revisions;
-  if (known && typeof known === "object" && Object.keys(known).length) return { ...known };
-  const snapshot = await cloudRequest("/v1/snapshot");
-  await chrome.storage.local.set({
-    cloudSyncMetadata: { revisions: snapshot.revisions || {}, pulledAt: new Date().toISOString() },
-  });
+  const expectedIdentity = configOverride ? cloudSyncConfigIdentity(configOverride) : "";
+  const knownIdentity = String(stored.cloudSyncMetadata?.configIdentity || "");
+  if (
+    known &&
+    typeof known === "object" &&
+    Object.keys(known).length &&
+    (!configOverride || knownIdentity === expectedIdentity)
+  ) {
+    return { ...known };
+  }
+  // Do not persist this read here. The caller may still discover that the
+  // cloud configuration changed while the snapshot was in flight; persisting
+  // its revisions before that check would associate the old workspace with
+  // the new local configuration.
+  const snapshot = await cloudRequest("/v1/snapshot", {}, configOverride);
   return { ...(snapshot.revisions || {}) };
 }
 
@@ -1173,41 +1405,110 @@ function scheduleCloudSyncRetry() {
   scheduleCloudSync(CLOUD_SYNC_RETRY_DELAYS_MS[index], false);
 }
 
+function cloudSyncConfigChangedError() {
+  const error = new Error("云端配置在本轮保存期间发生变化，已停止继续上传；本地修改仍保留待同步。");
+  error.code = "CLOUD_CONFIG_CHANGED";
+  return error;
+}
+
 async function flushCloudState(keys = null) {
   if (cloudSyncFlushPromise) return cloudSyncFlushPromise;
   cloudSyncFlushPromise = (async () => {
+    if (typeof initializationPromise !== "undefined") await initializationPromise;
     const config = await getCloudConfig();
+    const configFingerprint = submissionLedgerCloudConfigFingerprint(config);
     if (!config.configured) return { ok: true, skipped: true };
     const requested = keys || [...cloudSyncPendingKeys];
-    const documentKeys = requested.filter((key) => self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key));
+    const explicit = keys !== null;
+    const documentKeys = requested
+      .filter((key) => self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key))
+      .filter((key) => explicit || !cloudSyncConflictKeys.has(key));
     if (!documentKeys.length) return { ok: true, skipped: true };
-    const revisions = await ensureCloudRevisions();
     const storage = await chrome.storage.local.get(documentKeys);
+    for (const key of documentKeys) {
+      if (Object.prototype.hasOwnProperty.call(storage, key)) cloudSyncPendingKeys.add(key);
+    }
+    // Keep the intent durable before the first network request. MV3 may stop
+    // this worker while a fetch is in flight; a restart must replay the write.
+    await persistCloudSyncQueue();
+    const revisions = await ensureCloudRevisions(config);
+    const assertConfigStable = async () => {
+      const currentConfig = await getCloudConfig();
+      if (submissionLedgerCloudConfigFingerprint(currentConfig) === configFingerprint) return;
+      // A PUT may already have succeeded in the old workspace. Keep every
+      // key queued so the new workspace receives a complete local snapshot
+      // after the user finishes switching configurations.
+      for (const key of documentKeys) cloudSyncPendingKeys.add(key);
+      await persistCloudSyncQueue();
+      throw cloudSyncConfigChangedError();
+    };
+    const persistRevisionProgress = async (completed = false) => {
+      await assertConfigStable();
+      const metadataStorage = await chrome.storage.local.get("cloudSyncMetadata");
+      await assertConfigStable();
+      await chrome.storage.local.set({
+        cloudSyncMetadata: {
+          ...(metadataStorage.cloudSyncMetadata && typeof metadataStorage.cloudSyncMetadata === "object"
+            ? metadataStorage.cloudSyncMetadata
+            : {}),
+          revisions: { ...revisions },
+          configIdentity: cloudSyncConfigIdentity(config),
+          ...(completed ? { pushedAt: new Date().toISOString() } : {}),
+        },
+      });
+      await assertConfigStable();
+      // Remove each acknowledged key durably before attempting the next key.
+      // A worker restart after a later failure must not replay an already
+      // acknowledged document with its old revision.
+      await persistCloudSyncQueue();
+      await assertConfigStable();
+    };
     const saved = [];
     for (const key of documentKeys) {
       if (!Object.prototype.hasOwnProperty.call(storage, key)) {
         cloudSyncPendingKeys.delete(key);
         continue;
       }
+      const submittedValue = storage[key];
+      const submittedVersion = cloudSyncMutationVersions.get(key) || 0;
+      await assertConfigStable();
       try {
         const result = await cloudRequest(`/v1/state/${key}`, {
           method: "PUT",
-          body: { data: storage[key], revision: revisions[key] || 0 },
-        });
+          body: { data: submittedValue, revision: revisions[key] || 0 },
+        }, config);
+        await assertConfigStable();
         revisions[key] = result.revision;
-        cloudSyncPendingKeys.delete(key);
+        const latest = await chrome.storage.local.get(key);
+        await assertConfigStable();
+        const changedDuringWrite =
+          (cloudSyncMutationVersions.get(key) || 0) !== submittedVersion ||
+          JSON.stringify(latest[key]) !== JSON.stringify(submittedValue);
+        if (changedDuringWrite) cloudSyncPendingKeys.add(key);
+        else {
+          cloudSyncPendingKeys.delete(key);
+          cloudSyncConflictKeys.delete(key);
+        }
         saved.push(key);
+        await persistRevisionProgress();
       } catch (err) {
         if (err.status === 409) {
-          cloudSyncPendingKeys.delete(key);
-          throw new Error(`“${key}”已在其他设备更新，请先从云端回读再继续编辑`);
+          const conflict = new Error(`“${key}”已在其他设备更新，已保留本地修改；自动回读已暂停，请先明确处理冲突后再继续`);
+          conflict.status = 409;
+          try {
+            await markCloudSyncConflict(key);
+          } catch (persistError) {
+            console.warn("ExternalLink cloud conflict marker persistence failed", persistError?.message || persistError);
+          }
+          throw conflict;
         }
         throw err;
       }
     }
-    await chrome.storage.local.set({
-      cloudSyncMetadata: { revisions, pushedAt: new Date().toISOString() },
-    });
+    await persistRevisionProgress(true);
+    await assertConfigStable();
+    if (cloudSyncPendingKeys.size) scheduleCloudSync();
+    await assertConfigStable();
     await updateCloudMetadata({ lastPushAt: new Date().toISOString(), lastError: "" });
     cloudSyncRetryAttempt = 0;
     return { ok: true, saved };
@@ -1215,8 +1516,12 @@ async function flushCloudState(keys = null) {
   try {
     return await cloudSyncFlushPromise;
   } catch (err) {
-    await updateCloudMetadata({ lastError: err.message });
-    if (err.status !== 409) scheduleCloudSyncRetry();
+    try {
+      await updateCloudMetadata({ lastError: err.message });
+    } catch (metadataError) {
+      console.warn("ExternalLink cloud sync metadata update failed", metadataError?.message || metadataError);
+    }
+    if (err.status !== 409 && err.code !== "CLOUD_CONFIG_CHANGED") scheduleCloudSyncRetry();
     throw err;
   } finally {
     cloudSyncFlushPromise = null;
@@ -1545,7 +1850,7 @@ async function resumeBatchRun() {
     entry.closeAfterResume = false;
     closeTab(tabId);
   }
-  await persistActiveBatchStatus("running", { resumedAt: new Date().toISOString() });
+  await persistActiveBatchStatus("running", { resumedAt: new Date().toISOString() }, { allowResume: true });
   await recordAutomationEvent(null, { taskId: "run-event", type: "run_resumed", status: "running" }, { runStatus: "running" });
   await scheduleUnattendedWatchdog();
   broadcastStatus();
@@ -1554,7 +1859,7 @@ async function resumeBatchRun() {
   return { ok: true, status: "running" };
 }
 
-async function persistActiveBatchStatus(status, extra = {}) {
+async function persistActiveBatchStatus(status, extra = {}, options = {}) {
   return updateActiveBatchRun((activeBatchRun) => ({
     ...activeBatchRun,
     ...extra,
@@ -1562,10 +1867,10 @@ async function persistActiveBatchStatus(status, extra = {}) {
     tasks: serializeBatchTasks(state.tasks),
     parkedTaskIds: [...state.parkedTaskIds],
     unattendedState: state.unattended ? { ...state.unattended } : activeBatchRun.unattendedState,
-  }));
+  }), options);
 }
 
-function updateActiveBatchRun(updater) {
+function updateActiveBatchRun(updater, options = {}) {
   return runActiveBatchWrite(async () => {
     const stored = await chrome.storage.local.get(["activeBatchRun"]);
     if (!stored.activeBatchRun) return null;
@@ -1579,7 +1884,7 @@ function updateActiveBatchRun(updater) {
       next.status = "stopped";
       next.stoppedAt = current.stoppedAt || next.stoppedAt || new Date().toISOString();
     }
-    if (current.status === "paused" && next.status === "running") {
+    if (current.status === "paused" && next.status === "running" && options.allowResume !== true) {
       next.status = "paused";
     }
     await chrome.storage.local.set({ activeBatchRun: next });
@@ -5668,9 +5973,17 @@ async function processQueue() {
 
 function scheduleQueueProcessing() {
   if (processQueuePromise) return processQueuePromise;
+  const scheduledRunId = state.runId;
   processQueuePromise = processQueue()
-    .catch((err) => {
-      state.running = false;
+    .catch(async (err) => {
+      if (state.runId !== scheduledRunId) return;
+      if (!state.stopped) {
+        // Keep the queue recoverable and persist the same state shown by the UI.
+        state.running = true;
+        await pauseBatchRun().catch((pauseError) => {
+          log(`批量异常暂停保存失败: ${pauseError.message}`, "err", { event: "queue_pause_save_failed" });
+        });
+      }
       log(`批量调度异常: ${err.message}`, "err", {
         event: "queue_failed",
         stack: err.stack,

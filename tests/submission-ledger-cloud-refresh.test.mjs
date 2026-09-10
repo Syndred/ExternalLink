@@ -65,6 +65,7 @@ const functionNames = [
   "submissionLedgerSyncResult",
   "submissionLedgerPullMetadata",
   "submissionLedgerCloudConfigFingerprint",
+  "cloudSyncConfigIdentity",
   "prepareSubmissionLedgerCloudPull",
   "applySubmissionLedgerCloudPull",
   "refreshSubmissionLedgerFromCloud",
@@ -102,6 +103,7 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   const context = {
     chrome,
     cloudSyncPendingKeys: new Set(),
+    cloudSyncConflictKeys: new Set(),
     cloudSyncIgnoredValues: new Map(),
     getCloudConfig: async () => clone(cloudConfig || {
       configured: true,
@@ -225,6 +227,34 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   assert.equal(harness.calls.length, 1);
   gate.resolve({ documents: {}, revisions: {} });
   await Promise.all([first, second]);
+}
+
+// A 409 conflict must remain visible and block an automatic ledger refresh;
+// the remote snapshot must never replace the conflicted local timeline.
+{
+  const harness = createHarness({
+    initial: {
+      submissionRecords: { "local.example::RspAi": { status: "success" } },
+      submissionTimeline: { "local.example::RspAi": [{ id: "local-event" }] },
+    },
+    cloudSnapshot: {
+      documents: {
+        submissionRecords: { "remote.example::RspAi": { status: "success" } },
+        submissionTimeline: { "remote.example::RspAi": [{ id: "remote-event" }] },
+      },
+      revisions: { submissionRecords: 2, submissionTimeline: 2 },
+    },
+  });
+  harness.context.cloudSyncConflictKeys.add("submissionTimeline");
+  const result = await harness.context.refreshSubmissionLedgerFromCloud();
+  assert.equal(result.sync.status, "conflict");
+  assert.equal(harness.calls.length, 0);
+  assert.deepEqual(harness.storageData.submissionRecords, {
+    "local.example::RspAi": { status: "success" },
+  });
+  assert.deepEqual(harness.storageData.submissionTimeline, {
+    "local.example::RspAi": [{ id: "local-event" }],
+  });
 }
 
 // A newer local revision must not be moved backwards by an older snapshot,

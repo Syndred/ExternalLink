@@ -3515,12 +3515,43 @@
     document.querySelectorAll(`[${VISUAL_OVERLAY_ATTR}]`).forEach((element) => element.remove());
   }
 
+  function isLikelyCustomClickTarget(element) {
+    if (!element || !element.matches || !element.matches("div, span, li, section")) return false;
+    if (!isRelevantSnapshotElement(element)) return false;
+    if (getComputedStyle(element).cursor !== "pointer") return false;
+    const rect = element.getBoundingClientRect();
+    if (rect.width < 18 || rect.height < 18 || rect.width > window.innerWidth * 0.98) return false;
+    const label = compactText(getSnapshotLabel(element), 180);
+    if (!label || label.length > 180) return false;
+    return !Array.from(element.children || []).some((child) => (
+      child.matches?.("div, span, li, section") &&
+      isVisible(child) &&
+      getComputedStyle(child).cursor === "pointer" &&
+      compactText(getSnapshotLabel(child), 180) === label
+    ));
+  }
+
+  function collectVisualSnapshotCandidates() {
+    const nativeCandidates = Array.from(document.querySelectorAll(
+      'input, textarea, select, button, label[for], [onclick], [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [role="option"], [role="tab"], [role="menuitem"], [role="link"], [role="switch"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
+    )).filter(isRelevantSnapshotElement);
+    const seen = new Set(nativeCandidates);
+    const customCandidates = Array.from(document.querySelectorAll("div, span, li, section"))
+      .slice(0, 4000)
+      .filter((element) => !seen.has(element) && isLikelyCustomClickTarget(element))
+      .slice(0, 40);
+    customCandidates.forEach((element, index) => {
+      if (!element.hasAttribute(SNAPSHOT_SELECTOR_ATTR)) {
+        element.setAttribute(SNAPSHOT_SELECTOR_ATTR, `${SNAPSHOT_SELECTOR_PREFIX}-custom-${index + 1}`);
+      }
+    });
+    return [...nativeCandidates, ...customCandidates].slice(0, 80);
+  }
+
   function prepareVisualSnapshot() {
     clearVisualSnapshot();
     assignStableSelectors();
-    const candidates = Array.from(document.querySelectorAll(
-      'input, textarea, select, button, label[for], [onclick], [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [role="option"], [role="tab"], [role="menuitem"], [role="link"], [role="switch"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
-    )).filter(isRelevantSnapshotElement).slice(0, 60);
+    const candidates = collectVisualSnapshotCandidates();
     const elements = [];
     candidates.forEach((element, index) => {
       const rect = element.getBoundingClientRect();

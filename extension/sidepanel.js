@@ -2411,6 +2411,7 @@
         await chrome.runtime.sendMessage({
           action: "confirmSubmissionSuccess",
           taskIndex: task.index,
+          taskId: task.id,
           runId: task.runId,
           confirmationNonce: task.confirmationNonce,
           evidence: "user confirmed from side panel",

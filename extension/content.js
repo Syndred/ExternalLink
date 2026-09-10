@@ -2492,6 +2492,7 @@
       }
 
       const baseline = productHuntResultBaseline(config);
+      const createRect = createButton.getBoundingClientRect();
       createButton.click();
       const result = await waitForProductHuntResult(
         config,
@@ -2505,6 +2506,10 @@
         submittedAttempt: true,
         clickedCreateDraft: true,
         finalAction: "create draft",
+        createPoint: {
+          x: Math.round(createRect.left + createRect.width / 2),
+          y: Math.round(createRect.top + createRect.height / 2),
+        },
         ...result,
       };
     }

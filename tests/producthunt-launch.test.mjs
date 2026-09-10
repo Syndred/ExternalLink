@@ -330,6 +330,8 @@ assert.match(background, /dispatchTrustedTabClick[\s\S]*?Input\.dispatchMouseEve
   "a Product Hunt transition rejected by DOM click must escalate to a trusted browser click");
 assert.match(background, /stageCompleted[\s\S]*?stageAdvanced\s*===\s*false[\s\S]*?advancePoint/,
   "trusted clicking must only run after a verified DOM transition failure");
+assert.match(background, /confirmCreate\s*===\s*true[\s\S]*?createPoint[\s\S]*?dispatchTrustedTabClick/,
+  "an explicitly confirmed Create draft action may use the same trusted-click fallback");
 assert.match(
   content,
   /connect with investors[\s\S]*?return ["']extras["']/i,

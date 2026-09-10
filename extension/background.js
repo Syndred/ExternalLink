@@ -4475,6 +4475,27 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
       }
       if (result.submittedAttempt) {
         entry.submissionAttempted = true;
+        if (options.confirmCreate === true && result.createPoint) {
+          log(`${task.domain}: Create draft 的 DOM 点击未产生回执，升级为浏览器级真实点击`, "warn");
+          if (await dispatchTrustedTabClick(tabId, result.createPoint)) {
+            await sleep(5000);
+            const followup = await sendTabMessage(tabId, {
+              action: "runProductHuntStep",
+              config,
+              confirmCreate: false,
+            });
+            await persistProductHuntCheckpoint(task, followup || {});
+            if (followup?.matched && followup?.evidence) {
+              completeTaskFromSubmit(tabId, task, {
+                ...followup,
+                submitted: true,
+                clickedSubmit: true,
+                publicationStatus: followup.publicationStatus || "submitted",
+              });
+              return;
+            }
+          }
+        }
         markTaskUnconfirmed(
           tabId,
           task,

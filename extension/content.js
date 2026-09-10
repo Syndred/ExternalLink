@@ -2167,6 +2167,7 @@
       };
     }
     const label = productHuntControlLabel(button);
+    const rect = button.getBoundingClientRect();
     const beforeUrl = location.href;
     const beforeSignature = productHuntStageSignature(scope);
     button.click();
@@ -2177,6 +2178,10 @@
       stageAdvanced: changed.changed,
       skipped: button === skip,
       clickedLabel: label,
+      advancePoint: {
+        x: Math.round(rect.left + rect.width / 2),
+        y: Math.round(rect.top + rect.height / 2),
+      },
       nextStage: changed.stage,
       urlChanged: location.href !== beforeUrl,
       waiting: !changed.changed,

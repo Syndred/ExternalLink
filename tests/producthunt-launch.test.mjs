@@ -326,6 +326,10 @@ assert.match(
   /fillProductHuntMaker[\s\S]*?input\[type=["']radio["']\][\s\S]*?worked on this product/i,
   "Makers must survive renamed radio fields by matching the visible choice semantics",
 );
+assert.match(background, /dispatchTrustedTabClick[\s\S]*?Input\.dispatchMouseEvent/,
+  "a Product Hunt transition rejected by DOM click must escalate to a trusted browser click");
+assert.match(background, /stageCompleted[\s\S]*?stageAdvanced\s*===\s*false[\s\S]*?advancePoint/,
+  "trusted clicking must only run after a verified DOM transition failure");
 assert.match(
   content,
   /connect with investors[\s\S]*?return ["']extras["']/i,

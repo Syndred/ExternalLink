@@ -4410,6 +4410,26 @@ function parkProductHuntTask(tabId, task, entry, reason, status = "needs_manual"
   }).catch(() => {});
 }
 
+async function dispatchTrustedTabClick(tabId, point) {
+  const x = Number(point?.x);
+  const y = Number(point?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const target = { tabId };
+  await chrome.debugger.attach(target, "1.3");
+  try {
+    await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+    await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
+      type: "mousePressed", x, y, button: "left", clickCount: 1,
+    });
+    await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
+      type: "mouseReleased", x, y, button: "left", clickCount: 1,
+    });
+    return true;
+  } finally {
+    await chrome.debugger.detach(target).catch(() => {});
+  }
+}
+
 async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
   if (entry.agentRunning || entry.agentDone || state.stopped) return;
   const runId = nextEntryRunId(entry);
@@ -4478,6 +4498,14 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         throw new Error(result.error || result.reason || "Product Hunt 步骤失败");
       }
       if (result.waiting) {
+        if (result.stageCompleted && result.stageAdvanced === false && result.advancePoint) {
+          log(`${task.domain}: DOM 点击未推进，升级为浏览器级真实点击 ${result.clickedLabel || "Next"}`, "warn");
+          if (await dispatchTrustedTabClick(tabId, result.advancePoint)) {
+            await sleep(900);
+            waitingRetries += 1;
+            continue;
+          }
+        }
         const waitingSignature = [
           result.stage || "unknown",
           JSON.stringify(result.missing || result.requiredUnchecked || []),

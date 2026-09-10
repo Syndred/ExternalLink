@@ -189,7 +189,7 @@ assert.match(
 );
 assert.match(
   background,
-  /async function\s+startBatchRun\(msg\)[\s\S]{0,320}?closeAllTabs\(\)/,
+  /async function\s+startBatchRun\(msg\)[\s\S]*?closeAllTabs\(\)[\s\S]*?state\.tasks =/,
   "a fresh batch run should clear existing active tabs before replacing task state",
 );
 assert.match(

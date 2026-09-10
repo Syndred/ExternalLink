@@ -99,6 +99,13 @@
       sendResponse(classifyVisibleEvidence());
       return true;
     }
+    if (msg.action === "inspectCurrentFormStage") {
+      sendResponse({
+        signature: formStageSignature(),
+        validation: collectFormValidationState(),
+      });
+      return true;
+    }
     if (msg.action === "countEmptyFields") {
       sendResponse(countEmptyFillableFields());
       return true;
@@ -2711,6 +2718,7 @@
     logStep("🚀 无验证码，代点提交…");
     const beforeUrl = location.href;
     const beforeEvidence = classifyVisibleEvidence();
+    const beforeStage = formStageSignature();
     submitBtn.click();
     const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
     const urlChanged = location.href !== beforeUrl;
@@ -2765,11 +2773,29 @@
       };
     }
 
+    // Some multi-step forms reuse the same URL and use a submit-styled button
+    // to replace the current form with the next stage. A changed form
+    // signature without success evidence is progress, not an unconfirmed final
+    // submission; let the background loop fill and validate the new stage.
+    const afterStage = formStageSignature();
+    if (afterStage && beforeStage && afterStage !== beforeStage) {
+      return {
+        ok: true,
+        platform,
+        stageAdvanced: true,
+        submitted: false,
+        matched: false,
+        clickedSubmit: true,
+        ...fillResult,
+      };
+    }
+
     return {
       ok: true,
       platform,
       clickedSubmit: true,
       submitted: true,
+      beforeStage,
       publicationStatus: classified.publicationStatus || "submitted",
       evidence: classified.evidence || "",
       evidenceSignals: [],
@@ -4463,7 +4489,7 @@
 
   function queryFillableElements(scope) {
     const root = scope || getActiveFillScope();
-    return Array.from(
+    const primary = Array.from(
       root.querySelectorAll(
         'input, textarea, select, [contenteditable="true"], [role="textbox"][contenteditable]',
       ),
@@ -4479,6 +4505,22 @@
         return false;
       return true;
     });
+
+    // Multi-step pages sometimes render the next-step taxonomy controls beside
+    // (rather than inside) the URL form. Keep the best-form scope for avoiding
+    // newsletter/search fields, but include visible discovery selects wherever
+    // the framework mounted them so the run can finish the current stage.
+    if (root !== document) {
+      const supplemental = Array.from(document.querySelectorAll("select"))
+        .filter((element) => !root.contains(element))
+        .filter((element) => isVisible(element) && isFillableField(element))
+        .filter((element) => /categor|industry|sector|niche|vertical|topic|project\s*kind|product\s*type/.test(getFieldHint(element)));
+      for (const element of supplemental) {
+        if (!primary.includes(element)) primary.push(element);
+      }
+    }
+
+    return primary;
   }
 
   function isContentEditableField(element) {

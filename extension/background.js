@@ -2229,6 +2229,42 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     };
   }
 
+  // A normal form submit can replace the document without changing the URL.
+  // In that case the old content-script promise finishes against the detached
+  // document and misses the receipt rendered by the new content script. Always
+  // perform one bounded read from the current document before parking a clicked
+  // submission as unconfirmed.
+  if (submitResult?.submitted && !submitResult?.matched) {
+    await sleep(1200);
+    const currentEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+    const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
+    const currentText = String(currentEvidence?.evidence || "").replace(/\s+/g, " ").trim();
+    if (currentEvidence?.matched && currentText && currentText !== beforeText) {
+      submitResult = {
+        ...submitResult,
+        matched: true,
+        evidence: currentEvidence.evidence,
+        publicationStatus: currentEvidence.publicationStatus || "submitted",
+        evidenceSignals: currentEvidence.evidenceSignals || [{
+          type: currentEvidence.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+          text: currentEvidence.evidence,
+          url: await getTabUrlSafe(tabId),
+          matched: true,
+        }],
+      };
+    } else if (submitResult.beforeStage) {
+      const currentStage = await sendTabMessage(tabId, { action: "inspectCurrentFormStage" }).catch(() => ({}));
+      if (currentStage?.signature && currentStage.signature !== submitResult.beforeStage) {
+        submitResult = {
+          ...submitResult,
+          submitted: false,
+          matched: false,
+          stageAdvanced: true,
+        };
+      }
+    }
+  }
+
   if (submitResult?.captcha) {
     const pageUrl = await getTabUrlSafe(tabId);
     if (pageUrl) await autoClassifySite(pageUrl, "请完成验证码", "needs_captcha");

@@ -36,6 +36,11 @@ assert.match(
   /chrome\.tabs\.update\(tabId,\s*\{\s*url(?:,|:)/,
   "background.js should navigate tracked task tabs after content.js returns a navigation request",
 );
+assert.match(
+  content,
+  /const beforeStage = formStageSignature\(\);[\s\S]*afterStage !== beforeStage[\s\S]*stageAdvanced: true/,
+  "same-URL multi-step forms must continue when the form stage changes without final evidence",
+);
 assert.doesNotMatch(
   background,
   /sidePanel\.open\(/,
@@ -618,6 +623,26 @@ assert.match(manifestText, /lib\/playbooks\.js/, "content scripts should include
 
 const queue = readFileSync(resolve(root, "extension/lib/queue.js"), "utf8");
 assert.match(queue, /publicationStatus/, "success records should store publication status");
+assert.match(
+  background,
+  /submitResult\?\.submitted\s*&&\s*!submitResult\?\.matched[\s\S]*classifySubmitEvidence/,
+  "a clicked submission must re-read evidence from the current document after same-URL navigation",
+);
+assert.match(
+  background,
+  /submitResult\.beforeStage[\s\S]*inspectCurrentFormStage[\s\S]*stageAdvanced: true/,
+  "late-rendered same-URL stages must be detected before parking an unmatched submission",
+);
+assert.match(
+  content,
+  /inspectCurrentFormStage[\s\S]*signature: formStageSignature\(\)/,
+  "content script should expose a read-only current-stage signature",
+);
+assert.match(
+  content,
+  /Multi-step pages sometimes render the next-step taxonomy controls[\s\S]*document\.querySelectorAll\("select"\)[\s\S]*categor\|industry\|sector\|niche\|vertical\|topic/,
+  "generic filling should include taxonomy selects mounted outside the initial URL form",
+);
 assert.match(queue, /pending_moderation/, "publication status should include pending moderation");
 assert.match(queue, /classifyStatusFromReason/, "queue should classify failure reasons");
 assert.match(queue, /DEAD_END_STATUSES/, "queue should define dead-end statuses including paid");

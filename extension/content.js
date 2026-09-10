@@ -64,6 +64,41 @@
 
   // ─── Message Handler (registered at end of IIFE) ───
   let manualSubmissionWatch = null;
+  // Every async fill/comment/media operation captures this lightweight page
+  // context before it starts. Full navigations tear down the content script,
+  // but SPA route changes keep it alive and otherwise let an old response
+  // write into the newly-rendered page.
+  let pageContextVersion = 0;
+
+  function capturePageContext() {
+    return {
+      href: String(location.href || ""),
+      version: pageContextVersion,
+      body: document.body || null,
+    };
+  }
+
+  function isCurrentPageContext(context) {
+    return !!context &&
+      context.version === pageContextVersion &&
+      context.href === String(location.href || "") &&
+      (!context.body || context.body === document.body);
+  }
+
+  function stalePageResult(platform, details = {}) {
+    return {
+      ok: false,
+      stale: true,
+      needs_manual: true,
+      keepTab: true,
+      platform,
+      submitted: false,
+      clickedSubmit: false,
+      reason: "页面已切换，已丢弃旧填表结果，请重新检测当前页面",
+      ...details,
+    };
+  }
+
   function observeManualSubmission(event) {
     if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch) return;
     const control = event.target?.closest?.('button, input[type="submit"]');
@@ -310,6 +345,7 @@
   }
 
   function onPageNavigation() {
+    pageContextVersion += 1;
     setTimeout(() => {
       if (!chrome.runtime?.id) return;
       if (manualIconsEnabled) scheduleManualIconSync();
@@ -405,9 +441,11 @@
     for (const [name, handler] of Object.entries(PLATFORMS)) {
       if (handler.match()) return name;
     }
-    // Generic detection
-    if (document.querySelector('textarea[name="comment"], #comment, textarea.comment'))
-      return "wp_comment";
+    // Keep the generic fallback behind the same form-aware detectors. A
+    // directory may use `name=comment` for product copy, which must not turn
+    // the page into a blog-comment target.
+    if (detectWPComment()) return "wp_comment";
+    if (detectArticleComment()) return "article";
     if (
       document.querySelector(
         'input[name="url"], input[name="website"], input[name="pf_phpbb_website"]',
@@ -447,10 +485,10 @@
   }
 
   function detectWPComment() {
-    return !!document.querySelector(
-      '#commentform, form.comment-form, textarea[name="comment"], #comment, ' +
-        ".comment-respond, .wp-block-comments",
-    );
+    // Only WordPress's explicit form markers (including its comment widget
+    // containers) select this route. Ordinary article forms use the article
+    // detector below, even when their field is also named `comment`.
+    return !!findVisibleWpCommentForm();
   }
 
   function fieldHasValue(element) {
@@ -461,7 +499,7 @@
     if (window.top !== window) {
       return { ok: false, reason: "iframe" };
     }
-    const form = document.querySelector("#commentform, form.comment-form");
+    const form = findVisibleWpCommentForm();
     if (!form) return { ok: false, reason: "no_standard_form" };
     const author = form.querySelector('#author, input[name="author"]');
     const email = form.querySelector('#email, input[name="email"], input[type="email"]');
@@ -477,6 +515,27 @@
       return { ok: false, reason: "captcha", form, author, email, url, comment, submit };
     }
     return { ok: true, form, author, email, url, comment, submit };
+  }
+
+  function findVisibleWpCommentForm() {
+    const candidates = [
+      ...Array.from(document.querySelectorAll("#commentform, form.comment-form")),
+      ...Array.from(document.querySelectorAll(".comment-respond, .wp-block-comments"))
+        .map((container) => container.matches?.("form") ? container : container.querySelector?.("form"))
+        .filter(Boolean),
+    ];
+    return candidates.find((form) => {
+      if (!isVisibleHumanGate(form)) return false;
+      const comment = form.querySelector?.(
+        '#comment, textarea[name="comment"], textarea.comment, ' +
+          'textarea[aria-label*="comment" i], textarea[placeholder*="comment" i]',
+      );
+      const submit = form.querySelector?.(
+        '#submit, input[type="submit"][name="submit"], button[type="submit"], ' +
+          'input.comment-submit, button.comment-submit, .form-submit input[type="submit"]',
+      );
+      return isVisibleHumanGate(comment) && isVisibleHumanGate(submit);
+    }) || null;
   }
 
   function shouldAutoSubmitListing(config, platform) {
@@ -535,9 +594,55 @@
     return { classification: "safe", type: "safe", reason: "", evidence: submitClassification.evidence };
   }
 
+  function isVisibleHumanGate(element) {
+    if (!element) return false;
+    if (element.hidden || element.getAttribute?.("aria-hidden") === "true") return false;
+    try {
+      if (element.closest?.('[hidden], [aria-hidden="true"]')) return false;
+    } catch {
+      /* ignore malformed test/third-party nodes */
+    }
+    if (
+      typeof window.getComputedStyle === "function" &&
+      typeof element.getBoundingClientRect === "function"
+    ) {
+      return isVisible(element);
+    }
+    return true;
+  }
+
+  function findVisibleHumanGate(selector, scope = null) {
+    return Array.from(document.querySelectorAll(selector)).find((element) => {
+      if (!isVisibleHumanGate(element)) return false;
+      if (!scope || scope === document) return true;
+      return !!scope.contains?.(element);
+    }) || null;
+  }
+
+  function isVerificationCodeField(element) {
+    if (!element) return false;
+    const hint = [
+      element.name,
+      element.id,
+      element.getAttribute?.("aria-label"),
+      element.getAttribute?.("placeholder"),
+      element.closest?.("label")?.textContent,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return /captcha|h[\s-]?captcha|one[\s-]?time|\botp\b|verification|verify|security\s*code|confirmation\s*code|auth(?:entication)?\s*code|email\s*code|验证码|校验码|验证(?:码|代码)/i.test(hint);
+  }
+
   function detectSubmitBlockers() {
     if (typeof detectCaptcha === "function" && detectCaptcha()) return { captcha: true };
-    if (document.querySelector('input[type="password"]')) {
+    let activeScope = document;
+    try {
+      activeScope = getActiveFillScope() || document;
+    } catch {
+      /* fall back to page scope when a framework exposes a partial DOM */
+    }
+    if (findVisibleHumanGate('input[type="password"]', activeScope)) {
       return { needs_manual: true, reason: "需要登录或注册" };
     }
     const paid = detectPaidSubmit();
@@ -647,7 +752,13 @@
     if (!form) return false;
     const commentField = articleCommentField(form);
     const submit = articleCommentSubmit(form);
-    if (!commentField || !submit) return false;
+    if (
+      !isVisibleHumanGate(form) ||
+      !commentField ||
+      !submit ||
+      !isVisibleHumanGate(commentField) ||
+      !isVisibleHumanGate(submit)
+    ) return false;
 
     // A plain `form[action*=post]` is common on directory/listing forms. It is
     // a comment form only when the form itself, its action, or its local copy
@@ -715,6 +826,10 @@
       const submit = articleCommentSubmit(form);
       return !!(commentField && submit && isArticleCommentForm(form));
     });
+  }
+
+  function findVisibleArticleCommentForm() {
+    return Array.from(document.querySelectorAll("form")).find((form) => isArticleCommentForm(form)) || null;
   }
 
   function detectSubmissionForm() {
@@ -2788,8 +2903,21 @@
     isArticleCommentForm,
     isArticleCommentField,
   };
+  self.__extLinkContentAuditTestHooks = {
+    detectWPComment,
+    identifyPlatform,
+    detectSubmitBlockers,
+    isCommentLikeField,
+    submitArticleComment,
+    submitWPComment,
+    submitFilledForm,
+    requestCommentDrafts,
+    capturePageContext,
+    isCurrentPageContext,
+  };
 
   async function submitFilledForm(config, platform = "directory", fillResult = {}) {
+    const pageContext = capturePageContext();
     const blocker = detectSubmitBlockers();
     if (blocker?.captcha) {
       logStep("🤖 检测到验证码 — 页签留下等人，不代点提交");
@@ -2901,6 +3029,7 @@
     const beforeUrl = location.href;
     const beforeEvidence = classifyVisibleEvidence();
     const beforeStage = formStageSignature();
+    if (!isCurrentPageContext(pageContext)) return stalePageResult(platform, fillResult);
     submitBtn.click();
     const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
     const urlChanged = location.href !== beforeUrl;
@@ -2973,10 +3102,13 @@
     }
 
     return {
-      ok: true,
+      ok: false,
+      needs_manual: true,
+      keepTab: true,
+      reason: "已点击提交，但未发现新的成功回执，请人工确认",
       platform,
       clickedSubmit: true,
-      submitted: true,
+      submitted: false,
       beforeStage,
       publicationStatus: classified.publicationStatus || "submitted",
       evidence: classified.evidence || "",
@@ -3197,39 +3329,48 @@
 
   // ─── WordPress Comment Submission ───
   async function submitWPComment(config) {
+    const pageContext = capturePageContext();
     logStep("🔍 检测到 WordPress 评论表单");
+    const commentForm = findVisibleWpCommentForm();
+    if (!commentForm) {
+      return { manual: true, platform: "wp_comment", reason: "no_visible_comment_form" };
+    }
+    const findField = (selector) => commentForm.querySelector?.(selector);
     // Step 1: Fill author name
-    const authorField = document.querySelector(
+    const authorField = findField(
       '#author, input[name="author"], input[name*="author"], ' +
         'input[aria-label*="Name"], input[placeholder*="name" i], input[placeholder*="Name"]',
     );
     if (authorField) {
       logStep(`✏️ 填写作者名 → ${config.username}`);
       await simulateTyping(authorField, config.username);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
     }
 
     // Step 2: Fill email
-    const emailField = document.querySelector(
+    const emailField = findField(
       '#email, input[name="email"], input[type="email"], ' +
         'input[aria-label*="Email"], input[placeholder*="email" i], input[placeholder*="Email"]',
     );
     if (emailField) {
       logStep(`✏️ 填写邮箱 → ${config.email}`);
       await simulateTyping(emailField, config.email);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
     }
 
     // Step 3: Fill URL (link goes HERE, not in body - Akismet bypass)
-    const urlField = document.querySelector(
+    const urlField = findField(
       '#url, input[name="url"], input[name="website"], ' +
         'input[aria-label*="Website"], input[placeholder*="website" i]',
     );
     if (urlField) {
       logStep(`✏️ 填写外链 → ${config.targetDomain}`);
       await simulateTyping(urlField, config.targetDomain);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
     }
 
     // Step 4: Generate comment text (link stays in the URL field above, not the body)
-    const commentField = document.querySelector(
+    const commentField = findField(
       '#comment, textarea[name="comment"], textarea.comment, ' +
         'textarea[aria-label*="Comment"], textarea[placeholder*="comment" i]',
     );
@@ -3242,10 +3383,13 @@
       if (!commentText) {
         return { manual: true, platform: "wp_comment", reason: "no_comment_text" };
       }
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
       await simulateTyping(commentField, commentText);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
     }
 
     // Step 5: Check for captcha before submitting
+    if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
     if (detectCaptcha()) {
       logStep("🤖 检测到验证码 — 请手动完成");
       highlightCaptchaArea();
@@ -3258,18 +3402,35 @@
     // Step 6: Submit only when fillOnly is off, or the opt-in standard WP preflight passed.
     const submitBtn =
       preflight.submit ||
-      findSubmitButton(
+      commentForm.querySelector?.(
         '#submit, input[type="submit"][name="submit"], button[type="submit"], input.comment-submit, button.comment-submit, .form-submit input[type="submit"]',
-        ["post comment", "submit", "comment"],
       );
     if (submitBtn) {
-      if (isFillOnly(config) && !canAutoSubmit) {
+      if (isFillOnly(config)) {
         return { ...returnAfterFill(config, "wp_comment"), standardWp: preflight.ok };
       }
       logStep(canAutoSubmit ? "🚀 标准评论表单预检通过，代点提交…" : "🚀 提交评论…");
+      const beforeUrl = location.href;
+      const beforeEvidence = classifyVisibleEvidence();
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("wp_comment");
       submitBtn.click();
-      await sleep(3000);
-      const classified = classifyVisibleEvidence();
+      const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
+      const matched = classified?.matched === true && Boolean(classified?.evidence);
+      if (!matched) {
+        return {
+          ok: false,
+          needs_manual: true,
+          keepTab: true,
+          reason: "已点击评论提交，但未发现新的成功回执，请人工确认",
+          platform: "wp_comment",
+          clickedSubmit: true,
+          submitted: false,
+          standardWp: preflight.ok,
+          publicationStatus: classified?.publicationStatus || "submitted",
+          evidence: classified?.evidence || "",
+          matched: false,
+        };
+      }
       return {
         ok: true,
         platform: "wp_comment",
@@ -3278,10 +3439,10 @@
         standardWp: preflight.ok,
         publicationStatus: classified.publicationStatus || "submitted",
         evidence: classified.evidence || "",
-        matched: classified.matched === true,
+        matched: true,
       };
     }
-    if (isFillOnly(config) && !canAutoSubmit) {
+    if (isFillOnly(config)) {
       return { ...returnAfterFill(config, "wp_comment"), standardWp: preflight.ok };
     }
     logStep("⚠️ 未找到评论提交按钮，已填字段请手动提交");
@@ -3331,6 +3492,7 @@
   async function submitDirectoryLink(config) {
     logStep("🔍 检测到目录提交表单");
     const result = await smartFillFromConfig(config);
+    if (result?.stale) return result;
     if (result.filledCount === 0) {
       const submissionLink = findSubmissionLink();
       if (submissionLink) {
@@ -3352,36 +3514,45 @@
 
   // ─── Article Comment Submission ───
   async function submitArticleComment(config) {
+    const pageContext = capturePageContext();
     logStep("🔍 检测到文章评论表单");
+    const commentForm = findVisibleArticleCommentForm();
+    if (!commentForm) {
+      return { manual: true, platform: "article", reason: "no_visible_comment_form" };
+    }
+    const findField = (selector) => commentForm.querySelector?.(selector);
     // Similar to WP but with generic selectors
-    const nameField = document.querySelector(
+    const nameField = findField(
       'input[name="author"], input[name="name"], ' +
         'input[placeholder*="name" i], input[placeholder*="Name"]',
     );
     if (nameField) {
       logStep(`✏️ 填写名称 → ${config.username}`);
       await simulateTyping(nameField, config.username);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
     }
 
-    const emailField = document.querySelector(
+    const emailField = findField(
       'input[name="email"], input[type="email"], ' +
         'input[placeholder*="email" i], input[placeholder*="Email"]',
     );
     if (emailField) {
       logStep(`✏️ 填写邮箱 → ${config.email}`);
       await simulateTyping(emailField, config.email);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
     }
 
-    const urlField = document.querySelector(
+    const urlField = findField(
       'input[name="url"], input[name="website"], ' +
         'input[placeholder*="website" i], input[placeholder*="URL"]',
     );
     if (urlField) {
       logStep(`✏️ 填写外链 → ${config.targetDomain}`);
       await simulateTyping(urlField, config.targetDomain);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
     }
 
-    const commentField = document.querySelector(
+    const commentField = findField(
       'textarea[name="comment"], textarea.comment, ' +
         'textarea[name="body"], textarea[placeholder*="comment" i]',
     );
@@ -3394,68 +3565,104 @@
       if (!commentText) {
         return { manual: true, platform: "article", reason: "no_comment_text" };
       }
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
       await simulateTyping(commentField, commentText);
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
     }
 
+    if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
     if (detectCaptcha()) {
       logStep("🤖 检测到验证码 — 请手动完成");
       highlightCaptchaArea();
       return { captcha: true };
     }
 
-    const submitBtn = findSubmitButton('input[type="submit"], button[type="submit"]', [
-      "post",
-      "submit",
-      "comment",
-    ]);
+    const submitBtn = commentForm.querySelector?.('input[type="submit"], button[type="submit"]');
     if (submitBtn) {
       if (isFillOnly(config)) return returnAfterFill(config, "article");
       logStep("🚀 提交评论…");
+      const beforeUrl = location.href;
+      const beforeEvidence = classifyVisibleEvidence();
+      if (!isCurrentPageContext(pageContext)) return stalePageResult("article");
       submitBtn.click();
-      await sleep(3000);
+      const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
+      const matched = classified?.matched === true && Boolean(classified?.evidence);
+      if (!matched) {
+        return {
+          ok: false,
+          needs_manual: true,
+          keepTab: true,
+          reason: "已点击评论提交，但未发现新的成功回执，请人工确认",
+          platform: "article",
+          clickedSubmit: true,
+          submitted: false,
+          publicationStatus: classified?.publicationStatus || "submitted",
+          evidence: classified?.evidence || "",
+          matched: false,
+        };
+      }
+      return {
+        ok: true,
+        platform: "article",
+        clickedSubmit: true,
+        submitted: true,
+        publicationStatus: classified.publicationStatus || "submitted",
+        evidence: classified.evidence,
+        matched: true,
+      };
     } else {
       if (isFillOnly(config)) return returnAfterFill(config, "article");
       logStep("⚠️ 未找到评论提交按钮，已填字段请手动提交");
       return { manual: true, platform: "article", reason: "no_submit_button" };
     }
 
-    return { ok: true, platform: "article" };
+    return { ok: false, platform: "article", submitted: false };
   }
 
   // ─── Generic Form Submission ───
   async function submitGenericForm(config) {
+    const pageContext = capturePageContext();
     logStep("🔍 检测到通用提交表单");
     let filledCount = 0;
+    const staleResult = () => stalePageResult("generic", { filledCount });
     // Fill all visible text inputs with relevant data
     const inputs = document.querySelectorAll(
       'input[type="text"], input[type="url"], input[type="email"], input:not([type])',
     );
     for (const input of inputs) {
+      if (!isCurrentPageContext(pageContext)) return staleResult();
       if (!isFillableField(input)) continue;
       const name = getFieldHint(input);
       if (name.includes("url") || name.includes("website") || name.includes("link")) {
         await simulateTyping(input, config.targetDomain);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       } else if (name.includes("name") || name.includes("author")) {
         await simulateTyping(input, config.username);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       } else if (name.includes("email")) {
         await simulateTyping(input, config.email);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       } else if (name.includes("title") || name.includes("subject")) {
         await simulateTyping(input, config.brandName);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       } else if (input.type === "url") {
         await simulateTyping(input, config.targetDomain);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       } else if (input.type === "email") {
         await simulateTyping(input, config.email);
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       }
     }
 
     const textareas = document.querySelectorAll("textarea");
     for (const ta of textareas) {
+      if (!isCurrentPageContext(pageContext)) return staleResult();
       if (!isFillableField(ta)) continue;
       const name = getFieldHint(ta);
       const isRealCommentField = isArticleCommentField(ta);
@@ -3472,14 +3679,20 @@
           maxChars: getCommentCharBudget(ta),
         });
         if (commentText) {
+          if (!isCurrentPageContext(pageContext)) return staleResult();
           await simulateTyping(ta, commentText);
+          if (!isCurrentPageContext(pageContext)) return staleResult();
           filledCount++;
         }
       } else if (isDescriptionField) {
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         await simulateTyping(ta, config.commentTemplate || generateDescription(config));
+        if (!isCurrentPageContext(pageContext)) return staleResult();
         filledCount++;
       }
     }
+
+    if (!isCurrentPageContext(pageContext)) return staleResult();
 
     logStep(`✏️ 填充了 ${filledCount} 个字段`);
     if (filledCount === 0) {
@@ -5699,6 +5912,7 @@
   async function tryFillFileFromUrl(input, imageUrl, baseUrl, config, media = null) {
     if (!input || input.type !== "file") return false;
 
+    const pageContext = capturePageContext();
     const useLogoDataUrl = media === true || media?.useLogoDataUrl === true;
     const descriptor = media && typeof media === "object" ? media : null;
     const dataUrl = useLogoDataUrl ? config?.logoDataUrl : "";
@@ -5706,7 +5920,9 @@
     try {
       if (dataUrl && String(dataUrl).startsWith("data:")) {
         const blob = await (await fetch(dataUrl)).blob();
+        if (!isCurrentPageContext(pageContext)) return false;
         if (await attachBlobToFileInput(input, blob, "logo")) {
+          if (!isCurrentPageContext(pageContext)) return false;
           reportMediaUpload("success", { name: "logo", source: "embedded", bytes: blob.size, mime: blob.type });
           return true;
         }
@@ -5714,7 +5930,9 @@
       if (imageUrl) {
         if (isCloudMediaRef(imageUrl)) {
           const cloud = await fetchCloudMediaBlob(imageUrl, descriptor?.profileKey || "cloud-media");
+          if (!isCurrentPageContext(pageContext)) return false;
           if (await attachBlobToFileInput(input, cloud.blob, cloud.name)) {
+            if (!isCurrentPageContext(pageContext)) return false;
             logStep(`☁️ 已用云端媒体上传 ${cloud.name}`);
             reportMediaUpload("success", { name: cloud.name, source: "cloud", bytes: cloud.blob.size, mime: cloud.blob.type });
             return true;
@@ -5723,7 +5941,9 @@
         const absolute = new URL(imageUrl, baseUrl || location.href).href;
         const sourceName = absolute.split("/").pop()?.split("?")[0] || "image";
         const blob = await fetchSubmissionMediaBlob(absolute);
+        if (!isCurrentPageContext(pageContext)) return false;
         if (await attachBlobToFileInput(input, blob, sourceName)) {
+          if (!isCurrentPageContext(pageContext)) return false;
           reportMediaUpload("success", { name: sourceName, source: "remote", bytes: blob.size, mime: blob.type });
           return true;
         }
@@ -5731,7 +5951,9 @@
     } catch {
       /* The page may block remote image reads; report the usable cloud reference below. */
     }
-    reportMediaUpload("failed", { profile: config?.projectKey || "", reason: "没有可用或符合要求的云端媒体文件" });
+    if (isCurrentPageContext(pageContext)) {
+      reportMediaUpload("failed", { profile: config?.projectKey || "", reason: "没有可用或符合要求的云端媒体文件" });
+    }
     return false;
   }
 
@@ -5895,6 +6117,7 @@
   }
 
   async function smartFillFromConfig(config) {
+    const pageContext = capturePageContext();
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);
     const baseUrl = config.targetDomain || pf.Url || location.href;
@@ -5908,6 +6131,15 @@
     let screenshotCursor = 0;
 
     for (const element of elements) {
+      if (!isCurrentPageContext(pageContext)) {
+        return stalePageResult("form", {
+          filledCount,
+          mappings,
+          skippedFiles,
+          uploadedFiles,
+          inferredFields: [...inferredFields],
+        });
+      }
       const type = (element.type || "").toLowerCase();
       const tag = element.tagName.toLowerCase();
 
@@ -5942,6 +6174,15 @@
           ...(media || {}),
           index: media?.explicitIndex ? media.index : screenshotCursor,
         });
+        if (!isCurrentPageContext(pageContext)) {
+          return stalePageResult("form", {
+            filledCount,
+            mappings,
+            skippedFiles,
+            uploadedFiles,
+            inferredFields: [...inferredFields],
+          });
+        }
         if (ok) {
           filledCount++;
           uploadedFiles.push(getSnapshotLabel(element) || element.name || "image");
@@ -5982,6 +6223,15 @@
       );
       const fitted = fitValueToConstraints(String(resolved), getFieldConstraints(element));
       await simulateTyping(element, fitted);
+      if (!isCurrentPageContext(pageContext)) {
+        return stalePageResult("form", {
+          filledCount,
+          mappings,
+          skippedFiles,
+          uploadedFiles,
+          inferredFields: [...inferredFields],
+        });
+      }
       filledCount++;
       mappings[fieldMappingKey(element)] = {
         profileKey: inferProfileKeyForValue(config, fitted),
@@ -5991,8 +6241,26 @@
     }
 
     for (const trigger of queryCustomDropdowns()) {
+      if (!isCurrentPageContext(pageContext)) {
+        return stalePageResult("form", {
+          filledCount,
+          mappings,
+          skippedFiles,
+          uploadedFiles,
+          inferredFields: [...inferredFields],
+        });
+      }
       if (!isCustomDropdownEmpty(trigger)) continue;
       const ok = await tryFillCustomDropdown(trigger, config);
+      if (!isCurrentPageContext(pageContext)) {
+        return stalePageResult("form", {
+          filledCount,
+          mappings,
+          skippedFiles,
+          uploadedFiles,
+          inferredFields: [...inferredFields],
+        });
+      }
       if (ok) {
         filledCount++;
         mappings[fieldMappingKey(trigger)] = {
@@ -6174,41 +6442,33 @@
   // ─── Captcha Detection ───
   function detectCaptcha() {
     // reCAPTCHA
-    if (
-      document.querySelector(
-        '.g-recaptcha, [data-sitekey], iframe[src*="recaptcha"], iframe[src*="captcha"], .grecaptcha-badge',
-      )
-    )
-      return true;
+    if (findVisibleHumanGate(
+      '.g-recaptcha, [data-sitekey], iframe[src*="recaptcha"], iframe[src*="captcha"], .grecaptcha-badge',
+    )) return true;
     // hCaptcha
-    if (document.querySelector('.h-captcha, iframe[src*="hcaptcha"]')) return true;
+    if (findVisibleHumanGate('.h-captcha, iframe[src*="hcaptcha"]')) return true;
     // Cloudflare Turnstile
-    if (document.querySelector('.cf-turnstile, iframe[src*="challenges.cloudflare"]')) return true;
+    if (findVisibleHumanGate('.cf-turnstile, iframe[src*="challenges.cloudflare"]')) return true;
     // Image captcha
-    if (document.querySelector('img[src*="captcha"], img.captcha, img[alt*="captcha" i]'))
-      return true;
+    if (findVisibleHumanGate('img[src*="captcha"], img.captcha, img[alt*="captcha" i]')) return true;
     // Generic captcha input
-    if (
-      document.querySelector(
-        'input[name*="captcha"], input[id*="captcha"], input[placeholder*="captcha" i]',
-      )
-    )
-      return true;
+    if (findVisibleHumanGate(
+      'input[name*="captcha"], input[id*="captcha"], input[placeholder*="captcha" i]',
+    )) return true;
     // Math captcha
-    if (document.querySelector('input[name*="math"], input[name*="spam"]')) return true;
+    if (findVisibleHumanGate('input[name*="math"], input[name*="spam"]')) return true;
     // OTP / Verification code
-    if (
-      document.querySelector(
-        'input[name*="code"], input[name*="otp"], input[name*="verification"], input[name*="emailCode"]',
-      )
-    )
-      return true;
+    const verificationInput = Array.from(document.querySelectorAll(
+      'input[name*="code"], input[id*="code"], input[name*="otp"], input[id*="otp"], ' +
+        'input[name*="verification"], input[id*="verification"], input[name*="emailCode"], input[id*="emailCode"]',
+    )).find((element) => isVisibleHumanGate(element) && isVerificationCodeField(element));
+    if (verificationInput) return true;
 
     return false;
   }
 
   function highlightCaptchaArea() {
-    const captchaEl = document.querySelector(
+    const captchaEl = findVisibleHumanGate(
       '.g-recaptcha, .h-captcha, iframe[src*="captcha"], iframe[src*="recaptcha"], ' +
         'img[src*="captcha"], .captcha',
     );
@@ -6491,10 +6751,7 @@
   }
 
   function pageLooksLikeManualFillTarget() {
-    if (detectWPComment() || detectDirectory()) return true;
-    if (document.querySelector("#commentform, form.comment-form, textarea[name='comment']")) {
-      return true;
-    }
+    if (detectWPComment() || detectArticleComment() || detectDirectory()) return true;
     for (const form of document.querySelectorAll("form")) {
       if (form.querySelector('input[type="password"], input[type="search"]')) continue;
       const hasWebsite = form.querySelector(
@@ -6584,11 +6841,15 @@
   }
 
   function isCommentLikeField(field) {
-    const hint = `${getFieldHint(field)} ${getSnapshotLabel(field)}`.toLowerCase();
-    return (
-      field.tagName.toLowerCase() === "textarea" &&
-      /comment|reply|message|body|thoughts|feedback/.test(hint)
+    if (!field || field.tagName?.toLowerCase() !== "textarea") return false;
+    if (isArticleCommentField(field)) return true;
+    const wpForm = findVisibleWpCommentForm();
+    if (!wpForm || !wpForm.contains?.(field)) return false;
+    const wpField = wpForm.querySelector?.(
+      '#comment, textarea[name="comment"], textarea.comment, ' +
+        'textarea[aria-label*="comment" i], textarea[placeholder*="comment" i]',
     );
+    return wpField === field;
   }
 
   function syncManualIcons() {
@@ -6724,6 +6985,8 @@
   }
 
   async function requestCommentDrafts(config, options = {}) {
+    const pageContext = options.__pageContext || capturePageContext();
+    if (!isCurrentPageContext(pageContext)) return null;
     const cacheKey = `${config?.projectKey || ""}|${location.href}`;
     if (!options.refresh && commentDraftCacheKey === cacheKey && commentDraftCacheValue) {
       return commentDraftCacheValue;
@@ -6746,6 +7009,11 @@
         refresh: options.refresh === true,
       });
     } catch {
+      return null;
+    }
+
+    if (!isCurrentPageContext(pageContext)) {
+      logStep("ℹ️ 页面已切换，已丢弃旧评论草稿");
       return null;
     }
 
@@ -6777,11 +7045,16 @@
   }
 
   async function generateComment(config, options = {}) {
+    const pageContext = capturePageContext();
     if (config?.commentTemplate && options.preferTemplate !== false) {
       return config.commentTemplate;
     }
 
-    const drafts = await requestCommentDrafts(config, options);
+    const drafts = await requestCommentDrafts(config, { ...options, __pageContext: pageContext });
+    if (!isCurrentPageContext(pageContext)) {
+      logStep("ℹ️ 页面已切换，已跳过旧评论内容");
+      return "";
+    }
     if (drafts?.drafts?.length) {
       const draft = drafts.drafts[0];
       const anchor = draft.anchorText && draft.placement === "body" ? draft.anchorText : "";

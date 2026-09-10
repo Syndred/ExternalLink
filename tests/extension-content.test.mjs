@@ -582,8 +582,8 @@ assert.match(
 );
 assert.match(
   content,
-  /isFillOnly\(config\) && !canAutoSubmit/,
-  "fill-only must still win unless the standard WP preflight passed",
+  /if \(isFillOnly\(config\)\) \{\s*return \{ \.\.\.returnAfterFill\(config, "wp_comment"\)/,
+  "explicit fill-only must win even when the standard WP auto-submit preference is enabled",
 );
 assert.match(
   content,

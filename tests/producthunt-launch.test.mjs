@@ -374,6 +374,11 @@ assert.match(
 );
 assert.match(content, /productHuntReceipt[\s\S]*?this product is a draft/i,
   "a Product Hunt draft success page must expose a recoverable receipt");
+assert.match(
+  content,
+  /function\s+productHuntVisibleText[\s\S]*requested\s*===\s*document\s*\?\s*document\.body/,
+  "Product Hunt receipt detection must read document.body because Document.textContent is null",
+);
 assert.match(background, /success_page_recovery[\s\S]*?recordSubmittedProject/,
   "detecting a matching Product Hunt draft page must recover the ledger record");
 assert.match(

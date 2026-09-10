@@ -1117,7 +1117,8 @@
   }
 
   function productHuntVisibleText(scope) {
-    const root = scope || document;
+    const requested = scope || document;
+    const root = requested === document ? document.body : requested;
     return compactText(root.innerText || root.textContent || "", 10000);
   }
 

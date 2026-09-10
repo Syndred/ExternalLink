@@ -323,6 +323,11 @@ assert.match(
 );
 assert.match(
   content,
+  /fillProductHuntMaker[\s\S]*?input\[type=["']radio["']\][\s\S]*?worked on this product/i,
+  "Makers must survive renamed radio fields by matching the visible choice semantics",
+);
+assert.match(
+  content,
   /connect with investors[\s\S]*?return ["']extras["']/i,
   "Connect with Investors is the Extras step boundary, not an unknown stage",
 );

@@ -1656,7 +1656,12 @@
 
   async function fillProductHuntMaker(scope, values) {
     const isMakerInputs = productHuntRawControls(scope, 'input[name="isMaker"], input[name="is_maker"]');
-    const hiddenIsMaker = isMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || isMakerInputs[0];
+    const semanticMakerInput = productHuntRawControls(scope, 'input[type="radio"], input[type="checkbox"]')
+      .find((input) => /i worked on this product|i am (?:a|the) maker|i made this product/i.test(
+        normalizeProductHuntText(productHuntChoiceLabel(input)),
+      ));
+    const hiddenIsMaker = isMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) ||
+      isMakerInputs[0] || semanticMakerInput;
     const soloMakerInputs = productHuntRawControls(scope, 'input[name="soloMaker"], input[name="solo_maker"]');
     const hiddenSoloMaker = soloMakerInputs.find((input) => /^(?:true|yes|1|on)$/i.test(String(input.value || "").trim())) || soloMakerInputs[0];
     if ((values.makerHandle || values.soloMaker) && hiddenIsMaker && !productHuntBooleanControlChecked(hiddenIsMaker)) {

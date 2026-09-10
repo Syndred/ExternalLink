@@ -648,6 +648,11 @@ assert.match(
   /function\s+findSubmitButton[\s\S]*Submit link[\s\S]*compareDocumentPosition[\s\S]*DOCUMENT_POSITION_FOLLOWING/,
   "submit selection should prefer the action belonging to the latest visible multi-step stage",
 );
+assert.match(
+  content,
+  /Links styled as buttons usually reopen[\s\S]*tagName\.toLowerCase\(\) === "a"/,
+  "submission must not click promotional links styled as buttons",
+);
 assert.match(queue, /pending_moderation/, "publication status should include pending moderation");
 assert.match(queue, /classifyStatusFromReason/, "queue should classify failure reasons");
 assert.match(queue, /DEAD_END_STATUSES/, "queue should define dead-end statuses including paid");

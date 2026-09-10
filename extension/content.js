@@ -5735,6 +5735,9 @@
         if (!isVisible(element) || element.disabled || element.getAttribute("aria-disabled") === "true") {
           return false;
         }
+        // Links styled as buttons usually reopen or navigate to a submission
+        // page; they are entry points, not the form action itself.
+        if (element.tagName.toLowerCase() === "a") return false;
         const label = getElementLabel(element);
         return direct.includes(element) || labels.some((text) => label.includes(text));
       })

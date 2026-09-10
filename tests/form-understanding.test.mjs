@@ -206,6 +206,14 @@ function config(projectKey) {
     /Paid\/Free\/Freemium\/Subscription/,
     "the plan prompt must explain product pricing versus submission fees",
   );
+  assert.equal(runtime.cloudCalls[0].payload.config.projectKey, "A");
+  assert.equal(runtime.cloudCalls[0].payload.config.targetDomain, "directory.example");
+  assert.equal(runtime.cloudCalls[0].payload.fillOnly, true);
+  assert.equal(
+    runtime.cloudCalls[0].payload.snapshot.url,
+    "https://directory.example/submit?from=queue",
+    "the model must receive the current page snapshot",
+  );
 }
 
 {

@@ -2344,6 +2344,21 @@
       reason.textContent = task.parkedReason || task.skipReason || "需要人工处理";
       const actions = document.createElement("div");
       actions.className = "manual-actions";
+      if (task.tabId && batchStatus !== "stopped") {
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "btn btn-ghost";
+        open.textContent = "查看原页面";
+        open.addEventListener("click", async () => {
+          try {
+            await chrome.tabs.update(task.tabId, { active: true });
+          } catch {
+            showToast("原页签已关闭，请刷新待人工列表", true);
+            syncTasksFromBackground();
+          }
+        });
+        actions.append(open);
+      }
       const resume = document.createElement("button");
       resume.type = "button";
       const productHuntReady = /Product Hunt 必填 100%.*Create draft/i.test(
@@ -2355,7 +2370,7 @@
           ? "打开页签"
           : productHuntReady
             ? "确认创建 Product Hunt 草稿"
-            : "继续处理"
+            : "处理后继续"
         : "打开待办页面";
       resume.addEventListener("click", async () => {
         if (!task.tabId) {
@@ -2372,6 +2387,8 @@
         await chrome.runtime.sendMessage({
           action: "manualContinue",
           taskIndex: task.index,
+          taskId: task.id,
+          runId: task.runId,
           platformType: task.platformType,
           confirmProductHuntCreate: productHuntReady,
         });

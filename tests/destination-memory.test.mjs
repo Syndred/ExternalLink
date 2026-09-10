@@ -222,6 +222,66 @@ const initialMark = await hooks.markSubmissionSite({
 });
 assert.equal(initialMark.annotation.status, "can_submit");
 assert.equal(initialMark.annotation.auto, false);
+assert.deepEqual(JSON.parse(JSON.stringify(initialMark.annotation.statuses)), ["can_submit"]);
+
+// Marker toggles are serialized in the background and must preserve every
+// selected status while keeping a safety-first singular status for old readers.
+const multiMarkerUrl = "https://multi-marker.example/submit";
+const manualLogin = await hooks.markSubmissionSite({
+  url: multiMarkerUrl,
+  status: "needs_login",
+  toggle: true,
+});
+const manualCanSubmit = await hooks.markSubmissionSite({
+  url: multiMarkerUrl,
+  status: "can_submit",
+  toggle: true,
+});
+assert.deepEqual(
+  JSON.parse(JSON.stringify(manualCanSubmit.annotation.statuses)),
+  ["needs_login", "can_submit"],
+);
+assert.equal(manualCanSubmit.annotation.status, "needs_login");
+const observedPaid = await hooks.markSubmissionSite({
+  url: multiMarkerUrl,
+  status: "paid",
+  note: "自动观察到支付提示",
+  auto: true,
+});
+assert.deepEqual(
+  JSON.parse(JSON.stringify(observedPaid.annotation.statuses)),
+  ["needs_login", "can_submit"],
+  "automatic observations must not replace manually selected markers",
+);
+assert.equal(observedPaid.annotation.lastAutomaticObservation.status, "paid");
+const removedCanSubmit = await hooks.markSubmissionSite({
+  url: multiMarkerUrl,
+  status: "can_submit",
+  toggle: true,
+  tabId: 17,
+  profileId: "A",
+});
+assert.deepEqual(
+  JSON.parse(JSON.stringify(removedCanSubmit.annotation.statuses)),
+  ["needs_login"],
+  "toggling a marker off should leave the other markers intact",
+);
+assert.equal(removedCanSubmit.annotation.status, "needs_login");
+
+await Promise.all([
+  hooks.markSubmissionSite({ url: multiMarkerUrl, status: "can_submit", toggle: true }),
+  hooks.markSubmissionSite({ url: multiMarkerUrl, status: "needs_captcha", toggle: true }),
+]);
+assert.deepEqual(
+  [...mock.storageData.siteAnnotations["multi-marker.example"].statuses].sort(),
+  ["can_submit", "needs_captcha", "needs_login"],
+  "concurrent UI toggles must not overwrite each other",
+);
+await Promise.all(["can_submit", "needs_captcha", "needs_login"].map((status) =>
+  hooks.markSubmissionSite({ url: multiMarkerUrl, status, toggle: true }),
+));
+assert.equal(mock.storageData.siteAnnotations["multi-marker.example"].status, "");
+assert.equal(mock.storageData.siteAnnotations["multi-marker.example"].statuses.length, 0);
 
 const snapshotWithAnswers = {
   url: `${destinationUrl}?profile=A&utm_source=test`,

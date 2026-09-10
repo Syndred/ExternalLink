@@ -148,15 +148,15 @@
 
       <details class="card collapsible" open>
         <summary class="collapsible-summary">站点标记</summary>
-        <p class="site-mark-scope">按外链站保存，与当前 Profile 无关；切换 A/B 后仍保留。</p>
+        <p class="site-mark-scope">按外链站保存，与当前 Profile 无关；切换 A/B 后仍保留。可同时选择多个标记，重复点击可取消单个标记。</p>
         <div class="mark-btns">
-          <button type="button" class="mark-btn" data-status="can_submit">可提交</button>
-          <button type="button" class="mark-btn" data-status="needs_login">需登录</button>
-          <button type="button" class="mark-btn" data-status="needs_captcha">验证码</button>
-          <button type="button" class="mark-btn" data-status="paid">付费</button>
-          <button type="button" class="mark-btn" data-status="broken">无法提交</button>
-          <button type="button" class="mark-btn" data-status="skip">跳过</button>
-          <button type="button" class="mark-btn mark-danger" data-status="deleted">删除</button>
+          <button type="button" class="mark-btn" data-status="can_submit" aria-pressed="false">可提交</button>
+          <button type="button" class="mark-btn" data-status="needs_login" aria-pressed="false">需登录</button>
+          <button type="button" class="mark-btn" data-status="needs_captcha" aria-pressed="false">验证码</button>
+          <button type="button" class="mark-btn" data-status="paid" aria-pressed="false">付费</button>
+          <button type="button" class="mark-btn" data-status="broken" aria-pressed="false">无法提交</button>
+          <button type="button" class="mark-btn" data-status="skip" aria-pressed="false">跳过</button>
+          <button type="button" class="mark-btn mark-danger" data-status="deleted" aria-pressed="false">删除</button>
         </div>
         <button type="button" class="btn btn-ghost btn-block" id="btnAddToUrlList" hidden>加入外链列表（置顶）</button>
       </details>

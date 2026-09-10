@@ -4,6 +4,7 @@
 
   const $ = (id) => document.getElementById(id);
   const P = self.ExtLinkProfiles;
+  const Q = self.ExtLinkQueue;
   const Timeline = self.ExtLinkSubmissionTimeline;
 
   let siteProfiles = {};
@@ -635,6 +636,10 @@
       : "neutral";
   }
 
+  function annotationStatuses(annotation) {
+    return Q.normalizeAnnotationStatuses(annotation);
+  }
+
   function activityLabel(type) {
     return (
       {
@@ -865,18 +870,19 @@
   }
 
   async function markLibrarySite(item, status) {
-    const current = item.annotation?.status || "";
-    const clearing = current === status;
-    if (!clearing && status === "deleted" && !confirm(`确认从外链列表删除 ${item.domain || item.url}？删除后不会再自动填表。`)) {
+    const currentStatuses = annotationStatuses(item.annotation);
+    const selected = currentStatuses.includes(status);
+    if (!selected && status === "deleted" && !confirm(`确认从外链列表删除 ${item.domain || item.url}？删除后不会再自动填表。`)) {
       return;
     }
-    const result = await chrome.runtime.sendMessage(
-      clearing
-        ? { action: "clearSiteAnnotation", url: item.url }
-        : { action: "markSubmissionSite", url: item.url, status },
-    );
-    if (!result?.ok) throw new Error(result?.error || (clearing ? "取消标记失败" : "标记失败"));
-    if (!clearing && status === "deleted" && selectedLibraryKey === item.key) selectedLibraryKey = "";
+    const result = await chrome.runtime.sendMessage({
+      action: "markSubmissionSite",
+      url: item.url,
+      status,
+      toggle: true,
+    });
+    if (!result?.ok) throw new Error(result?.error || "标记失败");
+    if (!selected && status === "deleted" && selectedLibraryKey === item.key) selectedLibraryKey = "";
     await loadLibrary();
   }
 
@@ -888,16 +894,17 @@
     title.textContent = "站点标记";
     const scope = document.createElement("p");
     scope.className = "library-mark-scope";
-    scope.textContent = "按外链站保存，与自家网站 Profile 无关；切换 A/B 后仍保留。";
+    scope.textContent = "按外链站保存，与自家网站 Profile 无关；切换 A/B 后仍保留。可同时选择多个标记，重复点击可取消单个标记。";
     const btns = document.createElement("div");
     btns.className = "library-mark-btns";
-    const current = item.annotation?.status || "";
+    const current = annotationStatuses(item.annotation);
     for (const [status, label] of SITE_MARK_STATUSES) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `library-mark-btn${status === "deleted" ? " mark-danger" : ""}${current === status ? " active" : ""}`;
+      const selected = current.includes(status);
+      btn.className = `library-mark-btn${status === "deleted" ? " mark-danger" : ""}${selected ? " active" : ""}`;
       btn.textContent = label;
-      btn.setAttribute("aria-pressed", String(current === status));
+      btn.setAttribute("aria-pressed", String(selected));
       btn.addEventListener("click", async (event) => {
         event.stopPropagation();
         btn.disabled = true;
@@ -1008,12 +1015,13 @@
     const qualityFilter = Number($("libraryQualityFilter")?.value || 0);
     const sortMode = $("librarySort")?.value || "quality";
     const filtered = libraryItems.filter((item) => {
-      const status = item.annotation?.status || "";
+      const statuses = annotationStatuses(item.annotation);
       const progress = Timeline.deriveLibraryProgress(item);
       const haystack = [
         item.domain,
         item.url,
-        status,
+        ...statuses,
+        ...statuses.map((value) => annotationLabel(value)),
         item.note,
         item.record,
         item.detail,
@@ -1024,7 +1032,7 @@
         .toLowerCase();
       return (
         (!query || haystack.includes(query)) &&
-        (!statusFilter || status === statusFilter) &&
+        (!statusFilter || statuses.includes(statusFilter)) &&
         Timeline.matchesLibraryProgress(progress, progressFilter) &&
         Number(item.quality?.score || 0) >= qualityFilter
       );
@@ -1059,11 +1067,17 @@
       const title = document.createElement("strong");
       title.textContent = item.domain || item.url;
       title.title = item.url;
-      const category = document.createElement("span");
-      const status = item.annotation?.status || "";
-      category.className = `library-status ${annotationTone(status)}`;
-      category.textContent = annotationLabel(item.annotation?.status);
-      category.setAttribute("aria-label", `站点状态：${annotationLabel(status)}`);
+      const category = document.createElement("div");
+      category.className = "library-statuses";
+      const markerStatuses = annotationStatuses(item.annotation);
+      const visibleStatuses = markerStatuses.length ? markerStatuses : [""];
+      for (const status of visibleStatuses) {
+        const chip = document.createElement("span");
+        chip.className = `library-status ${annotationTone(status)}`;
+        chip.textContent = annotationLabel(status);
+        chip.setAttribute("aria-label", `站点状态：${annotationLabel(status)}`);
+        category.append(chip);
+      }
       const pin = createIconButton("pin", `置顶 ${item.domain || item.url}`);
       pin.addEventListener("click", async (event) => {
         event.stopPropagation();

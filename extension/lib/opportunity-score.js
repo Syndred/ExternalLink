@@ -36,6 +36,20 @@
     return Math.min(max, Math.max(min, value));
   }
 
+  function annotationStatuses(input = {}) {
+    const values = [];
+    const direct = Array.isArray(input.status) ? input.status : [input.status];
+    const annotation = input.annotation || input;
+    const marked = Array.isArray(annotation?.statuses)
+      ? annotation.statuses
+      : [annotation?.status];
+    for (const value of [...direct, ...marked]) {
+      const normalized = String(value || "").trim();
+      if (normalized && !values.includes(normalized)) values.push(normalized);
+    }
+    return values;
+  }
+
   function recencyPoints(value, now = Date.now()) {
     if (!value) return 0;
     const stamp = Date.parse(value);
@@ -82,10 +96,10 @@
     if (metrics.difficulty != null) score -= clamp(metrics.difficulty / 10, 0, 10);
     score += recencyPoints(metrics.verifiedAt, now);
 
-    const status = String(input.status || input.annotation?.status || "");
-    if (status === "can_submit") score += 8;
-    if (["paid", "broken", "skip", "deleted"].includes(status)) score -= 40;
-    if (["needs_captcha", "needs_login", "needs_manual"].includes(status)) score -= 5;
+    const statuses = annotationStatuses(input);
+    if (statuses.includes("can_submit")) score += 8;
+    if (statuses.some((status) => ["paid", "broken", "skip", "deleted"].includes(status))) score -= 40;
+    if (statuses.some((status) => ["needs_captcha", "needs_login", "needs_manual"].includes(status))) score -= 5;
     if (input.monitorStatus === "live") score += 10;
     if (["missing", "unreachable"].includes(input.monitorStatus)) score -= 25;
 

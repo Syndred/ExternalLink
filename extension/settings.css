@@ -423,6 +423,15 @@
   white-space: nowrap;
 }
 
+#panel-library .library-statuses {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
 #panel-library .library-status.can_submit {
   border-color: #166534;
   background: rgba(20, 83, 45, 0.34);

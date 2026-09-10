@@ -2118,7 +2118,7 @@ async function restoreActiveBatchRun() {
     const interruption = self.ExtLinkUnattended.interruptedTaskStatus(task);
     const restoredStatus = successful
       ? "ok"
-      : deleted || self.ExtLinkQueue.isDeadEndStatus(annotation?.status)
+      : deleted || self.ExtLinkQueue.hasAnnotationStatusInSet(annotation, self.ExtLinkQueue.DEAD_END_STATUSES)
         ? "skip"
         : interruption?.status || task.status;
     if (interruption && !successful) {
@@ -3743,7 +3743,16 @@ async function getSiteAnnotation(url) {
 
 async function markSubmissionSite(msg) {
   const result = await runSiteAnnotationWrite(() => writeSubmissionSiteAnnotation(msg));
-  if (!msg.auto && msg.status === "can_submit" && Number.isInteger(msg.tabId) && msg.profileId) {
+  // A multi-marker toggle can remove `can_submit` while still writing the
+  // remaining markers. Only collect form learnings when that marker is still
+  // present in the saved annotation.
+  if (
+    !msg.auto &&
+    msg.status === "can_submit" &&
+    self.ExtLinkQueue.hasAnnotationStatus(result.annotation, "can_submit") &&
+    Number.isInteger(msg.tabId) &&
+    msg.profileId
+  ) {
     try {
       const tab = await chrome.tabs.get(msg.tabId);
       if (siteKeyForUrl(tab.url) === siteKeyForUrl(msg.url)) {
@@ -3770,15 +3779,34 @@ async function writeSubmissionSiteAnnotation(msg) {
   const annotations = storage.siteAnnotations || {};
   let deletedKeys = storage.deletedSubmissionKeys || [];
   const prev = annotations[key] || annotations[domain] || {};
+  const previousStatuses = self.ExtLinkQueue.normalizeAnnotationStatuses(prev);
   // A temporary outcome for B must not erase the user's destination-level verdict.
-  if (msg.auto && prev.status && prev.auto !== true) {
-    const observation = { status, note: msg.note || "", updatedAt: new Date().toISOString() };
-    const annotation = { ...prev, lastAutomaticObservation: observation };
+  if (msg.auto && previousStatuses.length && prev.auto !== true) {
+    const observation = {
+      status,
+      statuses: [status],
+      note: msg.note || "",
+      updatedAt: new Date().toISOString(),
+    };
+    const annotation = {
+      ...prev,
+      status: self.ExtLinkQueue.primaryAnnotationStatus(previousStatuses),
+      statuses: previousStatuses,
+      lastAutomaticObservation: observation,
+    };
     annotations[key] = annotation;
     annotations[domain] = annotation;
     await chrome.storage.local.set({ siteAnnotations: annotations });
     return { ok: true, annotation };
   }
+  const statuses = msg.toggle
+    ? previousStatuses.includes(status)
+      ? previousStatuses.filter((value) => value !== status)
+      : [...previousStatuses, status]
+    : self.ExtLinkQueue.normalizeAnnotationStatuses(
+        Array.isArray(msg.statuses) ? msg.statuses : [status],
+      );
+  const primaryStatus = self.ExtLinkQueue.primaryAnnotationStatus(statuses);
   let submittedProjects = Array.isArray(prev.submittedProjects) ? [...prev.submittedProjects] : [];
   if (msg.submittedProject) {
     const proj = String(msg.submittedProject);
@@ -3792,7 +3820,8 @@ async function writeSubmissionSiteAnnotation(msg) {
     ...prev,
     url,
     domain,
-    status,
+    status: primaryStatus,
+    statuses,
     note: msg.note || prev.note || "",
     submittedProjects,
     updatedAt: new Date().toISOString(),
@@ -3800,7 +3829,7 @@ async function writeSubmissionSiteAnnotation(msg) {
   };
   annotations[domain] = annotations[key];
 
-  if (status === "deleted") {
+  if (self.ExtLinkQueue.hasAnnotationStatus(statuses, "deleted")) {
     if (!deletedKeys.includes(key)) deletedKeys.push(key);
   } else {
     deletedKeys = deletedKeys.filter((k) => k !== key);
@@ -4952,7 +4981,7 @@ async function handleRequestAutoFill(msg, sender) {
   const key = siteKeyForUrl(tabUrl);
   const domain = self.ExtLinkQueue.extractDomain(tabUrl);
   const ann = (storage.siteAnnotations || {})[key] || (storage.siteAnnotations || {})[domain];
-  if (ann && self.ExtLinkQueue.isDeadEndStatus(ann.status)) return;
+  if (ann && self.ExtLinkQueue.hasAnnotationStatusInSet(ann, self.ExtLinkQueue.DEAD_END_STATUSES)) return;
 
   const matchedIndex = pendingTasks.findIndex(
     (t) => t.id === matched.id || (t.key === matched.key && (t.profileId || t.projectKey) === profile.id),

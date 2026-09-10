@@ -118,6 +118,7 @@
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
     needs_login: { label: "🔐 需登录提交", cls: "warn" },
     needs_captcha: { label: "🤖 需验证码", cls: "warn" },
+    needs_manual: { label: "🧑‍💻 需人工处理", cls: "warn" },
     paid: { label: "💳 付费提交", cls: "warn" },
     broken: { label: "❌ 无法提交", cls: "err" },
     skip: { label: "⏭ 已跳过", cls: "warn" },
@@ -1603,7 +1604,10 @@
     if (!pageUrl?.startsWith("http")) {
       $("siteStatusBadge")?.setAttribute("hidden", "");
       $("btnAddToUrlList")?.setAttribute("hidden", "");
-      document.querySelectorAll(".mark-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".mark-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
       return;
     }
 
@@ -1613,23 +1617,31 @@
       const addBtn = $("btnAddToUrlList");
       const rememberedFields = Object.keys(info?.annotation?.formKnowledge?.mappings || {}).length;
       const memoryLabel = rememberedFields ? ` · 已记住 ${rememberedFields} 个字段` : "";
+      const statuses = Q.normalizeAnnotationStatuses(info?.annotation);
 
-      document.querySelectorAll(".mark-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".mark-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
 
-      if (info?.annotation?.status) {
-        const meta = SITE_STATUS_MAP[info.annotation.status] || {
-          label: info.annotation.status,
+      if (statuses.length) {
+        const primary = Q.primaryAnnotationStatus(statuses);
+        const meta = SITE_STATUS_MAP[primary] || {
+          label: primary,
           cls: "",
         };
         if (badge) {
-          badge.textContent = meta.label + memoryLabel;
+          badge.textContent = statuses
+            .map((value) => SITE_STATUS_MAP[value]?.label || value)
+            .join("、") + memoryLabel;
           badge.className = "status-pill " + (meta.cls || "");
           badge.removeAttribute("hidden");
         }
-        const activeBtn = document.querySelector(
-          `.mark-btn[data-status="${info.annotation.status}"]`,
-        );
-        activeBtn?.classList.add("active");
+        for (const value of statuses) {
+          const button = document.querySelector(`.mark-btn[data-status="${value}"]`);
+          button?.classList.add("active");
+          button?.setAttribute("aria-pressed", "true");
+        }
       } else if (badge) {
         badge.textContent = (info?.inQueue ? "📋 在外链队列中" : "未标记") + memoryLabel;
         badge.className = "status-pill";
@@ -1656,21 +1668,24 @@
         action: "getSiteAnnotation",
         url: currentPageUrl,
       });
-      const current = currentInfo?.annotation?.status || "";
-      const clearing = current === status;
-      if (!clearing && status === "deleted") {
+      const currentStatuses = Q.normalizeAnnotationStatuses(currentInfo?.annotation);
+      const selected = currentStatuses.includes(status);
+      if (!selected && status === "deleted") {
         if (!confirm("确认从外链列表删除此站点？删除后不会再自动填表。")) return;
       }
-      const result = await chrome.runtime.sendMessage(
-        clearing
-          ? { action: "clearSiteAnnotation", url: currentPageUrl }
-          : { action: "markSubmissionSite", url: currentPageUrl, status, tabId: activeTabId, profileId: activeSiteId },
-      );
-      if (!result?.ok) throw new Error(result?.error || (clearing ? "取消标记失败" : "标记失败"));
+      const result = await chrome.runtime.sendMessage({
+        action: "markSubmissionSite",
+        url: currentPageUrl,
+        status,
+        toggle: true,
+        tabId: activeTabId,
+        profileId: activeSiteId,
+      });
+      if (!result?.ok) throw new Error(result?.error || "标记失败");
       await refreshSiteAnnotation(currentPageUrl);
       await loadSubmissionQueue(currentPageUrl);
       await loadClassifiedList();
-      showToast(clearing ? "已取消标记" : SITE_STATUS_MAP[status]?.label || "已标记");
+      showToast(selected ? "已取消标记" : SITE_STATUS_MAP[status]?.label || "已标记");
     } catch (err) {
       showToast(err.message, true);
     }

@@ -71,6 +71,50 @@
     return match?.[1] || null;
   }
 
+  // Site classifications used to be stored in the singular `status` field.
+  // Keep that field as a compatibility projection, while allowing the UI and
+  // cloud snapshot to retain every manually selected marker in `statuses`.
+  function normalizeAnnotationStatuses(annotationOrStatuses) {
+    const raw = Array.isArray(annotationOrStatuses)
+      ? annotationOrStatuses
+      : Array.isArray(annotationOrStatuses?.statuses)
+        ? annotationOrStatuses.statuses
+        : annotationOrStatuses?.status
+          ? [annotationOrStatuses.status]
+          : [];
+    return [...new Set(raw.map((value) => String(value || "").trim()).filter(Boolean))];
+  }
+
+  const ANNOTATION_STATUS_PRIORITY = Object.freeze({
+    deleted: 100,
+    paid: 90,
+    broken: 80,
+    skip: 70,
+    needs_otp: 60,
+    needs_captcha: 55,
+    needs_login: 50,
+    needs_manual: 45,
+    can_submit: 10,
+  });
+
+  function primaryAnnotationStatus(annotationOrStatuses) {
+    return normalizeAnnotationStatuses(annotationOrStatuses).sort(
+      (left, right) =>
+        (ANNOTATION_STATUS_PRIORITY[right] || 0) -
+        (ANNOTATION_STATUS_PRIORITY[left] || 0),
+    )[0] || "";
+  }
+
+  function hasAnnotationStatus(annotationOrStatuses, status) {
+    const wanted = String(status || "").trim();
+    return !!wanted && normalizeAnnotationStatuses(annotationOrStatuses).includes(wanted);
+  }
+
+  function hasAnnotationStatusInSet(annotationOrStatuses, statuses) {
+    const wanted = statuses instanceof Set ? statuses : new Set(statuses || []);
+    return normalizeAnnotationStatuses(annotationOrStatuses).some((status) => wanted.has(status));
+  }
+
   function submissionRecordKey(destinationKey, profileId) {
     return `${String(destinationKey || "").trim()}::${String(profileId || "").trim()}`;
   }
@@ -693,7 +737,7 @@
     const kept = (tasks || []).filter((task) => {
       if (hasStoredDestinationKey(deletedKeys, task.key)) return false;
       const ann = findDestinationAnnotation(annotations, task.key, task.domain);
-      if (ann && skipStatuses.has(ann.status)) return false;
+      if (ann && hasAnnotationStatusInSet(ann, skipStatuses)) return false;
       if (
         activeProject &&
         Array.isArray(ann?.submittedProjects) &&
@@ -825,7 +869,7 @@
         destination.destinationKey,
         destination.domain,
       );
-      if (annotation && DEAD_END_STATUSES.has(annotation.status)) continue;
+      if (annotation && hasAnnotationStatusInSet(annotation, DEAD_END_STATUSES)) continue;
 
       const jobs = [];
       for (const profile of profiles) {
@@ -911,6 +955,10 @@
     normalizeDestinationKey,
     hasStoredDestinationKey,
     findDestinationAnnotation,
+    normalizeAnnotationStatuses,
+    primaryAnnotationStatus,
+    hasAnnotationStatus,
+    hasAnnotationStatusInSet,
     extractDomain,
     submissionRecordKey,
     isSubmissionSuccessful,

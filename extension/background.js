@@ -1714,11 +1714,17 @@ async function handleSidepanelDetect(tabId) {
     const receipt = result?.productHuntReceipt;
     if (receipt?.matched) {
       const storage = await chrome.storage.local.get(["siteProfiles", "activeSiteId"]);
-      const profile = self.ExtLinkProfiles.getActiveProfile(storage);
-      const expectedName = String(profile?.fields?.Name || profile?.name || profile?.productName || "").trim().toLowerCase();
       const receivedName = String(receipt.productName || "").trim().toLowerCase();
-      const expectedSlug = expectedName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-      if (profile?.id && expectedName && (receivedName === expectedName || receipt.slug === expectedSlug)) {
+      const matchesReceipt = (candidate) => {
+        const expectedName = String(candidate?.fields?.Name || candidate?.name || candidate?.productName || "").trim().toLowerCase();
+        const expectedSlug = expectedName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        return !!expectedName && (receivedName === expectedName || receipt.slug === expectedSlug);
+      };
+      const activeProfile = self.ExtLinkProfiles.getActiveProfile(storage);
+      const profile = matchesReceipt(activeProfile)
+        ? activeProfile
+        : Object.values(storage.siteProfiles || {}).find(matchesReceipt) || null;
+      if (profile?.id) {
         await recordSubmittedProject({
           url: "https://www.producthunt.com/posts/new/submission",
           profileId: profile.id,
@@ -2666,7 +2672,7 @@ async function runValidateAndFixFill(tabId, config, options = {}) {
 }
 
 function siteKeyForUrl(url) {
-  return self.ExtLinkQueue.normalizeUrlKey(url);
+  return self.ExtLinkQueue.normalizeDestinationKey(url);
 }
 
 async function getSiteAnnotation(url) {

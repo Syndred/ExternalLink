@@ -50,8 +50,10 @@ assert.match(background, /executeVisualFallback/);
 assert.match(background, /runProductHuntLaunchLoop/);
 assert.match(background, /type:\s*["']producthunt_stage["']/,
   "Product Hunt must persist a checkpoint for every stage");
-assert.match(background, /status === ["']ready_to_create["'][\s\S]*通用截图智能体执行 Create draft/,
-  "Product Hunt preparation must hand off to the same general visual agent used on other sites");
+assert.match(background, /shouldHandOffStableProductHuntStep[\s\S]*?handOffToVisualAgent[\s\S]*?visualFillOnly:\s*true/,
+  "a loaded Product Hunt custom control must hand off to the same general visual agent used on other sites before final creation");
+assert.match(background, /parkProductHuntReadyToCreate[\s\S]*等待确认 Create draft/,
+  "Product Hunt visual filling must stop at the existing explicit Create draft confirmation");
 assert.match(background, /function handOffToVisualAgent[\s\S]*type:\s*["']visual_escalation["']/,
   "the batch must write a durable escalation event before visual supervision starts");
 assert.match(background, /extra\.escalationReason[\s\S]*Previous action produced no visible page change/,

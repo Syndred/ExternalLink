@@ -112,6 +112,7 @@
   };
   let mediaLoadToken = 0;
   let timelineLoadToken = 0;
+  let productHuntReadyToCreateTabId = null;
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -1427,6 +1428,14 @@
     el.removeAttribute("hidden");
   }
 
+  function updateProductHuntFillButton() {
+    const button = $("btnFillForm");
+    if (!button || button.disabled) return;
+    button.textContent = productHuntReadyToCreateTabId === activeTabId
+      ? "确认创建 Product Hunt 草稿"
+      : "填表";
+  }
+
   async function triggerAutoFillForCurrentTab() {
     if (!activeTabId) return;
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
@@ -1449,6 +1458,10 @@
   async function handleFillResult(result, mode) {
     if (mode === "form") refreshMediaUploadResult(result).catch(() => {});
     if (result?.submitted && result?.matched && result?.evidence) {
+      if (result?.platform === "product_hunt") {
+        productHuntReadyToCreateTabId = null;
+        updateProductHuntFillButton();
+      }
       const successLabel =
         result.publicationStatus === "pending_moderation"
           ? "已提交，站点显示待审核"
@@ -1465,14 +1478,27 @@
       return;
     }
     if (result?.platform === "product_hunt") {
-      if (result.ready_to_create) {
+      if (result.submitted && !(result.matched && result.evidence)) {
+        productHuntReadyToCreateTabId = null;
+        updateProductHuntFillButton();
+        setAutoFillStatus(
+          result.reason || "Product Hunt 已点击 Create draft，但未出现新的可核验回执；页签已保留",
+          "warn",
+        );
+      } else if (result.ready_to_create) {
+        productHuntReadyToCreateTabId = activeTabId;
+        updateProductHuntFillButton();
         setAutoFillStatus(
           "Product Hunt 必填项已完成，等待确认 Create draft（不会排期或购买推广）",
           "warn",
         );
       } else if (result.stage) {
+        productHuntReadyToCreateTabId = null;
+        updateProductHuntFillButton();
         setAutoFillStatus(`Product Hunt 已处理至 ${result.stage}，页签已保留`, "warn");
       } else {
+        productHuntReadyToCreateTabId = null;
+        updateProductHuntFillButton();
         setAutoFillStatus("Product Hunt 当前步骤未推进，页签已保留", "warn");
       }
       await loadClassifiedList();
@@ -1709,6 +1735,7 @@
       renderSidepanelTimeline(null);
     }
     renderPageMetrics(pagePrescan, {});
+    updateProductHuntFillButton();
   }
 
   chrome.tabs.onActivated.addListener(async () => {
@@ -1719,6 +1746,10 @@
     requestAutoFillForTab(activeTabId, currentPageUrl);
   });
   chrome.tabs.onUpdated.addListener((tabId, info) => {
+    if (tabId === productHuntReadyToCreateTabId && info.url) {
+      productHuntReadyToCreateTabId = null;
+      updateProductHuntFillButton();
+    }
     if (tabId === activeTabId && info.url) refreshActiveTab();
     if (info.status === "complete" && tabId === activeTabId) {
       detection = null;
@@ -1869,6 +1900,8 @@
 
     const btn = mode === "comment" ? $("btnFillComment") : $("btnFillForm");
     if (!btn) return;
+    const confirmProductHuntCreate =
+      mode === "form" && productHuntReadyToCreateTabId === activeTabId;
     const origText = btn.textContent;
     btn.disabled = true;
     btn.textContent = "填写中…";
@@ -1884,6 +1917,7 @@
         commentText: commentOverride,
         useAgent: true,
         profileId: activeSiteId,
+        confirmProductHuntCreate,
       });
 
       handleFillResult(result, mode);
@@ -1895,7 +1929,8 @@
       showToast(err.message, true);
     } finally {
       btn.disabled = false;
-      btn.textContent = origText;
+      if (mode === "form") updateProductHuntFillButton();
+      else btn.textContent = origText;
     }
   }
 

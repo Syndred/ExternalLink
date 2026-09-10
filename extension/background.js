@@ -1826,7 +1826,7 @@ async function handleSidepanelFill(msg) {
       status: "filling",
       message: "Product Hunt 专用状态机正在逐步填写并校验…",
     });
-    const result = await runProductHuntSidepanelLoop(tabId, config, {
+    const result = await runProductHuntSidepanelWithVisualFallback(tabId, config, {
       confirmCreate: msg.confirmProductHuntCreate === true,
     });
     if (!result) {
@@ -1866,6 +1866,21 @@ async function handleSidepanelFill(msg) {
           : "Product Hunt 草稿已创建并记入账本",
       });
       return { ...result, ok: true, platform: "product_hunt", submitted: true, advance: true };
+    }
+    if (result.submittedAttempt) {
+      broadcastAutoFillUpdate({
+        tabId,
+        status: "manual",
+        message: "Product Hunt 已点击 Create draft，但未出现新的可核验回执；页签已保留",
+        keepTab: true,
+      });
+      return {
+        ...result,
+        platform: "product_hunt",
+        submitted: true,
+        keepTab: true,
+        reason: "Product Hunt 已点击 Create draft，但未出现新的可核验回执",
+      };
     }
     if (result.ready_to_create) {
       broadcastAutoFillUpdate({
@@ -2492,8 +2507,17 @@ async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
         stableWaitingRetries = 0;
       }
       // A loaded pane with the same missing prerequisite is not a loading
-      // screen. Stop after a short bounded retry window and preserve the tab,
-      // instead of spinning for the full 60-retry load budget.
+      // screen. Escalate custom controls to the general screenshot operator
+      // after a short bounded retry window. Explicit human gates stay parked.
+      if (shouldHandOffStableProductHuntStep(result, stableWaitingRetries)) {
+        return {
+          ...result,
+          platform: "product_hunt",
+          visualEscalation: true,
+          keepTab: true,
+          reason: `Product Hunt ${result.stage} 已稳定加载但普通控件未推进，交给通用截图智能体处理自定义组件`,
+        };
+      }
       if (result.stage && result.stage !== "unknown" && result.missing?.length && stableWaitingRetries >= 5) {
         return {
           ...result,
@@ -3833,7 +3857,7 @@ async function handleRequestAutoFill(msg, sender) {
   );
 }
 
-async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
+async function runSidepanelAgentFill(tabId, config, platformType, maxLoops, options = {}) {
   const fakeTask = {
     index: 0,
     domain: "sidepanel",
@@ -3847,17 +3871,37 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
   const history = [];
   const loops = Math.max(1, Math.min(maxLoops || MAX_AGENT_LOOPS, MAX_AGENT_LOOPS));
   for (let loop = 0; loop < loops; loop++) {
+    if (productHuntVisualFillReachedFinalConfirmation(options, snapshot)) {
+      return {
+        ok: true,
+        fillOnly: true,
+        ready_to_create: true,
+        stage: "checklist",
+        reason: "Product Hunt 必填 100% 已完成，等待确认 Create draft（不会排期或购买推广）",
+      };
+    }
     const visualStep = await createVisualActionPlan(tabId, fakeTask, snapshot, {
       step: loop,
       history,
       config,
       fillOnly: true,
-      failure: loop > 0 ? "The deterministic fill still leaves required fields or validation errors." : "",
+      failure: [
+        options.failure || "",
+        loop > 0 ? "The deterministic fill still leaves required fields or validation errors." : "",
+      ].filter(Boolean).join(" "),
     });
-    const plan = visualStep.plan;
+    let plan = visualStep.plan;
 
     if (plan.status === "needs_manual") {
-      return { needs_manual: true, reason: plan.reason || plan.message || "需要人工处理" };
+      if (isExplicitHumanGateJudge(plan, snapshot)) {
+        return { needs_manual: true, reason: plan.reason || plan.message || "需要人工处理" };
+      }
+      plan = {
+        ...plan,
+        status: "act",
+        reason: `${plan.reason || "当前截图不足以决定下一步"}；未发现人工闸门，继续观察页面`,
+        actions: [{ type: "scroll", delta_y: Math.round((snapshot?.viewport?.height || 800) * 0.72) }],
+      };
     }
     if (plan.status === "blocked" || plan.status === "error") {
       return {
@@ -3884,6 +3928,22 @@ async function runSidepanelAgentFill(tabId, config, platformType, maxLoops) {
   }
 
   return { ok: true, fillOnly: true };
+}
+
+async function runProductHuntSidepanelWithVisualFallback(tabId, config, options = {}) {
+  let result = await runProductHuntSidepanelLoop(tabId, config, options);
+  for (let fallback = 0; result?.visualEscalation === true && fallback < 2; fallback++) {
+    const visual = await runSidepanelAgentFill(tabId, config, "product_hunt", MAX_AGENT_LOOPS, {
+      productHuntPrepared: true,
+      visualFillOnly: true,
+      failure: result.reason || "Product Hunt loaded but its custom control did not advance.",
+    });
+    if (visual.ready_to_create || visual.needs_manual || visual.blocked || visual.error) {
+      return { ...visual, platform: "product_hunt", keepTab: true };
+    }
+    result = await runProductHuntSidepanelLoop(tabId, config, options);
+  }
+  return result;
 }
 
 // ─── Queue Processing ───
@@ -4239,6 +4299,10 @@ function isCustomLaunchUrl(url) {
 
 const PRODUCT_HUNT_MAX_STEPS = 12;
 const PRODUCT_HUNT_MAX_WAIT_RETRIES = 60;
+// A known Product Hunt step can still hydrate for a moment.  Do not hand it
+// to vision on the first unchanged reply, but do not spin through the full
+// loading budget once a custom control has demonstrably stopped progressing.
+const PRODUCT_HUNT_VISUAL_HANDOFF_STABLE_RETRIES = 2;
 
 async function persistProductHuntCheckpoint(task, result = {}) {
   task.productHuntStage = result.stage || task.productHuntStage || "unknown";
@@ -4267,6 +4331,62 @@ function productHuntGateStatus(result = {}) {
   if (result.status === "needs_otp") return "needs_otp";
   if (result.status === "needs_login") return "needs_login";
   return "needs_manual";
+}
+
+function productHuntWaitingHasHumanGate(result = {}) {
+  const signals = [
+    result.gate,
+    result.status,
+    result.reason,
+    ...(Array.isArray(result.missing) ? result.missing : []),
+    ...(Array.isArray(result.requiredUnchecked) ? result.requiredUnchecked : []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return /captcha|recaptcha|hcaptcha|turnstile|验证码|人机验证|\botp\b|verification code|登录|log[ -]?in|sign[ -]?in|oauth|paywall|payment|purchase|checkout|subscribe|付款|支付|购买|订阅|legal|terms|privacy|consent|agree|accept|条款|隐私|同意/.test(
+    signals,
+  );
+}
+
+function shouldHandOffStableProductHuntStep(result = {}, stableWaitingRetries = 0) {
+  const stage = String(result.stage || "").trim().toLowerCase();
+  const missing = Array.isArray(result.missing) ? result.missing : [];
+  return (
+    stage.length > 0 &&
+    stage !== "unknown" &&
+    missing.length > 0 &&
+    stableWaitingRetries >= PRODUCT_HUNT_VISUAL_HANDOFF_STABLE_RETRIES &&
+    !productHuntWaitingHasHumanGate(result)
+  );
+}
+
+function hasVisibleProductHuntCreateDraft(snapshot = {}) {
+  return (Array.isArray(snapshot.buttons) ? snapshot.buttons : []).some((button) => {
+    if (!button || button.disabled === true || button.visible === false) return false;
+    const label = [button.text, button.value, button.aria, button.title]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+    return /\bcreate draft\b/.test(label) &&
+      !/schedule|promote|boost|pay|checkout|upgrade|buy|sponsor|publish|launch/.test(label);
+  });
+}
+
+function productHuntVisualFillReachedFinalConfirmation(extra = {}, snapshot = {}) {
+  return extra.productHuntPrepared === true && extra.visualFillOnly === true && hasVisibleProductHuntCreateDraft(snapshot);
+}
+
+function parkProductHuntReadyToCreate(tabId, task, entry) {
+  entry.productHuntReadyToCreate = true;
+  parkProductHuntTask(
+    tabId,
+    task,
+    entry,
+    "Product Hunt 必填 100% 已完成，等待确认 Create draft（不会排期或购买推广）",
+  );
 }
 
 function parkProductHuntTask(tabId, task, entry, reason, status = "needs_manual") {
@@ -4333,19 +4453,25 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         });
         return;
       }
+      if (result.submittedAttempt) {
+        entry.submissionAttempted = true;
+        markTaskUnconfirmed(
+          tabId,
+          task,
+          entry,
+          "Product Hunt 已点击 Create draft，但未出现新的可核验回执",
+        );
+        return;
+      }
       if (result.status === "ready_to_create" || result.ready_to_create === true) {
-        entry.productHuntReadyToCreate = true;
-        log(`${task.domain}: Product Hunt 必填项已完成，交给通用截图智能体执行 Create draft 并核验回执`, "");
+        log(`${task.domain}: Product Hunt 必填项已完成，等待现有确认按钮执行 Create draft`, "");
         await recordAutomationEvent(task, {
           type: "producthunt_handoff",
-          status: "running",
-          action: "visual_agent",
-          result: "required fields complete; generic visual agent owns final draft creation and receipt verification",
+          status: "waiting_manual",
+          action: "await_confirm_create_draft",
+          result: "required fields complete; existing explicit Create draft confirmation is required",
         });
-        await handOffToVisualAgent(tabId, task, entry, {
-          manual: true,
-          productHuntPrepared: true,
-        }, "Product Hunt 进入复杂的最终创建与回执核验阶段");
+        parkProductHuntReadyToCreate(tabId, task, entry);
         return;
       }
       if (result.status === "error" || result.error) {
@@ -4361,6 +4487,15 @@ async function runProductHuntLaunchLoop(tabId, task, entry, options = {}) {
         else {
           lastWaitingSignature = waitingSignature;
           stableWaitingRetries = 0;
+        }
+        if (shouldHandOffStableProductHuntStep(result, stableWaitingRetries)) {
+          const reason = `Product Hunt ${result.stage} 已稳定加载但普通控件未推进，交给通用截图智能体处理自定义组件`;
+          await handOffToVisualAgent(tabId, task, entry, {
+            manual: true,
+            productHuntPrepared: true,
+            visualFillOnly: true,
+          }, reason);
+          return;
         }
         if (result.stage && result.stage !== "unknown" && result.missing?.length && stableWaitingRetries >= 5) {
           parkProductHuntTask(
@@ -5064,6 +5199,9 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
   }
   if (entry.agentRunning || entry.agentDone) return;
   if (entry.agentPaused && !extra.manual && !extra.captchaResolved && !extra.pendingRejudge) return;
+  const visualFillOnly =
+    extra.visualFillOnly === true ||
+    getTaskConfig(task, extra.config || {}).fillOnly === true;
   const identityMismatch = self.ExtLinkProfiles.taskConfigIdentityMismatch(
     task,
     getTaskConfig(task, extra.config || {}),
@@ -5095,6 +5233,10 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
       result: "initial stable snapshot",
     });
     assertRunCurrent(tabId, entry, runId);
+    if (productHuntVisualFillReachedFinalConfirmation({ ...extra, visualFillOnly }, snapshot)) {
+      parkProductHuntReadyToCreate(tabId, task, entry);
+      return;
+    }
     let judge = await callCloudAgent("/judge", agentPayload(task, snapshot, extra));
     await recordAutomationEvent(task, {
       type: "judge",
@@ -5127,7 +5269,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         const visualStep = await createVisualActionPlan(tabId, task, snapshot, {
           step: loop,
           history: entry.agentHistory,
-          fillOnly: getTaskConfig(task, extra.config || {}).fillOnly === true,
+          fillOnly: visualFillOnly,
           failure: [
             extra.escalationReason || "",
             entry.noProgressCount > 0
@@ -5138,9 +5280,15 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         plan = visualStep.plan;
       } catch (visualError) {
         log(`${task.domain}: 截图智能体暂不可用，使用 DOM 计划继续 - ${visualError.message}`, "warn");
+        const fallbackPayload = agentPayload(
+          task,
+          snapshot,
+          { ...extra, judge, loop, visualError: visualError.message },
+        );
+        fallbackPayload.fillOnly = visualFillOnly;
         plan = await callCloudAgent(
           "/plan",
-          agentPayload(task, snapshot, { ...extra, judge, loop, visualError: visualError.message }),
+          fallbackPayload,
         );
         plan.visualAgent = false;
       }
@@ -5238,6 +5386,10 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         throw err;
       }
       assertRunCurrent(tabId, entry, runId);
+      if (productHuntVisualFillReachedFinalConfirmation({ ...extra, visualFillOnly }, snapshot)) {
+        parkProductHuntReadyToCreate(tabId, task, entry);
+        return;
+      }
 
       const expectedMutation = plan.actions?.some((action) => ["fill", "select", "check", "click", "scroll"].includes(action?.type));
       const changed = !expectedMutation || !snapshot.domHash || snapshot.domHash !== previousSnapshotHash;
@@ -5255,7 +5407,7 @@ async function runAgentLoop(tabId, task, entry, extra = {}) {
         log(`${task.domain}: 第 ${loop + 1} 轮页面无变化，下轮将基于新截图重新判断`, "warn");
       }
 
-      const terminalSubmit = !plan.visualAgent
+      const terminalSubmit = !visualFillOnly && !plan.visualAgent
         ? await tryAgentDeterministicSubmit(tabId, task, entry, snapshot)
         : false;
       if (terminalSubmit) return;

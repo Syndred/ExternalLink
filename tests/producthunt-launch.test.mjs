@@ -264,8 +264,8 @@ assert.ok(
 );
 assert.match(
   sidepanelFill,
-  /isCustomLaunchUrl[\s\S]*?runProductHuntSidepanelLoop/,
-  "the Product Hunt sidepanel path must use the multi-stage submit loop without generic form validation",
+  /isCustomLaunchUrl[\s\S]*?runProductHuntSidepanelWithVisualFallback/,
+  "the Product Hunt sidepanel path must use the multi-stage loop plus general visual fallback without generic form validation",
 );
 assert.match(
   background,
@@ -274,13 +274,23 @@ assert.match(
 );
 assert.match(
   background,
-  /runProductHuntSidepanelLoop[\s\S]*?stableWaitingRetries[\s\S]*?result\.missing\?\.length[\s\S]*?needs_manual/,
-  "a loaded Product Hunt pane with stable missing prerequisites must stop quickly instead of using the loading budget",
+  /runProductHuntSidepanelLoop[\s\S]*?stableWaitingRetries[\s\S]*?shouldHandOffStableProductHuntStep[\s\S]*?visualEscalation/,
+  "a loaded Product Hunt pane with stable missing prerequisites must escalate to visual supervision instead of using the loading budget",
 );
 assert.match(
   productHuntLoop,
-  /stableWaitingRetries[\s\S]*?result\.missing\?\.length[\s\S]*?parkProductHuntTask/,
-  "batch Product Hunt runs must use the same bounded stable-missing guard",
+  /stableWaitingRetries[\s\S]*?shouldHandOffStableProductHuntStep[\s\S]*?handOffToVisualAgent[\s\S]*?visualFillOnly:\s*true/,
+  "batch Product Hunt runs must hand stable custom controls to visual supervision in fill-only mode",
+);
+assert.match(
+  background,
+  /function\s+productHuntVisualFillReachedFinalConfirmation[\s\S]*?hasVisibleProductHuntCreateDraft[\s\S]*?parkProductHuntReadyToCreate/,
+  "a visual Product Hunt pass must preserve the existing final Create draft confirmation",
+);
+assert.match(
+  sidepanel,
+  /productHuntReadyToCreateTabId[\s\S]*?确认创建 Product Hunt 草稿[\s\S]*?confirmProductHuntCreate/,
+  "the single-site side panel must expose the same explicit Create draft action",
 );
 assert.match(
   content,

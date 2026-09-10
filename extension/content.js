@@ -3531,6 +3531,14 @@
     ));
   }
 
+  function isInVisualViewport(element) {
+    if (!isRelevantSnapshotElement(element)) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width >= 2 && rect.height >= 2 &&
+      rect.bottom > 0 && rect.right > 0 &&
+      rect.top < window.innerHeight && rect.left < window.innerWidth;
+  }
+
   function collectVisualSnapshotCandidates() {
     const nativeCandidates = Array.from(document.querySelectorAll(
       'input, textarea, select, button, label[for], [onclick], [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="combobox"], [role="textbox"], [role="checkbox"], [role="radio"], [role="option"], [role="tab"], [role="menuitem"], [role="link"], [role="switch"], [aria-haspopup="listbox"], .ProseMirror, .ql-editor, a[href]',
@@ -3545,7 +3553,12 @@
         element.setAttribute(SNAPSHOT_SELECTOR_ATTR, `${SNAPSHOT_SELECTOR_PREFIX}-custom-${index + 1}`);
       }
     });
-    return [...nativeCandidates, ...customCandidates].slice(0, 80);
+    // Framework cards are the reason the visual supervisor was invoked. Keep
+    // them ahead of ordinary links, and discard offscreen footer/navigation
+    // controls before applying the screenshot budget.
+    return [...customCandidates, ...nativeCandidates]
+      .filter(isInVisualViewport)
+      .slice(0, 80);
   }
 
   function prepareVisualSnapshot() {

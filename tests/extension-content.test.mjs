@@ -253,6 +253,8 @@ assert.match(content, /getComputedStyle\(element\)\.cursor\s*!==\s*["']pointer["
   "generic custom-control discovery should recognize visible pointer-style cards");
 assert.match(content, /collectVisualSnapshotCandidates\(\)/,
   "the annotated screenshot must use the shared custom-control candidate collector");
+assert.match(content, /return\s+\[\.\.\.customCandidates,\s*\.\.\.nativeCandidates\][\s\S]*filter\(isInVisualViewport\)[\s\S]*slice\(0,\s*80\)/,
+  "visible custom controls must not be displaced by offscreen navigation and footer links");
 assert.match(content, /uploadedFiles/,
   "a media injection should request a visual preview check before the batch continues");
 

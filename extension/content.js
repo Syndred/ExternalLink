@@ -5494,6 +5494,13 @@
   function resolveValueForField(config, element) {
     const pf = getProfileFields(config);
     const hint = getFieldHint(element);
+    // A repository URL is not the product homepage. Resolve it before legacy
+    // learned mappings, which may already contain the old generic URL answer.
+    if (/\bgithub\b/.test(hint)) {
+      const entry = Object.entries(pf).find(([key]) => /\bgithub\b/i.test(key));
+      const repositoryUrl = String(entry?.[1] || "").trim();
+      return /^https?:\/\/(?:www\.)?github\.com\/[^\s]+$/i.test(repositoryUrl) ? repositoryUrl : "";
+    }
     const type = (element.type || "").toLowerCase();
     const tag = element.tagName.toLowerCase();
     const host = location.hostname;

@@ -473,6 +473,10 @@
     const list = $("sidepanelTimelineList");
     if (!summary || !list) return;
     currentTimelineItem = item || null;
+    summary.dataset.syncStatus = options.sync?.status || "";
+    const withSyncStatus = (text) => options.sync?.message
+      ? `${text} · ${options.sync.message}`
+      : text;
     const addButton = $("btnAddTimelineEvent");
     if (addButton) addButton.hidden = !/^https?:\/\//i.test(currentPageUrl || "");
     if (timelineEditorUrl && timelineEditorUrl !== currentPageUrl) closeTimelineEditor();
@@ -486,7 +490,7 @@
       return;
     }
     if (options.error) {
-      summary.textContent = "时间线暂时无法读取";
+      summary.textContent = withSyncStatus("时间线暂时无法读取");
       const error = document.createElement("div");
       error.className = "empty-state compact-empty";
       error.textContent = options.error;
@@ -494,7 +498,7 @@
       return;
     }
     if (!item) {
-      summary.textContent = "当前页面尚未登记为外链站";
+      summary.textContent = withSyncStatus("当前页面尚未登记为外链站");
       const empty = document.createElement("div");
       empty.className = "empty-state compact-empty";
       empty.textContent = "把当前页面加入外链库后，这里会显示提交和跟进动态。";
@@ -506,7 +510,7 @@
       ? Sidepanel.buildTimelineModel(item, siteProfiles)
       : { events: [], profileCount: 0, latestAt: "" };
     if (!model.events.length) {
-      summary.textContent = `${item.domain || "当前外链站"} · 暂无动态记录`;
+      summary.textContent = withSyncStatus(`${item.domain || "当前外链站"} · 暂无动态记录`);
       const empty = document.createElement("div");
       empty.className = "empty-state compact-empty";
       empty.textContent = "还没有提交、审核或跟进记录；可在设置页外链库添加动态。";
@@ -514,7 +518,7 @@
       return;
     }
 
-    summary.textContent = `${item.domain || "当前外链站"} · ${model.profileCount} 个 Profile · ${model.events.length} 条动态 · 最近 ${formatSidepanelTimelineTime(model.latestAt)}`;
+    summary.textContent = withSyncStatus(`${item.domain || "当前外链站"} · ${model.profileCount} 个 Profile · ${model.events.length} 条动态 · 最近 ${formatSidepanelTimelineTime(model.latestAt)}`);
     const visibleEvents = model.events.slice(0, 8);
     for (const event of visibleEvents) {
       const row = document.createElement("article");
@@ -559,25 +563,73 @@
     }
   }
 
-  async function loadSidepanelTimeline(pageUrl = currentPageUrl) {
+  async function loadSidepanelTimeline(pageUrl = currentPageUrl, { forceCloud = false } = {}) {
     const token = ++timelineLoadToken;
     if (!pageUrl?.startsWith("http")) {
       renderSidepanelTimeline(null);
       return;
     }
-    renderSidepanelTimeline(null, { loading: true });
+
+    // Keep an already-rendered local timeline visible while the background
+    // performs its optional cloud read. A slow/offline Worker must never blank
+    // the sidebar or delay the form detection/fill workflow.
+    const currentSiteStillMatches = currentTimelineItem
+      && findSidepanelTimelineItem([currentTimelineItem], pageUrl);
+    if (!currentSiteStillMatches) {
+      renderSidepanelTimeline(null, { loading: true });
+    }
+
+    let localResult;
     try {
-      const result = await chrome.runtime.sendMessage({
+      localResult = await chrome.runtime.sendMessage({
         action: "getLibraryManagerState",
         url: pageUrl,
+        refreshCloud: false,
       });
       if (token !== timelineLoadToken) return;
-      if (!result?.ok) throw new Error(result?.error || "无法读取外链库");
-      renderSidepanelTimeline(findSidepanelTimelineItem(result.items, pageUrl));
+      if (!localResult?.ok) throw new Error(localResult?.error || "无法读取外链库");
+      renderSidepanelTimeline(findSidepanelTimelineItem(localResult.items, pageUrl));
     } catch (err) {
       if (token !== timelineLoadToken) return;
       renderSidepanelTimeline(null, { error: err.message || "请稍后重试" });
+      return;
     }
+
+    const refreshFromCloud = async () => {
+      try {
+        const cloudResult = await chrome.runtime.sendMessage({
+          action: "refreshSubmissionLedger",
+          force: forceCloud,
+        });
+        if (token !== timelineLoadToken) return;
+        if (!cloudResult?.ok) throw new Error(cloudResult?.error || "云端动态读取失败");
+        const refreshed = await chrome.runtime.sendMessage({
+          action: "getLibraryManagerState",
+          url: pageUrl,
+          refreshCloud: false,
+        });
+        if (token !== timelineLoadToken) return;
+        if (!refreshed?.ok) throw new Error(refreshed?.error || "刷新后的外链库读取失败");
+        renderSidepanelTimeline(
+          findSidepanelTimelineItem(refreshed.items, pageUrl),
+          { sync: cloudResult.sync },
+        );
+      } catch (err) {
+        if (token !== timelineLoadToken) return;
+        // The local result is still authoritative for this render. Surface the
+        // cloud problem in the summary without discarding visible local events.
+        renderSidepanelTimeline(
+          findSidepanelTimelineItem(localResult.items, pageUrl),
+          {
+            sync: {
+              status: "error",
+              message: `云端动态暂不可用，已保留本地记录：${err.message || "读取失败"}`,
+            },
+          },
+        );
+      }
+    };
+    refreshFromCloud().catch(() => {});
   }
 
   function toDateTimeLocal(value = new Date()) {
@@ -1466,7 +1518,7 @@
 
   $("btnRefreshMedia")?.addEventListener("click", () => loadMediaPreflight());
   $("btnRefreshSidepanelTimeline")?.addEventListener("click", () => {
-    loadSidepanelTimeline(currentPageUrl).catch(() => {});
+    loadSidepanelTimeline(currentPageUrl, { forceCloud: true }).catch(() => {});
   });
   $("btnAddTimelineEvent")?.addEventListener("click", openTimelineEditor);
   $("timelineEditor")?.addEventListener("submit", saveTimelineEvent);

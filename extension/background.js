@@ -99,6 +99,13 @@ const submissionLedgerWrite = self.ExtLinkBatchControls.createSerialExecutor();
 const understoodForms = new Map();
 const cloudSyncIgnoredValues = new Map();
 let cloudSyncRetryAttempt = 0;
+const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze([
+  "submissionRecords",
+  "submissionTimeline",
+]);
+const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 5000;
+let submissionLedgerPullPromise = null;
+let submissionLedgerPullStartedAt = 0;
 let batchLogWritePromise = Promise.resolve();
 let pendingBatchLogEntries = [];
 let batchLogFlushTimer = null;
@@ -377,6 +384,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "cloudSyncPull":
       pullCloudState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "refreshSubmissionLedger":
+      refreshSubmissionLedgerFromCloud(msg)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -865,6 +877,264 @@ async function pullCloudState() {
     state,
     revisions: snapshot.revisions || {},
   };
+}
+
+function submissionLedgerValuesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function submissionLedgerHasPendingWrites() {
+  return SUBMISSION_LEDGER_CLOUD_KEYS.some((key) => cloudSyncPendingKeys.has(key));
+}
+
+function submissionLedgerSyncResult(status, message, extra = {}) {
+  return {
+    status,
+    message,
+    ...extra,
+  };
+}
+
+function submissionLedgerPullMetadata(storage = {}) {
+  return storage.cloudSyncMetadata && typeof storage.cloudSyncMetadata === "object"
+    ? storage.cloudSyncMetadata
+    : {};
+}
+
+function submissionLedgerCloudConfigFingerprint(config = {}) {
+  return [config.endpoint, config.workspaceId, config.accessToken].map((value) => String(value || "")).join("\u0000");
+}
+
+async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
+  if (submissionLedgerPullPromise) return submissionLedgerPullPromise;
+
+  const request = (async () => {
+    const initial = await chrome.storage.local.get([
+      ...SUBMISSION_LEDGER_CLOUD_KEYS,
+      "cloudSyncMetadata",
+    ]);
+    const baseline = {
+      submissionRecords: initial.submissionRecords,
+      submissionTimeline: initial.submissionTimeline,
+    };
+
+    if (submissionLedgerHasPendingWrites()) {
+      return {
+        baseline,
+        sync: submissionLedgerSyncResult(
+          "pending",
+          "本地外链动态正在等待云端保存，暂不覆盖本地记录。",
+        ),
+      };
+    }
+
+    const config = await getCloudConfig();
+    if (!config.configured) {
+      return {
+        baseline,
+        configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        sync: submissionLedgerSyncResult(
+          "unconfigured",
+          "云端尚未连接，当前显示本地动态。",
+        ),
+      };
+    }
+
+    const metadata = submissionLedgerPullMetadata(initial);
+    const lastAttemptAt = Date.parse(metadata.submissionLedgerPullAttemptAt || "");
+    const memoryAttemptAt = submissionLedgerPullStartedAt || 0;
+    const recentAttemptAt = Math.max(Number.isFinite(lastAttemptAt) ? lastAttemptAt : 0, memoryAttemptAt);
+    if (!force && recentAttemptAt && Date.now() - recentAttemptAt < SUBMISSION_LEDGER_PULL_COOLDOWN_MS) {
+      const cachedError = String(metadata.submissionLedgerPullError || "").trim();
+      return {
+        baseline,
+        configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        sync: submissionLedgerSyncResult(
+          cachedError ? "error_cached" : "recent",
+          cachedError
+            ? `云端暂不可用，已保留本地动态：${cachedError}`
+            : "已使用最近一次云端动态回读。",
+        ),
+      };
+    }
+
+    submissionLedgerPullStartedAt = Date.now();
+    try {
+      // The Worker currently exposes a single snapshot read endpoint. Keep
+      // the reconciliation surface deliberately narrow: only these two
+      // documents may leave this helper or be applied by its consumer.
+      const snapshot = await cloudRequest("/v1/snapshot");
+      const documents = snapshot?.documents && typeof snapshot.documents === "object"
+        ? snapshot.documents
+        : {};
+      const pulled = {};
+      for (const key of SUBMISSION_LEDGER_CLOUD_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(documents, key)) pulled[key] = documents[key];
+      }
+      return {
+        baseline,
+        configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        documents: pulled,
+        revisions: Object.fromEntries(
+          SUBMISSION_LEDGER_CLOUD_KEYS
+            .filter((key) => Object.prototype.hasOwnProperty.call(snapshot?.revisions || {}, key))
+            .map((key) => [key, snapshot.revisions[key]]),
+        ),
+        attemptedAt: new Date(submissionLedgerPullStartedAt).toISOString(),
+        sync: submissionLedgerSyncResult("fetched", "已读取云端动态，正在核对本地变更。"),
+      };
+    } catch (err) {
+      return {
+        baseline,
+        configFingerprint: submissionLedgerCloudConfigFingerprint(config),
+        attemptedAt: new Date(submissionLedgerPullStartedAt).toISOString(),
+        sync: submissionLedgerSyncResult(
+          "error",
+          `云端动态暂不可用，已保留本地记录：${err.message || "读取失败"}`,
+          { error: err.message || "读取失败" },
+        ),
+      };
+    }
+  })();
+
+  submissionLedgerPullPromise = request;
+  try {
+    return await request;
+  } finally {
+    if (submissionLedgerPullPromise === request) submissionLedgerPullPromise = null;
+  }
+}
+
+async function applySubmissionLedgerCloudPull(prepared) {
+  if (!prepared) return null;
+
+  const storage = await chrome.storage.local.get([
+    ...SUBMISSION_LEDGER_CLOUD_KEYS,
+    "cloudSyncMetadata",
+  ]);
+  const metadata = submissionLedgerPullMetadata(storage);
+  const metadataPatch = {
+    submissionLedgerPullStatus: prepared.sync?.status || "unknown",
+  };
+  if (prepared.attemptedAt) metadataPatch.submissionLedgerPullAttemptAt = prepared.attemptedAt;
+  if (prepared.sync?.status === "fetched") {
+    metadataPatch.submissionLedgerPullError = "";
+  } else if (prepared.sync?.error) {
+    metadataPatch.submissionLedgerPullError = prepared.sync.error;
+  }
+
+  const persistMetadata = async (sync) => {
+    await chrome.storage.local.set({
+      cloudSyncMetadata: {
+        ...metadata,
+        ...metadataPatch,
+        submissionLedgerPullStatus: sync?.status || metadataPatch.submissionLedgerPullStatus,
+        ...(sync?.status === "applied" || sync?.status === "up_to_date"
+          ? { submissionLedgerPulledAt: new Date().toISOString() }
+          : {}),
+      },
+    });
+    return sync;
+  };
+
+  if (prepared.sync?.status !== "fetched") {
+    return persistMetadata(prepared.sync || submissionLedgerSyncResult("unknown", "未读取云端动态。"));
+  }
+
+  const currentConfig = await getCloudConfig();
+  if (
+    submissionLedgerCloudConfigFingerprint(currentConfig) !== prepared.configFingerprint
+  ) {
+    return persistMetadata(
+      submissionLedgerSyncResult(
+        "config_changed",
+        "云端配置在回读期间发生变化，暂不覆盖本地记录。",
+      ),
+    );
+  }
+
+  if (submissionLedgerHasPendingWrites()) {
+    return persistMetadata(
+      submissionLedgerSyncResult(
+        "pending",
+        "本地外链动态在回读期间等待云端保存，暂不覆盖本地记录。",
+      ),
+    );
+  }
+
+  const baselineChanged = SUBMISSION_LEDGER_CLOUD_KEYS.some(
+    (key) => !submissionLedgerValuesEqual(storage[key], prepared.baseline?.[key]),
+  );
+  if (baselineChanged) {
+    return persistMetadata(
+      submissionLedgerSyncResult(
+        "changed",
+        "本地动态在云端回读期间发生改动，暂不覆盖本地记录。",
+      ),
+    );
+  }
+
+  const patch = {};
+  const staleKeys = [];
+  for (const key of SUBMISSION_LEDGER_CLOUD_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(prepared.documents || {}, key)) continue;
+    const knownRevision = Number(metadata.revisions?.[key]);
+    const remoteRevision = Number(prepared.revisions?.[key]);
+    if (
+      Number.isInteger(knownRevision) && knownRevision >= 0
+      && Number.isInteger(remoteRevision) && remoteRevision >= 0
+      && remoteRevision < knownRevision
+    ) {
+      staleKeys.push(key);
+      continue;
+    }
+    if (!submissionLedgerValuesEqual(storage[key], prepared.documents[key])) {
+      patch[key] = prepared.documents[key];
+    }
+  }
+  const revisions = {
+    ...(metadata.revisions && typeof metadata.revisions === "object" ? metadata.revisions : {}),
+  };
+  for (const key of SUBMISSION_LEDGER_CLOUD_KEYS) {
+    if (staleKeys.includes(key)) continue;
+    if (Object.prototype.hasOwnProperty.call(prepared.revisions || {}, key)) {
+      revisions[key] = prepared.revisions[key];
+    }
+  }
+  const sync = staleKeys.length
+    ? submissionLedgerSyncResult(
+        "stale",
+        "云端动态版本早于本地已知版本，暂不覆盖本地记录。",
+        { keys: Object.keys(patch), skippedKeys: staleKeys },
+      )
+    : Object.keys(patch).length
+      ? submissionLedgerSyncResult("applied", "已从云端更新外链动态。", { keys: Object.keys(patch) })
+      : submissionLedgerSyncResult("up_to_date", "云端动态已核对，当前记录是最新的。", { keys: [] });
+  const nextMetadata = {
+    ...metadata,
+    ...metadataPatch,
+    revisions,
+    submissionLedgerPullStatus: sync.status,
+    submissionLedgerPullError: sync.status === "stale" ? sync.message : "",
+    ...(sync.status === "stale" ? {} : { submissionLedgerPulledAt: new Date().toISOString() }),
+  };
+
+  if (!Object.keys(patch).length) {
+    await chrome.storage.local.set({ cloudSyncMetadata: nextMetadata });
+    return sync;
+  }
+
+  for (const [key, value] of Object.entries(patch)) {
+    cloudSyncIgnoredValues.set(key, JSON.stringify(value));
+  }
+  await chrome.storage.local.set({ ...patch, cloudSyncMetadata: nextMetadata });
+  return sync;
+}
+
+async function refreshSubmissionLedgerFromCloud(msg = {}) {
+  const prepared = await prepareSubmissionLedgerCloudPull({ force: msg.force === true });
+  const sync = await submissionLedgerWrite(() => applySubmissionLedgerCloudPull(prepared));
+  return { ok: true, sync };
 }
 
 async function migrateLocalStateToCloud() {
@@ -4251,10 +4521,14 @@ async function removeFromSubmissionQueue(msg) {
 }
 
 async function getLibraryManagerState(options = {}) {
-  return submissionLedgerWrite(() => getLibraryManagerStateUnlocked(options));
+  const prepared = options.refreshCloud === false || typeof prepareSubmissionLedgerCloudPull !== "function"
+    ? null
+    : await prepareSubmissionLedgerCloudPull({ force: options.forceCloud === true });
+  return submissionLedgerWrite(() => getLibraryManagerStateUnlocked(options, prepared));
 }
 
-async function getLibraryManagerStateUnlocked(options = {}) {
+async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = null) {
+  const cloudSync = await applySubmissionLedgerCloudPull(preparedCloudPull);
   const storage = await chrome.storage.local.get([
     "urlList",
     "siteAnnotations",
@@ -4409,7 +4683,7 @@ async function getLibraryManagerStateUnlocked(options = {}) {
     };
   });
   items.sort(self.ExtLinkOpportunityScore.compareOpportunities);
-  return { ok: true, items, profiles: seeded.profiles };
+  return { ok: true, items, profiles: seeded.profiles, sync: cloudSync };
 }
 
 function applyTimelinePublicationUpgrade(records, event) {

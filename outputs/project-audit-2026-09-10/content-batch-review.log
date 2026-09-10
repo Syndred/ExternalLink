@@ -1,0 +1,33 @@
+TAP version 13
+# batch resume persistence regression passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-batch-resume.test.mjs
+ok 1 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-batch-resume.test.mjs
+  ---
+  duration_ms: 26.979292
+  ...
+# Content audit findings regression tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-content-findings.test.mjs
+ok 2 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-content-findings.test.mjs
+  ---
+  duration_ms: 31.057125
+  ...
+# scheduler failure recovery regression passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-scheduler-error.test.mjs
+ok 3 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-scheduler-error.test.mjs
+  ---
+  duration_ms: 25.515416
+  ...
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/extension-content.test.mjs
+ok 4 - /Users/syndred/Desktop/projects/ExternalLink/tests/extension-content.test.mjs
+  ---
+  duration_ms: 40.074167
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44.834333

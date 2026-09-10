@@ -1,0 +1,11 @@
+{
+  "version": "3.4.6",
+  "javascriptSyntaxPassed": 28,
+  "pythonSyntaxPassed": 10,
+  "resourceReferencesChecked": 19,
+  "missingResources": [],
+  "nodeTestFilesPassed": 40,
+  "nodeTestFilesFailed": 0,
+  "liveExtensionUIVerified": false,
+  "liveCloudWriteReadDisplayVerified": false
+}

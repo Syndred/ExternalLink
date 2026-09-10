@@ -1,0 +1,249 @@
+TAP version 13
+# batch resume persistence regression passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-batch-resume.test.mjs
+ok 1 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-batch-resume.test.mjs
+  ---
+  duration_ms: 40.989
+  ...
+# Content audit findings regression tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-content-findings.test.mjs
+ok 2 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-content-findings.test.mjs
+  ---
+  duration_ms: 43.948
+  ...
+# scheduler failure recovery regression passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-scheduler-error.test.mjs
+ok 3 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-scheduler-error.test.mjs
+  ---
+  duration_ms: 42.531292
+  ...
+# cloud sync race audit tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-sync-races.test.mjs
+ok 4 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-sync-races.test.mjs
+  ---
+  duration_ms: 46.672459
+  ...
+# Settings conflict recovery action flow passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-ui-conflict-flow.test.mjs
+ok 5 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-ui-conflict-flow.test.mjs
+  ---
+  duration_ms: 35.768334
+  ...
+# UI settings/sidepanel audit tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/audit-ui-settings.test.mjs
+ok 6 - /Users/syndred/Desktop/projects/ExternalLink/tests/audit-ui-settings.test.mjs
+  ---
+  duration_ms: 39.544458
+  ...
+# automation integration tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/automation-integration.test.mjs
+ok 7 - /Users/syndred/Desktop/projects/ExternalLink/tests/automation-integration.test.mjs
+  ---
+  duration_ms: 39.547583
+  ...
+# automation ledger tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/automation-ledger.test.mjs
+ok 8 - /Users/syndred/Desktop/projects/ExternalLink/tests/automation-ledger.test.mjs
+  ---
+  duration_ms: 91.436875
+  ...
+# backup workflow tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/backup-workflow.test.mjs
+ok 9 - /Users/syndred/Desktop/projects/ExternalLink/tests/backup-workflow.test.mjs
+  ---
+  duration_ms: 36.258125
+  ...
+# batch controls tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/batch-controls.test.mjs
+ok 10 - /Users/syndred/Desktop/projects/ExternalLink/tests/batch-controls.test.mjs
+  ---
+  duration_ms: 53.823417
+  ...
+# batch report tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/batch-report.test.mjs
+ok 11 - /Users/syndred/Desktop/projects/ExternalLink/tests/batch-report.test.mjs
+  ---
+  duration_ms: 34.893834
+  ...
+# cloud sync workflow tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/cloud-sync-workflow.test.mjs
+ok 12 - /Users/syndred/Desktop/projects/ExternalLink/tests/cloud-sync-workflow.test.mjs
+  ---
+  duration_ms: 41.368583
+  ...
+# cloud worker core tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/cloud-worker-core.test.mjs
+ok 13 - /Users/syndred/Desktop/projects/ExternalLink/tests/cloud-worker-core.test.mjs
+  ---
+  duration_ms: 37.179625
+  ...
+# Content comment detector tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/content-comment-detection.test.mjs
+ok 14 - /Users/syndred/Desktop/projects/ExternalLink/tests/content-comment-detection.test.mjs
+  ---
+  duration_ms: 33.935958
+  ...
+# context menu tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/context-menu.test.mjs
+ok 15 - /Users/syndred/Desktop/projects/ExternalLink/tests/context-menu.test.mjs
+  ---
+  duration_ms: 38.045833
+  ...
+# destination memory tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/destination-memory.test.mjs
+ok 16 - /Users/syndred/Desktop/projects/ExternalLink/tests/destination-memory.test.mjs
+  ---
+  duration_ms: 44.293583
+  ...
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/extension-content.test.mjs
+ok 17 - /Users/syndred/Desktop/projects/ExternalLink/tests/extension-content.test.mjs
+  ---
+  duration_ms: 51.665875
+  ...
+# external-link operator skill tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/external-link-operator-skill.test.mjs
+ok 18 - /Users/syndred/Desktop/projects/ExternalLink/tests/external-link-operator-skill.test.mjs
+  ---
+  duration_ms: 74.473792
+  ...
+# local-first fill and trusted manual receipt tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/fill-first-and-manual-receipt.test.mjs
+ok 19 - /Users/syndred/Desktop/projects/ExternalLink/tests/fill-first-and-manual-receipt.test.mjs
+  ---
+  duration_ms: 26.917417
+  ...
+# form understanding runtime tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/form-understanding.test.mjs
+ok 20 - /Users/syndred/Desktop/projects/ExternalLink/tests/form-understanding.test.mjs
+  ---
+  duration_ms: 36.078917
+  ...
+# link monitor tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/link-monitor.test.mjs
+ok 21 - /Users/syndred/Desktop/projects/ExternalLink/tests/link-monitor.test.mjs
+  ---
+  duration_ms: 31.337125
+  ...
+# opportunity score tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/opportunity-score.test.mjs
+ok 22 - /Users/syndred/Desktop/projects/ExternalLink/tests/opportunity-score.test.mjs
+  ---
+  duration_ms: 28.970084
+  ...
+# pricing context and shared field mapping tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/pricing-context.test.mjs
+ok 23 - /Users/syndred/Desktop/projects/ExternalLink/tests/pricing-context.test.mjs
+  ---
+  duration_ms: 43.967167
+  ...
+# Product Hunt stage, gate, media, and final-action safety tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/producthunt-launch.test.mjs
+ok 24 - /Users/syndred/Desktop/projects/ExternalLink/tests/producthunt-launch.test.mjs
+  ---
+  duration_ms: 42.92875
+  ...
+# profile migration tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/profile-migration.test.mjs
+ok 25 - /Users/syndred/Desktop/projects/ExternalLink/tests/profile-migration.test.mjs
+  ---
+  duration_ms: 29.985166
+  ...
+# publication and playbook tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/publication-playbook.test.mjs
+ok 26 - /Users/syndred/Desktop/projects/ExternalLink/tests/publication-playbook.test.mjs
+  ---
+  duration_ms: 35.602916
+  ...
+# queue workflow tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/queue-workflow.test.mjs
+ok 27 - /Users/syndred/Desktop/projects/ExternalLink/tests/queue-workflow.test.mjs
+  ---
+  duration_ms: 40.644875
+  ...
+# repository URL field tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/repository-field.test.mjs
+ok 28 - /Users/syndred/Desktop/projects/ExternalLink/tests/repository-field.test.mjs
+  ---
+  duration_ms: 28.441958
+  ...
+# scheduler workflow tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/scheduler-workflow.test.mjs
+ok 29 - /Users/syndred/Desktop/projects/ExternalLink/tests/scheduler-workflow.test.mjs
+  ---
+  duration_ms: 30.691375
+  ...
+# Sidepanel behavior tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-behavior.test.mjs
+ok 30 - /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-behavior.test.mjs
+  ---
+  duration_ms: 34.699917
+  ...
+# Sidepanel comment/media tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-comment-media.test.mjs
+ok 31 - /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-comment-media.test.mjs
+  ---
+  duration_ms: 32.79125
+  ...
+# sidepanel timeline refresh tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-timeline-refresh.test.mjs
+ok 32 - /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-timeline-refresh.test.mjs
+  ---
+  duration_ms: 27.646917
+  ...
+# Sidepanel timeline tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-timeline.test.mjs
+ok 33 - /Users/syndred/Desktop/projects/ExternalLink/tests/sidepanel-timeline.test.mjs
+  ---
+  duration_ms: 30.041084
+  ...
+# site marker migration, multiselect, queue and priority tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/site-markers.test.mjs
+ok 34 - /Users/syndred/Desktop/projects/ExternalLink/tests/site-markers.test.mjs
+  ---
+  duration_ms: 33.474833
+  ...
+# submission ledger cloud refresh tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/submission-ledger-cloud-refresh.test.mjs
+ok 35 - /Users/syndred/Desktop/projects/ExternalLink/tests/submission-ledger-cloud-refresh.test.mjs
+  ---
+  duration_ms: 37.279708
+  ...
+# submission ledger runtime tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/submission-ledger-runtime.test.mjs
+ok 36 - /Users/syndred/Desktop/projects/ExternalLink/tests/submission-ledger-runtime.test.mjs
+  ---
+  duration_ms: 75.735125
+  ...
+# submission timeline tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/submission-timeline.test.mjs
+ok 37 - /Users/syndred/Desktop/projects/ExternalLink/tests/submission-timeline.test.mjs
+  ---
+  duration_ms: 31.432334
+  ...
+# Table import tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/table-import.test.mjs
+ok 38 - /Users/syndred/Desktop/projects/ExternalLink/tests/table-import.test.mjs
+  ---
+  duration_ms: 104.040041
+  ...
+# UI workflow tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/ui-workflow.test.mjs
+ok 39 - /Users/syndred/Desktop/projects/ExternalLink/tests/ui-workflow.test.mjs
+  ---
+  duration_ms: 27.707875
+  ...
+# unattended runtime tests passed
+# Subtest: /Users/syndred/Desktop/projects/ExternalLink/tests/unattended-runtime.test.mjs
+ok 40 - /Users/syndred/Desktop/projects/ExternalLink/tests/unattended-runtime.test.mjs
+  ---
+  duration_ms: 1882.980875
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2046.437667

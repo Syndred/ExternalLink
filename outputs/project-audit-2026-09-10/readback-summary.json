@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-10",
+  "source": "Read-only Chrome extension disk cache and authenticated Worker GET",
+  "destinationProfileKey": "devpages.io/submit-a-tool::RspAi",
+  "localCache": { "recordPresent": true, "eventCount": 2, "recordStatus": "success" },
+  "localRevisions": { "submissionRecords": 2, "submissionTimeline": 4 },
+  "batchStatus": "stopped",
+  "workerHealthHttpStatus": 403,
+  "workerSnapshotHttpStatus": 403,
+  "workerReadbackError": "text/plain: error code: 1010",
+  "limitations": "Disk cache is not a live sidepanel display. Worker readback was rejected on this diagnostic path; this is not proof that the Chrome extension cannot connect. No cloud or browser data was modified."
+}

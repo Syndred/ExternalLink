@@ -17,6 +17,10 @@
   let selectedLibraryKey = "";
   let editingTimelineEventId = "";
   let draggingSiteId = "";
+  let siteEditorDirty = false;
+  let siteEditorBaseline = null;
+  const nonProfileDirtyScopes = new Set();
+  let nonProfileEditorRevision = 0;
   const TIMELINE_TYPES = [
     ["submitted", "已提交"],
     ["pending_moderation", "待审核"],
@@ -144,6 +148,22 @@
   function save(obj) {
     chrome.storage.local.set(obj);
   }
+
+  function canonicalProfileSnapshot(value) {
+    if (Array.isArray(value)) return value.map(canonicalProfileSnapshot);
+    if (!value || typeof value !== "object") return value;
+    return Object.keys(value).sort().reduce((result, key) => {
+      if (key !== "updatedAt") result[key] = canonicalProfileSnapshot(value[key]);
+      return result;
+    }, {});
+  }
+
+  function profileHasUnsavedChanges(draft, persisted) {
+    return JSON.stringify(canonicalProfileSnapshot(draft)) !== JSON.stringify(canonicalProfileSnapshot(persisted));
+  }
+
+  self.ExtLinkSettings = self.ExtLinkSettings || {};
+  self.ExtLinkSettings.profileHasUnsavedChanges = profileHasUnsavedChanges;
 
   function updateLogoPreview(dataUrl) {
     const preview = $("siteLogoPreview");
@@ -377,6 +397,90 @@
     };
   }
 
+  function hasUnsavedSiteEdits() {
+    if (siteEditorDirty) return true;
+    if (!siteEditorBaseline) return false;
+    try {
+      return profileHasUnsavedChanges(
+        formToProfile(activeSiteId || undefined),
+        siteEditorBaseline,
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function hasUnsavedSettingsEdits() {
+    return hasUnsavedSiteEdits() || nonProfileDirtyScopes.size > 0;
+  }
+
+  function nonProfileScopeForTarget(target) {
+    const id = String(target?.id || "");
+    if (
+      id === "cfgEmail" ||
+      id === "cfgName" ||
+      id === "cfgCommentTemplate" ||
+      id === "cfgConcurrency" ||
+      id === "cfgPingIndex" ||
+      id === "autoFillOnVisit" ||
+      id === "autoSubmitDirectoryListings" ||
+      id === "autoSubmitStandardWpComments"
+    ) return "config";
+    if (
+      id === "filterBlacklistEnabled" ||
+      id === "filterMinDomainAge" ||
+      id === "filterRequireKnownAge" ||
+      id === "filterMinOpportunityScore" ||
+      id === "domainBlacklistText"
+    ) return "target-gate";
+    if (
+      id === "filterAiComments" ||
+      id === "filterAiCommentAllowLink" ||
+      id === "filterManualFillIcons"
+    ) return "assistant";
+    if (id === "linkMonitorEnabled" || id === "linkMonitorMinutes") return "link-monitor";
+    if (target?.closest?.("#libraryTimelinePane")) return "timeline";
+    if (target?.closest?.(".library-ops")) {
+      if (id === "cloudWorkerEndpoint" || id === "cloudAccessToken" || id === "cloudWorkspaceId") {
+        return "cloud-config";
+      }
+    }
+    return "";
+  }
+
+  function markNonProfileEditorDirty(target) {
+    const scope = nonProfileScopeForTarget(target);
+    if (!scope) return;
+    nonProfileDirtyScopes.add(scope);
+    nonProfileEditorRevision += 1;
+  }
+
+  function clearNonProfileEditorDirty(scope, revision = null) {
+    if (revision !== null && revision !== nonProfileEditorRevision) return;
+    if (scope) nonProfileDirtyScopes.delete(scope);
+  }
+
+  function adoptPulledSiteProfiles(state, preserveDraft = false) {
+    if (!state || !Object.prototype.hasOwnProperty.call(state, "siteProfiles")) return;
+    if (!state.siteProfiles || typeof state.siteProfiles !== "object" || Array.isArray(state.siteProfiles)) return;
+    siteProfiles = state.siteProfiles;
+    if (!preserveDraft) {
+      renderSiteSelector();
+      if (activeSiteId && siteProfiles[activeSiteId]) {
+        profileToForm(siteProfiles[activeSiteId]);
+      }
+      captureSiteEditorBaseline();
+    }
+  }
+
+  function captureSiteEditorBaseline() {
+    try {
+      siteEditorBaseline = canonicalProfileSnapshot(formToProfile(activeSiteId || undefined));
+    } catch {
+      siteEditorBaseline = null;
+    }
+  }
+
   function orderedSiteIds() {
     return P.orderedProfileIds(siteProfiles);
   }
@@ -450,6 +554,10 @@
 
   function selectSite(id) {
     if (!id || !siteProfiles[id] || id === activeSiteId) return;
+    if (hasUnsavedSiteEdits()) {
+      alert("当前站点资料有未保存修改，请先保存后再切换站点。");
+      return;
+    }
     activeSiteId = id;
     loadActiveToForm();
     persistProfiles();
@@ -466,6 +574,7 @@
     siteProfiles = P.applyProfileOrder(siteProfiles, ids);
     draggingSiteId = "";
     persistProfiles();
+    captureSiteEditorBaseline();
     renderSiteSelector();
   }
 
@@ -474,12 +583,15 @@
   }
 
   function loadActiveToForm() {
+    siteEditorDirty = false;
     if (!activeSiteId || !siteProfiles[activeSiteId]) {
       pendingLogoDataUrl = null;
       profileToForm(P.emptySiteProfile("new"));
+      captureSiteEditorBaseline();
       return;
     }
     profileToForm(siteProfiles[activeSiteId]);
+    captureSiteEditorBaseline();
   }
 
   $("siteLogoFile")?.addEventListener("change", (e) => {
@@ -503,9 +615,14 @@
     pendingLogoDataUrl = "";
     updateLogoPreview("");
     if ($("siteLogoFile")) $("siteLogoFile").value = "";
+    siteEditorDirty = true;
   });
 
   $("btnAddSite")?.addEventListener("click", () => {
+    if (hasUnsavedSiteEdits()) {
+      alert("当前站点资料有未保存修改，请先保存后再添加站点。");
+      return;
+    }
     const id = "site-" + Date.now().toString(36);
     siteProfiles[id] = {
       ...P.emptySiteProfile(id, "新站点"),
@@ -519,6 +636,10 @@
 
   $("btnRemoveSite")?.addEventListener("click", () => {
     if (!activeSiteId || !siteProfiles[activeSiteId]) return;
+    if (hasUnsavedSiteEdits()) {
+      alert("当前站点资料有未保存修改，请先保存后再删除站点。");
+      return;
+    }
     if (!confirm(`删除「${siteProfiles[activeSiteId].name || activeSiteId}」？此操作会从云端资料里移除该站点。`)) return;
     delete siteProfiles[activeSiteId];
     siteProfiles = P.applyProfileOrder(siteProfiles, orderedSiteIds());
@@ -539,6 +660,8 @@
     pendingLogoDataUrl = profile.logoDataUrl || null;
     renderSiteSelector();
     persistProfiles();
+    siteEditorDirty = false;
+    captureSiteEditorBaseline();
     renderProfileMedia(profile);
     alert("✅ 站点资料已保存");
   });
@@ -564,6 +687,7 @@
           : P.emptySiteProfile(activeSiteId || P.slugifySiteId(url), "");
       const merged = P.mergeExtractedProfile(current, data.profile || {});
       profileToForm(merged);
+      siteEditorDirty = true;
     } catch (err) {
       alert(`提取失败: ${err.message}\n\n请确认云端数据中心已连接。`);
     } finally {
@@ -584,6 +708,7 @@
       });
       if (!data?.ok) throw new Error(data?.error || "云端资料完善失败");
       profileToForm(P.mergeExtractedProfile(partial, data.profile || {}));
+      siteEditorDirty = true;
     } catch (err) {
       alert(`生成失败: ${err.message}`);
     } finally {
@@ -593,6 +718,7 @@
   });
 
   $("btnSaveConfig")?.addEventListener("click", () => {
+    const editorRevision = nonProfileEditorRevision;
     save({
       cfgEmail: $("cfgEmail").value,
       cfgName: $("cfgName").value,
@@ -603,6 +729,7 @@
       autoSubmitDirectoryListings: $("autoSubmitDirectoryListings")?.checked !== false,
       autoSubmitStandardWpComments: $("autoSubmitStandardWpComments")?.checked === true,
     });
+    clearNonProfileEditorDirty("config", editorRevision);
     alert("✅ 全局配置已保存");
   });
 
@@ -841,12 +968,14 @@
     cancel.addEventListener("click", () => {
       editingTimelineEventId = "";
       fillTimelineForm(fields);
+      clearNonProfileEditorDirty("timeline");
     });
     form.append(profile, type, occurredAt, url, note, submit, cancel);
     form.timelineFields = fields;
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       submit.disabled = true;
+      const editorRevision = nonProfileEditorRevision;
       const editing = Boolean(editingTimelineEventId);
       submit.textContent = editing ? "保存中…" : "保存中…";
       try {
@@ -859,6 +988,7 @@
         if (!result?.ok) throw new Error(result?.error || (editing ? "保存动态失败" : "添加动态失败"));
         editingTimelineEventId = "";
         await loadLibrary();
+        clearNonProfileEditorDirty("timeline", editorRevision);
       } catch (err) {
         alert(err.message);
         fillTimelineForm(fields, editing ? item.events?.find((row) => row.id === editingTimelineEventId) : null);
@@ -1282,12 +1412,14 @@
 
   $("btnCloudConnect")?.addEventListener("click", async () => {
     const btn = $("btnCloudConnect");
+    const editorRevision = nonProfileEditorRevision;
     btn.disabled = true;
     setCloudStatus("正在验证云端连接…");
     try {
       const result = await chrome.runtime.sendMessage({ action: "cloudSyncConnect", config: cloudConfigFromForm() });
       if (!result?.ok) throw new Error(result?.error || "无法连接云端数据中心");
       await loadCloudSyncStatus();
+      clearNonProfileEditorDirty("cloud-config", editorRevision);
     } catch (err) {
       setCloudStatus(err.message, "warning");
     } finally {
@@ -1318,17 +1450,76 @@
 
   $("btnCloudPull")?.addEventListener("click", async () => {
     const btn = $("btnCloudPull");
+    if (hasUnsavedSettingsEdits()) {
+      setCloudStatus("当前设置有未保存修改，请先保存后再从云端回读。", "warning");
+      return;
+    }
     btn.disabled = true;
     setCloudStatus("正在从云端回读数据…");
     try {
-      const result = await chrome.runtime.sendMessage({ action: "cloudSyncPull" });
+      let result = await chrome.runtime.sendMessage({ action: "cloudSyncPull" });
       if (!result?.ok) throw new Error(result?.error || "云端回读失败");
+      if (result.status === "conflict") {
+        try {
+          await downloadSubmissionBackup();
+        } catch (err) {
+          setCloudStatus("本地 JSON 备份失败，未执行强制回读：" + err.message, "warning");
+          btn.disabled = false;
+          return;
+        }
+        if (hasUnsavedSettingsEdits()) {
+          setCloudStatus("备份期间产生了未保存修改，未执行强制回读；请先保存后重试。", "warning");
+          btn.disabled = false;
+          return;
+        }
+        const shouldResolve = confirm(
+          "JSON 备份下载已发起，请确认文件已保存，再采用云端替换冲突数据；取消将保留原数据。是否继续？",
+        );
+        if (!shouldResolve) {
+          setCloudStatus(result.message || "已取消冲突回读，原数据保持不变。", "warning");
+          btn.disabled = false;
+          return;
+        }
+        result = await chrome.runtime.sendMessage({
+          action: "cloudSyncPull",
+          resolveConflicts: true,
+        });
+        if (!result?.ok) throw new Error(result?.error || "冲突回读失败");
+      }
+      if (result.applied === false) {
+        setCloudStatus(result.message || "云端回读暂未应用，请稍后重试。", "warning");
+        btn.disabled = false;
+        return;
+      }
+      const hasSiteDraftAfterPull = hasUnsavedSiteEdits();
+      const hasDraftAfterPull = hasUnsavedSettingsEdits();
+      adoptPulledSiteProfiles(result.state, hasSiteDraftAfterPull);
+      if (hasDraftAfterPull) {
+        setCloudStatus("回读完成，但期间产生了未保存修改；页面未刷新，请先保存当前资料。", "warning");
+        btn.disabled = false;
+        return;
+      }
       setCloudStatus(`已回读 ${result.documentCount || 0} 类数据。`, "success");
       location.reload();
     } catch (err) {
       setCloudStatus(err.message, "warning");
       btn.disabled = false;
     }
+  });
+
+  document.addEventListener("input", (event) => {
+    if (event.target?.closest?.("#panel-sites")) {
+      siteEditorDirty = true;
+      return;
+    }
+    markNonProfileEditorDirty(event.target);
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target?.closest?.("#panel-sites")) {
+      siteEditorDirty = true;
+      return;
+    }
+    markNonProfileEditorDirty(event.target);
   });
 
   $("btnCloudPush")?.addEventListener("click", async () => {
@@ -1386,6 +1577,7 @@
   });
 
   $("btnSaveLinkMonitor")?.addEventListener("click", async () => {
+    const editorRevision = nonProfileEditorRevision;
     const result = await chrome.runtime.sendMessage({
       action: "saveLinkMonitorSchedule",
       enabled: $("linkMonitorEnabled").checked,
@@ -1393,20 +1585,32 @@
     });
     if (!result?.ok) return setStatusLine("linkMonitorStatus", result?.error || "保存失败", "warning");
     await loadLinkMonitorState();
+    clearNonProfileEditorDirty("link-monitor", editorRevision);
   });
 
-  $("btnExportLedger")?.addEventListener("click", async () => {
+  async function downloadSubmissionBackup() {
     const result = await chrome.runtime.sendMessage({ action: "exportSubmissionData" });
-    if (!result?.ok) return alert(result?.error || "导出失败");
+    if (!result?.ok) throw new Error(result?.error || "导出失败");
     const blob = new Blob([JSON.stringify(result.data, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `externallink-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    try {
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "externallink-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      anchor.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  $("btnExportLedger")?.addEventListener("click", async () => {
+    try {
+      await downloadSubmissionBackup();
+    } catch (err) {
+      alert(err.message || "导出失败");
+    }
   });
 
   $("btnImportLedger")?.addEventListener("click", () => $("ledgerImportFile")?.click());
@@ -1483,6 +1687,7 @@
 
   $("btnSaveTargetGate")?.addEventListener("click", async () => {
     const btn = $("btnSaveTargetGate");
+    const editorRevision = nonProfileEditorRevision;
     btn.disabled = true;
     try {
       const entries = String($("domainBlacklistText").value || "")
@@ -1508,6 +1713,7 @@
       if (!filterResult?.ok) throw new Error(filterResult?.error || "保存闸门设置失败");
       await loadTargetGateState();
       setStatusLine("targetGateStatus", "闸门设置已保存，下一次构建队列生效。", "success");
+      clearNonProfileEditorDirty("target-gate", editorRevision);
     } catch (err) {
       setStatusLine("targetGateStatus", err.message, "warning");
     } finally {
@@ -1559,6 +1765,7 @@
 
   $("btnSaveAssistant")?.addEventListener("click", async () => {
     const btn = $("btnSaveAssistant");
+    const editorRevision = nonProfileEditorRevision;
     btn.disabled = true;
     try {
       const result = await chrome.runtime.sendMessage({
@@ -1571,6 +1778,7 @@
       });
       if (!result?.ok) throw new Error(result?.error || "保存助手设置失败");
       setStatusLine("mediaLibraryStatus", "助手设置已保存，新打开的页面生效。", "success");
+      clearNonProfileEditorDirty("assistant", editorRevision);
     } catch (err) {
       setStatusLine("mediaLibraryStatus", err.message, "warning");
     } finally {

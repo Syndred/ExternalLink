@@ -63,8 +63,38 @@
     };
   }
 
+  function canEditTimeline(item, pageUrl) {
+    return /^https?:\/\//i.test(String(pageUrl || ""));
+  }
+
+  function normalizeBatchConcurrency(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
+  }
+
+  function clampBatchLimit(value, fallback, max) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(1, Math.min(max, parsed)) : fallback;
+  }
+
+  function buildBatchConfig(options = {}) {
+    return {
+      autoSkipCaptcha: false,
+      concurrency: normalizeBatchConcurrency(options.concurrency),
+      pingIndex: options.pingIndex !== false,
+      fillOnly: options.fillOnly === true,
+      unattended: options.unattended === true,
+      unattendedMaxHours: clampBatchLimit(options.unattendedMaxHours, 8, 12),
+      unattendedMaxTasks: clampBatchLimit(options.unattendedMaxTasks, 100, 500),
+      unattendedMaxManualTabs: clampBatchLimit(options.unattendedMaxManualTabs, 20, 100),
+    };
+  }
+
   global.ExtLinkSidepanel = global.ExtLinkSidepanel || {};
   global.ExtLinkSidepanel.buildTimelineModel = buildTimelineModel;
+  global.ExtLinkSidepanel.canEditTimeline = canEditTimeline;
+  global.ExtLinkSidepanel.normalizeBatchConcurrency = normalizeBatchConcurrency;
+  global.ExtLinkSidepanel.buildBatchConfig = buildBatchConfig;
 })(typeof self !== "undefined" ? self : globalThis);
 
 // ExternalLink Side Panel — persistent UI for detect & fill
@@ -91,9 +121,13 @@
   let submissionTasks = [];
   let submissionIndex = 0;
   let submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
+  let submissionQueueLoadToken = 0;
   let currentTimelineItem = null;
   let currentPageUrl = "";
   let selectedSiteIds = [];
+  let batchConcurrency = 1;
+  let batchPingIndex = true;
+  let batchPreviewToken = 0;
   let parkedTasks = [];
   let pagePrescan = null;
   let workflowStep = "detect";
@@ -164,6 +198,8 @@
         "cfgName",
         "cfgCommentTemplate",
         "cfgFillOnly",
+        "cfgConcurrency",
+        "cfgPingIndex",
         "unattendedPreferences",
         "activeBatchRun",
         "selectedSiteIds",
@@ -175,6 +211,8 @@
         activeSiteId = items.activeSiteId || Object.keys(siteProfiles)[0] || "";
         selectedSiteIds = (items.selectedSiteIds || []).filter((id) => siteProfiles[id]);
         if (!selectedSiteIds.length && activeSiteId) selectedSiteIds = [activeSiteId];
+        batchConcurrency = Sidepanel.normalizeBatchConcurrency(items.cfgConcurrency);
+        batchPingIndex = items.cfgPingIndex !== false;
         const activeRun = items.activeBatchRun;
         const unattendedPrefs = items.unattendedPreferences || {};
         if ($("cfgUnattended")) $("cfgUnattended").checked = unattendedPrefs.enabled === true;
@@ -231,6 +269,12 @@
         loadMediaPreflight().catch(() => {});
       });
     }
+    if (changes.cfgConcurrency || changes.cfgPingIndex) {
+      if (changes.cfgConcurrency) batchConcurrency = Sidepanel.normalizeBatchConcurrency(changes.cfgConcurrency.newValue);
+      if (changes.cfgPingIndex) {
+        batchPingIndex = changes.cfgPingIndex.newValue !== false;
+      }
+    }
     if (changes.deletedSubmissionKeys || changes.siteAnnotations || changes.urlList) {
       loadSubmissionQueue(currentPageUrl);
       loadClassifiedList();
@@ -285,8 +329,16 @@
       input.checked = selectedSiteIds.includes(id);
       input.addEventListener("change", () => {
         selectedSiteIds = [...el.querySelectorAll("input:checked")].map((node) => node.value);
+        const nextSelectedSiteIds = [...selectedSiteIds];
         chrome.storage.local.set({ selectedSiteIds });
+        // Clear the old nav before the request completes so a quick click
+        // cannot operate on a task excluded by the new Profile selection.
+        submissionTasks = [];
+        submissionIndex = 0;
+        submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
+        renderSubmissionNav();
         updateBatchPreview();
+        loadSubmissionQueue(currentPageUrl, nextSelectedSiteIds).catch(() => {});
       });
       const text = document.createElement("span");
       text.textContent = siteProfiles[id]?.name || id;
@@ -299,6 +351,7 @@
   async function updateBatchPreview() {
     const summary = $("batchSelectionSummary");
     if (!summary) return;
+    const requestToken = ++batchPreviewToken;
     if (!selectedSiteIds.length) {
       summary.textContent = "请至少选择一个自家网站";
       return;
@@ -312,8 +365,10 @@
       const destinationTotal = result?.meta?.destinationTotal || 0;
       const total = result?.meta?.total || 0;
       const skipped = result?.meta?.successfulSkipped || 0;
+      if (requestToken !== batchPreviewToken) return;
       summary.textContent = `${destinationTotal} 个外链站 · ${total} 个待提交组合 · 历史成功跳过 ${skipped} 个`;
     } catch (err) {
+      if (requestToken !== batchPreviewToken) return;
       summary.textContent = `无法计算：${err.message}`;
     }
   }
@@ -331,19 +386,31 @@
     refreshSiteAnnotation(currentPageUrl).catch(() => {});
   });
 
-  async function loadSubmissionQueue(syncUrl) {
+  async function loadSubmissionQueue(syncUrl, selectedIds = selectedSiteIds) {
+    const requestToken = ++submissionQueueLoadToken;
+    const profileIds = Array.isArray(selectedIds) ? [...selectedIds] : [];
+    if (!profileIds.length) {
+      submissionTasks = [];
+      submissionIndex = 0;
+      submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
+      renderSubmissionNav();
+      return;
+    }
     try {
       const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
       const url = syncUrl || tab?.url || "";
       const result = await chrome.runtime.sendMessage({
         action: "getSubmissionQueue",
         url: url.startsWith("http") ? url : undefined,
+        selectedSiteIds: profileIds,
       });
+      if (requestToken !== submissionQueueLoadToken) return;
       submissionTasks = result?.tasks || [];
       submissionIndex = result?.index ?? 0;
       submissionMeta = result?.meta || submissionMeta;
       renderSubmissionNav();
     } catch {
+      if (requestToken !== submissionQueueLoadToken) return;
       submissionTasks = [];
       renderSubmissionNav();
     }
@@ -478,7 +545,7 @@
       ? `${text} · ${options.sync.message}`
       : text;
     const addButton = $("btnAddTimelineEvent");
-    if (addButton) addButton.hidden = !/^https?:\/\//i.test(currentPageUrl || "");
+    if (addButton) addButton.hidden = !Sidepanel.canEditTimeline(item, currentPageUrl);
     if (timelineEditorUrl && timelineEditorUrl !== currentPageUrl) closeTimelineEditor();
     list.replaceChildren();
     if (options.loading) {
@@ -501,7 +568,7 @@
       summary.textContent = withSyncStatus("当前页面尚未登记为外链站");
       const empty = document.createElement("div");
       empty.className = "empty-state compact-empty";
-      empty.textContent = "把当前页面加入外链库后，这里会显示提交和跟进动态。";
+      empty.textContent = "保存动态时会自动把当前页面加入外链库，然后显示提交和跟进记录。";
       list.append(empty);
       return;
     }
@@ -677,7 +744,7 @@
     const editor = $("timelineEditor");
     if (editor) editor.hidden = true;
     const addButton = $("btnAddTimelineEvent");
-    if (addButton) addButton.hidden = !/^https?:\/\//i.test(currentPageUrl || "");
+    if (addButton) addButton.hidden = !Sidepanel.canEditTimeline(currentTimelineItem, currentPageUrl);
   }
 
   function openTimelineEditor() {
@@ -733,8 +800,10 @@
     if (timelineSaveInProgress) return;
     // Capture the page item before any awaited refresh can replace it. The
     // saved event must stay bound to the page/Profile the user reviewed.
-    const timelineItem = currentTimelineItem;
-    const destinationUrl = timelineEditorUrl || timelineItem?.url || currentPageUrl;
+    const capturedPageUrl = currentPageUrl;
+    const capturedEditorUrl = timelineEditorUrl;
+    let timelineItem = currentTimelineItem;
+    const destinationUrl = capturedEditorUrl || timelineItem?.url || capturedPageUrl;
     if (!/^https?:\/\//i.test(destinationUrl || "")) {
       showToast("当前页不是可登记的网页", true);
       return;
@@ -747,21 +816,18 @@
     }
     const type = String($("timelineEventType")?.value || "note").trim() || "note";
     const note = String($("timelineNote")?.value || "").trim();
+    let occurredAt = "";
     let publicUrl = "";
     let evidenceUrl = "";
     try {
+      occurredAt = parseTimelineEditorTime($("timelineOccurredAt")?.value);
       publicUrl = validateTimelineLink($("timelinePublicUrl")?.value, "公开链接");
       evidenceUrl = validateTimelineLink($("timelineEvidenceUrl")?.value, "证据链接");
     } catch (err) {
       showToast(err.message || "链接格式无效", true);
       return;
     }
-    const destinationKey = timelineItem?.key ||
-      (typeof Q?.normalizeDestinationKey === "function"
-        ? Q.normalizeDestinationKey(destinationUrl)
-        : typeof Q?.normalizeUrlKey === "function"
-          ? Q.normalizeUrlKey(destinationUrl)
-          : destinationUrl);
+
     const saveButton = $("btnSaveTimelineEvent");
     const cancelButton = $("btnCancelTimelineEvent");
     timelineSaveInProgress = true;
@@ -771,13 +837,46 @@
     }
     if (cancelButton) cancelButton.disabled = true;
     try {
+      if (!timelineItem) {
+        const added = await chrome.runtime.sendMessage({
+          action: "addToUrlList",
+          url: destinationUrl,
+          platformType: detection?.platform || "directory",
+        });
+        if (!added?.ok) throw new Error(added?.error || "当前页面加入外链列表失败");
+        const normalizedUrl = added.url || destinationUrl;
+        const normalizedKey = typeof Q?.normalizeDestinationKey === "function"
+          ? Q.normalizeDestinationKey(normalizedUrl)
+          : typeof Q?.normalizeUrlKey === "function"
+            ? Q.normalizeUrlKey(normalizedUrl)
+            : normalizedUrl;
+        timelineItem = {
+          key: normalizedKey,
+          url: normalizedUrl,
+          domain: typeof Q?.extractDomain === "function" ? Q.extractDomain(normalizedUrl) : "",
+          events: [],
+        };
+        // A tab/page switch can happen while the destination is materialized.
+        // Keep the captured item for the event payload, but never replace a
+        // newer page's item in the live panel.
+        if (currentPageUrl === capturedPageUrl && timelineEditorUrl === capturedEditorUrl) {
+          currentTimelineItem = timelineItem;
+        }
+      }
+
+      const destinationKey = timelineItem?.key ||
+        (typeof Q?.normalizeDestinationKey === "function"
+          ? Q.normalizeDestinationKey(destinationUrl)
+          : typeof Q?.normalizeUrlKey === "function"
+            ? Q.normalizeUrlKey(destinationUrl)
+            : destinationUrl);
       const result = await chrome.runtime.sendMessage({
         action: "addSubmissionTimelineEvent",
         destinationKey,
         destinationUrl: timelineItem?.url || destinationUrl,
         profileId,
         profileName: profile.name || profileId,
-        occurredAt: parseTimelineEditorTime($("timelineOccurredAt")?.value),
+        occurredAt,
         type,
         note,
         publicUrl,
@@ -785,7 +884,9 @@
         source: "manual",
       });
       if (!result?.ok) throw new Error(result?.error || "保存外链动态失败");
-      closeTimelineEditor();
+      if (currentPageUrl === capturedPageUrl && timelineEditorUrl === capturedEditorUrl) {
+        closeTimelineEditor();
+      }
       await loadSidepanelTimeline(currentPageUrl);
       showToast(`已登记 ${timelineEditorTypeLabel(type)}（人工记录）`);
     } catch (err) {
@@ -2825,14 +2926,15 @@
         action: "start",
         selectedSiteIds,
         config: {
-          autoSkipCaptcha: false,
-          concurrency: 1,
-          pingIndex: true,
-          fillOnly: $("cfgFillOnly")?.checked || false,
-          unattended: $("cfgUnattended")?.checked === true,
-          unattendedMaxHours: Math.max(1, Math.min(12, Number($("cfgUnattendedHours")?.value) || 8)),
-          unattendedMaxTasks: Math.max(1, Math.min(500, Number($("cfgUnattendedTasks")?.value) || 100)),
-          unattendedMaxManualTabs: Math.max(1, Math.min(100, Number($("cfgUnattendedManualTabs")?.value) || 20)),
+          ...Sidepanel.buildBatchConfig({
+            concurrency: batchConcurrency,
+            pingIndex: batchPingIndex,
+            fillOnly: $("cfgFillOnly")?.checked === true,
+            unattended: $("cfgUnattended")?.checked === true,
+            unattendedMaxHours: $("cfgUnattendedHours")?.value,
+            unattendedMaxTasks: $("cfgUnattendedTasks")?.value,
+            unattendedMaxManualTabs: $("cfgUnattendedManualTabs")?.value,
+          }),
         },
       });
       if (!result?.ok) throw new Error(result?.error || "启动失败");

@@ -1611,6 +1611,8 @@
       const info = await chrome.runtime.sendMessage({ action: "getSiteAnnotation", url: pageUrl });
       const badge = $("siteStatusBadge");
       const addBtn = $("btnAddToUrlList");
+      const rememberedFields = Object.keys(info?.annotation?.formKnowledge?.mappings || {}).length;
+      const memoryLabel = rememberedFields ? ` · 已记住 ${rememberedFields} 个字段` : "";
 
       document.querySelectorAll(".mark-btn").forEach((b) => b.classList.remove("active"));
 
@@ -1620,7 +1622,7 @@
           cls: "",
         };
         if (badge) {
-          badge.textContent = meta.label;
+          badge.textContent = meta.label + memoryLabel;
           badge.className = "status-pill " + (meta.cls || "");
           badge.removeAttribute("hidden");
         }
@@ -1629,7 +1631,7 @@
         );
         activeBtn?.classList.add("active");
       } else if (badge) {
-        badge.textContent = info?.inQueue ? "📋 在外链队列中" : "未标记";
+        badge.textContent = (info?.inQueue ? "📋 在外链队列中" : "未标记") + memoryLabel;
         badge.className = "status-pill";
         badge.removeAttribute("hidden");
       }
@@ -1662,7 +1664,7 @@
       const result = await chrome.runtime.sendMessage(
         clearing
           ? { action: "clearSiteAnnotation", url: currentPageUrl }
-          : { action: "markSubmissionSite", url: currentPageUrl, status },
+          : { action: "markSubmissionSite", url: currentPageUrl, status, tabId: activeTabId, profileId: activeSiteId },
       );
       if (!result?.ok) throw new Error(result?.error || (clearing ? "取消标记失败" : "标记失败"));
       await refreshSiteAnnotation(currentPageUrl);

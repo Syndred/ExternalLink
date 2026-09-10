@@ -374,4 +374,12 @@ assert.equal(manualCaptcha.annotation.status, "needs_captcha");
 assert.equal(manualCaptcha.annotation.formKnowledge.mappings.product_name.profileKey, "Name");
 assert.equal(mock.storageData.siteAnnotations[destinationKey].status, "needs_captcha");
 
+for (let stage = 0; stage < 14; stage++) {
+  await hooks.persistDestinationFormKnowledge(destinationUrl, {}, { url: destinationUrl, fields: [{ label: `Stage ${stage}` }] });
+}
+const rememberedStages = mock.storageData.siteAnnotations[destinationKey].formKnowledge.stages;
+assert.equal(rememberedStages.length, 12);
+assert.equal(rememberedStages.at(-1).fields[0].label, "Stage 13");
+assert.equal(mock.storageData.siteAnnotations[destinationKey].formKnowledge.mappings.product_name.profileKey, "Name");
+
 console.log("destination memory tests passed");

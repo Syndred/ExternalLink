@@ -320,4 +320,19 @@ function runtimeSchemaKey(snapshot) {
   return runtime.hooks.formSchemaKey(snapshot);
 }
 
+{
+  const runtime = makeHarness();
+  const current = config("B");
+  current.logoDataUrl = "data:image/png;base64,AAA";
+  current.learnedFieldMappings = { "other.example": { old: { value: "unrelated answer" } } };
+  current.destinationFormStages = [{ fields: [] }];
+  await runtime.hooks.understandFormBeforeFill(7, current, "directory");
+  const payload = runtime.cloudCalls[0].payload;
+  assert.equal(payload.config.logoDataUrl, "");
+  assert.equal(payload.config.learnedFieldMappings["other.example"], undefined);
+  assert.equal(payload.config.destinationFormStages, undefined);
+  assert.equal(payload.config.projectFields.Name, "Product B");
+  assert.equal(current.logoDataUrl, "data:image/png;base64,AAA", "upload config must remain intact");
+}
+
 console.log("form understanding runtime tests passed");

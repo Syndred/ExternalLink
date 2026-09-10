@@ -21,6 +21,23 @@
   let siteEditorBaseline = null;
   const nonProfileDirtyScopes = new Set();
   let nonProfileEditorRevision = 0;
+  const LIBRARY_STORAGE_KEYS = new Set([
+    "urlList",
+    "siteAnnotations",
+    "submissionRecords",
+    "siteProfiles",
+    "domainMetricsCache",
+    "linkMonitorResults",
+    "submissionTimeline",
+    "sheetTableData",
+  ]);
+  const LIBRARY_REFRESH_DEBOUNCE_MS = 80;
+  let libraryLoadRequestId = 0;
+  let libraryStorageRevision = 0;
+  let libraryRefreshTimer = null;
+  let libraryRefreshPending = false;
+  let libraryInitialSyncPending = true;
+  let libraryStorageListenerInstalled = false;
   const TIMELINE_TYPES = [
     ["submitted", "已提交"],
     ["pending_moderation", "待审核"],
@@ -986,14 +1003,15 @@
             : { action: "addSubmissionTimelineEvent", ...payload },
         );
         if (!result?.ok) throw new Error(result?.error || (editing ? "保存动态失败" : "添加动态失败"));
-        editingTimelineEventId = "";
-        await loadLibrary();
+        if (editorRevision === nonProfileEditorRevision) editingTimelineEventId = "";
         clearNonProfileEditorDirty("timeline", editorRevision);
+        await loadLibrary();
       } catch (err) {
         alert(err.message);
-        fillTimelineForm(fields, editing ? item.events?.find((row) => row.id === editingTimelineEventId) : null);
+        submit.textContent = editingTimelineEventId ? "保存修改" : "添加动态";
       } finally {
         submit.disabled = false;
+        submit.textContent = editingTimelineEventId ? "保存修改" : "添加动态";
       }
     });
     return form;
@@ -1119,6 +1137,28 @@
     const editingEvent = events.find((event) => event.id === editingTimelineEventId) || null;
     if (editingEvent) fillTimelineForm(form.timelineFields, editingEvent);
     panel.append(list, form);
+  }
+
+  function captureTimelineEditorDraft() {
+    const pane = $("libraryTimelinePane");
+    const form = pane?.querySelector?.("form.timeline-form");
+    if (!form || (!nonProfileDirtyScopes.has("timeline") && !editingTimelineEventId)) return null;
+    return {
+      form,
+      focusedField: form.contains(document.activeElement) ? document.activeElement : null,
+      selectedLibraryKey,
+    };
+  }
+
+  function restoreTimelineEditorDraft(draft) {
+    if (!draft || draft.selectedLibraryKey !== selectedLibraryKey) return;
+    const pane = $("libraryTimelinePane");
+    if (!pane) return;
+    const form = pane.querySelector("form.timeline-form");
+    // Keep the original editor and its handlers, including an in-flight save.
+    if (form) form.replaceWith(draft.form);
+    else pane.append(draft.form);
+    draft.focusedField?.focus({ preventScroll: true });
   }
 
   function renderSelectedLibraryTimeline() {
@@ -1375,20 +1415,103 @@
     renderSelectedLibraryTimeline();
   }
 
-  async function loadLibrary() {
-    const result = await chrome.runtime.sendMessage({ action: "getLibraryManagerState" });
-    if (!result?.ok) throw new Error(result?.error || "加载外链库失败");
-    libraryItems = result.items || [];
-    if (result.profiles && Object.keys(result.profiles).length) {
-      const hadProfiles = Object.keys(siteProfiles).length > 0;
-      siteProfiles = result.profiles;
-      if (!activeSiteId || !siteProfiles[activeSiteId]) {
-        activeSiteId = orderedSiteIds()[0] || "";
-      }
-      renderSiteSelector();
-      if (!hadProfiles) loadActiveToForm();
+  function storageValuesEqual(left, right) {
+    if (Object.is(left, right)) return true;
+    const normalize = (value) => {
+      if (Array.isArray(value)) return value.map(normalize);
+      if (!value || typeof value !== "object") return value;
+      return Object.keys(value)
+        .sort()
+        .reduce((result, key) => {
+          result[key] = normalize(value[key]);
+          return result;
+        }, {});
+    };
+    try {
+      return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
+    } catch {
+      return false;
     }
-    renderLibrary();
+  }
+
+  function hasLibraryStorageChanges(changes) {
+    return Object.entries(changes || {}).some(([key, change]) =>
+      LIBRARY_STORAGE_KEYS.has(key) &&
+      !storageValuesEqual(change?.oldValue, change?.newValue),
+    );
+  }
+
+  function setLibraryRefreshError(error) {
+    const message = error?.message || String(error || "加载外链库失败");
+    const count = $("libraryCount");
+    if (count) count.textContent = `外链库刷新失败：${message}`;
+  }
+
+  function scheduleLibraryRefresh() {
+    libraryRefreshPending = true;
+    if (libraryInitialSyncPending || libraryRefreshTimer !== null) return;
+    libraryRefreshTimer = setTimeout(() => {
+      libraryRefreshTimer = null;
+      libraryRefreshPending = false;
+      loadLibrary().catch(setLibraryRefreshError);
+    }, LIBRARY_REFRESH_DEBOUNCE_MS);
+  }
+
+  function onLibraryStorageChanged(changes, area) {
+    if (area !== "local" || !hasLibraryStorageChanges(changes)) return false;
+    libraryStorageRevision += 1;
+    scheduleLibraryRefresh();
+    return true;
+  }
+
+  function installLibraryStorageListener() {
+    if (libraryStorageListenerInstalled || !chrome.storage?.onChanged?.addListener) return;
+    chrome.storage.onChanged.addListener(onLibraryStorageChanged);
+    libraryStorageListenerInstalled = true;
+  }
+
+  async function loadLibrary(options = {}) {
+    const requestId = ++libraryLoadRequestId;
+    const storageRevisionAtStart = libraryStorageRevision;
+    const initial = options.initial === true;
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "getLibraryManagerState" });
+      if (requestId !== libraryLoadRequestId) return { stale: true };
+      if (storageRevisionAtStart !== libraryStorageRevision) {
+        scheduleLibraryRefresh();
+        return { stale: true };
+      }
+      if (!result?.ok) throw new Error(result?.error || "加载外链库失败");
+
+      const timelineDraft = captureTimelineEditorDraft();
+      const preserveSiteDraft = hasUnsavedSiteEdits();
+      const previousActiveSiteId = activeSiteId;
+      const previousActiveProfile = previousActiveSiteId ? siteProfiles[previousActiveSiteId] : null;
+      libraryItems = Array.isArray(result.items) ? result.items : [];
+      if (result.profiles && typeof result.profiles === "object" && !Array.isArray(result.profiles)) {
+        siteProfiles = result.profiles;
+        if (preserveSiteDraft && previousActiveSiteId && !siteProfiles[previousActiveSiteId] && previousActiveProfile) {
+          siteProfiles = { ...siteProfiles, [previousActiveSiteId]: previousActiveProfile };
+        }
+        if (!activeSiteId || !siteProfiles[activeSiteId]) {
+          if (!preserveSiteDraft) activeSiteId = orderedSiteIds()[0] || "";
+          else activeSiteId = previousActiveSiteId;
+        }
+        renderSiteSelector();
+        if (!preserveSiteDraft) loadActiveToForm();
+      }
+      renderLibrary();
+      restoreTimelineEditorDraft(timelineDraft);
+      return result;
+    } finally {
+      if (initial) {
+        libraryInitialSyncPending = false;
+        if (libraryRefreshPending) {
+          libraryRefreshPending = false;
+          scheduleLibraryRefresh();
+        }
+      }
+    }
   }
 
   function resetLibraryAndRender() {
@@ -1826,6 +1949,7 @@
     });
   });
 
+  installLibraryStorageListener();
   chrome.storage.local.get(
     [
       "siteProfiles",
@@ -1857,7 +1981,7 @@
       if ($("autoSubmitStandardWpComments")) {
         $("autoSubmitStandardWpComments").checked = items.autoSubmitStandardWpComments === true;
       }
-      loadLibrary()
+      loadLibrary({ initial: true })
         .catch((err) => {
           const el = $("libraryList");
           if (el) {

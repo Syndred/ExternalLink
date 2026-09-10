@@ -2063,6 +2063,9 @@
     const report = self.ExtLinkBatchReport.build(batch);
     const counts = report.summary;
     element.textContent = `本轮：取得回执 ${counts.success} · 待人工 ${counts.manual} · 失败 ${counts.failed} · 跳过 ${counts.skipped} · 剩余 ${counts.remaining}`;
+    if (report.deadlineAt) element.textContent += ` · 截止 ${new Date(report.deadlineAt).toLocaleString()}`;
+    element.textContent += ` · 模型调用 ${report.modelCallsUsed}`;
+    if (report.stopReason) element.textContent += ` · ${report.stopReason}`;
   }
 
   $("btnExportBatchReport")?.addEventListener("click", async () => {
@@ -2186,6 +2189,9 @@
       toggle.classList.toggle("btn-ghost", batchStatus !== "paused");
     }
     if ($("btnStop")) $("btnStop").hidden = visibility.stopHidden;
+    for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgFillOnly"]) {
+      if ($(id)) $(id).disabled = ["running", "paused"].includes(batchStatus);
+    }
   }
 
   function setBatchStatus(status, save = true) {
@@ -2460,6 +2466,7 @@
     if (msg.action === "log" && msg.entry) appendLogEntry(msg.entry);
     if (msg.action === "status") {
       setBatchStatus(msg.status || (msg.running ? "running" : msg.stopped ? "stopped" : "idle"));
+      refreshUnattendedSummary().catch(() => {});
     }
     if (msg.action === "progress") {
       stats = msg.stats;

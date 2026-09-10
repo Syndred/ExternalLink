@@ -24,12 +24,18 @@
     const summary = Object.fromEntries(Object.entries(groups).map(([key, tasks]) => [key, tasks.length]));
     return { runId: batch.runId, status: batch.status, startedAt: batch.startedAt,
       finishedAt: batch.finishedAt || batch.stoppedAt || null, generatedAt: new Date().toISOString(),
-      unattended: batch.config?.unattended === true, summary, groups };
+      unattended: batch.config?.unattended === true,
+      stopReason: batch.unattendedState?.stopReason || batch.pauseReason || "",
+      deadlineAt: batch.unattendedState?.runDeadlineAt || null,
+      modelCallsUsed: Number(batch.unattendedState?.modelCallsUsed) || 0,
+      summary, groups };
   }
   function markdown(report) {
     const clean = (value) => String(value ?? "").replace(/[\r\n|]/g, " ");
     const lines = ["# 外链批次报告", "", `批次 ${report.runId} · 状态 ${report.status}`, "",
       "已提交不代表已收录，发布状态和回执见下表。", ""];
+    if (report.stopReason) lines.push(`暂停原因：${clean(report.stopReason)}`, "");
+    if (report.unattended) lines.push(`本轮模型调用：${report.modelCallsUsed}`, "");
     const labels = { success: "取得回执", manual: "待人工 / 待核验", failed: "失败", skipped: "跳过", remaining: "剩余" };
     for (const [key, tasks] of Object.entries(report.groups)) {
       lines.push(`## ${labels[key]}（${tasks.length}）`, "");

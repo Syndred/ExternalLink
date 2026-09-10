@@ -459,19 +459,48 @@
       'button[type="submit"], input[type="submit"]',
       ["submit", "add", "list", "publish", "pay", "buy", "checkout", "upgrade"],
     );
-    const label = submitBtn ? getElementLabel(submitBtn) : "";
-    if (/\$\d+|pay now|checkout|upgrade to|buy listing|fast.?track|premium only/i.test(label)) {
-      return "当前提交按钮是付费入口";
+    const submitContext = submitBtn
+      ? getPaymentElementContext(submitBtn, "submit")
+      : {
+          label: "",
+          fieldset: "",
+          options: "",
+          local: compactText(document.querySelector("form")?.innerText || "", 1200),
+          actionType: "submit",
+          choiceControl: false,
+        };
+    const submitClassification = classifyPaymentContext(submitContext);
+    if (submitClassification.classification === "confirmed_payment") {
+      return submitClassification;
     }
+
+    // Keep this page-level check deliberately narrow. A directory may mention
+    // that a product is paid, while the directory submission itself remains
+    // free. The action and its local form scope must describe an actual charge.
     const text = String(document.body?.innerText || "").slice(0, 4000).toLowerCase();
     const hasFreeSubmit = /free (submit|listing|launch)|submit for free|no credit card/.test(text);
-    if (
+    const pagePaymentGate =
       !hasFreeSubmit &&
-      /this listing is paid|unlock with|choose a paid plan|upgrade to submit/.test(text)
-    ) {
-      return "页面要求付费后才能提交";
+      /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|listing fee|submission fee|fee to (?:submit|publish|list)|checkout to continue|credit card required/.test(
+        text,
+      );
+    if (pagePaymentGate) {
+      return {
+        classification: "confirmed_payment",
+        type: "payment",
+        reason: "页面要求付款后才能提交",
+        evidence: {
+          ...submitClassification.evidence,
+          local: submitClassification.evidence?.local || compactText(text, 1200),
+          matched: ["page_payment_gate"],
+        },
+      };
     }
-    return "";
+
+    if (submitClassification.classification === "uncertain_payment") {
+      return submitClassification;
+    }
+    return { classification: "safe", type: "safe", reason: "", evidence: submitClassification.evidence };
   }
 
   function detectSubmitBlockers() {
@@ -480,7 +509,23 @@
       return { needs_manual: true, reason: "需要登录或注册" };
     }
     const paid = detectPaidSubmit();
-    if (paid) return { blocked: true, reason: paid };
+    if (paid?.classification === "confirmed_payment") {
+      return {
+        blocked: true,
+        reason: paid.reason || "当前提交动作需要付款",
+        paymentClassification: paid.classification,
+        paymentEvidence: paid.evidence,
+      };
+    }
+    if (paid?.classification === "uncertain_payment") {
+      return {
+        payment_uncertain: true,
+        needs_model: true,
+        reason: paid.reason || "付款语义不明确，交给模型判断",
+        paymentClassification: paid.classification,
+        paymentEvidence: paid.evidence,
+      };
+    }
     return null;
   }
 
@@ -2621,6 +2666,15 @@
     classifyResult: classifyProductHuntResult,
   };
   self.__extLinkProductHuntTestHooks = self.__extLinkProductHunt;
+  self.__extLinkPaymentTestHooks = {
+    classifyPaymentContext,
+    getPaymentElementContext,
+  };
+  self.__extLinkFieldMappingTestHooks = {
+    sharedLearnedMappingMatches,
+    resolveSharedLearnedProfileValue,
+    normalizeLearnedFieldText,
+  };
 
   async function submitFilledForm(config, platform = "directory", fillResult = {}) {
     const blocker = detectSubmitBlockers();
@@ -2632,6 +2686,21 @@
     if (blocker?.needs_manual) {
       logStep(`⚠️ ${blocker.reason} — 不代点提交`);
       return { needs_manual: true, reason: blocker.reason, keepTab: true, platform, ...fillResult };
+    }
+    if (blocker?.payment_uncertain) {
+      logStep(`🧠 ${blocker.reason} — 保留局部证据，交给模型判断`);
+      return {
+        needs_manual: true,
+        needs_model: true,
+        payment_uncertain: true,
+        semanticReview: true,
+        paymentClassification: blocker.paymentClassification || "uncertain_payment",
+        paymentEvidence: blocker.paymentEvidence || null,
+        reason: blocker.reason,
+        keepTab: true,
+        platform,
+        ...fillResult,
+      };
     }
     if (blocker?.blocked) {
       logStep(`⛔ ${blocker.reason} — 不代点提交`);
@@ -3734,6 +3803,10 @@
             ...actionFailure(action, gate.reason),
             needs_manual: true,
             humanGate: gate.type,
+            uncertain: gate.uncertain === true,
+            semanticReview: gate.uncertain === true,
+            paymentClassification: gate.paymentClassification || "",
+            paymentEvidence: gate.paymentEvidence || null,
           };
         }
 
@@ -4076,18 +4149,253 @@
     return false;
   }
 
+  function normalizePaymentContextText(value, limit = 800) {
+    return compactText(value, limit)
+      .toLowerCase()
+      .replace(/[\u2013\u2014]/g, "-");
+  }
+
+  function paymentChoiceControl(element) {
+    if (!element) return false;
+    const tag = String(element.tagName || "").toLowerCase();
+    const type = String(element.type || element.getAttribute?.("type") || "").toLowerCase();
+    const role = String(element.getAttribute?.("role") || "").toLowerCase();
+    if (["radio", "checkbox"].includes(type)) return true;
+    if (["select", "option"].includes(tag)) return true;
+    if (["radio", "checkbox", "option", "combobox", "listbox"].includes(role)) return true;
+    return !!element.querySelector?.(
+      'input[type="radio"], input[type="checkbox"], option, [role="radio"], [role="option"]',
+    );
+  }
+
+  function paymentLocalContainer(element) {
+    if (!element?.closest) return null;
+    const selector = [
+      "fieldset",
+      "[role='group']",
+      "[role='radiogroup']",
+      "[role='listbox']",
+      "[role='combobox']",
+      "[data-field]",
+      "[data-field-group]",
+      "[data-testid*='field' i]",
+      "[class*='field' i]",
+      "[class*='question' i]",
+      "[class*='pricing' i]",
+      "[class*='plan' i]",
+      "[class*='billing' i]",
+      "[class*='payment' i]",
+      "[class*='option' i]",
+      "[class*='choice' i]",
+      ".form-group",
+      ".form-control",
+      ".input-group",
+    ].join(", ");
+    const scoped = element.closest(selector);
+    if (scoped) return scoped;
+
+    // A plain wrapper is useful for custom controls, but never walk up to the
+    // whole form/dialog. That would make an unrelated word such as "Paid" on
+    // the page look like a payment action.
+    let current = element.parentElement;
+    for (let depth = 0; current && depth < 2; depth += 1, current = current.parentElement) {
+      const tag = String(current.tagName || "").toLowerCase();
+      if (["form", "body", "html", "dialog"].includes(tag)) break;
+      const text = compactText(current.innerText || current.textContent || "", 1200);
+      if (text && text.length <= 1200) return current;
+    }
+    return null;
+  }
+
+  function paymentAssociatedLabels(element) {
+    const labels = [];
+    if (element?.labels) labels.push(...Array.from(element.labels));
+    const wrapped = element?.closest?.("label");
+    if (wrapped) labels.push(wrapped);
+    const id = element?.id || element?.getAttribute?.("id");
+    if (id && document.querySelectorAll) {
+      for (const label of Array.from(document.querySelectorAll("label[for]"))) {
+        if (label.getAttribute("for") === id) labels.push(label);
+      }
+    }
+    return [...new Set(labels)];
+  }
+
+  function paymentOptionLabels(root) {
+    if (!root?.querySelectorAll) return [];
+    const controls = Array.from(root.querySelectorAll(
+      'input[type="radio"], input[type="checkbox"], select, option, [role="radio"], [role="option"]',
+    ));
+    const labels = [];
+    for (const control of controls) {
+      labels.push(getSnapshotLabel(control) || getElementLabel(control));
+      paymentAssociatedLabels(control).forEach((label) => labels.push(label.innerText || label.textContent || ""));
+    }
+    return labels.filter(Boolean);
+  }
+
+  function getPaymentElementContext(element, actionType = "click") {
+    const localContainer = paymentLocalContainer(element);
+    const fieldset = element?.closest?.("fieldset, [role='group'], [role='radiogroup']") || null;
+    const labels = paymentAssociatedLabels(element);
+    const label = compactText(
+      [getElementLabel(element), getSnapshotLabel(element), ...labels.map((item) => item.innerText || item.textContent || "")]
+        .filter(Boolean)
+        .join(" "),
+      600,
+    );
+    const local = compactText(localContainer?.innerText || localContainer?.textContent || "", 1200);
+    const fieldsetText = compactText(fieldset?.innerText || fieldset?.textContent || "", 1000);
+    const optionRoot = fieldset || localContainer || (element?.tagName?.toLowerCase() === "select" ? element : null);
+    const options = compactText(
+      [
+        ...paymentOptionLabels(optionRoot),
+        ...(element?.tagName?.toLowerCase() === "select"
+          ? Array.from(element.options || []).map((option) => option.textContent || option.label || option.value || "")
+          : []),
+      ].join(" "),
+      900,
+    );
+    return {
+      label,
+      fieldset: fieldsetText,
+      options,
+      local,
+      actionType,
+      choiceControl: paymentChoiceControl(element),
+    };
+  }
+
+  function classifyPaymentContext(input = {}) {
+    const label = normalizePaymentContextText(input.label, 600);
+    const fieldset = normalizePaymentContextText(input.fieldset, 1000);
+    const options = normalizePaymentContextText(input.options, 900);
+    const local = normalizePaymentContextText(input.local, 1200);
+    const context = [label, fieldset, options, local].filter(Boolean).join(" ");
+    const actionType = String(input.actionType || "click").toLowerCase();
+    const choiceControl = input.choiceControl === true;
+    const matched = [];
+
+    const optionSignals = [
+      /\bfree\b|\bno cost\b|免费/,
+      /\bfreemium\b/,
+      /\bpaid\b|付费/,
+      /\bpremium\b|\bpro\b|\benterprise\b/,
+      /\btrial\b|\bpay[- ]as[- ]you[- ]go\b/,
+      /\bmonthly\b|\byearly\b|\bannual\b|月付|年付/,
+    ].reduce((count, pattern) => count + (pattern.test(options) ? 1 : 0), 0);
+    const pricingContext =
+      /\bpricing(?:\s+(?:model|type|plan))?\b|\bprice\b|\bcost\b|\bplan(?:s)?\b|\btier(?:s)?\b|\bpricing\b|\bfree\b|\bfreemium\b|\bpaid\b|\bpremium\b|\bsubscription\b|定价|价格|费用|套餐|方案|免费|付费|订阅/.test(
+        context,
+      );
+    const productBillingQuestion =
+      (/(?:does|do|is|are|can|will|would|should)\b.{0,100}\b(?:your|the)\b.{0,80}\b(?:website|product|tool|app|service|business)\b.{0,100}\b(?:require|accept|support|offer|charge|have|use)\b.{0,60}\b(?:payment|payments|paid|billing|pricing|subscription|free|freemium)\b/.test(
+        context,
+      ) ||
+        /\b(?:your|the)\s+(?:website|product|tool|app|service)\b.{0,100}\b(?:paid|free|freemium|charge|cost|payment|pricing)\b/.test(
+          context,
+        )) &&
+      !/\b(?:to\s+submit|to\s+publish|to\s+list|to\s+post|listing fee|submission fee|promote|boost|sponsored placement)\b/.test(
+        context,
+      );
+    const explicitSubmissionPayment =
+      /\bpay\s+to\s+(?:submit|publish|list|post)\b|\bpayment\s+(?:is\s+)?required\s+to\s+(?:submit|publish|list|post)\b|\b(?:listing|submission)\s+fee\b|\bfee\s+to\s+(?:submit|publish|list|post)\b|\bpay\s+for\s+(?:the\s+)?(?:listing|submission)\b|\bpaid\s+(?:placement|listing)\b|\bpromote\s+(?:this|your)\s+(?:launch|listing)\b|\bboost\s+(?:this|your)\s+(?:launch|listing)\b/.test(
+        context,
+      );
+    const checkoutContext =
+      /\bcheckout\b|\bcredit\s*card\b|\bcard\s+number\b|\bcvv\b|\bcvc\b|\bexpir(?:y|ation)\s+date\b|\bbilling\s+address\b|\bamount\s+due\b|\btotal\s+due\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\border\s+(?:a\s+)?subscription\b|\bsubscription\s+(?:order|checkout|payment)\b|\bpayment\s+method\b|\bstripe\b|\bpaypal\b/.test(
+        context,
+      );
+    const actionPayment =
+      /\bpay(?:\s+now)?\b|\bpay\s+to\s+(?:submit|publish|list|post)\b|\bcheckout\b|\bpurchase\b|\bbuy(?:\s+now)?\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\bconfirm\s+(?:payment|purchase)\b|\bsubscribe\s+(?:now|to\s+(?:a|the)\s+plan)\b|\bstart\s+(?:a\s+)?subscription\b|\bupgrade\s+(?:now|plan|subscription|account)\b/.test(
+        label,
+      );
+
+    if (pricingContext) matched.push("pricing_context");
+    if (optionSignals > 0) matched.push("pricing_options");
+    if (productBillingQuestion) matched.push("product_billing_question");
+    if (explicitSubmissionPayment) matched.push("submission_payment");
+    if (checkoutContext) matched.push("checkout_context");
+    if (actionPayment) matched.push("payment_action");
+
+    // A pricing question/choice describes the product being submitted. It is
+    // not a charge to the submitter, even when the selected option is "Paid".
+    const productPricing =
+      !explicitSubmissionPayment &&
+      !checkoutContext &&
+      (productBillingQuestion ||
+        (pricingContext && optionSignals > 0 && (choiceControl || actionType === "submit")) ||
+        (choiceControl && optionSignals >= 2 && pricingContext));
+    if (productPricing) {
+      return {
+        classification: "product_pricing",
+        type: "pricing_choice",
+        reason: "这是产品自身的定价/收费选项，不是本次提交付款",
+        evidence: { label, fieldset, options, local, matched },
+      };
+    }
+
+    if (explicitSubmissionPayment || checkoutContext || actionPayment) {
+      return {
+        classification: "confirmed_payment",
+        type: "payment",
+        reason: "当前动作明确进入付款、结算或付费提交流程",
+        evidence: { label, fieldset, options, local, matched },
+      };
+    }
+
+    const ambiguousPayment =
+      /\bpayment\b|\bpay\b|\bpaid\b|\bbilling\b|\bsubscription\b|\bsubscribe\b|\bupgrade\b|\bprice\b|\bpricing\b|\bcost\b|\bcharge\b|\bplan\b|\btier\b|付款|支付|付费|账单|订阅|升级|价格|定价|费用|套餐/.test(
+        context,
+      );
+    if (ambiguousPayment) {
+      return {
+        classification: "uncertain_payment",
+        type: "payment_uncertain",
+        uncertain: true,
+        reason: "检测到付款相关语义，但局部表单无法确认是否真的扣款，交给模型判断",
+        evidence: { label, fieldset, options, local, matched },
+      };
+    }
+
+    return {
+      classification: "safe",
+      type: "safe",
+      reason: "",
+      evidence: { label, fieldset, options, local, matched },
+    };
+  }
+
   function classifyModelClickGate(element) {
     const label = compactText(getElementLabel(element), 500).toLowerCase();
-    const nearby = compactText(element.closest("form, dialog, [role='dialog']")?.innerText || "", 1200).toLowerCase();
+    const paymentContext = getPaymentElementContext(element, "click");
+    const payment = classifyPaymentContext(paymentContext);
+    if (payment.classification === "confirmed_payment") {
+      return {
+        type: "payment",
+        reason: payment.reason,
+        uncertain: false,
+        paymentClassification: payment.classification,
+        paymentEvidence: payment.evidence,
+      };
+    }
+    if (payment.classification === "uncertain_payment") {
+      return {
+        type: "payment_uncertain",
+        reason: payment.reason,
+        uncertain: true,
+        paymentClassification: payment.classification,
+        paymentEvidence: payment.evidence,
+      };
+    }
+
+    const nearby = compactText(paymentContext.local || paymentContext.fieldset || "", 1200).toLowerCase();
     const context = `${label} ${nearby}`;
     if (detectCaptcha() || /captcha|recaptcha|hcaptcha|turnstile|验证码|人机验证/.test(context)) {
       return { type: "captcha", reason: "检测到验证码，需要人工完成" };
     }
     if (/\b(log[ -]?in|sign[ -]?in|sign up|continue with (google|github|apple)|oauth)\b|登录|登入|注册账号|第三方授权/.test(label)) {
       return { type: "login", reason: "登录或 OAuth 授权需要人工处理" };
-    }
-    if (/\b(pay|payment|purchase|buy now|checkout|subscribe|upgrade plan|start trial)\b|付款|支付|购买|订阅|升级套餐|开始试用/.test(context)) {
-      return { type: "payment", reason: "检测到付费或订阅动作，需要人工确认" };
     }
     if (/\b(delete account|delete project|remove account|cancel subscription)\b|删除账号|注销账号|取消订阅/.test(context)) {
       return { type: "destructive", reason: "检测到不可逆或破坏性动作，需要人工确认" };
@@ -4943,6 +5251,45 @@
       .toLowerCase();
   }
 
+  function normalizeLearnedFieldText(value) {
+    return compactText(value, 320)
+      .toLowerCase()
+      .replace(/[\u00a0*_]/g, " ")
+      .replace(/[^a-z0-9\u4e00-\u9fff]+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function learnedFieldTextMatches(expected, actual) {
+    const wanted = normalizeLearnedFieldText(expected);
+    const current = normalizeLearnedFieldText(actual);
+    if (!wanted || !current) return false;
+    if (wanted === current) return true;
+    if (wanted.length < 4 || current.length < 4) return false;
+    return current.includes(wanted) || wanted.includes(current);
+  }
+
+  function sharedLearnedMappingMatches(learned, current = {}) {
+    if (!learned?.shared) return true;
+    const expectedLabel = normalizeLearnedFieldText(learned.label);
+    const expectedHint = normalizeLearnedFieldText(learned.hint);
+    const currentLabel = normalizeLearnedFieldText(current.label);
+    const currentHint = normalizeLearnedFieldText(current.hint);
+    const checks = [];
+    if (expectedLabel) checks.push(learnedFieldTextMatches(expectedLabel, currentLabel));
+    if (expectedHint) checks.push(learnedFieldTextMatches(expectedHint, currentHint));
+    // A shared mapping without a semantic fingerprint is unsafe to replay.
+    // Requiring every stored part to match also makes a changed form fall back
+    // to the normal field resolver instead of silently reusing an old value.
+    return checks.length > 0 && checks.every(Boolean);
+  }
+
+  function resolveSharedLearnedProfileValue(learned, current, profileFields = {}) {
+    if (learned?.shared !== true || !sharedLearnedMappingMatches(learned, current)) return "";
+    const value = learned.profileKey ? profileFields[learned.profileKey] : "";
+    return value == null ? "" : String(value);
+  }
+
   function scoreChoiceLabel(label, corpus, tags) {
     const normalized = compactText(label, 120)
       .toLowerCase()
@@ -5024,16 +5371,39 @@
     const type = (element.type || "").toLowerCase();
     const tag = element.tagName.toLowerCase();
     const host = location.hostname;
+    const learnedKey = fieldMappingKey(element);
     const learned =
       config.learnedFieldMappings &&
       config.learnedFieldMappings[host] &&
-      config.learnedFieldMappings[host][element.name || element.id];
+      config.learnedFieldMappings[host][learnedKey];
 
     if (learned) {
-      const constraints = getFieldConstraints(element);
-      if (learned.value) return fitValueToConstraints(learned.value, constraints);
-      if (learned.profileKey && pf[learned.profileKey]) {
-        return fitValueToConstraints(pf[learned.profileKey], constraints);
+      const sharedMatches = learned.shared
+        ? sharedLearnedMappingMatches(learned, {
+            label: getSnapshotLabel(element),
+            hint: getFieldHint(element),
+          })
+        : true;
+      if (sharedMatches) {
+        const constraints = getFieldConstraints(element);
+        // Shared mappings are semantic hints only. They must resolve against
+        // the current profile and must never replay a value learned from a
+        // different profile or an older form.
+        if (learned.shared === true) {
+          const sharedValue = resolveSharedLearnedProfileValue(
+            learned,
+            { label: getSnapshotLabel(element), hint: getFieldHint(element) },
+            pf,
+          );
+          if (sharedValue) {
+            return fitValueToConstraints(sharedValue, constraints);
+          }
+        } else {
+          if (learned.value) return fitValueToConstraints(learned.value, constraints);
+          if (learned.profileKey && pf[learned.profileKey]) {
+            return fitValueToConstraints(pf[learned.profileKey], constraints);
+          }
+        }
       }
     }
 

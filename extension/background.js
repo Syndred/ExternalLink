@@ -2489,7 +2489,29 @@ async function runProductHuntSidepanelLoop(tabId, config, options = {}) {
     if (result.status === "gate" || result.needs_manual || result.captcha || /^needs_/.test(result.status || "")) {
       return result;
     }
-    if (result.submittedAttempt || result.ready_to_create === true || result.status === "ready_to_create") {
+    if (result.submittedAttempt) {
+      if (options.confirmCreate === true && result.createPoint) {
+        log("producthunt.com: 侧栏 Create draft 的 DOM 点击未产生回执，升级为浏览器级真实点击", "warn");
+        if (await dispatchTrustedTabClick(tabId, result.createPoint)) {
+          await sleep(5000);
+          const followup = await sendTabMessage(tabId, {
+            action: "runProductHuntStep",
+            config,
+            confirmCreate: false,
+          });
+          if (followup?.matched && followup?.evidence) {
+            return {
+              ...followup,
+              submittedAttempt: true,
+              clickedCreateDraft: true,
+              publicationStatus: followup.publicationStatus || "submitted",
+            };
+          }
+        }
+      }
+      return result;
+    }
+    if (result.ready_to_create === true || result.status === "ready_to_create") {
       return result;
     }
     if (result.status === "error" || result.error) {

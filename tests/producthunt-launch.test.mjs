@@ -333,6 +333,11 @@ assert.match(background, /stageCompleted[\s\S]*?stageAdvanced\s*===\s*false[\s\S
 assert.match(background, /confirmCreate\s*===\s*true[\s\S]*?createPoint[\s\S]*?dispatchTrustedTabClick/,
   "an explicitly confirmed Create draft action may use the same trusted-click fallback");
 assert.match(
+  background,
+  /runProductHuntSidepanelLoop[\s\S]*?options\.confirmCreate\s*===\s*true[\s\S]*?result\.createPoint[\s\S]*?dispatchTrustedTabClick[\s\S]*?followup\?\.matched\s*&&\s*followup\?\.evidence/,
+  "the side-panel Create draft action must also use a trusted click and read back a receipt",
+);
+assert.match(
   content,
   /connect with investors[\s\S]*?return ["']extras["']/i,
   "Connect with Investors is the Extras step boundary, not an unknown stage",

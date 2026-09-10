@@ -57,6 +57,18 @@ assert.match(content, /input\[type="email"\]/, "generic form filling should incl
 
 assert.match(
   content,
+  /marketingOptIn[\s\S]*bestScore\s*>\s*candidate\.fillable\.length/,
+  "newsletter popups must not hide a larger directory submission form",
+);
+
+assert.match(
+  content,
+  /function\s+detectArticleComment\s*\([\s\S]*commentField\s*&&\s*submit/,
+  "generic POST/search forms must not be misclassified as comment forms",
+);
+
+assert.match(
+  content,
   /\[contenteditable=["']true["']\]/,
   "generic form filling should discover rich-text contenteditable editors",
 );

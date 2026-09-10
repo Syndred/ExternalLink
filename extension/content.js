@@ -540,11 +540,21 @@
 
   function detectArticleComment() {
     // Article/blog comment forms (non-WP)
-    return !!document.querySelector(
-      'form[action*="comment"], form[action*="post"], ' +
-        ".comment-form:not(.wp-block-comments), " +
-        "#comment-form:not(#commentform)",
+    const candidates = Array.from(
+      document.querySelectorAll(
+        'form[action*="comment"], form[action*="post"], ' +
+          ".comment-form:not(.wp-block-comments), " +
+          "#comment-form:not(#commentform)",
+      ),
     );
+    return candidates.some((form) => {
+      const commentField = form.querySelector(
+        'textarea[name*="comment" i], textarea[id*="comment" i], ' +
+          'textarea[name*="message" i], [contenteditable="true"], [role="textbox"][contenteditable]',
+      );
+      const submit = form.querySelector('button[type="submit"], input[type="submit"]');
+      return !!(commentField && submit);
+    });
   }
 
   function detectSubmissionForm() {
@@ -4406,6 +4416,7 @@
       '[class*="popup"]:not([aria-hidden="true"])',
       '[class*="overlay"]:not([aria-hidden="true"])',
     ];
+    const dialogCandidates = [];
     for (const sel of dialogSelectors) {
       try {
         const candidates = document.querySelectorAll(sel);
@@ -4419,7 +4430,7 @@
             const t = (node.type || "").toLowerCase();
             return !["hidden", "submit", "button", "reset"].includes(t);
           });
-          if (fillable.length > 0) return el;
+          if (fillable.length > 0) dialogCandidates.push({ element: el, fillable });
         }
       } catch {
         /* invalid selector in old browsers */
@@ -4435,6 +4446,16 @@
         bestScore = score;
         bestForm = form;
       }
+    }
+    for (const candidate of dialogCandidates) {
+      const text = String(candidate.element.innerText || candidate.element.textContent || "");
+      const onlyEmail =
+        candidate.fillable.length === 1 &&
+        String(candidate.fillable[0].type || "").toLowerCase() === "email";
+      const marketingOptIn =
+        onlyEmail && /newsletter|subscribe|join\s+[\d,]+|don't miss|free database/i.test(text);
+      if (marketingOptIn && bestScore > candidate.fillable.length) continue;
+      return candidate.element;
     }
     return bestForm || document;
   }

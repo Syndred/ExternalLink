@@ -303,6 +303,42 @@ const Q = loadQueueModule();
 assert.equal(Q.isGateStatus("needs_manual"), true);
 assert.equal(Q.isGateStatus("needs_otp"), true);
 assert.equal(Q.classifyStatusFromReason("Email OTP verification required", "broken"), "needs_otp");
+for (const [reason, expected] of [
+  ["This directory requires payment to submit", "paid"],
+  ["Listing fee: $49 to be included in the directory", "paid"],
+  ["页面要求付费后才能提交", "paid"],
+  ["当前提交按钮是付费入口", "paid"],
+  ["checkout required to continue", "paid"],
+  ["Promote this launch to publish the listing", "paid"],
+  ["Pricing: Paid", "needs_manual"],
+  ["Pricing: Free", "needs_manual"],
+  ["Pricing: Freemium", "needs_manual"],
+  ["Product subscription: monthly plan", "needs_manual"],
+  ["产品收费，但没有说明收录是否收费", "needs_manual"],
+  ["payment required", "needs_manual"],
+  ["The product is paid", "needs_manual"],
+  ["The form says free-freemium-paid options", "needs_manual"],
+  ["Payment field present on the form, no indication of submission fee", "needs_manual"],
+  ["There is a payment option near the submission form", "needs_manual"],
+  ["This directory has payment settings and accepts free submissions", "needs_manual"],
+]) {
+  assert.equal(
+    Q.classifyStatusFromReason(reason, "broken"),
+    expected,
+    `payment classification for ${reason}`,
+  );
+}
+for (const [reason, expected] of [
+  ["Payment required, then complete the CAPTCHA", "needs_captcha"],
+  ["The listing requires payment after login", "needs_login"],
+  ["Checkout is visible but an email OTP is required", "needs_otp"],
+]) {
+  assert.equal(
+    Q.classifyStatusFromReason(reason, "broken"),
+    expected,
+    `human gate must take priority for ${reason}`,
+  );
+}
 const otpFiltered = Q.filterSubmissionTasks(
   [{ key: "otp.example", domain: "otp.example", status: "pending" }],
   { annotations: { "otp.example": { status: "needs_otp" } } },

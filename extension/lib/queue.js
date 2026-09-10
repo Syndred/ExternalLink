@@ -525,14 +525,14 @@
   const GATE_STATUSES = new Set(["needs_login", "needs_captcha", "needs_otp", "needs_manual"]);
 
   function classifyStatusFromReason(reason, fallback = "broken") {
-    const text = String(reason || "").toLowerCase();
-    if (
-      /付费|订阅|收费|pricing|payment|paid\b|paywall|credit\s*card|checkout|subscribe to continue|paid\s*plan|subscription\s*required/.test(
-        text,
-      )
-    ) {
-      return "paid";
-    }
+    const text = String(reason || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Human gates take precedence over payment words. A page can mention a
+    // payment option and still only need a CAPTCHA, OTP, or login from the
+    // operator before the free submission can continue.
     if (
       /验证码|captcha|recaptcha|hcaptcha|turnstile|human\s*verification|verify you are human|security check/.test(
         text,
@@ -554,6 +554,56 @@
     ) {
       return "needs_login";
     }
+
+    // A product's Pricing/Paid/Free/Freemium or subscription field describes
+    // the submitted product. It does not prove that this directory charges
+    // for the submission. Mark such and other ambiguous payment observations
+    // for review instead of permanently excluding the destination as paid.
+    const submissionAction =
+      "(?:submit(?:ted|ting)?|submission|list(?:ing)?|directory|catalog(?:ue)?|feature|publish(?:ing)?|post|launch|promot(?:e|ion)|add\\s+(?:a\\s+)?(?:site|product|listing)|提交|收录|发布|上架|目录|推广|入库|刊登|投稿)";
+    const paymentTerm =
+      "(?:付费|收费|费用|价格|付款|支付|payment|paid|fee|charge|cost|pay(?:\\s+now)?|credit\\s*card|[$€£]\\s*\\d|\\d+\\s*(?:usd|eur|gbp))";
+    const productPricingField =
+      /pricing|\b(?:product|app|service|plan|tier)\b.{0,30}\b(?:free|freemium|paid|subscription)\b|\b(?:free|freemium|paid|subscription)\b.{0,30}\b(?:product|app|service|plan|tier)\b|\b(?:free|freemium)(?:\s*[-/]\s*(?:free|freemium|paid))+\b|产品.{0,20}(?:免费|付费|收费|订阅)|(?:免费|付费|收费|订阅).{0,20}产品/.test(
+        text,
+      );
+    const uncertainPayment =
+      /(?:是否|有没有|有无|未说明|没有说明|未提及|没有表明|不确定|无法判断|不清楚|no\s+(?:indication|evidence)|not\s+(?:stated|specified|clear)|unknown|unclear|cannot tell|not clear).{0,50}(?:付费|订阅|收费|支付|付款|payment|paid|fee|charge|cost)|(?:付费|订阅|收费|支付|付款|payment|paid|fee|charge|cost).{0,50}(?:是否|有没有|有无|未说明|没有说明|未提及|没有表明|不确定|无法判断|不清楚|no\s+(?:indication|evidence)|not\s+(?:stated|specified|clear)|unknown|unclear|cannot tell|not clear)/.test(
+        text,
+      );
+    if (productPricingField || uncertainPayment) {
+      return "needs_manual";
+    }
+    const submissionFee = new RegExp(
+      [
+        `(?:${submissionAction})\\s+(?:is|are)\\s+(?:paid|premium|not\\s+free)`,
+        `(?:${submissionAction}).{0,50}(?:requires?|needs?|costs?|charges?).{0,30}(?:a\\s+)?(?:${paymentTerm}|fee|charge|cost)`,
+        `(?:${submissionAction}).{0,30}(?:has|includes?)\\s+(?:a\\s+)?(?:fee|charge|cost)`,
+        `(?:${submissionAction}).{0,30}(?:for|with)\\s+(?:a\\s+)?(?:fee|charge|cost|payment)`,
+        `(?:${submissionAction})\\s+(?:fee|charge|cost)\\b`,
+        `(?:${paymentTerm})\\s+(?:required|needed)\\s+(?:to|for)\\s+(?:${submissionAction})`,
+        `(?:payment|fee|charge|cost)\\s+(?:for|on)\\s+(?:${submissionAction})`,
+        `(?:paid|premium)\\s+(?:${submissionAction})`,
+        `(?:提交|收录|发布|上架|目录|推广|入库|刊登|投稿).{0,20}(?:付费|收费|费用|支付|付款|价格)`,
+        `(?:付费|收费|费用|支付|付款|价格).{0,20}(?:提交|收录|发布|上架|目录|推广|入库|刊登|投稿)`,
+      ].join("|"),
+    );
+    const explicitPaidAction =
+      /\bcheckout\b|\bpay\s+now\b|\bbuy\s+(?:a\s+)?(?:listing|submission|placement|feature)\b|\bpurchase\s+(?:a\s+)?(?:listing|submission|placement|feature)\b|\bupgrade\s+to\s+(?:submit|list|publish)\b|\b(?:promote|boost)\s+(?:this\s+)?(?:launch|listing|post|site|product)\b|(?:页面|当前)?提交按钮.{0,20}(?:付费|收费|支付|付款)入口|(?:页面要求|需要).{0,30}(?:付费|收费|支付|付款).{0,30}(?:提交|收录|发布)/.test(
+        text,
+      );
+    if (submissionFee.test(text) || explicitPaidAction) {
+      return "paid";
+    }
+
+    const ambiguousPayment =
+      /付费|订阅|收费|payment|paid\b|paywall|credit\s*card|subscribe(?:d|r)?|subscription|paid\s*plan|subscription\s*required/.test(
+        text,
+      );
+    if (ambiguousPayment) {
+      return "needs_manual";
+    }
+
     if (
       /无法提交|坏链|失效|closed|not\s*accept|no longer|404|not found|access denied|forbidden|unavailable|cannot submit|broken|dead\s*link|domain.*(expired|invalid)/.test(
         text,

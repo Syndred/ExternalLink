@@ -4289,10 +4289,10 @@
         context,
       );
     const productBillingQuestion =
-      (/(?:does|do|is|are|can|will|would|should)\b.{0,100}\b(?:your|the)\b.{0,80}\b(?:website|product|tool|app|service|business)\b.{0,100}\b(?:require|accept|support|offer|charge|have|use)\b.{0,60}\b(?:payment|payments|paid|billing|pricing|subscription|free|freemium)\b/.test(
+      (/(?:does|do|is|are|can|will|would|should)\b.{0,100}\b(?:your|the)\b.{0,80}\b(?:website|product|tool|app|service|business)\b.{0,100}\b(?:require|accept|support|offer|charge|have|use)\b.{0,60}\b(?:payment|payments|paid|billing|pricing|subscription|free|freemium|stripe|paypal|credit\s+card)\b/.test(
         context,
       ) ||
-        /\b(?:your|the)\s+(?:website|product|tool|app|service)\b.{0,100}\b(?:paid|free|freemium|charge|cost|payment|pricing)\b/.test(
+        /\b(?:your|the)\s+(?:website|product|tool|app|service)\b.{0,100}\b(?:paid|free|freemium|charge|cost|payment|pricing|stripe|paypal|credit\s+card)\b/.test(
           context,
         )) &&
       !/\b(?:to\s+submit|to\s+publish|to\s+list|to\s+post|listing fee|submission fee|promote|boost|sponsored placement)\b/.test(
@@ -4302,10 +4302,13 @@
       /\bpay\s+to\s+(?:submit|publish|list|post)\b|\bpayment\s+(?:is\s+)?required\s+to\s+(?:submit|publish|list|post)\b|\b(?:listing|submission)\s+fee\b|\bfee\s+to\s+(?:submit|publish|list|post)\b|\bpay\s+for\s+(?:the\s+)?(?:listing|submission)\b|\bpaid\s+(?:placement|listing)\b|\bpromote\s+(?:this|your)\s+(?:launch|listing)\b|\bboost\s+(?:this|your)\s+(?:launch|listing)\b/.test(
         context,
       );
+    const paymentMethodContext = /\bpayment\s+method\b/.test(context);
+    const paymentProviderContext = /\bstripe\b|\bpaypal\b/.test(context);
     const checkoutContext =
-      /\bcheckout\b|\bcredit\s*card\b|\bcard\s+number\b|\bcvv\b|\bcvc\b|\bexpir(?:y|ation)\s+date\b|\bbilling\s+address\b|\bamount\s+due\b|\btotal\s+due\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\border\s+(?:a\s+)?subscription\b|\bsubscription\s+(?:order|checkout|payment)\b|\bpayment\s+method\b|\bstripe\b|\bpaypal\b/.test(
+      /\bcheckout\b|\bcredit\s*card\b|\bcard\s+number\b|\bcvv\b|\bcvc\b|\bexpir(?:y|ation)\s+date\b|\bbilling\s+address\b|\bamount\s+due\b|\btotal\s+due\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\border\s+(?:a\s+)?subscription\b|\bsubscription\s+(?:order|checkout|payment)\b/.test(
         context,
-      );
+      ) ||
+      ((!productBillingQuestion) && (paymentMethodContext || paymentProviderContext));
     const actionPayment =
       /\bpay(?:\s+now)?\b|\bpay\s+to\s+(?:submit|publish|list|post)\b|\bcheckout\b|\bpurchase\b|\bbuy(?:\s+now)?\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\bconfirm\s+(?:payment|purchase)\b|\bsubscribe\s+(?:now|to\s+(?:a|the)\s+plan)\b|\bstart\s+(?:a\s+)?subscription\b|\bupgrade\s+(?:now|plan|subscription|account)\b/.test(
         label,
@@ -4322,10 +4325,11 @@
     // not a charge to the submitter, even when the selected option is "Paid".
     const productPricing =
       !explicitSubmissionPayment &&
-      !checkoutContext &&
-      (productBillingQuestion ||
-        (pricingContext && optionSignals > 0 && (choiceControl || actionType === "submit")) ||
-        (choiceControl && optionSignals >= 2 && pricingContext));
+      !actionPayment &&
+      ((productBillingQuestion && (choiceControl || actionType === "submit")) ||
+        (!checkoutContext &&
+          ((pricingContext && optionSignals > 0 && (choiceControl || actionType === "submit")) ||
+            (choiceControl && optionSignals >= 2 && pricingContext))));
     if (productPricing) {
       return {
         classification: "product_pricing",

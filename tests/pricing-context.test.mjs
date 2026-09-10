@@ -99,6 +99,18 @@ assert.equal(
 
 assert.equal(
   classify({
+    label: "Does your product accept Stripe/PayPal payments?",
+    fieldset: "Payment integrations",
+    options: "Yes No",
+    local: "Does your product accept Stripe/PayPal payments?",
+    choiceControl: true,
+  }).classification,
+  "product_pricing",
+  "Stripe/PayPal in a product payment capability question must not look like checkout",
+);
+
+assert.equal(
+  classify({
     label: "Paid",
     local: "Pricing type",
     options: "Free Paid",

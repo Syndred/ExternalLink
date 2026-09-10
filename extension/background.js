@@ -71,6 +71,15 @@ const AUTOMATION_OUTBOX_LIMIT = 3000;
 const VISION_FALLBACK_AFTER_FAILURES = 1;
 const UNATTENDED_WATCHDOG_ALARM = "externallink-unattended-watchdog";
 const CLOUD_REQUEST_TIMEOUT_MS = 30000;
+const MANUAL_REVIEW_STATUSES = new Set([
+  "needs_login",
+  "needs_captcha",
+  "needs_otp",
+  "needs_manual",
+  "captcha",
+  "filled",
+  "submitted_unconfirmed",
+]);
 
 const commentDraftCache = new Map();
 
@@ -179,10 +188,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     entry.tabLoadComplete = false;
     entry.lastContentReady = null;
     entry.readyProbe = null;
+    if (tab?.url) entry.tabUrl = tab.url;
     return;
   }
   if (changeInfo.status !== "complete") return;
   entry.tabLoadComplete = true;
+  if (tab?.url) entry.tabUrl = tab.url;
   if (entry.lastContentReady) {
     handleContentReady(tab || { id: tabId }, entry.lastContentReady).catch((err) =>
       log(`页面就绪处理失败: ${err.message}`, "err", {
@@ -446,17 +457,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
       break;
     case "manualSubmit":
-      handleManualSubmit(msg).catch((err) =>
+      handleManualSubmit(msg, sender.tab?.id).catch((err) =>
         log(`人工继续失败: ${err.message}`, "err", { event: "manual_resume_failed", stack: err.stack }),
       );
       break;
     case "manualSkip":
-      Promise.resolve(handleManualSkip(msg)).catch((err) =>
+      Promise.resolve(handleManualSkip(msg, sender.tab?.id)).catch((err) =>
         log(`人工跳过失败: ${err.message}`, "err", { event: "manual_skip_failed", stack: err.stack }),
       );
       break;
     case "manualContinue":
-      handleManualSubmit(msg).catch((err) =>
+      handleManualSubmit(msg, sender.tab?.id).catch((err) =>
         log(`人工继续失败: ${err.message}`, "err", { event: "manual_continue_failed", stack: err.stack }),
       );
       break;
@@ -1325,44 +1336,196 @@ function unattendedTaskForEntry(entry) {
 
 function manualTabEntries() {
   return [...state.activeTabs.entries()]
-    .filter(([, entry]) => entry?.slotActive === false && entry?.taskId)
+    .filter(([tabId, entry]) => {
+      const task = unattendedTaskForEntry(entry);
+      return entry?.slotActive === false && isManualReviewEntry(entry, task) && (entry?.taskId || task?.id || tabId);
+    })
     .sort((left, right) => Number(left[1].parkedAt || 0) - Number(right[1].parkedAt || 0));
 }
 
-function trimUnattendedManualTabs(preferredTabId = null) {
-  if (!unattendedEnabled()) return;
-  const maxTabs = Math.max(0, Number(state.unattended.maxManualTabs) || 0);
-  const entries = manualTabEntries();
-  if (entries.length <= maxTabs) return;
-  const overflow = entries.slice(0, Math.max(0, entries.length - maxTabs));
-  // Keep the newest manual pages available; the closed pages remain durable TODOs.
-  for (const [tabId, entry] of overflow) {
+function isManualReviewEntry(entry, task = unattendedTaskForEntry(entry)) {
+  if (!entry || ["ok", "skip", "err"].includes(task?.status)) return false;
+  return Boolean(
+    entry.slotActive === false ||
+      state.parkedTaskIds.has(entry.taskId || task?.id) ||
+      MANUAL_REVIEW_STATUSES.has(task?.status),
+  );
+}
+
+function manualCapacityReached() {
+  if (!unattendedEnabled()) return false;
+  const limit = Math.max(
+    1,
+    Number(state.unattended.manualTabLimit || state.unattended.maxManualTabs) || 20,
+  );
+  return manualTabEntries().length >= limit;
+}
+
+async function syncUnattendedManualCapacity(options = {}) {
+  if (!unattendedEnabled()) return state.unattended;
+  const manualTabCount = manualTabEntries().length;
+  const before = state.unattended || {};
+  const next = self.ExtLinkUnattended.noteManualCapacity(
+    before,
+    manualTabCount,
+    Date.now(),
+  );
+  const wasBlocked = before.waitReason === "manual_capacity";
+  const changed =
+    Number(before.manualTabCount) !== Number(next.manualTabCount) ||
+    Number(before.manualTabLimit) !== Number(next.manualTabLimit) ||
+    String(before.waitReason || "") !== String(next.waitReason || "") ||
+    Number(before.waitReasonAt) !== Number(next.waitReasonAt);
+  state.unattended = next;
+  if (changed) {
+    await updateUnattendedCheckpoint((checkpoint) =>
+      self.ExtLinkUnattended.noteManualCapacity(checkpoint, manualTabCount, Date.now()),
+    );
+  }
+  if (
+    wasBlocked &&
+    next.waitReason !== "manual_capacity" &&
+    options.schedule !== false &&
+    self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+    state.queue.length > 0
+  ) {
+    scheduleQueueProcessing();
+  }
+  return state.unattended;
+}
+
+// Kept as a compatibility name for callers and older tests. Manual pages are
+// never evicted; this now only records capacity and the durable queue wait.
+function trimUnattendedManualTabs() {
+  return syncUnattendedManualCapacity({ schedule: false }).catch((err) => {
+    log(`人工页签容量状态保存失败: ${err.message}`, "warn", {
+      event: "manual_capacity_persist_failed",
+    });
+    return state.unattended;
+  });
+}
+
+function makeParkedTabEntry(tabId, task, previous = {}, reason = "") {
+  return {
+    taskIndex: task?.index,
+    groupKey: task?.destinationGroupKey,
+    timeoutId: null,
+    manualWaitTimeoutId: null,
+    runId: 0,
+    slotActive: false,
+    taskId: task?.id || previous.taskId || "",
+    agentPaused: true,
+    agentDone: true,
+    pendingRejudge: false,
+    contentReadyWhileRunning: false,
+    rejudgeAfterRun: false,
+    batchPaused: false,
+    pauseRequested: false,
+    parkedAt: Number(previous.parkedAt) || Date.parse(task?.manualTodoAt || "") || Date.now(),
+    parkedReason: reason || previous.parkedReason || task?.skipReason || "恢复的待人工任务",
+    tabUrl: previous.tabUrl || task?.manualTabUrl || task?.url || "",
+    lastContentReady: null,
+    readyProbe: null,
+  };
+}
+
+function preserveManualTabsForNewBatch() {
+  const preserved = [];
+  for (const [tabId, entry] of [...state.activeTabs.entries()]) {
     const task = unattendedTaskForEntry(entry);
-    if (task?.id) {
-      state.parkedTaskIds.add(task.id);
-      state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
-      task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
-      task.skipReason = task.skipReason || "待人工页签上限已达 2，已保留为待办";
-      broadcastTaskUpdate(task);
+    if (isManualReviewEntry(entry, task)) {
+      const taskId = entry.taskId || task?.id || "";
+      bumpEntryRunId(entry);
+      clearEntryTimeout(entry);
+      clearManualWaitTimer(entry);
+      entry.agentDone = true;
+      entry.agentPaused = true;
+      entry.pendingRejudge = false;
+      entry.slotActive = false;
+      if (taskId && task) {
+        task.manualTabId = Number(tabId) > 0 ? Number(tabId) : task.manualTabId || 0;
+        task.manualTabUrl = task.manualTabUrl || entry.tabUrl || task.url || "";
+        task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
+        if (task.status === "running") {
+          markInterruptedTask(task, "新批次开始前保留人工页签，提交结果请人工核验", entry);
+        }
+      }
+      const placeholderTask = task || {
+        id: taskId,
+        index: entry.taskIndex,
+        destinationGroupKey: entry.groupKey || "",
+        skipReason: entry.parkedReason || "恢复的待人工任务",
+      };
+      // Keep a fresh entry in the map during the asynchronous batch rebuild.
+      // This makes old callbacks stale while ensuring stop/restart cannot lose
+      // ownership of the still-open human page.
+      state.activeTabs.set(
+        tabId,
+        makeParkedTabEntry(tabId, placeholderTask, entry, entry.parkedReason),
+      );
+      preserved.push({
+        tabId,
+        taskId,
+        parkedReason: entry.parkedReason || task?.skipReason || "恢复的待人工任务",
+        parkedAt: entry.parkedAt || Date.now(),
+        taskSnapshot: task ? { ...task } : null,
+        tabUrl: entry.tabUrl || task?.manualTabUrl || task?.url || "",
+      });
+      continue;
     }
+    // In-flight automated work must never survive a batch lifecycle change.
+    // Invalidate its entry before closing the tab so delayed promises cannot
+    // act on a later task that reuses the same tab id.
     bumpEntryRunId(entry);
     clearEntryTimeout(entry);
     clearManualWaitTimer(entry);
     state.activeTabs.delete(tabId);
     chrome.tabs.remove(tabId).catch(() => {});
-    log(`${task?.domain || "任务"}: 人工页签达到上限，已关闭页签并保留待办`, "warn", {
-      event: "manual_tab_capped",
-      taskIndex: task?.index,
-      taskId: task?.id,
-      preferredTabId,
-    });
   }
-  persistParkedTaskIds();
+  return preserved;
+}
+
+function rebindPreservedManualTabs(bindings = []) {
+  for (const binding of bindings) {
+    const task = state.tasks.find((item) => item.id === binding.taskId);
+    if (!task) continue;
+    if (!MANUAL_REVIEW_STATUSES.has(task.status)) {
+      task.status = task.submissionAttempted === true ? "submitted_unconfirmed" : "needs_manual";
+    }
+    task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
+    task.executionPhase = "manual_review";
+    task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
+    task.manualTabId = Number(binding.tabId) > 0 ? Number(binding.tabId) : task.manualTabId || 0;
+    task.manualTabUrl = binding.tabUrl || task.manualTabUrl || task.url || "";
+    state.parkedTaskIds.add(task.id);
+    const entry = makeParkedTabEntry(binding.tabId, task, binding, binding.parkedReason);
+    state.activeTabs.set(binding.tabId, entry);
+    // Replace the old content banner with the new task index without
+    // navigating or refreshing the page. Sender-tab routing also protects a
+    // click from a stale banner during this handoff.
+    chrome.tabs.sendMessage(binding.tabId, {
+      action: "showManualWaitBanner",
+      taskIndex: task.index,
+      taskId: task.id,
+      runId: state.runId,
+      reason: task.skipReason || entry.parkedReason,
+      timeoutSec: 0,
+      config: getTaskConfig(task),
+      platformType: task.platformType,
+    }).catch(() => {});
+    broadcastTaskUpdate(task);
+  }
+  return bindings.length;
 }
 
 function markInterruptedTask(task, reason = "后台中断，提交结果不确定，请人工核验", entry = null) {
   if (!task) return;
   if (entry?.submissionAttempted === true) task.submissionAttempted = true;
+  const entryTabId = entry
+    ? [...state.activeTabs.entries()].find(([, candidate]) => candidate === entry)?.[0]
+    : null;
+  if (Number(entryTabId) > 0) task.manualTabId = Number(entryTabId);
+  if (entry?.tabUrl) task.manualTabUrl = entry.tabUrl;
   const interrupted = self.ExtLinkUnattended.interruptedTaskStatus({
     ...task,
     status: "running",
@@ -1627,7 +1790,7 @@ async function startBatchRun(msg) {
     "captcha",
     "filled",
   ]);
-  closeAllTabs();
+  const preservedManualTabs = preserveManualTabsForNewBatch();
 
   state.runId = `run-${Date.now().toString(36)}`;
   await resetBatchLog(state.runId, selectedSiteIds);
@@ -1654,6 +1817,7 @@ async function startBatchRun(msg) {
   state.profileConfigs = {
     ...(previousBatch?.profileConfigs || {}),
     ...collectProfileConfigs(pending.tasks),
+    ...collectProfileConfigs(preservedManualTabs.map((item) => item.taskSnapshot).filter(Boolean)),
   };
   const previousDestinations = hydrateBatchDestinations(previousBatch?.destinations || []);
   const previousTasks = Array.isArray(previousBatch?.tasks)
@@ -1693,6 +1857,29 @@ async function startBatchRun(msg) {
       manualTodoAt: previous.manualTodoAt || new Date().toISOString(),
     }));
   }
+  for (const binding of preservedManualTabs) {
+    const snapshot = binding.taskSnapshot;
+    if (!snapshot || nextTaskIds.has(binding.taskId)) continue;
+    const inherited = snapshot.status === "running"
+      ? self.ExtLinkUnattended.interruptedTaskStatus(snapshot)
+      : null;
+    const status = inherited?.status ||
+      (MANUAL_REVIEW_STATUSES.has(snapshot.status)
+        ? snapshot.status
+        : snapshot.submissionAttempted === true
+          ? "submitted_unconfirmed"
+          : "needs_manual");
+    nextTasks.push(stripTaskConfig({
+      ...snapshot,
+      status,
+      skipReason: binding.parkedReason || inherited?.reason || snapshot.skipReason || "上轮批次待人工核验",
+      confirmationNonce: snapshot.confirmationNonce || crypto.randomUUID(),
+      executionPhase: "manual_review",
+      manualTodoAt: snapshot.manualTodoAt || new Date().toISOString(),
+      manualTabId: Number(binding.tabId) > 0 ? Number(binding.tabId) : snapshot.manualTabId || 0,
+    }));
+    nextTaskIds.add(binding.taskId);
+  }
   const groupIndexes = new Map();
   for (const task of nextTasks) {
     const groupKey = task.destinationGroupKey || task.destinationKey || task.key || task.domain;
@@ -1720,6 +1907,7 @@ async function startBatchRun(msg) {
       .map((task) => task.id)
       .filter(Boolean),
   );
+  rebindPreservedManualTabs(preservedManualTabs);
   state.queue = self.ExtLinkUnattended.pendingGroups(state.groups, state.parkedTaskIds);
   state.concurrency = state.config.unattended
     ? 1
@@ -1749,6 +1937,15 @@ async function startBatchRun(msg) {
   state.unattended = self.ExtLinkUnattended.createCheckpoint(
     state.config,
     Date.parse(state.startedAt || "") || Date.now(),
+  );
+  for (const task of state.tasks) {
+    if (state.parkedTaskIds.has(task.id)) {
+      state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
+    }
+  }
+  state.unattended = self.ExtLinkUnattended.noteManualCapacity(
+    state.unattended,
+    manualTabEntries().length,
   );
 
   await replaceActiveBatchRun({
@@ -1803,7 +2000,8 @@ function queueOperationCurrent(batchRunId, lifecycleVersion) {
   return (
     state.runId === batchRunId &&
     state.lifecycleVersion === lifecycleVersion &&
-    self.ExtLinkBatchControls.shouldProcessQueue(state)
+    self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+    !manualCapacityReached()
   );
 }
 
@@ -1848,6 +2046,8 @@ async function getRuntimeState() {
           ? {
               ...task,
               ...(active || {}),
+              runId: state.runId,
+              taskId: task.id,
               parkedReason:
                 active?.parkedReason ||
                 task.skipReason ||
@@ -1941,6 +2141,9 @@ async function restoreActiveBatchRun() {
   state.paused = batch.status === "paused";
   state.stopped = batch.status === "stopped";
   state.parkedTaskIds = new Set([...(batch.parkedTaskIds || []), ...interruptedTaskIds]);
+  for (const taskId of state.parkedTaskIds) {
+    state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, taskId);
+  }
 
   if (
     state.unattended.enabled &&
@@ -1954,33 +2157,104 @@ async function restoreActiveBatchRun() {
 
   const tabs = await chrome.tabs.query({});
   const claimedTabIds = new Set();
+  const tabsById = new Map(
+    tabs.filter((tab) => Number(tab?.id) > 0).map((tab) => [Number(tab.id), tab]),
+  );
+  const unboundTasksByDestination = new Map();
+  for (const taskId of state.parkedTaskIds) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    const exact = task?.manualTabId ? tabsById.get(Number(task.manualTabId)) : null;
+    if (task && !exact) {
+      const list = unboundTasksByDestination.get(task.destinationKey) || [];
+      list.push(task);
+      unboundTasksByDestination.set(task.destinationKey, list);
+    }
+  }
+  const tabsByDestination = new Map();
+  const tabsByDomain = new Map();
+  const unboundTasksByDomain = new Map();
+  const tabDomain = (url) => {
+    try {
+      return self.ExtLinkQueue.extractDomain(url || "").toLowerCase();
+    } catch {
+      return "";
+    }
+  };
+  const taskDomain = (task) =>
+    tabDomain(task?.manualTabUrl || task?.url || task?.destinationKey || task?.domain || "");
+  const tabMatchesTask = (tab, task) => {
+    const expected = taskDomain(task);
+    return Boolean(expected && tabDomain(tab?.url) === expected);
+  };
+  for (const tab of tabs) {
+    if (!tab?.id || !tab.url) continue;
+    let key = "";
+    try {
+      key = self.ExtLinkQueue.normalizeDestinationKey(tab.url);
+    } catch {
+      key = "";
+    }
+    if (!key) continue;
+    const list = tabsByDestination.get(key) || [];
+    list.push(tab);
+    tabsByDestination.set(key, list);
+    const domain = tabDomain(tab.url);
+    if (domain) {
+      const domainTabs = tabsByDomain.get(domain) || [];
+      domainTabs.push(tab);
+      tabsByDomain.set(domain, domainTabs);
+    }
+  }
+  for (const taskId of state.parkedTaskIds) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    const exact = task?.manualTabId ? tabsById.get(Number(task.manualTabId)) : null;
+    if (task && !exact) {
+      const domain = taskDomain(task);
+      if (domain) {
+        const list = unboundTasksByDomain.get(domain) || [];
+        list.push(task);
+        unboundTasksByDomain.set(domain, list);
+      }
+    }
+  }
   for (const taskId of state.parkedTaskIds) {
     const task = state.tasks.find((item) => item.id === taskId);
     if (!task) continue;
     // Batches saved before confirmation nonces were introduced still need a
     // side-panel-only confirmation path after the extension upgrades.
     task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
-    const tab = tabs.find((item) => {
-      if (!item?.id || claimedTabIds.has(item.id)) return false;
-      try {
-        return self.ExtLinkQueue.normalizeDestinationKey(item.url || "") === task.destinationKey;
-      } catch {
-        return false;
+    const exactTab = task.manualTabId
+      ? tabsById.get(Number(task.manualTabId))
+      : null;
+    let tab = exactTab &&
+      !claimedTabIds.has(Number(exactTab.id)) &&
+      tabMatchesTask(exactTab, task)
+      ? exactTab
+      : null;
+    if (!tab) {
+      const sameDestinationTasks = unboundTasksByDestination.get(task.destinationKey) || [];
+      const candidates = (tabsByDestination.get(task.destinationKey) || []).filter(
+        (item) => !claimedTabIds.has(Number(item.id)),
+      );
+      // Legacy rows have no tab id. Only use a destination fallback when the
+      // mapping is unambiguous; multiple Profiles on one host must remain
+      // unbound rather than receiving another Profile's form.
+      if (sameDestinationTasks.length === 1 && candidates.length === 1) tab = candidates[0];
+      if (!tab) {
+        const domain = taskDomain(task);
+        const sameDomainTasks = unboundTasksByDomain.get(domain) || [];
+        const domainCandidates = (tabsByDomain.get(domain) || []).filter(
+          (item) => !claimedTabIds.has(Number(item.id)),
+        );
+        if (sameDomainTasks.length === 1 && domainCandidates.length === 1) {
+          tab = domainCandidates[0];
+        }
       }
-    });
+    }
     if (!tab?.id) continue;
-    claimedTabIds.add(tab.id);
-    state.activeTabs.set(tab.id, {
-      taskIndex: task.index,
-      groupKey: task.destinationGroupKey,
-      timeoutId: null,
-      runId: 0,
-      slotActive: false,
-      taskId: task.id,
-      agentPaused: true,
-      agentDone: true,
-      parkedReason: task.skipReason || "恢复的待人工任务",
-    });
+    claimedTabIds.add(Number(tab.id));
+    task.manualTabId = Number(tab.id);
+    state.activeTabs.set(Number(tab.id), makeParkedTabEntry(Number(tab.id), task));
   }
 
   state.queue = self.ExtLinkScheduler.buildRestoredQueue(
@@ -1992,7 +2266,12 @@ async function restoreActiveBatchRun() {
   // runs; unattended recovery needs the remaining combinations to continue.
   state.queue = self.ExtLinkUnattended.pendingGroups(state.groups, state.parkedTaskIds);
   state.running = batch.status !== "finished" && !state.stopped && (state.paused || state.queue.length > 0);
-  trimUnattendedManualTabs();
+  await trimUnattendedManualTabs();
+  if (state.running && state.unattended.enabled) {
+    await persistActiveBatchStatus(state.paused ? "paused" : "running", {
+      unattendedState: state.unattended,
+    });
+  }
   if (state.paused && state.unattended.enabled && batch.status !== "finished") {
     await persistActiveBatchStatus("paused", {
       pauseReason: state.unattended.stopReason || batch.pauseReason || "批次已暂停",
@@ -2047,6 +2326,8 @@ function serializeBatchTasks(tasks = []) {
     Math.max(0, Number(task.taskDeadlineAt) || 0),
     task.manualTodoAt || "",
     task.unattendedClaimed === true ? 1 : 0,
+    Number(task.manualTabId) > 0 ? Number(task.manualTabId) : 0,
+    task.manualTabUrl || "",
   ]);
 }
 
@@ -2121,6 +2402,8 @@ function hydratePersistedTask(rawTask, destinations) {
     taskDeadlineAt: Math.max(0, Number(rawTask[22]) || 0),
     manualTodoAt: rawTask[23] || "",
     unattendedClaimed: rawTask[24] === 1,
+    manualTabId: Math.max(0, Number(rawTask[25]) || 0),
+    manualTabUrl: rawTask[26] || "",
   };
 }
 
@@ -4637,17 +4920,28 @@ async function runProductHuntSidepanelWithVisualFallback(tabId, config, options 
 
 // ─── Queue Processing ───
 async function processQueue() {
-  while (self.ExtLinkBatchControls.shouldProcessQueue(state) && state.queue.length > 0) {
+  await syncUnattendedManualCapacity({ schedule: false });
+  while (
+    self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+    !manualCapacityReached() &&
+    state.queue.length > 0
+  ) {
     while (
       self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+      !manualCapacityReached() &&
       countProcessingTabs() < state.concurrency &&
       state.queue.length > 0
     ) {
       const group = state.queue.shift();
       await processOne(group);
     }
+    if (manualCapacityReached()) {
+      await syncUnattendedManualCapacity({ schedule: false });
+      break;
+    }
     await sleep(500);
   }
+  await syncUnattendedManualCapacity({ schedule: false });
   await refreshBatchRunStatus();
 }
 
@@ -4666,6 +4960,7 @@ function scheduleQueueProcessing() {
       processQueuePromise = null;
       if (
         self.ExtLinkBatchControls.shouldProcessQueue(state) &&
+        !manualCapacityReached() &&
         state.queue.length > 0
       ) {
         scheduleQueueProcessing();
@@ -4691,6 +4986,9 @@ async function refreshBatchRunStatus() {
   }
   if (!state.stopped && (hasProcessing || hasQueuedGroups)) {
     state.running = true;
+    await persistActiveBatchStatus("running", {
+      unattendedState: state.unattended,
+    });
     return;
   }
 
@@ -4737,6 +5035,7 @@ async function processOne(group) {
   try {
     if (!queueOperationCurrent(batchRunId, lifecycleVersion)) {
       state.queue.unshift(group);
+      if (manualCapacityReached()) await syncUnattendedManualCapacity({ schedule: false });
       return;
     }
     task = (group?.tasks || []).find((item) => item.status === "pending");
@@ -4808,6 +5107,7 @@ async function processOne(group) {
       tabLoadComplete: tab.status === "complete",
       lastContentReady: null,
       readyProbe: null,
+      tabUrl: tab.url || url,
     };
     state.activeTabs.set(tab.id, entry);
     resetEntryTimeout(entry, tab.id, PAGE_LOAD_TIMEOUT_MS);
@@ -4833,6 +5133,7 @@ async function handleContentReady(tab, data = {}) {
   if (!entry) return;
   if (state.stopped) return;
   if (entry.agentDone) return;
+  if (tab?.url) entry.tabUrl = tab.url;
   entry.lastContentReady = data;
   if (entry.agentRunning) {
     entry.pendingRejudge = true;
@@ -5332,6 +5633,10 @@ function looksReadyForManualResume(data) {
 function handleTimeout(tabId) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
+  if (entry.slotActive === false) {
+    clearEntryTimeout(entry);
+    return;
+  }
   if (state.paused && !state.stopped) {
     entry.batchPaused = true;
     entry.agentPaused = true;
@@ -5357,16 +5662,34 @@ function handleTimeout(tabId) {
 }
 
 // ─── Manual continue: user clicked "继续填表" from banner ───
-async function handleManualSubmit(msg) {
+async function handleManualSubmit(msg, sourceTabId = null) {
   if (state.stopped) return;
-  const { taskIndex, platformType } = msg;
-  const task = state.tasks.find((t) => t.index === taskIndex);
+  if (msg.runId && msg.runId !== state.runId) {
+    throw new Error("批次已变化，请刷新待人工列表后重试");
+  }
+  const sourceEntry = sourceTabId ? state.activeTabs.get(sourceTabId) : null;
+  if (sourceTabId && !sourceEntry) {
+    throw new Error("该页签已不再属于当前批次，请从侧栏刷新待人工列表");
+  }
+  const sourceTask = sourceEntry
+    ? state.tasks.find((item) => item.index === sourceEntry.taskIndex)
+    : null;
+  if (sourceTabId && !sourceTask) {
+    throw new Error("该页签未绑定有效任务，请刷新待人工列表");
+  }
+  if (msg.taskId && sourceTask && msg.taskId !== sourceTask.id) {
+    throw new Error("该页签已绑定到其他任务，请刷新后重试");
+  }
+  const task = sourceTask || (msg.taskId
+    ? state.tasks.find((item) => item.id === msg.taskId)
+    : state.tasks.find((item) => item.index === msg.taskIndex));
   if (!task) return;
+  const { taskIndex, platformType } = msg;
 
   // Find the tab for this task
-  let tabId = null;
-  for (const [id, entry] of state.activeTabs) {
-    if (entry.taskIndex === taskIndex) {
+  let tabId = sourceTabId || null;
+  if (!tabId) for (const [id, entry] of state.activeTabs) {
+    if (entry.taskId === task.id || entry.taskIndex === task.index) {
       tabId = id;
       break;
     }
@@ -5384,12 +5707,15 @@ async function handleManualSubmit(msg) {
     clearManualWaitTimer(entry);
     entry.slotActive = true;
     entry.agentDone = false;
+    task.manualTabId = 0;
+    task.manualTabUrl = "";
     task.taskDeadlineAt = unattendedEnabled()
       ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
       : task.taskDeadlineAt;
     entry.taskDeadlineAt = task.taskDeadlineAt || 0;
     state.parkedTaskIds.delete(task.id);
     if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
+    await syncUnattendedManualCapacity();
     await persistParkedTaskIds();
     await chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
     await runProductHuntLaunchLoop(tabId, task, entry, {
@@ -5400,12 +5726,15 @@ async function handleManualSubmit(msg) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  task.manualTabId = 0;
+  task.manualTabUrl = "";
   task.taskDeadlineAt = unattendedEnabled()
     ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
     : task.taskDeadlineAt;
   entry.taskDeadlineAt = task.taskDeadlineAt || 0;
   state.parkedTaskIds.delete(task.id);
   if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
+  await syncUnattendedManualCapacity();
   persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
@@ -5418,15 +5747,24 @@ async function handleManualSubmit(msg) {
 }
 
 // ─── Manual skip: user clicked "跳过" from banner ───
-function handleManualSkip(msg) {
+function handleManualSkip(msg, sourceTabId = null) {
   if (state.stopped) return;
-  const { taskIndex } = msg;
-  const task = state.tasks.find((t) => t.index === taskIndex);
+  if (msg.runId && msg.runId !== state.runId) return;
+  const sourceEntry = sourceTabId ? state.activeTabs.get(sourceTabId) : null;
+  if (sourceTabId && !sourceEntry) return;
+  const sourceTask = sourceEntry
+    ? state.tasks.find((item) => item.index === sourceEntry.taskIndex)
+    : null;
+  if (sourceTabId && !sourceTask) return;
+  if (msg.taskId && sourceTask && msg.taskId !== sourceTask.id) return;
+  const task = sourceTask || (msg.taskId
+    ? state.tasks.find((item) => item.id === msg.taskId)
+    : state.tasks.find((item) => item.index === msg.taskIndex));
   if (!task) return;
 
-  let tabId = null;
-  for (const [id, entry] of state.activeTabs) {
-    if (entry.taskIndex === taskIndex) {
+  let tabId = sourceTabId || null;
+  if (!tabId) for (const [id, entry] of state.activeTabs) {
+    if (entry.taskId === task.id || entry.taskIndex === task.index) {
       tabId = id;
       break;
     }
@@ -5436,7 +5774,10 @@ function handleManualSkip(msg) {
   if (entry) clearManualWaitTimer(entry);
   task.status = "skip";
   task.skipReason = "manual_skip_current_run";
+  task.manualTabId = 0;
+  task.manualTabUrl = "";
   if (entry) entry.agentDone = true;
+  syncUnattendedManualCapacity({ schedule: true });
   log(`${task.domain}: 用户手动跳过`, "warn");
   broadcastTaskUpdate(task);
   if (tabId && entry) {
@@ -5446,8 +5787,9 @@ function handleManualSkip(msg) {
 }
 
 async function confirmSubmissionSuccess(msg) {
-  const task =
-    state.tasks.find((item) => item.index === msg.taskIndex || item.id === msg.taskId) || null;
+  const task = msg.taskId
+    ? state.tasks.find((item) => item.id === msg.taskId) || null
+    : state.tasks.find((item) => item.index === msg.taskIndex) || null;
   if (!task) throw new Error("待确认任务不存在或已过期");
   if (msg.runId !== state.runId) throw new Error("批次已变化，请刷新待人工列表后重试");
   if (!task.confirmationNonce || msg.confirmationNonce !== task.confirmationNonce) {
@@ -5462,6 +5804,8 @@ async function confirmSubmissionSuccess(msg) {
   task.confirmedBy = "manual";
   task.successEvidence = msg.evidence || "user confirmed submission success";
   task.confirmationNonce = "";
+  task.manualTabId = 0;
+  task.manualTabUrl = "";
   await recordSubmittedProject(task);
   await recordUnattendedSuccess();
   broadcastTaskUpdate(task);
@@ -5469,6 +5813,7 @@ async function confirmSubmissionSuccess(msg) {
     if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
     await persistParkedTaskIds();
   }
+  await syncUnattendedManualCapacity();
 
   for (const [tabId, entry] of state.activeTabs) {
     if (entry.taskIndex !== task.index) continue;
@@ -5490,12 +5835,15 @@ async function resumeAfterCaptcha(tabId, data) {
   clearManualWaitTimer(entry);
   entry.slotActive = true;
   entry.agentDone = false;
+  task.manualTabId = 0;
+  task.manualTabUrl = "";
   task.taskDeadlineAt = unattendedEnabled()
     ? self.ExtLinkUnattended.taskDeadline(state.unattended, Date.now())
     : task.taskDeadlineAt;
   entry.taskDeadlineAt = task.taskDeadlineAt || 0;
   state.parkedTaskIds.delete(task.id);
   if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
+  await syncUnattendedManualCapacity();
   await persistParkedTaskIds();
   chrome.tabs.sendMessage(tabId, { action: "removeManualWaitBanner" }).catch(() => {});
   resetEntryTimeout(entry, tabId, EXECUTION_TIMEOUT_MS);
@@ -6624,6 +6972,8 @@ function parkTaskEntry(tabId, entry, reason) {
     task.confirmationNonce = task.confirmationNonce || crypto.randomUUID();
     task.executionPhase = "manual_review";
     task.manualTodoAt = task.manualTodoAt || new Date().toISOString();
+    task.manualTabId = Number(tabId) > 0 ? Number(tabId) : task.manualTabId || 0;
+    task.manualTabUrl = entry.tabUrl || task.manualTabUrl || task.url || "";
     state.parkedTaskIds.add(task.id);
     if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.addManualTodo(state.unattended, task.id);
   }
@@ -6636,7 +6986,7 @@ function parkTaskEntry(tabId, entry, reason) {
       unattendedState: state.unattended || activeBatchRun.unattendedState,
     })).catch(() => {});
   }
-  trimUnattendedManualTabs(tabId);
+  trimUnattendedManualTabs();
 }
 
 function persistParkedTaskIds() {
@@ -6651,6 +7001,17 @@ function persistParkedTaskIds() {
 async function advanceDestinationGroup(tabId, completedTask) {
   const entry = state.activeTabs.get(tabId);
   if (!entry) return;
+  const batchRunId = state.runId;
+  const lifecycleVersion = state.lifecycleVersion;
+  const entryRunId = entry.runId;
+  let expectedTaskId = completedTask?.id || entry.taskId;
+  const isCurrent = () =>
+    state.runId === batchRunId &&
+    state.lifecycleVersion === lifecycleVersion &&
+    state.activeTabs.get(tabId) === entry &&
+    entry.runId === entryRunId &&
+    entry.taskId === expectedTaskId;
+  if (!isCurrent()) return;
   const group = findGroupForTask(completedTask);
   const removedParkedTask = completedTask?.id
     ? state.parkedTaskIds.delete(completedTask.id)
@@ -6658,21 +7019,28 @@ async function advanceDestinationGroup(tabId, completedTask) {
   if (removedParkedTask) persistParkedTaskIds();
   const nextTask = self.ExtLinkScheduler.nextPendingTask(group, completedTask.index);
   if (!nextTask) {
+    if (!isCurrent()) return;
     entry.agentDone = true;
     entry.slotActive = true;
+    entry.taskDeadlineAt = 0;
     delayCloseTab(tabId, POST_SUCCESS_CLOSE_DELAY_MS);
     return;
   }
 
   if (unattendedEnabled()) {
     if (!(await claimUnattendedTask(nextTask))) {
-      if (group && !state.queue.includes(group)) state.queue.unshift(group);
+      if (state.runId === batchRunId && state.lifecycleVersion === lifecycleVersion && group && !state.queue.includes(group)) {
+        state.queue.unshift(group);
+      }
       return;
     }
   }
 
+  if (!isCurrent()) return;
+
   entry.taskIndex = nextTask.index;
   entry.taskId = nextTask.id;
+  expectedTaskId = nextTask.id;
   entry.agentDone = false;
   entry.agentPaused = false;
   entry.pendingRejudge = false;
@@ -6685,13 +7053,23 @@ async function advanceDestinationGroup(tabId, completedTask) {
   entry.customLaunchGateRequested = false;
   entry.slotActive = true;
   entry.taskDeadlineAt = nextTask.taskDeadlineAt || 0;
+  entry.tabUrl = nextTask.url || entry.tabUrl || "";
+  nextTask.manualTabId = 0;
+  nextTask.manualTabUrl = "";
   nextTask.status = "pending";
   nextTask.skipReason = "";
   nextTask.executionPhase = "navigation";
   await persistActiveBatchStatus("running");
-  if (state.stopped || state.paused) {
+  if (!isCurrent() || state.stopped || state.paused) {
+    if (isCurrent()) {
+      entry.slotActive = true;
+      entry.agentPaused = true;
+      entry.agentDone = false;
+      entry.batchPaused = true;
+      nextTask.executionPhase = "";
+    }
+    if (isCurrent() && group && !state.queue.includes(group)) state.queue.unshift(group);
     nextTask.executionPhase = "";
-    if (group && !state.queue.includes(group)) state.queue.unshift(group);
     return;
   }
   log(
@@ -6701,12 +7079,16 @@ async function advanceDestinationGroup(tabId, completedTask) {
   broadcastTaskUpdate(nextTask);
 
   try {
+    if (!isCurrent()) return;
     const tab = await chrome.tabs.get(tabId);
+    if (!isCurrent()) return;
     const targetUrl = nextTask.url.startsWith("http") ? nextTask.url : `https://${nextTask.url}`;
     resetEntryTimeout(entry, tabId, PAGE_LOAD_TIMEOUT_MS);
     if (tab.url === targetUrl) await chrome.tabs.reload(tabId);
     else await chrome.tabs.update(tabId, { url: targetUrl });
+    if (isCurrent()) entry.tabUrl = targetUrl;
   } catch (err) {
+    if (!isCurrent()) return;
     nextTask.status = "needs_manual";
     nextTask.skipReason = `无法重新进入提交入口: ${err.message}`;
     broadcastTaskUpdate(nextTask);
@@ -7004,7 +7386,16 @@ async function navigateTaskTab(tabId, entry, url) {
 
 function closeTab(tabId) {
   const entry = state.activeTabs.get(tabId);
-  if (entry && state.paused && !state.stopped && entry.slotActive !== false) {
+  // A delayed callback from an earlier batch may fire after the tab has been
+  // rebound to a manual task. Never close an unowned tab or a human-review
+  // page as a side effect of that stale callback.
+  if (!entry) return;
+  const task = unattendedTaskForEntry(entry);
+  if (isManualReviewEntry(entry, task)) {
+    syncUnattendedManualCapacity({ schedule: false });
+    return;
+  }
+  if (state.paused && !state.stopped && entry.slotActive !== false) {
     clearEntryTimeout(entry);
     entry.closeAfterResume = true;
     return;
@@ -7038,13 +7429,18 @@ function delayCloseTab(tabId, delayMs) {
   entry.timeoutId = setTimeout(() => closeTab(tabId), delayMs);
 }
 
-function closeAllTabs() {
+function closeAllTabs({ preserveManual = true } = {}) {
+  if (preserveManual) return preserveManualTabsForNewBatch();
+  const closed = [];
   for (const [tabId, entry] of state.activeTabs) {
     bumpEntryRunId(entry);
     clearEntryTimeout(entry);
+    clearManualWaitTimer(entry);
+    closed.push(tabId);
     chrome.tabs.remove(tabId).catch(() => {});
   }
   state.activeTabs.clear();
+  return closed;
 }
 
 function closeAutomatedTabs() {
@@ -7053,7 +7449,7 @@ function closeAutomatedTabs() {
     if (unattendedEnabled() && task && entry.slotActive !== false && task.status === "running") {
       task.submissionAttempted = task.submissionAttempted === true || entry.submissionAttempted === true;
       bumpEntryRunId(entry);
-      markInterruptedTask(task, "批次停止时任务结果不确定，请人工核验");
+      markInterruptedTask(task, "批次停止时任务结果不确定，请人工核验", entry);
       entry.agentDone = true;
       entry.agentPaused = true;
       entry.slotActive = false;
@@ -7062,12 +7458,14 @@ function closeAutomatedTabs() {
       broadcastTaskUpdate(task);
     }
     const customLaunch = isCustomLaunchTask(task);
-    const disposition = self.ExtLinkBatchControls.stopTabDisposition({
-      entry,
-      parkedTaskIds: state.parkedTaskIds,
-      taskStatus: task?.status,
-      customLaunch: false,
-    });
+    const disposition = isManualReviewEntry(entry, task)
+      ? "preserve_manual"
+      : self.ExtLinkBatchControls.stopTabDisposition({
+          entry,
+          parkedTaskIds: state.parkedTaskIds,
+          taskStatus: task?.status,
+          customLaunch: false,
+        });
     if (disposition === "preserve_manual") {
       bumpEntryRunId(entry);
       clearEntryTimeout(entry);
@@ -7099,6 +7497,7 @@ function closeAutomatedTabs() {
     state.activeTabs.delete(tabId);
     chrome.tabs.remove(tabId).catch(() => {});
   }
+  syncUnattendedManualCapacity({ schedule: false });
 }
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -7106,10 +7505,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   if (entry) {
     bumpEntryRunId(entry);
     const task = state.tasks.find((t) => t.index === entry.taskIndex);
-    if (task && entry.slotActive === false) {
+    const manualPage = isManualReviewEntry(entry, task);
+    if (task && manualPage) {
       // A parked page is owned by the human-review queue. Closing it must not
       // turn the task into a skip or silently start another task.
       task.skipReason = task.skipReason || "待人工页签已关闭，请重新打开后继续";
+      task.manualTabId = 0;
+      task.manualTabUrl = "";
       broadcastTaskUpdate(task);
     } else if (task && !["ok", "skip", "err"].includes(task.status)) {
       if (state.stopped) {
@@ -7132,6 +7534,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     }
     state.activeTabs.delete(tabId);
     persistParkedTaskIds();
+    if (manualPage) syncUnattendedManualCapacity({ schedule: true });
     refreshBatchRunStatus().catch(() => {});
   }
 });

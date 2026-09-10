@@ -7,7 +7,7 @@
     maxTasks: 100,
     maxAgentCalls: 200,
     maxConsecutiveFailures: 5,
-    maxManualTabs: 2,
+    maxManualTabs: 20,
     watchdogMinutes: 1,
     taskMaxMinutes: 5,
   });
@@ -40,8 +40,8 @@
       unattendedMaxManualTabs: clampInt(
         source.unattendedMaxManualTabs,
         DEFAULTS.maxManualTabs,
-        0,
-        DEFAULTS.maxManualTabs,
+        1,
+        100,
       ),
       unattendedWatchdogMinutes: clampInt(
         source.unattendedWatchdogMinutes,
@@ -80,6 +80,10 @@
       maxAgentCalls: normalized.unattendedMaxAgentCalls,
       maxConsecutiveFailures: normalized.unattendedMaxConsecutiveFailures,
       maxManualTabs: normalized.unattendedMaxManualTabs,
+      manualTabCount: Math.max(0, Number(old.manualTabCount) || 0),
+      manualTabLimit: normalized.unattendedMaxManualTabs,
+      waitReason: String(old.waitReason || ""),
+      waitReasonAt: validTimestamp(old.waitReasonAt) || 0,
       watchdogMinutes: normalized.unattendedWatchdogMinutes,
       taskMaxMinutes: normalized.unattendedTaskMaxMinutes,
       taskBudgetUsed: Math.max(0, Number(old.taskBudgetUsed) || 0),
@@ -164,6 +168,23 @@
     return { ...checkpoint, manualTodoIds: (checkpoint.manualTodoIds || []).filter((id) => id !== taskId) };
   }
 
+  function noteManualCapacity(checkpoint, manualTabCount, now = Date.now()) {
+    if (!checkpoint) return checkpoint;
+    const count = Math.max(0, Number(manualTabCount) || 0);
+    const limit = Math.max(1, Number(checkpoint.maxManualTabs) || DEFAULTS.maxManualTabs);
+    const blocked = count >= limit;
+    const wasBlocked = checkpoint.waitReason === "manual_capacity";
+    return {
+      ...checkpoint,
+      manualTabCount: count,
+      manualTabLimit: limit,
+      waitReason: blocked ? "manual_capacity" : wasBlocked ? "" : String(checkpoint.waitReason || ""),
+      waitReasonAt: blocked
+        ? (wasBlocked && validTimestamp(checkpoint.waitReasonAt) ? checkpoint.waitReasonAt : now)
+        : 0,
+    };
+  }
+
   function pendingGroups(groups = [], parkedTaskIds = []) {
     const parked = new Set(parkedTaskIds || []);
     return (groups || []).filter((group) =>
@@ -196,6 +217,7 @@
     taskDeadline,
     addManualTodo,
     removeManualTodo,
+    noteManualCapacity,
     pendingGroups,
     interruptedTaskStatus,
   };

@@ -5717,23 +5717,46 @@
   }
 
   function findSubmitButton(selector, textMatches) {
-    const directMatch = safeQuerySelector(selector);
-    if (directMatch && isVisible(directMatch)) return directMatch;
-
     const labels = textMatches.map((text) => text.toLowerCase());
-    const candidates = Array.from(
+    const direct = Array.from(document.querySelectorAll(selector));
+    const candidates = Array.from(new Set([
+      ...direct,
+      ...Array.from(
       document.querySelectorAll(
         'button, input[type="submit"], input[type="button"], a[role="button"], .button, .btn',
       ),
-    );
+      ),
+    ]));
+    const fillable = queryFillableElements();
+    const lastControl = fillable[fillable.length - 1] || null;
 
-    return (
-      candidates.find((el) => {
-        if (!isVisible(el)) return false;
-        const label = getElementLabel(el);
-        return labels.some((text) => label.includes(text));
-      }) || null
-    );
+    return candidates
+      .filter((element) => {
+        if (!isVisible(element) || element.disabled || element.getAttribute("aria-disabled") === "true") {
+          return false;
+        }
+        const label = getElementLabel(element);
+        return direct.includes(element) || labels.some((text) => label.includes(text));
+      })
+      .map((element, index) => {
+        const label = getElementLabel(element).replace(/\s+/g, " ").trim();
+        let score = direct.includes(element) ? 20 : 0;
+        if (labels.some((text) => label.includes(text))) score += 15;
+        // Prefer the action belonging to the latest visible form stage. This
+        // matters when an SPA keeps an earlier "Submit link" form mounted
+        // above a newly-rendered review/category stage.
+        if (/submit for review|skip.*submit|finish|complete|publish|send for review|final/i.test(label)) score += 80;
+        if (/submit\s+(?:the\s+)?(?:link|url)|next|continue|proceed/i.test(label)) score -= 35;
+        if (lastControl) {
+          const relation = lastControl.compareDocumentPosition(element);
+          if (relation & Node.DOCUMENT_POSITION_FOLLOWING) score += 30;
+          if (relation & Node.DOCUMENT_POSITION_PRECEDING) score -= 20;
+        }
+        const form = element.closest("form");
+        if (form) score += Math.min(25, queryFillableElements(form).length * 5);
+        return { element, score, index };
+      })
+      .sort((a, b) => b.score - a.score || b.index - a.index)[0]?.element || null;
   }
 
   function findSafeAdvanceButton() {

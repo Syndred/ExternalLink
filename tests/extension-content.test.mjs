@@ -643,6 +643,11 @@ assert.match(
   /Multi-step pages sometimes render the next-step taxonomy controls[\s\S]*document\.querySelectorAll\("select"\)[\s\S]*categor\|industry\|sector\|niche\|vertical\|topic/,
   "generic filling should include taxonomy selects mounted outside the initial URL form",
 );
+assert.match(
+  content,
+  /function\s+findSubmitButton[\s\S]*Submit link[\s\S]*compareDocumentPosition[\s\S]*DOCUMENT_POSITION_FOLLOWING/,
+  "submit selection should prefer the action belonging to the latest visible multi-step stage",
+);
 assert.match(queue, /pending_moderation/, "publication status should include pending moderation");
 assert.match(queue, /classifyStatusFromReason/, "queue should classify failure reasons");
 assert.match(queue, /DEAD_END_STATUSES/, "queue should define dead-end statuses including paid");

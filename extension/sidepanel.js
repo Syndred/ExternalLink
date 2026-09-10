@@ -149,6 +149,7 @@
         "cfgName",
         "cfgCommentTemplate",
         "cfgFillOnly",
+        "unattendedPreferences",
         "activeBatchRun",
         "selectedSiteIds",
         "urlList",
@@ -160,6 +161,11 @@
         selectedSiteIds = (items.selectedSiteIds || []).filter((id) => siteProfiles[id]);
         if (!selectedSiteIds.length && activeSiteId) selectedSiteIds = [activeSiteId];
         const activeRun = items.activeBatchRun;
+        const unattendedPrefs = items.unattendedPreferences || {};
+        if ($("cfgUnattended")) $("cfgUnattended").checked = unattendedPrefs.enabled === true;
+        if ($("cfgUnattendedHours")) $("cfgUnattendedHours").value = unattendedPrefs.hours || 8;
+        if ($("cfgUnattendedTasks")) $("cfgUnattendedTasks").value = unattendedPrefs.tasks || 100;
+        if ($("unattendedOptions")) $("unattendedOptions").hidden = unattendedPrefs.enabled !== true;
         if (
           activeRun?.tasks?.length &&
           ["running", "waiting_manual", "paused", "stopped"].includes(activeRun.status)
@@ -2036,6 +2042,44 @@
     }
   });
 
+  for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks"]) {
+    $(id)?.addEventListener("change", () => {
+      const enabled = $("cfgUnattended")?.checked === true;
+      $("unattendedOptions").hidden = !enabled;
+      chrome.storage.local.set({ unattendedPreferences: {
+        enabled,
+        hours: Math.max(1, Math.min(12, Number($("cfgUnattendedHours").value) || 8)),
+        tasks: Math.max(1, Math.min(500, Number($("cfgUnattendedTasks").value) || 100)),
+      } });
+    });
+  }
+
+  async function refreshUnattendedSummary() {
+    const element = $("unattendedRunSummary");
+    if (!element) return;
+    const { activeBatchRun: batch } = await chrome.storage.local.get("activeBatchRun");
+    element.hidden = batch?.config?.unattended !== true;
+    if (element.hidden) return;
+    const report = self.ExtLinkBatchReport.build(batch);
+    const counts = report.summary;
+    element.textContent = `本轮：取得回执 ${counts.success} · 待人工 ${counts.manual} · 失败 ${counts.failed} · 跳过 ${counts.skipped} · 剩余 ${counts.remaining}`;
+  }
+
+  $("btnExportBatchReport")?.addEventListener("click", async () => {
+    try {
+      const { activeBatchRun } = await chrome.storage.local.get("activeBatchRun");
+      const report = self.ExtLinkBatchReport.build(activeBatchRun);
+      const blob = new Blob([self.ExtLinkBatchReport.markdown(report)], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `externallink-${report.runId}-本轮报告.md`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast("已导出本轮报告");
+    } catch (err) { showToast(`报告导出失败：${err.message}`, true); }
+  });
+
   $("btnExportAutomationRun")?.addEventListener("click", async () => {
     try {
       const stored = await chrome.storage.local.get("automationRunLedger");
@@ -2191,6 +2235,7 @@
       updateStats();
       renderTasks();
       renderManualTasks();
+      refreshUnattendedSummary().catch(() => {});
     } catch {
       /* ignore */
     }
@@ -2214,6 +2259,9 @@
           concurrency: 1,
           pingIndex: true,
           fillOnly: $("cfgFillOnly")?.checked || false,
+          unattended: $("cfgUnattended")?.checked === true,
+          unattendedMaxHours: Math.max(1, Math.min(12, Number($("cfgUnattendedHours")?.value) || 8)),
+          unattendedMaxTasks: Math.max(1, Math.min(500, Number($("cfgUnattendedTasks")?.value) || 100)),
         },
       });
       if (!result?.ok) throw new Error(result?.error || "启动失败");
@@ -2299,9 +2347,17 @@
           : productHuntReady
             ? "确认创建 Product Hunt 草稿"
             : "继续处理"
-        : "页签已关闭";
-      resume.disabled = !task.tabId;
+        : "打开待办页面";
       resume.addEventListener("click", async () => {
+        if (!task.tabId) {
+          try {
+            const url = new URL(task.url);
+            if (!["https:", "http:"].includes(url.protocol)) throw new Error("无法打开此站点地址");
+            await chrome.tabs.create({ url: url.href, active: true });
+            showToast("已打开待办页面，请核查站点状态后处理");
+          } catch (err) { showToast(err.message, true); }
+          return;
+        }
         if (task.tabId) await chrome.tabs.update(task.tabId, { active: true }).catch(() => {});
         if (batchStatus === "stopped") return;
         await chrome.runtime.sendMessage({

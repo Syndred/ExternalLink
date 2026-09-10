@@ -187,6 +187,18 @@
           <input type="checkbox" id="cfgFillOnly" />
           仅填表（不自动提交）
         </label>
+        <label class="check-row">
+          <input type="checkbox" id="cfgUnattended" />
+          无人值守
+        </label>
+        <div id="unattendedOptions" hidden>
+          <div class="unattended-limits">
+            <label>最长运行（小时）<input id="cfgUnattendedHours" type="number" min="1" max="12" value="8" /></label>
+            <label>最多项目组合<input id="cfgUnattendedTasks" type="number" min="1" max="500" value="100" /></label>
+          </div>
+          <p class="card-desc">遇到人工环节继续下一站，最多保留 2 个待办页签。保持电脑唤醒、Chrome 开启。</p>
+        </div>
+        <p class="card-desc" id="unattendedRunSummary" hidden role="status"></p>
         <div class="stats">
           <div class="stat"><b id="statQueue">0</b><span>排队</span></div>
           <div class="stat ok"><b id="statDone">0</b><span>完成</span></div>
@@ -207,6 +219,7 @@
         </div>
         <div>
           <button type="button" class="btn-link" id="btnExportAutomationRun">导出执行记录</button>
+          <button type="button" class="btn-link" id="btnExportBatchReport">导出本轮报告</button>
           <button type="button" class="btn-link" id="btnCopyBatchLog">复制日志</button>
         </div>
       </div>
@@ -228,6 +241,7 @@
     <script src="lib/queue.js"></script>
     <script src="lib/playbooks.js"></script>
     <script src="lib/batch-controls.js"></script>
+    <script src="lib/batch-report.js"></script>
     <script src="lib/url-library.js"></script>
     <script src="sidepanel.js"></script>
   </body>

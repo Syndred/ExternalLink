@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import {
+  applyPatchOperations,
   artifactObjectKey,
   migrationConflictKeys,
   mediaObjectKey,
@@ -31,7 +32,7 @@ function requestOrigin(request, env) {
 function corsHeaders(request, env) {
   const origin = requestOrigin(request, env);
   const headers = {
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Asset-Name, X-Asset-Sha256, X-Profile-Id, X-Media-Kind, X-Media-Index, X-Run-Id, X-Task-Id, X-Artifact-Kind",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -653,6 +654,54 @@ async function router(request, env) {
   }
 
   const stateMatch = path.match(/^\/v1\/state\/([a-zA-Z0-9_-]+)$/);
+  if (request.method === "PATCH" && stateMatch) {
+    const key = stateMatch[1];
+    if (!STATE_DOCUMENT_KEYS.includes(key)) return json({ ok: false, error: "不支持的状态文档" }, { status: 404 });
+    const input = await requestJson(request);
+    await ensureWorkspace(sql, workspaceId);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const currentRows = await sql`
+        select data, revision from externallink_workspace_documents
+        where workspace_id = ${workspaceId} and document_key = ${key}
+      `;
+      const current = currentRows[0] || null;
+      const expectedRevision = Number(current?.revision || 0);
+      const nextData = applyPatchOperations(current?.data, input.operations);
+      const docs = normalizeDocuments({ [key]: nextData });
+      const rows = await sql`
+        insert into externallink_workspace_documents (workspace_id, document_key, data)
+        values (${workspaceId}, ${key}, ${JSON.stringify(docs[key])}::jsonb)
+        on conflict (workspace_id, document_key) do update
+          set data = excluded.data, revision = externallink_workspace_documents.revision + 1, updated_at = now()
+          where externallink_workspace_documents.revision = ${expectedRevision}
+        returning revision, updated_at
+      `;
+      if (!rows[0]) continue;
+      if (key === "submissionTimeline") {
+        const auditRows = timelineAuditRows(current?.data || {}, docs[key]).map((audit) => ({
+          event_id: audit.eventId,
+          operation: audit.operation,
+          event: audit.event,
+        }));
+        if (auditRows.length) {
+          await sql`
+            insert into externallink_timeline_revisions (workspace_id, event_id, operation, event)
+            select ${workspaceId}, incoming.event_id, incoming.operation, incoming.event
+            from jsonb_to_recordset(${JSON.stringify(auditRows)}::jsonb)
+              as incoming(event_id text, operation text, event jsonb)
+          `;
+        }
+      }
+      return json({
+        ok: true,
+        documentKey: key,
+        revision: Number(rows[0].revision || 1),
+        updatedAt: rows[0].updated_at || "",
+        data: docs[key],
+      });
+    }
+    return json({ ok: false, error: "云端数据正在频繁更新，请稍后重试" }, { status: 409 });
+  }
   if (request.method === "PUT" && stateMatch) {
     const key = stateMatch[1];
     if (!STATE_DOCUMENT_KEYS.includes(key)) return json({ ok: false, error: "不支持的状态文档" }, { status: 404 });

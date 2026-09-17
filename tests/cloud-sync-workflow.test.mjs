@@ -52,6 +52,21 @@ const restored = C.documentsToState(documents);
 assert.deepEqual(JSON.parse(JSON.stringify(restored.submissionRecords)), state.submissionRecords);
 assert.deepEqual(JSON.parse(JSON.stringify(restored.siteAnnotations)), state.siteAnnotations);
 
+assert.equal(C.supportsPatch("siteProfiles"), true);
+assert.equal(C.supportsPatch("activeBatchRun"), false, "active batches still require lease-aware writes");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(C.diffPatchOperations(
+    { A: { name: "Old", url: "https://a.example" }, B: { name: "Keep" } },
+    { A: { name: "New", url: "https://a.example" }, C: { name: "Added" } },
+  ))),
+  [
+    { op: "set", path: ["A", "name"], value: "New" },
+    { op: "delete", path: ["B"] },
+    { op: "set", path: ["C"], value: { name: "Added" } },
+  ],
+  "cloud-first writes should send only changed paths instead of a full document",
+);
+
 const changedTimeline = structuredClone(state.submissionTimeline);
 changedTimeline["directory.example::RainbowPetAI"][0].note = "已审核通过";
 changedTimeline["directory.example::RainbowPetAI"].push({

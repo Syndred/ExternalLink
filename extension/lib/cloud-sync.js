@@ -30,10 +30,53 @@
     "cfgCommentTemplate",
   ]);
   const STATE_DOCUMENT_KEY_SET = new Set(STATE_DOCUMENT_KEYS);
+  const PATCH_DOCUMENT_KEYS = Object.freeze([
+    "siteProfiles",
+    "submissionRecords",
+    "submissionTimeline",
+    "siteAnnotations",
+    "targetFilters",
+    "domainMetricsCache",
+    "linkMonitorResults",
+    "linkMonitorSchedule",
+    "autoSubmitStandardWpComments",
+    "autoSubmitDirectoryListings",
+    "cfgEmail",
+    "cfgName",
+    "cfgCommentTemplate",
+  ]);
+  const PATCH_DOCUMENT_KEY_SET = new Set(PATCH_DOCUMENT_KEYS);
 
   function clone(value) {
     if (value === undefined) return undefined;
     return JSON.parse(JSON.stringify(value));
+  }
+
+  function isPlainObject(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function valuesEqual(left, right) {
+    return JSON.stringify(left) === JSON.stringify(right);
+  }
+
+  function diffPatchOperations(previous, next, path = []) {
+    if (valuesEqual(previous, next)) return [];
+    if (isPlainObject(previous) && isPlainObject(next)) {
+      const operations = [];
+      const keys = new Set([...Object.keys(previous), ...Object.keys(next)]);
+      for (const key of keys) {
+        if (!Object.hasOwn(next, key)) operations.push({ op: "delete", path: [...path, key] });
+        else if (!Object.hasOwn(previous, key)) operations.push({ op: "set", path: [...path, key], value: clone(next[key]) });
+        else operations.push(...diffPatchOperations(previous[key], next[key], [...path, key]));
+      }
+      return operations;
+    }
+    return [{ op: "set", path, value: clone(next) }];
+  }
+
+  function supportsPatch(key) {
+    return PATCH_DOCUMENT_KEY_SET.has(key);
   }
 
   function normalizeEndpoint(value) {
@@ -150,12 +193,15 @@
     CONFIG_KEY,
     DEFAULT_WORKSPACE_ID,
     STATE_DOCUMENT_KEYS,
+    PATCH_DOCUMENT_KEYS,
     normalizeConfig,
     normalizeEndpoint,
     normalizeWorkspaceId,
     stateToDocuments,
     documentsToState,
     stateKeysFromChanges,
+    diffPatchOperations,
+    supportsPatch,
     diffTimelineEvents,
     isCloudMediaRef,
     cloudMediaAssetId,

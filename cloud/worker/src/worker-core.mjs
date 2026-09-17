@@ -25,6 +25,9 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
 
 const STATE_DOCUMENT_KEY_SET = new Set(STATE_DOCUMENT_KEYS);
 const MAX_DOCUMENT_BYTES = 4 * 1024 * 1024;
+const MAX_PATCH_OPERATIONS = 5000;
+const MAX_PATCH_PATH_DEPTH = 24;
+const FORBIDDEN_PATCH_SEGMENTS = new Set(["__proto__", "prototype", "constructor"]);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -32,6 +35,58 @@ function clone(value) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizePatchPath(raw) {
+  if (!Array.isArray(raw) || raw.length > MAX_PATCH_PATH_DEPTH) {
+    throw new Error("invalid patch path");
+  }
+  return raw.map((segment) => {
+    const value = String(segment || "");
+    if (!value || value.length > 200 || FORBIDDEN_PATCH_SEGMENTS.has(value)) {
+      throw new Error("invalid patch path segment");
+    }
+    return value;
+  });
+}
+
+export function normalizePatchOperations(raw) {
+  if (!Array.isArray(raw) || !raw.length || raw.length > MAX_PATCH_OPERATIONS) {
+    throw new Error("patch operations must be a non-empty bounded array");
+  }
+  return raw.map((entry) => {
+    if (!isPlainObject(entry) || !["set", "delete"].includes(entry.op)) {
+      throw new Error("unsupported patch operation");
+    }
+    const path = normalizePatchPath(entry.path);
+    if (!path.length && entry.op === "delete") throw new Error("cannot delete the document root");
+    if (entry.op === "delete") return { op: "delete", path };
+    if (!Object.hasOwn(entry, "value") || entry.value === undefined) {
+      throw new Error("set patch operation requires a value");
+    }
+    return { op: "set", path, value: clone(entry.value) };
+  });
+}
+
+export function applyPatchOperations(document, rawOperations) {
+  const operations = normalizePatchOperations(rawOperations);
+  let result = document === undefined ? {} : clone(document);
+  for (const operation of operations) {
+    if (!operation.path.length) {
+      result = clone(operation.value);
+      continue;
+    }
+    if (!isPlainObject(result)) result = {};
+    let target = result;
+    for (const segment of operation.path.slice(0, -1)) {
+      if (!isPlainObject(target[segment])) target[segment] = {};
+      target = target[segment];
+    }
+    const leaf = operation.path.at(-1);
+    if (operation.op === "delete") delete target[leaf];
+    else target[leaf] = clone(operation.value);
+  }
+  return result;
 }
 
 export function jsonEquivalent(left, right) {

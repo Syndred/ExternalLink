@@ -334,6 +334,7 @@ const settingsSource = readFileSync("extension/settings.js", "utf8");
       },
       adoptPulledSiteProfiles() {},
       setCloudStatus: (message, tone) => statuses.push({ message, tone }),
+      queueReloadNotice: (message, tone, panel) => events.push(`notice:${tone}:${panel}:${message}`),
       confirm: () => {
         events.push("confirm");
         return confirmResult;
@@ -389,7 +390,8 @@ const settingsSource = readFileSync("extension/settings.js", "utf8");
     confirmResult: true,
   });
   await resolved.button.listener();
-  assert.deepEqual(resolved.events, ["pull", "backup", "confirm", "force"]);
+  assert.deepEqual(resolved.events.slice(0, 4), ["pull", "backup", "confirm", "force"]);
+  assert.match(resolved.events[4], /^notice:success:library:云端回读成功/);
   assert.equal(resolved.messages.length, 2);
   assert.equal(resolved.messages[1].resolveConflicts, true);
   assert.equal(resolved.reloads, 1);

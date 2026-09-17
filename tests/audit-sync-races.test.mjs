@@ -62,6 +62,7 @@ function extractFunction(source, name) {
 const source = [
   "const CLOUD_SYNC_PENDING_STORAGE_KEY = 'cloudSyncPendingKeys';",
   "const CLOUD_SYNC_CONFLICT_STORAGE_KEY = 'cloudSyncConflictKeys';",
+  "const CLOUD_SYNC_PATCH_STORAGE_KEY = 'cloudSyncPendingPatches';",
   "const CLOUD_SYNC_RETRY_DELAYS_MS = [1];",
   "const CLOUD_SYNC_DEBOUNCE_MS = 1;",
   extractFunction(background, "cloudSyncQueueSnapshot"),
@@ -99,7 +100,7 @@ async function waitForCall(calls) {
   assert.ok(calls.length, "cloud request did not start");
 }
 
-function createHarness({ initial = {}, cloudRequest, config } = {}) {
+function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = {}) {
   const storageData = clone(initial) || {};
   const writes = [];
   const context = {
@@ -121,10 +122,12 @@ function createHarness({ initial = {}, cloudRequest, config } = {}) {
       ExtLinkCloudSync: {
         STATE_DOCUMENT_KEYS: ["submissionRecords", "submissionTimeline"],
         documentsToState: (documents) => clone(documents || {}),
+        supportsPatch: (key) => patchKeys.includes(key),
       },
     },
     cloudSyncPendingKeys: new Set(initial.cloudSyncPendingKeys || []),
     cloudSyncConflictKeys: new Set(initial.cloudSyncConflictKeys || []),
+    cloudSyncPendingPatches: new Map(Object.entries(initial.cloudSyncPendingPatches || {})),
     cloudSyncMutationVersions: new Map(),
     cloudSyncIgnoredValues: new Map(),
     cloudSyncFlushPromise: null,
@@ -156,6 +159,43 @@ function createHarness({ initial = {}, cloudRequest, config } = {}) {
   vm.createContext(context);
   vm.runInContext(source, context);
   return { context, storageData, writes };
+}
+
+// Cloud-first patch writes merge the changed path on the server and refresh
+// the local cache from the authoritative response without a client revision.
+{
+  const calls = [];
+  const harness = createHarness({
+    patchKeys: ["submissionRecords"],
+    initial: {
+      submissionRecords: { local: { status: "success" } },
+      cloudSyncPendingKeys: ["submissionRecords"],
+      cloudSyncPendingPatches: {
+        submissionRecords: [{ op: "set", path: ["local"], value: { status: "success" } }],
+      },
+    },
+    cloudRequest: async (path, options) => {
+      calls.push({ path, options: clone(options) });
+      return {
+        revision: 5,
+        data: {
+          remote: { status: "success" },
+          local: { status: "success" },
+        },
+      };
+    },
+  });
+  await harness.context.pushCloudState();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].options.method, "PATCH");
+  assert.equal(Object.hasOwn(calls[0].options.body, "revision"), false);
+  assert.deepEqual(harness.storageData.submissionRecords, {
+    remote: { status: "success" },
+    local: { status: "success" },
+  });
+  assert.equal(harness.context.cloudSyncPendingKeys.has("submissionRecords"), false);
+  assert.equal(harness.context.cloudSyncPendingPatches.has("submissionRecords"), false);
+  assert.deepEqual(harness.storageData.cloudSyncPendingPatches, {});
 }
 
 // A local edit during an in-flight PUT must leave a durable pending marker.

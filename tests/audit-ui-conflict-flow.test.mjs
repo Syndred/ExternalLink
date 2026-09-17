@@ -18,6 +18,7 @@ async function run({ consent = true, backupFails = false, editDuringBackup = fal
     hasUnsavedSettingsEdits: () => dirty,
     hasUnsavedSiteEdits: () => dirty,
     setCloudStatus: () => {},
+    queueReloadNotice: () => {},
     confirm: () => { trace.push('confirm'); return consent; },
     downloadSubmissionBackup: async () => {
       trace.push('backup');

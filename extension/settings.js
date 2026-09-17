@@ -33,12 +33,16 @@
     "sheetTableData",
   ]);
   const LIBRARY_REFRESH_DEBOUNCE_MS = 80;
+  const SETTINGS_PANEL_SESSION_KEY = "externallink.settings.activePanel";
+  const SETTINGS_NOTICE_SESSION_KEY = "externallink.settings.reloadNotice";
+  const SETTINGS_PANELS = new Set(["sites", "library", "config"]);
   let libraryLoadRequestId = 0;
   let libraryStorageRevision = 0;
   let libraryRefreshTimer = null;
   let libraryRefreshPending = false;
   let libraryInitialSyncPending = true;
   let libraryStorageListenerInstalled = false;
+  let settingsToastTimer = null;
   const TIMELINE_TYPES = [
     ["submitted", "已提交"],
     ["pending_moderation", "待审核"],
@@ -109,6 +113,61 @@
     el.textContent = message;
   }
 
+  function sessionGet(key) {
+    try {
+      return sessionStorage.getItem(key) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function sessionSet(key, value) {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // The settings page still works when session storage is unavailable.
+    }
+  }
+
+  function sessionTake(key) {
+    const value = sessionGet(key);
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // Ignore unavailable session storage.
+    }
+    return value;
+  }
+
+  function showSettingsToast(message, tone = "success") {
+    const toast = $("settingsToast");
+    if (!toast || !message) return;
+    if (settingsToastTimer) clearTimeout(settingsToastTimer);
+    toast.className = `settings-toast${tone === "warning" ? " warning" : ""}`;
+    toast.textContent = message;
+    toast.hidden = false;
+    settingsToastTimer = setTimeout(() => {
+      toast.hidden = true;
+      settingsToastTimer = null;
+    }, 8000);
+  }
+
+  function queueReloadNotice(message, tone = "success", panel = "library") {
+    sessionSet(SETTINGS_NOTICE_SESSION_KEY, JSON.stringify({ message, tone, panel }));
+    if (SETTINGS_PANELS.has(panel)) sessionSet(SETTINGS_PANEL_SESSION_KEY, panel);
+  }
+
+  function takeReloadNotice() {
+    const raw = sessionTake(SETTINGS_NOTICE_SESSION_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
   function cloudConfigFromForm() {
     return {
       endpoint: $("cloudWorkerEndpoint")?.value || "",
@@ -147,7 +206,8 @@
     return result;
   }
 
-  function setActivePanel(name) {
+  function setActivePanel(name, options = {}) {
+    if (!SETTINGS_PANELS.has(name)) return;
     document.body.dataset.panel = name;
     document.querySelectorAll(".tab").forEach((tab) => {
       const active = tab.dataset.panel === name;
@@ -157,11 +217,19 @@
     document.querySelectorAll(".panel").forEach((panel) => {
       panel.classList.toggle("active", panel.id === `panel-${name}`);
     });
+    if (options.persist !== false) sessionSet(SETTINGS_PANEL_SESSION_KEY, name);
   }
 
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => setActivePanel(tab.dataset.panel));
   });
+
+  const startupReloadNotice = takeReloadNotice();
+  const startupSessionPanel = startupReloadNotice?.panel || sessionGet(SETTINGS_PANEL_SESSION_KEY);
+  if (SETTINGS_PANELS.has(startupSessionPanel)) setActivePanel(startupSessionPanel, { persist: false });
+  if (startupReloadNotice?.message) {
+    showSettingsToast(startupReloadNotice.message, startupReloadNotice.tone);
+  }
 
   function save(obj) {
     chrome.storage.local.set(obj);
@@ -1637,7 +1705,9 @@
         btn.disabled = false;
         return;
       }
-      setCloudStatus(`已回读 ${result.documentCount || 0} 类数据。`, "success");
+      const successMessage = `云端回读成功：已更新 ${result.documentCount || 0} 类数据。`;
+      setCloudStatus(successMessage, "success");
+      queueReloadNotice(successMessage, "success", "library");
       location.reload();
     } catch (err) {
       setCloudStatus(err.message, "warning");
@@ -1667,6 +1737,13 @@
       const result = await chrome.runtime.sendMessage({ action: "cloudSyncPush" });
       if (!result?.ok) throw new Error(result?.error || "云端保存失败");
       await loadCloudSyncStatus();
+      const savedCount = Array.isArray(result.saved) ? result.saved.length : 0;
+      const message = savedCount
+        ? `云端保存成功：已保存 ${savedCount} 类修改。`
+        : "云端已是最新，没有待保存修改。";
+      setCloudStatus(message, "success");
+      showSettingsToast(message, "success");
+      setActivePanel("library");
     } catch (err) {
       setCloudStatus(err.message, "warning");
     } finally {
@@ -1982,9 +2059,11 @@
     ],
     (items) => {
       siteProfiles = items.siteProfiles || {};
-      if (["sites", "library", "config"].includes(items.settingsActivePanel)) {
+      if (SETTINGS_PANELS.has(items.settingsActivePanel)) {
         setActivePanel(items.settingsActivePanel);
         chrome.storage.local.remove("settingsActivePanel");
+      } else if (SETTINGS_PANELS.has(startupSessionPanel)) {
+        setActivePanel(startupSessionPanel, { persist: false });
       }
       activeSiteId = items.activeSiteId || P.orderedProfileIds(siteProfiles)[0] || "";
       renderSiteSelector();

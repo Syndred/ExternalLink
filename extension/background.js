@@ -71,6 +71,7 @@ const AUTOMATION_OUTBOX_ALARM = "externallink-automation-outbox";
 const AUTOMATION_OUTBOX_LIMIT = 3000;
 const CLOUD_SYNC_PENDING_STORAGE_KEY = "cloudSyncPendingKeys";
 const CLOUD_SYNC_CONFLICT_STORAGE_KEY = "cloudSyncConflictKeys";
+const CLOUD_SYNC_PATCH_STORAGE_KEY = "cloudSyncPendingPatches";
 const VISION_FALLBACK_AFTER_FAILURES = 1;
 const UNATTENDED_WATCHDOG_ALARM = "externallink-unattended-watchdog";
 const CLOUD_REQUEST_TIMEOUT_MS = 30000;
@@ -93,6 +94,7 @@ let cloudSyncTimer = null;
 let cloudSyncFlushPromise = null;
 const cloudSyncPendingKeys = new Set();
 const cloudSyncConflictKeys = new Set();
+const cloudSyncPendingPatches = new Map();
 const cloudSyncMutationVersions = new Map();
 let cloudSyncPendingPersistence = Promise.resolve();
 let cloudPullPromise = null;
@@ -137,6 +139,14 @@ let initializationPromise = restoreActiveBatchRun()
   .then(() => scheduleUnattendedWatchdog().catch((err) => {
     log(`无人值守 watchdog 初始化失败: ${err.message}`, "warn");
   }));
+
+initializationPromise.then(() => {
+  pullCloudState().then((result) => {
+    if (result?.applied) log(`启动时已从云端更新 ${result.documentCount || 0} 类数据`, "ok");
+  }).catch((err) => {
+    log(`启动时云端回读跳过: ${err.message}`, "warn");
+  });
+});
 
 self.addEventListener?.("unhandledrejection", (event) => {
   const reason = event?.reason;
@@ -186,7 +196,19 @@ chrome.storage.onChanged.addListener((changes, area) => {
     return JSON.stringify(changes[key]?.newValue) !== pulledValue;
   });
   if (!keys.length) return;
-  for (const key of keys) cloudSyncPendingKeys.add(key);
+  for (const key of keys) {
+    cloudSyncPendingKeys.add(key);
+    const change = changes[key];
+    if (self.ExtLinkCloudSync.supportsPatch(key) && change?.newValue !== undefined) {
+      const operations = self.ExtLinkCloudSync.diffPatchOperations(change.oldValue, change.newValue);
+      if (operations.length) {
+        cloudSyncPendingPatches.set(key, [
+          ...(cloudSyncPendingPatches.get(key) || []),
+          ...operations,
+        ]);
+      }
+    }
+  }
   persistCloudSyncQueue().catch((err) => {
     log(`保存云端待同步队列失败: ${err.message}`, "warn");
   });
@@ -588,6 +610,9 @@ function cloudSyncQueueSnapshot() {
   return {
     [CLOUD_SYNC_PENDING_STORAGE_KEY]: [...cloudSyncPendingKeys],
     [CLOUD_SYNC_CONFLICT_STORAGE_KEY]: [...cloudSyncConflictKeys],
+    [CLOUD_SYNC_PATCH_STORAGE_KEY]: Object.fromEntries(
+      [...cloudSyncPendingPatches.entries()].filter(([, operations]) => operations.length),
+    ),
   };
 }
 
@@ -603,6 +628,7 @@ async function restoreCloudSyncQueue() {
   const stored = await chrome.storage.local.get([
     CLOUD_SYNC_PENDING_STORAGE_KEY,
     CLOUD_SYNC_CONFLICT_STORAGE_KEY,
+    CLOUD_SYNC_PATCH_STORAGE_KEY,
   ]);
   const validKeys = new Set(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
   for (const key of Array.isArray(stored[CLOUD_SYNC_PENDING_STORAGE_KEY]) ? stored[CLOUD_SYNC_PENDING_STORAGE_KEY] : []) {
@@ -610,6 +636,15 @@ async function restoreCloudSyncQueue() {
   }
   for (const key of Array.isArray(stored[CLOUD_SYNC_CONFLICT_STORAGE_KEY]) ? stored[CLOUD_SYNC_CONFLICT_STORAGE_KEY] : []) {
     if (validKeys.has(key)) cloudSyncConflictKeys.add(key);
+  }
+  const storedPatches = stored[CLOUD_SYNC_PATCH_STORAGE_KEY];
+  if (storedPatches && typeof storedPatches === "object" && !Array.isArray(storedPatches)) {
+    for (const [key, operations] of Object.entries(storedPatches)) {
+      if (validKeys.has(key) && self.ExtLinkCloudSync.supportsPatch(key) && Array.isArray(operations) && operations.length) {
+        cloudSyncPendingPatches.set(key, operations);
+        cloudSyncPendingKeys.add(key);
+      }
+    }
   }
   if (cloudSyncPendingKeys.size) scheduleCloudSync(0, false);
 }
@@ -627,6 +662,7 @@ function clearCloudSyncConflict(key) {
   const changed = cloudSyncConflictKeys.delete(key);
   if (!changed) return Promise.resolve();
   cloudSyncPendingKeys.delete(key);
+  cloudSyncPendingPatches.delete(key);
   return persistCloudSyncQueue();
 }
 
@@ -943,6 +979,7 @@ async function applyCloudSnapshot(snapshot, options = {}) {
   for (const key of resolvedConflicts) {
     cloudSyncConflictKeys.delete(key);
     cloudSyncPendingKeys.delete(key);
+    cloudSyncPendingPatches.delete(key);
   }
   if (resolvedConflicts.length) await persistCloudSyncQueue();
   return nextState;
@@ -1492,12 +1529,31 @@ async function flushCloudState(keys = null) {
       }
       const submittedValue = storage[key];
       const submittedVersion = cloudSyncMutationVersions.get(key) || 0;
+      const submittedPatches = self.ExtLinkCloudSync.supportsPatch(key)
+        ? [...(cloudSyncPendingPatches.get(key) || [])]
+        : [];
       await assertConfigStable();
       try {
-        const result = await cloudRequest(`/v1/state/${key}`, {
-          method: "PUT",
-          body: { data: submittedValue, revision: revisions[key] || 0 },
-        }, config);
+        let result;
+        if (submittedPatches.length) {
+          try {
+            result = await cloudRequest(`/v1/state/${key}`, {
+              method: "PATCH",
+              body: { operations: submittedPatches },
+            }, config);
+          } catch (patchError) {
+            if (![404, 405].includes(patchError.status)) throw patchError;
+            result = await cloudRequest(`/v1/state/${key}`, {
+              method: "PUT",
+              body: { data: submittedValue, revision: revisions[key] || 0 },
+            }, config);
+          }
+        } else {
+          result = await cloudRequest(`/v1/state/${key}`, {
+            method: "PUT",
+            body: { data: submittedValue, revision: revisions[key] || 0 },
+          }, config);
+        }
         await assertConfigStable();
         revisions[key] = result.revision;
         const latest = await chrome.storage.local.get(key);
@@ -1505,7 +1561,23 @@ async function flushCloudState(keys = null) {
         const changedDuringWrite =
           (cloudSyncMutationVersions.get(key) || 0) !== submittedVersion ||
           JSON.stringify(latest[key]) !== JSON.stringify(submittedValue);
-        if (changedDuringWrite) cloudSyncPendingKeys.add(key);
+        if (submittedPatches.length) {
+          const queued = cloudSyncPendingPatches.get(key) || [];
+          const submittedPrefixMatches = submittedPatches.every(
+            (operation, index) => JSON.stringify(queued[index]) === JSON.stringify(operation),
+          );
+          if (submittedPrefixMatches) {
+            const remaining = queued.slice(submittedPatches.length);
+            if (remaining.length) cloudSyncPendingPatches.set(key, remaining);
+            else cloudSyncPendingPatches.delete(key);
+          }
+        }
+        const hasQueuedPatches = (cloudSyncPendingPatches.get(key) || []).length > 0;
+        if (!changedDuringWrite && !hasQueuedPatches && result.data !== undefined && JSON.stringify(result.data) !== JSON.stringify(submittedValue)) {
+          cloudSyncIgnoredValues.set(key, JSON.stringify(result.data));
+          await chrome.storage.local.set({ [key]: result.data });
+        }
+        if (changedDuringWrite || hasQueuedPatches) cloudSyncPendingKeys.add(key);
         else {
           cloudSyncPendingKeys.delete(key);
           cloudSyncConflictKeys.delete(key);

@@ -166,6 +166,8 @@
   let sidepanelLibraryStats = {};
   let sidepanelLibraryLoaded = false;
   let sidepanelLibraryVisibleLimit = 60;
+  const sidepanelQuickOpenSelection = new Map();
+  let quickOpenBusy = false;
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -251,11 +253,50 @@
     const query = String($("sidepanelLibrarySearch")?.value || "").trim().toLowerCase();
     const category = $("sidepanelLibraryCategory")?.value || "";
     const access = $("sidepanelLibraryAccess")?.value || "";
+    const favorite = $("sidepanelLibraryFavorite")?.value || "";
+    const enabled = $("sidepanelLibraryEnabled")?.value || "";
     return sidepanelLibraryItems.filter((item) => {
       const haystack = [item.name, item.domain, item.url, item.category, item.language, ...(item.tags || [])]
         .filter(Boolean).join(" ").toLowerCase();
-      return (!query || haystack.includes(query)) && (!category || item.category === category) && (!access || item.accessModel === access);
+      const preferences = LibraryClassifier.libraryPreferences(item.annotation);
+      return (
+        (!query || haystack.includes(query)) &&
+        (!category || item.category === category) &&
+        (!access || item.accessModel === access) &&
+        (!favorite || (favorite === "favorite" ? preferences.favorite : !preferences.favorite)) &&
+        (!enabled || (enabled === "enabled" ? preferences.enabled : !preferences.enabled))
+      );
     });
+  }
+
+  function updateQuickOpenControls() {
+    const count = sidepanelQuickOpenSelection.size;
+    const countLabel = $("quickOpenSelectedCount");
+    if (countLabel) countLabel.textContent = `已选 ${count} 条`;
+    const button = $("btnQuickOpenBatch");
+    if (button) {
+      const batchSize = Math.min(20, Math.max(1, Number($("quickOpenBatchSize")?.value) || 5));
+      button.disabled = !count || quickOpenBusy;
+      button.textContent = quickOpenBusy ? "正在打开…" : `打开下一批（最多 ${Math.min(batchSize, count)} 条）`;
+    }
+    const selectButton = $("btnQuickOpenSelectFiltered");
+    if (selectButton) {
+      const filtered = sidepanelLibraryFilteredItems();
+      const allSelected = filtered.length > 0 && filtered.every((item) => sidepanelQuickOpenSelection.has(item.key));
+      selectButton.textContent = allSelected ? "取消当前筛选" : "选择当前筛选";
+    }
+  }
+
+  async function updateLibraryItemPreferences(item, changes) {
+    const result = await chrome.runtime.sendMessage({
+      action: "updateLibraryPreferences",
+      url: item.url,
+      ...changes,
+    });
+    if (!result?.ok) throw new Error(result?.error || "保存个人外链设置失败");
+    item.annotation = result.annotation || item.annotation;
+    item.library = result.library || LibraryClassifier.libraryPreferences(item.annotation);
+    renderSidepanelLibrary();
   }
 
   function updateLibraryCategoryStartButton() {
@@ -286,10 +327,21 @@
       list.append(empty);
     }
     for (const item of shown) {
+      const preferences = LibraryClassifier.libraryPreferences(item.annotation);
       const card = document.createElement("article");
-      card.className = "sidepanel-library-item";
+      card.className = `sidepanel-library-item${sidepanelQuickOpenSelection.has(item.key) ? " selected" : ""}`;
       const head = document.createElement("div");
       head.className = "sidepanel-library-head";
+      const select = document.createElement("input");
+      select.type = "checkbox";
+      select.checked = sidepanelQuickOpenSelection.has(item.key);
+      select.setAttribute("aria-label", `选择 ${item.name || item.domain || item.url} 用于 Quick Open`);
+      select.addEventListener("change", () => {
+        if (select.checked) sidepanelQuickOpenSelection.set(item.key, item.url);
+        else sidepanelQuickOpenSelection.delete(item.key);
+        card.classList.toggle("selected", select.checked);
+        updateQuickOpenControls();
+      });
       const titleWrap = document.createElement("div");
       titleWrap.className = "sidepanel-library-title";
       const title = document.createElement("strong");
@@ -303,7 +355,7 @@
       open.rel = "noreferrer";
       open.className = "sidepanel-library-open";
       open.textContent = "打开";
-      head.append(titleWrap, open);
+      head.append(select, titleWrap, open);
       const chips = document.createElement("div");
       chips.className = "sidepanel-library-chips";
       const values = [item.category, libraryAccessLabel(item.accessModel), item.language];
@@ -319,7 +371,56 @@
       const markers = Q.normalizeAnnotationStatuses(item.annotation);
       const progress = (item.profileStatuses || []).filter((profile) => profile.success || profile.latestEvent).length;
       status.textContent = markers.length ? markers.map((value) => SITE_STATUS_MAP[value]?.label || value).join(" · ") : progress ? `${progress} 个 Profile 已有记录` : "尚未提交";
-      card.append(head, chips, status);
+      const actions = document.createElement("div");
+      actions.className = "sidepanel-library-actions";
+      const favoriteButton = document.createElement("button");
+      favoriteButton.type = "button";
+      favoriteButton.className = `sidepanel-library-action${preferences.favorite ? " active" : ""}`;
+      favoriteButton.textContent = preferences.favorite ? "★ 已收藏" : "☆ 收藏";
+      favoriteButton.setAttribute("aria-pressed", String(preferences.favorite));
+      favoriteButton.addEventListener("click", () => {
+        updateLibraryItemPreferences(item, { favorite: !preferences.favorite })
+          .catch((error) => showToast(error.message, true));
+      });
+      const enabledButton = document.createElement("button");
+      enabledButton.type = "button";
+      enabledButton.className = `sidepanel-library-action${preferences.enabled ? "" : " disabled"}`;
+      enabledButton.textContent = preferences.enabled ? "已启用" : "已停用";
+      enabledButton.setAttribute("aria-pressed", String(preferences.enabled));
+      enabledButton.addEventListener("click", () => {
+        updateLibraryItemPreferences(item, { enabled: !preferences.enabled })
+          .catch((error) => showToast(error.message, true));
+      });
+      actions.append(favoriteButton, enabledButton);
+
+      const profileAssignment = document.createElement("details");
+      profileAssignment.className = "library-profile-assignment";
+      const profileSummary = document.createElement("summary");
+      profileSummary.textContent = preferences.profileIds.length
+        ? `指定 ${preferences.profileIds.length} 个 Profile`
+        : "全部 Profile 可用";
+      const profileOptions = document.createElement("div");
+      profileOptions.className = "library-profile-options";
+      for (const [profileId, profile] of Object.entries(siteProfiles)) {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = preferences.profileIds.includes(profileId);
+        checkbox.addEventListener("change", () => {
+          const next = new Set(preferences.profileIds);
+          if (checkbox.checked) next.add(profileId);
+          else next.delete(profileId);
+          updateLibraryItemPreferences(item, { profileIds: [...next] })
+            .catch((error) => showToast(error.message, true));
+        });
+        label.append(checkbox, document.createTextNode(profile?.name || profileId));
+        profileOptions.append(label);
+      }
+      const profileHint = document.createElement("p");
+      profileHint.className = "library-profile-hint";
+      profileHint.textContent = "未勾选时全部 Profile 可用；勾选后只进入指定 Profile 的队列。";
+      profileAssignment.append(profileSummary, profileOptions, profileHint);
+      card.append(head, chips, status, actions, profileAssignment);
       list.append(card);
     }
     const more = $("btnSidepanelLibraryMore");
@@ -327,6 +428,7 @@
       more.hidden = shown.length >= filtered.length;
       more.textContent = `加载更多（剩余 ${Math.max(0, filtered.length - shown.length)} 条）`;
     }
+    updateQuickOpenControls();
   }
 
   async function loadSidepanelLibrary() {
@@ -349,7 +451,13 @@
     renderSidepanelLibrary();
   }
 
-  for (const id of ["sidepanelLibrarySearch", "sidepanelLibraryCategory", "sidepanelLibraryAccess"]) {
+  for (const id of [
+    "sidepanelLibrarySearch",
+    "sidepanelLibraryCategory",
+    "sidepanelLibraryAccess",
+    "sidepanelLibraryFavorite",
+    "sidepanelLibraryEnabled",
+  ]) {
     $(id)?.addEventListener(id === "sidepanelLibrarySearch" ? "input" : "change", () => {
       sidepanelLibraryVisibleLimit = 60;
       updateLibraryCategoryStartButton();
@@ -359,6 +467,51 @@
   $("btnSidepanelLibraryMore")?.addEventListener("click", () => {
     sidepanelLibraryVisibleLimit += 60;
     renderSidepanelLibrary();
+  });
+  $("quickOpenBatchSize")?.addEventListener("input", updateQuickOpenControls);
+  $("btnQuickOpenSelectFiltered")?.addEventListener("click", () => {
+    const filtered = sidepanelLibraryFilteredItems();
+    const allSelected = filtered.length > 0 && filtered.every((item) => sidepanelQuickOpenSelection.has(item.key));
+    for (const item of filtered) {
+      if (allSelected) sidepanelQuickOpenSelection.delete(item.key);
+      else sidepanelQuickOpenSelection.set(item.key, item.url);
+    }
+    renderSidepanelLibrary();
+  });
+  $("btnQuickOpenBatch")?.addEventListener("click", async () => {
+    if (quickOpenBusy || !sidepanelQuickOpenSelection.size) return;
+    quickOpenBusy = true;
+    updateQuickOpenControls();
+    const status = $("quickOpenStatus");
+    if (status) status.textContent = "正在按间隔打开下一批…";
+    try {
+      const batchSize = Math.min(20, Math.max(1, Number($("quickOpenBatchSize")?.value) || 5));
+      const intervalMs = Math.min(5000, Math.max(100, Number($("quickOpenInterval")?.value) || 800));
+      const result = await chrome.runtime.sendMessage({
+        action: "quickOpenLibraryUrls",
+        urls: [...sidepanelQuickOpenSelection.values()],
+        batchSize,
+        intervalMs,
+      });
+      if (!result?.ok) throw new Error(result?.error || "批量打开失败");
+      const openedUrls = (result.opened || []).map((entry) => entry.url);
+      if ($("quickOpenRemoveOpened")?.checked) {
+        const openedKeys = new Set(openedUrls.map((url) => Q.normalizeDestinationKey(url)));
+        for (const [key, url] of sidepanelQuickOpenSelection.entries()) {
+          if (openedKeys.has(Q.normalizeDestinationKey(url))) sidepanelQuickOpenSelection.delete(key);
+        }
+      }
+      if (status) {
+        status.textContent = `已打开 ${openedUrls.length} 条${result.failed?.length ? `，失败 ${result.failed.length} 条` : ""}；未填写、未提交。`;
+      }
+      renderSidepanelLibrary();
+    } catch (error) {
+      if (status) status.textContent = `Quick Open 失败：${error.message}`;
+      showToast(error.message, true);
+    } finally {
+      quickOpenBusy = false;
+      updateQuickOpenControls();
+    }
   });
 
   // ─── Storage ───

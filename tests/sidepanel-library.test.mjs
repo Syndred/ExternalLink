@@ -6,6 +6,8 @@ const classifierSource = readFileSync(new URL("../extension/lib/library-classifi
 const sidepanelHtml = readFileSync(new URL("../extension/sidepanel.html", import.meta.url), "utf8");
 const sidepanelSource = readFileSync(new URL("../extension/sidepanel.js", import.meta.url), "utf8");
 const backgroundSource = readFileSync(new URL("../extension/background.js", import.meta.url), "utf8");
+const settingsHtml = readFileSync(new URL("../extension/settings.html", import.meta.url), "utf8");
+const settingsSource = readFileSync(new URL("../extension/settings.js", import.meta.url), "utf8");
 
 const context = vm.createContext({ self: {}, URL, JSON, Number, String, Array, Object, RegExp });
 vm.runInContext(classifierSource, context);
@@ -32,18 +34,43 @@ assert.deepEqual(
   ["directory", "ai-tools"],
 );
 assert.equal(classifier.normalizeAccessModel("freemium"), "freemium");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(classifier.libraryPreferences({
+    library: { favorite: true, enabled: false, profileIds: ["Video", "Video", "AISpeak"] },
+  }))),
+  { favorite: true, enabled: false, profileIds: ["Video", "AISpeak"], updatedAt: "" },
+);
+assert.equal(classifier.libraryEligibility({}, "Video").allowed, true);
+assert.equal(classifier.libraryEligibility({ library: { enabled: false } }, "Video").reason, "library_disabled");
+assert.equal(
+  classifier.libraryEligibility({ library: { profileIds: ["AISpeak"] } }, "Video").reason,
+  "profile_not_assigned",
+);
+assert.equal(classifier.libraryEligibility({ library: { profileIds: ["AISpeak"] } }, "AISpeak").allowed, true);
 
 assert.match(sidepanelHtml, /data-panel="library"[^>]*>外链</);
 assert.match(sidepanelHtml, /id="panel-library"/);
 assert.match(sidepanelHtml, /id="sidepanelLibraryCategory"/);
 assert.match(sidepanelHtml, /id="btnStartLibraryCategory"/);
+assert.match(sidepanelHtml, /id="sidepanelLibraryFavorite"/);
+assert.match(sidepanelHtml, /id="btnQuickOpenBatch"/);
 assert.match(sidepanelHtml, /lib\/library-classifier\.js/);
 assert.match(sidepanelSource, /action: "getLibraryManagerState"/);
+assert.match(sidepanelSource, /action: "updateLibraryPreferences"/);
+assert.match(sidepanelSource, /action: "quickOpenLibraryUrls"/);
 assert.match(sidepanelSource, /category,\s*config:/);
 assert.match(sidepanelSource, /loadSidepanelLibrary/);
 assert.match(backgroundSource, /ExtLinkLibraryClassifier\.describe/);
 assert.match(backgroundSource, /hasCanonicalLibrary\s*\? \[\.\.\.tableCandidates/);
 assert.match(backgroundSource, /category: requestedCategory/);
+assert.match(backgroundSource, /function updateLibraryPreferences/);
+assert.match(backgroundSource, /function quickOpenLibraryUrls/);
+assert.match(backgroundSource, /libraryEligibility\(annotation, task\.profileId\)/);
+assert.match(backgroundSource, /case "syncSubmifyLibrary"/);
+assert.match(backgroundSource, /api\/banklinks/);
+assert.match(settingsHtml, /id="btnSyncSubmifyLibrary"/);
+assert.match(settingsHtml, /id="submifySyncStatus"/);
+assert.match(settingsSource, /action: "syncSubmifyLibrary"/);
 
 vm.runInContext(extractFunction(backgroundSource, "scopeDestinationGroupsByLibraryCategory"), context);
 const scoped = context.scopeDestinationGroupsByLibraryCategory([

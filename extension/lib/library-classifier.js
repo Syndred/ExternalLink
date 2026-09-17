@@ -99,12 +99,41 @@
     };
   }
 
+  function normalizeProfileIds(value) {
+    if (!Array.isArray(value)) return [];
+    return [...new Set(value.map((item) => compact(item)).filter(Boolean))];
+  }
+
+  function libraryPreferences(annotation = {}) {
+    const library = annotation && typeof annotation.library === "object" && !Array.isArray(annotation.library)
+      ? annotation.library
+      : {};
+    return {
+      favorite: library.favorite === true,
+      enabled: library.enabled !== false,
+      profileIds: normalizeProfileIds(library.profileIds),
+      updatedAt: compact(library.updatedAt),
+    };
+  }
+
+  function libraryEligibility(annotation, profileId = "") {
+    const preferences = libraryPreferences(annotation);
+    if (!preferences.enabled) return { allowed: false, reason: "library_disabled", preferences };
+    if (preferences.profileIds.length && !preferences.profileIds.includes(compact(profileId))) {
+      return { allowed: false, reason: "profile_not_assigned", preferences };
+    }
+    return { allowed: true, reason: "", preferences };
+  }
+
   global.ExtLinkLibraryClassifier = {
     CATEGORY_ORDER,
     categoryFromText,
     describe,
     inferCategory,
+    libraryEligibility,
+    libraryPreferences,
     normalizeAccessModel,
+    normalizeProfileIds,
     normalizeTags,
   };
 })(typeof self !== "undefined" ? self : globalThis);

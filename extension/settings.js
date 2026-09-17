@@ -113,6 +113,13 @@
     el.textContent = message;
   }
 
+  function setSubmifySyncStatus(message, tone = "") {
+    const el = $("submifySyncStatus");
+    if (!el) return;
+    el.className = `sync-status${tone ? ` ${tone}` : ""}`;
+    el.textContent = message;
+  }
+
   function sessionGet(key) {
     try {
       return sessionStorage.getItem(key) || "";
@@ -1746,6 +1753,25 @@
       setActivePanel("library");
     } catch (err) {
       setCloudStatus(err.message, "warning");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("btnSyncSubmifyLibrary")?.addEventListener("click", async () => {
+    const btn = $("btnSyncSubmifyLibrary");
+    btn.disabled = true;
+    setSubmifySyncStatus("正在回读云端主数据并获取 Submify 最新外链…");
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "syncSubmifyLibrary" });
+      if (!result?.ok) throw new Error(result?.error || "Submify 外链库同步失败");
+      const message = result.message || `同步成功：新增 ${result.added || 0} 条，云端共 ${result.total || 0} 条。`;
+      setSubmifySyncStatus(`${message} 云端版本 ${result.revision || "—"}。`, "success");
+      showSettingsToast(message, "success");
+      await loadLibrary();
+    } catch (err) {
+      setSubmifySyncStatus(err.message, "warning");
+      showSettingsToast(err.message, "warning");
     } finally {
       btn.disabled = false;
     }

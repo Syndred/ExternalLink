@@ -13,6 +13,7 @@ importScripts(
   "lib/cloud-sync.js",
   "lib/url-library.js",
   "lib/library-classifier.js",
+  "lib/submify-import.js",
   "lib/opportunity-score.js",
   "lib/context-menu.js",
   "lib/automation-ledger.js",
@@ -98,6 +99,7 @@ const cloudSyncPendingPatches = new Map();
 const cloudSyncMutationVersions = new Map();
 let cloudSyncPendingPersistence = Promise.resolve();
 let cloudPullPromise = null;
+let submifySyncPromise = null;
 const runActiveBatchWrite = self.ExtLinkBatchControls.createSerialExecutor();
 const runSiteAnnotationWrite = self.ExtLinkBatchControls.createSerialExecutor();
 // Chrome storage writes are whole-value replacements. Keep every submission
@@ -375,6 +377,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message, items: [] }));
       return true;
+    case "updateLibraryPreferences":
+      updateLibraryPreferences(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "quickOpenLibraryUrls":
+      quickOpenLibraryUrls(msg)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message, opened: [] }));
+      return true;
     case "addSubmissionTimelineEvent":
       addSubmissionTimelineEvent(msg)
         .then(sendResponse)
@@ -432,6 +444,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     case "cloudSyncPush":
       pushCloudState()
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "syncSubmifyLibrary":
+      syncSubmifyLibrary()
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -4931,6 +4948,223 @@ async function removeFromSubmissionQueue(msg) {
   return markSubmissionSite({ url: msg.url, status: "deleted", note: msg.note || "" });
 }
 
+async function fetchSubmifyPublicLibrary() {
+  const pageSize = 50;
+  const firstUrl = `https://submify.app/api/banklinks?page=1&pageSize=${pageSize}`;
+  const readPage = async (url) => {
+    const response = await fetch(url, { method: "GET", cache: "no-store" });
+    if (!response.ok) throw new Error(`Submify 接口返回 HTTP ${response.status}`);
+    const payload = await response.json();
+    if (payload?.code !== 0 || !Array.isArray(payload?.data?.list)) {
+      throw new Error(payload?.message || "Submify 返回了无法识别的数据");
+    }
+    return payload.data;
+  };
+  const first = await readPage(firstUrl);
+  const advertisedTotal = Math.max(0, Number(first.pagination?.total) || first.list.length);
+  if (!advertisedTotal) throw new Error("Submify 当前没有返回可同步的外链");
+  if (advertisedTotal > 5000) throw new Error(`Submify 返回 ${advertisedTotal} 条，超过本次安全上限 5000 条`);
+  const pages = Math.max(1, Math.ceil(advertisedTotal / pageSize));
+  const items = [...first.list];
+  for (let page = 2; page <= pages; page += 1) {
+    const data = await readPage(`https://submify.app/api/banklinks?page=${page}&pageSize=${pageSize}`);
+    items.push(...data.list);
+  }
+  const unique = [];
+  const seen = new Set();
+  for (const item of items) {
+    const identity = String(item?.id || item?.link || "").trim();
+    if (!identity || seen.has(identity)) continue;
+    seen.add(identity);
+    unique.push(item);
+  }
+  if (unique.length < advertisedTotal) {
+    throw new Error(`Submify 声明 ${advertisedTotal} 条，但只读到 ${unique.length} 条唯一记录，已停止写入`);
+  }
+  return { items: unique.slice(0, advertisedTotal), advertisedTotal };
+}
+
+function applySubmifySafetyGates(annotations = {}, addedItems = [], importedAt = new Date().toISOString()) {
+  const next = { ...annotations };
+  let disabled = 0;
+  for (const added of addedItems) {
+    if (!added?.gate || !added?.entry?.link) continue;
+    const key = siteKeyForUrl(added.entry.link);
+    const domain = self.ExtLinkQueue.extractDomain(added.entry.link);
+    const previous = next[key] || next[domain] || {};
+    const previousLibrary = self.ExtLinkLibraryClassifier.libraryPreferences(previous);
+    const annotation = {
+      ...previous,
+      url: added.entry.link,
+      domain,
+      library: {
+        ...previousLibrary,
+        enabled: false,
+        updatedAt: importedAt,
+      },
+      importGate: {
+        source: "submify-public",
+        reason: added.gate,
+        createdAt: importedAt,
+      },
+      updatedAt: importedAt,
+    };
+    next[key] = annotation;
+    next[domain] = annotation;
+    disabled += 1;
+  }
+  return { annotations: next, disabled };
+}
+
+async function syncSubmifyLibrary() {
+  if (submifySyncPromise) return submifySyncPromise;
+  submifySyncPromise = (async () => {
+    const pulled = await pullCloudState();
+    if (!pulled?.ok || pulled.applied === false) {
+      throw new Error(pulled?.message || "云端主数据尚未成功回读，未执行 Submify 同步");
+    }
+    const source = await fetchSubmifyPublicLibrary();
+    const importedAt = new Date().toISOString();
+    const storage = await chrome.storage.local.get(["sheetTableData", "siteAnnotations"]);
+    const merged = self.ExtLinkSubmifyImport.mergeLibrary(
+      storage.sheetTableData || {},
+      source.items,
+      { normalizeKey: self.ExtLinkQueue.normalizeDestinationKey, importedAt },
+    );
+    const gated = applySubmifySafetyGates(storage.siteAnnotations || {}, merged.addedItems, importedAt);
+    await chrome.storage.local.set({
+      sheetTableData: merged.tableData,
+      siteAnnotations: gated.annotations,
+    });
+    const pushed = await flushCloudState(["sheetTableData", "siteAnnotations"]);
+    if (!pushed?.ok || !Array.isArray(pushed.saved) || !pushed.saved.includes("sheetTableData")) {
+      throw new Error("Submify 数据已保存在本机，但云端未确认保存，请点击“立即保存”后重试");
+    }
+    const snapshot = await cloudRequest("/v1/snapshot");
+    const cloudTable = snapshot?.documents?.sheetTableData || {};
+    const cloudEntries = Array.isArray(cloudTable.entries) ? cloudTable.entries : [];
+    const cloudSourceIds = new Set();
+    for (const entry of cloudEntries) {
+      const sourceId = String(entry?.sourceId || "").trim();
+      if (sourceId) cloudSourceIds.add(sourceId);
+      for (const ref of Array.isArray(entry?.sourceRefs) ? entry.sourceRefs : []) {
+        const normalized = String(ref || "").trim();
+        if (normalized) cloudSourceIds.add(normalized);
+      }
+    }
+    const missingSourceIds = source.items
+      .map((item) => String(item?.id || "").trim())
+      .filter((id) => id && !cloudSourceIds.has(id));
+    if (cloudEntries.length !== merged.tableData.entries.length || missingSourceIds.length) {
+      throw new Error(
+        `云端回读核验未通过：总数 ${cloudEntries.length}/${merged.tableData.entries.length}，缺少 ${missingSourceIds.length} 条 Submify 记录`,
+      );
+    }
+    return {
+      ok: true,
+      source: "submify-public",
+      sourceTotal: source.advertisedTotal,
+      total: cloudEntries.length,
+      added: merged.stats.added,
+      updated: merged.stats.updated,
+      safetyDisabled: gated.disabled,
+      revision: snapshot?.revisions?.sheetTableData || 0,
+      importedAt,
+      message: `Submify 最新库同步成功：来源 ${source.advertisedTotal} 条，新增 ${merged.stats.added} 条，云端现有 ${cloudEntries.length} 条。`,
+    };
+  })();
+  try {
+    return await submifySyncPromise;
+  } finally {
+    submifySyncPromise = null;
+  }
+}
+
+async function updateLibraryPreferences(msg = {}) {
+  const url = String(msg.url || "").trim();
+  if (!url) throw new Error("缺少外链 URL");
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("外链 URL 无效");
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("只支持 HTTP(S) 外链");
+
+  return runSiteAnnotationWrite(async () => {
+    const key = siteKeyForUrl(parsed.href);
+    const domain = self.ExtLinkQueue.extractDomain(parsed.href);
+    const storage = await chrome.storage.local.get(["siteAnnotations", "siteProfiles"]);
+    const annotations = storage.siteAnnotations || {};
+    const previous = annotations[key] || annotations[domain] || {};
+    const previousPreferences = self.ExtLinkLibraryClassifier.libraryPreferences(previous);
+    const validProfileIds = new Set(Object.keys(storage.siteProfiles || {}));
+    const requestedProfileIds = Array.isArray(msg.profileIds)
+      ? self.ExtLinkLibraryClassifier.normalizeProfileIds(msg.profileIds)
+      : previousPreferences.profileIds;
+    const invalidProfileIds = requestedProfileIds.filter((profileId) => !validProfileIds.has(profileId));
+    if (invalidProfileIds.length) throw new Error("包含不存在的 Profile，请刷新后重试");
+    const library = {
+      favorite: typeof msg.favorite === "boolean" ? msg.favorite : previousPreferences.favorite,
+      enabled: typeof msg.enabled === "boolean" ? msg.enabled : previousPreferences.enabled,
+      profileIds: requestedProfileIds,
+      updatedAt: new Date().toISOString(),
+    };
+    const annotation = {
+      ...previous,
+      url: parsed.href,
+      domain,
+      library,
+      updatedAt: library.updatedAt,
+    };
+    annotations[key] = annotation;
+    annotations[domain] = annotation;
+    await chrome.storage.local.set({ siteAnnotations: annotations });
+    return { ok: true, key, domain, annotation, library };
+  });
+}
+
+async function quickOpenLibraryUrls(msg = {}) {
+  const requested = Array.isArray(msg.urls) ? msg.urls : [];
+  const batchSize = Math.min(20, Math.max(1, Number(msg.batchSize) || 5));
+  const intervalMs = Math.min(5000, Math.max(100, Number(msg.intervalMs) || 800));
+  const library = await getLibraryManagerState({ refreshCloud: false });
+  const allowed = new Map((library.items || []).map((item) => [siteKeyForUrl(item.url), item.url]));
+  const selected = [];
+  const seen = new Set();
+  for (const raw of requested) {
+    let parsed;
+    try {
+      parsed = new URL(String(raw || "").trim());
+    } catch {
+      continue;
+    }
+    if (!["http:", "https:"].includes(parsed.protocol)) continue;
+    const key = siteKeyForUrl(parsed.href);
+    if (!key || seen.has(key) || !allowed.has(key)) continue;
+    seen.add(key);
+    selected.push(allowed.get(key));
+    if (selected.length >= batchSize) break;
+  }
+  if (!selected.length) throw new Error("没有可打开的有效外链");
+
+  const opened = [];
+  const failed = [];
+  for (let index = 0; index < selected.length; index += 1) {
+    const url = selected[index];
+    try {
+      const tab = await chrome.tabs.create({ url, active: false });
+      opened.push({ url, tabId: tab?.id || null });
+    } catch (error) {
+      failed.push({ url, error: error?.message || String(error || "打开失败") });
+    }
+    if (index < selected.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+  }
+  return { ok: true, opened, failed, requested: requested.length, intervalMs };
+}
+
 async function getLibraryManagerState(options = {}) {
   const prepared = options.refreshCloud === false || typeof prepareSubmissionLedgerCloudPull !== "function"
     ? null
@@ -5078,6 +5312,7 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       detail: entry.entry?.detail || "",
       metrics: quality.metrics,
     });
+    const library = self.ExtLinkLibraryClassifier.libraryPreferences(annotation);
     return {
       key,
       url: entry.url,
@@ -5090,6 +5325,7 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       monitorStatus,
       metrics: quality.metrics,
       classification,
+      library,
       name: classification.name,
       category: classification.category,
       language: classification.language,
@@ -5776,7 +6012,15 @@ async function loadPendingSubmissionTasks(options = {}) {
   const deletedKeys = storage.deletedSubmissionKeys || [];
   const filters = normalizeTargetFilters(storage.targetFilters);
   const flattened = self.ExtLinkQueue.flattenDestinationGroups(groups);
-  const gated = self.ExtLinkQueue.filterSubmissionTasks(flattened, {
+  const gateExclusions = [];
+  const libraryScoped = flattened.filter((task) => {
+    const annotation = annotations[task.key] || annotations[task.domain] || null;
+    const eligibility = self.ExtLinkLibraryClassifier.libraryEligibility(annotation, task.profileId);
+    if (eligibility.allowed) return true;
+    gateExclusions.push({ key: task.key, domain: task.domain, profileId: task.profileId, reason: eligibility.reason });
+    return false;
+  });
+  const gated = self.ExtLinkQueue.filterSubmissionTasks(libraryScoped, {
     deletedKeys,
     annotations,
     blacklist: filters.blacklistEnabled ? storage.domainBlacklist || [] : [],
@@ -5785,7 +6029,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     domainMetrics: storage.domainMetricsCache || {},
     collectExclusions: true,
   });
-  const gateExclusions = gated.gateExclusions || [];
+  gateExclusions.push(...(gated.gateExclusions || []));
   const filtered = gated.filter((task) => {
     if (!(filters.minOpportunityScore > 0)) return true;
     if (Number(task.quality?.score || 0) >= filters.minOpportunityScore) return true;

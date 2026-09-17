@@ -248,12 +248,38 @@
             <option value="unknown">待核验</option>
           </select>
         </div>
+        <div class="library-filter-row">
+          <select id="sidepanelLibraryFavorite" aria-label="收藏状态">
+            <option value="">全部收藏状态</option>
+            <option value="favorite">我的收藏</option>
+            <option value="plain">未收藏</option>
+          </select>
+          <select id="sidepanelLibraryEnabled" aria-label="启用状态">
+            <option value="">全部启用状态</option>
+            <option value="enabled">已启用</option>
+            <option value="disabled">已停用</option>
+          </select>
+        </div>
         <button type="button" class="btn btn-primary btn-block" id="btnStartLibraryCategory" disabled>
           从此分类开始提交
         </button>
         <p class="library-submit-note">使用当前勾选的 Profile；已成功、付费、跳过、登录和验证码等安全闸门仍然生效。</p>
         <div class="library-summary" id="sidepanelLibrarySummary" role="status">打开后加载外链库…</div>
       </section>
+      <details class="library-quick-open" id="libraryQuickOpen">
+        <summary>Quick Open 批量打开</summary>
+        <div class="quick-open-actions">
+          <button type="button" class="btn btn-ghost" id="btnQuickOpenSelectFiltered">选择当前筛选</button>
+          <span id="quickOpenSelectedCount">已选 0 条</span>
+        </div>
+        <div class="quick-open-options">
+          <label>每批<input type="number" id="quickOpenBatchSize" min="1" max="20" value="5" /></label>
+          <label>间隔(ms)<input type="number" id="quickOpenInterval" min="100" max="5000" step="100" value="800" /></label>
+        </div>
+        <label class="check-row quick-open-remove"><input type="checkbox" id="quickOpenRemoveOpened" checked />打开后从临时选择中移除</label>
+        <button type="button" class="btn btn-primary btn-block" id="btnQuickOpenBatch" disabled>打开下一批</button>
+        <p class="library-submit-note" id="quickOpenStatus" role="status">只打开页面，不填写、不提交，也不会删除云端外链。</p>
+      </details>
       <div class="sidepanel-library-list" id="sidepanelLibraryList">
         <div class="empty-state">正在等待加载外链库…</div>
       </div>

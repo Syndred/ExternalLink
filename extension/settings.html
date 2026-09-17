@@ -666,6 +666,16 @@
             </div>
           </div>
           <div class="card">
+            <div class="section-title">Submify 外链库</div>
+            <p class="help-text">从 Submify 当前插件使用的公开 Backlink Plaza 接口增量更新；保留已有资料、提交记录和个人设置。新增的付费或高风险内容默认停用。</p>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btnSyncSubmifyLibrary">同步 Submify 最新库</button>
+            </div>
+            <div class="sync-status" id="submifySyncStatus" role="status" aria-live="polite">
+              尚未执行本轮同步。
+            </div>
+          </div>
+          <div class="card">
             <div class="section-title">已发布外链存活监控</div>
             <div class="form-row sync-schedule-row">
               <label><input type="checkbox" id="linkMonitorEnabled" checked /> 每日复查已发布链接</label>

@@ -20,6 +20,7 @@ const moduleSources = new Map(
     "lib/backup.js",
     "lib/cloud-sync.js",
     "lib/url-library.js",
+    "lib/library-classifier.js",
     "lib/opportunity-score.js",
     "lib/context-menu.js",
     "lib/automation-ledger.js",

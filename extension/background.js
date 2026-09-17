@@ -12,6 +12,7 @@ importScripts(
   "lib/backup.js",
   "lib/cloud-sync.js",
   "lib/url-library.js",
+  "lib/library-classifier.js",
   "lib/opportunity-score.js",
   "lib/context-menu.js",
   "lib/automation-ledger.js",
@@ -4961,6 +4962,14 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
         ? self.ExtLinkPlaybooks.lookup(domain)
         : null;
+    const classification = self.ExtLinkLibraryClassifier.describe({
+      entry: entry.entry || {},
+      url: entry.url,
+      domain,
+      note: entry.entry?.note || annotation?.note || "",
+      detail: entry.entry?.detail || "",
+      metrics: quality.metrics,
+    });
     return {
       key,
       url: entry.url,
@@ -4972,6 +4981,12 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       quality,
       monitorStatus,
       metrics: quality.metrics,
+      classification,
+      name: classification.name,
+      category: classification.category,
+      language: classification.language,
+      accessModel: classification.accessModel,
+      tags: classification.tags,
       profileStatuses,
       playbook: playbook
         ? { id: playbook.id, title: playbook.title, notes: playbook.notes }

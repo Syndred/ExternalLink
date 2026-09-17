@@ -106,6 +106,7 @@
   const Q = self.ExtLinkQueue;
   const Controls = self.ExtLinkBatchControls;
   const Sidepanel = self.ExtLinkSidepanel;
+  const LibraryClassifier = self.ExtLinkLibraryClassifier;
 
   let activeTabId = null;
   let siteProfiles = {};
@@ -161,6 +162,9 @@
   const SIDEPANEL_FILL_TIMEOUT_MS = 30_000;
   const SIDEPANEL_FILL_STALE_MS = 90_000;
   let productHuntReadyToCreateTabId = null;
+  let sidepanelLibraryItems = [];
+  let sidepanelLibraryLoaded = false;
+  let sidepanelLibraryVisibleLimit = 60;
 
   const SITE_STATUS_MAP = {
     can_submit: { label: "✅ 可提交外链", cls: "ok" },
@@ -179,13 +183,166 @@
       document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
       document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
       tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+      document.querySelectorAll(".tab").forEach((item) => {
+        if (item !== tab) item.setAttribute("aria-selected", "false");
+      });
       const panel = $("panel-" + tab.dataset.panel);
       panel?.classList.add("active");
+      if (tab.dataset.panel === "library" && !sidepanelLibraryLoaded) {
+        loadSidepanelLibrary().catch((error) => renderSidepanelLibraryError(error));
+      }
     });
   });
 
   $("btnOpenSettings")?.addEventListener("click", () => {
     chrome.runtime.openOptionsPage();
+  });
+
+  $("btnOpenLibrarySettings")?.addEventListener("click", () => {
+    chrome.storage.local.set({ settingsActivePanel: "library" }).finally(() => chrome.runtime.openOptionsPage());
+  });
+
+  function libraryAccessLabel(value) {
+    return {
+      free: "免费",
+      freemium: "免费增值",
+      paid: "付费",
+      unknown: "待核验",
+    }[value] || "待核验";
+  }
+
+  function formatLibraryMetric(value) {
+    const count = Number(value);
+    if (!Number.isFinite(count)) return "";
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(count >= 10_000_000 ? 0 : 1)}M`;
+    if (count >= 1_000) return `${(count / 1_000).toFixed(count >= 10_000 ? 0 : 1)}K`;
+    return String(count);
+  }
+
+  function renderSidepanelLibraryError(error) {
+    const list = $("sidepanelLibraryList");
+    if (list) {
+      list.replaceChildren();
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = `外链库加载失败：${error?.message || error || "未知错误"}`;
+      list.append(empty);
+    }
+    if ($("sidepanelLibrarySummary")) $("sidepanelLibrarySummary").textContent = "加载失败，请稍后重试";
+  }
+
+  function populateSidepanelLibraryCategories(items) {
+    const select = $("sidepanelLibraryCategory");
+    if (!select || select.options.length > 1) return;
+    const counts = new Map();
+    for (const item of items) counts.set(item.category, (counts.get(item.category) || 0) + 1);
+    for (const category of LibraryClassifier.CATEGORY_ORDER) {
+      if (!counts.has(category)) continue;
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = `${category}（${counts.get(category)}）`;
+      select.append(option);
+    }
+  }
+
+  function sidepanelLibraryFilteredItems() {
+    const query = String($("sidepanelLibrarySearch")?.value || "").trim().toLowerCase();
+    const category = $("sidepanelLibraryCategory")?.value || "";
+    const access = $("sidepanelLibraryAccess")?.value || "";
+    return sidepanelLibraryItems.filter((item) => {
+      const haystack = [item.name, item.domain, item.url, item.category, item.language, ...(item.tags || [])]
+        .filter(Boolean).join(" ").toLowerCase();
+      return (!query || haystack.includes(query)) && (!category || item.category === category) && (!access || item.accessModel === access);
+    });
+  }
+
+  function renderSidepanelLibrary() {
+    const list = $("sidepanelLibraryList");
+    if (!list) return;
+    const filtered = sidepanelLibraryFilteredItems();
+    const shown = filtered.slice(0, sidepanelLibraryVisibleLimit);
+    list.replaceChildren();
+    if ($("sidepanelLibrarySummary")) {
+      $("sidepanelLibrarySummary").textContent = `共 ${sidepanelLibraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`;
+    }
+    if (!shown.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "没有符合条件的外链，换个分类或关键词试试。";
+      list.append(empty);
+    }
+    for (const item of shown) {
+      const card = document.createElement("article");
+      card.className = "sidepanel-library-item";
+      const head = document.createElement("div");
+      head.className = "sidepanel-library-head";
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "sidepanel-library-title";
+      const title = document.createElement("strong");
+      title.textContent = item.name || item.domain || item.url;
+      const domain = document.createElement("span");
+      domain.textContent = item.domain || item.url;
+      titleWrap.append(title, domain);
+      const open = document.createElement("a");
+      open.href = item.url;
+      open.target = "_blank";
+      open.rel = "noreferrer";
+      open.className = "sidepanel-library-open";
+      open.textContent = "打开";
+      head.append(titleWrap, open);
+      const chips = document.createElement("div");
+      chips.className = "sidepanel-library-chips";
+      const values = [item.category, libraryAccessLabel(item.accessModel), item.language];
+      if (Number.isFinite(item.classification?.dr)) values.push(`DR ${item.classification.dr}`);
+      if (Number.isFinite(item.classification?.organicTraffic)) values.push(`流量 ${formatLibraryMetric(item.classification.organicTraffic)}`);
+      for (const value of values.filter(Boolean)) {
+        const chip = document.createElement("span");
+        chip.textContent = value;
+        chips.append(chip);
+      }
+      const status = document.createElement("div");
+      status.className = "sidepanel-library-status";
+      const markers = Q.normalizeAnnotationStatuses(item.annotation);
+      const progress = (item.profileStatuses || []).filter((profile) => profile.success || profile.latestEvent).length;
+      status.textContent = markers.length ? markers.map((value) => SITE_STATUS_MAP[value]?.label || value).join(" · ") : progress ? `${progress} 个 Profile 已有记录` : "尚未提交";
+      card.append(head, chips, status);
+      list.append(card);
+    }
+    const more = $("btnSidepanelLibraryMore");
+    if (more) {
+      more.hidden = shown.length >= filtered.length;
+      more.textContent = `加载更多（剩余 ${Math.max(0, filtered.length - shown.length)} 条）`;
+    }
+  }
+
+  async function loadSidepanelLibrary() {
+    if ($("sidepanelLibrarySummary")) $("sidepanelLibrarySummary").textContent = "正在加载外链库…";
+    const result = await chrome.runtime.sendMessage({ action: "getLibraryManagerState" });
+    if (!result?.ok) throw new Error(result?.error || "加载外链库失败");
+    sidepanelLibraryItems = (Array.isArray(result.items) ? result.items : []).map((item) => ({
+      ...item,
+      classification: item.classification || LibraryClassifier.describe(item),
+      name: item.name || item.classification?.name || item.domain,
+      category: item.category || item.classification?.category || "其他目录",
+      language: item.language || item.classification?.language || "未知",
+      accessModel: item.accessModel || item.classification?.accessModel || "unknown",
+      tags: item.tags || item.classification?.tags || [],
+    }));
+    sidepanelLibraryLoaded = true;
+    populateSidepanelLibraryCategories(sidepanelLibraryItems);
+    renderSidepanelLibrary();
+  }
+
+  for (const id of ["sidepanelLibrarySearch", "sidepanelLibraryCategory", "sidepanelLibraryAccess"]) {
+    $(id)?.addEventListener(id === "sidepanelLibrarySearch" ? "input" : "change", () => {
+      sidepanelLibraryVisibleLimit = 60;
+      renderSidepanelLibrary();
+    });
+  }
+  $("btnSidepanelLibraryMore")?.addEventListener("click", () => {
+    sidepanelLibraryVisibleLimit += 60;
+    renderSidepanelLibrary();
   });
 
   // ─── Storage ───
@@ -279,6 +436,12 @@
       loadSubmissionQueue(currentPageUrl);
       loadClassifiedList();
       refreshSiteAnnotation(currentPageUrl).catch(() => {});
+    }
+    if (
+      typeof sidepanelLibraryLoaded !== "undefined" && sidepanelLibraryLoaded &&
+      (changes.sheetTableData || changes.urlList || changes.siteAnnotations || changes.submissionRecords || changes.submissionTimeline || changes.domainMetricsCache)
+    ) {
+      loadSidepanelLibrary().catch((error) => renderSidepanelLibraryError(error));
     }
     if (changes.submissionRecords || changes.submissionTimeline) {
       loadSidepanelTimeline(currentPageUrl).catch(() => {});

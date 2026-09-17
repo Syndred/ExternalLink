@@ -567,6 +567,19 @@
               id="librarySearch"
               placeholder="筛选域名、分类或项目"
             />
+            <select id="libraryCategoryFilter" aria-label="资源类型">
+              <option value="">全部资源类型</option>
+              <option value="AI 工具目录">AI 工具目录</option>
+              <option value="启动发布">启动发布</option>
+              <option value="SaaS / 软件目录">SaaS / 软件目录</option>
+              <option value="应用目录">应用目录</option>
+              <option value="企业 / 本地目录">企业 / 本地目录</option>
+              <option value="内容 / 客座投稿">内容 / 客座投稿</option>
+              <option value="社区 / 论坛">社区 / 论坛</option>
+              <option value="设计 / 作品展示">设计 / 作品展示</option>
+              <option value="社交 / 资料页">社交 / 资料页</option>
+              <option value="其他目录">其他目录</option>
+            </select>
             <select id="libraryStatusFilter">
               <option value="">全部站点分类</option>
               <option value="can_submit">可提交</option>
@@ -860,6 +873,7 @@
     <script src="lib/profiles.js"></script>
     <script src="lib/queue.js"></script>
     <script src="lib/submission-timeline.js"></script>
+    <script src="lib/library-classifier.js"></script>
     <script src="settings.js"></script>
   </body>
 </html>

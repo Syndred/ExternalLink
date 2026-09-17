@@ -1180,6 +1180,7 @@
     const el = $("libraryList");
     if (!el) return;
     const query = ($("librarySearch")?.value || "").trim().toLowerCase();
+    const categoryFilter = $("libraryCategoryFilter")?.value || "";
     const statusFilter = $("libraryStatusFilter")?.value || "";
     const progressFilter = $("libraryProgressFilter")?.value || "";
     const qualityFilter = Number($("libraryQualityFilter")?.value || 0);
@@ -1190,6 +1191,11 @@
       const haystack = [
         item.domain,
         item.url,
+        item.name,
+        item.category,
+        item.language,
+        item.accessModel,
+        ...(item.tags || []),
         ...statuses,
         ...statuses.map((value) => annotationLabel(value)),
         item.note,
@@ -1202,6 +1208,7 @@
         .toLowerCase();
       return (
         (!query || haystack.includes(query)) &&
+        (!categoryFilter || item.category === categoryFilter) &&
         (!statusFilter || statuses.includes(statusFilter)) &&
         Timeline.matchesLibraryProgress(progress, progressFilter) &&
         Number(item.quality?.score || 0) >= qualityFilter
@@ -1275,9 +1282,9 @@
       const meta = document.createElement("div");
       meta.className = "library-meta";
       const sourceLabel = { saved: "自定义", table: "迁移库", library: "内置" }[item.source] || "内置";
-      meta.textContent = item.playbook
-        ? `${sourceLabel} · ${item.platformType || "directory"} · 熟站 ${item.playbook.title}`
-        : `${sourceLabel} · ${item.platformType || "directory"}`;
+      const accessLabel = { free: "免费", freemium: "免费增值", paid: "付费", unknown: "费用待核验" }[item.accessModel] || "费用待核验";
+      meta.textContent = `${sourceLabel} · ${item.category || "其他目录"} · ${accessLabel} · ${item.language || "语言未知"}`;
+      if (item.playbook) meta.textContent += ` · 熟站 ${item.playbook.title}`;
       if (item.playbook?.notes) meta.title = item.playbook.notes;
       const destinationWrap = document.createElement("div");
       destinationWrap.className = "library-destination";
@@ -1520,6 +1527,7 @@
   }
 
   $("librarySearch")?.addEventListener("input", resetLibraryAndRender);
+  $("libraryCategoryFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryStatusFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryProgressFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryQualityFilter")?.addEventListener("change", resetLibraryAndRender);
@@ -1963,9 +1971,14 @@
       "autoSubmitDirectoryListings",
       "autoSubmitStandardWpComments",
       "cloudSyncConfig",
+      "settingsActivePanel",
     ],
     (items) => {
       siteProfiles = items.siteProfiles || {};
+      if (["sites", "library", "config"].includes(items.settingsActivePanel)) {
+        setActivePanel(items.settingsActivePanel);
+        chrome.storage.local.remove("settingsActivePanel");
+      }
       activeSiteId = items.activeSiteId || P.orderedProfileIds(siteProfiles)[0] || "";
       renderSiteSelector();
       loadActiveToForm();

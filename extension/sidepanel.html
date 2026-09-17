@@ -34,6 +34,7 @@
 
     <nav class="tabs" role="tablist" aria-label="工作区">
       <button class="tab active" type="button" data-panel="home" role="tab" aria-selected="true">执行</button>
+      <button class="tab" type="button" data-panel="library" role="tab">外链</button>
       <button class="tab" type="button" data-panel="batch" role="tab">批量</button>
       <button class="tab" type="button" data-panel="manual" role="tab">
         待人工 <span class="tab-badge" id="manualTabCount"></span>
@@ -224,6 +225,37 @@
       <div class="toast" id="spToast" hidden role="status"></div>
     </main>
 
+    <!-- 外链库 -->
+    <main class="panel" id="panel-library" role="tabpanel">
+      <section class="library-hero">
+        <div>
+          <h2 class="card-title">外链库</h2>
+          <p class="card-desc">按类型查找目标，查看费用、语言与质量信号。打开目标不代表已提交。</p>
+        </div>
+        <button type="button" class="btn-link" id="btnOpenLibrarySettings">完整管理</button>
+      </section>
+      <section class="library-filter-card">
+        <input type="search" id="sidepanelLibrarySearch" placeholder="搜索名称、域名或标签" aria-label="搜索外链" />
+        <div class="library-filter-row">
+          <select id="sidepanelLibraryCategory" aria-label="外链分类">
+            <option value="">全部分类</option>
+          </select>
+          <select id="sidepanelLibraryAccess" aria-label="费用类型">
+            <option value="">全部费用</option>
+            <option value="free">免费</option>
+            <option value="freemium">免费增值</option>
+            <option value="paid">付费</option>
+            <option value="unknown">待核验</option>
+          </select>
+        </div>
+        <div class="library-summary" id="sidepanelLibrarySummary" role="status">打开后加载外链库…</div>
+      </section>
+      <div class="sidepanel-library-list" id="sidepanelLibraryList">
+        <div class="empty-state">正在等待加载外链库…</div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-block" id="btnSidepanelLibraryMore" hidden>加载更多</button>
+    </main>
+
     <!-- 批量 -->
     <main class="panel" id="panel-batch" role="tabpanel">
       <div class="card">
@@ -293,6 +325,7 @@
     <script src="lib/batch-controls.js"></script>
     <script src="lib/batch-report.js"></script>
     <script src="lib/url-library.js"></script>
+    <script src="lib/library-classifier.js"></script>
     <script src="sidepanel.js"></script>
   </body>
 </html>

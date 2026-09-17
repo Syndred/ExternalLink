@@ -2360,12 +2360,20 @@ async function startBatchRun(msg) {
 
   const previousStorage = await chrome.storage.local.get(["activeBatchRun"]);
   const previousBatch = previousStorage.activeBatchRun;
-  const pending = await loadPendingSubmissionTasks({ selectedProfileIds: selectedSiteIds });
+  const requestedCategory = String(msg.category || "").trim();
+  const pending = await loadPendingSubmissionTasks({
+    selectedProfileIds: selectedSiteIds,
+    category: requestedCategory,
+  });
   if (state.lifecycleVersion !== lifecycleVersion) {
     throw new Error("批次启动已取消");
   }
   if (!pending.tasks.length) {
-    throw new Error("所选网站没有新的待提交组合；原批次记录和待办已保留");
+    throw new Error(
+      requestedCategory
+        ? `分类「${requestedCategory}」没有新的待提交组合；原批次记录和待办已保留`
+        : "所选网站没有新的待提交组合；原批次记录和待办已保留",
+    );
   }
   state.stopped = false;
   state.automationFinalStatus = "";
@@ -2384,9 +2392,10 @@ async function startBatchRun(msg) {
 
   state.runId = `run-${Date.now().toString(36)}`;
   await resetBatchLog(state.runId, selectedSiteIds);
-  log(`正在为 ${selectedSiteIds.length} 个 Profile 构建批量队列`, "", {
+  log(`${requestedCategory ? `正在从「${requestedCategory}」分类` : "正在"}为 ${selectedSiteIds.length} 个 Profile 构建批量队列`, "", {
     event: "queue_build_started",
     selectedSiteIds,
+    category: requestedCategory,
   });
   await chrome.storage.local.set({ selectedSiteIds });
   assertBatchStartCurrent(lifecycleVersion);
@@ -2398,6 +2407,7 @@ async function startBatchRun(msg) {
   assertBatchStartCurrent(lifecycleVersion);
   state.config = {
     ...(msg.config || {}),
+    libraryCategory: requestedCategory,
     fillOnly: msg.config?.fillOnly === true,
     autoSubmitDirectory:
       storedFlags.autoSubmitDirectoryListings !== false && msg.config?.fillOnly !== true,
@@ -4879,17 +4889,20 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
     storage.urlList || "",
     self.ExtLinkUrlLibrary || [],
   );
-  const candidates = [
-    ...pluginUrls.filter((entry) => entry.source === "saved"),
-    ...(tableData.entries || []).map((entry) => ({
+  const hasCanonicalLibrary = Array.isArray(tableData.entries) && tableData.entries.length > 0;
+  const tableCandidates = (tableData.entries || []).map((entry) => ({
       url: entry.indexPage || entry.link,
       domain: self.ExtLinkQueue.extractDomain(entry.indexPage || entry.link),
       source: "table",
       platformType: "directory",
       entry,
-    })),
-    ...pluginUrls.filter((entry) => entry.source !== "saved"),
-  ];
+    }));
+  const candidates = hasCanonicalLibrary
+    ? [...tableCandidates, ...pluginUrls.filter((entry) => entry.source === "saved")]
+    : [
+        ...pluginUrls.filter((entry) => entry.source === "saved"),
+        ...pluginUrls.filter((entry) => entry.source !== "saved"),
+      ];
   const seen = new Set();
   const urls = candidates.filter((entry) => {
     const key = siteKeyForUrl(entry.url || "");
@@ -5003,7 +5016,17 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
     };
   });
   items.sort(self.ExtLinkOpportunityScore.compareOpportunities);
-  return { ok: true, items, profiles: seeded.profiles, sync: cloudSync };
+  return {
+    ok: true,
+    items,
+    profiles: seeded.profiles,
+    sync: cloudSync,
+    libraryStats: {
+      cloudRows: tableCandidates.length,
+      destinationTotal: items.length,
+      customOnly: items.filter((item) => item.source === "saved").length,
+    },
+  };
 }
 
 function applyTimelinePublicationUpgrade(records, event) {
@@ -5555,6 +5578,28 @@ async function ensureSubmissionSchema(
   return migration.records;
 }
 
+function scopeDestinationGroupsByLibraryCategory(groups = [], category = "") {
+  const requestedCategory = String(category || "").trim();
+  if (!requestedCategory) return groups;
+  if (!self.ExtLinkLibraryClassifier.CATEGORY_ORDER.includes(requestedCategory)) {
+    throw new Error("外链分类无效，请重新选择");
+  }
+  return groups
+    .filter((group) => group.source !== "library")
+    .map((group) => {
+      const classification = self.ExtLinkLibraryClassifier.describe({
+        entry: group.entry || {},
+        url: group.url,
+        domain: group.domain,
+        note: group.note || group.entry?.note || "",
+        detail: group.entry?.detail || "",
+        metrics: group.quality?.metrics || group.entry?.metrics || {},
+      });
+      return { ...group, category: classification.category, classification };
+    })
+    .filter((group) => group.category === requestedCategory);
+}
+
 async function loadPendingSubmissionTasks(options = {}) {
   const storage = await chrome.storage.local.get([
     "siteProfiles",
@@ -5613,7 +5658,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     selectedProfileIds.push(seeded.activeSiteId);
   }
 
-  const groups = self.ExtLinkQueue.buildDestinationGroups({
+  const allGroups = self.ExtLinkQueue.buildDestinationGroups({
     tableData,
     pluginUrls,
     siteProfiles: seeded.profiles,
@@ -5630,6 +5675,8 @@ async function loadPendingSubmissionTasks(options = {}) {
     });
     return { ...group, quality };
   }).sort(self.ExtLinkOpportunityScore.compareOpportunities);
+  const requestedCategory = String(options.category || "").trim();
+  const groups = scopeDestinationGroupsByLibraryCategory(allGroups, requestedCategory);
 
   const deletedKeys = storage.deletedSubmissionKeys || [];
   const filters = normalizeTargetFilters(storage.targetFilters);
@@ -5668,6 +5715,7 @@ async function loadPendingSubmissionTasks(options = {}) {
       excluded: flattened.length - filtered.length,
       total: filtered.length,
       destinationTotal: groups.length,
+      category: requestedCategory,
       selectedProfileTotal: selectedProfileIds.length,
       successfulSkipped: Object.values(submissionRecords).filter(
         (record) =>

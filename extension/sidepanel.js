@@ -163,6 +163,7 @@
   const SIDEPANEL_FILL_STALE_MS = 90_000;
   let productHuntReadyToCreateTabId = null;
   let sidepanelLibraryItems = [];
+  let sidepanelLibraryStats = {};
   let sidepanelLibraryLoaded = false;
   let sidepanelLibraryVisibleLimit = 60;
 
@@ -257,6 +258,14 @@
     });
   }
 
+  function updateLibraryCategoryStartButton() {
+    const button = $("btnStartLibraryCategory");
+    if (!button) return;
+    const category = $("sidepanelLibraryCategory")?.value || "";
+    button.disabled = !category || running || batchStatus === "paused";
+    button.textContent = category ? `提交「${category}」` : "从此分类开始提交";
+  }
+
   function renderSidepanelLibrary() {
     const list = $("sidepanelLibraryList");
     if (!list) return;
@@ -264,7 +273,11 @@
     const shown = filtered.slice(0, sidepanelLibraryVisibleLimit);
     list.replaceChildren();
     if ($("sidepanelLibrarySummary")) {
-      $("sidepanelLibrarySummary").textContent = `共 ${sidepanelLibraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`;
+      const cloudRows = Number(sidepanelLibraryStats.cloudRows) || 0;
+      const customOnly = Number(sidepanelLibraryStats.customOnly) || 0;
+      $("sidepanelLibrarySummary").textContent = cloudRows
+        ? `云端 ${cloudRows} 行 · ${sidepanelLibraryItems.length} 个目标${customOnly ? `（含 ${customOnly} 条自定义补充）` : ""} · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`
+        : `共 ${sidepanelLibraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`;
     }
     if (!shown.length) {
       const empty = document.createElement("div");
@@ -320,6 +333,7 @@
     if ($("sidepanelLibrarySummary")) $("sidepanelLibrarySummary").textContent = "正在加载外链库…";
     const result = await chrome.runtime.sendMessage({ action: "getLibraryManagerState" });
     if (!result?.ok) throw new Error(result?.error || "加载外链库失败");
+    sidepanelLibraryStats = result.libraryStats || {};
     sidepanelLibraryItems = (Array.isArray(result.items) ? result.items : []).map((item) => ({
       ...item,
       classification: item.classification || LibraryClassifier.describe(item),
@@ -331,12 +345,14 @@
     }));
     sidepanelLibraryLoaded = true;
     populateSidepanelLibraryCategories(sidepanelLibraryItems);
+    updateLibraryCategoryStartButton();
     renderSidepanelLibrary();
   }
 
   for (const id of ["sidepanelLibrarySearch", "sidepanelLibraryCategory", "sidepanelLibraryAccess"]) {
     $(id)?.addEventListener(id === "sidepanelLibrarySearch" ? "input" : "change", () => {
       sidepanelLibraryVisibleLimit = 60;
+      updateLibraryCategoryStartButton();
       renderSidepanelLibrary();
     });
   }
@@ -3020,6 +3036,7 @@
     for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs", "cfgFillOnly"]) {
       if ($(id)) $(id).disabled = ["running", "paused"].includes(batchStatus);
     }
+    updateLibraryCategoryStartButton();
   }
 
   function setBatchStatus(status, save = true) {
@@ -3075,19 +3092,25 @@
     }
   }
 
-  $("btnStart")?.addEventListener("click", async () => {
+  async function startSubmissionBatch({ category = "", button = null, switchToBatch = false } = {}) {
     if (running || batchStatus === "paused") return;
     if (!selectedSiteIds.length) {
       showToast("请至少勾选一个自家网站", true);
       return;
     }
-    const startButton = $("btnStart");
+    if (category && !LibraryClassifier.CATEGORY_ORDER.includes(category)) {
+      showToast("请先选择有效的外链分类", true);
+      return;
+    }
+    const startButton = button || $("btnStart");
+    const idleText = category ? `提交「${category}」` : "开始提交";
     startButton.disabled = true;
     startButton.textContent = "正在构建队列…";
     try {
       const result = await chrome.runtime.sendMessage({
         action: "start",
         selectedSiteIds,
+        category,
         config: {
           ...Sidepanel.buildBatchConfig({
             concurrency: batchConcurrency,
@@ -3108,13 +3131,28 @@
       renderTasks();
       setBatchStatus(stats.total > 0 ? "running" : "finished");
       updateBatchPreview();
+      if (switchToBatch) document.querySelector('.tab[data-panel="batch"]')?.click();
     } catch (err) {
       await syncTasksFromBackground();
       showToast(err.message, true);
     } finally {
       startButton.disabled = false;
-      startButton.textContent = "开始提交";
+      startButton.textContent = idleText;
+      updateLibraryCategoryStartButton();
     }
+  }
+
+  $("btnStart")?.addEventListener("click", () => {
+    startSubmissionBatch({ button: $("btnStart") }).catch((err) => showToast(err.message, true));
+  });
+
+  $("btnStartLibraryCategory")?.addEventListener("click", () => {
+    const category = $("sidepanelLibraryCategory")?.value || "";
+    startSubmissionBatch({
+      category,
+      button: $("btnStartLibraryCategory"),
+      switchToBatch: true,
+    }).catch((err) => showToast(err.message, true));
   });
 
   $("btnStop")?.addEventListener("click", async () => {

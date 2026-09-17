@@ -935,6 +935,7 @@
           domain: group.domain,
           platformType: group.platformType,
           source: group.source,
+          category: group.category || "",
           note: group.note,
           quality: group.quality || null,
           destinationGroupKey: group.key,

@@ -12,6 +12,7 @@
   let pendingLogoDataUrl = null;
   let mediaPreviewToken = 0;
   let libraryItems = [];
+  let libraryStats = {};
   let libraryVisibleLimit = 200;
   const LIBRARY_PAGE_SIZE = 200;
   let selectedLibraryKey = "";
@@ -1222,9 +1223,14 @@
     el.replaceChildren();
     const shown = filtered.slice(0, libraryVisibleLimit);
     if ($("libraryCount")) {
+      const cloudRows = Number(libraryStats.cloudRows) || 0;
+      const customOnly = Number(libraryStats.customOnly) || 0;
+      const totalLabel = cloudRows
+        ? `云端 ${cloudRows} 行 · ${libraryItems.length} 个目标${customOnly ? `（含 ${customOnly} 条自定义补充）` : ""}`
+        : `共 ${libraryItems.length} 条`;
       $("libraryCount").textContent = filtered.length
-        ? `共 ${libraryItems.length} 条 · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`
-        : `共 ${libraryItems.length} 条 · 没有符合筛选的外链站`;
+        ? `${totalLabel} · 筛选后 ${filtered.length} 条 · 已展示 ${shown.length} 条`
+        : `${totalLabel} · 没有符合筛选的外链站`;
     }
     if (!filtered.length) {
       const empty = document.createElement("div");
@@ -1494,6 +1500,7 @@
       const preserveSiteDraft = hasUnsavedSiteEdits();
       const previousActiveSiteId = activeSiteId;
       const previousActiveProfile = previousActiveSiteId ? siteProfiles[previousActiveSiteId] : null;
+      libraryStats = result.libraryStats || {};
       libraryItems = Array.isArray(result.items) ? result.items : [];
       if (result.profiles && typeof result.profiles === "object" && !Array.isArray(result.profiles)) {
         siteProfiles = result.profiles;

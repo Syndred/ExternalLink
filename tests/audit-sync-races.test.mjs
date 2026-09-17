@@ -77,6 +77,7 @@ const source = [
   extractFunction(background, "applyCloudSnapshot"),
   extractFunction(background, "pullCloudState"),
   extractFunction(background, "flushCloudState"),
+  extractFunction(background, "pushCloudState"),
 ].join("\n\n");
 
 function deferred() {
@@ -299,6 +300,30 @@ function createHarness({ initial = {}, cloudRequest, config } = {}) {
   assert.deepEqual(harness.storageData.submissionTimeline, { local: "value" });
 }
 
+// Manual save uploads only locally pending, non-conflicted documents. A copied
+// browser profile must not replay every stale document merely because the user
+// clicked "save now".
+{
+  const calls = [];
+  const harness = createHarness({
+    initial: {
+      submissionRecords: { local: "pending" },
+      submissionTimeline: { local: "conflicted" },
+      cloudSyncPendingKeys: ["submissionRecords", "submissionTimeline"],
+      cloudSyncConflictKeys: ["submissionTimeline"],
+    },
+    cloudRequest: async (path) => {
+      calls.push(path);
+      return { revision: 2 };
+    },
+  });
+  await harness.context.pushCloudState();
+  assert.deepEqual(calls, ["/v1/state/submissionRecords"]);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("submissionRecords"), false);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("submissionTimeline"), true);
+  assert.equal(harness.context.cloudSyncConflictKeys.has("submissionTimeline"), true);
+}
+
 // An explicit resolution may apply the remote snapshot and clear only the
 // resolved conflict markers; the persisted metadata contains no access token.
 {
@@ -324,8 +349,8 @@ function createHarness({ initial = {}, cloudRequest, config } = {}) {
   assert.doesNotMatch(JSON.stringify(harness.storageData.cloudSyncMetadata), /token/);
 }
 
-// Explicit resolution still refuses to overwrite a non-conflicting pending
-// write, and a local edit during the read keeps the conflicted value intact.
+// Explicit resolution applies only the conflicted remote document while
+// preserving unrelated pending writes and their older revisions.
 {
   const harness = createHarness({
     initial: {
@@ -333,14 +358,32 @@ function createHarness({ initial = {}, cloudRequest, config } = {}) {
       submissionTimeline: { local: "conflicted" },
       cloudSyncPendingKeys: ["submissionRecords", "submissionTimeline"],
       cloudSyncConflictKeys: ["submissionTimeline"],
+      cloudSyncMetadata: {
+        revisions: { submissionRecords: 4, submissionTimeline: 2 },
+      },
     },
-    cloudRequest: async () => ({ documents: { submissionTimeline: { remote: "value" } }, revisions: {} }),
+    cloudRequest: async () => ({
+      documents: {
+        submissionRecords: { remote: "must-not-overwrite-pending" },
+        submissionTimeline: { remote: "value" },
+      },
+      revisions: { submissionRecords: 9, submissionTimeline: 3 },
+    }),
   });
-  const blocked = await harness.context.pullCloudState({ resolveConflicts: true });
-  assert.equal(blocked.status, "pending");
-  assert.equal(harness.storageData.submissionTimeline.local, "conflicted");
-  assert.equal(harness.context.cloudSyncConflictKeys.has("submissionTimeline"), true);
-  assert.deepEqual(harness.storageData.cloudSyncPendingKeys, ["submissionRecords", "submissionTimeline"]);
+  const resolved = await harness.context.pullCloudState({ resolveConflicts: true });
+  assert.equal(resolved.status, "applied");
+  assert.deepEqual(resolved.resolvedConflicts, ["submissionTimeline"]);
+  assert.deepEqual(harness.storageData.submissionRecords, { local: "pending" });
+  assert.deepEqual(harness.storageData.submissionTimeline, { remote: "value" });
+  assert.equal(harness.context.cloudSyncPendingKeys.has("submissionRecords"), true);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("submissionTimeline"), false);
+  assert.equal(harness.context.cloudSyncConflictKeys.has("submissionTimeline"), false);
+  assert.deepEqual(harness.storageData.cloudSyncPendingKeys, ["submissionRecords"]);
+  assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
+  assert.deepEqual(harness.storageData.cloudSyncMetadata.revisions, {
+    submissionRecords: 4,
+    submissionTimeline: 3,
+  });
 }
 
 {

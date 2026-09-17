@@ -978,7 +978,10 @@ async function pullCloudState(options = {}) {
         revisions: baselineStorage.cloudSyncMetadata?.revisions || {},
       };
     }
-    if (pendingNonConflicts.length || (baselinePending.size && !resolveConflicts && !conflictKeys.length)) {
+    if (
+      (pendingNonConflicts.length && (!resolveConflicts || !conflictKeys.length)) ||
+      (baselinePending.size && !resolveConflicts && !conflictKeys.length)
+    ) {
       return {
         ok: true,
         applied: false,
@@ -1035,7 +1038,24 @@ async function pullCloudState(options = {}) {
         revisions: snapshot.revisions || {},
       };
     }
-    const state = await applyCloudSnapshot(snapshot, {
+    const snapshotToApply = resolveConflicts && conflictKeys.length && pendingNonConflicts.length
+      ? {
+          documents: Object.fromEntries(
+            conflictKeys
+              .filter((key) => Object.prototype.hasOwnProperty.call(snapshot.documents || {}, key))
+              .map((key) => [key, snapshot.documents[key]]),
+          ),
+          revisions: {
+            ...(baselineStorage.cloudSyncMetadata?.revisions || {}),
+            ...Object.fromEntries(
+              conflictKeys
+                .filter((key) => Object.prototype.hasOwnProperty.call(snapshot.revisions || {}, key))
+                .map((key) => [key, snapshot.revisions[key]]),
+            ),
+          },
+        }
+      : snapshot;
+    const state = await applyCloudSnapshot(snapshotToApply, {
       metadata: baselineStorage.cloudSyncMetadata,
       configIdentity: cloudSyncConfigIdentity(config),
     });
@@ -1047,7 +1067,7 @@ async function pullCloudState(options = {}) {
       ok: true,
       applied: true,
       status: "applied",
-      documentCount: Object.keys(snapshot.documents || {}).length,
+      documentCount: Object.keys(snapshotToApply.documents || {}).length,
       state,
       revisions: snapshot.revisions || {},
       resolvedConflicts,
@@ -1530,7 +1550,10 @@ async function flushCloudState(keys = null) {
 }
 
 async function pushCloudState() {
-  return flushCloudState(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
+  const writablePendingKeys = [...cloudSyncPendingKeys].filter((key) =>
+    self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && !cloudSyncConflictKeys.has(key),
+  );
+  return flushCloudState(writablePendingKeys);
 }
 
 // ─── Target gating: domain blacklist + registration age ───

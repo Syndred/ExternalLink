@@ -117,6 +117,9 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
             writes.push(clone(values));
             for (const [key, value] of Object.entries(values || {})) storageData[key] = clone(value);
           },
+          async remove(keys) {
+            for (const key of Array.isArray(keys) ? keys : [keys]) delete storageData[key];
+          },
         },
       },
     },
@@ -389,6 +392,42 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
   assert.deepEqual(harness.storageData.cloudSyncPendingKeys, []);
   assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
   assert.doesNotMatch(JSON.stringify(harness.storageData.cloudSyncMetadata), /token/);
+}
+
+// A copied browser profile may explicitly discard pure pending writes and
+// replace its complete local cache with the canonical cloud workspace.
+{
+  const harness = createHarness({
+    initial: {
+      submissionRecords: { local: "stale" },
+      submissionTimeline: { local: "only-local" },
+      cloudSyncPendingKeys: ["submissionRecords", "submissionTimeline"],
+      cloudSyncPendingPatches: { submissionRecords: [{ op: "set", path: ["local"], value: "stale" }] },
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { submissionRecords: 7, submissionTimeline: 4 },
+      },
+    },
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") return { revisions: { submissionRecords: 8 } };
+      if (path === "/v1/state/submissionRecords") {
+        return { documentKey: "submissionRecords", data: { remote: "canonical" }, revision: 8 };
+      }
+      throw new Error(`unexpected path ${path}`);
+    },
+  });
+  const blocked = await harness.context.pullCloudState();
+  assert.equal(blocked.status, "pending");
+  const result = await harness.context.pullCloudState({
+    resolveConflicts: true,
+    discardLocalChanges: true,
+  });
+  assert.equal(result.status, "applied");
+  assert.deepEqual(harness.storageData.submissionRecords, { remote: "canonical" });
+  assert.equal(harness.storageData.submissionTimeline, undefined);
+  assert.deepEqual(harness.storageData.cloudSyncPendingKeys, []);
+  assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
+  assert.deepEqual(harness.storageData.cloudSyncPendingPatches, {});
 }
 
 // Explicit resolution applies only the conflicted remote document while

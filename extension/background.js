@@ -1023,13 +1023,22 @@ async function connectCloudSync(rawConfig) {
 
 async function applyCloudSnapshot(snapshot, options = {}) {
   const nextState = self.ExtLinkCloudSync.documentsToState(snapshot.documents || {});
+  const missingKeys = options.replaceMissingKeys === true
+    ? self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.filter((key) =>
+      !Object.prototype.hasOwnProperty.call(nextState, key),
+    )
+    : [];
   const stored = options.metadata
     ? { cloudSyncMetadata: options.metadata }
     : await chrome.storage.local.get("cloudSyncMetadata");
   Object.entries(nextState).forEach(([key, value]) => {
     cloudSyncIgnoredValues.set(key, JSON.stringify(value));
   });
+  missingKeys.forEach((key) => {
+    cloudSyncIgnoredValues.set(key, undefined);
+  });
   try {
+    if (missingKeys.length) await chrome.storage.local.remove(missingKeys);
     await chrome.storage.local.set({
       ...nextState,
       cloudSyncMetadata: {
@@ -1047,16 +1056,20 @@ async function applyCloudSnapshot(snapshot, options = {}) {
         cloudSyncIgnoredValues.delete(key);
       }
     }
+    for (const key of missingKeys) {
+      if (cloudSyncIgnoredValues.get(key) === undefined) cloudSyncIgnoredValues.delete(key);
+    }
   }
-  const resolvedConflicts = [...cloudSyncConflictKeys].filter((key) =>
-    Object.prototype.hasOwnProperty.call(nextState, key),
+  const resolvedKeys = new Set(
+    [...cloudSyncConflictKeys].filter((key) => Object.prototype.hasOwnProperty.call(nextState, key)),
   );
-  for (const key of resolvedConflicts) {
+  for (const key of options.discardedLocalKeys || []) resolvedKeys.add(key);
+  for (const key of resolvedKeys) {
     cloudSyncConflictKeys.delete(key);
     cloudSyncPendingKeys.delete(key);
     cloudSyncPendingPatches.delete(key);
   }
-  if (resolvedConflicts.length) await persistCloudSyncQueue();
+  if (resolvedKeys.size) await persistCloudSyncQueue();
   return nextState;
 }
 
@@ -1065,6 +1078,7 @@ async function pullCloudState(options = {}) {
   const request = (async () => {
     if (typeof initializationPromise !== "undefined") await initializationPromise;
     const resolveConflicts = options.resolveConflicts === true;
+    const discardLocalChanges = options.discardLocalChanges === true;
     const baselineStorage = await chrome.storage.local.get([
       ...self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS,
       "cloudSyncMetadata",
@@ -1078,7 +1092,7 @@ async function pullCloudState(options = {}) {
     const pendingNonConflicts = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.filter(
       (key) => baselinePending.has(key) && !baselineConflicts.has(key),
     );
-    if (conflictKeys.length && !resolveConflicts) {
+    if (conflictKeys.length && !resolveConflicts && !discardLocalChanges) {
       return {
         ok: true,
         applied: false,
@@ -1090,10 +1104,10 @@ async function pullCloudState(options = {}) {
         revisions: baselineStorage.cloudSyncMetadata?.revisions || {},
       };
     }
-    if (
+    if (!discardLocalChanges && (
       (pendingNonConflicts.length && (!resolveConflicts || !conflictKeys.length)) ||
       (baselinePending.size && !resolveConflicts && !conflictKeys.length)
-    ) {
+    )) {
       return {
         ok: true,
         applied: false,
@@ -1112,12 +1126,15 @@ async function pullCloudState(options = {}) {
     const knownRevisions = metadata.configIdentity === cloudSyncConfigIdentity(config)
       ? metadata.revisions || {}
       : {};
-    const requestedKeys = resolveConflicts && conflictKeys.length && pendingNonConflicts.length
+    const requestedKeys = discardLocalChanges
+      ? self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS
+      : resolveConflicts && conflictKeys.length && pendingNonConflicts.length
       ? conflictKeys
       : self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS;
     const snapshot = await fetchChangedCloudDocuments(config, requestedKeys, knownRevisions, {
       allowInitialSnapshot: requestedKeys.length === self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.length,
       forceKeys: [
+        ...(discardLocalChanges ? self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS : []),
         ...(resolveConflicts ? conflictKeys : []),
         ...requestedKeys.filter((key) => baselineStorage[key] === undefined),
       ],
@@ -1165,7 +1182,7 @@ async function pullCloudState(options = {}) {
         revisions: snapshot.revisions || {},
       };
     }
-    const snapshotToApply = resolveConflicts && conflictKeys.length && pendingNonConflicts.length
+    const snapshotToApply = !discardLocalChanges && resolveConflicts && conflictKeys.length && pendingNonConflicts.length
       ? {
           documents: Object.fromEntries(
             conflictKeys
@@ -1185,6 +1202,8 @@ async function pullCloudState(options = {}) {
     const state = await applyCloudSnapshot(snapshotToApply, {
       metadata: baselineStorage.cloudSyncMetadata,
       configIdentity: cloudSyncConfigIdentity(config),
+      replaceMissingKeys: discardLocalChanges,
+      discardedLocalKeys: discardLocalChanges ? [...baselinePending] : [],
     });
     const resolvedConflicts = conflictKeys.filter((key) =>
       Object.prototype.hasOwnProperty.call(snapshot.documents || {}, key),

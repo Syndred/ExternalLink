@@ -1672,7 +1672,7 @@
     try {
       let result = await chrome.runtime.sendMessage({ action: "cloudSyncPull" });
       if (!result?.ok) throw new Error(result?.error || "云端回读失败");
-      if (result.status === "conflict") {
+      if (["conflict", "pending"].includes(result.status)) {
         try {
           await downloadSubmissionBackup();
         } catch (err) {
@@ -1686,7 +1686,9 @@
           return;
         }
         const shouldResolve = confirm(
-          "JSON 备份下载已发起，请确认文件已保存，再采用云端替换冲突数据；取消将保留原数据。是否继续？",
+          result.status === "pending"
+            ? "JSON 备份下载已发起，请确认文件已保存。继续后会放弃本机待保存修改，并用云端完整数据覆盖本机；取消将保留原数据。是否继续？"
+            : "JSON 备份下载已发起，请确认文件已保存，再采用云端替换冲突数据；取消将保留原数据。是否继续？",
         );
         if (!shouldResolve) {
           setCloudStatus(result.message || "已取消冲突回读，原数据保持不变。", "warning");
@@ -1696,6 +1698,7 @@
         result = await chrome.runtime.sendMessage({
           action: "cloudSyncPull",
           resolveConflicts: true,
+          discardLocalChanges: result.status === "pending",
         });
         if (!result?.ok) throw new Error(result?.error || "冲突回读失败");
       }

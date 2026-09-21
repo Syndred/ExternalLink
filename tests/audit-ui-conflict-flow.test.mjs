@@ -32,9 +32,9 @@ async function run({ consent = true, backupFails = false, editDuringBackup = fal
     location: { reload: () => trace.push('reload') },
     chrome: { runtime: { sendMessage: async message => {
       assert.equal(message.action, 'cloudSyncPull');
-      trace.push(message.resolveConflicts ? 'resolve' : 'pull');
+      trace.push(message.discardLocalChanges ? 'discard' : message.resolveConflicts ? 'resolve' : 'pull');
       if (editDuringPull) dirty = true;
-      if (!message.resolveConflicts && initialStatus !== 'applied') {
+      if (!message.resolveConflicts && !message.discardLocalChanges && initialStatus !== 'applied') {
         return { ok: true, status: initialStatus, applied: false };
       }
       return { ok: true, applied, state, documentCount: 1 };
@@ -54,7 +54,7 @@ assert.deepEqual(failed.trace, ['pull', 'backup'], 'failed backup must never off
 assert.equal(failed.button.disabled, false);
 assert.deepEqual((await run({ editDuringBackup: true })).trace, ['pull', 'backup'], 'new drafts must stop recovery');
 assert.deepEqual((await run({ applied: false })).trace, ['pull', 'backup', 'confirm', 'resolve'], 'a rejected backend apply must not reload');
-assert.deepEqual((await run({ initialStatus: 'pending' })).trace, ['pull']);
+assert.deepEqual((await run({ initialStatus: 'pending' })).trace, ['pull', 'backup', 'confirm', 'discard', 'adopt', 'reload']);
 assert.deepEqual((await run({ initialStatus: 'applied', editDuringPull: true })).trace, ['pull', 'adopt-preserving-draft'], 'adopt fresh profile data without discarding in-flight edits');
 // Discarding a timeline edit must release only that editor's dirty marker.
 {

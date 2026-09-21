@@ -287,9 +287,10 @@ const settingsSource = readFileSync("extension/settings.js", "utf8");
     (pullBody.match(/hasUnsavedSettingsEdits\(\)/g) || []).length >= 3,
     "cloud pull must check every editor before the request, before conflict resolution, and before reload",
   );
-  assert.match(pullBody, /result\.status === "conflict"/);
+  assert.match(pullBody, /\["conflict", "pending"\]\.includes\(result\.status\)/);
   assert.match(pullBody, /downloadSubmissionBackup\(\)/);
   assert.match(pullBody, /resolveConflicts: true/);
+  assert.match(pullBody, /discardLocalChanges: result\.status === "pending"/);
   assert.ok(
     pullBody.indexOf("downloadSubmissionBackup()") < pullBody.indexOf("resolveConflicts: true"),
     "conflict recovery must trigger the local backup before forcing the cloud pull",

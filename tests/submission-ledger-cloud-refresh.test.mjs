@@ -60,6 +60,8 @@ function extractFunction(source, name) {
 }
 
 const functionNames = [
+  "normalizeCloudRevisions",
+  "fetchChangedCloudDocuments",
   "submissionLedgerValuesEqual",
   "submissionLedgerHasPendingWrites",
   "submissionLedgerSyncResult",
@@ -114,7 +116,18 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
     cloudRequest: async (path) => {
       calls.push(path);
       if (cloudRequest) return cloudRequest(path);
-      return clone(cloudSnapshot || { documents: {}, revisions: {} });
+      const snapshot = clone(cloudSnapshot || { documents: {}, revisions: {} });
+      if (path === "/v1/revisions") return { revisions: snapshot.revisions || {} };
+      const stateMatch = path.match(/^\/v1\/state\/([a-zA-Z0-9_-]+)$/);
+      if (stateMatch) {
+        const key = stateMatch[1];
+        return {
+          documentKey: key,
+          data: snapshot.documents?.[key],
+          revision: snapshot.revisions?.[key],
+        };
+      }
+      return snapshot;
     },
     setTimeout,
     clearTimeout,
@@ -126,11 +139,19 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
     Promise,
   };
   context.self = context;
+  context.self.ExtLinkCloudSync = {
+    STATE_DOCUMENT_KEYS: [
+      "activeSiteId",
+      "siteProfiles",
+      "submissionRecords",
+      "submissionTimeline",
+    ],
+  };
   vm.createContext(context);
   vm.runInContext(readFileSync("extension/lib/batch-controls.js", "utf8"), context);
   vm.runInContext(
     `const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze(["submissionRecords", "submissionTimeline"]);
-     const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 5000;
+     const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 60000;
      let submissionLedgerPullPromise = null;
      let submissionLedgerPullStartedAt = 0;
      const submissionLedgerWrite = self.ExtLinkBatchControls.createSerialExecutor();
@@ -140,8 +161,8 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   return { context, storageData, calls };
 }
 
-// A sidebar refresh may read the whole Worker snapshot, but only the two
-// ledger documents are allowed to reach local storage.
+// A sidebar refresh reads revisions first and downloads only changed ledger
+// documents. Unrelated cloud documents never cross the network.
 {
   const remoteRecords = { "devpages.io/submit-a-tool::RspAi": { status: "success" } };
   const remoteTimeline = {
@@ -170,8 +191,11 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   assert.deepEqual(harness.storageData.submissionRecords, remoteRecords);
   assert.deepEqual(harness.storageData.submissionTimeline, remoteTimeline);
   assert.equal(harness.storageData.activeSiteId, "LocalProfile");
-  assert.equal(harness.calls.length, 1);
-  assert.equal(harness.calls[0], "/v1/snapshot");
+  assert.deepEqual(harness.calls, [
+    "/v1/revisions",
+    "/v1/state/submissionRecords",
+    "/v1/state/submissionTimeline",
+  ]);
 }
 
 // A local write during the network read must remain visible and must block the
@@ -184,17 +208,25 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
       submissionTimeline: {},
       cloudSyncMetadata: { revisions: {} },
     },
-    cloudRequest: async () => gate.promise,
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") {
+        return { revisions: { submissionRecords: 1, submissionTimeline: 1 } };
+      }
+      if (path === "/v1/state/submissionRecords") return gate.promise;
+      return {
+        documentKey: "submissionTimeline",
+        data: { "remote.example::RspAi": [{ id: "remote-event" }] },
+        revision: 1,
+      };
+    },
   });
   const refresh = harness.context.refreshSubmissionLedgerFromCloud({ force: true });
   while (harness.calls.length === 0) await new Promise((resolve) => setTimeout(resolve, 0));
   harness.storageData.submissionTimeline = { "local.example::RspAi": [{ id: "local-event" }] };
   gate.resolve({
-    documents: {
-      submissionRecords: { "remote.example::RspAi": { status: "success" } },
-      submissionTimeline: { "remote.example::RspAi": [{ id: "remote-event" }] },
-    },
-    revisions: { submissionRecords: 1, submissionTimeline: 1 },
+    documentKey: "submissionRecords",
+    data: { "remote.example::RspAi": { status: "success" } },
+    revision: 1,
   });
   const result = await refresh;
   assert.equal(result.sync.status, "changed");
@@ -271,7 +303,7 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
         submissionRecords: { remote: true },
         submissionTimeline: { remote: true },
       },
-      revisions: { submissionRecords: 4, submissionTimeline: 4 },
+      revisions: { submissionRecords: 5, submissionTimeline: 4 },
     },
   });
   const result = await harness.context.refreshSubmissionLedgerFromCloud({ force: true });
@@ -279,9 +311,35 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   assert.deepEqual(harness.storageData.submissionRecords, { remote: true });
   assert.deepEqual(harness.storageData.submissionTimeline, { local: true });
   assert.deepEqual(harness.storageData.cloudSyncMetadata.revisions, {
-    submissionRecords: 4,
+    submissionRecords: 5,
     submissionTimeline: 5,
   });
+}
+
+// Equal revisions must not download multi-megabyte ledger bodies again.
+{
+  const harness = createHarness({
+    initial: {
+      submissionRecords: { local: true },
+      submissionTimeline: { local: true },
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { submissionRecords: 7, submissionTimeline: 8 },
+      },
+    },
+    cloudSnapshot: {
+      documents: {
+        submissionRecords: { shouldNotDownload: true },
+        submissionTimeline: { shouldNotDownload: true },
+      },
+      revisions: { submissionRecords: 7, submissionTimeline: 8 },
+    },
+  });
+  const result = await harness.context.refreshSubmissionLedgerFromCloud({ force: true });
+  assert.equal(result.sync.status, "up_to_date");
+  assert.deepEqual(harness.calls, ["/v1/revisions"]);
+  assert.deepEqual(harness.storageData.submissionRecords, { local: true });
+  assert.deepEqual(harness.storageData.submissionTimeline, { local: true });
 }
 
 console.log("submission ledger cloud refresh tests passed");

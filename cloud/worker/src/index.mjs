@@ -96,6 +96,16 @@ async function listSnapshot(sql, workspaceId) {
   return snapshotFromRows(rows);
 }
 
+async function listRevisions(sql, workspaceId) {
+  const rows = await sql`
+    select document_key, revision
+    from externallink_workspace_documents
+    where workspace_id = ${workspaceId}
+    order by document_key
+  `;
+  return Object.fromEntries(rows.map((row) => [row.document_key, Number(row.revision)]));
+}
+
 function normaliseContentType(value) {
   const type = String(value || "").split(";", 1)[0].trim().toLowerCase();
   if (!["image/jpeg", "image/png", "image/webp"].includes(type)) {
@@ -580,6 +590,11 @@ async function router(request, env) {
     return json({ ok: true, workspaceId, ...snapshot });
   }
 
+  if (request.method === "GET" && path === "/v1/revisions") {
+    const revisions = await listRevisions(sql, workspaceId);
+    return json({ ok: true, workspaceId, revisions });
+  }
+
   if (request.method === "POST" && path === "/v1/migrate") {
     const input = await requestJson(request);
     const documents = normalizeDocuments(input.documents);
@@ -654,6 +669,24 @@ async function router(request, env) {
   }
 
   const stateMatch = path.match(/^\/v1\/state\/([a-zA-Z0-9_-]+)$/);
+  if (request.method === "GET" && stateMatch) {
+    const key = stateMatch[1];
+    if (!STATE_DOCUMENT_KEYS.includes(key)) return json({ ok: false, error: "不支持的状态文档" }, { status: 404 });
+    const rows = await sql`
+      select data, revision, updated_at
+      from externallink_workspace_documents
+      where workspace_id = ${workspaceId} and document_key = ${key}
+    `;
+    const current = rows[0];
+    if (!current) return json({ ok: false, error: "状态文档不存在" }, { status: 404 });
+    return json({
+      ok: true,
+      documentKey: key,
+      data: current.data,
+      revision: Number(current.revision),
+      updatedAt: current.updated_at || "",
+    });
+  }
   if (request.method === "PATCH" && stateMatch) {
     const key = stateMatch[1];
     if (!STATE_DOCUMENT_KEYS.includes(key)) return json({ ok: false, error: "不支持的状态文档" }, { status: 404 });

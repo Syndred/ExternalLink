@@ -113,7 +113,7 @@ const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze([
   "submissionRecords",
   "submissionTimeline",
 ]);
-const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 5000;
+const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 60000;
 let submissionLedgerPullPromise = null;
 let submissionLedgerPullStartedAt = 0;
 let batchLogWritePromise = Promise.resolve();
@@ -773,6 +773,53 @@ async function cloudRequest(pathname, options = {}, configOverride = null) {
   }
 }
 
+function normalizeCloudRevisions(value = {}) {
+  const revisions = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) return revisions;
+  for (const [key, revision] of Object.entries(value)) {
+    const parsed = Number(revision);
+    if (self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && Number.isInteger(parsed) && parsed >= 0) {
+      revisions[key] = parsed;
+    }
+  }
+  return revisions;
+}
+
+async function fetchChangedCloudDocuments(config, keys, knownRevisions = {}, options = {}) {
+  const requestedKeys = [...new Set(keys || [])].filter((key) =>
+    self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key),
+  );
+  const known = normalizeCloudRevisions(knownRevisions);
+  if (options.allowInitialSnapshot === true && requestedKeys.length === self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.length
+    && !Object.keys(known).length) {
+    const snapshot = await cloudRequest("/v1/snapshot", {}, config);
+    return {
+      documents: snapshot?.documents && typeof snapshot.documents === "object" ? snapshot.documents : {},
+      revisions: normalizeCloudRevisions(snapshot?.revisions),
+    };
+  }
+
+  const revisionResult = await cloudRequest("/v1/revisions", {}, config);
+  const revisions = normalizeCloudRevisions(revisionResult?.revisions);
+  const forcedKeys = new Set(options.forceKeys || []);
+  const changedKeys = requestedKeys.filter((key) =>
+    Object.prototype.hasOwnProperty.call(revisions, key)
+      && (forcedKeys.has(key) || known[key] !== revisions[key]),
+  );
+  const rows = await Promise.all(changedKeys.map((key) =>
+    cloudRequest(`/v1/state/${key}`, {}, config),
+  ));
+  const documents = {};
+  rows.forEach((row, index) => {
+    const key = changedKeys[index];
+    if (row?.documentKey !== key || !Object.prototype.hasOwnProperty.call(row || {}, "data")) return;
+    documents[key] = row.data;
+    const revision = Number(row.revision);
+    if (Number.isInteger(revision) && revision >= 0) revisions[key] = revision;
+  });
+  return { documents, revisions };
+}
+
 function automationRunSummary(status = "running") {
   return {
     runId: state.runId,
@@ -1048,7 +1095,19 @@ async function pullCloudState(options = {}) {
     }
     const config = await getCloudConfig();
     const configFingerprint = submissionLedgerCloudConfigFingerprint(config);
-    const snapshot = await cloudRequest("/v1/snapshot", {}, config);
+    const metadata = baselineStorage.cloudSyncMetadata && typeof baselineStorage.cloudSyncMetadata === "object"
+      ? baselineStorage.cloudSyncMetadata
+      : {};
+    const knownRevisions = metadata.configIdentity === cloudSyncConfigIdentity(config)
+      ? metadata.revisions || {}
+      : {};
+    const requestedKeys = resolveConflicts && conflictKeys.length && pendingNonConflicts.length
+      ? conflictKeys
+      : self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS;
+    const snapshot = await fetchChangedCloudDocuments(config, requestedKeys, knownRevisions, {
+      allowInitialSnapshot: requestedKeys.length === self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.length,
+      forceKeys: resolveConflicts ? conflictKeys : [],
+    });
     const latestStorage = await chrome.storage.local.get(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
     const currentConfig = await getCloudConfig();
     const changed = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.some((key) =>
@@ -1240,10 +1299,14 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
 
     submissionLedgerPullStartedAt = Date.now();
     try {
-      // The Worker currently exposes a single snapshot read endpoint. Keep
-      // the reconciliation surface deliberately narrow: only these two
-      // documents may leave this helper or be applied by its consumer.
-      const snapshot = await cloudRequest("/v1/snapshot", {}, config);
+      const knownRevisions = metadata.configIdentity === cloudSyncConfigIdentity(config)
+        ? metadata.revisions || {}
+        : {};
+      const snapshot = await fetchChangedCloudDocuments(
+        config,
+        SUBMISSION_LEDGER_CLOUD_KEYS,
+        knownRevisions,
+      );
       const documents = snapshot?.documents && typeof snapshot.documents === "object"
         ? snapshot.documents
         : {};
@@ -1457,11 +1520,11 @@ async function ensureCloudRevisions(configOverride = null) {
     return { ...known };
   }
   // Do not persist this read here. The caller may still discover that the
-  // cloud configuration changed while the snapshot was in flight; persisting
+  // cloud configuration changed while the request was in flight; persisting
   // its revisions before that check would associate the old workspace with
   // the new local configuration.
-  const snapshot = await cloudRequest("/v1/snapshot", {}, configOverride);
-  return { ...(snapshot.revisions || {}) };
+  const result = await cloudRequest("/v1/revisions", {}, configOverride);
+  return normalizeCloudRevisions(result.revisions);
 }
 
 function scheduleCloudSync(delayMs = CLOUD_SYNC_DEBOUNCE_MS, resetRetry = true) {
@@ -5040,8 +5103,8 @@ async function syncSubmifyLibrary() {
     if (!pushed?.ok || !Array.isArray(pushed.saved) || !pushed.saved.includes("sheetTableData")) {
       throw new Error("Submify 数据已保存在本机，但云端未确认保存，请点击“立即保存”后重试");
     }
-    const snapshot = await cloudRequest("/v1/snapshot");
-    const cloudTable = snapshot?.documents?.sheetTableData || {};
+    const cloudDocument = await cloudRequest("/v1/state/sheetTableData");
+    const cloudTable = cloudDocument?.data || {};
     const cloudEntries = Array.isArray(cloudTable.entries) ? cloudTable.entries : [];
     const cloudSourceIds = new Set();
     for (const entry of cloudEntries) {
@@ -5068,7 +5131,7 @@ async function syncSubmifyLibrary() {
       added: merged.stats.added,
       updated: merged.stats.updated,
       safetyDisabled: gated.disabled,
-      revision: snapshot?.revisions?.sheetTableData || 0,
+      revision: cloudDocument?.revision || 0,
       importedAt,
       message: `Submify 最新库同步成功：来源 ${source.advertisedTotal} 条，新增 ${merged.stats.added} 条，云端现有 ${cloudEntries.length} 条。`,
     };

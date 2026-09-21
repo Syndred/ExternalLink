@@ -97,6 +97,13 @@ const workerSource = await readFile(new URL("../cloud/worker/src/index.mjs", imp
 assert.match(workerSource, /sha256Hex\(bytes\).*!== sha256/s, "media uploads must verify the supplied checksum");
 assert.match(workerSource, /where externallink_workspace_documents\.revision = \$\{expectedRevision\}/, "state writes must use an atomic revision predicate");
 assert.match(workerSource, /request\.method === "PATCH"/, "cloud-first state updates need an atomic server-side patch endpoint");
+assert.match(workerSource, /path === "\/v1\/revisions"/, "incremental pulls need a lightweight revision endpoint");
+assert.match(workerSource, /request\.method === "GET" && stateMatch/, "incremental pulls need a single-document read endpoint");
+assert.doesNotMatch(
+  workerSource,
+  /select document_key, data, revision[\s\S]{0,300}path === "\/v1\/revisions"/,
+  "revision checks must not select document JSON bodies",
+);
 assert.match(workerSource, /await sql\.transaction\(queries\)/, "migration queries must use one Neon HTTP transaction");
 assert.match(workerSource, /jsonb_to_recordset/, "migration and timeline writes must be batched in PostgreSQL");
 assert.match(workerSource, /\/v1\/automation\/events/, "automation events must have a durable cloud endpoint");

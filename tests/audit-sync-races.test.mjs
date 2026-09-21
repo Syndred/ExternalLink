@@ -75,6 +75,8 @@ const source = [
   extractFunction(background, "cloudSyncConfigChangedError"),
   extractFunction(background, "submissionLedgerCloudConfigFingerprint"),
   extractFunction(background, "cloudSyncConfigIdentity"),
+  extractFunction(background, "normalizeCloudRevisions"),
+  extractFunction(background, "fetchChangedCloudDocuments"),
   extractFunction(background, "applyCloudSnapshot"),
   extractFunction(background, "pullCloudState"),
   extractFunction(background, "flushCloudState"),
@@ -399,16 +401,20 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
       cloudSyncPendingKeys: ["submissionRecords", "submissionTimeline"],
       cloudSyncConflictKeys: ["submissionTimeline"],
       cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
         revisions: { submissionRecords: 4, submissionTimeline: 2 },
       },
     },
-    cloudRequest: async () => ({
-      documents: {
-        submissionRecords: { remote: "must-not-overwrite-pending" },
-        submissionTimeline: { remote: "value" },
-      },
-      revisions: { submissionRecords: 9, submissionTimeline: 3 },
-    }),
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") {
+        return { revisions: { submissionRecords: 9, submissionTimeline: 2 } };
+      }
+      return {
+        documentKey: "submissionTimeline",
+        data: { remote: "value" },
+        revision: 2,
+      };
+    },
   });
   const resolved = await harness.context.pullCloudState({ resolveConflicts: true });
   assert.equal(resolved.status, "applied");
@@ -422,7 +428,7 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
   assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
   assert.deepEqual(harness.storageData.cloudSyncMetadata.revisions, {
     submissionRecords: 4,
-    submissionTimeline: 3,
+    submissionTimeline: 2,
   });
 }
 

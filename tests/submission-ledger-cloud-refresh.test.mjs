@@ -62,6 +62,7 @@ function extractFunction(source, name) {
 const functionNames = [
   "normalizeCloudRevisions",
   "fetchChangedCloudDocuments",
+  "isCloudQuotaError",
   "submissionLedgerValuesEqual",
   "submissionLedgerHasPendingWrites",
   "submissionLedgerSyncResult",
@@ -152,6 +153,7 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
   vm.runInContext(
     `const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze(["submissionRecords", "submissionTimeline"]);
      const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 60000;
+     const CLOUD_QUOTA_RETRY_MS = 60 * 60 * 1000;
      let submissionLedgerPullPromise = null;
      let submissionLedgerPullStartedAt = 0;
      const submissionLedgerWrite = self.ExtLinkBatchControls.createSerialExecutor();
@@ -159,6 +161,33 @@ function createHarness({ initial = {}, cloudSnapshot, cloudConfig, cloudRequest 
     context,
   );
   return { context, storageData, calls };
+}
+
+// Malformed single-document responses must not advance the cached revision.
+{
+  const harness = createHarness({
+    initial: {
+      submissionRecords: { local: true },
+      submissionTimeline: { local: true },
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { submissionRecords: 3, submissionTimeline: 3 },
+      },
+    },
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") {
+        return { revisions: { submissionRecords: 4, submissionTimeline: 3 } };
+      }
+      return { documentKey: "wrong-key", data: { remote: true }, revision: 4 };
+    },
+  });
+  const result = await harness.context.refreshSubmissionLedgerFromCloud({ force: true });
+  assert.equal(result.sync.status, "error");
+  assert.deepEqual(harness.storageData.cloudSyncMetadata.revisions, {
+    submissionRecords: 3,
+    submissionTimeline: 3,
+  });
+  assert.deepEqual(harness.storageData.submissionRecords, { local: true });
 }
 
 // A sidebar refresh reads revisions first and downloads only changed ledger

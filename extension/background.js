@@ -63,6 +63,7 @@ const LINK_MONITOR_ALARM = "externallink-link-monitor";
 const DEFAULT_LINK_MONITOR_MINUTES = 24 * 60;
 const CLOUD_SYNC_DEBOUNCE_MS = 800;
 const CLOUD_SYNC_RETRY_DELAYS_MS = [1000, 5000, 15000, 60000];
+const CLOUD_QUOTA_RETRY_MS = 60 * 60 * 1000;
 const BATCH_LOG_STORAGE_KEY = "batchRunLog";
 const BATCH_LOG_LIMIT = 400;
 const BATCH_TASK_WINDOW_SIZE = 180;
@@ -806,18 +807,28 @@ async function fetchChangedCloudDocuments(config, keys, knownRevisions = {}, opt
     Object.prototype.hasOwnProperty.call(revisions, key)
       && (forcedKeys.has(key) || known[key] !== revisions[key]),
   );
-  const rows = await Promise.all(changedKeys.map((key) =>
-    cloudRequest(`/v1/state/${key}`, {}, config),
-  ));
   const documents = {};
-  rows.forEach((row, index) => {
-    const key = changedKeys[index];
-    if (row?.documentKey !== key || !Object.prototype.hasOwnProperty.call(row || {}, "data")) return;
+  for (const key of changedKeys) {
+    const row = await cloudRequest(`/v1/state/${key}`, {}, config);
+    const revision = Number(row?.revision);
+    if (
+      row?.documentKey !== key
+      || !Object.prototype.hasOwnProperty.call(row || {}, "data")
+      || !Number.isInteger(revision)
+      || revision < revisions[key]
+    ) {
+      throw new Error(`云端状态文档“${key}”返回不完整，已停止推进本地版本`);
+    }
     documents[key] = row.data;
-    const revision = Number(row.revision);
-    if (Number.isInteger(revision) && revision >= 0) revisions[key] = revision;
-  });
+    revisions[key] = revision;
+  }
   return { documents, revisions };
+}
+
+function isCloudQuotaError(error) {
+  return /HTTP status 402|exceeded the quota|network transfer allowance/i.test(
+    String(error?.message || error || ""),
+  );
 }
 
 function automationRunSummary(status = "running") {
@@ -1106,7 +1117,10 @@ async function pullCloudState(options = {}) {
       : self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS;
     const snapshot = await fetchChangedCloudDocuments(config, requestedKeys, knownRevisions, {
       allowInitialSnapshot: requestedKeys.length === self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.length,
-      forceKeys: resolveConflicts ? conflictKeys : [],
+      forceKeys: [
+        ...(resolveConflicts ? conflictKeys : []),
+        ...requestedKeys.filter((key) => baselineStorage[key] === undefined),
+      ],
     });
     const latestStorage = await chrome.storage.local.get(self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS);
     const currentConfig = await getCloudConfig();
@@ -1282,8 +1296,11 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
     const lastAttemptAt = Date.parse(metadata.submissionLedgerPullAttemptAt || "");
     const memoryAttemptAt = submissionLedgerPullStartedAt || 0;
     const recentAttemptAt = Math.max(Number.isFinite(lastAttemptAt) ? lastAttemptAt : 0, memoryAttemptAt);
-    if (!force && recentAttemptAt && Date.now() - recentAttemptAt < SUBMISSION_LEDGER_PULL_COOLDOWN_MS) {
-      const cachedError = String(metadata.submissionLedgerPullError || "").trim();
+    const cachedError = String(metadata.submissionLedgerPullError || "").trim();
+    const cooldownMs = isCloudQuotaError(cachedError)
+      ? CLOUD_QUOTA_RETRY_MS
+      : SUBMISSION_LEDGER_PULL_COOLDOWN_MS;
+    if (!force && recentAttemptAt && Date.now() - recentAttemptAt < cooldownMs) {
       return {
         baseline,
         configFingerprint: submissionLedgerCloudConfigFingerprint(config),
@@ -1306,6 +1323,7 @@ async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
         config,
         SUBMISSION_LEDGER_CLOUD_KEYS,
         knownRevisions,
+        { forceKeys: SUBMISSION_LEDGER_CLOUD_KEYS.filter((key) => baseline[key] === undefined) },
       );
       const documents = snapshot?.documents && typeof snapshot.documents === "object"
         ? snapshot.documents
@@ -1536,8 +1554,12 @@ function scheduleCloudSync(delayMs = CLOUD_SYNC_DEBOUNCE_MS, resetRetry = true) 
   }, delayMs);
 }
 
-function scheduleCloudSyncRetry() {
+function scheduleCloudSyncRetry(error = null) {
   if (!cloudSyncPendingKeys.size) return;
+  if (isCloudQuotaError(error)) {
+    scheduleCloudSync(CLOUD_QUOTA_RETRY_MS, false);
+    return;
+  }
   const index = Math.min(cloudSyncRetryAttempt, CLOUD_SYNC_RETRY_DELAYS_MS.length - 1);
   cloudSyncRetryAttempt += 1;
   scheduleCloudSync(CLOUD_SYNC_RETRY_DELAYS_MS[index], false);
@@ -1694,7 +1716,7 @@ async function flushCloudState(keys = null) {
     } catch (metadataError) {
       console.warn("ExternalLink cloud sync metadata update failed", metadataError?.message || metadataError);
     }
-    if (err.status !== 409 && err.code !== "CLOUD_CONFIG_CHANGED") scheduleCloudSyncRetry();
+    if (err.status !== 409 && err.code !== "CLOUD_CONFIG_CHANGED") scheduleCloudSyncRetry(err);
     throw err;
   } finally {
     cloudSyncFlushPromise = null;

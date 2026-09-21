@@ -15,6 +15,9 @@ const MIME = Object.freeze({
   ".webp": "image/webp",
   ".gif": "image/gif",
 });
+const PROFILE_FOLDER_ALIASES = Object.freeze({
+  FreeLanguage: "AISpeakLearn",
+});
 
 function requiredEnv(name) {
   const value = String(process.env[name] || "").trim();
@@ -91,6 +94,19 @@ function applyMediaReferences(profiles, rows) {
   return next;
 }
 
+function resolveProfileIds(rows, profiles) {
+  const entries = Object.entries(profiles || {});
+  return rows.map((row) => {
+    if (profiles?.[row.profileId]) return row;
+    const expectedName = PROFILE_FOLDER_ALIASES[row.profileId];
+    const matches = entries.filter(([, profile]) => String(profile?.name || "").trim() === expectedName);
+    if (matches.length !== 1) {
+      throw new Error(`Cloud state has no unique Profile for media folder ${row.profileId}`);
+    }
+    return { ...row, profileId: matches[0][0] };
+  });
+}
+
 function applyTableMediaReferences(table, rows) {
   if (!table || typeof table !== "object" || !table.projects || typeof table.projects !== "object") return table;
   const next = structuredClone(table);
@@ -107,12 +123,17 @@ function applyTableMediaReferences(table, rows) {
   return next;
 }
 
+function safeHeaderFileName(name, fallback) {
+  const value = String(name || "").trim();
+  return /^[\x20-\x7e]+$/.test(value) ? value : String(fallback || "media");
+}
+
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
   const base = endpoint(requiredEnv("EXTERNALLINK_CLOUD_URL"));
   const token = requiredEnv("EXTERNALLINK_CLOUD_TOKEN");
   const workspace = String(process.env.EXTERNALLINK_CLOUD_WORKSPACE || "default").trim() || "default";
-  const plan = await mediaPlan();
+  let plan = await mediaPlan();
   const logos = plan.filter((row) => row.kind === "logo").length;
   const screenshots = plan.length - logos;
   if (dryRun) {
@@ -122,6 +143,7 @@ async function main() {
 
   const snapshot = await request(base, token, workspace, "/v1/snapshot");
   if (!snapshot.documents?.siteProfiles) throw new Error("Cloud state is empty; complete the first data migration before media migration");
+  plan = resolveProfileIds(plan, snapshot.documents.siteProfiles);
   for (const row of plan) {
     const bytes = await readFile(row.path);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -129,7 +151,7 @@ async function main() {
       method: "PUT",
       headers: {
         "Content-Type": row.contentType,
-        "X-Asset-Name": row.name,
+        "X-Asset-Name": safeHeaderFileName(row.name, row.assetId),
         "X-Asset-Sha256": sha256,
         "X-Profile-Id": row.profileId,
         "X-Media-Kind": row.kind,

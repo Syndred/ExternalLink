@@ -95,5 +95,16 @@ assert.match(background, /scheduleCloudSyncRetry/, "temporary cloud save failure
 assert.match(settings, /result\.pulledDocuments \?\? result\.totalDocuments/, "migration success must show the total cloud document count");
 assert.match(settings, /result\.resumed \? "迁移续传完成"/, "a resumed migration must not look like an empty migration");
 assert.match(settings, /migrateButton\.disabled = migrated/, "completed first migration must disable the one-time button");
+const mediaMigration = readFileSync("tools/migrate-media-to-r2.mjs", "utf8");
+assert.match(
+  mediaMigration,
+  /safeHeaderFileName\(row\.name, row\.assetId\)/,
+  "media migration headers must fall back to an ASCII asset name for Chinese filenames",
+);
+assert.match(
+  mediaMigration,
+  /FreeLanguage:\s*"AISpeakLearn"/,
+  "the legacy media folder must resolve to the stable AISpeakLearn profile",
+);
 
 console.log("cloud sync workflow tests passed");

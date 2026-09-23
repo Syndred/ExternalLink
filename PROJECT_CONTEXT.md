@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-23 / JevPlay Product Hunt 排期**：已通过 `@syndred` 在 Product Hunt 创建 JevPlay Launch，预发布后台回读 `Scheduled`，计划北京时间 2026-09-23 15:01 上线。当前云端资料中没有 JevPlay Profile，因此没有把这次提交硬写为其他 Profile 的成功账本；上线状态与链接见 `docs/JevPlay-Product-Hunt-2026-09-23.md`。
+
 - **2026-09-21 / 3.7.2 多设备强制云端回读**：修复复制浏览器 Profile 后只有 `pending`、没有 `conflict` 时无法采用云端的问题。设置页“从云端回读”现在会先导出 JSON 备份并二次确认，再以 Neon 完整覆盖本机旧缓存、删除云端缺失键并清空 pending/conflict/patch；并发编辑保护仍保留。44/44 回归通过，详见 `docs/多设备强制云端回读-2026-09-21.md`。
 
 - **2026-09-21 / Neon 新项目迁移完成**：用户确认本机 Ego Profile 为最新真相源。已创建新 Neon `ExternalLink` 项目 `dark-night-20420985`，建表并轮换 Worker `DATABASE_URL`；生产健康检查恢复 200。迁移后回读 20 类文档、7 个 Profile、2,975 条外链、30 条提交记录、77 组/222 条时间线。43 个 R2 媒体逐个下载校验 SHA-256/大小一致，媒体缺失引用为 0。备份与台式机连接流程见 `docs/Neon新项目迁移-2026-09-21.md`。

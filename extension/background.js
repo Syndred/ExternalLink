@@ -997,11 +997,54 @@ async function updateCloudMetadata(patch) {
 }
 
 async function getCloudSyncStatus() {
+  if (typeof initializationPromise !== "undefined") await initializationPromise;
   const config = await getCloudConfig();
   if (!config.configured) return { ok: true, connected: false, config };
   try {
-    const health = await cloudRequest("/v1/health");
-    return { ok: true, connected: true, config: await getCloudConfig(), health };
+    // Status checks read revision numbers only. Never download the large
+    // sheetTableData document just to decide whether this device is current.
+    const revisionResult = await cloudRequest("/v1/revisions", {}, config);
+    if (!revisionResult?.revisions || typeof revisionResult.revisions !== "object"
+      || Array.isArray(revisionResult.revisions)) {
+      throw new Error("云端修订号响应不完整，暂无法确认同步状态");
+    }
+    const remoteRevisions = normalizeCloudRevisions(revisionResult?.revisions);
+    const keys = self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS;
+    const localState = await chrome.storage.local.get(["cloudSyncMetadata", ...keys]);
+    const metadata = localState.cloudSyncMetadata || {};
+    const localRevisions = metadata.configIdentity === cloudSyncConfigIdentity(config)
+      ? normalizeCloudRevisions(metadata.revisions)
+      : {};
+    const outOfDateKeys = keys.filter((key) =>
+      Object.prototype.hasOwnProperty.call(remoteRevisions, key)
+        && (remoteRevisions[key] !== localRevisions[key]
+          || !Object.prototype.hasOwnProperty.call(localState, key)),
+    );
+    const localOnlyKeys = keys.filter((key) =>
+      Object.prototype.hasOwnProperty.call(localState, key)
+        && !Object.prototype.hasOwnProperty.call(remoteRevisions, key),
+    );
+    const pendingKeys = keys.filter((key) => cloudSyncPendingKeys.has(key));
+    const conflictKeys = keys.filter((key) => cloudSyncConflictKeys.has(key));
+    const syncStatus = conflictKeys.length ? "conflict"
+      : pendingKeys.length ? "pending"
+      : outOfDateKeys.length || localOnlyKeys.length ? "out_of_date"
+      : !Object.keys(remoteRevisions).length ? "empty"
+      : "current";
+    return {
+      ok: true,
+      connected: true,
+      config: await getCloudConfig(),
+      sync: {
+        status: syncStatus,
+        checkedAt: new Date().toISOString(),
+        remoteDocumentCount: Object.keys(remoteRevisions).length,
+        pendingCount: pendingKeys.length,
+        conflictCount: conflictKeys.length,
+        outOfDateCount: outOfDateKeys.length,
+        localOnlyCount: localOnlyKeys.length,
+      },
+    };
   } catch (err) {
     await updateCloudMetadata({ lastError: err.message });
     return { ok: true, connected: false, config: await getCloudConfig(), error: err.message };

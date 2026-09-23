@@ -634,6 +634,15 @@
               <div class="empty-state">先在左侧选择一个外链站。</div>
             </div>
           </div>
+          <div class="card">
+            <div class="section-title">本机与云端同步</div>
+            <div class="sync-status" id="cloudSyncStatus" role="status" aria-live="polite">
+              正在检查同步状态…
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btnCloudRefresh">轻量核对版本</button>
+            </div>
+          </div>
           <details class="library-ops">
             <summary>云端、备份与监控</summary>
           <div class="card">
@@ -652,18 +661,15 @@
             </div>
             <div class="btn-row">
               <button class="btn btn-secondary" id="btnCloudConnect">连接云端</button>
-              <button class="btn btn-secondary" id="btnCloudRefresh">刷新状态</button>
             </div>
             <div class="btn-row">
               <button class="btn btn-primary" id="btnCloudMigrate">首次迁移到云端</button>
-              <button class="btn btn-secondary" id="btnCloudPull">从云端回读</button>
+              <button class="btn btn-secondary" id="btnCloudPull">回读云端更新</button>
             </div>
             <div class="btn-row">
-              <button class="btn btn-secondary" id="btnCloudPush">立即保存</button>
+              <button class="btn btn-secondary" id="btnCloudPush">重试上传本机修改</button>
             </div>
-            <div class="sync-status" id="cloudSyncStatus" role="status" aria-live="polite">
-              尚未连接云端数据中心。
-            </div>
+            <p class="help-text">“轻量核对版本”只查询修订号，不下载正文。打开设置可能增量回读有变化的提交记录和时间线；日常修改会自动上传。手动回读仅下载有更新的数据；新设备首次回读或确认覆盖本机数据时，可能下载完整云端数据。</p>
           </div>
           <div class="card">
             <div class="section-title">Submify 外链库</div>

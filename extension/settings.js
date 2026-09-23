@@ -184,6 +184,7 @@
   }
 
   async function loadCloudSyncStatus() {
+    setCloudStatus("正在轻量检查云端版本…");
     const result = await chrome.runtime.sendMessage({ action: "cloudSyncStatus" });
     if (!result?.ok) throw new Error(result?.error || "读取云端状态失败");
     const config = result.config || {};
@@ -205,11 +206,39 @@
       setCloudStatus(`云端不可用：${result.error || "连接失败"}`, "warning");
       return result;
     }
-    const health = result.health || {};
-    const parts = ["已连接 Neon + R2", `工作区 ${config.workspaceId || "default"}`, `状态文档 ${health.documentKeys || 0} 类`];
-    if (config.migratedAt) parts.push(`首次迁移 ${new Date(config.migratedAt).toLocaleString()}`);
-    if (config.lastPushAt) parts.push(`最近保存 ${new Date(config.lastPushAt).toLocaleString()}`);
-    setCloudStatus(parts.join(" · "), "success");
+    const sync = result.sync || {};
+    const parts = [`云端已连接 · 工作区 ${config.workspaceId || "default"}`];
+    let tone = "success";
+    if (sync.status === "conflict") {
+      parts.push(`${sync.conflictCount} 类数据有冲突，这些数据的自动上传已暂停；先备份，再处理冲突。`);
+      tone = "warning";
+    } else if (sync.status === "pending") {
+      parts.push(`${sync.pendingCount} 类本机修改待云端确认；可重试上传。`);
+      tone = "warning";
+    } else if (sync.status === "out_of_date") {
+      if (sync.outOfDateCount) parts.push(`${sync.outOfDateCount} 类本机与云端修订不一致，请回读核对。`);
+      if (sync.localOnlyCount) parts.push(`${sync.localOnlyCount} 类本机数据在云端尚无版本，需核对。`);
+      tone = "warning";
+    } else if (sync.status === "empty") {
+      parts.push("云端工作区尚无状态文档，请确认工作区或完成首次迁移。");
+      tone = "warning";
+    } else if (sync.status === "current") {
+      parts.push("本机已保存数据与云端版本一致。待上传 0 类，冲突 0 类。");
+    } else {
+      parts.push("尚未核对本机与云端的版本。");
+      tone = "warning";
+    }
+    if (["conflict", "pending"].includes(sync.status) && sync.outOfDateCount) {
+      parts.push(`另有 ${sync.outOfDateCount} 类修订不同；先处理本机修改，再核对云端。`);
+    }
+    if (hasUnsavedSettingsEdits()) {
+      parts.push("本页还有未保存的编辑，尚未计入版本核对。");
+      tone = "warning";
+    }
+    if (sync.checkedAt) parts.push(`核对时间 ${new Date(sync.checkedAt).toLocaleString()}`);
+    if (config.lastPullAt) parts.push(`上次回读 ${new Date(config.lastPullAt).toLocaleString()}`);
+    if (config.lastPushAt) parts.push(`上次上传 ${new Date(config.lastPushAt).toLocaleString()}`);
+    setCloudStatus(parts.join("\n"), tone);
     return result;
   }
 
@@ -1715,7 +1744,10 @@
         btn.disabled = false;
         return;
       }
-      const successMessage = `云端回读成功：已更新 ${result.documentCount || 0} 类数据。`;
+      const updatedCount = result.documentCount || 0;
+      const successMessage = updatedCount
+        ? `云端回读成功：已更新 ${updatedCount} 类数据。`
+        : "版本已核对，云端没有新更新。";
       setCloudStatus(successMessage, "success");
       queueReloadNotice(successMessage, "success", "library");
       location.reload();
@@ -1746,13 +1778,19 @@
     try {
       const result = await chrome.runtime.sendMessage({ action: "cloudSyncPush" });
       if (!result?.ok) throw new Error(result?.error || "云端保存失败");
-      await loadCloudSyncStatus();
       const savedCount = Array.isArray(result.saved) ? result.saved.length : 0;
-      const message = savedCount
+      const statusResult = await loadCloudSyncStatus();
+      const blocked = !statusResult.connected || statusResult.sync?.status !== "current";
+      let message = savedCount
         ? `云端保存成功：已保存 ${savedCount} 类修改。`
-        : "云端已是最新，没有待保存修改。";
-      setCloudStatus(message, "success");
-      showSettingsToast(message, "success");
+        : "本机没有待上传的修改；请查看版本状态。";
+      if (!statusResult.connected) message = "云端当前不可用，尚未确认本机版本。";
+      else if (!savedCount && statusResult.sync?.status === "conflict") {
+        message = "本机有冲突数据，上传未执行；请先处理冲突。";
+      } else if (!savedCount && statusResult.sync?.status === "pending") {
+        message = "仍有本机修改待云端确认，请查看同步状态。";
+      }
+      showSettingsToast(message, blocked ? "warning" : "success");
       setActivePanel("library");
     } catch (err) {
       setCloudStatus(err.message, "warning");

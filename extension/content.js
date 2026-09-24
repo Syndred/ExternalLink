@@ -3212,6 +3212,7 @@
     fitValueToConstraints,
     modelFillGuard,
     shouldClearStaleProtectedValue,
+    shouldReplaceExistingProfileEmail,
   };
   self.__extLinkCommentTestHooks = {
     detectArticleComment,
@@ -5364,6 +5365,17 @@
     return isSocialMediaFieldHint(hint) && isMediaUrlValue(text);
   }
 
+  function shouldReplaceExistingProfileEmail(element, existing, resolved) {
+    const current = String(existing || "").trim();
+    const configured = String(resolved || "").trim();
+    if (!current || !isValidEmailValue(configured)) return false;
+    // A CMS may name a category control `email`; its visible label wins.
+    const label = String(getSnapshotLabel(element) || "").toLowerCase();
+    const isEmail = isEmailFieldHint(label) ||
+      ((element.type || "").toLowerCase() === "email" && !label);
+    return isEmail && current.toLowerCase() !== configured.toLowerCase();
+  }
+
   function getProfileFields(config) {
     return config && config.projectFields && typeof config.projectFields === "object"
       ? config.projectFields
@@ -6922,7 +6934,8 @@
         element.dispatchEvent(new Event("change", { bubbles: true }));
         existing = "";
       }
-      if (existing && !fieldNeedsRefill(element)) continue;
+      if (existing && !fieldNeedsRefill(element) &&
+          !shouldReplaceExistingProfileEmail(element, existing, value)) continue;
 
       const resolved = value || resolveValueForField(config, element);
       if (!resolved) continue;

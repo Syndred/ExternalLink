@@ -239,6 +239,10 @@ assert.equal(
   "a valid deterministic value must survive a later asynchronous visual fill",
 );
 assert.equal(fieldHooks.shouldClearStaleProtectedValue(emailField, "not-an-email"), true);
+assert.equal(fieldHooks.shouldReplaceExistingProfileEmail(emailField, "syndredyoung@gmail.com", "support@oldphotoliveai.com"), true);
+assert.equal(fieldHooks.shouldReplaceExistingProfileEmail(emailField, "support@oldphotoliveai.com", "support@oldphotoliveai.com"), false);
+assert.equal(fieldHooks.shouldReplaceExistingProfileEmail(emailField, "syndredyoung@gmail.com", ""), false);
+assert.equal(fieldHooks.shouldReplaceExistingProfileEmail(new FakeField({ name: "email", ariaLabel: "Tool category" }), "Art", "support@oldphotoliveai.com"), false);
 assert.equal(fieldHooks.shouldClearStaleProtectedValue(socialUrlField, "https://cdn.example.com/a.jpg"), true);
 
 const newsletter = new FakeForm({

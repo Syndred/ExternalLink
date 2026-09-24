@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 21:06 / 最新进度**：Launchpedia 官方嵌入 Tally 对 JevPlay、OldPhotoLive AI、Graffiti Name AI 各显示最终 `Form submitted / Thanks for completing this form!`。JevPlay 在旧版人工补记；OldPhoto 与 Graffiti 在 Ego 已重载的 3.7.28 自动填表、自动记账，来源侧栏显示 3 个 Profile、3 条动态，刷新后无待云端保存提示。可选 Affiliate Link 保持空白。累计 **35 个真实产品×站点回执、13 站、11 站三产品齐全**；距 30 个完整站仍差 19 站。Tally 旧邮箱在切换 Profile 后可能保留，OldPhoto 提交前人工改为业务邮箱；3.7.29 已修自动填表时把不匹配的邮箱改为当前 Profile 的有效邮箱，待 Ego 重载复验。
+
 - **2026-09-24 20:50 / 最新进度**：Startup Collections 的官方嵌入式 Google Form 已分别收到 JevPlay、OldPhotoLive AI、Graffiti Name AI 的 `您的回复已记录。` 回执；三份都选免费排队、拒绝 $10 加速。插件正确自动填入三组产品名称、官网、描述和联系人，但未识别嵌入表单的点击与回执；已按现场证据在同一来源站逐份人工登记，侧栏显示 3 个 Profile、3 条动态，刷新回读 `云端动态已核对，当前记录是最新的`。累计 **33 个真实产品×站点回执、12 站、10 站三产品齐全**；距离 30 个完整站点还差 20 站。3.7.27 扩展提交监听到来源绑定的嵌入式 Google Form，要求精确产品域名、带标签的网址栏和最终确认链接，代码回归通过，待重载并在下一家实站验证。验证码、登录、付费、法律确认继续停放。
 
 - **2026-09-24 20:40 / 最新进度**：AI Tools Inc 的 JevPlay 收到官方 Typeform 最终 Thanks 回执，3.7.24 自动记账；该站三产品齐全。AI SuperHub 免费表单的 JevPlay、OldPhoto、Graffiti 均逐份跳转官方 `Submission Received!` 成功页，插件分别提示自动保存；来源站侧栏显示 3 个 Profile、5 条动态（Graffiti 因人工核验重复追加），点击刷新后回读 `云端动态已核对，当前记录是最新的`。累计 **30 个真实产品×站点回执、11 个站点、9 个站点三产品齐全**；目标是 30 个站点各三产品，仍差 21 个完整站。3.7.25 已在 Ego 重载，实站空表单能转为需人工处理；随后发现 `0/30 words` 被当成 30 字符上限，使短描述漏填。3.7.26 修正词数计数单位及打开的自定义选单误报可提交，52 组回归通过，待 Ego 重载实站复验。验证码/登录/付费/法律确认继续停放。

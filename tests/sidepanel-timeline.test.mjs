@@ -66,4 +66,13 @@ assert.deepEqual(
 );
 assert.equal(model.events[0].publicUrl, "https://example.com/listing");
 
+const excelModel = buildTimelineModel({ events: [
+  { id: "legacy-a", profileId: "VideoToArticleAI", type: "submitted", occurredAt: "46261", note: "Your submission was successful." },
+  { id: "legacy-b", profileId: "VideoToArticleAI", type: "submitted", occurredAt: "46261", note: "Your submission was successful." },
+  { id: "current", profileId: "JevPlay", type: "submitted", occurredAt: "2026-09-24T10:00:00Z", note: "Received" },
+] });
+assert.equal(excelModel.events.length, 2, "same receipt with different migration IDs should display once");
+assert.equal(excelModel.events[0].profileId, "JevPlay", "Excel serial must not sort as year 46261");
+assert.equal(excelModel.events[1].timestamp, Date.parse("2026-08-27T00:00:00Z"));
+
 console.log("Sidepanel timeline tests passed");

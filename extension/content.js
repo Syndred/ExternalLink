@@ -5357,6 +5357,17 @@
     const hint = getFieldHint(element);
     const pf = getProfileFields(config);
 
+    if (/\b(short description|short desc)\b/.test(hint)) {
+      return fitValueToConstraints(
+        pf["Short description(20-30 words)"] || pickShortPitch(config),
+        { ...constraints, maxWords: constraints.maxWords || 30, maxLength: constraints.maxLength || 200 },
+      );
+    }
+    if (/\b2\s*[-–]\s*3\s+sentences?\b/.test(hint)) {
+      const sentences = String(pickDescription(config)).split(/(?<=[.!?])\s+/).filter(Boolean);
+      return fitValueToConstraints(sentences.slice(0, 3).join(" "), constraints);
+    }
+
     if (
       /\b(what made you|why did you|why choose|how does|what problem|alternative|over the alternative|shoutout|review|testimonial|tips|considered)\b/.test(
         hint,

@@ -613,6 +613,16 @@
         skipped.push({ source: "submissionRecords", key: storedKey, reason: "missing destination/profile" });
         continue;
       }
+      const groupKey = timelineKey(event.destinationKey, event.profileId);
+      const equivalent = (next[groupKey] || []).some((existing) =>
+        existing.type === event.type &&
+        existing.occurredAt === event.occurredAt &&
+        existing.note === event.note &&
+        existing.evidenceUrl === event.evidenceUrl &&
+        existing.publicUrl === event.publicUrl &&
+        (!existing.recordKey || existing.recordKey === event.recordKey)
+      );
+      if (equivalent) continue;
       const result = appendWithResult(next, event);
       next = result.timeline;
       if (result.added) migratedEvents.push(event);

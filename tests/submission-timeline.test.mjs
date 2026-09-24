@@ -284,6 +284,25 @@ assert.equal(
   "legacy migration is idempotent for unchanged source rows",
 );
 
+const sameRecordAlreadyWritten = T.migrateLegacy({
+  timeline: {
+    "directory.example/submit::VideoToArticleAI": [{
+      id: "agent-receipt",
+      destinationKey: "directory.example/submit",
+      profileId: "VideoToArticleAI",
+      recordKey: "directory.example/submit::VideoToArticleAI",
+      type: "submitted",
+      occurredAt: "2026-08-24T03:00:00.000Z",
+      note: "Submitted for Review",
+      evidenceUrl: "https://directory.example/evidence",
+      publicUrl: "https://directory.example/tools/video",
+    }],
+  },
+  submissionRecords: { "directory.example/submit::VideoToArticleAI": legacyRecords["directory.example/submit::VideoToArticleAI"] },
+});
+assert.equal(sameRecordAlreadyWritten.timeline["directory.example/submit::VideoToArticleAI"].length, 1,
+  "migration should not add another event beside an equivalent agent receipt");
+
 const backup = T.validateBackup({
   format: T.TIMELINE_BACKUP_FORMAT,
   version: 1,

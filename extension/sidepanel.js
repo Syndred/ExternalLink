@@ -3,6 +3,17 @@
 
   // Keep the data shaping independent from the DOM so the side panel and its
   // focused tests use the same Profile-aware timeline contract.
+  function parseTimelineTimestamp(value) {
+    const raw = String(value || "").trim();
+    // Legacy spreadsheet rows sometimes contain an Excel date serial. Date.parse
+    // interprets e.g. 46261 as year 46261, so convert it before sorting.
+    if (/^\d{5}$/.test(raw)) {
+      const serial = Number(raw);
+      if (serial >= 20000 && serial <= 60000) return Date.UTC(1899, 11, 30) + serial * 86400000;
+    }
+    return Date.parse(raw);
+  }
+
   function buildTimelineModel(item = {}, siteProfiles = {}) {
     const profileNames = new Map();
     for (const profile of Array.isArray(item.profileStatuses) ? item.profileStatuses : []) {
@@ -16,6 +27,7 @@
 
     const events = [];
     const seenIds = new Set();
+    const seenReceipts = new Set();
     const append = (raw, fallback = {}) => {
       if (!raw || typeof raw !== "object") return;
       const profileId = String(raw.profileId || raw.projectId || fallback.profileId || "__destination__").trim() || "__destination__";
@@ -26,7 +38,10 @@
       const id = String(raw.id || "").trim();
       if (id && seenIds.has(id)) return;
       if (id) seenIds.add(id);
-      events.push({ ...raw, profileId, profileName, occurredAt, type, timestamp: Date.parse(occurredAt) });
+      const receiptKey = JSON.stringify([profileId, type, occurredAt, String(raw.note || "").trim(), String(raw.evidenceUrl || "").trim(), String(raw.publicUrl || "").trim()]);
+      if (seenReceipts.has(receiptKey)) return;
+      seenReceipts.add(receiptKey);
+      events.push({ ...raw, profileId, profileName, occurredAt, type, timestamp: parseTimelineTimestamp(occurredAt) });
     };
 
     for (const event of Array.isArray(item.events) ? item.events : []) append(event);
@@ -92,6 +107,7 @@
 
   global.ExtLinkSidepanel = global.ExtLinkSidepanel || {};
   global.ExtLinkSidepanel.buildTimelineModel = buildTimelineModel;
+  global.ExtLinkSidepanel.parseTimelineTimestamp = parseTimelineTimestamp;
   global.ExtLinkSidepanel.canEditTimeline = canEditTimeline;
   global.ExtLinkSidepanel.normalizeBatchConcurrency = normalizeBatchConcurrency;
   global.ExtLinkSidepanel.buildBatchConfig = buildBatchConfig;
@@ -838,7 +854,9 @@
   function formatSidepanelTimelineTime(value) {
     const raw = String(value || "").trim();
     if (!raw || /^(?:unknown|null|undefined|n\/a|na|未(?:知|记录)|时间未知)$/i.test(raw)) return "时间未知";
-    const date = new Date(raw);
+    const timestamp = typeof Sidepanel !== "undefined" && Sidepanel?.parseTimelineTimestamp
+      ? Sidepanel.parseTimelineTimestamp(raw) : Date.parse(raw);
+    const date = new Date(timestamp);
     if (Number.isNaN(date.getTime())) return "时间未知";
     return new Intl.DateTimeFormat("zh-CN", {
       year: "numeric",

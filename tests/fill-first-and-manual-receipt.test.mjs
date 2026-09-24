@@ -326,6 +326,18 @@ vm.runInContext("manualSubmissionWatch = { token: 'google-wrong-profile', target
 listeners.click(googleClick);
 assert.equal(clicks.length, 7, 'a Google Form with another Profile URL must not be attributed');
 watcher.location.pathname = '/forms/d/e/unknown/viewform';
-vm.runInContext("manualSubmissionWatch = { token: 'google-unknown-form', targetDomain: 'https://jevplay.com' };", watcher);
+vm.runInContext("manualSubmissionWatch = { token: 'google-no-source', targetDomain: 'https://jevplay.com' };", watcher);
 listeners.click(googleClick);
-assert.equal(clicks.length, 7, 'another Google Form must not use the AI Infinity receipt shortcut');
+assert.equal(clicks.length, 7, 'a Google Form without a bound source must not claim a receipt');
+watcher.document.querySelector = () => null;
+watcher.document.getElementById = (id) => id === 'i6' ? { textContent: 'Website' } : null;
+watcher.document.querySelectorAll = () => [{
+  type: 'text', value: 'https://jevplay.com/games',
+  getAttribute: (name) => name === 'aria-labelledby' ? 'i6 i9' : '',
+}];
+vm.runInContext("manualSubmissionWatch = { token: 'embedded-google', targetDomain: 'https://jevplay.com/games', destinationUrl: 'https://startupcollections.com/submit-product/' };", watcher);
+listeners.click(googleClick);
+assert.equal(clicks.length, 8, 'a source-bound embedded Google Form with a labelled matching website may report its final click');
+vm.runInContext("manualSubmissionWatch = { token: 'wrong-embedded-google', targetDomain: 'https://oldphotoliveai.com', destinationUrl: 'https://startupcollections.com/submit-product/' };", watcher);
+listeners.click(googleClick);
+assert.equal(clicks.length, 8, 'an embedded form for another Profile must not be attributed');

@@ -127,11 +127,12 @@
     const typeformFinalControl = typeformFrame && Boolean(expectedHost || destinationHost) &&
       /\b(submit|send|apply|finish|complete|done)\b|提交|完成/.test(controlHint) &&
       !/\b(next|continue|ok|back|previous)\b/.test(controlHint);
-    // Google Forms uses a div[role=button] for its final Submit action. Only
-    // the known AI Infinity form may use this path; other custom buttons must
-    // not arm an unrelated directory's receipt watcher.
+    // Google Forms uses a div[role=button] for its final Submit action. The
+    // watcher is bound to the source tab and must also find this Profile's
+    // exact website host in a labelled URL answer before it can record.
     const googleFormFinalControl = currentHost === "docs.google.com" &&
-      /^\/forms\/d\/e\/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg\/viewform$/i.test(location.pathname) &&
+      /^\/forms\/(?:u\/\d+\/)?d\/e\/[^/]+\/viewform$/i.test(location.pathname) &&
+      destinationHost && destinationHost !== currentHost &&
       control?.getAttribute?.("role") === "button" &&
       /\bsubmit\b|提交/.test(controlHint) &&
       !/\b(next|continue|back|previous)\b|下一步|上一步/.test(controlHint);
@@ -150,7 +151,9 @@
       if (!expectedHost || siteHost(String(input.value || "")) !== expectedHost) return false;
       if (type === "url" || hasDescription) return true;
       const labels = [...(input.labels || [])].map((label) => label.textContent || "");
-      const hint = [input.name, input.id, input.placeholder, ...labels].join(" ");
+      const labelledBy = String(input.getAttribute?.("aria-labelledby") || "")
+        .split(/\s+/).map((id) => document.getElementById?.(id)?.textContent || "");
+      const hint = [input.name, input.id, input.placeholder, ...labels, ...labelledBy].join(" ");
       return /\b(url|website|web\s*site|link|domain|site\s*address)\b/i.test(hint);
     });
     // Typeform keeps the product URL in an earlier answer and renders the
@@ -800,6 +803,28 @@
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    // Google Forms shows this confirmation link only after a completed
+    // response. Wording elsewhere on the form is not submission evidence.
+    const googleFormReceipt = (() => {
+      try {
+        const page = new URL(String(location.href || ""));
+        const source = new URL(String(destinationUrl || ""));
+        return page.hostname === "docs.google.com" && source.hostname !== "docs.google.com" &&
+          /^\/forms\/(?:u\/\d+\/)?d\/e\/[^/]+\/(?:viewform|formResponse)$/i.test(page.pathname) &&
+          Boolean(document.querySelector('a[href*="usp=form_confirm"]'));
+      } catch {
+        return false;
+      }
+    })();
+    if (googleFormReceipt && /您的回复已记录。?|Your response has been recorded\.?/i.test(text)) {
+      const evidence = /您的回复已记录/.test(text) ? "您的回复已记录。" : "Your response has been recorded.";
+      return {
+        publicationStatus: "submitted",
+        evidence,
+        evidenceSignals: [{ type: "visible_confirmation", text: evidence, url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     // AI Marketing Directory's embedded Tally form replaces the fields with
     // this status after a real submit. Scope the signal to its known form so
     // an unrelated page containing the same words cannot create a record.

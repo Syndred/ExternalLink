@@ -336,6 +336,16 @@ document.body.innerText = "Form submitted Are you interested in a guaranteed spo
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.aimarketing.directory/submit" });
 assert.equal(receipt.matched, true, "the known Tally form's final confirmation should count as a submission receipt");
 assert.equal(receipt.evidence, "Form submitted");
+const originalQuerySelector = document.querySelector.bind(document);
+context.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSfxtP1hx6kN9nkAYXquRq2eTG24_YPEx5-pHov2POonNLeuOw/viewform";
+document.body.innerText = "您的回复已记录。另填写一份回复";
+document.querySelector = (selector) => selector.includes("usp=form_confirm") ? { href: "https://docs.google.com/forms/d/e/example/viewform?usp=form_confirm" } : originalQuerySelector(selector);
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupcollections.com/submit-product/" });
+assert.equal(receipt.matched, true, "a source-bound Google Form confirmation link and final text prove submission");
+assert.equal(receipt.evidence, "您的回复已记录。");
+document.querySelector = originalQuerySelector;
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupcollections.com/submit-product/" });
+assert.equal(receipt.matched, false, "thank-you text without the final confirmation link is not enough");
 context.location.href = "https://tally.so/embed/another-form";
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.aimarketing.directory/submit" });
 assert.equal(receipt.matched, false, "another Tally form must not inherit AI Marketing's receipt shortcut");

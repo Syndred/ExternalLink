@@ -341,3 +341,11 @@ assert.equal(clicks.length, 8, 'a source-bound embedded Google Form with a label
 vm.runInContext("manualSubmissionWatch = { token: 'wrong-embedded-google', targetDomain: 'https://oldphotoliveai.com', destinationUrl: 'https://startupcollections.com/submit-product/' };", watcher);
 listeners.click(googleClick);
 assert.equal(clicks.length, 8, 'an embedded form for another Profile must not be attributed');
+watcher.location.href = 'https://tally.so/embed/3xrj59';
+watcher.location.pathname = '/embed/3xrj59';
+watcher.isSubmitControl = () => true;
+watcher.document.querySelectorAll = () => [{ type: 'url', value: 'https://jevplay.com/games' }];
+const tallyButton = { tagName: 'BUTTON', textContent: 'Submit', getAttribute: () => '', closest: () => null };
+vm.runInContext("manualSubmissionWatch = { token: 'embedded-tally', targetDomain: 'https://jevplay.com/games', destinationUrl: 'https://launchpedia.co/submit/' };", watcher);
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => tallyButton } });
+assert.equal(clicks.length, 9, 'a source-bound Tally final button with an exact product URL must trigger receipt polling');

@@ -336,6 +336,21 @@ document.body.innerText = "Form submitted Are you interested in a guaranteed spo
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.aimarketing.directory/submit" });
 assert.equal(receipt.matched, true, "the known Tally form's final confirmation should count as a submission receipt");
 assert.equal(receipt.evidence, "Form submitted");
+const tallyQuerySelector = document.querySelector.bind(document);
+context.location.href = "https://tally.so/embed/3xrj59";
+document.body.innerText = "Form submitted Thanks for completing this form!";
+document.querySelector = (selector) => selector === '[role="status"]'
+  ? { textContent: "Form submitted" }
+  : selector === 'h1'
+    ? { textContent: "Thanks for completing this form!" }
+    : tallyQuerySelector(selector);
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://launchpedia.co/submit/" });
+assert.equal(receipt.matched, true, "a source-bound Tally final status and heading prove submission");
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://tally.so/embed/3xrj59" });
+assert.equal(receipt.matched, false, "a Tally receipt without an external source must not be attributed");
+document.querySelector = tallyQuerySelector;
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://launchpedia.co/submit/" });
+assert.equal(receipt.matched, false, "generic text without a Tally final status is not enough");
 const originalQuerySelector = document.querySelector.bind(document);
 context.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSfxtP1hx6kN9nkAYXquRq2eTG24_YPEx5-pHov2POonNLeuOw/viewform";
 document.body.innerText = "您的回复已记录。另填写一份回复";

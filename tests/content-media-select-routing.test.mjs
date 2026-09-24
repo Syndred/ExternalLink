@@ -115,6 +115,12 @@ assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, tags: "AI g
 assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", email: "contact@example.com", projectFields: {} },
   { tagName: "INPUT", type: "url", hint: "Website URL form_fields[email]", label: "Website URL", getAttribute: () => null }),
   "https://jevplay.com/games", "URL input must outrank an internal email field name");
+assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", projectFields: {} },
+  { tagName: "INPUT", type: "url", hint: "Affiliate Link", label: "Affiliate Link", getAttribute: () => null }),
+  "", "an optional affiliate URL must not reuse the product homepage");
+assert.equal(resolveValue({ projectFields: { "Affiliate Link": "https://partner.example.com/jev" } },
+  { tagName: "INPUT", type: "url", hint: "Affiliate Link", label: "Affiliate Link", getAttribute: () => null }),
+  "https://partner.example.com/jev");
 assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "First name", getAttribute: () => null }), "Syndred");
 assert.equal(resolveValue({ username: "Syndred", projectFields: {} },

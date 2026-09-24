@@ -803,6 +803,26 @@
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    const sourceBoundTallyReceipt = (() => {
+      try {
+        const page = new URL(String(location.href || ""));
+        const source = new URL(String(destinationUrl || ""));
+        return page.hostname === "tally.so" && source.hostname !== "tally.so" &&
+          /^\/(?:embed|r)\/[^/]+\/?$/i.test(page.pathname) &&
+          /^Form submitted$/i.test(String(document.querySelector('[role="status"]')?.textContent || "").trim()) &&
+          /^Thanks for completing this form!$/i.test(String(document.querySelector('h1')?.textContent || "").trim());
+      } catch {
+        return false;
+      }
+    })();
+    if (sourceBoundTallyReceipt) {
+      return {
+        publicationStatus: "submitted",
+        evidence: "Form submitted — Thanks for completing this form!",
+        evidenceSignals: [{ type: "visible_confirmation", text: "Form submitted — Thanks for completing this form!", url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     // Google Forms shows this confirmation link only after a completed
     // response. Wording elsewhere on the form is not submission evidence.
     const googleFormReceipt = (() => {
@@ -6290,6 +6310,10 @@
       return resolveConfiguredSocialUrl(config, `${hint} ${visibleHint}`);
     }
     if (isUnmappedSourceFieldHint(`${hint} ${visibleHint}`)) return "";
+    if (/\baffiliate\s*(?:link|url)?\b|\breferral\s+(?:link|url)\b/.test(`${hint} ${visibleHint}`)) {
+      const affiliate = pf["Affiliate Link"] || pf["Affiliate URL"] || pf["Referral Link"] || pf["Referral URL"] || "";
+      return /^https?:\/\/[^\s]+$/i.test(String(affiliate).trim()) ? String(affiliate).trim() : "";
+    }
     if (/\bprimary\s+use\s+case\b/.test(`${hint} ${visibleHint}`)) {
       const useCase =
         (Array.isArray(config.useCases) ? config.useCases.find(Boolean) : "") ||

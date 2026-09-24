@@ -724,6 +724,7 @@
   $("spSiteSelect")?.addEventListener("change", () => {
     activeSiteId = $("spSiteSelect").value;
     chrome.storage.local.set({ activeSiteId });
+    setAutoFillStatus("");
     resetCommentStudio({ clearHistory: true });
     resetMediaUploadState();
     updateProfileStatus();
@@ -2680,9 +2681,15 @@
 
   // ─── Active tab tracking ───
   async function refreshActiveTab() {
+    const previousTabId = activeTabId;
+    const previousPageUrl = currentPageUrl;
     const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
     activeTabId = tab?.id || null;
     currentPageUrl = tab?.url?.startsWith("http") ? tab.url : "";
+    if (activeTabId !== previousTabId || currentPageUrl !== previousPageUrl) {
+      setAutoFillStatus("");
+      setStatusPending();
+    }
     if (tab?.url?.startsWith("http")) {
       try {
         const u = new URL(tab.url);

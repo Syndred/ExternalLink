@@ -46,6 +46,7 @@ assert.equal(run.result.validation.submitReady, false);
 assert.match(run.result.agentResult.reason, /本地已填写 3 个字段/);
 
 const store = {};
+const sessionStore = {};
 const records = [];
 const messages = [];
 let evidence = { matched: false };
@@ -66,6 +67,9 @@ const ctx = {
     get: async (key) => ({ [key]: store[key] }),
     set: async (data) => Object.assign(store, data),
     remove: async (key) => { delete store[key]; },
+  }, session: {
+    get: async (key) => ({ [key]: sessionStore[key] }),
+    set: async (data) => Object.assign(sessionStore, data),
   } } },
   getTabUrlSafe: async () => 'https://directory.example/submit',
   sendTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
@@ -159,6 +163,17 @@ assert.equal(
   store['manualSubmissionWatch:13'].url,
   'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
   'forms.gle redirect must use the browser-owned opener tab to retain the directory attribution',
+);
+await ctx.captureTrustedExternalFormOpen({
+  sourceTabId: 99,
+  tabId: 14,
+  url: 'https://forms.gle/Ze6pdWzmweCfKWnLA',
+});
+await ctx.armManualSubmissionWatch(14, { id: 'JevPlay' }, { targetDomain: 'https://jevplay.com' });
+assert.equal(
+  store['manualSubmissionWatch:14'].url,
+  'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
+  'a popup without openerTabId must retain its browser navigation source after forms.gle redirects',
 );
 
 const binding = {

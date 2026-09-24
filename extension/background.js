@@ -179,6 +179,10 @@ chrome.contextMenus?.onClicked.addListener((info) => {
   self.ExtLinkContextMenu.handleActionMenuClick(chrome, info);
 });
 
+chrome.webNavigation?.onCreatedNavigationTarget?.addListener((details) => {
+  captureTrustedExternalFormOpen(details).catch(() => {});
+});
+
 chrome.runtime.onStartup.addListener(() => {
   configureScheduledChecks().catch(() => {});
   chrome.alarms.create(AUTOMATION_OUTBOX_ALARM, { periodInMinutes: 5 });
@@ -4325,6 +4329,31 @@ function isStandaloneExternalFormUrl(value) {
   }
 }
 
+const AI_INFINITY_FORM_SHORT_URL = "https://forms.gle/Ze6pdWzmweCfKWnLA";
+const EXTERNAL_FORM_SOURCE_MAX_AGE_MS = 10 * 60 * 1000;
+
+async function captureTrustedExternalFormOpen(details = {}) {
+  const sourceTabId = Number(details.sourceTabId);
+  const targetTabId = Number(details.tabId);
+  if (!Number.isInteger(sourceTabId) || !Number.isInteger(targetTabId)) return;
+  if (!chrome.storage?.session?.set) return;
+  const openingUrl = String(details.url || "").trim();
+  if (openingUrl !== AI_INFINITY_FORM_SHORT_URL &&
+      !trustedExternalFormDestination(openingUrl, "https://aiinfinity-meetpatel.notion.site/")) return;
+  const sourceTab = await chrome.tabs.get(sourceTabId);
+  const sourceUrl = String(sourceTab?.url || "");
+  const expectedGoogleForm = "https://docs.google.com/forms/d/e/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg/viewform";
+  if (!trustedExternalFormDestination(expectedGoogleForm, sourceUrl)) return;
+  await chrome.storage.session.set({
+    [`externalFormSource:${targetTabId}`]: {
+      sourceTabId,
+      sourceUrl,
+      openingUrl,
+      capturedAt: Date.now(),
+    },
+  });
+}
+
 async function trustedExternalFormSourceForTab(tabId, pageUrl, referrerUrl) {
   const direct = trustedExternalFormDestination(pageUrl, referrerUrl);
   if (direct) return direct;
@@ -4333,9 +4362,24 @@ async function trustedExternalFormSourceForTab(tabId, pageUrl, referrerUrl) {
   // retains the source directory URL without trusting a copied query string.
   try {
     const tab = await chrome.tabs.get(tabId);
-    if (!Number.isInteger(tab.openerTabId)) return null;
-    const opener = await chrome.tabs.get(tab.openerTabId);
-    return trustedExternalFormDestination(pageUrl, opener.url || "");
+    if (Number.isInteger(tab.openerTabId)) {
+      const opener = await chrome.tabs.get(tab.openerTabId);
+      const mapped = trustedExternalFormDestination(pageUrl, opener.url || "");
+      if (mapped) return mapped;
+    }
+  } catch {
+    // A target=_blank link can suppress window.opener. Fall through to the
+    // browser's onCreatedNavigationTarget capture below.
+  }
+  if (!chrome.storage?.session?.get) return null;
+  const key = `externalFormSource:${tabId}`;
+  const stored = await chrome.storage.session.get(key).catch(() => ({}));
+  const source = stored?.[key];
+  if (!source || Date.now() - Number(source.capturedAt || 0) > EXTERNAL_FORM_SOURCE_MAX_AGE_MS) return null;
+  try {
+    const sourceTab = await chrome.tabs.get(source.sourceTabId);
+    if (sourceTab?.url !== source.sourceUrl) return null;
+    return trustedExternalFormDestination(pageUrl, source.sourceUrl);
   } catch {
     return null;
   }

@@ -4409,7 +4409,17 @@ async function armManualSubmissionWatch(tabId, profile, config) {
   }
   // An active batch task can be stale after navigating into a new source's
   // form. Browser-referrer attribution wins over that task on standalone forms.
-  const destinationUrl = trustedSource?.destinationUrl || task?.url || pageUrl;
+  // A stale batch slot must not attribute a different directory's receipt.
+  const taskOnCurrentSite = task && (() => {
+    try {
+      const currentHost = new URL(pageUrl).hostname.replace(/^www\./, "").toLowerCase();
+      const taskHost = new URL(task.url).hostname.replace(/^www\./, "").toLowerCase();
+      return currentHost === taskHost;
+    } catch {
+      return false;
+    }
+  })();
+  const destinationUrl = trustedSource?.destinationUrl || (taskOnCurrentSite ? task.url : pageUrl);
   const baseline = await sendTopTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   const token = crypto.randomUUID();
   const watch = {

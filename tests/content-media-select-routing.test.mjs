@@ -115,6 +115,19 @@ assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, tags: "AI g
 assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", email: "contact@example.com", projectFields: {} },
   { tagName: "INPUT", type: "url", hint: "Website URL form_fields[email]", label: "Website URL", getAttribute: () => null }),
   "https://jevplay.com/games", "URL input must outrank an internal email field name");
+assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "First name", getAttribute: () => null }), "Syndred");
+assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "",
+  "a one-token username must not be duplicated into the surname field");
+assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "Young");
+const aiSuperRequired = new Function("getSnapshotLabel", "location",
+  `${extractFunction("fieldIsRequired", "collectFillLearnings")}; return fieldIsRequired;`,
+)((element) => element.label || "", { hostname: "www.aisuperhub.io" });
+assert.equal(aiSuperRequired({ name: "email", required: false, getAttribute: () => null }), true);
+assert.equal(aiSuperRequired({ name: "shortDescription", required: false, getAttribute: () => null }), true);
+assert.equal(aiSuperRequired({ name: "socialUrl", required: false, getAttribute: () => null }), false);
 assert.doesNotMatch(content, /options\[0\]\.el\.click\(\)/, "custom selects must not choose an arbitrary first option");
 assert.match(content, /new KeyboardEvent\("keydown"[\s\S]*key: "ArrowDown"/);
 assert.match(content, /new MouseEvent\("mousedown"/);

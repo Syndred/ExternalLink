@@ -22,4 +22,17 @@ assert.equal(pick({ projectFields: { "Short description(20-30 words)": "A compac
   { hint: "Tool short description (Optional)" }), "A compact product summary.");
 assert.equal(pick({}, { hint: "Tool Description Please describe your product in 2-3 sentences." }),
   "First sentence. Second sentence. Third sentence.");
+const shortWithMinimum = new Function(
+  "getFieldConstraints", "getFieldHint", "getProfileFields", "pickShortPitch", "pickDescription", "fitValueToConstraints",
+  `${source.slice(start, end)}; return pickDescriptionForField;`,
+)(
+  () => ({ minWords: 10, maxWords: 30 }),
+  (field) => field.hint,
+  (config) => config.projectFields || {},
+  () => "Tiny pitch.",
+  () => "This longer product summary has enough words to satisfy the directory minimum for short descriptions.",
+  (value) => value,
+);
+assert.match(shortWithMinimum({}, { hint: "Short description (10-30 words)" }), /longer product summary/,
+  "a too-short profile pitch must fall back to factual longer copy");
 console.log("short description and sentence count routing passed");

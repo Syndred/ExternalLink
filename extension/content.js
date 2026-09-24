@@ -5732,10 +5732,19 @@
     const pf = getProfileFields(config);
 
     if (/\b(short description|short desc)\b/.test(hint)) {
-      return fitValueToConstraints(
-        pf["Short description(20-30 words)"] || pickShortPitch(config),
-        { ...constraints, maxWords: constraints.maxWords || 30, maxLength: constraints.maxLength || 200 },
-      );
+      const candidates = [
+        pf["Short description(20-30 words)"],
+        pf["Short Discription(100-150 words)"],
+        pickShortPitch(config),
+        pickDescription(config),
+      ].filter(Boolean);
+      const minWords = constraints.minWords || 0;
+      const source = candidates.find((value) => String(value).trim().split(/\s+/).length >= minWords) || "";
+      return fitValueToConstraints(source, {
+        ...constraints,
+        maxWords: constraints.maxWords || 30,
+        maxLength: constraints.maxLength || 200,
+      });
     }
     if (/\b2\s*[-–]\s*3\s+sentences?\b/.test(hint)) {
       const sentences = String(pickDescription(config)).split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -6327,6 +6336,13 @@
     }
     if (tag === "textarea" || /\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
       return pickDescriptionForField(config, element);
+    }
+    if (/\bfirst\s+name\b/.test(hint)) {
+      return String(config.username || "").trim().split(/\s+/)[0] || "";
+    }
+    if (/\blast\s+name\b|\bsurname\b|\bfamily\s+name\b/.test(hint)) {
+      const parts = String(config.username || "").trim().split(/\s+/).filter(Boolean);
+      return parts.length > 1 ? parts.slice(1).join(" ") : "";
     }
     const host = location.hostname;
     const learnedKey = fieldMappingKey(element);
@@ -7047,6 +7063,13 @@
   function fieldIsRequired(element) {
     if (!element) return false;
     if (element.required || element.getAttribute("aria-required") === "true") return true;
+    // AISuperHub's free form validates these fields in React but omits HTML
+    // required attributes; an empty form otherwise appears ready to submit.
+    if (typeof location !== "undefined" && /(?:^|\.)aisuperhub\.io$/i.test(location.hostname)) {
+      if (["email", "name", "shortDescription", "longDescription", "useCase", "website"].includes(element.name)) {
+        return true;
+      }
+    }
     return /\*(?=\s|$)|\brequired\b/i.test(getSnapshotLabel(element));
   }
 

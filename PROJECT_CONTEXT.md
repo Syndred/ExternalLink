@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 20:35 / 最新进度**：AI Tools Inc 的 JevPlay 收到官方 Typeform 最终 Thanks 回执，3.7.24 自动记账；该站三产品齐全。AI SuperHub 免费表单的 JevPlay、OldPhoto、Graffiti 均逐份跳转官方 `Submission Received!` 成功页，插件也显示自动保存；来源站侧栏现有 3 个 Profile、5 条动态（Graffiti 因人工核验重复追加），云端同步仍提示本地待保存，不能声称 Neon 已核对。累计 **30 个真实产品×站点回执、11 个站点、9 个站点三产品齐全**；目标是 30 个站点各三产品，仍差 21 个完整站。3.7.25 修正旧批次任务跨站抢占普通表单来源、Typeform 单词用户名误填姓氏、短描述达不到最低字数时不回退，以及 AI SuperHub 未标 HTML required 导致空表单显示“可提交”；52 组回归通过，Ego 重载后需实站复验。验证码/登录/付费/法律确认继续停放。
+
 - **2026-09-24 20:15 / 最新进度**：AI Tools Inc 的 OldPhotoLive AI 也已取得官方 Typeform 最终 Thanks 回执；自动填名称和官网正确，姓氏错填、邮箱未填，提交前已修正。3.7.23 监听到最终提交但清空上下文后复核回执时遗漏来源站地址，导致未自动记账；按现场回执在 AI Tools Inc/OldPhoto 人工补记。3.7.24 将可信来源随最终回执检查传递，待 JevPlay 实站复验。当前 26 个真实产品×站点回执、10 站、7 站三产品齐全；OldPhoto 云端补记正在回读。
 
 - **2026-09-24 20:10 / 最新进度**：AI Tools Inc 免费官方 Typeform 的 Graffiti Name AI 取得结束页 `Thanks! We'll be in touch over the next few days to proceed with your listing.` 回执，站点侧栏补记后从云端回读确认。累计 25 个真实产品×站点提交、10 个站点、7 个三产品完整站点。实站发现插件把未提交联系信息题的 `We will be in touch` 误判为回执，且旧批次任务覆盖可信 Typeform 来源；3.7.23 修复两者，并将 AI Tools Inc 首页来源归一到 `/submit`。定向回归已过，待重载后用 JevPlay、OldPhoto 复验。验证码/登录/付费/法律确认继续停放。

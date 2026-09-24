@@ -154,6 +154,17 @@ sourceContext = { ok: true, referrer: 'https://aitools.inc/' };
 await ctx.armManualSubmissionWatch(10, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
 assert.equal(store['manualSubmissionWatch:10'].url, 'https://aitools.inc/submit', 'trusted source must override an unrelated stale batch task');
 assert.equal(store['manualSubmissionWatch:10'].sourceContext.sourceHost, 'aitools.inc');
+ctx.getTabUrlSafe = async () => 'https://www.aisuperhub.io/ai-tools/submit/free';
+ctx.state.activeTabs = new Map([[15, { taskIndex: 15 }]]);
+ctx.state.tasks = [{ index: 15, profileId: 'GraffitiName', url: 'https://aitoolsguide.com/submit' }];
+await ctx.armManualSubmissionWatch(15, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
+assert.equal(store['manualSubmissionWatch:15'].url, 'https://www.aisuperhub.io/ai-tools/submit/free',
+  'a stale batch task from another host must not claim an ordinary directory receipt');
+ctx.state.tasks = [{ index: 15, profileId: 'GraffitiName', url: 'https://aisuperhub.io/ai-tools/submit/free' }];
+await ctx.armManualSubmissionWatch(15, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
+assert.equal(store['manualSubmissionWatch:15'].url, 'https://aisuperhub.io/ai-tools/submit/free',
+  'a matching task may keep the source directory URL');
+ctx.getTabUrlSafe = async () => 'https://loxr142exnq.typeform.com/to/RB6ZnEf2?typeform-source=aitools.inc';
 ctx.recordSubmittedProject = async (record) => { records.push(record); return record; };
 evidence = { matched: true, evidence: "Thanks! We'll be in touch over the next few days to proceed with your listing." };
 assert.equal((await ctx.observeManualSubmissionReceipt(10, store['manualSubmissionWatch:10'].token)).ok, true);

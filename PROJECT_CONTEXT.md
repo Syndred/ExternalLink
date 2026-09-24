@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-- **2026-09-24 / 外链提交恢复与验收**：用户新建并充值 DeepSeek `outlink` Key；已写入 Cloudflare Worker Secret，部署 `4d293a19-d070-4f0a-abbd-0119736000a7`，直接模型请求 HTTP 200。Ego 已启用扩展 3.7.12。Insidr、Human or Not、NextPedia 各完成三产品真实提交并云端回读，共 9 个组合；其中 7 次新版自动记账，JevPlay 两次旧版提交人工补记。Once Tools 的 JevPlay 另有待审核回执并人工补记，但该站一次性付费软件定位不适合三产品覆盖。3.7.12 修复长短描述路由、时间线重复展示与 Excel 日期序号。旧 `activeBatchRun` 冲突及三产品各 30 站目标仍待处理。详见 `docs/外链提交验收与误填保护-2026-09-24.md`。
+- **2026-09-24 / 外链提交恢复与验收**：用户新建并充值 DeepSeek `outlink` Key；已写入 Cloudflare Worker Secret，部署 `4d293a19-d070-4f0a-abbd-0119736000a7`，直接模型请求 HTTP 200。Ego 已启用扩展 3.7.14。Insidr、Human or Not、NextPedia 各完成三产品真实提交并云端回读，共 9 个组合，其中 7 次新版自动记账、JevPlay 两次旧版提交人工补记。Once Tools JevPlay、Startup Stash 三款、TipSeason 两款、AI Infinity OldPhoto、Phygital OldPhoto 与 Graffiti 也取得站点回执；截至 19:18 共 18 个产品×站点组合、8 个不同站点、4 个三产品完整站点。Startup Stash JevPlay 与 TipSeason 两款自动写入本地账本，但 Startup Stash 自动目标键带 `/add-listing`，侧栏只展示域名键，造成一次人工重复补记；AI Infinity OldPhoto 的来源站归属待修。Phygital 同 URL 双标签复测发现 3.7.14 「填表」在当前标签误报空表单已填，并异步把 Graffiti 内容写进旧 OldPhoto 标签；两款真实回执已分别人工补记时间线，精确提交记录仍待核对。最近记录的 Neon 回读因 1 类同步冲突尚未确认。Viesearch Graffiti 仍需邮件确认，StartupBase Graffiti 仍是草稿，均不计成功。3.7.12 修复长短描述路由、时间线展示；`2f8ab90` 修复无可信回执误跳过，3.7.13–3.7.14 修复跨域回执监听但实站仍有错标签填表、漏填、目标键和显示问题。旧批次冲突及三产品各 30 站目标仍待处理。详见 `docs/外链提交验收与误填保护-2026-09-24.md`。
 
 - **2026-09-23 / 3.7.3 云同步状态可见性**：设置页改用轻量修订号查询展示本机已保存数据与云端是否一致，分开显示待上传、冲突、需回读和本页未保存编辑；按钮和“更新 0 类”文案已澄清。45/45 测试通过；Ego 扩展重载后的实机显示因浏览器安全策略待验收。见 `docs/云同步状态可见性-2026-09-23.md`。
 

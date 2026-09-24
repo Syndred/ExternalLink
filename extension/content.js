@@ -5004,6 +5004,11 @@
     const hint = getFieldHint(element);
     const pf = getProfileFields(config);
     const tokens = [];
+    const tagField = /\b(tags?|keywords?|hashtags?)\b/.test(hint);
+    const profileTags = String(config.tags || pf["Tags Keywords/Hashtags"] || "")
+      .split(/[,;|/]+/)
+      .map((tag) => tag.trim().replace(/^#+/, ""))
+      .filter(Boolean);
 
     if (/pric|plan|model|tier|billing/.test(hint)) {
       const pricingText = String(pf["PRICING TYPE"] || pf.Pricing || "freemium").toLowerCase();
@@ -5014,11 +5019,11 @@
     }
 
     if (/categor|industry|sector|niche|vertical|topic|type/.test(hint)) {
-      const tags = String(config.tags || pf["Tags Keywords/Hashtags"] || "")
-        .split(/[,;|/]+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      tokens.push(...tags, "ai", "saas", "software", "tools", "productivity", "business", "tech");
+      tokens.push(...profileTags, "ai", "saas", "software", "tools", "productivity", "business", "tech");
+    }
+
+    if (tagField) {
+      return [...new Set(profileTags.slice(0, 5))];
     }
 
     if (/countr|region|location|market/.test(hint)) {
@@ -5072,9 +5077,9 @@
     if (!desiredTokens.length) return false;
 
     const current = compactText(
-      [trigger.textContent, trigger.getAttribute("aria-label"), trigger.value]
-        .filter(Boolean)
-        .join(" "),
+      trigger.tagName?.toLowerCase() === "input"
+        ? trigger.value
+        : trigger.textContent || trigger.getAttribute("aria-valuetext"),
       120,
     );
     if (current && !/select|choose|pick|please/i.test(current)) return false;
@@ -5092,36 +5097,65 @@
       "[class*='option']",
       "[class*='Option']",
     ];
-    const options = [];
-    for (const sel of optionSelectors) {
-      for (const el of document.querySelectorAll(sel)) {
-        if (!isVisible(el)) continue;
-        const label = compactText(el.textContent, 120);
-        if (!label || /^(select|choose|pick|please)/i.test(label)) continue;
-        options.push({ el, label });
+    const visibleOptions = () => {
+      const reactSelect = trigger.closest?.('[class*="css-"][class*="-container"]');
+      if (reactSelect && trigger.id) {
+        const prefix = `react-select-${trigger.id}-option-`;
+        return Array.from(document.querySelectorAll('[id*="-option-"]'))
+          .filter((el) => el.id?.startsWith(prefix) && isVisible(el))
+          .map((el) => ({ el, label: compactText(el.textContent, 120) }))
+          .filter((option) => option.label);
       }
-      if (options.length) break;
+      for (const sel of optionSelectors) {
+        const options = Array.from(document.querySelectorAll(sel))
+          .filter(isVisible)
+          .map((el) => ({ el, label: compactText(el.textContent, 120) }))
+          .filter((option) => option.label && !/^(select|choose|pick|please)/i.test(option.label));
+        if (options.length) return options;
+      }
+      return [];
+    };
+    if (!visibleOptions().length) {
+      trigger.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        code: "ArrowDown",
+        bubbles: true,
+        cancelable: true,
+      }));
+      await sleep(120);
     }
 
-    for (const token of desiredTokens) {
+    for (const token of desiredTokens.slice(0, 8)) {
+      if (!token) continue;
+      let options = visibleOptions();
       const n = normalizeOptionText(token);
-      const match = options.find(
+      let match = options.find(
         (o) =>
           normalizeOptionText(o.label) === n ||
           normalizeOptionText(o.label).includes(n) ||
           n.includes(normalizeOptionText(o.label)),
       );
-      if (match) {
-        match.el.click();
-        await sleep(150);
-        return true;
+      if (!match && trigger.tagName?.toLowerCase() === "input") {
+        setFieldValue(trigger, token);
+        trigger.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: token }));
+        await sleep(180);
+        options = visibleOptions();
+        match = options.find((o) => {
+          const label = normalizeOptionText(o.label);
+          return label === n || label.includes(n) || n.includes(label);
+        });
       }
-    }
-
-    if (options.length) {
-      options[0].el.click();
-      await sleep(150);
-      return true;
+      if (match) {
+        match.el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+        await sleep(80);
+        if (isCustomDropdownEmpty(trigger)) match.el.click();
+        await sleep(150);
+        if (!isCustomDropdownEmpty(trigger)) return true;
+      }
+      if (trigger.tagName?.toLowerCase() === "input") {
+        setFieldValue(trigger, "");
+        trigger.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward" }));
+      }
     }
 
     document.body.click();
@@ -5758,9 +5792,33 @@
     return { filledCount, handled, mappings };
   }
 
+  function publicMediaUrlForField(config, hint) {
+    const pf = getProfileFields(config);
+    const normalizedHint = String(hint || "").replace(/[_-]+/g, " ");
+    const iconField = /\b(icon|logo|avatar|favicon)\b/.test(normalizedHint);
+    const candidates = iconField
+      ? [pf.LOGO, config.logoUrl, pf["Featured image"], config.featuredImage]
+      : [pf["Featured image"], config.featuredImage, pf.LOGO, config.logoUrl];
+    for (const candidate of candidates) {
+      const raw = String(candidate || "").trim();
+      try {
+        const parsed = new URL(raw);
+        if (/^https?:$/.test(parsed.protocol) && /\.(?:png|jpe?g|gif|webp|svg|avif|ico)$/i.test(parsed.pathname)) {
+          return parsed.toString();
+        }
+      } catch {
+        /* Private cloud-media references and non-URLs cannot be sent as public image URLs. */
+      }
+    }
+    return "";
+  }
+
   function resolveValueForField(config, element) {
     const pf = getProfileFields(config);
     const hint = getFieldHint(element);
+    const type = (element.type || "").toLowerCase();
+    const tag = element.tagName.toLowerCase();
+    const normalizedHint = hint.replace(/[_-]+/g, " ");
     // A repository URL is not the product homepage. Resolve it before legacy
     // learned mappings, which may already contain the old generic URL answer.
     if (/\bgithub\b/.test(hint)) {
@@ -5768,8 +5826,30 @@
       const repositoryUrl = String(entry?.[1] || "").trim();
       return /^https?:\/\/(?:www\.)?github\.com\/[^\s]+$/i.test(repositoryUrl) ? repositoryUrl : "";
     }
-    const type = (element.type || "").toLowerCase();
-    const tag = element.tagName.toLowerCase();
+    if (
+      (type === "url" || /\b(url|link)\b/.test(normalizedHint)) &&
+      /\b(image|icon|logo|avatar|favicon|thumbnail|banner|cover|screenshot|photo|media)\b/.test(normalizedHint)
+    ) {
+      return publicMediaUrlForField(config, normalizedHint);
+    }
+    // Custom listboxes need a selected option. Typing the entire profile tag
+    // string into their search input leaves an invalid, unselected value.
+    if (
+      tag === "input" &&
+      (element.getAttribute("role") === "combobox" ||
+        element.getAttribute("aria-autocomplete") === "list" ||
+        element.getAttribute("aria-haspopup") === "listbox")
+    ) {
+      return "";
+    }
+    if (/\bother tags?\b/.test(normalizedHint)) {
+      return String(config.tags || pf["Tags Keywords/Hashtags"] || "")
+        .split(/[,;|/]+/)
+        .map((tagValue) => tagValue.trim().replace(/^#+/, ""))
+        .filter(Boolean)
+        .slice(0, 5)
+        .join(", ");
+    }
     const host = location.hostname;
     const learnedKey = fieldMappingKey(element);
     const learned =
@@ -6329,6 +6409,14 @@
   }
 
   function isCustomDropdownEmpty(trigger) {
+    const reactSelect = trigger.closest?.('[class*="css-"][class*="-container"]');
+    if (reactSelect?.querySelector?.('[class*="singleValue"], [class*="multiValue"]')) {
+      return false;
+    }
+    if (reactSelect && trigger.tagName?.toLowerCase() === "input" && trigger.getAttribute("role") === "combobox") {
+      // React Select search text is not a selected option, even when nonempty.
+      return true;
+    }
     const current = compactText(
       [trigger.textContent, trigger.getAttribute("aria-label"), trigger.value]
         .filter(Boolean)
@@ -6341,15 +6429,17 @@
   function countEmptyFillableFields() {
     const elements = queryFillableElements();
     const customDropdowns = queryCustomDropdowns();
+    const customDropdownSet = new Set(customDropdowns);
     const choiceGroups = collectChoiceGroups(elements);
     const choiceElements = new Set([...choiceGroups.values()].flat());
     let emptyCount = 0;
     let invalidCount = 0;
     const totalCount =
-      elements.length - choiceElements.size + choiceGroups.size + customDropdowns.length;
+      elements.length - choiceElements.size - elements.filter((element) => customDropdownSet.has(element)).length +
+      choiceGroups.size + customDropdowns.length;
 
     for (const element of elements) {
-      if (choiceElements.has(element)) continue;
+      if (choiceElements.has(element) || customDropdownSet.has(element)) continue;
       const type = (element.type || "").toLowerCase();
       if (type === "file") {
         if ((!element.files || element.files.length === 0) && fieldIsRequired(element)) {
@@ -6437,7 +6527,7 @@
   function fieldIsRequired(element) {
     if (!element) return false;
     if (element.required || element.getAttribute("aria-required") === "true") return true;
-    return /(^|\s)\*($|\s)|\brequired\b/i.test(getSnapshotLabel(element));
+    return /\*(?=\s|$)|\brequired\b/i.test(getSnapshotLabel(element));
   }
 
   function collectFillLearnings(config) {

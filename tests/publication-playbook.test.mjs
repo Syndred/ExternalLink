@@ -86,6 +86,11 @@ const P = playbookSelf.ExtLinkPlaybooks;
   assert.equal(classified.publicationStatus, "pending_moderation");
   assert.equal(classified.playbookId, "thejoai");
   assert.equal(classified.matched, true);
+  const aiso = P.lookup("https://aisotools.com/submit/success?tier=free");
+  assert.equal(aiso?.id, "aisotools");
+  assert.equal(P.classifyEvidence("✅ JevPlay is live It cleared our checks and published straight away", aiso).publicationStatus, "published");
+  assert.equal(P.classifyEvidence("Submit your tool to get a live listing", aiso).matched, false,
+    "ordinary AISO submit page copy must not count as publication");
 
   const unknown = P.lookup("https://random-blog.example/post/1");
   assert.equal(unknown, null);

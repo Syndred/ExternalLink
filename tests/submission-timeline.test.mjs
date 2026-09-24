@@ -303,6 +303,31 @@ const sameRecordAlreadyWritten = T.migrateLegacy({
 assert.equal(sameRecordAlreadyWritten.timeline["directory.example/submit::VideoToArticleAI"].length, 1,
   "migration should not add another event beside an equivalent agent receipt");
 
+const publishedMirror = T.migrateLegacy({
+  timeline: {
+    "aisotools.com::JevPlay": [{
+      id: "manual-published", destinationKey: "aisotools.com", profileId: "JevPlay",
+      type: "published", occurredAt: "2026-09-24T13:51:00Z", source: "manual",
+      note: "JevPlay is live", publicUrl: "https://aisotools.com/tool/jevplay",
+    }, {
+      id: "old-migration", destinationKey: "aisotools.com", profileId: "JevPlay",
+      type: "submitted", occurredAt: "2026-09-24T13:50:00Z", source: "migration",
+      publicationStatus: "published", note: "JevPlay is live",
+      publicUrl: "https://aisotools.com/tool/jevplay",
+      legacy: { source: "submissionRecords" },
+    }],
+  },
+  submissionRecords: {
+    "aisotools.com::JevPlay": {
+      destinationKey: "aisotools.com", profileId: "JevPlay", status: "success",
+      publicationStatus: "published", submittedAt: "2026-09-24T13:50:00Z",
+      evidence: "JevPlay is live", publicUrl: "https://aisotools.com/tool/jevplay",
+    },
+  },
+});
+assert.equal(publishedMirror.timeline["aisotools.com::JevPlay"].length, 1,
+  "a manual publication event must not gain a duplicate mirror from the upgraded success record");
+
 const backup = T.validateBackup({
   format: T.TIMELINE_BACKUP_FORMAT,
   version: 1,

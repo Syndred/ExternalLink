@@ -205,6 +205,15 @@
     return Number.isFinite(previousTime) && Number.isFinite(currentTime) && currentTime - previousTime <= 60_000;
   }
 
+  function isMigratedPublicationMirror(event, events) {
+    if (event?.source !== "migration" || event?.legacy?.source !== "submissionRecords") return false;
+    const status = text(event.publicationStatus);
+    if (!["pending_moderation", "published"].includes(status)) return false;
+    return events.some((other) => other !== event && other.source !== "migration" &&
+      other.type === status && other.note === event.note &&
+      other.evidenceUrl === event.evidenceUrl && other.publicUrl === event.publicUrl);
+  }
+
   function normalizeTimeline(timeline, { strict = false } = {}) {
     const normalized = {};
     for (const [storedKey, rawEvents] of Object.entries(readTimelineGroups(timeline))) {
@@ -236,6 +245,9 @@
       events.sort(compareEvents);
       for (let index = events.length - 1; index > 0; index -= 1) {
         if (isDuplicateAutomationEvent(events[index - 1], events[index])) events.splice(index, 1);
+      }
+      for (let index = events.length - 1; index >= 0; index -= 1) {
+        if (isMigratedPublicationMirror(events[index], events)) events.splice(index, 1);
       }
     }
     return normalized;
@@ -615,12 +627,14 @@
       }
       const groupKey = timelineKey(event.destinationKey, event.profileId);
       const equivalent = (next[groupKey] || []).some((existing) =>
-        existing.type === event.type &&
-        existing.occurredAt === event.occurredAt &&
         existing.note === event.note &&
         existing.evidenceUrl === event.evidenceUrl &&
         existing.publicUrl === event.publicUrl &&
-        (!existing.recordKey || existing.recordKey === event.recordKey)
+        (!existing.recordKey || existing.recordKey === event.recordKey) &&
+        ((existing.type === event.type && existing.occurredAt === event.occurredAt) ||
+          (event.legacy?.source === "submissionRecords" &&
+            ["pending_moderation", "published"].includes(event.publicationStatus) &&
+            existing.type === event.publicationStatus))
       );
       if (equivalent) continue;
       const result = appendWithResult(next, event);

@@ -4,6 +4,15 @@
 
   const PLAYBOOKS = [
     {
+      id: "aisotools",
+      hosts: ["aisotools.com"],
+      kind: "directory",
+      title: "AISO Tools",
+      notes: "免费档公开链接为 nofollow；成功页明确显示产品 is live 后才计上线。",
+      hints: ["核对公开详情页及官网链接", "不要选择 $149 Verified"],
+      publishedPatterns: ["is live it cleared our checks and published straight away"],
+    },
+    {
       id: "thejoai",
       hosts: ["thejoai.com"],
       kind: "directory",

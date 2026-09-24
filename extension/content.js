@@ -5796,10 +5796,12 @@
     for (const container of searchRoots) {
       if (!container?.textContent) continue;
       const text = container.textContent;
-      const match = text.match(/(\d+)\s*\/\s*(\d+)/);
+      const match = text.match(/(\d+)\s*\/\s*(\d+)\s*(words?)?/i);
       if (match) {
         const max = parseInt(match[2], 10);
-        if (max > 0 && max <= 5000) return { current: parseInt(match[1], 10), max };
+        if (max > 0 && max <= 5000) {
+          return { current: parseInt(match[1], 10), max, unit: match[3] ? "words" : "characters" };
+        }
       }
       const maxMatch = text.match(
         /(?:cannot be longer than|max(?:imum)?|limit|up to)\s*(\d+)\s*(?:character|char|字)/i,
@@ -5822,12 +5824,10 @@
     if (wordRange) {
       minWords = parseInt(wordRange[1], 10);
       maxWords = parseInt(wordRange[2], 10);
-      if (!maxLength) maxLength = maxWords * 6;
     } else {
       const maxWord = combined.match(/(?:max|up to|limit)\s*(\d+)\s*words?/i);
       if (maxWord) {
         maxWords = parseInt(maxWord[1], 10);
-        if (!maxLength) maxLength = maxWords * 6;
       }
       const minWord = combined.match(/(?:min(?:imum)?|at least)\s*(\d+)\s*words?/i);
       if (minWord) minWords = parseInt(minWord[1], 10);
@@ -5837,8 +5837,12 @@
     if (charLimit) maxLength = maxLength || parseInt(charLimit[1], 10);
 
     const counter = findCharCounter(element);
-    if (counter?.max && (!maxLength || counter.max < maxLength)) {
-      maxLength = counter.max;
+    if (counter?.max) {
+      if (counter.unit === "words") {
+        if (!maxWords || counter.max < maxWords) maxWords = counter.max;
+      } else if (!maxLength || counter.max < maxLength) {
+        maxLength = counter.max;
+      }
     }
 
     return { maxLength, minLength, maxWords, minWords, required: !!element.required };
@@ -7004,6 +7008,12 @@
 
     for (const trigger of customDropdowns) {
       if (isCustomDropdownEmpty(trigger) && fieldIsRequired(trigger)) emptyCount++;
+    }
+
+    // An open custom picker can hide the parent form from the visible-field
+    // scan. Its one search control is not proof that the form is complete.
+    if (Array.from(document.querySelectorAll('[role="listbox"][data-state="open"]')).some(isVisible)) {
+      emptyCount = Math.max(emptyCount, 1);
     }
 
     return {

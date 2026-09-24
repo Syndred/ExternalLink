@@ -35,4 +35,22 @@ const shortWithMinimum = new Function(
 );
 assert.match(shortWithMinimum({}, { hint: "Short description (10-30 words)" }), /longer product summary/,
   "a too-short profile pitch must fall back to factual longer copy");
+const constraintsSource = source.slice(source.indexOf("  function findCharCounter("), source.indexOf("  function fitValueToConstraints("));
+const actualConstraints = new Function(
+  "getSnapshotLabel", "getFieldHint", "document", `${constraintsSource}; return getFieldConstraints;`,
+)(
+  () => "Short description (10-30 words)",
+  () => "Short description (10-30 words)",
+  { getElementById: () => null },
+);
+const shortField = {
+  parentElement: { textContent: "Short description (10-30 words) 0/30 words" },
+  getAttribute: () => null,
+  maxLength: -1,
+  minLength: -1,
+  required: false,
+};
+assert.deepEqual(actualConstraints(shortField), {
+  maxLength: null, minLength: null, maxWords: 30, minWords: 10, required: false,
+}, "a word counter must not become a 30-character limit");
 console.log("short description and sentence count routing passed");

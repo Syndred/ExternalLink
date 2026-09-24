@@ -58,7 +58,11 @@ const ctx = {
   crypto: { randomUUID: () => `watch-token-${++watchCounter}` },
   state: { activeTabs: new Map(), tasks: [] },
   submissionLedgerWrite: async (fn) => fn(),
-  chrome: { storage: { local: {
+  chrome: { tabs: { get: async (id) => id === 13
+    ? { openerTabId: 99 }
+    : id === 99
+      ? { url: 'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231' }
+      : { openerTabId: null } }, storage: { local: {
     get: async (key) => ({ [key]: store[key] }),
     set: async (data) => Object.assign(store, data),
     remove: async (key) => { delete store[key]; },
@@ -138,7 +142,7 @@ await assert.rejects(
   'a mismatched referrer must not let a copied typeform-source query redirect attribution',
 );
 
-ctx.getTabUrlSafe = async () => 'https://docs.google.com/forms/d/e/1FAIpQLScdSN4wbdFM7V8q-Ao5XpcLrVnqImhoagVG8PMgmpoRWCKU9Q/viewform';
+ctx.getTabUrlSafe = async () => 'https://docs.google.com/forms/d/e/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg/viewform';
 sourceContext = {
   ok: true,
   referrer: 'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
@@ -148,6 +152,13 @@ assert.equal(
   store['manualSubmissionWatch:12'].url,
   'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
   'a standalone Google Form must bind to the allowlisted AI Infinity opener',
+);
+sourceContext = { ok: true, referrer: 'https://forms.gle/' };
+await ctx.armManualSubmissionWatch(13, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
+assert.equal(
+  store['manualSubmissionWatch:13'].url,
+  'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
+  'forms.gle redirect must use the browser-owned opener tab to retain the directory attribution',
 );
 
 const binding = {

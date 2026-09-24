@@ -4290,7 +4290,7 @@ function trustedExternalFormDestination(pageUrl, referrerUrl) {
   }
   const pageHost = page.hostname.replace(/^www\./i, "").toLowerCase();
   const googleForm = pageHost === "docs.google.com" &&
-    /^\/forms\/d\/e\/[^/]+\/viewform$/i.test(page.pathname);
+    /^\/forms\/d\/e\/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg\/viewform$/i.test(page.pathname);
   if (!googleForm) return null;
   let referrer;
   try {
@@ -4325,6 +4325,22 @@ function isStandaloneExternalFormUrl(value) {
   }
 }
 
+async function trustedExternalFormSourceForTab(tabId, pageUrl, referrerUrl) {
+  const direct = trustedExternalFormDestination(pageUrl, referrerUrl);
+  if (direct) return direct;
+  // forms.gle redirects the directory's outbound link before Google Forms
+  // loads, so document.referrer names forms.gle. The browser-owned opener tab
+  // retains the source directory URL without trusting a copied query string.
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (!Number.isInteger(tab.openerTabId)) return null;
+    const opener = await chrome.tabs.get(tab.openerTabId);
+    return trustedExternalFormDestination(pageUrl, opener.url || "");
+  } catch {
+    return null;
+  }
+}
+
 async function armManualSubmissionWatch(tabId, profile, config) {
   const pageUrl = await getTabUrlSafe(tabId);
   const activeEntry = typeof state === "object" ? state.activeTabs?.get(tabId) : null;
@@ -4337,7 +4353,7 @@ async function armManualSubmissionWatch(tabId, profile, config) {
     ? candidateTask
     : null;
   const sourceContext = await sendTopTabMessage(tabId, { action: "getSubmissionSourceContext" }).catch(() => null);
-  const trustedSource = !task ? trustedExternalFormDestination(pageUrl, sourceContext?.referrer) : null;
+  const trustedSource = !task ? await trustedExternalFormSourceForTab(tabId, pageUrl, sourceContext?.referrer) : null;
   if (isStandaloneExternalFormUrl(pageUrl) && !task && !trustedSource) {
     throw new Error("独立外部表单未确认来源目录，已停止归属；请从目录页重新打开或用「登记动态」补记");
   }

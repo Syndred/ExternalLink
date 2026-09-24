@@ -125,6 +125,7 @@ assert.ok(store['manualSubmissionWatch:7'], 'failed storage must retain the watc
 ctx.state.activeTabs = new Map([[8, { taskIndex: 9 }]]);
 ctx.state.tasks = [{ index: 9, profileId: 'RspAi', url: 'https://startupstash.com/submit' }];
 ctx.getTabUrlSafe = async () => 'https://loxr142exnq.typeform.com/to/RB6ZnEf2';
+sourceContext = { ok: true, referrer: 'https://startupstash.com/submit' };
 await ctx.armManualSubmissionWatch(8, { id: 'RspAi' }, { targetDomain: 'https://rspai.com' });
 assert.equal(store['manualSubmissionWatch:8'].url, 'https://startupstash.com/submit', 'standalone Typeform watches must retain the original destination URL');
 assert.equal(store['manualSubmissionWatch:8'].pageUrl, 'https://loxr142exnq.typeform.com/to/RB6ZnEf2');
@@ -139,6 +140,14 @@ assert.equal(
   'https://aitools.inc/submit',
   'a standalone Typeform must resolve to the allowlisted opener directory',
 );
+ctx.state.activeTabs = new Map([[10, { taskIndex: 10 }]]);
+ctx.state.tasks = [{ index: 10, profileId: 'GraffitiName', url: 'https://aitools.neilpatel.com/submit' }];
+sourceContext = { ok: true, referrer: 'https://aitools.inc/' };
+await ctx.armManualSubmissionWatch(10, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
+assert.equal(store['manualSubmissionWatch:10'].url, 'https://aitools.inc/submit', 'trusted source must override an unrelated stale batch task');
+assert.equal(store['manualSubmissionWatch:10'].sourceContext.sourceHost, 'aitools.inc');
+ctx.state.activeTabs = new Map();
+ctx.state.tasks = [];
 sourceContext = { ok: true, referrer: 'https://startupstash.com/submit' };
 await assert.rejects(
   ctx.armManualSubmissionWatch(11, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' }),

@@ -323,7 +323,10 @@ receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupstash.
 assert.equal(receipt.matched, false, "generic Typeform thank-you copy must not count as StartupStash success");
 
 context.location.href = "https://loxr142exnq.typeform.com/to/RB6ZnEf2";
-document.body.innerText = "Thanks we'll be in touch soon.";
+document.body.innerText = "Your contact details. We will be in touch to finalize your tool's listing.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitools.inc/submit" });
+assert.equal(receipt.matched, false, "AI Tools Inc contact question must not look like a receipt");
+document.body.innerText = "Thanks! We'll be in touch over the next few days to proceed with your listing.";
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitools.inc/submit" });
 assert.equal(receipt.matched, true, "a standalone Typeform receipt should use the original directory playbook");
 assert.equal(receipt.playbookId, "aitools-inc");

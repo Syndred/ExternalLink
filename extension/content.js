@@ -819,6 +819,26 @@
         matched: true,
       };
     }
+    // This known Typeform asks for contact information with a pre-submit
+    // sentence about being in touch. Only its final thank-you page is proof.
+    const aiToolsIncForm = (() => {
+      try {
+        const page = new URL(String(location.href || ""));
+        return page.hostname.endsWith(".typeform.com") && /^\/to\/RB6ZnEf2\/?$/i.test(page.pathname) &&
+          /\/\/aitools\.inc(?:\/|$)/i.test(destinationUrl);
+      } catch {
+        return false;
+      }
+    })();
+    if (aiToolsIncForm && /\bThanks!\s*We['’]ll be in touch over the next few days to proceed with your listing\.?/i.test(text)) {
+      return {
+        publicationStatus: "submitted",
+        playbookId: "aitools-inc",
+        evidence: "Thanks! We'll be in touch over the next few days to proceed with your listing.",
+        evidenceSignals: [{ type: "visible_confirmation", text: "Thanks! We'll be in touch over the next few days to proceed with your listing.", url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     const startupStashContext = isStartupStashUrl(destinationUrl) ||
       isStartupStashUrl(location.href) ||
       isStartupStashUrl(document.referrer || "");
@@ -5065,6 +5085,10 @@
 
   function getSnapshotLabel(element) {
     const labels = [];
+    const labelledBy = String(element.getAttribute("aria-labelledby") || "").trim();
+    if (labelledBy) {
+      labels.push(...labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent || ""));
+    }
     if (element.id) {
       labels.push(
         ...Array.from(document.querySelectorAll(`label[for="${cssEscape(element.id)}"]`)).map(

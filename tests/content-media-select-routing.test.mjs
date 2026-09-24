@@ -13,6 +13,22 @@ function extractFunction(name, nextName) {
   return content.slice(start, end).trim();
 }
 
+const snapshotLabel = new Function(
+  "document", "cssEscape", "compactText",
+  `${extractFunction("getSnapshotLabel", "getSnapshotValueInfo")}; return getSnapshotLabel;`,
+)(
+  {
+    getElementById: (id) => id === "label-tool-name" ? { textContent: "Tool Name" } : null,
+    querySelectorAll: () => [],
+  },
+  (value) => value,
+  (value, limit) => String(value || "").replace(/\s+/g, " ").trim().slice(0, limit),
+);
+assert.equal(snapshotLabel({
+  id: "random-id", textContent: "", closest: () => null,
+  getAttribute: (name) => name === "aria-labelledby" ? "label-tool-name" : null,
+}), "Tool Name", "aria-labelledby headings must supply semantic form labels for Tally fields");
+
 const mediaHelper = new Function(
   "getProfileFields",
   `${extractFunction("publicMediaUrlForField", "resolveValueForField")}; return publicMediaUrlForField;`,

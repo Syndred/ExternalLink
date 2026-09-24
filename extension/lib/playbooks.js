@@ -37,7 +37,7 @@
       title: "AITools.inc",
       notes: "Typeform 结束页 Thanks / we'll be in touch。不要走付费 Fast Lane。",
       hints: ["Typeform 结束页才算提交"],
-      pendingPatterns: ["thanks", "we'll be in touch", "we will be in touch"],
+      pendingPatterns: [],
     },
     {
       id: "uneed",
@@ -144,7 +144,7 @@
   const GENERIC_PENDING =
     /awaiting moderation|held for moderation|pending moderation|comment is awaiting|under review|in queue|submitted for review|pending review|waiting line/i;
   const GENERIC_THANKS =
-    /thank you(?:!|\s)*(?:for (submitting|applying|listing)|your submission has been received)|thanks for (your )?(submission|applying)|we'll be in touch|we will be in touch|submission (?:has been )?received|your submission was successful|successfully submitted|your (tool|product|startup) (has been|was) submitted/i;
+    /thank you(?:!|\s)*(?:for (submitting|applying|listing)|your submission has been received)|thanks for (your )?(submission|applying)|submission (?:has been )?received|your submission was successful|successfully submitted|your (tool|product|startup) (has been|was) submitted/i;
 
   function snippetAround(text, needle) {
     const blob = String(text || "");

@@ -4275,6 +4275,9 @@ function trustedTypeformDestination(pageUrl, referrerUrl) {
   const destination = new URL(referrer.href);
   destination.hash = "";
   destination.search = "";
+  // The official AI Tools Inc link can set document.referrer to the home page.
+  // Its directory ledger uses the submission page as the canonical key.
+  if (sourceHost === "aitools.inc") destination.pathname = "/submit";
   return {
     destinationUrl: destination.toString(),
     sourceHost,
@@ -4397,11 +4400,16 @@ async function armManualSubmissionWatch(tabId, profile, config) {
     ? candidateTask
     : null;
   const sourceContext = await sendTopTabMessage(tabId, { action: "getSubmissionSourceContext" }).catch(() => null);
-  const trustedSource = !task ? await trustedExternalFormSourceForTab(tabId, pageUrl, sourceContext?.referrer) : null;
-  if (isStandaloneExternalFormUrl(pageUrl) && !task && !trustedSource) {
+  const standaloneForm = isStandaloneExternalFormUrl(pageUrl);
+  const trustedSource = standaloneForm
+    ? await trustedExternalFormSourceForTab(tabId, pageUrl, sourceContext?.referrer)
+    : null;
+  if (standaloneForm && !trustedSource) {
     throw new Error("独立外部表单未确认来源目录，已停止归属；请从目录页重新打开或用「登记动态」补记");
   }
-  const destinationUrl = task?.url || trustedSource?.destinationUrl || pageUrl;
+  // An active batch task can be stale after navigating into a new source's
+  // form. Browser-referrer attribution wins over that task on standalone forms.
+  const destinationUrl = trustedSource?.destinationUrl || task?.url || pageUrl;
   const baseline = await sendTopTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   const token = crypto.randomUUID();
   const watch = {

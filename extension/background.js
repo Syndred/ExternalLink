@@ -3423,10 +3423,9 @@ async function sendTabMessageToFrame(tabId, frameId, message) {
   return chrome.tabs.sendMessage(tabId, message, { frameId: normalizedFrameId });
 }
 
-async function sendManualSubmissionWatchToFrames(tabId, message) {
-  await ensureContentScript(tabId);
-  if (!chrome.tabs?.sendMessage) return sendTabMessage(tabId, message);
+async function getSubmissionWatchFrameIds(tabId) {
   let frameIds = [0];
+  let enumerated = false;
   try {
     const frames = typeof chrome.webNavigation?.getAllFrames === "function"
       ? await chrome.webNavigation.getAllFrames({ tabId })
@@ -3434,10 +3433,53 @@ async function sendManualSubmissionWatchToFrames(tabId, message) {
     const discovered = (Array.isArray(frames) ? frames : [])
       .map((frame) => Number(frame?.frameId))
       .filter((frameId) => Number.isInteger(frameId) && frameId >= 0);
-    if (discovered.length) frameIds = [...new Set(discovered)];
+    if (discovered.length) {
+      frameIds = [...new Set(discovered)];
+      enumerated = true;
+    }
   } catch {
     // The top frame remains a valid fallback when frame enumeration is not available.
   }
+  return { frameIds, enumerated };
+}
+
+async function refreshContentScriptsForManualWatch(tabId) {
+  const tab = await chrome.tabs.get(tabId);
+  if (!tab.url || !/^https?:\/\//i.test(tab.url)) {
+    throw new Error("当前页面不支持，请在普通 http/https 网页上使用");
+  }
+  const { frameIds, enumerated } = await getSubmissionWatchFrameIds(tabId);
+  const files = ["lib/profiles.js", "lib/playbooks.js", "content.js"];
+  if (!chrome.scripting?.executeScript) {
+    throw new Error("当前浏览器不支持刷新提交监听脚本");
+  }
+  const results = enumerated
+    ? await Promise.allSettled(frameIds.map((frameId) => chrome.scripting.executeScript({
+        target: { tabId, frameIds: [frameId] },
+        files,
+      })))
+    : await Promise.allSettled([chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
+        files,
+      })]);
+  const failedFrameIds = results.flatMap((result, index) =>
+    result.status === "rejected" ? [enumerated ? frameIds[index] : 0] : [],
+  );
+  if (failedFrameIds.includes(0)) {
+    throw new Error("无法刷新主页面提交监听脚本，请刷新当前页后重试");
+  }
+  if (failedFrameIds.length) {
+    log(`提交监听有 ${failedFrameIds.length} 个子 frame 未刷新，已保留可用 frame`, "warn", {
+      event: "manual_submission_frame_refresh_partial",
+    });
+  }
+  return { frameIds, enumerated, failedFrameIds };
+}
+
+async function sendManualSubmissionWatchToFrames(tabId, message, options = {}) {
+  const frameInfo = options.frameInfo || await getSubmissionWatchFrameIds(tabId);
+  const frameIds = frameInfo.frameIds || [0];
+  if (!chrome.tabs?.sendMessage) return sendTabMessage(tabId, message);
   await Promise.allSettled(frameIds.map((frameId) =>
     chrome.tabs.sendMessage(tabId, message, { frameId }),
   ));
@@ -4133,12 +4175,13 @@ async function armManualSubmissionWatch(tabId, profile, config) {
     createdAt: Date.now(),
   };
   await chrome.storage.local.set({ [`manualSubmissionWatch:${tabId}`]: watch });
+  const frameInfo = await refreshContentScriptsForManualWatch(tabId);
   await sendManualSubmissionWatchToFrames(tabId, {
     action: "watchManualSubmission",
     token,
     targetDomain: config.targetDomain,
     destinationUrl,
-  });
+  }, { frameInfo });
 }
 
 async function observeManualSubmissionReceipt(tabId, token, frameId, details = {}) {

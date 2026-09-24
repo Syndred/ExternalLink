@@ -47,6 +47,7 @@ const records = [];
 const messages = [];
 let evidence = { matched: false };
 let watchCounter = 0;
+let refreshWatchCalls = 0;
 const ctx = {
   Set, Date, URL,
   log() {},
@@ -61,6 +62,7 @@ const ctx = {
   getTabUrlSafe: async () => 'https://directory.example/submit',
   sendTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
   sendTopTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  refreshContentScriptsForManualWatch: async () => { refreshWatchCalls += 1; return { frameIds: [0, 2], enumerated: true }; },
   sendManualSubmissionWatchToFrames: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
   sendTabMessageToFrame: async (_, _frameId, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
   broadcastAutoFillUpdate: (event) => messages.push(event),
@@ -70,6 +72,7 @@ const ctx = {
 vm.createContext(ctx);
 vm.runInContext(slice('const manualReceiptChecks = ', 'async function persistFillLearnings('), ctx);
 await ctx.armManualSubmissionWatch(7, { id: 'RspAi', name: 'RspAi' }, { targetDomain: 'https://rspai.com' });
+assert.equal(refreshWatchCalls, 1, 'arming a watch must refresh already loaded frame scripts');
 const firstWatchToken = store['manualSubmissionWatch:7'].token;
 assert.equal((await ctx.observeManualSubmissionReceipt(7, 'wrong')).ok, false);
 assert.equal(records.length, 0);

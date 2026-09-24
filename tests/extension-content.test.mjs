@@ -662,6 +662,11 @@ assert.match(
   /manualSubmissionWatchRequest/,
   "newly loaded iframe content scripts should recover the active submission watch",
 );
+assert.match(
+  background,
+  /function\s+refreshContentScriptsForManualWatch[\s\S]*?executeScript[\s\S]*?allFrames\s*:\s*true/,
+  "arming a watch should refresh content scripts in existing frames",
+);
 
 const queue = readFileSync(resolve(root, "extension/lib/queue.js"), "utf8");
 assert.match(queue, /publicationStatus/, "success records should store publication status");

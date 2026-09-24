@@ -4977,15 +4977,26 @@ function submissionTimelineContainsRecord(timeline, recordKey, record) {
   });
 }
 
+function isPersistedSuccessRecord(records, recordKey, destinationKey, profileId) {
+  const record = records?.[recordKey];
+  return Boolean(
+    record?.status === "success" &&
+    String(record.destinationKey || "").trim() === String(destinationKey || "").trim() &&
+    String(record.profileId || "").trim() === String(profileId || "").trim() &&
+    String(recordKey || "") === self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId),
+  );
+}
+
 async function recordSubmittedProject(task) {
   return submissionLedgerWrite(() => recordSubmittedProjectUnlocked(task));
 }
 
 async function recordSubmittedProjectUnlocked(task) {
-  if (!task?.url) return;
-  const url = task.url.startsWith("http") ? task.url : `https://${task.url}`;
-  const profileId = task.profileId || task.projectKey || task.config?.projectKey || "";
-  if (!profileId) return;
+  const rawUrl = String(task?.url || "").trim();
+  if (!rawUrl) throw new Error("成功记录写入失败：缺少目标 URL");
+  const url = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
+  const profileId = String(task.profileId || task.projectKey || task.config?.projectKey || "").trim();
+  if (!profileId) throw new Error("成功记录写入失败：缺少项目 profileId");
   const proof = self.ExtLinkAutomationLedger.validateSuccessProof({
     confirmedBy: task.confirmedBy || "agent",
     evidence: task.successEvidence || "",
@@ -4999,7 +5010,8 @@ async function recordSubmittedProjectUnlocked(task) {
     evidenceUrl: task.evidenceUrl || "",
   });
   if (!proof.ok) throw new Error(`成功证据未通过硬闸门: ${proof.reason}`);
-  const destinationKey = siteKeyForUrl(url);
+  const destinationKey = String(siteKeyForUrl(url) || "").trim();
+  if (!destinationKey) throw new Error("成功记录写入失败：无法解析目标站点");
   const storage = await chrome.storage.local.get(["submissionRecords", "submissionTimeline"]);
   const records = storage.submissionRecords || {};
   const key = self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId);
@@ -5010,6 +5022,9 @@ async function recordSubmittedProjectUnlocked(task) {
     String(existing.evidence || "") === String(proof.evidence || "") &&
     String(existing.publicationStatus || "submitted") === String(task.publicationStatus || "submitted")
   ) {
+    if (!isPersistedSuccessRecord(records, key, destinationKey, profileId)) {
+      throw new Error(`成功记录写入失败：已有账本记录身份不匹配（${key}）`);
+    }
     // A worker can be suspended after the record write and before its timeline
     // write. Repair only that missing event; an existing event is left alone.
     if (!submissionTimelineContainsRecord(storage.submissionTimeline, key, existing)) {
@@ -5029,7 +5044,7 @@ async function recordSubmittedProjectUnlocked(task) {
         timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
       });
     }
-    return existing;
+    return records[key];
   }
   const record = self.ExtLinkQueue.buildSuccessRecord({
     destinationKey,
@@ -5057,7 +5072,12 @@ async function recordSubmittedProjectUnlocked(task) {
     submissionTimeline,
     timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
   });
-  return record;
+  const persistedStorage = await chrome.storage.local.get(["submissionRecords"]);
+  const persistedRecord = persistedStorage.submissionRecords?.[key];
+  if (!isPersistedSuccessRecord(persistedStorage.submissionRecords || {}, key, destinationKey, profileId)) {
+    throw new Error(`成功记录写入失败：账本未持久化精确记录（${key}）`);
+  }
+  return persistedRecord;
 }
 
 async function addToUrlList(msg) {
@@ -7386,14 +7406,17 @@ async function confirmSubmissionSuccess(msg) {
     throw new Error("该任务当前不在待人工确认状态");
   }
 
-  task.status = "ok";
   task.skipReason = "";
   task.confirmedBy = "manual";
   task.successEvidence = msg.evidence || "user confirmed submission success";
   task.confirmationNonce = "";
   task.manualTabId = 0;
   task.manualTabUrl = "";
-  await recordSubmittedProject(task);
+  const record = await recordSubmittedProject(task);
+  if (!record?.status || record.status !== "success") {
+    throw new Error("成功记录写入失败：未返回已持久化的成功账本记录");
+  }
+  task.status = "ok";
   await recordUnattendedSuccess();
   broadcastTaskUpdate(task);
   if (task.id && state.parkedTaskIds.delete(task.id)) {
@@ -8513,7 +8536,10 @@ function completeTaskFromJudge(tabId, task, judge) {
   };
   log(`${task.domain}: 已取得证据，正在写入成功账本 - ${proof.evidence}`, "ok");
   recordSubmittedProject(task)
-    .then(() => {
+    .then((record) => {
+      if (!record || record.status !== "success") {
+        throw new Error("成功记录写入失败：未返回已持久化的成功账本记录");
+      }
       task.status = "ok";
       recordAutomationEvent(task, {
         type: "success_recorded",

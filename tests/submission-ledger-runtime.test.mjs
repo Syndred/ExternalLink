@@ -63,6 +63,7 @@ const functionNames = [
   "siteKeyForUrl",
   "buildSubmissionTimelineEventForRecord",
   "submissionTimelineContainsRecord",
+  "isPersistedSuccessRecord",
   "recordSubmittedProject",
   "recordSubmittedProjectUnlocked",
   "applyTimelinePublicationUpgrade",
@@ -74,6 +75,8 @@ const functionNames = [
 ];
 const functionSource = functionNames.map((name) => extractFunction(background, name)).join("\n\n");
 const libraryStateWrapperSource = extractFunction(background, "getLibraryManagerState");
+const completionSource = extractFunction(background, "completeTaskFromJudge");
+const manualConfirmationSource = extractFunction(background, "confirmSubmissionSuccess");
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -122,6 +125,84 @@ function createHarness(initial = {}) {
   );
   return { context, storageData, setCalls };
 }
+
+// A success record without a target URL or project identity must fail closed;
+// silently resolving here lets callers advance a task without an exact ledger
+// pair to prove what was submitted.
+{
+  const harness = createHarness();
+  await assert.rejects(
+    harness.context.recordSubmittedProject({
+      profileId: "JevPlay",
+      confirmedBy: "manual",
+      successEvidence: "Submission received",
+    }),
+    /缺少目标 URL/,
+  );
+  await assert.rejects(
+    harness.context.recordSubmittedProject({
+      url: "https://example.test/submit",
+      confirmedBy: "manual",
+      successEvidence: "Submission received",
+    }),
+    /缺少项目 profileId/,
+  );
+  assert.equal(harness.storageData.submissionRecords, undefined);
+}
+
+// The recorder must verify the exact destinationKey::profileId record after
+// storage.set resolves, otherwise a dropped or stale write can be reported as
+// a successful submission.
+{
+  const harness = createHarness();
+  harness.context.chrome.storage.local.set = async () => {};
+  await assert.rejects(
+    harness.context.recordSubmittedProject({
+      url: "https://example.test/submit",
+      profileId: "JevPlay",
+      confirmedBy: "manual",
+      successEvidence: "Submission received",
+    }),
+    /账本未持久化精确记录/,
+  );
+  assert.equal(harness.storageData.submissionRecords, undefined);
+}
+
+// A pre-existing success row is only reusable when the row itself carries the
+// same destination and profile as the derived key.
+{
+  const key = "example.test/submit::JevPlay";
+  const harness = createHarness({
+    submissionRecords: {
+      [key]: {
+        status: "success",
+        destinationKey: "other.example/submit",
+        profileId: "OtherProject",
+        evidence: "Submission received",
+        publicationStatus: "submitted",
+      },
+    },
+  });
+  await assert.rejects(
+    harness.context.recordSubmittedProject({
+      url: "https://example.test/submit",
+      profileId: "JevPlay",
+      confirmedBy: "manual",
+      successEvidence: "Submission received",
+      publicationStatus: "submitted",
+    }),
+    /已有账本记录身份不匹配/,
+  );
+}
+
+assert.ok(
+  completionSource.indexOf("recordSubmittedProject(task)") < completionSource.indexOf('task.status = "ok"'),
+  "judge success must persist the ledger record before marking the task ok",
+);
+assert.ok(
+  manualConfirmationSource.indexOf("recordSubmittedProject(task)") < manualConfirmationSource.indexOf('task.status = "ok"'),
+  "manual confirmation must persist the ledger record before marking the task ok",
+);
 
 // Two simultaneous ledger writes must serialize their reads as well as their
 // final sets. Without the shared executor, the second stale whole-value write

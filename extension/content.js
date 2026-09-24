@@ -452,9 +452,7 @@
       )
     )
       return "profile";
-    if (document.querySelector('form[action*="submit"], form[action*="add"], form.submit-tool'))
-      return "directory";
-    if (document.querySelector("form") && hasLikelySubmissionFields()) return "submission";
+    if (detectSubmissionForm()) return "submission";
     return null;
   }
 
@@ -833,20 +831,63 @@
   }
 
   function detectSubmissionForm() {
-    return (
-      !!document.querySelector(
-        'form[action*="submit"], form[action*="contact"], form[action*="send"]',
-      ) ||
-      (!!document.querySelector("form") && hasLikelySubmissionFields())
+    return Array.from(document.querySelectorAll("form")).some((form) => {
+      if (isMarketingOptInForm(form)) return false;
+      return hasLikelySubmissionFields(form);
+    });
+  }
+
+  function hasLikelySubmissionFields(scope = document) {
+    if (!scope?.querySelector) return false;
+    if (hasLikelyListingFields(scope)) return true;
+    return !!scope.querySelector(
+      'textarea[name*="message" i], textarea[id*="message" i], ' +
+        'textarea[aria-label*="message" i], textarea[placeholder*="message" i]',
     );
   }
 
-  function hasLikelySubmissionFields() {
-    return !!document.querySelector(
-      'input[type="url"], input[type="email"], input[name*="url" i], input[id*="url" i], ' +
+  function hasLikelyListingFields(scope) {
+    if (!scope?.querySelector) return false;
+    return !!scope.querySelector(
+      'input[type="url"], input[name*="url" i], input[id*="url" i], ' +
         'input[name*="website" i], input[id*="website" i], input[name*="link" i], input[id*="link" i], ' +
         'input[name*="product" i], input[id*="product" i], input[name*="title" i], input[id*="title" i], ' +
-        'textarea[name*="description" i], textarea[id*="description" i], textarea[name*="message" i]',
+        'input[aria-label*="url" i], input[aria-label*="website" i], input[placeholder*="https"], ' +
+        'input[placeholder*="url" i], input[placeholder*="website" i], ' +
+        'textarea[name*="description" i], textarea[id*="description" i], textarea[name*="summary" i], ' +
+        'textarea[id*="summary" i]',
+    );
+  }
+
+  function isMarketingOptInForm(form) {
+    if (!form?.querySelectorAll) return false;
+    const fields = Array.from(
+      form.querySelectorAll(
+        'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select',
+      ),
+    );
+    const hasEmail = fields.some((field) => String(field.type || "").toLowerCase() === "email");
+    if (!hasEmail || hasLikelyListingFields(form)) return false;
+
+    const context = compactText(
+      [
+        form.id,
+        form.className,
+        form.getAttribute?.("name"),
+        form.getAttribute?.("aria-label"),
+        form.getAttribute?.("action"),
+        form.innerText,
+        form.textContent,
+        ...Array.from(form.querySelectorAll("button, input[type='submit']")).map(
+          (button) => button.innerText || button.textContent || button.value || "",
+        ),
+      ]
+        .filter(Boolean)
+        .join(" "),
+      1200,
+    );
+    return /newsletter|subscribe|mailing\s+list|join\s+[\d,]+\s+(?:readers|subscribers)|free\s+(?:ai\s+)?database|briefing/i.test(
+      context,
     );
   }
 
@@ -2902,6 +2943,15 @@
     detectArticleComment,
     isArticleCommentForm,
     isArticleCommentField,
+  };
+  self.__extLinkSubmissionTestHooks = {
+    identifyPlatform,
+    detectDirectory,
+    detectSubmissionForm,
+    hasLikelySubmissionFields,
+    hasLikelyListingFields,
+    isMarketingOptInForm,
+    queryFillableElements,
   };
   self.__extLinkContentAuditTestHooks = {
     detectWPComment,
@@ -5114,7 +5164,7 @@
     let bestForm = null;
     let bestScore = 0;
     for (const form of document.querySelectorAll("form")) {
-      if (!isVisible(form)) continue;
+      if (!isVisible(form) || isMarketingOptInForm(form)) continue;
       const score = queryFillableElements(form).length;
       if (score > bestScore) {
         bestScore = score;
@@ -5127,8 +5177,10 @@
         candidate.fillable.length === 1 &&
         String(candidate.fillable[0].type || "").toLowerCase() === "email";
       const marketingOptIn =
-        onlyEmail && /newsletter|subscribe|join\s+[\d,]+|don't miss|free database/i.test(text);
-      if (marketingOptIn && bestScore > candidate.fillable.length) continue;
+        isMarketingOptInForm(candidate.element) ||
+        Array.from(candidate.element.querySelectorAll?.("form") || []).some(isMarketingOptInForm) ||
+        (onlyEmail && /newsletter|subscribe|join\s+[\d,]+|don't miss|free database/i.test(text));
+      if (marketingOptIn) continue;
       return candidate.element;
     }
     return bestForm || document;
@@ -5142,6 +5194,8 @@
       ),
     ).filter((element) => {
       const type = (element.type || "").toLowerCase();
+      const owningForm = element.closest?.("form") || (root.matches?.("form") ? root : null);
+      if (owningForm && isMarketingOptInForm(owningForm)) return false;
       // Modern upload UIs usually hide the real file control behind a visible
       // dropzone. Keep that control available for DataTransfer injection, but
       // only when the nearby visible label is clearly an upload/media target.

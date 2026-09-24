@@ -2741,6 +2741,7 @@
   function shouldAutoFillAfterDetection(result = {}) {
     const platform = String(result.platform || "").trim().toLowerCase();
     if (!result.operable || Number(result.formFieldCount || 0) <= 0) return false;
+    if (!["directory", "submission", "profile", "forum"].includes(platform)) return false;
     // A blog comment form is operable, but its Description-like textarea must
     // never receive the selected Profile's directory copy automatically.
     if (platform === "wp_comment" || platform === "article") return false;

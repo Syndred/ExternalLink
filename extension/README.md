@@ -65,6 +65,7 @@ node tests/scheduler-workflow.test.mjs
 node tests/backup-workflow.test.mjs
 node tests/ui-workflow.test.mjs
 node tests/extension-content.test.mjs
+node tests/content-submission-detection.test.mjs
 node tests/cloud-sync-workflow.test.mjs
 node tests/cloud-worker-core.test.mjs
 node tests/table-import.test.mjs

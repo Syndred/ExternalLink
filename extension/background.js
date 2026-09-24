@@ -6358,6 +6358,8 @@ async function handleRequestAutoFill(msg, sender) {
         if (!latestProfile || latestProfile.id !== profile.id) return;
 
         const detection = await sendTabMessage(tabId, { action: "detectPage" });
+        const fillablePlatforms = ["directory", "submission", "profile", "forum"];
+        if (!fillablePlatforms.includes(String(detection?.platform || "").toLowerCase())) return;
         if (!detection?.operable && !(detection?.formFieldCount > 0)) return;
 
         autoFillInProgress.add(tabId);

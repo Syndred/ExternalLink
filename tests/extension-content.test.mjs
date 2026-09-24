@@ -37,6 +37,11 @@ assert.match(
   "background.js should navigate tracked task tabs after content.js returns a navigation request",
 );
 assert.match(
+  background,
+  /function\s+handleRequestAutoFill[\s\S]*?fillablePlatforms\s*=\s*\["directory",\s*"submission",\s*"profile",\s*"forum"\][\s\S]*?fillablePlatforms\.includes/,
+  "batch auto-fill must require a recognized submission or profile form",
+);
+assert.match(
   content,
   /const beforeStage = formStageSignature\(\);[\s\S]*afterStage !== beforeStage[\s\S]*stageAdvanced: true/,
   "same-URL multi-step forms must continue when the form stage changes without final evidence",
@@ -62,8 +67,8 @@ assert.match(content, /input\[type="email"\]/, "generic form filling should incl
 
 assert.match(
   content,
-  /marketingOptIn[\s\S]*bestScore\s*>\s*candidate\.fillable\.length/,
-  "newsletter popups must not hide a larger directory submission form",
+  /function\s+isMarketingOptInForm[\s\S]*function\s+getActiveFillScope[\s\S]*if\s*\(marketingOptIn\)\s*continue/,
+  "newsletter opt-in fields must not become automatic fill targets",
 );
 
 assert.match(

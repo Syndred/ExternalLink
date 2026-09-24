@@ -60,6 +60,27 @@ function statusElement(text = "") {
   assert.equal(vm.runInContext('formatSidepanelTimelineTime("not-a-date")', context), "时间未知");
 }
 
+// Automatically fill only when content detection identifies a supported
+// profile or submission workflow, not any arbitrary page with an input.
+{
+  const context = { String, Number };
+  vm.createContext(context);
+  vm.runInContext(
+    slice("  function shouldAutoFillAfterDetection", "  // ─── Detect ───"),
+    context,
+  );
+  assert.equal(
+    vm.runInContext('shouldAutoFillAfterDetection({ operable: true, platform: "unknown", formFieldCount: 1 })', context),
+    false,
+    "unknown pages with one field must not trigger automatic fill",
+  );
+  assert.equal(
+    vm.runInContext('shouldAutoFillAfterDetection({ operable: true, platform: "directory", formFieldCount: 3 })', context),
+    true,
+    "recognized directory forms should keep automatic fill enabled",
+  );
+}
+
 // Detection starts fill as soon as sidepanelDetect returns. Slow quality
 // requests are intentionally held open to prove they are not on the fill path.
 {

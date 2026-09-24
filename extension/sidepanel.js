@@ -3521,6 +3521,10 @@
         const cls =
           msg.submitReady === false || msg.invalidCount > 0 || msg.emptyCount > 0 ? "warn" : "ok";
         setAutoFillStatus(msg.message || "填写完成", cls);
+        if (msg.ledgerSaved === true) {
+          loadSubmissionQueue(currentPageUrl).catch(() => {});
+          loadSidepanelTimeline(currentPageUrl).catch(() => {});
+        }
       } else if (
         msg.status === "manual" ||
         msg.status === "captcha" ||

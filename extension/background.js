@@ -3815,6 +3815,7 @@ async function runSidepanelFill(msg) {
       broadcastAutoFillUpdate({
         tabId,
         status: "done",
+        ledgerSaved: true,
         message: result.publicationStatus === "published"
           ? "Product Hunt 草稿已创建并看到公开回执"
           : "Product Hunt 草稿已创建并记入账本",
@@ -4431,7 +4432,7 @@ async function observeManualSubmissionReceipt(tabId, token, frameId, details = {
       const currentWatch = (await chrome.storage.local.get(key))[key];
       if (currentWatch?.token === token) await chrome.storage.local.remove(key);
       log(`${watch.profileName}: 已保存手动提交回执和动态：${evidence}`, "ok", { event: "manual_submission_recorded", profileId: watch.profileId, url: watch.url });
-      broadcastAutoFillUpdate({ tabId, status: "done", message: `${watch.profileName} 已提交，回执和外链动态已保存` });
+      broadcastAutoFillUpdate({ tabId, status: "done", ledgerSaved: true, message: `${watch.profileName} 已提交，回执和外链动态已保存` });
       return { ok: true, record };
     }
     broadcastAutoFillUpdate({ tabId, status: "manual", message: "未读取到新的提交回执；若已成功，请点「登记动态」补记" });
@@ -4678,7 +4679,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
         : submitResult.publicationStatus === "published"
           ? "已提交并看到上线回执"
           : "已提交并记入账本";
-    broadcastAutoFillUpdate({ tabId, status: "done", message: doneMsg });
+    broadcastAutoFillUpdate({ tabId, status: "done", ledgerSaved: true, message: doneMsg });
     return {
       ok: true,
       submitted: true,
@@ -5085,7 +5086,11 @@ async function runValidateAndFixFill(tabId, config, options = {}) {
 // service. Keep the stored evidence rows intact, but use one display/ledger
 // identity so a receipt from the submit route appears on the landing page and
 // a later queue pass cannot schedule the same Profile again.
-const DISPLAY_HOST_DESTINATIONS = new Set(["startupstash.com"]);
+const DISPLAY_HOST_DESTINATIONS = new Set([
+  "startupstash.com",
+  "tipseason.com",
+  "library.phygital.plus",
+]);
 
 function canonicalDestinationKey(value) {
   const normalized = self.ExtLinkQueue.normalizeDestinationKey(value);
@@ -5100,7 +5105,7 @@ function siteKeyForUrl(url) {
   const domain = self.ExtLinkQueue.extractDomain(url);
   // Keep this function self-contained because destination-memory helpers are
   // also loaded in isolation by the form-learning regression tests.
-  return String(domain || "").toLowerCase() === "startupstash.com"
+  return ["startupstash.com", "tipseason.com", "library.phygital.plus"].includes(String(domain || "").toLowerCase())
     ? String(domain || "").toLowerCase()
     : normalized;
 }

@@ -57,6 +57,8 @@ vm.runInContext(`${background.slice(helperStart, helperEnd)}\n${extractFunction(
 
 assert.equal(context.siteKeyForUrl("https://startupstash.com"), "startupstash.com");
 assert.equal(context.siteKeyForUrl("https://startupstash.com/add-listing/"), "startupstash.com");
+assert.equal(context.siteKeyForUrl("https://www.tipseason.com/ai-tools/submit-free/success"), "tipseason.com");
+assert.equal(context.siteKeyForUrl("https://library.phygital.plus/tool-submission"), "library.phygital.plus");
 assert.equal(context.siteKeyForUrl("https://other.example/submit"), "other.example/submit");
 
 const pathRecord = {
@@ -71,6 +73,13 @@ const records = { "startupstash.com/add-listing::JevPlay": pathRecord };
 const expanded = context.expandSubmissionRecordsForQueue(records, ["https://startupstash.com/"]);
 assert.equal(expanded["startupstash.com::JevPlay"], pathRecord);
 assert.equal(records["startupstash.com::JevPlay"], undefined, "alias expansion must not mutate persisted records");
+
+const tipRecord = { ...pathRecord, destinationKey: "tipseason.com/ai-tools/submit-free" };
+const tipAliases = context.expandSubmissionRecordsForQueue(
+  { "tipseason.com/ai-tools/submit-free::JevPlay": tipRecord },
+  ["https://www.tipseason.com/ai-tools/submit"],
+);
+assert.equal(tipAliases["tipseason.com/ai-tools/submit::JevPlay"], tipRecord);
 
 assert.match(background, /if \(sidePanelOpen\) \{[\s\S]*chrome\.tabs\.query\(\{ active: true, lastFocusedWindow: true \}\)/,
   "side-panel auto-fill must be restricted to the active tab");

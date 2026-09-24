@@ -148,6 +148,7 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
     }),
     ensureCloudRevisions: async () => ({ submissionTimeline: 1 }),
     updateCloudMetadata: async () => {},
+    backfillVerifiedSiteMarkers: async () => [],
     log: () => {},
     scheduleCloudSync: () => {},
     cloudRequest,

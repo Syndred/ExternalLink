@@ -1303,6 +1303,9 @@ async function pullCloudState(options = {}) {
       Object.prototype.hasOwnProperty.call(snapshot.documents || {}, key),
     );
     await updateCloudMetadata({ lastPullAt: new Date().toISOString(), lastError: "" });
+    await backfillVerifiedSiteMarkers().catch((err) => {
+      log(`已回读云端，站点标记补全暂未完成：${err.message}`, "warn");
+    });
     return {
       ok: true,
       applied: true,
@@ -5373,6 +5376,22 @@ async function listSiteAnnotations() {
   return { ok: true, items };
 }
 
+async function backfillVerifiedSiteMarkers() {
+  return runSiteAnnotationWrite(async () => {
+    const storage = await chrome.storage.local.get(["submissionRecords", "siteAnnotations"]);
+    const result = self.ExtLinkQueue.verifiedSubmissionSiteAnnotationUpdates(
+      storage.submissionRecords || {},
+      storage.siteAnnotations || {},
+      siteKeyForUrl,
+    );
+    if (result.addedKeys.length) {
+      await chrome.storage.local.set({ siteAnnotations: result.annotations });
+      log(`已按真实提交回执补全 ${result.addedKeys.length} 个站点标记`, "ok");
+    }
+    return result.addedKeys;
+  });
+}
+
 async function clearSiteAnnotation(msg) {
   return runSiteAnnotationWrite(() => removeSiteAnnotation(msg));
 }
@@ -5586,6 +5605,9 @@ async function recordSubmittedProjectUnlocked(task) {
         timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
       });
     }
+    await backfillVerifiedSiteMarkers().catch((err) => {
+      log(`成功记录已保存，站点标记待补：${err.message}`, "warn");
+    });
     return records[key];
   }
   const record = self.ExtLinkQueue.buildSuccessRecord({
@@ -5619,6 +5641,9 @@ async function recordSubmittedProjectUnlocked(task) {
   if (!isPersistedSuccessRecord(persistedStorage.submissionRecords || {}, key, destinationKey, profileId)) {
     throw new Error(`成功记录写入失败：账本未持久化精确记录（${key}）`);
   }
+  await backfillVerifiedSiteMarkers().catch((err) => {
+    log(`成功记录已保存，站点标记待补：${err.message}`, "warn");
+  });
   return persistedRecord;
 }
 

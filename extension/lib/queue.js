@@ -149,6 +149,39 @@
     );
   }
 
+  function verifiedSubmissionSiteAnnotationUpdates(records = {}, annotations = {}, siteKeyForUrl = normalizeDestinationKey, now = new Date().toISOString()) {
+    const next = { ...annotations };
+    const addedKeys = [];
+    for (const [recordKey, record] of Object.entries(records || {})) {
+      const destinationKey = String(record?.destinationKey || "").trim();
+      const profileId = String(record?.profileId || "").trim();
+      if (!destinationKey || !profileId || recordKey !== submissionRecordKey(destinationKey, profileId)) continue;
+      if (!isSubmissionSuccessful({ [recordKey]: record }, destinationKey, profileId)) continue;
+      const url = String(record.destinationUrl || `https://${destinationKey}`).trim();
+      const key = siteKeyForUrl(url);
+      const domain = extractDomain(url);
+      if (!key || !domain) continue;
+      const previous = next[key] || next[domain] || findDestinationAnnotation(next, key, domain) || {};
+      // A verified receipt proves that a route accepted this Profile. It does
+      // not lift a manually chosen login, CAPTCHA, paid, or skip gate.
+      if (normalizeAnnotationStatuses(previous).length) continue;
+      const annotation = {
+        ...previous,
+        url,
+        domain,
+        status: "can_submit",
+        statuses: ["can_submit"],
+        note: previous.note || "已取得精确 Profile 提交回执",
+        updatedAt: now,
+        auto: true,
+      };
+      next[key] = annotation;
+      next[domain] = annotation;
+      addedKeys.push(key);
+    }
+    return { annotations: next, addedKeys };
+  }
+
   function normalizePublicationStatus(value) {
     const raw = String(value || "")
       .trim()
@@ -981,6 +1014,7 @@
     extractDomain,
     submissionRecordKey,
     isSubmissionSuccessful,
+    verifiedSubmissionSiteAnnotationUpdates,
     normalizePublicationStatus,
     publicationRank,
     inferPublicationStatus,

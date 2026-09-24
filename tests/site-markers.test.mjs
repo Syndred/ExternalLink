@@ -39,4 +39,44 @@ for (const status of ["paid", "broken", "skip", "deleted"]) {
   }
 }
 assert.equal(groupsFor({ status: "paid", statuses: [] }).length, 1, "cleared markers must restore queue eligibility");
+
+const verifiedRecord = (destinationKey, profileId, evidence = "Submission received") => ({
+  status: "success",
+  destinationKey,
+  destinationUrl: `https://${destinationKey}`,
+  profileId,
+  confirmedBy: "agent",
+  evidence,
+});
+const markerRecords = {
+  "good.example/submit::JevPlay": verifiedRecord("good.example/submit", "JevPlay"),
+  "good.example/submit::OldPhotoLive": verifiedRecord("good.example/submit", "OldPhotoLive"),
+  "captcha.example/submit::JevPlay": verifiedRecord("captcha.example/submit", "JevPlay"),
+  "paid.example/submit::JevPlay": verifiedRecord("paid.example/submit", "JevPlay"),
+  "legacy.example/submit::JevPlay": verifiedRecord("legacy.example/submit", "JevPlay", "Table.xlsx submitted seed"),
+  "wrong.example/submit::JevPlay": { ...verifiedRecord("wrong.example/submit", "Other") },
+};
+const markerExisting = {
+  "captcha.example": { status: "needs_captcha", statuses: ["needs_captcha"], note: "人工验证" },
+  "paid.example": { status: "paid", statuses: ["paid"] },
+  "good.example": { formKnowledge: { version: 1 } },
+};
+const markerResult = Q.verifiedSubmissionSiteAnnotationUpdates(
+  markerRecords,
+  markerExisting,
+  (url) => Q.extractDomain(url),
+  "2026-09-24T14:00:00.000Z",
+);
+assert.deepEqual(plain(markerResult.addedKeys), ["good.example"]);
+assert.deepEqual(plain(markerResult.annotations["good.example"].statuses), ["can_submit"]);
+assert.deepEqual(plain(markerResult.annotations["good.example"].formKnowledge), { version: 1 });
+assert.deepEqual(plain(markerResult.annotations["captcha.example"].statuses), ["needs_captcha"]);
+assert.deepEqual(plain(markerResult.annotations["paid.example"].statuses), ["paid"]);
+assert.equal(markerResult.annotations["legacy.example"], undefined);
+assert.equal(markerResult.annotations["wrong.example"], undefined);
+assert.deepEqual(plain(Q.verifiedSubmissionSiteAnnotationUpdates(
+  markerRecords,
+  markerResult.annotations,
+  (url) => Q.extractDomain(url),
+).addedKeys), [], "reconciling the same verified receipts must not rewrite markers");
 console.log("site marker migration, multiselect, queue and priority tests passed");

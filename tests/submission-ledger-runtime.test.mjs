@@ -112,6 +112,8 @@ function createHarness(initial = {}) {
     URL,
     crypto: { randomUUID: () => `timeline-${setCalls.length}-${Math.random()}` },
     state: { runId: "ledger-test-run" },
+    backfillVerifiedSiteMarkers: async () => [],
+    log() {},
     setTimeout,
     clearTimeout,
   };

@@ -22,7 +22,9 @@
     "domainMetricsCache",
     "linkMonitorResults",
     "linkMonitorSchedule",
-    "activeBatchRun",
+    // Batch execution belongs to the browser that owns its tabs. Mirroring
+    // this large, rapidly changing object causes cross-device 409 conflicts
+    // and can replay another device's stopped run into the current browser.
     "autoSubmitStandardWpComments",
     "autoSubmitDirectoryListings",
     "cfgEmail",

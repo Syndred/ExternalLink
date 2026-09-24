@@ -47,13 +47,17 @@ assert.equal(documents.siteProfiles.RainbowPetAI.id, "RainbowPetAI");
 assert.equal(documents.submissionTimeline["directory.example::RainbowPetAI"][0].id, "event-1");
 assert.deepEqual(JSON.parse(JSON.stringify(documents.deletedSubmissionKeys)), ["removed.example"]);
 assert.equal(Object.hasOwn(documents, "googleSheetId"), false, "Google credentials are never migrated");
+assert.equal(Object.hasOwn(documents, "activeBatchRun"), false, "a browser's active batch must remain device-local");
+assert.equal(C.STATE_DOCUMENT_KEYS.includes("activeBatchRun"), false);
+assert.deepEqual(JSON.parse(JSON.stringify(C.stateKeysFromChanges({ activeBatchRun: { status: "stopped" } }))), [],
+  "stopping a local batch must not queue a cloud write");
 
 const restored = C.documentsToState(documents);
 assert.deepEqual(JSON.parse(JSON.stringify(restored.submissionRecords)), state.submissionRecords);
 assert.deepEqual(JSON.parse(JSON.stringify(restored.siteAnnotations)), state.siteAnnotations);
 
 assert.equal(C.supportsPatch("siteProfiles"), true);
-assert.equal(C.supportsPatch("activeBatchRun"), false, "active batches still require lease-aware writes");
+assert.equal(C.supportsPatch("activeBatchRun"), false, "device-local batches are never patched to the cloud");
 assert.deepEqual(
   JSON.parse(JSON.stringify(C.diffPatchOperations(
     { A: { name: "Old", url: "https://a.example" }, B: { name: "Keep" } },

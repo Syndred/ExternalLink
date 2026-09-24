@@ -4478,7 +4478,9 @@ async function observeManualSubmissionReceipt(tabId, token, frameId, details = {
       }).catch(() => null);
       const evidence = String(receipt?.evidence || "").replace(/\s+/g, " ").trim();
       if (!receipt?.matched || !evidence || evidence === String(frameBaseline.evidence || "").replace(/\s+/g, " ").trim()) continue;
-      const evidenceUrl = receipt.evidenceUrl || details.frameUrl || frameBaseline.url || currentUrl;
+      const evidenceUrl = receipt.evidenceUrl ||
+        (normalizedFrameId === 0 ? currentUrl : details.frameUrl) ||
+        frameBaseline.url || currentUrl;
       const record = await recordSubmittedProject({
         url: watch.url, profileId: watch.profileId, profileName: watch.profileName,
         confirmedBy: "agent", successEvidence: evidence,

@@ -175,6 +175,11 @@ assert.equal(
   'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
   'a popup without openerTabId must retain its browser navigation source after forms.gle redirects',
 );
+ctx.recordSubmittedProject = async (record) => { records.push(record); return record; };
+ctx.getTabUrlSafe = async () => 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg/formResponse';
+evidence = { matched: true, evidence: 'Thank you for submitting a new AI tool.' };
+assert.equal((await ctx.observeManualSubmissionReceipt(14, store['manualSubmissionWatch:14'].token)).ok, true);
+assert.equal(records.at(-1).evidenceUrl, await ctx.getTabUrlSafe(), 'top-frame receipt links must point to the response page');
 
 const binding = {
   chrome: { storage: { local: { get: async () => ({ activeSiteId: 'B' }) } } },

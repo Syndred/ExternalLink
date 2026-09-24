@@ -75,6 +75,10 @@ const functionNames = [
   "confirmSubmissionSuccess",
 ];
 const functionSource = functionNames.map((name) => extractFunction(background, name)).join("\n\n");
+const destinationHelperSource = `${background.slice(
+  background.indexOf("const DISPLAY_HOST_DESTINATIONS"),
+  background.indexOf("function siteKeyForUrl"),
+)}\n`;
 const libraryStateWrapperSource = extractFunction(background, "getLibraryManagerState");
 const completionSource = extractFunction(background, "completeTaskFromJudge");
 const manualConfirmationSource = extractFunction(background, "confirmSubmissionSuccess");
@@ -119,6 +123,7 @@ function createHarness(initial = {}) {
   vm.runInContext(
     `const SUBMISSION_SCHEMA_VERSION = 2;
      const submissionLedgerWrite = self.ExtLinkBatchControls.createSerialExecutor();
+     ${destinationHelperSource}
      ${functionSource}
      ${libraryStateWrapperSource}`,
     context,
@@ -204,6 +209,36 @@ assert.ok(
   manualConfirmationSource.indexOf("recordSubmittedProject(task)") < manualConfirmationSource.indexOf('task.status = "ok"'),
   "manual confirmation must persist the ledger record before marking the task ok",
 );
+
+// A manual timeline status without a receipt/evidence link is only a note;
+// it must not fabricate a trusted success row. Supplying the original receipt
+// promotes the exact destination/profile pair into the submission ledger.
+{
+  const harness = createHarness();
+  const emptyEvidence = await harness.context.writeSubmissionTimelineEventUnlocked({
+    destinationKey: "phygital.example/submit",
+    destinationUrl: "https://phygital.example/submit",
+    profileId: "GraffitiName",
+    type: "submitted",
+    note: "",
+    occurredAt: "2026-09-24T11:00:00.000Z",
+    source: "manual",
+  });
+  assert.equal(emptyEvidence.record, null);
+  assert.equal(harness.storageData.submissionRecords, undefined);
+  const withReceipt = await harness.context.writeSubmissionTimelineEventUnlocked({
+    destinationKey: "phygital.example/submit",
+    destinationUrl: "https://phygital.example/submit",
+    profileId: "GraffitiName",
+    type: "submitted",
+    note: "Thank you for your submission!",
+    occurredAt: "2026-09-24T11:01:00.000Z",
+    source: "manual",
+  });
+  assert.equal(withReceipt.record.status, "success");
+  assert.equal(withReceipt.record.destinationKey, "phygital.example/submit");
+  assert.equal(withReceipt.record.profileId, "GraffitiName");
+}
 
 // A failed manual confirmation write must leave the task retryable. In
 // particular, the confirmation nonce and page identity are the recovery

@@ -9,12 +9,26 @@ const source = readFileSync(resolve(root, "extension/content.js"), "utf8");
 const forms = [];
 
 class FakeField {
-  constructor({ type = "text", tagName = "input", name = "", id = "", placeholder = "" } = {}) {
+  constructor({
+    type = "text",
+    tagName = "input",
+    name = "",
+    id = "",
+    placeholder = "",
+    ariaLabel = "",
+    minLength = 0,
+    maxLength = 0,
+    required = false,
+  } = {}) {
     this.type = type;
     this.tagName = tagName.toUpperCase();
     this.name = name;
     this.id = id;
     this.placeholder = placeholder;
+    this.ariaLabel = ariaLabel;
+    this.minLength = minLength;
+    this.maxLength = maxLength;
+    this.required = required;
     this.value = "";
     this.disabled = false;
     this.readOnly = false;
@@ -23,7 +37,13 @@ class FakeField {
   }
 
   getAttribute(name) {
-    return ({ name: this.name, id: this.id, type: this.type, placeholder: this.placeholder })[name] || "";
+    return ({
+      name: this.name,
+      id: this.id,
+      type: this.type,
+      placeholder: this.placeholder,
+      "aria-label": this.ariaLabel,
+    })[name] || "";
   }
 
   closest(selector) {
@@ -153,6 +173,73 @@ vm.runInContext(source, context, { filename: "extension/content.js" });
 
 const hooks = context.__extLinkSubmissionTestHooks;
 assert.ok(hooks, "content.js should expose submission detection test hooks");
+const fieldHooks = context.__extLinkFieldRoutingTestHooks;
+assert.ok(fieldHooks, "content.js should expose field routing test hooks");
+
+const oldPhotoConfig = {
+  targetDomain: "https://oldphotoliveai.com",
+  brandName: "OldPhotoLive AI",
+  email: "",
+  useCases: ["Restore and animate old family photos"],
+  projectFields: {
+    "Business mail": "support@oldphotoliveai.com",
+    "Short description(20-30 words)":
+      "OldPhotoLive AI restores, colorizes, and animates old family photos online, turning faded memories into vivid images and short videos.",
+    "Extra Link:X/Twitter/YouTube/Instagram/..": "Not specified in the project.",
+  },
+};
+const emailField = new FakeField({ name: "email", ariaLabel: "Email address" });
+assert.equal(
+  fieldHooks.resolveValueForField(oldPhotoConfig, emailField),
+  "support@oldphotoliveai.com",
+  "profile email should fill a text input whose label carries the email intent",
+);
+const shortDescriptionField = new FakeField({
+  tagName: "textarea",
+  ariaLabel: "Short description (minimum 10 words)",
+});
+const shortDescription = fieldHooks.resolveValueForField(oldPhotoConfig, shortDescriptionField);
+assert.ok(shortDescription.split(/\s+/).length >= 10, "short description must satisfy its minimum word count");
+assert.match(shortDescription, /^OldPhotoLive AI restores, colorizes, and animates/);
+const primaryUseCaseField = new FakeField({
+  tagName: "textarea",
+  ariaLabel: "Primary Use Case",
+});
+assert.equal(
+  fieldHooks.resolveValueForField(oldPhotoConfig, primaryUseCaseField),
+  "Restore and animate old family photos",
+  "primary use case should use the configured profile value",
+);
+const socialUrlField = new FakeField({ type: "url", ariaLabel: "Social media URL (optional)" });
+assert.equal(
+  fieldHooks.resolveValueForField(oldPhotoConfig, socialUrlField),
+  "",
+  "an optional social URL must stay blank when the profile has no social URL",
+);
+const sourceField = new FakeField({ ariaLabel: "How did you hear about us?" });
+assert.equal(
+  fieldHooks.resolveValueForField(oldPhotoConfig, sourceField),
+  "",
+  "site-specific acquisition fields must not receive product copy",
+);
+assert.equal(
+  fieldHooks.modelFillGuard(socialUrlField, "https://cdn.oldphotoliveai.com/example/01-restored.jpg"),
+  "field-requires-configured-profile-value",
+  "the visual fallback must not put a media URL into an optional social field",
+);
+assert.equal(
+  fieldHooks.modelFillGuard(shortDescriptionField, "OldPhotoLive AI restores,."),
+  "field-minimum-not-met",
+  "the visual fallback must not replace a short description with an underlength value",
+);
+shortDescriptionField.value = shortDescription;
+assert.equal(
+  fieldHooks.modelFillGuard(shortDescriptionField, "OldPhotoLive AI restores,."),
+  "preserve-existing-value",
+  "a valid deterministic value must survive a later asynchronous visual fill",
+);
+assert.equal(fieldHooks.shouldClearStaleProtectedValue(emailField, "not-an-email"), true);
+assert.equal(fieldHooks.shouldClearStaleProtectedValue(socialUrlField, "https://cdn.example.com/a.jpg"), true);
 
 const newsletter = new FakeForm({
   action: "/submit-email",
@@ -197,6 +284,16 @@ assert.equal(hooks.detectDirectory(), true, "a product directory keyword paired 
 assert.equal(hooks.detectSubmissionForm(), true, "valid directory fields should remain detectable");
 assert.equal(hooks.identifyPlatform(), "directory", "directory form detection should retain its specific platform");
 assert.equal(hooks.queryFillableElements(directory).length, 3, "directory fields should remain eligible for filling");
+
+directory.fields[0].value = "https://oldphotoliveai.com/";
+let guard = hooks.inspectAutoFillGuard("https://graffitinameai.com");
+assert.equal(guard.blocked, true, "a different Profile URL already in the form must block auto-fill");
+assert.deepEqual([...guard.foreignUrls], ["https://oldphotoliveai.com/"]);
+directory.fields[0].value = "";
+document.body.innerText = "Thank you for your submission!";
+guard = hooks.inspectAutoFillGuard("https://graffitinameai.com");
+assert.equal(guard.blocked, true, "a visible success receipt must block auto-fill overwrite");
+document.body.innerText = "Submit your AI tool";
 
 const placeholderDirectory = new FakeForm({
   fields: [new FakeField({ type: "text", name: "site", placeholder: "Your website URL" })],

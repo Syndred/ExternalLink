@@ -66,13 +66,17 @@ const fieldIsRequired = new Function(
 assert.equal(fieldIsRequired({ required: false, getAttribute: () => null, label: "Pricing* Select..." }), true);
 
 const routing = content.slice(content.indexOf("  function resolveValueForField("), content.indexOf("  async function fillSelectField("));
+const fieldHelpers = content.slice(
+  content.indexOf("  function isEmailFieldHint("),
+  content.indexOf("  function getProfileFields("),
+);
 assert.ok(routing.indexOf("publicMediaUrlForField(config, normalizedHint)") < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('element.getAttribute("role") === "combobox"') < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('element.parentElement?.querySelector(\'input[type="hidden"][name*="category"]\')') < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('pickDescriptionForField(config, element)') < routing.indexOf("const learnedKey"));
 const resolveValue = new Function(
   "getProfileFields", "getFieldHint", "getSnapshotLabel", "fitValueToConstraints", "getFieldConstraints", "pickDescriptionForField",
-  `${routing}; return resolveValueForField;`,
+  `${fieldHelpers}; ${routing}; return resolveValueForField;`,
 )(
   (config) => config.projectFields || {},
   (element) => element.hint.toLowerCase(),

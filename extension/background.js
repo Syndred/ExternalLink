@@ -1083,6 +1083,13 @@ async function getCloudSyncStatus() {
         conflictCount: conflictKeys.length,
         outOfDateCount: outOfDateKeys.length,
         localOnlyCount: localOnlyKeys.length,
+        // Document names are safe diagnostics and let the settings UI explain
+        // which local value is blocking a merge without exposing credentials
+        // or downloading the full cloud snapshot.
+        pendingKeys,
+        conflictKeys,
+        outOfDateKeys,
+        localOnlyKeys,
       },
     };
   } catch (err) {
@@ -3362,13 +3369,14 @@ function summarizeTaskStats(taskList) {
 }
 
 async function resolveTargetTabId(preferredTabId) {
-  if (preferredTabId) {
+  if (preferredTabId !== undefined && preferredTabId !== null) {
     try {
       const tab = await chrome.tabs.get(preferredTabId);
       if (tab.url && /^https?:\/\//i.test(tab.url)) return preferredTabId;
     } catch {
-      /* tab gone */
+      /* A caller supplied an exact tab; never fall back to another tab. */
     }
+    return null;
   }
   const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   const tab = tabs[0];
@@ -3421,6 +3429,73 @@ async function sendTopTabMessage(tabId, message) {
 async function sendTabMessageToFrame(tabId, frameId, message) {
   const normalizedFrameId = Number.isInteger(Number(frameId)) ? Number(frameId) : 0;
   return chrome.tabs.sendMessage(tabId, message, { frameId: normalizedFrameId });
+}
+
+async function getFillableFrameIds(tabId) {
+  await ensureContentScript(tabId);
+  const frameInfo = await getSubmissionWatchFrameIds(tabId);
+  const states = await Promise.all(frameInfo.frameIds.map(async (frameId) => {
+    try {
+      const state = await chrome.tabs.sendMessage(tabId, { action: "countEmptyFields" }, { frameId });
+      return { frameId, state };
+    } catch {
+      return { frameId, state: null };
+    }
+  }));
+  const active = states
+    .filter(({ state }) => Number(state?.totalCount) > 0)
+    .map(({ frameId }) => frameId);
+  return active.length ? active : [0];
+}
+
+async function sendFillMessageToFrames(tabId, message) {
+  const frameIds = await getFillableFrameIds(tabId);
+  const results = await Promise.allSettled(frameIds.map(async (frameId) => ({
+    frameId,
+    response: await chrome.tabs.sendMessage(tabId, message, { frameId }),
+  })));
+  return results
+    .filter((result) => result.status === "fulfilled" && result.value?.response)
+    .map((result) => result.value);
+}
+
+function mergeFrameFillResults(results) {
+  const successful = results.map(({ response }) => response).filter((response) => response && typeof response === "object");
+  const emptyCount = successful.reduce((sum, response) => sum + (Number(response.emptyCount) || 0), 0);
+  const invalidCount = successful.reduce((sum, response) => sum + (Number(response.invalidCount) || 0), 0);
+  const issues = [...new Set(successful.flatMap((response) => Array.isArray(response.issues) ? response.issues : []))].slice(0, 12);
+  const noResponse = successful.length === 0;
+  const countResponses = successful.filter((response) => Object.prototype.hasOwnProperty.call(response, "totalCount"));
+  const noFields = countResponses.length > 0 && countResponses.every((response) => Number(response.totalCount) === 0);
+  const unavailable = noResponse || noFields;
+  return {
+    ok: !unavailable && successful.every((response) => response.ok !== false),
+    filledCount: successful.reduce((sum, response) => sum + (Number(response.filledCount) || 0), 0),
+    emptyCount: unavailable ? 1 : emptyCount,
+    invalidCount,
+    totalCount: successful.reduce((sum, response) => sum + (Number(response.totalCount) || 0), 0),
+    allValid: !unavailable && successful.every((response) => response.allValid === true),
+    validationFailed: unavailable || successful.some((response) => response.validationFailed === true) || emptyCount > 0 || invalidCount > 0 || issues.length > 0,
+    issues,
+    skippedFiles: [...new Set(successful.flatMap((response) => Array.isArray(response.skippedFiles) ? response.skippedFiles : []))],
+    uploadedFiles: [...new Set(successful.flatMap((response) => Array.isArray(response.uploadedFiles) ? response.uploadedFiles : []))],
+    inferredFields: [...new Set(successful.flatMap((response) => Array.isArray(response.inferredFields) ? response.inferredFields : []))],
+  };
+}
+
+async function smartFillAcrossFrames(tabId, config) {
+  const results = await sendFillMessageToFrames(tabId, { action: "smartFill", config });
+  return mergeFrameFillResults(results);
+}
+
+async function countEmptyFieldsAcrossFrames(tabId) {
+  const results = await sendFillMessageToFrames(tabId, { action: "countEmptyFields" });
+  return mergeFrameFillResults(results);
+}
+
+async function collectFormValidationAcrossFrames(tabId) {
+  const results = await sendFillMessageToFrames(tabId, { action: "collectFormValidation" });
+  return mergeFrameFillResults(results);
 }
 
 async function getSubmissionWatchFrameIds(tabId) {
@@ -3592,6 +3667,12 @@ const sidepanelFillRequests = new Map();
 async function handleSidepanelFill(msg) {
   const tabId = await resolveTargetTabId(msg.tabId);
   if (!tabId) return { ok: false, error: "没有可填表的网页标签" };
+  if (msg.expectedUrl && msg.auto !== true) {
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (Number(activeTab?.id) !== Number(tabId)) {
+      return { ok: false, stale: true, error: "当前标签页已切换，已停止旧填表任务" };
+    }
+  }
   if (sidepanelFillRequests.has(tabId)) return { ok: false, error: "当前页面正在填写，请等待本次结果，不要重复点击" };
   const request = runSidepanelFill({ ...msg, tabId });
   sidepanelFillRequests.set(tabId, request);
@@ -3640,7 +3721,18 @@ async function runSidepanelFill(msg) {
   config.autoSubmitDirectory =
     storage.autoSubmitDirectoryListings !== false && msg.mode !== "comment" && msg.fillOnly !== true;
   config.learnedFieldMappings = profile.learnedFieldMappings || {};
-  config.sidepanelContext = { profileId: profile.id, url: await getTabUrlSafe(tabId) };
+  config.sidepanelContext = { profileId: profile.id, url: await getTabUrlSafe(tabId), tabId };
+
+  if (msg.mode !== "comment") {
+    const guard = await sendTabMessage(tabId, {
+      action: "inspectAutoFillGuard",
+      targetDomain: config.targetDomain || "",
+    }).catch(() => null);
+    if (guard?.blocked) {
+      broadcastAutoFillUpdate({ tabId, status: "manual", message: guard.reason || "当前页面已有其他 Profile 内容，已停止覆盖" });
+      return { ok: false, fillOnly: true, keepTab: true, stale: true, error: guard.reason || "当前页面已有其他 Profile 内容，已停止覆盖" };
+    }
+  }
 
   if (msg.mode === "comment" && msg.commentText) {
     config.commentTemplate = msg.commentText;
@@ -4142,6 +4234,96 @@ async function registerManualSubmissionWatchFrame(tabId, token, frameId, details
   });
 }
 
+function normalizeSourceHost(value) {
+  try {
+    return new URL(String(value || "").trim()).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function trustedTypeformDestination(pageUrl, referrerUrl) {
+  let page;
+  try {
+    page = new URL(String(pageUrl || ""));
+  } catch {
+    return null;
+  }
+  const pageHost = page.hostname.replace(/^www\./i, "").toLowerCase();
+  if (pageHost !== "typeform.com" && !pageHost.endsWith(".typeform.com")) return null;
+  // Only the known shared directory form is eligible for source attribution.
+  // A query parameter alone is never enough because it can be copied into a
+  // manually opened Typeform URL.
+  if (!/^\/to\/rb6znef2$/i.test(page.pathname.replace(/%20/g, " "))) return null;
+  let referrer;
+  try {
+    referrer = new URL(String(referrerUrl || ""));
+  } catch {
+    return null;
+  }
+  const sourceHost = normalizeSourceHost(referrer.href);
+  if (!["aitools.inc", "startupstash.com"].includes(sourceHost)) return null;
+  const querySource = page.searchParams.get("typeform-source") || page.searchParams.get("typeform_source") || "";
+  if (querySource && normalizeSourceHost(/^https?:\/\//i.test(querySource) ? querySource : `https://${querySource}`) !== sourceHost) {
+    return null;
+  }
+  const destination = new URL(referrer.href);
+  destination.hash = "";
+  destination.search = "";
+  return {
+    destinationUrl: destination.toString(),
+    sourceHost,
+    referrerUrl: destination.toString(),
+    formUrl: page.toString(),
+  };
+}
+
+function trustedExternalFormDestination(pageUrl, referrerUrl) {
+  const typeform = trustedTypeformDestination(pageUrl, referrerUrl);
+  if (typeform) return typeform;
+  let page;
+  try {
+    page = new URL(String(pageUrl || ""));
+  } catch {
+    return null;
+  }
+  const pageHost = page.hostname.replace(/^www\./i, "").toLowerCase();
+  const googleForm = pageHost === "docs.google.com" &&
+    /^\/forms\/d\/e\/[^/]+\/viewform$/i.test(page.pathname);
+  if (!googleForm) return null;
+  let referrer;
+  try {
+    referrer = new URL(String(referrerUrl || ""));
+  } catch {
+    return null;
+  }
+  const sourceHost = normalizeSourceHost(referrer.href);
+  if (sourceHost !== "aiinfinity-meetpatel.notion.site") return null;
+  const destination = new URL(referrer.href);
+  destination.hash = "";
+  destination.search = "";
+  return {
+    destinationUrl: destination.toString(),
+    sourceHost,
+    referrerUrl: destination.toString(),
+    formUrl: page.toString(),
+  };
+}
+
+function isStandaloneExternalFormUrl(value) {
+  try {
+    const parsed = new URL(String(value || ""));
+    const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+    return (
+      host === "typeform.com" ||
+      host.endsWith(".typeform.com") ||
+      (host === "docs.google.com" && /^\/forms\/d\/e\/[^/]+\/viewform$/i.test(parsed.pathname))
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function armManualSubmissionWatch(tabId, profile, config) {
   const pageUrl = await getTabUrlSafe(tabId);
   const activeEntry = typeof state === "object" ? state.activeTabs?.get(tabId) : null;
@@ -4153,7 +4335,12 @@ async function armManualSubmissionWatch(tabId, profile, config) {
   const task = candidateTask && (!candidateTask.profileId || candidateTask.profileId === profile.id)
     ? candidateTask
     : null;
-  const destinationUrl = task?.url || pageUrl;
+  const sourceContext = await sendTopTabMessage(tabId, { action: "getSubmissionSourceContext" }).catch(() => null);
+  const trustedSource = !task ? trustedExternalFormDestination(pageUrl, sourceContext?.referrer) : null;
+  if (isStandaloneExternalFormUrl(pageUrl) && !task && !trustedSource) {
+    throw new Error("独立外部表单未确认来源目录，已停止归属；请从目录页重新打开或用「登记动态」补记");
+  }
+  const destinationUrl = task?.url || trustedSource?.destinationUrl || pageUrl;
   const baseline = await sendTopTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   const token = crypto.randomUUID();
   const watch = {
@@ -4165,6 +4352,11 @@ async function armManualSubmissionWatch(tabId, profile, config) {
     baseline: baseline.evidence || "",
     destinationUrl,
     targetDomain: config.targetDomain || "",
+    sourceContext: trustedSource ? {
+      sourceHost: trustedSource.sourceHost,
+      referrerUrl: trustedSource.referrerUrl,
+      formUrl: trustedSource.formUrl,
+    } : null,
     frameBaselines: {
       "0": {
         evidence: String(baseline.evidence || "").replace(/\s+/g, " ").trim(),
@@ -4520,7 +4712,16 @@ async function assertFillContext(tabId, config) {
   if (!config.sidepanelContext) return;
   const { activeSiteId } = await chrome.storage.local.get("activeSiteId");
   const url = await getTabUrlSafe(tabId);
-  if (activeSiteId !== config.sidepanelContext.profileId || url !== config.sidepanelContext.url) {
+  let activeTabId = tabId;
+  if (config.sidepanelContext.tabId !== undefined && config.sidepanelContext.tabId !== null) {
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    activeTabId = activeTab?.id || null;
+  }
+  if (
+    activeTabId !== tabId ||
+    activeSiteId !== config.sidepanelContext.profileId ||
+    url !== config.sidepanelContext.url
+  ) {
     throw new Error("页面或项目已切换，已停止旧填表任务");
   }
 }
@@ -4536,13 +4737,15 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
   let validation = { submitReady: true, issues: [] };
   let formState = { validationFailed: false, issues: [] };
 
+  await assertFillContext(tabId, config);
   await applyDestinationFormKnowledge(tabId, config);
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "正在按字段名称填写产品名、网址、描述等资料…" });
 
   for (let round = 0; round < MAX_FILL_ROUNDS; round++) {
     try {
       await assertFillContext(tabId, config);
-      const smartResult = await sendTabMessage(tabId, { action: "smartFill", config });
+      const smartResult = await smartFillAcrossFrames(tabId, config);
+      await assertFillContext(tabId, config);
       smartTotal += smartResult.filledCount || 0;
       if (smartResult.skippedFiles?.length) skippedFiles = smartResult.skippedFiles;
       if (smartResult.uploadedFiles?.length) {
@@ -4555,12 +4758,12 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
       log(`智能填表: ${err.message}`, "warn");
     }
 
-    lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => ({
+    lastEmpty = await countEmptyFieldsAcrossFrames(tabId).catch(() => ({
       emptyCount: 1,
       invalidCount: 0,
       totalCount: 0,
     }));
-    formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(
+    formState = await collectFormValidationAcrossFrames(tabId).catch(
       () => lastEmpty,
     );
     if (
@@ -4585,11 +4788,12 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
         validation = { submitReady: false, issues: [review.reason] };
         break;
       }
-      lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" });
-      formState = await sendTabMessage(tabId, { action: "collectFormValidation" });
+      lastEmpty = await countEmptyFieldsAcrossFrames(tabId);
+      formState = await collectFormValidationAcrossFrames(tabId);
       if (lastEmpty.emptyCount === 0 && !lastEmpty.invalidCount && !formState?.validationFailed) break;
       broadcastAutoFillUpdate({ tabId, status: "filling", message: "普通字段已填写，正在处理剩余自定义控件…" });
       agentResult = await runSidepanelAgentFill(tabId, config, platformType, 2);
+      await assertFillContext(tabId, config);
       if (agentResult?.needs_manual || agentResult?.captcha || agentResult?.blocked) break;
     } catch (err) {
       agentResult = { needs_manual: true, semanticReview: true, reason: `本地已填写 ${smartTotal} 个字段；AI 补全失败：${err.message}` };
@@ -4598,12 +4802,12 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
       break;
     }
 
-    lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => ({
+    lastEmpty = await countEmptyFieldsAcrossFrames(tabId).catch(() => ({
       emptyCount: 1,
       invalidCount: 0,
       totalCount: 0,
     }));
-    formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(
+    formState = await collectFormValidationAcrossFrames(tabId).catch(
       () => lastEmpty,
     );
     if (
@@ -4621,15 +4825,15 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
 
   try {
     await assertFillContext(tabId, config);
-    await sendTabMessage(tabId, { action: "smartFill", config });
-    lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => ({
+    await smartFillAcrossFrames(tabId, config);
+    lastEmpty = await countEmptyFieldsAcrossFrames(tabId).catch(() => ({
       emptyCount: 1,
       invalidCount: 0,
       totalCount: 0,
     }));
     validation = await runValidateAndFixFill(tabId, config, { allowAgent });
-    lastEmpty = await sendTabMessage(tabId, { action: "countEmptyFields" }).catch(() => lastEmpty);
-    formState = await sendTabMessage(tabId, { action: "collectFormValidation" }).catch(
+    lastEmpty = await countEmptyFieldsAcrossFrames(tabId).catch(() => lastEmpty);
+    formState = await collectFormValidationAcrossFrames(tabId).catch(
       () => formState,
     );
   } catch (err) {
@@ -4877,8 +5081,70 @@ async function runValidateAndFixFill(tabId, config, options = {}) {
   };
 }
 
+// Some directories expose a landing page and a submit route for the same
+// service. Keep the stored evidence rows intact, but use one display/ledger
+// identity so a receipt from the submit route appears on the landing page and
+// a later queue pass cannot schedule the same Profile again.
+const DISPLAY_HOST_DESTINATIONS = new Set(["startupstash.com"]);
+
+function canonicalDestinationKey(value) {
+  const normalized = self.ExtLinkQueue.normalizeDestinationKey(value);
+  const domain = self.ExtLinkQueue.extractDomain(value);
+  return DISPLAY_HOST_DESTINATIONS.has(String(domain || "").toLowerCase())
+    ? String(domain || "").toLowerCase()
+    : normalized;
+}
+
 function siteKeyForUrl(url) {
-  return self.ExtLinkQueue.normalizeDestinationKey(url);
+  const normalized = self.ExtLinkQueue.normalizeDestinationKey(url);
+  const domain = self.ExtLinkQueue.extractDomain(url);
+  // Keep this function self-contained because destination-memory helpers are
+  // also loaded in isolation by the form-learning regression tests.
+  return String(domain || "").toLowerCase() === "startupstash.com"
+    ? String(domain || "").toLowerCase()
+    : normalized;
+}
+
+function recordsForDestination(records, destinationKey, profileId = "") {
+  const canonical = canonicalDestinationKey(destinationKey);
+  const wantedProfile = String(profileId || "").trim();
+  return Object.entries(records || {})
+    .filter(([, record]) => {
+      if (!record || canonicalDestinationKey(record.destinationKey || record.destinationUrl || "") !== canonical) {
+        return false;
+      }
+      return !wantedProfile || String(record.profileId || "").trim() === wantedProfile;
+    })
+    .sort(([, left], [, right]) => {
+      const leftTime = Date.parse(left?.submittedAt || left?.updatedAt || "") || 0;
+      const rightTime = Date.parse(right?.submittedAt || right?.updatedAt || "") || 0;
+      return rightTime - leftTime;
+    });
+}
+
+function timelineDestinationsForKey(timelineByDestination, destinationKey) {
+  const canonical = canonicalDestinationKey(destinationKey);
+  return Object.values(timelineByDestination || {}).filter(
+    (destination) => canonicalDestinationKey(destination?.destinationKey || "") === canonical,
+  );
+}
+
+function expandSubmissionRecordsForQueue(records, candidateUrls = []) {
+  const expanded = { ...(records || {}) };
+  const candidateKeys = [...new Set((candidateUrls || [])
+    .map((value) => self.ExtLinkQueue.normalizeDestinationKey(value))
+    .filter(Boolean))];
+  for (const [, record] of Object.entries(records || {})) {
+    const profileId = String(record?.profileId || "").trim();
+    const canonical = canonicalDestinationKey(record?.destinationKey || record?.destinationUrl || "");
+    if (!profileId || !canonical || record?.status !== "success") continue;
+    for (const candidateKey of candidateKeys) {
+      if (canonicalDestinationKey(candidateKey) !== canonical) continue;
+      const aliasKey = self.ExtLinkQueue.submissionRecordKey(candidateKey, profileId);
+      if (!expanded[aliasKey]) expanded[aliasKey] = record;
+    }
+  }
+  return expanded;
 }
 
 async function getSiteAnnotation(url) {
@@ -5617,8 +5883,7 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
     const key = siteKeyForUrl(entry.url);
     const annotation = annotations[key] || annotations[entry.domain] || null;
     const domain = entry.domain || self.ExtLinkQueue.extractDomain(entry.url);
-    const monitorStatuses = Object.entries(records)
-      .filter(([, record]) => record?.destinationKey === key)
+    const monitorStatuses = recordsForDestination(records, key)
       .map(([recordKey]) => storage.linkMonitorResults?.[recordKey]?.status)
       .filter(Boolean);
     const monitorStatus = monitorStatuses.includes("missing")
@@ -5636,8 +5901,8 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       annotation,
       monitorStatus,
     });
-    const destinationTimeline = timelineByDestination[key] || null;
-    const events = (destinationTimeline?.profiles || [])
+    const destinationTimelines = timelineDestinationsForKey(timelineByDestination, key);
+    const events = destinationTimelines.flatMap((destination) => destination.profiles || [])
       .flatMap((profile) => profile.events || [])
       .sort((left, right) => {
         const leftTime = Date.parse(left.occurredAt || "") || 0;
@@ -5646,16 +5911,29 @@ async function getLibraryManagerStateUnlocked(options = {}, preparedCloudPull = 
       });
     const profileStatuses = Object.values(seeded.profiles).map((profile) => {
       const recordKey = self.ExtLinkQueue.submissionRecordKey(key, profile.id);
-      const record = records[recordKey] || null;
-      const timelineProfile = destinationTimeline?.groups?.[recordKey] || null;
+      const profileRecords = recordsForDestination(records, key, profile.id);
+      const record = profileRecords[0]?.[1] || null;
+      const timelineProfiles = destinationTimelines
+        .flatMap((destination) => destination.profiles || [])
+        .filter((item) => String(item.profileId || "").trim() === String(profile.id || "").trim());
+      const profileEvents = timelineProfiles.flatMap((item) => item.events || []);
+      const latestEvent = profileEvents
+        .slice()
+        .sort((left, right) => (Date.parse(right.occurredAt || "") || 0) - (Date.parse(left.occurredAt || "") || 0))[0] || null;
+      const displayRecords = { ...records };
+      for (const [storedKey, storedRecord] of profileRecords) {
+        if (!displayRecords[recordKey]) displayRecords[recordKey] = storedRecord;
+        if (storedKey === recordKey) break;
+      }
+      const directSuccess = self.ExtLinkQueue.isSubmissionSuccessful(records, key, profile.id);
       return {
         profileId: profile.id,
         profileName: profile.name || profile.id,
-        success: self.ExtLinkQueue.isSubmissionSuccessful(records, key, profile.id),
+        success: directSuccess || self.ExtLinkQueue.isSubmissionSuccessful(displayRecords, key, profile.id),
         submittedAt: record?.submittedAt || "",
         publicationStatus: record?.publicationStatus || "",
-        latestEvent: timelineProfile?.current || null,
-        eventCount: timelineProfile?.events?.length || 0,
+        latestEvent,
+        eventCount: profileEvents.length,
       };
     });
     const playbook =
@@ -5726,6 +6004,17 @@ function applyTimelinePublicationUpgrade(records, event) {
     !["submitted", "pending_moderation", "published"].includes(event.type)
   ) {
     return { records, updatedRecord: null };
+  }
+  // The timeline editor also supports ordinary notes. A submitted status is
+  // allowed to create a success ledger row only when the user supplied a
+  // concrete receipt or evidence URL; an empty/default note must never turn a
+  // manual status click into a trusted success.
+  if (event.type === "submitted") {
+    const note = String(event.note || "").replace(/\s+/g, " ").trim();
+    const genericNote = /^(?:已提交|提交成功|submitted|success|人工记录[:：]?submitted)$/i.test(note);
+    if ((!note || genericNote) && !event.evidenceUrl && !event.publicUrl) {
+      return { records, updatedRecord: null };
+    }
   }
   const next = { ...records };
   const recordKey = self.ExtLinkQueue.submissionRecordKey(event.destinationKey, profileId);
@@ -6325,6 +6614,18 @@ async function loadPendingSubmissionTasks(options = {}) {
     storage.urlList || "",
     self.ExtLinkUrlLibrary || [],
   );
+  const candidateUrls = [
+    ...(tableData.entries || []).map((entry) => entry.indexPage || entry.link),
+    ...pluginUrls.map((entry) => entry.url),
+  ].filter(Boolean);
+  // Queue.js keeps its generic path identity. Add in-memory aliases for known
+  // host-scoped directories so an older path-keyed receipt still suppresses a
+  // new landing-page task (and vice versa), without rewriting either evidence
+  // row in storage.
+  const queueSubmissionRecords = expandSubmissionRecordsForQueue(
+    submissionRecords,
+    candidateUrls,
+  );
   const buildFromProfile = (profile) =>
     self.ExtLinkProfiles.buildAgentConfigFromProfile(profile, {
       email: storage.cfgEmail,
@@ -6352,7 +6653,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     pluginUrls,
     siteProfiles: seeded.profiles,
     selectedProfileIds,
-    submissionRecords,
+    submissionRecords: queueSubmissionRecords,
     annotations,
     findMatchingProfile: self.ExtLinkProfiles.findMatchingProfile,
     buildAgentConfigFromProfile: buildFromProfile,
@@ -6505,6 +6806,15 @@ async function handleRequestAutoFill(msg, sender) {
 
   if (!isSidepanelSender(sender, msg) && !sidePanelOpen) return;
 
+  // While the side panel is open, content scripts in every matching tab may
+  // request auto-fill. Only the currently active tab belongs to the user's
+  // visible Profile context; an older same-URL success tab must never receive
+  // the newly selected Profile's data.
+  if (sidePanelOpen) {
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (Number(activeTab?.id) !== Number(tabId)) return;
+  }
+
   if (state.activeTabs.has(tabId)) return;
   if (autoFillInProgress.has(tabId)) return;
 
@@ -6564,6 +6874,12 @@ async function handleRequestAutoFill(msg, sender) {
       autoFillTimers.delete(tabId);
       if (autoFillInProgress.has(tabId)) return;
       try {
+        if (sidePanelOpen) {
+          const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+          if (Number(activeTab?.id) !== Number(tabId)) return;
+        }
+        const currentTab = await chrome.tabs.get(tabId);
+        if (currentTab.url !== tabUrl) return;
         const latest = await chrome.storage.local.get(["siteProfiles", "activeSiteId"]);
         const latestProfile = self.ExtLinkProfiles.getActiveProfile(latest);
         if (!latestProfile || latestProfile.id !== profile.id) return;
@@ -6572,6 +6888,16 @@ async function handleRequestAutoFill(msg, sender) {
         const fillablePlatforms = ["directory", "submission", "profile", "forum"];
         if (!fillablePlatforms.includes(String(detection?.platform || "").toLowerCase())) return;
         if (!detection?.operable && !(detection?.formFieldCount > 0)) return;
+
+        const targetDomain = profile.url || profile.promoUrl || profile.fields?.Url || profile.fields?.URL || "";
+        const guard = await sendTabMessage(tabId, {
+          action: "inspectAutoFillGuard",
+          targetDomain,
+        }).catch(() => null);
+        if (guard?.blocked) {
+          log(`自动填表已跳过：${guard.reason || "当前页面已有其他 Profile 内容"}`, "warn");
+          return;
+        }
 
         autoFillInProgress.add(tabId);
         const result = await handleSidepanelFill({

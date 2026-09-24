@@ -66,6 +66,11 @@ assert.equal((await check({ remote: { siteProfiles: 5, submissionRecords: 2 } })
 assert.equal((await check({ state: { siteProfiles: {} } })).result.sync.status, "out_of_date", "missing local data is not current");
 assert.equal((await check({ pending: ["siteProfiles"] })).result.sync.status, "pending");
 assert.equal((await check({ pending: ["siteProfiles"], conflict: ["siteProfiles"] })).result.sync.status, "conflict");
+assert.deepEqual(
+  (await check({ pending: ["submissionRecords"], conflict: ["submissionRecords"] })).result.sync.conflictKeys,
+  ["submissionRecords"],
+  "sync diagnostics must identify the conflicted document without exposing credentials",
+);
 assert.equal((await check({ remote: { siteProfiles: 4 } })).result.sync.localOnlyCount, 1);
 assert.equal((await check({ remote: {}, local: {}, state: {} })).result.sync.status, "empty");
 assert.deepEqual((await check({ configured: false })).calls, []);

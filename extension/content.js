@@ -195,6 +195,14 @@
       sendResponse({ ok: true });
       return true;
     }
+    if (msg.action === "getSubmissionSourceContext") {
+      sendResponse({
+        ok: true,
+        pageUrl: String(location.href || ""),
+        referrer: String(document.referrer || ""),
+      });
+      return true;
+    }
     if (msg.action === "smartFill") {
       smartFillFromConfig(msg.config || {})
         .then((result) => sendResponse({ ok: true, ...result }))
@@ -226,6 +234,10 @@
       sendResponse(classifyVisibleEvidence({
         destinationUrl: manualSubmissionWatch?.destinationUrl || "",
       }));
+      return true;
+    }
+    if (msg.action === "inspectAutoFillGuard") {
+      sendResponse(inspectAutoFillGuard(msg.targetDomain || ""));
       return true;
     }
     if (msg.action === "inspectCurrentFormStage") {
@@ -392,6 +404,17 @@
     return false;
   }
 
+  // The side panel can re-arm an already open tab after an extension reload.
+  // Re-injecting this content script must replace the previous listener in
+  // this frame, otherwise the old handler can answer fill/count requests first
+  // and make the panel report a stale or empty form.
+  if (typeof window.__extLinkMessageHandler === "function") {
+    try {
+      chrome.runtime.onMessage.removeListener(window.__extLinkMessageHandler);
+    } catch {
+      /* Older Chromium builds may not expose removeListener in test shims. */
+    }
+  }
   window.__extLinkMessageHandler = onExtensionMessage;
   chrome.runtime.onMessage.addListener(onExtensionMessage);
 
@@ -803,6 +826,45 @@
       return { publicationStatus: "pending_moderation", evidence: "comment awaiting moderation", matched: true };
     }
     return { publicationStatus: "submitted", evidence: "", matched: false };
+  }
+
+  function inspectAutoFillGuard(targetDomain = "") {
+    const evidence = classifyVisibleEvidence({ destinationUrl: location.href });
+    if (evidence?.matched && evidence.evidence) {
+      return {
+        blocked: true,
+        reason: "当前页面已有可核验提交回执，已停止覆盖页面",
+        evidence: evidence.evidence,
+      };
+    }
+    let expectedHost = "";
+    try {
+      expectedHost = new URL(String(targetDomain || "").trim()).hostname
+        .replace(/^www\./i, "")
+        .toLowerCase();
+    } catch {
+      /* A profile without a product URL cannot provide an identity guard. */
+    }
+    if (!expectedHost) return { blocked: false, foreignUrls: [] };
+    const foreignUrls = [];
+    for (const element of queryFillableElements()) {
+      const value = String(getElementFillValue(element) || "").trim();
+      if (!/^https?:\/\//i.test(value)) continue;
+      try {
+        const host = new URL(value).hostname.replace(/^www\./i, "").toLowerCase();
+        if (host && host !== expectedHost && !host.endsWith(`.${expectedHost}`)) foreignUrls.push(value);
+      } catch {
+        /* Ignore non-URL field values. */
+      }
+    }
+    if (foreignUrls.length) {
+      return {
+        blocked: true,
+        reason: "当前页面已有其他 Profile 的产品链接，已停止覆盖页面",
+        foreignUrls: [...new Set(foreignUrls)].slice(0, 4),
+      };
+    }
+    return { blocked: false, foreignUrls: [] };
   }
 
   function detectForum() {
@@ -3052,6 +3114,13 @@
     resolveSharedLearnedProfileValue,
     normalizeLearnedFieldText,
   };
+  self.__extLinkFieldRoutingTestHooks = {
+    resolveValueForField,
+    getFieldConstraints,
+    fitValueToConstraints,
+    modelFillGuard,
+    shouldClearStaleProtectedValue,
+  };
   self.__extLinkCommentTestHooks = {
     detectArticleComment,
     isArticleCommentForm,
@@ -3066,6 +3135,7 @@
     isMarketingOptInForm,
     queryFillableElements,
     classifyVisibleEvidence,
+    inspectAutoFillGuard,
   };
   self.__extLinkContentAuditTestHooks = {
     detectWPComment,
@@ -4281,8 +4351,17 @@
           return actionFailure(action, "action target is not allowed");
         if (element.disabled || element.readOnly)
           return actionFailure(action, "field is disabled or readonly");
-        element.focus();
         const raw = action.value == null ? "" : String(action.value);
+        const guardReason = modelFillGuard(element, raw);
+        if (guardReason) {
+          return {
+            ok: true,
+            selector: action.selector,
+            skipped: true,
+            reason: guardReason,
+          };
+        }
+        element.focus();
         const fitted = fitValueToConstraints(raw, getFieldConstraints(element));
         setFieldValue(element, fitted);
         element.dispatchEvent(
@@ -5045,6 +5124,150 @@
       .toLowerCase();
   }
 
+  function isEmailFieldHint(hint) {
+    return /\b(?:e-?mail|email address|business mail|contact mail)\b/.test(String(hint || ""));
+  }
+
+  function isSocialMediaFieldHint(hint) {
+    const normalized = String(hint || "").replace(/[_-]+/g, " ");
+    return /\bsocial(?:\s+media)?\b|\b(?:twitter|linkedin|instagram|facebook|youtube|tiktok)\b|\bx\.com\b/.test(
+      normalized,
+    );
+  }
+
+  function isUnmappedSourceFieldHint(hint) {
+    return /\b(?:how did you hear|hear about us|referral source|traffic source|lead source|utm source)\b/.test(
+      String(hint || "").replace(/[_-]+/g, " "),
+    );
+  }
+
+  function socialNetworkToken(hint) {
+    const normalized = String(hint || "").toLowerCase();
+    if (/\blinkedin\b/.test(normalized)) return "linkedin";
+    if (/\binstagram\b/.test(normalized)) return "instagram";
+    if (/\bfacebook\b/.test(normalized)) return "facebook";
+    if (/\byoutube\b/.test(normalized)) return "youtube";
+    if (/\btiktok\b/.test(normalized)) return "tiktok";
+    if (/\b(?:twitter|x\.com)\b/.test(normalized)) return "twitter";
+    return "";
+  }
+
+  function socialFieldKeyMatches(key, network) {
+    const normalized = String(key || "").toLowerCase();
+    if (!network) return true;
+    if (network === "twitter") return /\b(?:twitter|x(?:\/|\s|$)|x\.com)\b/.test(normalized);
+    return new RegExp(`\\b${network}\\b`).test(normalized);
+  }
+
+  function resolveConfiguredSocialUrl(config, hint) {
+    const pf = getProfileFields(config);
+    const network = socialNetworkToken(hint);
+    const direct = [];
+    if (!network && config?.socialMediaUrl) direct.push(config.socialMediaUrl);
+    if (!network && config?.socialUrl) direct.push(config.socialUrl);
+    if (config?.socialLinks && typeof config.socialLinks === "object") {
+      if (network && config.socialLinks[network]) direct.push(config.socialLinks[network]);
+      if (!network) direct.push(...Object.values(config.socialLinks));
+    }
+    const entries = Object.entries(pf).filter(([key]) => {
+      if (!/\b(?:extra link|social|twitter|linkedin|instagram|facebook|youtube|tiktok|x\/twitter)\b/i.test(key)) {
+        return false;
+      }
+      return socialFieldKeyMatches(key, network);
+    });
+    const candidates = [...direct, ...entries.map(([, value]) => value)];
+    for (const candidate of candidates) {
+      const match = String(candidate || "").match(/https?:\/\/[^\s"'<>),]+/i);
+      if (!match) continue;
+      const value = match[0].replace(/[.,]+$/, "");
+      try {
+        const parsed = new URL(value);
+        if (!/^https?:$/.test(parsed.protocol)) continue;
+        if (/^cdn\./i.test(parsed.hostname) || /\.(?:png|jpe?g|gif|webp|svg|avif|ico)$/i.test(parsed.pathname)) {
+          continue;
+        }
+        return parsed.toString();
+      } catch {
+        /* Ignore malformed or descriptive profile values. */
+      }
+    }
+    return "";
+  }
+
+  function valueSatisfiesFieldConstraints(value, constraints) {
+    const text = String(value || "").trim();
+    if (!text || !constraints) return !!text;
+    if (constraints.minLength && text.length < constraints.minLength) return false;
+    if (constraints.maxLength && text.length > constraints.maxLength) return false;
+    const words = text.split(/\s+/).filter(Boolean).length;
+    if (constraints.minWords && words < constraints.minWords) return false;
+    if (constraints.maxWords && words > constraints.maxWords) return false;
+    return true;
+  }
+
+  function isValidEmailValue(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+  }
+
+  function isValidHttpUrlValue(value) {
+    try {
+      const parsed = new URL(String(value || "").trim());
+      return /^https?:$/.test(parsed.protocol) && !!parsed.hostname;
+    } catch {
+      return false;
+    }
+  }
+
+  function isMediaUrlValue(value) {
+    try {
+      const parsed = new URL(String(value || "").trim());
+      return /^cdn\./i.test(parsed.hostname) ||
+        /\.(?:png|jpe?g|gif|webp|svg|avif|ico)(?:$|[?#])/i.test(parsed.pathname);
+    } catch {
+      return false;
+    }
+  }
+
+  function modelFillGuard(element, raw) {
+    const text = String(raw == null ? "" : raw).trim();
+    const constraints = getFieldConstraints(element);
+    const existing = String(getElementFillValue(element) || "").trim();
+    if (
+      existing &&
+      !fieldNeedsRefill(element) &&
+      valueSatisfiesFieldConstraints(existing, constraints)
+    ) {
+      return "preserve-existing-value";
+    }
+    if (!text) return "ignore-empty-model-value";
+
+    const hint = getFieldHint(element);
+    if (
+      isUnmappedSourceFieldHint(hint) ||
+      isSocialMediaFieldHint(hint) ||
+      /\bprimary\s+use\s+case\b/.test(hint)
+    ) {
+      return "field-requires-configured-profile-value";
+    }
+
+    const fitted = fitValueToConstraints(text, constraints);
+    if (!valueSatisfiesFieldConstraints(fitted, constraints)) return "field-minimum-not-met";
+    if (isEmailFieldHint(hint) && !isValidEmailValue(fitted)) return "invalid-email-value";
+    if (/\b(?:url|link|website|homepage)\b/.test(hint) || (element.type || "").toLowerCase() === "url") {
+      if (!isValidHttpUrlValue(fitted)) return "invalid-url-value";
+    }
+    if (isSocialMediaFieldHint(hint) && isMediaUrlValue(fitted)) return "media-url-in-social-field";
+    return "";
+  }
+
+  function shouldClearStaleProtectedValue(element, value) {
+    const text = String(value || "").trim();
+    if (!text) return false;
+    const hint = getFieldHint(element);
+    if (isEmailFieldHint(hint)) return !isValidEmailValue(text);
+    return isSocialMediaFieldHint(hint) && isMediaUrlValue(text);
+  }
+
   function getProfileFields(config) {
     return config && config.projectFields && typeof config.projectFields === "object"
       ? config.projectFields
@@ -5394,6 +5617,10 @@
       const wc = String(value).split(/\s+/).filter(Boolean).length;
       if (wc > constraints.maxWords) return true;
     }
+    if (constraints.minWords) {
+      const wc = String(value).split(/\s+/).filter(Boolean).length;
+      if (wc < constraints.minWords) return true;
+    }
     try {
       if (typeof element.checkValidity === "function" && !element.checkValidity()) return true;
     } catch {
@@ -5542,6 +5769,8 @@
         maxWords = parseInt(maxWord[1], 10);
         if (!maxLength) maxLength = maxWords * 6;
       }
+      const minWord = combined.match(/(?:min(?:imum)?|at least)\s*(\d+)\s*words?/i);
+      if (minWord) minWords = parseInt(minWord[1], 10);
     }
 
     const charLimit = combined.match(/(?:max|up to|limit)\s*(\d+)\s*(?:character|char)/i);
@@ -5948,6 +6177,39 @@
     const type = (element.type || "").toLowerCase();
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
+    const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    // Field intent must outrank the HTML input type and historical mappings.
+    // TipSeason labels its email and social fields inconsistently, and the
+    // social URL is optional when the current Profile has no matching value.
+    const visibleCategoryField =
+      tag === "input" &&
+      ["text", "search", ""].includes(type) &&
+      /\b(tags?|categor(?:y|ies)|keywords?)\b/.test(visibleHint) &&
+      !/\be-?mail\b/.test(visibleHint);
+    const visibleUrlField =
+      tag === "input" &&
+      /\b(?:website\s+url|product\s+url|tool\s+url|homepage|url|link)\b/.test(visibleHint);
+    if (
+      !visibleCategoryField &&
+      !visibleUrlField &&
+      (type === "email" || isEmailFieldHint(`${hint} ${visibleHint}`))
+    ) {
+      return config.email || pf["Business mail"] || pf["Feedback mail"] || "";
+    }
+    if (isSocialMediaFieldHint(`${hint} ${visibleHint}`)) {
+      return resolveConfiguredSocialUrl(config, `${hint} ${visibleHint}`);
+    }
+    if (isUnmappedSourceFieldHint(`${hint} ${visibleHint}`)) return "";
+    if (/\bprimary\s+use\s+case\b/.test(`${hint} ${visibleHint}`)) {
+      const useCase =
+        (Array.isArray(config.useCases) ? config.useCases.find(Boolean) : "") ||
+        pf["Primary Use Case"] ||
+        pf["Use Case"] ||
+        "";
+      return fitValueToConstraints(useCase || "", getFieldConstraints(element));
+    }
+
     // A repository URL is not the product homepage. Resolve it before legacy
     // learned mappings, which may already contain the old generic URL answer.
     if (/\bgithub\b/.test(hint)) {
@@ -5987,7 +6249,6 @@
     ) {
       return "";
     }
-    const visibleHint = getSnapshotLabel(element).toLowerCase();
     // CMS forms can name a category field `email` internally. Its visible
     // label is the intent; never paste a business email into a tag field.
     if (
@@ -6534,7 +6795,13 @@
       }
 
       const existingValue = getElementFillValue(element);
-      const existing = existingValue && String(existingValue).trim();
+      let existing = existingValue && String(existingValue).trim();
+      if (existing && shouldClearStaleProtectedValue(element, existing)) {
+        setFieldValue(element, "");
+        element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+        existing = "";
+      }
       if (existing && !fieldNeedsRefill(element)) continue;
 
       const resolved = value || resolveValueForField(config, element);
@@ -6557,6 +6824,7 @@
         `✏️ ${getSnapshotLabel(element) || element.name || type} → ${String(resolved).slice(0, 40)}…`,
       );
       const fitted = fitValueToConstraints(String(resolved), getFieldConstraints(element));
+      if (!valueSatisfiesFieldConstraints(fitted, getFieldConstraints(element))) continue;
       await simulateTyping(element, fitted);
       if (!isCurrentPageContext(pageContext)) {
         return stalePageResult("form", {

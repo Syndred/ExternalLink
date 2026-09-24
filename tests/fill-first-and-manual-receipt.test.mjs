@@ -16,6 +16,9 @@ async function fillHarness({ empty = 0, planFails = false } = {}) {
       if (msg.action === 'countEmptyFields') return { emptyCount: empty, invalidCount: 0, totalCount: 4 };
       return { validationFailed: false };
     },
+    smartFillAcrossFrames: async () => { calls.push('smartFillAcrossFrames'); return { filledCount: 3 }; },
+    countEmptyFieldsAcrossFrames: async () => { calls.push('countEmptyFieldsAcrossFrames'); return { emptyCount: empty, invalidCount: 0, totalCount: 4 }; },
+    collectFormValidationAcrossFrames: async () => { calls.push('collectFormValidationAcrossFrames'); return { validationFailed: false }; },
     understandFormBeforeFill: async () => {
       calls.push('plan');
       if (planFails) throw Error('云端请求超时');
@@ -31,10 +34,10 @@ async function fillHarness({ empty = 0, planFails = false } = {}) {
   return { calls, result };
 }
 let run = await fillHarness();
-assert.ok(run.calls.includes('smartFill'));
+assert.ok(run.calls.includes('smartFillAcrossFrames'));
 assert.equal(run.calls.includes('plan'), false, 'complete local fields must not wait for a model');
 run = await fillHarness({ empty: 1 });
-assert.ok(run.calls.indexOf('smartFill') < run.calls.indexOf('plan'));
+assert.ok(run.calls.indexOf('smartFillAcrossFrames') < run.calls.indexOf('plan'));
 assert.equal(run.calls.includes('vision'), false, 'semantic fill success must skip screenshot agent');
 run = await fillHarness({ empty: 1, planFails: true });
 assert.equal(run.result.smartTotal, 3);
@@ -46,6 +49,7 @@ const store = {};
 const records = [];
 const messages = [];
 let evidence = { matched: false };
+let sourceContext = { ok: true, referrer: "" };
 let watchCounter = 0;
 let refreshWatchCalls = 0;
 const ctx = {
@@ -61,7 +65,11 @@ const ctx = {
   } } },
   getTabUrlSafe: async () => 'https://directory.example/submit',
   sendTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
-  sendTopTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  sendTopTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence'
+    ? evidence
+    : msg.action === 'getSubmissionSourceContext'
+      ? sourceContext
+      : { ok: true },
   refreshContentScriptsForManualWatch: async () => { refreshWatchCalls += 1; return { frameIds: [0, 2], enumerated: true }; },
   sendManualSubmissionWatchToFrames: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
   sendTabMessageToFrame: async (_, _frameId, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
@@ -112,6 +120,35 @@ ctx.getTabUrlSafe = async () => 'https://loxr142exnq.typeform.com/to/RB6ZnEf2';
 await ctx.armManualSubmissionWatch(8, { id: 'RspAi' }, { targetDomain: 'https://rspai.com' });
 assert.equal(store['manualSubmissionWatch:8'].url, 'https://startupstash.com/submit', 'standalone Typeform watches must retain the original destination URL');
 assert.equal(store['manualSubmissionWatch:8'].pageUrl, 'https://loxr142exnq.typeform.com/to/RB6ZnEf2');
+
+ctx.state.activeTabs = new Map();
+ctx.state.tasks = [];
+ctx.getTabUrlSafe = async () => 'https://loxr142exnq.typeform.com/to/RB6ZnEf2?typeform-source=aitools.inc';
+sourceContext = { ok: true, referrer: 'https://aitools.inc/submit' };
+await ctx.armManualSubmissionWatch(10, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
+assert.equal(
+  store['manualSubmissionWatch:10'].url,
+  'https://aitools.inc/submit',
+  'a standalone Typeform must resolve to the allowlisted opener directory',
+);
+sourceContext = { ok: true, referrer: 'https://startupstash.com/submit' };
+await assert.rejects(
+  ctx.armManualSubmissionWatch(11, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' }),
+  /未确认来源目录/,
+  'a mismatched referrer must not let a copied typeform-source query redirect attribution',
+);
+
+ctx.getTabUrlSafe = async () => 'https://docs.google.com/forms/d/e/1FAIpQLScdSN4wbdFM7V8q-Ao5XpcLrVnqImhoagVG8PMgmpoRWCKU9Q/viewform';
+sourceContext = {
+  ok: true,
+  referrer: 'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
+};
+await ctx.armManualSubmissionWatch(12, { id: 'OldPhotoLive' }, { targetDomain: 'https://oldphotoliveai.com' });
+assert.equal(
+  store['manualSubmissionWatch:12'].url,
+  'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
+  'a standalone Google Form must bind to the allowlisted AI Infinity opener',
+);
 
 const binding = {
   chrome: { storage: { local: { get: async () => ({ activeSiteId: 'B' }) } } },

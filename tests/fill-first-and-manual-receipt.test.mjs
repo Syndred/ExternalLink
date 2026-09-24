@@ -267,3 +267,26 @@ assert.equal(vm.runInContext("manualSubmissionWatch.token", watcher), 'typeform-
 watcherResponse = { ok: true };
 listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformButton } });
 assert.equal(clicks.length, 6, 'a recovered Typeform watch should allow one retry');
+
+watcher.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg/viewform';
+watcher.location.pathname = '/forms/d/e/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg/viewform';
+watcher.isSubmitControl = () => false;
+watcher.document.querySelector = () => ({});
+watcher.document.querySelectorAll = () => [{ type: 'text', value: 'https://jevplay.com' }];
+const googleSubmit = {
+  tagName: 'DIV', textContent: '提交',
+  getAttribute: (name) => name === 'role' ? 'button' : name === 'aria-label' ? '提交' : '',
+  closest: () => null,
+};
+const googleClick = { type: 'click', isTrusted: true, target: { closest: () => googleSubmit } };
+vm.runInContext("manualSubmissionWatch = { token: 'google-final', targetDomain: 'https://jevplay.com', destinationUrl: 'https://aiinfinity-meetpatel.notion.site/directory' };", watcher);
+listeners.click(googleClick);
+assert.equal(clicks.length, 7, 'the known Google Form final role button should trigger a receipt check');
+assert.equal(clicks.at(-1).frameUrl, watcher.location.href);
+vm.runInContext("manualSubmissionWatch = { token: 'google-wrong-profile', targetDomain: 'https://oldphotoliveai.com' };", watcher);
+listeners.click(googleClick);
+assert.equal(clicks.length, 7, 'a Google Form with another Profile URL must not be attributed');
+watcher.location.pathname = '/forms/d/e/unknown/viewform';
+vm.runInContext("manualSubmissionWatch = { token: 'google-unknown-form', targetDomain: 'https://jevplay.com' };", watcher);
+listeners.click(googleClick);
+assert.equal(clicks.length, 7, 'another Google Form must not use the AI Infinity receipt shortcut');

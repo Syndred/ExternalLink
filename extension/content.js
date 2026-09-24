@@ -102,7 +102,7 @@
 
   function observeManualSubmission(event) {
     if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch) return;
-    const control = event.target?.closest?.('button, input[type="submit"]');
+    const control = event.target?.closest?.('button, input[type="submit"], [role="button"]');
     const siteHost = (value) => {
       try {
         return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
@@ -127,7 +127,15 @@
     const typeformFinalControl = typeformFrame && Boolean(expectedHost || destinationHost) &&
       /\b(submit|send|apply|finish|complete|done)\b|提交|完成/.test(controlHint) &&
       !/\b(next|continue|ok|back|previous)\b/.test(controlHint);
-    if (event.type !== "submit" && (!control || (!isSubmitControl(control) && !typeformFinalControl))) return;
+    // Google Forms uses a div[role=button] for its final Submit action. Only
+    // the known AI Infinity form may use this path; other custom buttons must
+    // not arm an unrelated directory's receipt watcher.
+    const googleFormFinalControl = currentHost === "docs.google.com" &&
+      /^\/forms\/d\/e\/1FAIpQLSeuaZvj-s7KkI5Zp41q9LX0i9suH61c7JR2qe6sBdDtP9r9Sg\/viewform$/i.test(location.pathname) &&
+      control?.getAttribute?.("role") === "button" &&
+      /\bsubmit\b|提交/.test(controlHint) &&
+      !/\b(next|continue|back|previous)\b|下一步|上一步/.test(controlHint);
+    if (event.type !== "submit" && (!control || (!isSubmitControl(control) && !typeformFinalControl && !googleFormFinalControl))) return;
     const scope = event.type === "submit"
       ? event.target
       : control?.form || control?.closest("form") || document;

@@ -59,6 +59,9 @@ assert.equal(context.siteKeyForUrl("https://startupstash.com"), "startupstash.co
 assert.equal(context.siteKeyForUrl("https://startupstash.com/add-listing/"), "startupstash.com");
 assert.equal(context.siteKeyForUrl("https://www.tipseason.com/ai-tools/submit-free/success"), "tipseason.com");
 assert.equal(context.siteKeyForUrl("https://library.phygital.plus/tool-submission"), "library.phygital.plus");
+assert.equal(context.siteKeyForUrl("https://aisotools.com/submit"), "aisotools.com");
+assert.equal(context.siteKeyForUrl("https://aisotools.com/submit/success?tier=free"), "aisotools.com");
+assert.equal(context.siteKeyForUrl("https://aisotools.com/tool/oldphotolive-ai"), "aisotools.com");
 assert.equal(context.siteKeyForUrl("https://other.example/submit"), "other.example/submit");
 
 const pathRecord = {
@@ -80,6 +83,13 @@ const tipAliases = context.expandSubmissionRecordsForQueue(
   ["https://www.tipseason.com/ai-tools/submit"],
 );
 assert.equal(tipAliases["tipseason.com/ai-tools/submit::JevPlay"], tipRecord);
+
+const aisoRecord = { ...pathRecord, destinationKey: "aisotools.com/submit/success" };
+const aisoAliases = context.expandSubmissionRecordsForQueue(
+  { "aisotools.com/submit/success::JevPlay": aisoRecord },
+  ["https://aisotools.com/submit"],
+);
+assert.equal(aisoAliases["aisotools.com/submit::JevPlay"], aisoRecord);
 
 assert.match(background, /if \(sidePanelOpen\) \{[\s\S]*chrome\.tabs\.query\(\{ active: true, lastFocusedWindow: true \}\)/,
   "side-panel auto-fill must be restricted to the active tab");

@@ -6432,6 +6432,12 @@
       const useCases = Array.isArray(config.useCases) ? config.useCases.filter(Boolean).join("; ") : "";
       return fitValueToConstraints(useCases || pf["Primary Use Case"] || pf["Use Case"] || "", getFieldConstraints(element));
     }
+    if (/\b(?:pricing|price|cost)\s+(?:details?|description|information)\b/.test(visibleHint)) {
+      return fitValueToConstraints(
+        pf.Pricing || pf["Cost & Subscription"] || config.pricing || "",
+        getFieldConstraints(element),
+      );
+    }
     if (tag === "textarea" || /\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
       return pickDescriptionForField(config, element);
     }

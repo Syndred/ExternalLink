@@ -16,6 +16,7 @@
   const HOST_SCOPED_DESTINATIONS = new Set([
     "aitools.neilpatel.com",
     "producthunt.com",
+    "aisotools.com",
   ]);
   const NON_RECEIPT_MIGRATION_EVIDENCE = new Set([
     "table.xlsx submitted seed",

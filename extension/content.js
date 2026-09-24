@@ -800,6 +800,25 @@
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    // AI Marketing Directory's embedded Tally form replaces the fields with
+    // this status after a real submit. Scope the signal to its known form so
+    // an unrelated page containing the same words cannot create a record.
+    const tallyForm = (() => {
+      try {
+        const page = new URL(String(location.href || ""));
+        return page.hostname === "tally.so" && /^\/(?:embed|r)\/nG1V7j\/?$/i.test(page.pathname);
+      } catch {
+        return false;
+      }
+    })();
+    if (tallyForm && /\bForm submitted\b/i.test(text) && /\bPage 2 of 2\b|guaranteed spot on our directory/i.test(text)) {
+      return {
+        publicationStatus: "submitted",
+        evidence: "Form submitted",
+        evidenceSignals: [{ type: "visible_confirmation", text: "Form submitted", url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     const startupStashContext = isStartupStashUrl(destinationUrl) ||
       isStartupStashUrl(location.href) ||
       isStartupStashUrl(document.referrer || "");

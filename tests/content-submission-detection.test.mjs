@@ -328,4 +328,13 @@ receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitools.inc/s
 assert.equal(receipt.matched, true, "a standalone Typeform receipt should use the original directory playbook");
 assert.equal(receipt.playbookId, "aitools-inc");
 
+context.location.href = "https://tally.so/embed/nG1V7j?alignLeft=1";
+document.body.innerText = "Form submitted Are you interested in a guaranteed spot on our directory and the #1 spot for 5 days?";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.aimarketing.directory/submit" });
+assert.equal(receipt.matched, true, "the known Tally form's final confirmation should count as a submission receipt");
+assert.equal(receipt.evidence, "Form submitted");
+context.location.href = "https://tally.so/embed/another-form";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.aimarketing.directory/submit" });
+assert.equal(receipt.matched, false, "another Tally form must not inherit AI Marketing's receipt shortcut");
+
 console.log("Content submission detection tests passed");

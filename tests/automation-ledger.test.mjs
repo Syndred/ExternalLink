@@ -81,7 +81,7 @@ assert.equal(manual.ok, true);
 const background = readFileSync("extension/background.js", "utf8");
 assert.match(
   background,
-  /existing\?\.status\s*===\s*["']success["'][\s\S]*existing\.publicUrl[\s\S]*return existing/,
+  /existing\?\.status\s*===\s*["']success["'][\s\S]*existing\.publicUrl[\s\S]*isPersistedSuccessRecord\(records, key, destinationKey, profileId\)[\s\S]*return records\[key\]/,
   "recording the same success receipt repeatedly must be idempotent",
 );
 

@@ -5906,7 +5906,7 @@
     if (/\b(title|subject|headline)\b/.test(hint) && type !== "url") {
       return fitValueToConstraints(pf.Title || config.brandName || "", getFieldConstraints(element));
     }
-    if (/\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
+    if (tag === "textarea" || /\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
       return pickDescriptionForField(config, element);
     }
     const host = location.hostname;
@@ -5937,11 +5937,11 @@
           if (sharedValue) {
             return fitValueToConstraints(sharedValue, constraints);
           }
-        } else {
-          if (learned.value) return fitValueToConstraints(learned.value, constraints);
-          if (learned.profileKey && pf[learned.profileKey]) {
-            return fitValueToConstraints(pf[learned.profileKey], constraints);
-          }
+        } else if (learned.profileKey && pf[learned.profileKey]) {
+          // Historical profile-local mappings may contain a literal answer
+          // captured from another product's still-filled form. Resolve only
+          // the current Profile's field value.
+          return fitValueToConstraints(pf[learned.profileKey], constraints);
         }
       }
     }
@@ -6309,12 +6309,47 @@
     return "";
   }
 
+  function clearStaleProfileListingForm(elements, config) {
+    const expected = String(config.targetDomain || "").trim();
+    if (!/^https?:\/\//i.test(expected)) return 0;
+    let expectedHost;
+    try { expectedHost = new URL(expected).hostname.replace(/^www\./, ""); }
+    catch { return 0; }
+    const staleForms = new Set();
+    for (const element of elements) {
+      const current = String(getElementFillValue(element) || "").trim();
+      if (!/^https?:\/\//i.test(current)) continue;
+      if (String(resolveValueForField(config, element) || "").trim() !== expected) continue;
+      try {
+        if (new URL(current).hostname.replace(/^www\./, "") !== expectedHost) {
+          const form = element.closest("form");
+          if (form) staleForms.add(form);
+        }
+      } catch { /* An invalid existing URL is handled by normal validation. */ }
+    }
+    let cleared = 0;
+    for (const element of elements) {
+      if (!staleForms.has(element.closest("form"))) continue;
+      const tag = element.tagName.toLowerCase();
+      const type = String(element.type || "").toLowerCase();
+      if (!(tag === "textarea" || tag === "select" || (tag === "input" && ["text", "url", "email", "search", ""].includes(type)))) continue;
+      if (!getElementFillValue(element)) continue;
+      setFieldValue(element, "");
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+      cleared++;
+    }
+    if (cleared) logStep(`↻ 当前表单含其他产品链接，已清空 ${cleared} 个旧字段`);
+    return cleared;
+  }
+
   async function smartFillFromConfig(config) {
     const pageContext = capturePageContext();
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);
     const baseUrl = config.targetDomain || pf.Url || location.href;
     const elements = queryFillableElements();
+    clearStaleProfileListingForm(elements, config);
     const choiceResult = fillChoiceGroups(elements, config);
     let filledCount = choiceResult.filledCount;
     const mappings = { ...choiceResult.mappings };
@@ -6602,8 +6637,10 @@
       else val = getElementFillValue(element);
       if (!val || !String(val).trim()) continue;
       const key = fieldMappingKey(element);
+      const profileKey = inferProfileKeyForValue(config, val);
+      if (!profileKey) continue;
       mappings[key] = {
-        profileKey: inferProfileKeyForValue(config, val),
+        profileKey,
         value: String(val).trim(),
         label: getSnapshotLabel(element),
         hint: getFieldHint(element),

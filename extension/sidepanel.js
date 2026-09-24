@@ -1238,6 +1238,12 @@
         closeTimelineEditor();
       }
       await loadSidepanelTimeline(currentPageUrl);
+      // A submitted timeline event can also create a success ledger record.
+      // Refresh the pending queue before rendering its Profile status, or the
+      // card keeps saying "待提交" until this tab is reopened.
+      if (currentPageUrl === capturedPageUrl) {
+        await loadSubmissionQueue(capturedPageUrl);
+      }
       showToast(`已登记 ${timelineEditorTypeLabel(type)}（人工记录）`);
     } catch (err) {
       showToast(err.message || "保存外链动态失败", true);

@@ -5398,9 +5398,9 @@
     const options = Array.from(select.options).filter((o) => o.value && o.value !== "");
     const priorities = [];
     if (/freemium/.test(pricingText)) priorities.push("freemium", "free");
+    else if (/subscription|paid|credit|purchase/.test(pricingText))
+      priorities.push("paid", "subscription", "one-time", "usage-based");
     else if (/free/.test(pricingText)) priorities.push("free", "freemium");
-    else if (/subscription|paid/.test(pricingText))
-      priorities.push("paid", "subscription", "freemium");
     else priorities.push("freemium", "free", "paid");
 
     for (const token of priorities) {
@@ -5458,13 +5458,13 @@
     if (/pric|plan|model|tier|billing/.test(hint)) {
       const pricingText = String(pf["PRICING TYPE"] || pf.Pricing || "freemium").toLowerCase();
       if (/freemium/.test(pricingText)) tokens.push("freemium", "free");
+      else if (/subscription|paid|credit|purchase/.test(pricingText)) tokens.push("paid", "subscription", "one-time", "usage-based");
       else if (/free/.test(pricingText)) tokens.push("free", "freemium");
-      else if (/subscription|paid/.test(pricingText)) tokens.push("paid", "subscription");
       else tokens.push("freemium", "free", "paid");
     }
 
     if (/categor|industry|sector|niche|vertical|topic|type/.test(hint)) {
-      tokens.push(...profileTags, "ai", "saas", "software", "tools", "productivity", "business", "tech");
+      tokens.push(...profileTags.filter((tag) => tag.length >= 4));
     }
 
     if (tagField) {
@@ -5499,11 +5499,17 @@
     if (!options.length) return "";
 
     const tokens = resolveSelectTokens(element, config);
+    const hint = getFieldHint(element);
+    const isCategoryOrPersona = /categor|industry|sector|niche|vertical|profession|audience|persona/.test(hint);
     for (const token of tokens) {
+      if (isCategoryOrPersona && String(token).trim().length < 4) continue;
       const match = findBestSelectOption(options, token);
       if (match) return match.value;
     }
 
+    if (isCategoryOrPersona) {
+      return options.find((o) => /^other(?:\b|\s)/i.test(o.label))?.value || "";
+    }
     const fallback = options.find((o) => !/other|none|n\/a/i.test(o.label));
     return fallback?.value || options[0]?.value || "";
   }
@@ -6398,6 +6404,13 @@
     }
     if (/\b(title|subject|headline)\b/.test(hint) && type !== "url") {
       return fitValueToConstraints(pf.Title || config.brandName || "", getFieldConstraints(element));
+    }
+    if (/\b(?:key\s+)?features?\b/.test(visibleHint)) {
+      return fitValueToConstraints(pf["Feature description"] || pf.Features || "", getFieldConstraints(element));
+    }
+    if (/\buse\s+cases?\b/.test(visibleHint)) {
+      const useCases = Array.isArray(config.useCases) ? config.useCases.filter(Boolean).join("; ") : "";
+      return fitValueToConstraints(useCases || pf["Primary Use Case"] || pf["Use Case"] || "", getFieldConstraints(element));
     }
     if (tag === "textarea" || /\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
       return pickDescriptionForField(config, element);

@@ -60,6 +60,26 @@ const tags = selectTokens(
 );
 assert.deepEqual(tags.slice(0, 5), ["AI games", "decision games", "human vs AI", "TypeSafe Jev", "daily challenge"]);
 assert.equal(tags.includes("sixth tag"), false, "the custom tag selector should use at most five profile tags");
+assert.equal(selectTokens({ hint: "pricing model" }, {
+  projectFields: { "PRICING TYPE": "Paid generation with credits. Public browsing is free." },
+})[0], "paid", "free browsing must not classify paid generation as free");
+
+const selectValue = new Function(
+  "getNativeSelectOptions", "resolveSelectTokens", "getFieldHint", "findBestSelectOption",
+  `${extractFunction("resolveSelectValueForField", "queryCustomDropdowns")}; return resolveSelectValueForField;`,
+)(
+  (element) => element.options,
+  selectTokens,
+  (element) => element.hint,
+  (options, token) => options.find((option) => option.label.toLowerCase() === String(token).toLowerCase()) || null,
+);
+const industrySelect = { tagName: "SELECT", hint: "Primary industry", options: [
+  { value: "retail", label: "E-commerce & Retail" },
+  { value: "tech", label: "Technology & Software" },
+  { value: "other", label: "Other" },
+] };
+assert.equal(selectValue(industrySelect, { brandName: "JevPlay", tags: "AI games, decision games" }), "other",
+  "an unrelated category must not be picked from a generic token or first option");
 
 const isCustomDropdownEmpty = new Function(
   "compactText",
@@ -128,6 +148,10 @@ assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
   "a one-token username must not be duplicated into the surname field");
 assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "Young");
+assert.equal(resolveValue({ projectFields: { "Feature description": "Side-by-side replay" } },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }), "Side-by-side replay");
+assert.equal(resolveValue({ useCases: ["Compare daily puzzle decisions"] },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Use cases", label: "Use cases" }), "Compare daily puzzle decisions");
 const aiSuperRequired = new Function("getSnapshotLabel", "location",
   `${extractFunction("fieldIsRequired", "collectFillLearnings")}; return fieldIsRequired;`,
 )((element) => element.label || "", { hostname: "www.aisuperhub.io" });

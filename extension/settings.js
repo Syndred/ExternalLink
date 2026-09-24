@@ -208,12 +208,24 @@
     }
     const sync = result.sync || {};
     const parts = [`云端已连接 · 工作区 ${config.workspaceId || "default"}`];
+    const cloudKeyLabels = {
+      submissionRecords: "提交账本",
+      submissionTimeline: "提交时间线",
+      siteProfiles: "网站资料",
+      siteAnnotations: "站点标记",
+      sheetTableData: "来源表格",
+      urlList: "外链库",
+    };
+    const describeKeys = (keys) => (Array.isArray(keys) ? keys : [])
+      .map((key) => cloudKeyLabels[key] || key).join("、");
     let tone = "success";
     if (sync.status === "conflict") {
       parts.push(`${sync.conflictCount} 类数据有冲突，这些数据的自动上传已暂停；先备份，再处理冲突。`);
+      if (sync.conflictKeys?.length) parts.push(`冲突项：${describeKeys(sync.conflictKeys)}`);
       tone = "warning";
     } else if (sync.status === "pending") {
       parts.push(`${sync.pendingCount} 类本机修改待云端确认；可重试上传。`);
+      if (sync.pendingKeys?.length) parts.push(`待上传项：${describeKeys(sync.pendingKeys)}`);
       tone = "warning";
     } else if (sync.status === "out_of_date") {
       if (sync.outOfDateCount) parts.push(`${sync.outOfDateCount} 类本机与云端修订不一致，请回读核对。`);
@@ -230,6 +242,9 @@
     }
     if (["conflict", "pending"].includes(sync.status) && sync.outOfDateCount) {
       parts.push(`另有 ${sync.outOfDateCount} 类修订不同；先处理本机修改，再核对云端。`);
+    }
+    if (sync.status === "conflict" && sync.pendingKeys?.length) {
+      parts.push(`待上传项：${describeKeys(sync.pendingKeys)}`);
     }
     if (hasUnsavedSettingsEdits()) {
       parts.push("本页还有未保存的编辑，尚未计入版本核对。");

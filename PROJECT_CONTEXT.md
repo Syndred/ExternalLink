@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 21:20 / 最新进度**：Forward Future 官方免费表单的 Graffiti Name AI、OldPhotoLive AI、JevPlay 均收到 `Tool submitted. We'll review it shortly.` / `under review` 回执；插件自动生成三个准确 Profile 的待审核动态。累计 **38 个真实产品×站点回执、14 站、12 站三产品齐全**，距每款 30 站还差 18 个完整站点。3.7.30 修复 Key features / Use cases 重复长描述、付费生成被“免费浏览”误判为 Free、行业/职业无依据乱选，并在设置页显示具体冲突文档名；全量测试已过，需 Ego 重载实站复验。当前侧栏三条仅能证明本地自动记账，云端刷新仍显示待保存；设置页显示 1 类冲突与 4 类修订不同，重试上传被拒。已导出本机备份 `~/Downloads/externallink-backup-2026-09-24 (2).json`，不得称 Neon 已验收。AI Tool Claw 站方报错、Linkrena 提交跳登录，均未计数。
+
 - **2026-09-24 21:06 / 最新进度**：Launchpedia 官方嵌入 Tally 对 JevPlay、OldPhotoLive AI、Graffiti Name AI 各显示最终 `Form submitted / Thanks for completing this form!`。JevPlay 在旧版人工补记；OldPhoto 与 Graffiti 在 Ego 已重载的 3.7.28 自动填表、自动记账，来源侧栏显示 3 个 Profile、3 条动态，刷新后无待云端保存提示。可选 Affiliate Link 保持空白。累计 **35 个真实产品×站点回执、13 站、11 站三产品齐全**；距 30 个完整站仍差 19 站。Tally 旧邮箱在切换 Profile 后可能保留，OldPhoto 提交前人工改为业务邮箱；3.7.29 已修自动填表时把不匹配的邮箱改为当前 Profile 的有效邮箱，待 Ego 重载复验。
 
 - **2026-09-24 20:50 / 最新进度**：Startup Collections 的官方嵌入式 Google Form 已分别收到 JevPlay、OldPhotoLive AI、Graffiti Name AI 的 `您的回复已记录。` 回执；三份都选免费排队、拒绝 $10 加速。插件正确自动填入三组产品名称、官网、描述和联系人，但未识别嵌入表单的点击与回执；已按现场证据在同一来源站逐份人工登记，侧栏显示 3 个 Profile、3 条动态，刷新回读 `云端动态已核对，当前记录是最新的`。累计 **33 个真实产品×站点回执、12 站、10 站三产品齐全**；距离 30 个完整站点还差 20 站。3.7.27 扩展提交监听到来源绑定的嵌入式 Google Form，要求精确产品域名、带标签的网址栏和最终确认链接，代码回归通过，待重载并在下一家实站验证。验证码、登录、付费、法律确认继续停放。

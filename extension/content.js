@@ -5144,6 +5144,13 @@
     }
     const wrappingLabel = element.closest("label");
     if (wrappingLabel) labels.push(wrappingLabel.textContent);
+    // React forms often place an unbound label next to a single control.
+    // Read that visible label before relying on example placeholders.
+    const parent = element.parentElement;
+    if (parent && parent.querySelectorAll('input:not([type="hidden"]), textarea, select').length === 1) {
+      const siblingLabel = parent.querySelector(":scope > label");
+      if (siblingLabel) labels.push(siblingLabel.textContent);
+    }
     labels.push(
       element.getAttribute("aria-label"),
       element.getAttribute("placeholder"),
@@ -6305,6 +6312,19 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    if (tag === "textarea" && /\bscreenshots?\b/.test(visibleHint) && /\b(?:image\s+urls?|urls?|one\s+image)\b/.test(visibleHint)) {
+      const sources = [
+        ...(Array.isArray(config.screenshots) ? config.screenshots : []),
+        ...[1, 2, 3, 4].flatMap((index) => [pf[`Screenshot ${index}`], pf[`Screenshot-${index}`]]),
+      ];
+      return [...new Set(sources.map((source) => String(source || "").trim()).filter((source) => {
+        try {
+          const url = new URL(source);
+          return /^https?:$/.test(url.protocol) && /\.(?:png|jpe?g|gif|webp|svg|avif)$/i.test(url.pathname);
+        } catch { return false; }
+      }))].slice(0, 4).join("\n");
+    }
 
     // Field intent must outrank the HTML input type and historical mappings.
     // TipSeason labels its email and social fields inconsistently, and the

@@ -28,6 +28,14 @@ assert.equal(snapshotLabel({
   id: "random-id", textContent: "", closest: () => null,
   getAttribute: (name) => name === "aria-labelledby" ? "label-tool-name" : null,
 }), "Tool Name", "aria-labelledby headings must supply semantic form labels for Tally fields");
+assert.equal(snapshotLabel({
+  id: "", textContent: "", closest: () => null,
+  parentElement: {
+    querySelectorAll: () => [{}],
+    querySelector: () => ({ textContent: "Tool name *" }),
+  },
+  getAttribute: (name) => name === "placeholder" ? "e.g. ChatGPT" : null,
+}), "Tool name * e.g. ChatGPT", "an adjacent visible label must identify unbound React inputs");
 
 const mediaHelper = new Function(
   "getProfileFields",
@@ -152,6 +160,9 @@ assert.equal(resolveValue({ projectFields: { "Feature description": "Side-by-sid
   { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }), "Side-by-side replay");
 assert.equal(resolveValue({ useCases: ["Compare daily puzzle decisions"] },
   { tagName: "TEXTAREA", type: "textarea", hint: "Use cases", label: "Use cases" }), "Compare daily puzzle decisions");
+assert.equal(resolveValue({ screenshots: ["https://example.com/scene.png", "cloud-media://private", "https://example.com/page"] },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Screenshots (one image URL per line)", label: "Screenshots (one image URL per line)" }),
+  "https://example.com/scene.png", "screenshot URL lists must exclude private media references and page URLs");
 const aiSuperRequired = new Function("getSnapshotLabel", "location",
   `${extractFunction("fieldIsRequired", "collectFillLearnings")}; return fieldIsRequired;`,
 )((element) => element.label || "", { hostname: "www.aisuperhub.io" });

@@ -240,7 +240,7 @@
     }
     if (msg.action === "classifySubmitEvidence") {
       sendResponse(classifyVisibleEvidence({
-        destinationUrl: manualSubmissionWatch?.destinationUrl || "",
+        destinationUrl: msg.destinationUrl || manualSubmissionWatch?.destinationUrl || "",
       }));
       return true;
     }

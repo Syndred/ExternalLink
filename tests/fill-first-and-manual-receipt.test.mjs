@@ -53,6 +53,7 @@ let evidence = { matched: false };
 let sourceContext = { ok: true, referrer: "" };
 let watchCounter = 0;
 let refreshWatchCalls = 0;
+let receiptDestinationUrl = '';
 const ctx = {
   Set, Date, URL,
   log() {},
@@ -80,7 +81,13 @@ const ctx = {
       : { ok: true },
   refreshContentScriptsForManualWatch: async () => { refreshWatchCalls += 1; return { frameIds: [0, 2], enumerated: true }; },
   sendManualSubmissionWatchToFrames: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
-  sendTabMessageToFrame: async (_, _frameId, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  sendTabMessageToFrame: async (_, _frameId, msg) => {
+    if (msg.action === 'classifySubmitEvidence') {
+      receiptDestinationUrl = msg.destinationUrl;
+      return evidence;
+    }
+    return { ok: true };
+  },
   broadcastAutoFillUpdate: (event) => messages.push(event),
   recordSubmittedProject: async (record) => { records.push(record); return record; },
   sleep: async () => {},
@@ -105,6 +112,7 @@ assert.equal(records[0].profileId, 'RspAi');
 assert.equal(records[0].confirmedBy, 'agent');
 assert.equal(records[0].publicationStatus, 'pending_moderation');
 assert.equal(records[0].successProof.actionObserved, true);
+assert.equal(receiptDestinationUrl, 'https://directory.example/submit', 'receipt polling must carry the source destination after the content watcher clears itself');
 assert.equal(store['manualSubmissionWatch:7'], undefined);
 await ctx.armManualSubmissionWatch(7, { id: 'A' }, {});
 const secondWatchToken = store['manualSubmissionWatch:7'].token;
@@ -146,6 +154,12 @@ sourceContext = { ok: true, referrer: 'https://aitools.inc/' };
 await ctx.armManualSubmissionWatch(10, { id: 'GraffitiName' }, { targetDomain: 'https://graffitinameai.com' });
 assert.equal(store['manualSubmissionWatch:10'].url, 'https://aitools.inc/submit', 'trusted source must override an unrelated stale batch task');
 assert.equal(store['manualSubmissionWatch:10'].sourceContext.sourceHost, 'aitools.inc');
+ctx.recordSubmittedProject = async (record) => { records.push(record); return record; };
+evidence = { matched: true, evidence: "Thanks! We'll be in touch over the next few days to proceed with your listing." };
+assert.equal((await ctx.observeManualSubmissionReceipt(10, store['manualSubmissionWatch:10'].token)).ok, true);
+assert.equal(receiptDestinationUrl, 'https://aitools.inc/submit', 'the final receipt check must retain the trusted directory URL');
+assert.equal(records.at(-1).url, 'https://aitools.inc/submit');
+evidence = { matched: false };
 ctx.state.activeTabs = new Map();
 ctx.state.tasks = [];
 sourceContext = { ok: true, referrer: 'https://startupstash.com/submit' };

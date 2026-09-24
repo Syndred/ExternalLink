@@ -4483,6 +4483,7 @@ async function observeManualSubmissionReceipt(tabId, token, frameId, details = {
       if (currentOrigin !== expectedOrigin && !isTypeformPage) break;
       const receipt = await sendTabMessageToFrame(tabId, normalizedFrameId, {
         action: "classifySubmitEvidence",
+        destinationUrl: watch.destinationUrl,
       }).catch(() => null);
       const evidence = String(receipt?.evidence || "").replace(/\s+/g, " ").trim();
       if (!receipt?.matched || !evidence || evidence === String(frameBaseline.evidence || "").replace(/\s+/g, " ").trim()) continue;

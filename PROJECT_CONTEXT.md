@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 20:15 / 最新进度**：AI Tools Inc 的 OldPhotoLive AI 也已取得官方 Typeform 最终 Thanks 回执；自动填名称和官网正确，姓氏错填、邮箱未填，提交前已修正。3.7.23 监听到最终提交但清空上下文后复核回执时遗漏来源站地址，导致未自动记账；按现场回执在 AI Tools Inc/OldPhoto 人工补记。3.7.24 将可信来源随最终回执检查传递，待 JevPlay 实站复验。当前 26 个真实产品×站点回执、10 站、7 站三产品齐全；OldPhoto 云端补记正在回读。
+
 - **2026-09-24 20:10 / 最新进度**：AI Tools Inc 免费官方 Typeform 的 Graffiti Name AI 取得结束页 `Thanks! We'll be in touch over the next few days to proceed with your listing.` 回执，站点侧栏补记后从云端回读确认。累计 25 个真实产品×站点提交、10 个站点、7 个三产品完整站点。实站发现插件把未提交联系信息题的 `We will be in touch` 误判为回执，且旧批次任务覆盖可信 Typeform 来源；3.7.23 修复两者，并将 AI Tools Inc 首页来源归一到 `/submit`。定向回归已过，待重载后用 JevPlay、OldPhoto 复验。验证码/登录/付费/法律确认继续停放。
 
 - **2026-09-24 20:00 / 最新进度**：AI Marketing Directory 三产品均已取得官方 Tally `Form submitted / Page 2 of 2` 回执；3.7.22 修复此特定 Tally 成功状态识别，OldPhoto 与 Graffiti 实站自动记账，JevPlay 早一步提交并人工补记。当前累计 24 个真实产品×站点提交、9 个站点、7 个三产品完整站点；侧栏手动刷新后 Neon 回读确认此站 5 个 Profile、5 条动态最新（本轮三条）。Launching Next 有 `Quick Check` 人工验证题，已留页待用户完成，未计提交。Tally 自动填表仍漏产品名称/联系人，须继续修；下一步继续旧成功站点。

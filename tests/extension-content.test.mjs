@@ -649,6 +649,19 @@ assert.match(
   "background should load directory playbooks",
 );
 assert.match(manifestText, /lib\/playbooks\.js/, "content scripts should include playbooks");
+assert.ok(
+  manifest.content_scripts?.some((entry) => entry.all_frames === true),
+  "content scripts must run in cross-origin submission frames",
+);
+assert.ok(
+  manifest.permissions?.includes("webNavigation"),
+  "background should be allowed to enumerate existing submission frames",
+);
+assert.match(
+  background,
+  /manualSubmissionWatchRequest/,
+  "newly loaded iframe content scripts should recover the active submission watch",
+);
 
 const queue = readFileSync(resolve(root, "extension/lib/queue.js"), "utf8");
 assert.match(queue, /publicationStatus/, "success records should store publication status");

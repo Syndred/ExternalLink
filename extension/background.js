@@ -537,8 +537,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       break;
     case "manualSubmissionClicked":
       if (sender.tab?.id) {
-        observeManualSubmissionReceipt(sender.tab.id, msg.token)
+        observeManualSubmissionReceipt(sender.tab.id, msg.token, sender.frameId, {
+          frameUrl: sender.url || msg.frameUrl || "",
+          baselineEvidence: msg.baselineEvidence || "",
+        })
           .then(sendResponse)
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+        return true;
+      }
+      break;
+    case "manualSubmissionWatchReady":
+      if (sender.tab?.id) {
+        registerManualSubmissionWatchFrame(sender.tab.id, msg.token, sender.frameId, {
+          frameUrl: sender.url || msg.frameUrl || "",
+          baseline: msg.baseline || {},
+        })
+          .then(sendResponse)
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+        return true;
+      }
+      break;
+    case "manualSubmissionWatchRequest":
+      if (sender.tab?.id) {
+        const key = `manualSubmissionWatch:${sender.tab.id}`;
+        chrome.storage.local
+          .get(key)
+          .then((stored) => {
+            const watch = stored[key];
+            if (!watch || Date.now() - Number(watch.createdAt || 0) > 2 * 60 * 60 * 1000) {
+              sendResponse({ ok: false });
+              return;
+            }
+            sendResponse({
+              ok: true,
+              watch: {
+                token: watch.token,
+                targetDomain: watch.targetDomain || "",
+                destinationUrl: watch.destinationUrl || watch.url || "",
+              },
+            });
+          })
           .catch((err) => sendResponse({ ok: false, error: err.message }));
         return true;
       }
@@ -3375,6 +3413,37 @@ async function sendTabMessage(tabId, message) {
   return chrome.tabs.sendMessage(tabId, message);
 }
 
+async function sendTopTabMessage(tabId, message) {
+  await ensureContentScript(tabId);
+  return chrome.tabs.sendMessage(tabId, message, { frameId: 0 });
+}
+
+async function sendTabMessageToFrame(tabId, frameId, message) {
+  const normalizedFrameId = Number.isInteger(Number(frameId)) ? Number(frameId) : 0;
+  return chrome.tabs.sendMessage(tabId, message, { frameId: normalizedFrameId });
+}
+
+async function sendManualSubmissionWatchToFrames(tabId, message) {
+  await ensureContentScript(tabId);
+  if (!chrome.tabs?.sendMessage) return sendTabMessage(tabId, message);
+  let frameIds = [0];
+  try {
+    const frames = typeof chrome.webNavigation?.getAllFrames === "function"
+      ? await chrome.webNavigation.getAllFrames({ tabId })
+      : [];
+    const discovered = (Array.isArray(frames) ? frames : [])
+      .map((frame) => Number(frame?.frameId))
+      .filter((frameId) => Number.isInteger(frameId) && frameId >= 0);
+    if (discovered.length) frameIds = [...new Set(discovered)];
+  } catch {
+    // The top frame remains a valid fallback when frame enumeration is not available.
+  }
+  await Promise.allSettled(frameIds.map((frameId) =>
+    chrome.tabs.sendMessage(tabId, message, { frameId }),
+  ));
+  return { ok: true, frameIds };
+}
+
 async function handleSidepanelDetect(tabId) {
   const targetTabId = await resolveTargetTabId(tabId);
   if (!targetTabId) return { ok: false, error: "没有可检测的网页标签，请先打开目标站点" };
@@ -4010,41 +4079,118 @@ async function understandFormBeforeFill(tabId, config, platformType) {
 
 const manualReceiptChecks = new Set();
 
-async function armManualSubmissionWatch(tabId, profile, config) {
-  const url = await getTabUrlSafe(tabId);
-  const baseline = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
-  const watch = { token: crypto.randomUUID(), url, profileId: profile.id,
-    profileName: profile.name || profile.id, baseline: baseline.evidence || "", createdAt: Date.now() };
-  await chrome.storage.local.set({ [`manualSubmissionWatch:${tabId}`]: watch });
-  await sendTabMessage(tabId, { action: "watchManualSubmission", token: watch.token, targetDomain: config.targetDomain });
+async function registerManualSubmissionWatchFrame(tabId, token, frameId, details = {}) {
+  return submissionLedgerWrite(async () => {
+    const key = `manualSubmissionWatch:${tabId}`;
+    const stored = await chrome.storage.local.get(key);
+    const watch = stored[key];
+    if (!watch || watch.token !== token) return { ok: false, stale: true };
+    const normalizedFrameId = Number.isInteger(Number(frameId)) ? Number(frameId) : 0;
+    const frameKey = String(normalizedFrameId);
+    const frameBaselines = { ...(watch.frameBaselines || {}) };
+    frameBaselines[frameKey] = {
+      evidence: String(details.baseline?.evidence || "").replace(/\s+/g, " ").trim(),
+      matched: details.baseline?.matched === true,
+      url: String(details.frameUrl || "").trim(),
+    };
+    await chrome.storage.local.set({
+      [key]: { ...watch, frameBaselines },
+    });
+    return { ok: true, frameId: normalizedFrameId };
+  });
 }
 
-async function observeManualSubmissionReceipt(tabId, token) {
+async function armManualSubmissionWatch(tabId, profile, config) {
+  const pageUrl = await getTabUrlSafe(tabId);
+  const activeEntry = typeof state === "object" ? state.activeTabs?.get(tabId) : null;
+  const candidateTask = typeof unattendedTaskForEntry === "function"
+    ? unattendedTaskForEntry(activeEntry)
+    : activeEntry && Array.isArray(state.tasks)
+      ? state.tasks.find((item) => item.index === activeEntry.taskIndex)
+      : null;
+  const task = candidateTask && (!candidateTask.profileId || candidateTask.profileId === profile.id)
+    ? candidateTask
+    : null;
+  const destinationUrl = task?.url || pageUrl;
+  const baseline = await sendTopTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+  const token = crypto.randomUUID();
+  const watch = {
+    token,
+    url: destinationUrl,
+    pageUrl,
+    profileId: profile.id,
+    profileName: profile.name || profile.id,
+    baseline: baseline.evidence || "",
+    destinationUrl,
+    targetDomain: config.targetDomain || "",
+    frameBaselines: {
+      "0": {
+        evidence: String(baseline.evidence || "").replace(/\s+/g, " ").trim(),
+        matched: baseline.matched === true,
+        url: pageUrl || "",
+      },
+    },
+    createdAt: Date.now(),
+  };
+  await chrome.storage.local.set({ [`manualSubmissionWatch:${tabId}`]: watch });
+  await sendManualSubmissionWatchToFrames(tabId, {
+    action: "watchManualSubmission",
+    token,
+    targetDomain: config.targetDomain,
+    destinationUrl,
+  });
+}
+
+async function observeManualSubmissionReceipt(tabId, token, frameId, details = {}) {
   const key = `manualSubmissionWatch:${tabId}`;
   const stored = await chrome.storage.local.get(key);
   const watch = stored[key];
-  if (!watch || watch.token !== token || Date.now() - watch.createdAt > 2 * 60 * 60 * 1000 || manualReceiptChecks.has(token)) {
+  if (!watch || watch.token !== token || Date.now() - watch.createdAt > 2 * 60 * 60 * 1000) {
     return { ok: false, error: "本次提交监听已过期或正在核验，请使用登记动态" };
   }
-  manualReceiptChecks.add(token);
+  const normalizedFrameId = Number.isInteger(Number(frameId)) ? Number(frameId) : 0;
+  const frameKey = String(normalizedFrameId);
+  const frameBaseline = watch.frameBaselines?.[frameKey] || (
+    normalizedFrameId === 0
+      ? { evidence: watch.baseline || "", url: watch.url || "" }
+      : details.baselineEvidence
+        ? { evidence: details.baselineEvidence, url: details.frameUrl || "" }
+        : null
+  );
+  if (!frameBaseline) {
+    return { ok: false, needs_manual: true, error: "未建立当前 iframe 的提交监听基线，请人工登记回执" };
+  }
+  const checkKey = `${token}:${frameKey}`;
+  if (manualReceiptChecks.has(checkKey)) {
+    return { ok: false, error: "本次提交监听已过期或正在核验，请使用登记动态" };
+  }
+  manualReceiptChecks.add(checkKey);
   log(`${watch.profileName}: 检测到手动提交，核验 ${watch.url} 的新回执`, "info", { event: "manual_submission_observed", profileId: watch.profileId, url: watch.url });
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "已检测到手动提交，正在核验新回执并保存动态…" });
   try {
     for (let attempt = 0; attempt < 12; attempt++) {
       await sleep(1500);
       const currentUrl = await getTabUrlSafe(tabId);
-      if (!currentUrl || new URL(currentUrl).origin !== new URL(watch.url).origin) break;
-      const receipt = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => null);
+      if (!currentUrl) break;
+      const currentOrigin = new URL(currentUrl).origin;
+      const expectedOrigin = new URL(watch.pageUrl || watch.url).origin;
+      const currentHost = new URL(currentUrl).hostname.replace(/^www\./, "").toLowerCase();
+      const isTypeformPage = currentHost === "typeform.com" || currentHost.endsWith(".typeform.com");
+      if (currentOrigin !== expectedOrigin && !isTypeformPage) break;
+      const receipt = await sendTabMessageToFrame(tabId, normalizedFrameId, {
+        action: "classifySubmitEvidence",
+      }).catch(() => null);
       const evidence = String(receipt?.evidence || "").replace(/\s+/g, " ").trim();
-      if (!receipt?.matched || !evidence || evidence === String(watch.baseline).replace(/\s+/g, " ").trim()) continue;
+      if (!receipt?.matched || !evidence || evidence === String(frameBaseline.evidence || "").replace(/\s+/g, " ").trim()) continue;
+      const evidenceUrl = receipt.evidenceUrl || details.frameUrl || frameBaseline.url || currentUrl;
       const record = await recordSubmittedProject({
         url: watch.url, profileId: watch.profileId, profileName: watch.profileName,
         confirmedBy: "agent", successEvidence: evidence,
         publicationStatus: receipt.publicationStatus || "submitted",
-        publicUrl: receipt.publicUrl || "", evidenceUrl: currentUrl,
+        publicUrl: receipt.publicUrl || "", evidenceUrl,
         successProof: { source: "deterministic_submit", actionObserved: true,
           evidenceSignals: receipt.evidenceSignals?.length ? receipt.evidenceSignals : [
-            { type: "visible_confirmation", text: evidence, url: currentUrl, matched: true },
+            { type: "visible_confirmation", text: evidence, url: evidenceUrl, matched: true },
           ] },
       });
       const currentWatch = (await chrome.storage.local.get(key))[key];
@@ -4061,7 +4207,7 @@ async function observeManualSubmissionReceipt(tabId, token) {
     broadcastAutoFillUpdate({ tabId, status: "manual", message: `提交回执保存失败：${err.message}；请用「登记动态」补记` });
     return { ok: false, needs_manual: true, error: err.message };
   } finally {
-    manualReceiptChecks.delete(token);
+    manualReceiptChecks.delete(checkKey);
   }
 }
 

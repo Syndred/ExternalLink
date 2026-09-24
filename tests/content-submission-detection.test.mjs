@@ -90,6 +90,7 @@ class FakeForm {
 }
 
 const document = {
+  title: "",
   body: { innerText: "", textContent: "" },
   addEventListener() {},
   querySelector(selector) {
@@ -135,7 +136,7 @@ const context = {
   FocusEvent: class FocusEvent {},
   KeyboardEvent: class KeyboardEvent {},
   document,
-  location: { hostname: "futuretools.io", href: "https://futuretools.io/" },
+  location: { hostname: "futuretools.io", href: "https://futuretools.io/", referrer: "" },
   chrome: { runtime: { onMessage: { addListener() {}, removeListener() {} }, sendMessage: async () => ({ ok: true }) } },
   getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: "1" }),
   setTimeout,
@@ -147,6 +148,7 @@ context.window = context;
 context.self = context;
 context.__extLinkBootstrapped = true;
 vm.createContext(context);
+vm.runInContext(readFileSync("extension/lib/playbooks.js", "utf8"), context, { filename: "extension/lib/playbooks.js" });
 vm.runInContext(source, context, { filename: "extension/content.js" });
 
 const hooks = context.__extLinkSubmissionTestHooks;
@@ -214,5 +216,19 @@ forms.push(contact);
 document.body.textContent = "Contact us";
 assert.equal(hooks.detectSubmissionForm(), true, "email plus a message field should remain a valid contact form");
 assert.equal(hooks.identifyPlatform(), "submission", "contact forms with messages should remain supported");
+
+context.location.href = "https://rb6zn ef2.typeform.com/to/RB6ZnEf2".replace(" ", "");
+document.body.innerText = "Thank you for applying to get listed on StartupStash! We will get back to you as early as possible :)";
+let receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupstash.com/submit" });
+assert.equal(receipt.matched, true, "the exact StartupStash Typeform receipt should be accepted in a cross-origin frame");
+document.body.innerText = "Thank you for your response. Sponsored by Typeform.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupstash.com/submit" });
+assert.equal(receipt.matched, false, "generic Typeform thank-you copy must not count as StartupStash success");
+
+context.location.href = "https://loxr142exnq.typeform.com/to/RB6ZnEf2";
+document.body.innerText = "Thanks we'll be in touch soon.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitools.inc/submit" });
+assert.equal(receipt.matched, true, "a standalone Typeform receipt should use the original directory playbook");
+assert.equal(receipt.playbookId, "aitools-inc");
 
 console.log("Content submission detection tests passed");

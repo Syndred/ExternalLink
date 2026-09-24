@@ -46,10 +46,13 @@ const store = {};
 const records = [];
 const messages = [];
 let evidence = { matched: false };
+let watchCounter = 0;
 const ctx = {
   Set, Date, URL,
   log() {},
-  crypto: { randomUUID: () => 'watch-token' },
+  crypto: { randomUUID: () => `watch-token-${++watchCounter}` },
+  state: { activeTabs: new Map(), tasks: [] },
+  submissionLedgerWrite: async (fn) => fn(),
   chrome: { storage: { local: {
     get: async (key) => ({ [key]: store[key] }),
     set: async (data) => Object.assign(store, data),
@@ -57,6 +60,9 @@ const ctx = {
   } } },
   getTabUrlSafe: async () => 'https://directory.example/submit',
   sendTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  sendTopTabMessage: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  sendManualSubmissionWatchToFrames: async (_, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
+  sendTabMessageToFrame: async (_, _frameId, msg) => msg.action === 'classifySubmitEvidence' ? evidence : { ok: true },
   broadcastAutoFillUpdate: (event) => messages.push(event),
   recordSubmittedProject: async (record) => { records.push(record); return record; },
   sleep: async () => {},
@@ -64,24 +70,45 @@ const ctx = {
 vm.createContext(ctx);
 vm.runInContext(slice('const manualReceiptChecks = ', 'async function persistFillLearnings('), ctx);
 await ctx.armManualSubmissionWatch(7, { id: 'RspAi', name: 'RspAi' }, { targetDomain: 'https://rspai.com' });
+const firstWatchToken = store['manualSubmissionWatch:7'].token;
 assert.equal((await ctx.observeManualSubmissionReceipt(7, 'wrong')).ok, false);
 assert.equal(records.length, 0);
+await ctx.registerManualSubmissionWatchFrame(7, firstWatchToken, 2, {
+  frameUrl: 'https://rspai.typeform.com/to/form',
+  baseline: { matched: false, evidence: '' },
+});
+assert.equal(store['manualSubmissionWatch:7'].frameBaselines['2'].url, 'https://rspai.typeform.com/to/form');
 evidence = { matched: true, evidence: 'Submission received', publicationStatus: 'pending_moderation' };
-assert.equal((await ctx.observeManualSubmissionReceipt(7, 'watch-token')).ok, true);
+assert.equal((await ctx.observeManualSubmissionReceipt(7, firstWatchToken, 2, {
+  frameUrl: 'https://rspai.typeform.com/to/form',
+})).ok, true);
 assert.equal(records[0].profileId, 'RspAi');
+assert.equal(records[0].confirmedBy, 'agent');
 assert.equal(records[0].publicationStatus, 'pending_moderation');
 assert.equal(records[0].successProof.actionObserved, true);
 assert.equal(store['manualSubmissionWatch:7'], undefined);
 await ctx.armManualSubmissionWatch(7, { id: 'A' }, {});
-assert.equal((await ctx.observeManualSubmissionReceipt(7, 'watch-token')).ok, false);
+const secondWatchToken = store['manualSubmissionWatch:7'].token;
+assert.equal((await ctx.observeManualSubmissionReceipt(7, firstWatchToken, 2, {
+  frameUrl: 'https://rspai.typeform.com/to/form',
+})).ok, false, 'a stale iframe token must not claim a new Profile');
+assert.equal((await ctx.observeManualSubmissionReceipt(7, secondWatchToken)).ok, false);
 assert.equal(records.length, 1, 'an unchanged preexisting success message must never create a new record');
 evidence = { matched: false };
 await ctx.armManualSubmissionWatch(7, { id: 'RspAi' }, {});
+const thirdWatchToken = store['manualSubmissionWatch:7'].token;
 ctx.recordSubmittedProject = async () => { throw Error('storage unavailable'); };
 evidence = { matched: true, evidence: 'New submission received' };
-assert.equal((await ctx.observeManualSubmissionReceipt(7, 'watch-token')).needs_manual, true);
+assert.equal((await ctx.observeManualSubmissionReceipt(7, thirdWatchToken)).needs_manual, true);
 assert.match(messages.at(-1).message, /保存失败.*登记动态/);
 assert.ok(store['manualSubmissionWatch:7'], 'failed storage must retain the watch for recovery');
+
+ctx.state.activeTabs = new Map([[8, { taskIndex: 9 }]]);
+ctx.state.tasks = [{ index: 9, profileId: 'RspAi', url: 'https://startupstash.com/submit' }];
+ctx.getTabUrlSafe = async () => 'https://loxr142exnq.typeform.com/to/RB6ZnEf2';
+await ctx.armManualSubmissionWatch(8, { id: 'RspAi' }, { targetDomain: 'https://rspai.com' });
+assert.equal(store['manualSubmissionWatch:8'].url, 'https://startupstash.com/submit', 'standalone Typeform watches must retain the original destination URL');
+assert.equal(store['manualSubmissionWatch:8'].pageUrl, 'https://loxr142exnq.typeform.com/to/RB6ZnEf2');
 
 const binding = {
   chrome: { storage: { local: { get: async () => ({ activeSiteId: 'B' }) } } },
@@ -100,10 +127,16 @@ const clicks = [];
 const watcher = {
   window: {},
   URL,
-  document: { addEventListener: (type, listener) => { listeners[type] = listener; } },
-  chrome: { runtime: { id: 'test-extension', sendMessage: async (msg) => clicks.push(msg) } },
+  location: { href: 'https://directory.example/submit' },
+  document: {
+    addEventListener: (type, listener) => { listeners[type] = listener; },
+    querySelector: () => null,
+    querySelectorAll: () => [],
+  },
+  chrome: { runtime: { id: 'test-extension', sendMessage: async (msg) => { clicks.push(msg); return watcherResponse; } } },
   isSubmitControl: () => true,
 };
+let watcherResponse = { ok: true };
 vm.createContext(watcher);
 vm.runInContext(content.slice(content.indexOf('  let manualSubmissionWatch'), content.indexOf('  function onExtensionMessage')), watcher);
 vm.runInContext("manualSubmissionWatch = { token: 'bound', targetDomain: 'https://rspai.com' };", watcher);
@@ -135,3 +168,36 @@ vm.runInContext("manualSubmissionWatch = { token: 'newsletter', targetDomain: 'h
 form.querySelectorAll = () => [{ value: 'https://oldphotoliveai.com', type: 'hidden', name: 'tracking_url' }];
 listeners.submit(event);
 assert.equal(clicks.length, 3, 'hidden tracking fields must not trigger a receipt check');
+
+watcher.location.href = 'https://form.typeform.com/to/RB6ZnEf2';
+vm.runInContext("manualSubmissionWatch = { token: 'typeform-final', targetDomain: 'https://graffitinameai.com', destinationUrl: 'https://startupstash.com/submit' };", watcher);
+const typeformButton = {
+  tagName: 'BUTTON',
+  textContent: 'Submit application',
+  getAttribute: (name) => name === 'type' ? 'button' : name === 'data-qa' ? 'submit-button' : '',
+  closest: () => null,
+};
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformButton } });
+assert.equal(clicks.length, 4, 'the final Typeform action should notify the background from its frame');
+assert.equal(clicks.at(-1).frameUrl, 'https://form.typeform.com/to/RB6ZnEf2');
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformButton } });
+assert.equal(clicks.length, 4, 'the final Typeform action should notify only once');
+
+vm.runInContext("manualSubmissionWatch = { token: 'typeform-next', targetDomain: 'https://graffitinameai.com', destinationUrl: 'https://startupstash.com/submit' };", watcher);
+const typeformNextButton = {
+  tagName: 'BUTTON',
+  textContent: 'Continue',
+  getAttribute: (name) => name === 'type' ? 'button' : name === 'data-qa' ? 'continue-button' : '',
+  closest: () => null,
+};
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformNextButton } });
+assert.equal(clicks.length, 4, 'intermediate Typeform controls must not claim a submission');
+
+vm.runInContext("manualSubmissionWatch = { token: 'typeform-retry', targetDomain: 'https://graffitinameai.com', destinationUrl: 'https://startupstash.com/submit' };", watcher);
+watcherResponse = { ok: false, needs_manual: true };
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformButton } });
+await Promise.resolve();
+assert.equal(vm.runInContext("manualSubmissionWatch.token", watcher), 'typeform-retry', 'a failed ledger response must restore the click watch');
+watcherResponse = { ok: true };
+listeners.click({ type: 'click', isTrusted: true, target: { closest: () => typeformButton } });
+assert.equal(clicks.length, 6, 'a recovered Typeform watch should allow one retry');

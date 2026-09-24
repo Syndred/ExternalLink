@@ -49,6 +49,7 @@
   const ACTION_WAIT_LIMIT_MS = 5000;
   const VISUAL_OVERLAY_ATTR = "data-extlink-visual-overlay";
   const SENSITIVE_URL_PARAM_PATTERN = /token|key|secret|code|session|csrf|nonce/i;
+  const STARTUP_STASH_RECEIPT = "Thank you for applying to get listed on StartupStash! We will get back to you as early as possible :)";
   const PRODUCT_HUNT_STAGES = Object.freeze([
     "entry",
     "main_info",
@@ -102,9 +103,6 @@
   function observeManualSubmission(event) {
     if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch) return;
     const control = event.target?.closest?.('button, input[type="submit"]');
-    if (event.type !== "submit" && (!control || !isSubmitControl(control))) return;
-    const scope = event.type === "submit" ? event.target : control?.form || control?.closest("form");
-    if (!scope) return;
     const siteHost = (value) => {
       try {
         return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
@@ -113,10 +111,30 @@
         return "";
       }
     };
+    const expectedHost = siteHost(String(manualSubmissionWatch.targetDomain || ""));
+    const destinationHost = siteHost(String(manualSubmissionWatch.destinationUrl || ""));
+    const currentHost = siteHost(String(location.href || ""));
+    const typeformFrame = currentHost === "typeform.com" || currentHost.endsWith(".typeform.com");
+    const controlHint = control
+      ? [
+          control.textContent,
+          control.getAttribute?.("aria-label"),
+          control.getAttribute?.("data-qa"),
+          control.getAttribute?.("name"),
+          control.getAttribute?.("id"),
+        ].filter(Boolean).join(" ").toLowerCase()
+      : "";
+    const typeformFinalControl = typeformFrame && Boolean(expectedHost || destinationHost) &&
+      /\b(submit|send|apply|finish|complete|done)\b|提交|完成/.test(controlHint) &&
+      !/\b(next|continue|ok|back|previous)\b/.test(controlHint);
+    if (event.type !== "submit" && (!control || (!isSubmitControl(control) && !typeformFinalControl))) return;
+    const scope = event.type === "submit"
+      ? event.target
+      : control?.form || control?.closest("form") || document;
+    if (!scope) return;
     // The profile may promote a deep link while a directory asks for the
     // product homepage. Match the exact host, not the path, before attributing
     // a manual submit to this Profile. Never use a substring host match.
-    const expectedHost = siteHost(String(manualSubmissionWatch.targetDomain || ""));
     const hasDescription = !!scope.querySelector("textarea");
     const matchingUrl = [...scope.querySelectorAll("input")].some((input) => {
       const type = String(input.type || "").toLowerCase();
@@ -127,10 +145,25 @@
       const hint = [input.name, input.id, input.placeholder, ...labels].join(" ");
       return /\b(url|website|web\s*site|link|domain|site\s*address)\b/i.test(hint);
     });
-    if (!matchingUrl) return;
+    // Typeform keeps the product URL in an earlier answer and renders the
+    // final action inside a cross-origin frame, so no same-frame URL field is
+    // available at the final click. Restrict this fallback to a named final
+    // action on Typeform; intermediate question controls stay ignored.
+    if (!matchingUrl && !typeformFinalControl) return;
     const watch = manualSubmissionWatch;
     manualSubmissionWatch = null;
-    chrome.runtime.sendMessage({ action: "manualSubmissionClicked", token: watch.token }).catch(() => {});
+    chrome.runtime.sendMessage({
+      action: "manualSubmissionClicked",
+      token: watch.token,
+      frameUrl: String(location.href || ""),
+      baselineEvidence: watch.baselineEvidence || "",
+    }).then((response) => {
+      if (response?.ok !== true && manualSubmissionWatch === null) {
+        manualSubmissionWatch = watch;
+      }
+    }).catch(() => {
+      if (manualSubmissionWatch === null) manualSubmissionWatch = watch;
+    });
   }
   if (window.__extLinkManualSubmitHandler) {
     document.removeEventListener("click", window.__extLinkManualSubmitHandler, true);
@@ -142,8 +175,20 @@
 
   function onExtensionMessage(msg, sender, sendResponse) {
     if (msg.action === "watchManualSubmission") {
-      manualSubmissionWatch = { token: msg.token, targetDomain: msg.targetDomain };
-      sendResponse({ ok: true });
+      manualSubmissionWatch = {
+        token: msg.token,
+        targetDomain: msg.targetDomain,
+        destinationUrl: msg.destinationUrl || "",
+      };
+      const baseline = classifyVisibleEvidence({ destinationUrl: manualSubmissionWatch.destinationUrl });
+      manualSubmissionWatch.baselineEvidence = baseline.evidence || "";
+      chrome.runtime.sendMessage({
+        action: "manualSubmissionWatchReady",
+        token: msg.token,
+        baseline,
+        frameUrl: String(location.href || ""),
+      }).catch(() => {});
+      sendResponse({ ok: true, baseline });
       return true;
     }
     if (msg.action === "ping") {
@@ -178,7 +223,9 @@
       return true;
     }
     if (msg.action === "classifySubmitEvidence") {
-      sendResponse(classifyVisibleEvidence());
+      sendResponse(classifyVisibleEvidence({
+        destinationUrl: manualSubmissionWatch?.destinationUrl || "",
+      }));
       return true;
     }
     if (msg.action === "inspectCurrentFormStage") {
@@ -347,6 +394,14 @@
 
   window.__extLinkMessageHandler = onExtensionMessage;
   chrome.runtime.onMessage.addListener(onExtensionMessage);
+
+  // all_frames injects this script into a cross-origin Typeform iframe too.
+  // Ask the background for the active tab watch so the frame can report its
+  // own frameId and baseline without relying on a cross-origin broadcast.
+  chrome.runtime.sendMessage({ action: "manualSubmissionWatchRequest" }).then((response) => {
+    if (!response?.ok || !response.watch) return;
+    onExtensionMessage({ action: "watchManualSubmission", ...response.watch }, null, () => {});
+  }).catch(() => {});
 
   function maybeRequestAutoFill() {
     if (!chrome.runtime?.id) return null;
@@ -694,11 +749,51 @@
     );
   }
 
-  function classifyVisibleEvidence() {
+  function isStartupStashUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return false;
+    try {
+      const host = new URL(raw.includes("://") ? raw : `https://${raw}`).hostname
+        .replace(/^www\./, "")
+        .toLowerCase();
+      return host === "startupstash.com" || host.endsWith(".startupstash.com");
+    } catch {
+      return false;
+    }
+  }
+
+  function normalizeReceiptText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
+    const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    const startupStashContext = isStartupStashUrl(destinationUrl) ||
+      isStartupStashUrl(location.href) ||
+      isStartupStashUrl(document.referrer || "");
+    if (startupStashContext) {
+      const normalized = normalizeReceiptText(text);
+      if (normalized.includes(normalizeReceiptText(STARTUP_STASH_RECEIPT))) {
+        return {
+          publicationStatus: "submitted",
+          evidence: STARTUP_STASH_RECEIPT,
+          evidenceSignals: [{
+            type: "visible_confirmation",
+            text: STARTUP_STASH_RECEIPT,
+            url: String(location.href || ""),
+            matched: true,
+          }],
+          matched: true,
+        };
+      }
+      // StartupStash contains promotional copy and a Typeform ad step. Its
+      // generic "thank you" wording must not count as a submission receipt.
+      return { publicationStatus: "submitted", evidence: "", matched: false };
+    }
     const playbook =
       self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
-        ? self.ExtLinkPlaybooks.lookup(location.href)
+        ? self.ExtLinkPlaybooks.lookup(destinationUrl || location.href) || self.ExtLinkPlaybooks.lookup(location.href)
         : null;
     if (self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.classifyEvidence === "function") {
       return self.ExtLinkPlaybooks.classifyEvidence(text, playbook);
@@ -2970,6 +3065,7 @@
     hasLikelyListingFields,
     isMarketingOptInForm,
     queryFillableElements,
+    classifyVisibleEvidence,
   };
   self.__extLinkContentAuditTestHooks = {
     detectWPComment,

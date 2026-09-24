@@ -68,6 +68,33 @@ assert.equal(fieldIsRequired({ required: false, getAttribute: () => null, label:
 const routing = content.slice(content.indexOf("  function resolveValueForField("), content.indexOf("  async function fillSelectField("));
 assert.ok(routing.indexOf("publicMediaUrlForField(config, normalizedHint)") < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('element.getAttribute("role") === "combobox"') < routing.indexOf("const learnedKey"));
+assert.ok(routing.indexOf('element.parentElement?.querySelector(\'input[type="hidden"][name*="category"]\')') < routing.indexOf("const learnedKey"));
+assert.ok(routing.indexOf('pickDescriptionForField(config, element)') < routing.indexOf("const learnedKey"));
+const resolveValue = new Function(
+  "getProfileFields", "getFieldHint", "getSnapshotLabel", "fitValueToConstraints", "getFieldConstraints", "pickDescriptionForField",
+  `${routing}; return resolveValueForField;`,
+)(
+  (config) => config.projectFields || {},
+  (element) => element.hint.toLowerCase(),
+  (element) => element.label || element.hint,
+  (value) => value,
+  () => ({}),
+  () => "JevPlay is a free browser game against Jev.",
+);
+const wrongLearned = { "viesearch.com": { title: { value: "https://jevplay.com/games" } } };
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, learnedFieldMappings: wrongLearned },
+  { tagName: "INPUT", type: "text", hint: "Title (Optional) Leave blank to auto-fetch from website", getAttribute: () => null }), "JevPlay");
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, learnedFieldMappings: wrongLearned },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Description (Optional) Leave blank to auto-fetch from website" }),
+  "JevPlay is a free browser game against Jev.");
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, tags: "AI games, decision games" },
+  { tagName: "INPUT", type: "text", hint: "Category (Optional) Suggest a New Category", getAttribute: () => null, parentElement: { querySelector: () => ({}) } }), "");
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, tags: "AI games, decision games", email: "contact@example.com" },
+  { tagName: "INPUT", type: "text", hint: "Tag Tool category form_fields[email]", label: "Tag Tool category", getAttribute: () => null }),
+  "AI games", "visible category label must outrank an internal email field name");
+assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", email: "contact@example.com", projectFields: {} },
+  { tagName: "INPUT", type: "url", hint: "Website URL form_fields[email]", label: "Website URL", getAttribute: () => null }),
+  "https://jevplay.com/games", "URL input must outrank an internal email field name");
 assert.doesNotMatch(content, /options\[0\]\.el\.click\(\)/, "custom selects must not choose an arbitrary first option");
 assert.match(content, /new KeyboardEvent\("keydown"[\s\S]*key: "ArrowDown"/);
 assert.match(content, /new MouseEvent\("mousedown"/);

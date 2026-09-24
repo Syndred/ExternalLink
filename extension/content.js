@@ -5224,6 +5224,10 @@
       }
     }
     for (const candidate of dialogCandidates) {
+      // A newsletter/login popup can appear before its heading finishes
+      // rendering. Require a listing field before it can replace the real
+      // submission form as the active fill scope.
+      if (!hasLikelyListingFields(candidate.element)) continue;
       const text = String(candidate.element.innerText || candidate.element.textContent || "");
       const onlyEmail =
         candidate.fillable.length === 1 &&
@@ -5867,6 +5871,43 @@
         .filter(Boolean)
         .slice(0, 5)
         .join(", ");
+    }
+    // Some directories use an ordinary text input as the search half of a
+    // category picker. Its hidden slug, not the search text, is the selection.
+    if (
+      tag === "input" && /\bcategory\b/.test(normalizedHint) &&
+      element.parentElement?.querySelector('input[type="hidden"][name*="category"]')
+    ) {
+      return "";
+    }
+    const visibleHint = getSnapshotLabel(element).toLowerCase();
+    // CMS forms can name a category field `email` internally. Its visible
+    // label is the intent; never paste a business email into a tag field.
+    if (
+      tag === "input" && ["text", "search", ""].includes(type) &&
+      /\b(tags?|categor(?:y|ies)|keywords?)\b/.test(visibleHint) &&
+      !/\be-?mail\b/.test(visibleHint)
+    ) {
+      const tags = String(config.tags || pf["Tags Keywords/Hashtags"] || "")
+        .split(/[,;|/]+/).map((value) => value.trim().replace(/^#+/, "")).filter(Boolean);
+      return /\b(tags|keywords)\b/.test(visibleHint) ? tags.slice(0, 5).join(", ") : (tags[0] || "");
+    }
+    // Explicit field labels outrank old learned answers. A learned mapping
+    // from another submission must not put the product URL in Title/Description.
+    if (
+      type === "url" ||
+      (tag === "input" && /^(?:website\s+url|url\b|link\b|product\s+url|tool\s+url|homepage\b)/.test(visibleHint))
+    ) {
+      return config.targetDomain || pf.Url || "";
+    }
+    if (type === "email" || /\b(e-?mail|email address)\b/.test(hint)) {
+      return config.email || pf["Business mail"] || pf["Feedback mail"] || "";
+    }
+    if (/\b(title|subject|headline)\b/.test(hint) && type !== "url") {
+      return fitValueToConstraints(pf.Title || config.brandName || "", getFieldConstraints(element));
+    }
+    if (/\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
+      return pickDescriptionForField(config, element);
     }
     const host = location.hostname;
     const learnedKey = fieldMappingKey(element);

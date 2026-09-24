@@ -70,6 +70,11 @@ assert.match(
   /function\s+isMarketingOptInForm[\s\S]*function\s+getActiveFillScope[\s\S]*if\s*\(marketingOptIn\)\s*continue/,
   "newsletter opt-in fields must not become automatic fill targets",
 );
+assert.match(
+  content,
+  /for \(const candidate of dialogCandidates\) \{[\s\S]*if \(!hasLikelyListingFields\(candidate\.element\)\) continue;/,
+  "popups without listing fields must not displace the submission form",
+);
 
 assert.match(
   content,

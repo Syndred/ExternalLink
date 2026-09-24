@@ -6850,6 +6850,7 @@
 
   function clearStaleProfileListingForm(elements, config) {
     const expected = String(config.targetDomain || "").trim();
+    const expectedBrand = String(config.brandName || "").trim();
     if (!/^https?:\/\//i.test(expected)) return 0;
     let expectedHost;
     try { expectedHost = new URL(expected).hostname.replace(/^www\./, ""); }
@@ -6865,6 +6866,27 @@
           if (form) staleForms.add(form);
         }
       } catch { /* An invalid existing URL is handled by normal validation. */ }
+    }
+    // Some sites restore the previous submission's draft across tabs. If the
+    // operator has already changed the website to this Profile, the URL-only
+    // check above cannot see the stale title/description left behind.
+    if (expectedBrand) {
+      for (const element of elements) {
+        const label = `${getSnapshotLabel(element)} ${element.name || ""}`.toLowerCase();
+        if (!/\b(?:tool|product|app|startup|company)\s*name\b/.test(label)) continue;
+        const currentBrand = String(getElementFillValue(element) || "").trim();
+        if (!currentBrand || currentBrand.toLowerCase() === expectedBrand.toLowerCase()) continue;
+        const form = element.closest("form");
+        if (!form) continue;
+        const hasCurrentProductUrl = elements.some((candidate) => {
+          if (candidate.closest("form") !== form) return false;
+          if (String(resolveValueForField(config, candidate) || "").trim() !== expected) return false;
+          try {
+            return new URL(String(getElementFillValue(candidate) || "").trim()).hostname.replace(/^www\./, "") === expectedHost;
+          } catch { return false; }
+        });
+        if (hasCurrentProductUrl) staleForms.add(form);
+      }
     }
     let cleared = 0;
     for (const element of elements) {

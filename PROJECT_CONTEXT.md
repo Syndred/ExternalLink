@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 21:50 / AISO 跨 Profile 草稿保护**：3.7.33 已在 Ego 重载，OldPhotoLive AI 来源页正确显示 1 Profile、2 动态，公开页补登 `已上线` 后侧栏提示「云端动态已核对，当前记录是最新的」。切换 Graffiti 时发现 AISO 将 OldPhoto 草稿保留到新标签：插件因旧官网阻止覆盖是正确保护；人工改为 Graffiti 官网后，插件仅填空栏、未清旧名称和介绍。3.7.34 新增同一表单“官网已换、产品名仍是旧款”识别，清理旧草稿再填当前 Profile；回归通过，待重载实站确认。
+
 - **2026-09-24 21:45 / AISO Tools 公开收录与插件修复**：OldPhotoLive AI 通过免费表单取得 `is live` 回执，公开页 `https://aisotools.com/tool/oldphotolive-ai` 能打开且链接指向产品官网（`nofollow`）。累计 **39 个真实产品×站点回执、15 站、12 站三产品齐全**。插件自动提示已保存回执，但 `/submit` 页没有归并 `/submit/success` 的记录；3.7.33 将 AISO 多路径归为同一站点，并修正 Pricing Details 误填长产品介绍。52/52 Node 回归通过；待 Ego 重载、精确 Profile/云端回读及另外两产品实站提交。今日新 `outlink` Key 的 DeepSeek 后台统计截至 21:45 为 1 次、127 Tokens、<¥0.01，可能延迟 5 分钟。已关闭约 60 个已用完/无关的提交页，仅保留 DeepSeek 后台、AISO 工作页和 5 个验证码页。
 
 - **2026-09-24 21:40 / Taify 字段修复**：3.7.31 重载后插件在 Taify `/submit` 能开始填写，证明侧栏阻塞修复生效。实站发现该站 React 表单的 `<label>` 与输入框并列但未绑定 `for`：名称/邮箱漏填，单行标语误填功能清单，截图 URL 多行栏误填整段介绍。3.7.32 读取单控件容器内相邻可见标签，并对截图 URL 列表仅使用公开图片直链；定向测试通过，待重载复验。页面 DOM 含 `cf-turnstile-response`，最终提交需按验证码门槛停放，不能计成功。

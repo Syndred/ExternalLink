@@ -99,6 +99,7 @@ const listeners = {};
 const clicks = [];
 const watcher = {
   window: {},
+  URL,
   document: { addEventListener: (type, listener) => { listeners[type] = listener; } },
   chrome: { runtime: { id: 'test-extension', sendMessage: async (msg) => clicks.push(msg) } },
   isSubmitControl: () => true,
@@ -118,3 +119,10 @@ listeners.submit(event);
 assert.equal(clicks.length, 1);
 listeners.submit(event);
 assert.equal(clicks.length, 1, 'click plus submit should notify exactly once');
+vm.runInContext("manualSubmissionWatch = { token: 'path-variant', targetDomain: 'https://jevplay.com/games' };", watcher);
+form.querySelectorAll = () => [{ value: 'https://fakejevplay.com' }];
+listeners.submit(event);
+assert.equal(clicks.length, 1, 'a different host must not claim the Profile');
+form.querySelectorAll = () => [{ value: 'https://www.jevplay.com' }];
+listeners.submit(event);
+assert.equal(clicks.length, 2, 'a homepage should match a deep-link Profile on the same host');

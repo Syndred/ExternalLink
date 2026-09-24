@@ -105,9 +105,20 @@
     if (event.type !== "submit" && (!control || !isSubmitControl(control))) return;
     const scope = event.type === "submit" ? event.target : control?.form || control?.closest("form");
     if (!scope || !scope.querySelector('textarea, input[type="url"]')) return;
-    const expected = String(manualSubmissionWatch.targetDomain || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const siteHost = (value) => {
+      try {
+        return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
+          .hostname.toLowerCase().replace(/^www\./, "");
+      } catch {
+        return "";
+      }
+    };
+    // The profile may promote a deep link while a directory asks for the
+    // product homepage. Match the exact host, not the path, before attributing
+    // a manual submit to this Profile. Never use a substring host match.
+    const expectedHost = siteHost(String(manualSubmissionWatch.targetDomain || ""));
     const matchingUrl = [...scope.querySelectorAll("input")].some((input) =>
-      expected && String(input.value || "").replace(/^https?:\/\//, "").replace(/\/$/, "") === expected,
+      expectedHost && siteHost(String(input.value || "")) === expectedHost,
     );
     if (!matchingUrl) return;
     const watch = manualSubmissionWatch;

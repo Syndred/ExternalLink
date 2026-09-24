@@ -622,6 +622,8 @@ async function setupManualCapacityRuntime({ maxManualTabs = 2 } = {}) {
           status: "success",
           destinationKey: "example.com/submit",
           profileId: "P1",
+          confirmedBy: "agent",
+          evidence: "Submission received",
         },
       },
     },

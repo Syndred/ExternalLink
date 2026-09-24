@@ -17,6 +17,10 @@
     "aitools.neilpatel.com",
     "producthunt.com",
   ]);
+  const NON_RECEIPT_MIGRATION_EVIDENCE = new Set([
+    "table.xlsx submitted seed",
+    "legacy siteannotations.submittedprojects",
+  ]);
 
   function normalizeUrlKey(url) {
     try {
@@ -121,9 +125,18 @@
 
   function isSubmissionSuccessful(records, destinationKey, profileId) {
     // Imported table/annotation flags preserve history, but have no receipt.
-    // They must not prevent a real submission for this Profile.
-    const hasVerifiedSuccess = (item) =>
-      item?.status === "success" && item?.confirmedBy !== "migration";
+    // A queue skip requires a source that can produce a receipt plus evidence;
+    // status alone is not enough to prevent a real submission for this Profile.
+    const hasVerifiedSuccess = (item) => {
+      if (item?.status !== "success") return false;
+      const confirmedBy = String(item.confirmedBy || "").trim().toLowerCase();
+      const evidence = String(item.evidence || "").trim();
+      return (
+        (confirmedBy === "agent" || confirmedBy === "manual") &&
+        Boolean(evidence) &&
+        !NON_RECEIPT_MIGRATION_EVIDENCE.has(evidence.toLowerCase())
+      );
+    };
     const record = (records || {})[submissionRecordKey(destinationKey, profileId)];
     if (hasVerifiedSuccess(record)) return true;
     if (!HOST_SCOPED_DESTINATIONS.has(destinationKey)) return false;

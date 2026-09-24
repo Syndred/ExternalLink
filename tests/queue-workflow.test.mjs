@@ -54,6 +54,8 @@ const Q = loadQueueModule();
           status: "success",
           destinationKey: "producthunt.com/posts/new",
           profileId: "A",
+          confirmedBy: "agent",
+          evidence: "Launch draft created",
         },
       },
       "producthunt.com",
@@ -176,6 +178,8 @@ const Q = loadQueueModule();
       status: "success",
       destinationKey: destinationD,
       profileId: "B",
+      confirmedBy: "agent",
+      evidence: "Submission received",
     },
   };
 
@@ -281,6 +285,57 @@ const Q = loadQueueModule();
     Q.isSubmissionSuccessful(initial.records, sourceforgeKey, "OldPhotoLive"),
     false,
     "a Table.xlsx submitted seed must not count as verified success",
+  );
+  assert.equal(
+    Q.isSubmissionSuccessful(
+      {
+        "sourceforge.net::OldPhotoLive": {
+          status: "success",
+          destinationKey: sourceforgeKey,
+          profileId: "OldPhotoLive",
+          confirmedBy: "agent",
+          evidence: "Table.xlsx submitted seed",
+        },
+      },
+      sourceforgeKey,
+      "OldPhotoLive",
+    ),
+    false,
+    "seed evidence must not become trusted merely because its source is relabeled",
+  );
+  assert.equal(
+    Q.isSubmissionSuccessful(
+      {
+        "sourceforge.net::OldPhotoLive": {
+          status: "success",
+          destinationKey: sourceforgeKey,
+          profileId: "OldPhotoLive",
+          confirmedBy: "agent",
+          evidence: "",
+        },
+      },
+      sourceforgeKey,
+      "OldPhotoLive",
+    ),
+    false,
+    "a success row without evidence must remain eligible for a real submission",
+  );
+  assert.equal(
+    Q.isSubmissionSuccessful(
+      {
+        "sourceforge.net::OldPhotoLive": {
+          status: "success",
+          destinationKey: sourceforgeKey,
+          profileId: "OldPhotoLive",
+          confirmedBy: "agent",
+          evidence: "Submission received",
+        },
+      },
+      sourceforgeKey,
+      "OldPhotoLive",
+    ),
+    true,
+    "an agent record with a non-seed receipt must still skip the duplicate submission",
   );
   const queued = Q.buildDestinationGroups({
     tableData: {

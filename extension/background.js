@@ -758,8 +758,10 @@ async function cloudRequest(pathname, options = {}, configOverride = null) {
       throw new Error("云端返回无效 JSON");
     }
     if (!response.ok || data?.ok === false) {
-      const error = new Error(data?.error || `云端请求失败: HTTP ${response.status}`);
+      const error = new Error(data?.error || data?.message || `云端请求失败: HTTP ${response.status}`);
       error.status = response.status;
+      error.code = data?.code || "";
+      error.retryable = data?.retryable;
       error.data = data;
       throw error;
     }

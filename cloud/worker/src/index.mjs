@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import {
   applyPatchOperations,
   artifactObjectKey,
+  classifyAiProviderFailure,
   migrationConflictKeys,
   mediaObjectKey,
   normalizeDocuments,
@@ -16,6 +17,14 @@ const MAX_PAGE_TEXT_CHARS = 18000;
 const MAX_AI_ACTIONS = 24;
 const MAX_AUTOMATION_ARTIFACT_BYTES = 3 * 1024 * 1024;
 const MAX_VISION_DATA_URL_CHARS = 4 * 1024 * 1024;
+
+class AiProviderRequestError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "AiProviderRequestError";
+    this.upstreamStatus = Number(status) || 0;
+  }
+}
 
 function json(payload, init = {}) {
   const headers = new Headers(init.headers || {});
@@ -177,7 +186,7 @@ function parseModelJson(content) {
 
 async function callDeepSeek(env, system, user) {
   const key = String(env.DEEPSEEK_API_KEY || "").trim();
-  if (!key) throw new Error("Worker 未配置 DEEPSEEK_API_KEY");
+  if (!key) throw new AiProviderRequestError("Worker 未配置 DEEPSEEK_API_KEY", 0);
   const base = String(env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
@@ -193,13 +202,13 @@ async function callDeepSeek(env, system, user) {
     }),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error?.message || `DeepSeek HTTP ${response.status}`);
+  if (!response.ok) throw new AiProviderRequestError(data?.error?.message || `DeepSeek HTTP ${response.status}`, response.status);
   return parseModelJson(data?.choices?.[0]?.message?.content);
 }
 
 async function callDeepSeekVision(env, system, user, imageDataUrl) {
   const key = String(env.DEEPSEEK_API_KEY || "").trim();
-  if (!key) throw new Error("Worker 未配置 DEEPSEEK_API_KEY");
+  if (!key) throw new AiProviderRequestError("Worker 未配置 DEEPSEEK_API_KEY", 0);
   const base = String(env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
@@ -221,7 +230,7 @@ async function callDeepSeekVision(env, system, user, imageDataUrl) {
     }),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error?.message || `DeepSeek Vision HTTP ${response.status}`);
+  if (!response.ok) throw new AiProviderRequestError(data?.error?.message || `DeepSeek Vision HTTP ${response.status}`, response.status);
   return parseModelJson(data?.choices?.[0]?.message?.content);
 }
 
@@ -932,6 +941,10 @@ export default {
         path: new URL(request.url).pathname,
         message: error?.message || "云端请求失败",
       });
+      if (error instanceof AiProviderRequestError) {
+        const failure = classifyAiProviderFailure(error.message, error.upstreamStatus);
+        return withCors(json({ ok: false, error: failure.message, ...failure }, { status: 503 }), request, env);
+      }
       return withCors(json({ ok: false, error: error?.message || "云端请求失败" }, { status: 500 }), request, env);
     }
   },

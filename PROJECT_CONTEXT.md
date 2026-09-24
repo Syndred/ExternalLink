@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 / 外链提交试跑故障**：本轮 3 个 Graffiti Name AI 组合均未提交，云端 DeepSeek 返回 `Insufficient Balance`；Future Tools 误把 newsletter 邮箱识别为投稿框，已在本地扩展 3.7.4 源码修正。Worker 已部署版本 `d6e24727-7cf8-47f0-981b-1edafdafdd05`，将额度耗尽转为可识别的 503 错误。47/47 Node 回归通过；Ego 尚未重载扩展，AI 额度和三产品各 30 站提交仍待处理。详见 `docs/外链提交验收与误填保护-2026-09-24.md`。
+
 - **2026-09-23 / 3.7.3 云同步状态可见性**：设置页改用轻量修订号查询展示本机已保存数据与云端是否一致，分开显示待上传、冲突、需回读和本页未保存编辑；按钮和“更新 0 类”文案已澄清。45/45 测试通过；Ego 扩展重载后的实机显示因浏览器安全策略待验收。见 `docs/云同步状态可见性-2026-09-23.md`。
 
 - **2026-09-23 / AISpeakLearn 与 JevPlay 资料和 PH 排期**：云端及 Ego 插件现回读 8 个 Profile，两站均有独立资料。JevPlay PH 排期 9 月 23 日、AISpeakLearn PH 排期 9 月 24 日，均为北京时间 15:01；提交账本分别记录 `submitted`，正式上线待核验。AISpeakLearn 的 4 张英文截图与 PNG Logo 已进入 R2。详见 `docs/两站资料与PH提交-2026-09-23.md`。

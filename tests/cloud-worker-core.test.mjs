@@ -5,6 +5,16 @@ const Core = await import("../cloud/worker/src/worker-core.mjs");
 
 assert.equal(Core.normalizeWorkspaceId(" ExternalLink_Prod "), "externallink_prod");
 assert.equal(Core.normalizeWorkspaceId("../../bad"), "bad");
+assert.deepEqual(Core.classifyAiProviderFailure("Insufficient Balance", 402), {
+  code: "AI_PROVIDER_BALANCE_EXHAUSTED",
+  message: "AI 服务商账户余额或可用额度不足，云端表单规划暂不可用。",
+  retryable: false,
+});
+assert.deepEqual(Core.classifyAiProviderFailure("rate limit exceeded", 429), {
+  code: "AI_PROVIDER_UNAVAILABLE",
+  message: "AI 服务商暂不可用：rate limit exceeded",
+  retryable: true,
+});
 
 const documents = Core.normalizeDocuments({
   siteProfiles: { RainbowPetAI: { id: "RainbowPetAI" } },

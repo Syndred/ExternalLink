@@ -23,6 +23,23 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
   "cfgCommentTemplate",
 ]);
 
+export function classifyAiProviderFailure(message, status = 0) {
+  const detail = String(message || "AI 服务商请求失败").trim().slice(0, 500);
+  const insufficientBalance = Number(status) === 402 ||
+    /insufficient balance|no balance|balance.{0,20}(low|empty|insufficient)|quota.{0,30}(exceeded|exhausted)|(?:exceeded|exhausted).{0,30}quota|billing.{0,30}(limit|exhausted)|credits?.{0,30}(insufficient|exhausted)/i.test(detail);
+  return insufficientBalance
+    ? {
+      code: "AI_PROVIDER_BALANCE_EXHAUSTED",
+      message: "AI 服务商账户余额或可用额度不足，云端表单规划暂不可用。",
+      retryable: false,
+    }
+    : {
+      code: "AI_PROVIDER_UNAVAILABLE",
+      message: `AI 服务商暂不可用：${detail}`,
+      retryable: true,
+    };
+}
+
 const STATE_DOCUMENT_KEY_SET = new Set(STATE_DOCUMENT_KEYS);
 const MAX_DOCUMENT_BYTES = 4 * 1024 * 1024;
 const MAX_PATCH_OPERATIONS = 5000;

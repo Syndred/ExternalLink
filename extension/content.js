@@ -104,7 +104,7 @@
     const control = event.target?.closest?.('button, input[type="submit"]');
     if (event.type !== "submit" && (!control || !isSubmitControl(control))) return;
     const scope = event.type === "submit" ? event.target : control?.form || control?.closest("form");
-    if (!scope || !scope.querySelector('textarea, input[type="url"]')) return;
+    if (!scope) return;
     const siteHost = (value) => {
       try {
         return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
@@ -117,9 +117,16 @@
     // product homepage. Match the exact host, not the path, before attributing
     // a manual submit to this Profile. Never use a substring host match.
     const expectedHost = siteHost(String(manualSubmissionWatch.targetDomain || ""));
-    const matchingUrl = [...scope.querySelectorAll("input")].some((input) =>
-      expectedHost && siteHost(String(input.value || "")) === expectedHost,
-    );
+    const hasDescription = !!scope.querySelector("textarea");
+    const matchingUrl = [...scope.querySelectorAll("input")].some((input) => {
+      const type = String(input.type || "").toLowerCase();
+      if (type && !["text", "url", "search"].includes(type)) return false;
+      if (!expectedHost || siteHost(String(input.value || "")) !== expectedHost) return false;
+      if (type === "url" || hasDescription) return true;
+      const labels = [...(input.labels || [])].map((label) => label.textContent || "");
+      const hint = [input.name, input.id, input.placeholder, ...labels].join(" ");
+      return /\b(url|website|web\s*site|link|domain|site\s*address)\b/i.test(hint);
+    });
     if (!matchingUrl) return;
     const watch = manualSubmissionWatch;
     manualSubmissionWatch = null;

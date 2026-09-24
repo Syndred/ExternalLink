@@ -7406,16 +7406,22 @@ async function confirmSubmissionSuccess(msg) {
     throw new Error("该任务当前不在待人工确认状态");
   }
 
-  task.skipReason = "";
-  task.confirmedBy = "manual";
-  task.successEvidence = msg.evidence || "user confirmed submission success";
-  task.confirmationNonce = "";
-  task.manualTabId = 0;
-  task.manualTabUrl = "";
-  const record = await recordSubmittedProject(task);
+  const confirmedTask = {
+    ...task,
+    skipReason: "",
+    confirmedBy: "manual",
+    successEvidence: msg.evidence || "user confirmed submission success",
+  };
+  const record = await recordSubmittedProject(confirmedTask);
   if (!record?.status || record.status !== "success") {
     throw new Error("成功记录写入失败：未返回已持久化的成功账本记录");
   }
+  task.skipReason = confirmedTask.skipReason;
+  task.confirmedBy = confirmedTask.confirmedBy;
+  task.successEvidence = confirmedTask.successEvidence;
+  task.confirmationNonce = "";
+  task.manualTabId = 0;
+  task.manualTabUrl = "";
   task.status = "ok";
   await recordUnattendedSuccess();
   broadcastTaskUpdate(task);

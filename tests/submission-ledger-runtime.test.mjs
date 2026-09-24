@@ -72,6 +72,7 @@ const functionNames = [
   "addSubmissionTimelineEvent",
   "updateSubmissionTimelineEvent",
   "removeSubmissionTimelineEvent",
+  "confirmSubmissionSuccess",
 ];
 const functionSource = functionNames.map((name) => extractFunction(background, name)).join("\n\n");
 const libraryStateWrapperSource = extractFunction(background, "getLibraryManagerState");
@@ -203,6 +204,53 @@ assert.ok(
   manualConfirmationSource.indexOf("recordSubmittedProject(task)") < manualConfirmationSource.indexOf('task.status = "ok"'),
   "manual confirmation must persist the ledger record before marking the task ok",
 );
+
+// A failed manual confirmation write must leave the task retryable. In
+// particular, the confirmation nonce and page identity are the recovery
+// handle and must not be cleared until the exact ledger row is persisted.
+{
+  const harness = createHarness();
+  const task = {
+    id: "manual-failure-task",
+    index: 7,
+    url: "https://example.test/submit",
+    profileId: "JevPlay",
+    status: "submitted_unconfirmed",
+    skipReason: "等待人工确认",
+    confirmedBy: "agent",
+    successEvidence: "旧回执",
+    confirmationNonce: "retry-nonce",
+    manualTabId: 42,
+    manualTabUrl: "https://example.test/submit",
+  };
+  harness.context.state.tasks = [task];
+  harness.context.state.parkedTaskIds = new Set([task.id]);
+  harness.context.state.activeTabs = new Map();
+  harness.context.recordSubmittedProject = async () => {
+    throw new Error("storage unavailable");
+  };
+  harness.context.recordUnattendedSuccess = async () => {};
+  harness.context.broadcastTaskUpdate = () => {};
+  harness.context.unattendedEnabled = () => false;
+  harness.context.persistParkedTaskIds = async () => {};
+  harness.context.syncUnattendedManualCapacity = async () => {};
+  await assert.rejects(
+    harness.context.confirmSubmissionSuccess({
+      taskId: task.id,
+      runId: harness.context.state.runId,
+      confirmationNonce: task.confirmationNonce,
+      evidence: "新的回执",
+    }),
+    /storage unavailable/,
+  );
+  assert.equal(task.status, "submitted_unconfirmed");
+  assert.equal(task.skipReason, "等待人工确认");
+  assert.equal(task.confirmedBy, "agent");
+  assert.equal(task.successEvidence, "旧回执");
+  assert.equal(task.confirmationNonce, "retry-nonce");
+  assert.equal(task.manualTabId, 42);
+  assert.equal(task.manualTabUrl, "https://example.test/submit");
+}
 
 // Two simultaneous ledger writes must serialize their reads as well as their
 // final sets. Without the shared executor, the second stale whole-value write

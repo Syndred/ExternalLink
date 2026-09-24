@@ -15,6 +15,12 @@ function slice(start, end) {
   return source.slice(from, to);
 }
 
+assert.doesNotMatch(
+  slice("  async function refreshActiveTab()", "  chrome.tabs.onActivated.addListener"),
+  /await refreshSiteAnnotation\(/,
+  "site badge loading must not block the Detect and Fill active-tab refresh",
+);
+
 function deferred() {
   let resolve;
   const promise = new Promise((next) => {

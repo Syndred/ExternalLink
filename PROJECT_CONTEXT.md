@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-24 21:30 / 云端与运行态复验**：Ego 已重载 3.7.30，设置页显示冲突键仅 `activeBatchRun`（旧批次状态）；Forward Future 侧栏强制刷新后明确显示三 Profile、三动态且「云端动态已核对，当前记录是最新的」，因此该站三条已完成 Neon 回读。旧批次冲突仍保留本机备份。IndexOf.AI 免费提交需登录，未计数。Taify 有免费普通表单，但重载后侧栏一直“加载中”使检测/填表无反应；3.7.31 将当前页刷新中的站点标记加载改为非阻塞，待重载实站核验。仍是 38 个真实组合、14 站、12 站三产品齐全。
+
 - **2026-09-24 21:20 / 最新进度**：Forward Future 官方免费表单的 Graffiti Name AI、OldPhotoLive AI、JevPlay 均收到 `Tool submitted. We'll review it shortly.` / `under review` 回执；插件自动生成三个准确 Profile 的待审核动态。累计 **38 个真实产品×站点回执、14 站、12 站三产品齐全**，距每款 30 站还差 18 个完整站点。3.7.30 修复 Key features / Use cases 重复长描述、付费生成被“免费浏览”误判为 Free、行业/职业无依据乱选，并在设置页显示具体冲突文档名；全量测试已过，需 Ego 重载实站复验。当前侧栏三条仅能证明本地自动记账，云端刷新仍显示待保存；设置页显示 1 类冲突与 4 类修订不同，重试上传被拒。已导出本机备份 `~/Downloads/externallink-backup-2026-09-24 (2).json`，不得称 Neon 已验收。AI Tool Claw 站方报错、Linkrena 提交跳登录，均未计数。
 
 - **2026-09-24 21:06 / 最新进度**：Launchpedia 官方嵌入 Tally 对 JevPlay、OldPhotoLive AI、Graffiti Name AI 各显示最终 `Form submitted / Thanks for completing this form!`。JevPlay 在旧版人工补记；OldPhoto 与 Graffiti 在 Ego 已重载的 3.7.28 自动填表、自动记账，来源侧栏显示 3 个 Profile、3 条动态，刷新后无待云端保存提示。可选 Affiliate Link 保持空白。累计 **35 个真实产品×站点回执、13 站、11 站三产品齐全**；距 30 个完整站仍差 19 站。Tally 旧邮箱在切换 Profile 后可能保留，OldPhoto 提交前人工改为业务邮箱；3.7.29 已修自动填表时把不匹配的邮箱改为当前 Profile 的有效邮箱，待 Ego 重载复验。

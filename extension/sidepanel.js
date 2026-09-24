@@ -2699,12 +2699,14 @@
         $("spHostname") && ($("spHostname").textContent = tab.url);
         $("spPageUrl") && ($("spPageUrl").textContent = "");
       }
-      await refreshSiteAnnotation(tab.url);
+      // Site badges are supplemental. A slow storage/cloud response must not
+      // block the active-tab refresh used by Detect and Fill.
+      refreshSiteAnnotation(tab.url).catch(() => {});
       loadSidepanelTimeline(tab.url).catch(() => {});
     } else {
       $("spHostname") && ($("spHostname").textContent = "—");
       $("spPageUrl") && ($("spPageUrl").textContent = "请在普通网页上使用");
-      await refreshSiteAnnotation("");
+      refreshSiteAnnotation("").catch(() => {});
       renderSidepanelTimeline(null);
     }
     renderCurrentQueueQuality();

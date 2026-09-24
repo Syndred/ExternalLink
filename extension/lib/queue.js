@@ -120,12 +120,16 @@
   }
 
   function isSubmissionSuccessful(records, destinationKey, profileId) {
+    // Imported table/annotation flags preserve history, but have no receipt.
+    // They must not prevent a real submission for this Profile.
+    const hasVerifiedSuccess = (item) =>
+      item?.status === "success" && item?.confirmedBy !== "migration";
     const record = (records || {})[submissionRecordKey(destinationKey, profileId)];
-    if (record?.status === "success") return true;
+    if (hasVerifiedSuccess(record)) return true;
     if (!HOST_SCOPED_DESTINATIONS.has(destinationKey)) return false;
     return Object.values(records || {}).some(
       (item) =>
-        item?.status === "success" &&
+        hasVerifiedSuccess(item) &&
         item?.profileId === profileId &&
         normalizeDestinationKey(item.destinationKey || item.destinationUrl || "") === destinationKey,
     );

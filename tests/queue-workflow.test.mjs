@@ -271,6 +271,30 @@ const Q = loadQueueModule();
     ].status,
     "success",
   );
+  assert.equal(
+    Q.isSubmissionSuccessful(initial.records, destinationD, "B"),
+    false,
+    "legacy submittedProjects without a receipt must not skip a real submission",
+  );
+  const sourceforgeKey = Q.normalizeUrlKey("https://sourceforge.net/");
+  assert.equal(
+    Q.isSubmissionSuccessful(initial.records, sourceforgeKey, "OldPhotoLive"),
+    false,
+    "a Table.xlsx submitted seed must not count as verified success",
+  );
+  const queued = Q.buildDestinationGroups({
+    tableData: {
+      projects: {},
+      entries: [{ link: "https://sourceforge.net/", projects: ["OldPhotoLive"] }],
+    },
+    siteProfiles: { OldPhotoLive: profile("OldPhotoLive") },
+    selectedProfileIds: ["OldPhotoLive"],
+    submissionRecords: initial.records,
+    buildAgentConfigFromProfile: (item) => ({ projectKey: item.id }),
+    findMatchingProfile: (id, profiles) => profiles[id] || null,
+  });
+  assert.equal(queued.length, 1, "migration-only records must remain eligible in the queue");
+  assert.equal(queued[0].jobs.length, 1);
 
   const repeated = Q.migrateSubmissionRecords({
     records: initial.records,

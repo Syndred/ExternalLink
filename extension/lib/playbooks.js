@@ -165,6 +165,17 @@
 
   function classifyEvidence(text, playbook) {
     const blob = String(text || "").replace(/\s+/g, " ").trim();
+    // Some sites show "Submission Received" before a required badge or email
+    // verification. The initial receipt is not a completed application.
+    if (/verify (?:the )?badge to complete (?:your )?submission|(?:submission|listing) (?:is )?(?:not complete|incomplete) until (?:you )?(?:verify|add) (?:the |our |a )?badge|check your email to confirm (?:your )?(?:free )?submission|confirm your email (?:to|before) (?:complete|finish|activate|enter) (?:your |the )?(?:submission|listing)/i.test(blob)) {
+      return {
+        publicationStatus: "submitted",
+        evidence: "",
+        playbookId: playbook?.id || "",
+        matched: false,
+        pendingVerification: true,
+      };
+    }
     const publishedHit = (playbook?.publishedPatterns || []).find((pattern) =>
       blob.toLowerCase().includes(String(pattern).toLowerCase()),
     );

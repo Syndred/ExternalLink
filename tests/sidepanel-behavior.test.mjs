@@ -21,6 +21,48 @@ assert.doesNotMatch(
   "site badge loading must not block the Detect and Fill active-tab refresh",
 );
 
+// A receipt closes only an owned, still-active tab after canonical cloud
+// readback. Local ledger success alone must leave the page available.
+{
+  const removed = [];
+  const url = "https://directory.example/submit";
+  const context = {
+    activeTabId: 7,
+    activeSiteId: "OldPhotoLive",
+    ownedSubmissionTabs: new Map([[7, url]]),
+    skipActivationFromVerifiedClose: false,
+    Q: { normalizeUrlKey: (value) => String(value || "").replace(/\/$/, "") },
+    chrome: {
+      tabs: {
+        get: async () => ({ id: 7, active: true, url }),
+        remove: async (tabId) => removed.push(tabId),
+      },
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(slice("  async function closeVerifiedOwnedTab", "  chrome.tabs.onRemoved.addListener"), context);
+  const call = (result, tabId = 7) => vm.runInContext(
+    `closeVerifiedOwnedTab(${JSON.stringify(result)}, ${JSON.stringify({
+      tabId,
+      expectedUrl: url,
+      profileId: "OldPhotoLive",
+      ownedUrl: url,
+    })})`,
+    context,
+  );
+  const receipt = {
+    submitted: true, matched: true, evidence: "Accepted by directory",
+    ledgerSaved: true, receiptTabUrl: url,
+  };
+  assert.equal(await call({ ...receipt, cloudSynced: false }), false);
+  assert.deepEqual(removed, [], "unconfirmed cloud writes must keep the receipt tab open");
+  assert.equal(await call({ ...receipt, cloudSynced: true }, 8), false);
+  assert.deepEqual(removed, [], "a changed active tab must not be closed");
+  assert.equal(await call({ ...receipt, cloudSynced: true }), true);
+  assert.deepEqual(removed, [7], "a cloud-confirmed receipt may close its owned tab");
+  assert.equal(context.ownedSubmissionTabs.has(7), false);
+}
+
 function deferred() {
   let resolve;
   const promise = new Promise((next) => {
@@ -214,6 +256,7 @@ function statusElement(text = "") {
     },
     $: (id) => (id === "autoFillStatus" ? status : null),
     handleFillResult: async () => {},
+    captureFillContext: (tabId, expectedUrl, profileId) => ({ tabId, expectedUrl, profileId }),
     setTimeout,
     clearTimeout,
   };
@@ -360,6 +403,7 @@ function statusElement(text = "") {
       button.textContent = "填表";
     },
     handleFillResult: async () => {},
+    captureFillContext: (tabId, expectedUrl, profileId) => ({ tabId, expectedUrl, profileId }),
     showToast() {},
     chrome: { runtime: { openOptionsPage() {} } },
   };

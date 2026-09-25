@@ -56,7 +56,6 @@ const settingsSource = readFileSync("extension/settings.js", "utf8");
     submissionIndex: 0,
     submissionMeta: { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 },
     chrome: {
-      tabs: { query: async () => [{ url: "https://directory.example/submit" }] },
       runtime: {
         sendMessage: async (message) => {
           messages.push(message);
@@ -69,6 +68,7 @@ const settingsSource = readFileSync("extension/settings.js", "utf8");
         },
       },
     },
+    getOwnerActiveTab: async () => ({ url: "https://directory.example/submit" }),
     renderSubmissionNav() {},
   };
   vm.createContext(context);

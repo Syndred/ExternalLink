@@ -38,7 +38,7 @@ assert.deepEqual(
   JSON.parse(JSON.stringify(classifier.libraryPreferences({
     library: { favorite: true, enabled: false, profileIds: ["Video", "Video", "AISpeak"] },
   }))),
-  { favorite: true, enabled: false, profileIds: ["Video", "AISpeak"], updatedAt: "" },
+  { favorite: true, enabled: false, profileIds: ["Video", "AISpeak"], groups: [], updatedAt: "" },
 );
 assert.equal(classifier.libraryEligibility({}, "Video").allowed, true);
 assert.equal(classifier.libraryEligibility({ library: { enabled: false } }, "Video").reason, "library_disabled");
@@ -58,7 +58,7 @@ assert.match(sidepanelHtml, /lib\/library-classifier\.js/);
 assert.match(sidepanelSource, /action: "getLibraryManagerState"/);
 assert.match(sidepanelSource, /action: "updateLibraryPreferences"/);
 assert.match(sidepanelSource, /action: "quickOpenLibraryUrls"/);
-assert.match(sidepanelSource, /category,\s*config:/);
+assert.match(sidepanelSource, /category,\s*group,\s*config:/);
 assert.match(sidepanelSource, /loadSidepanelLibrary/);
 assert.match(backgroundSource, /ExtLinkLibraryClassifier\.describe/);
 assert.match(backgroundSource, /hasCanonicalLibrary\s*\? \[\.\.\.tableCandidates/);

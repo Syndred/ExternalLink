@@ -60,6 +60,7 @@ function extractFunction(source, name) {
 }
 
 const source = [
+  "const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze(['submissionRecords', 'submissionTimeline']);",
   "const CLOUD_SYNC_PENDING_STORAGE_KEY = 'cloudSyncPendingKeys';",
   "const CLOUD_SYNC_CONFLICT_STORAGE_KEY = 'cloudSyncConflictKeys';",
   "const CLOUD_SYNC_PATCH_STORAGE_KEY = 'cloudSyncPendingPatches';",
@@ -72,6 +73,7 @@ const source = [
   extractFunction(background, "clearCloudSyncConflict"),
   "function scheduleCloudSync() {}",
   "function scheduleCloudSyncRetry() {}",
+  "function reconcilePendingSubmissionCloudTasks() { return Promise.resolve(); }",
   extractFunction(background, "cloudSyncConfigChangedError"),
   extractFunction(background, "submissionLedgerCloudConfigFingerprint"),
   extractFunction(background, "cloudSyncConfigIdentity"),
@@ -516,4 +518,124 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
 }
 
 assert.doesNotMatch(background, /cloudSyncMute/, "pulls must not suppress other storage writers globally");
+
+// A locally saved receipt only permits queue advancement after both canonical
+// cloud documents contain the same exact destination/profile receipt.
+{
+  const destinationKey = "directory.example/submit";
+  const profileId = "OldPhotoLive";
+  const recordKey = `${destinationKey}::${profileId}`;
+  const record = {
+    status: "success", destinationKey, profileId,
+    submittedAt: "2026-09-25T09:00:00.000Z",
+    evidence: "Submission received", evidenceUrl: "https://directory.example/thanks",
+    publicUrl: "", publicationStatus: "submitted",
+  };
+  const reads = [];
+  const config = {
+    configured: true, endpoint: "https://cloud.example", workspaceId: "default", accessToken: "token",
+  };
+  let cloudRecord = clone(record);
+  let cloudTimeline;
+  const ledgerContext = {
+    URL, Promise, String, Object,
+    self: { ExtLinkQueue: { submissionRecordKey: (key, id) => `${key}::${id}` } },
+    SUBMISSION_LEDGER_CLOUD_KEYS: ["submissionRecords", "submissionTimeline"],
+    cloudSyncPendingKeys: new Set(),
+    cloudSyncConflictKeys: new Set(),
+    cloudSyncFlushPromise: null,
+    siteKeyForUrl: () => destinationKey,
+    getCloudConfig: async () => clone(config),
+    flushCloudState: async () => ({ ok: true }),
+    cloudRequest: async (path) => {
+      reads.push(path);
+      if (path === "/v1/state/submissionRecords") {
+        return { documentKey: "submissionRecords", data: { [recordKey]: clone(cloudRecord) } };
+      }
+      if (path === "/v1/state/submissionTimeline") {
+        return { documentKey: "submissionTimeline", data: clone(cloudTimeline) };
+      }
+      throw new Error(`unexpected cloud path ${path}`);
+    },
+  };
+  vm.createContext(ledgerContext);
+  vm.runInContext(readFileSync("extension/lib/submission-timeline.js", "utf8"), ledgerContext);
+  vm.runInContext([
+    extractFunction(background, "submissionLedgerCloudConfigFingerprint"),
+    extractFunction(background, "submissionTimelineContainsRecord"),
+    extractFunction(background, "isPersistedSuccessRecord"),
+    extractFunction(background, "confirmSubmissionRecordInCloud"),
+  ].join("\n\n"), ledgerContext);
+  cloudTimeline = ledgerContext.self.ExtLinkSubmissionTimeline.append({}, {
+    destinationKey, profileId, recordKey,
+    occurredAt: record.submittedAt, type: "submitted", status: "submitted",
+    note: record.evidence, evidenceUrl: record.evidenceUrl, publicUrl: record.publicUrl,
+  });
+  const exact = await ledgerContext.confirmSubmissionRecordInCloud(
+    "https://directory.example/submit", profileId, record,
+  );
+  assert.equal(exact.synced, true, "both exact remote documents should permit advancement");
+  assert.deepEqual(reads, ["/v1/state/submissionRecords", "/v1/state/submissionTimeline"]);
+
+  cloudRecord.evidence = "Older receipt";
+  assert.equal((await ledgerContext.confirmSubmissionRecordInCloud(
+    "https://directory.example/submit", profileId, record,
+  )).synced, false, "an older remote receipt must not certify this submission");
+  cloudRecord = clone(record);
+  cloudTimeline = {};
+  assert.equal((await ledgerContext.confirmSubmissionRecordInCloud(
+    "https://directory.example/submit", profileId, record,
+  )).synced, false, "a missing remote timeline event must not certify this submission");
+
+  reads.length = 0;
+  ledgerContext.cloudSyncPendingKeys.add("submissionRecords");
+  assert.equal((await ledgerContext.confirmSubmissionRecordInCloud(
+    "https://directory.example/submit", profileId, record,
+  )).synced, false, "pending ledger writes must not advance the queue");
+  assert.equal(reads.length, 0, "pending writes should stop before cloud readback");
+  ledgerContext.cloudSyncPendingKeys.clear();
+
+  assert.equal((await ledgerContext.confirmSubmissionRecordInCloud(
+    "https://directory.example/submit", "DifferentProfile", record,
+  )).synced, false, "a different profile must not borrow another profile receipt");
+}
+
+// A retry sees a persisted receipt before it can send a second submit click.
+{
+  const messages = [];
+  let cloudSynced = false;
+  const existing = {
+    status: "success", profileId: "OldPhotoLive", publicationStatus: "submitted",
+    evidence: "Submission received",
+  };
+  const context = {
+    state: { activeTabs: new Map() },
+    getTabUrlSafe: async () => "https://directory.example/submit",
+    isCustomLaunchUrl: () => false,
+    self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" } },
+    existingSubmissionRecord: async () => existing,
+    confirmSubmissionRecordInCloud: async () => ({
+      synced: cloudSynced, reason: cloudSynced ? "" : "waiting for remote readback",
+    }),
+    rememberPendingSubmissionCloudTab: async () => {},
+    broadcastAutoFillUpdate: () => {},
+    sendTabMessage: async (_tabId, message) => {
+      messages.push(message.action);
+      throw new Error("retry must not touch the submit button");
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(extractFunction(background, "tryAutoSubmitFilledForm"), context);
+  const result = await context.tryAutoSubmitFilledForm(7, {}, { id: "OldPhotoLive" }, "directory");
+  assert.equal(result.existingSubmission, true);
+  assert.equal(result.advance, false);
+  assert.equal(result.keepTab, true);
+  assert.deepEqual(messages, [], "retry must not click submit after a local success receipt");
+  cloudSynced = true;
+  const confirmed = await context.tryAutoSubmitFilledForm(7, {}, { id: "OldPhotoLive" }, "directory");
+  assert.equal(confirmed.advance, true, "an exact cloud readback may advance a prior success");
+  assert.equal(confirmed.keepTab, false);
+  assert.deepEqual(messages, [], "cloud reconciliation must not submit a second time");
+}
+
 console.log("cloud sync race audit tests passed");

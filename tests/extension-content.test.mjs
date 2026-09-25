@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const content = readFileSync(resolve(root, "extension/content.js"), "utf8");
@@ -12,6 +13,29 @@ const readme = readFileSync(resolve(root, "extension/README.md"), "utf8");
 const envExample = readFileSync(resolve(root, ".env.example"), "utf8");
 const manifestText = readFileSync(resolve(root, "extension/manifest.json"), "utf8");
 const manifest = JSON.parse(manifestText);
+
+// The directory's live form is a cross-origin Paperform iframe. Both the
+// parent page and that exact form must stop Profile copy before any fill.
+{
+  const start = content.indexOf("  function isAiToolsDirectoryHost() {");
+  const end = content.indexOf("  function capturePageContext()", start);
+  assert.ok(start >= 0 && end > start);
+  const source = content.slice(start, end);
+  const hostIsBlocked = (hostname, pathname = "/", referrer = "") => {
+    const context = { URL, location: { hostname, pathname }, document: { referrer } };
+    vm.createContext(context);
+    vm.runInContext(`${source}\nisAiToolsDirectoryHost()`, context);
+    return vm.runInContext("isAiToolsDirectoryHost()", context);
+  };
+  assert.equal(hostIsBlocked("aitoolsdirectory.com", "/submit-tool"), true);
+  assert.equal(hostIsBlocked("www.aitoolsdirectory.com", "/submit-tool"), true);
+  assert.equal(hostIsBlocked("aitool.paperform.co", "/", "https://aitoolsdirectory.com/submit-tool"), true);
+  assert.equal(hostIsBlocked("another.paperform.co", "/"), false);
+  assert.equal(hostIsBlocked("example.com", "/submit-tool"), false);
+  assert.match(source, /needs_manual:\s*true/);
+  assert.match(content, /async function smartFillFromConfig\(config\) \{\s*if \(isAiToolsDirectoryHost\(\)\) return aiToolsDirectoryManualGate\(\);/);
+  assert.match(content, /async function executeActionPlan\(actions\) \{\s*if \(isAiToolsDirectoryHost\(\)\)/);
+}
 
 assert.equal(
   content.includes(":has-text("),

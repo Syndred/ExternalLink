@@ -127,6 +127,7 @@ function makeHarness({ plans = [], snapshots = [], activeSiteId = "A", onPlan, a
     assertRunCurrent() {},
     assertFillContext: async () => {},
     broadcastAutoFillUpdate() {},
+    existingSubmissionRecord: async () => null,
     log() {},
     getTabSnapshot: async () => {
       events.push("snapshot");
@@ -351,6 +352,7 @@ function runtimeSchemaKey(snapshot) {
   const gate = { needs_manual: true, semanticReview: true, reason: "payment meaning unclear", paymentClassification: "uncertain_payment", paymentEvidence: { label: "Paid" } };
   const ctx = {
     state: { activeTabs: new Map() },
+    existingSubmissionRecord: async () => null,
     getTabUrlSafe: async () => "https://directory.example/submit",
     isCustomLaunchUrl: () => false,
     self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" }, ExtLinkQueue: { isDeadEndStatus: () => false } },

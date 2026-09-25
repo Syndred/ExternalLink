@@ -47,7 +47,9 @@ assert.equal(
   1,
   "a stop transition must write one final stopped line instead of duplicate identical logs",
 );
-const removedHandler = background.match(/chrome\.tabs\.onRemoved\.addListener\([\s\S]*?\n}\);/)?.[0] || "";
+const removedHandler = [...background.matchAll(/chrome\.tabs\.onRemoved\.addListener\([\s\S]*?\n}\);/g)]
+  .map((match) => match[0])
+  .find((handler) => handler.includes("state.activeTabs.get(tabId)")) || "";
 assert.match(removedHandler, /if \(state\.stopped\)/, "closing a tab after stop must not restart the queue");
 
 const playbooks = readFileSync(resolve(root, "extension/lib/playbooks.js"), "utf8");

@@ -12,6 +12,7 @@ const moduleSources = new Map(
   [
     "lib/profiles.js",
     "lib/queue.js",
+    "lib/library-groups.js",
     "lib/playbooks.js",
     "lib/batch-controls.js",
     "lib/unattended.js",

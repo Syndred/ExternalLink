@@ -442,12 +442,21 @@
       groupActions.className = "sidepanel-library-group-actions";
       for (const [groupId, label] of LibraryGroups.GROUPS) {
         const active = LibraryGroups.matches(item, groupId);
+        const groupBlockedReason = !preferences.enabled
+          ? "站点已停用，启用后才能加入分组"
+          : markers.some((status) => ["broken", "skip", "deleted"].includes(status))
+            ? "该站点当前标记为无法提交、跳过或已删除"
+            : groupId === "free_submit" && markers.includes("paid")
+              ? "已标记为付费，不能加入免费可提交分组"
+              : "";
         const groupButton = document.createElement("button");
         groupButton.type = "button";
         groupButton.className = `sidepanel-library-action${active ? " in-group" : ""}`;
         groupButton.textContent = `${active ? "✓" : "+"} ${label}`;
         groupButton.setAttribute("aria-pressed", String(active));
         groupButton.setAttribute("aria-label", `${active ? "从" : "加入"}${label}${active ? "分组移出" : "分组"}：${item.name || item.domain || item.url}`);
+        groupButton.disabled = Boolean(groupBlockedReason);
+        if (groupBlockedReason) groupButton.title = groupBlockedReason;
         groupButton.addEventListener("click", () => {
           const next = new Set(LibraryGroups.GROUPS
             .filter(([id]) => LibraryGroups.matches(item, id))

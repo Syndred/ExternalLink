@@ -41,9 +41,10 @@
   }
 
   function statuses(annotation = {}) {
-    const raw = Array.isArray(annotation?.statuses)
-      ? annotation.statuses
-      : [annotation?.status];
+    const raw = [
+      ...(Array.isArray(annotation?.status) ? annotation.status : [annotation?.status]),
+      ...(Array.isArray(annotation?.statuses) ? annotation.statuses : []),
+    ];
     return new Set(raw.map((value) => String(value || "").trim()).filter(Boolean));
   }
 

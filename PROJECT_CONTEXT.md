@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-25 / 3.7.39 外链库双分组**：新增“高质量优先”“免费可提交”动态候选组，站点可手动入组/移出，选择写入 `siteAnnotations.library.groups` 并沿用 Neon 同步；设置页和侧栏可筛选，侧栏可按组建批次，原提交安全闸门不变。最近五站主要经 Ego 人工提交和插件人工记账，不能宣称大部分表单由插件自动提交。Ego 原空间有暂停旧批次，已另建验收空间；浏览器 URL 安全策略拒绝打开扩展管理页，禁止绕行，因此新版尚未完成浏览器重载和云端分组回读。见 `docs/外链库分组与插件能力-2026-09-25.md`。
+
 - **2026-09-25 / 当前实站续办完成**：The Next AI、ListAi、Launching Next、Free AI Tools Directory、BestOfAI 五个来源站各自取得 JevPlay、OldPhotoLive AI、Graffiti Name AI 的站方免费申请或既有待审核证据，按 Profile 登记 `待审核` 并刷新确认各来源云端动态最新。ListAi OldPhoto 是站方已有 `pending review`，未重复提交；Launching Next 三款免费排队编号为 153624–153626；BestOfAI 登录后三款 `Awaiting Approval / Not Sponsored`；付费推广均未购买。Viesearch JevPlay/OldPhoto 邮件确认后选择 BASIC 免费等待队列并获 `Plan Selected!`，故该站不标 `付费`；Graffiti 缺当前 Gmail 确认邮件。TAIFY 验证失败，仅记笔记不计成功。`aitoolsdirectory.com` 标 `跳过`，Aitoolnet 标 `付费`，BestOfAI 标 `需登录`，对应页面重载后仍保留。9 月 24 日的 13 个三产品完整站点仍为历史基线，按基线加本轮五站可超过 15 站目标；缺少全量 Neon 账本，不宣称当前精确总数。详见 `docs/外链提交验收与误填保护-2026-09-25.md`。
 
 - **2026-09-25 / Viesearch 邮件与云端回读复核**：远端检查无新提交（本地 `f751eaa` 与 `origin/main` 一致）。当前可复核的侧栏云端回读只显示 Viesearch 旧的 VideoToArticleAI 记录（2026-08-26），没有本轮三款 Profile 的成功记录；站点标记仅显示「可提交」，没有「需人工」。AITools Inc、TipSeason、Startup Stash 三站单站云端动态均显示三款 Profile 已提交，属于已有站点复核。9 月 24 日记录的 42 组合 / 15 个有回执站点 / 13 个三款齐全站点仍只是历史快照，本轮未取得完整 Neon 账本，不能沿用为当前数量。Gmail 全文件夹搜索到一封 9 月 24 日 Viesearch 会话，含 JevPlay、OldPhotoLive AI 两封确认邮件；未找到 Graffiti Name AI 的 Viesearch 邮件，确认链接未点击，Gmail 搜索页已留给用户。扩展没有专用邮箱连接；浏览器安全策略拒绝设置页直达，不绕行访问或提取本机密钥。AIGCLIST 与四个验证码页均保留。详见 `docs/外链提交验收与误填保护-2026-09-25.md`。

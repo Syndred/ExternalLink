@@ -184,6 +184,10 @@ assert.equal(
   false,
   "an optional newsletter choice is not a legal permission",
 );
+assert.match(source, /function isHumanDeclarationField\(field\)/,
+  "explicit acknowledgement checkboxes need a human declaration gate");
+assert.match(source, /options\.some\(isHumanDeclarationField\)/,
+  "a matching word in the Profile must not automatically check a declaration");
 const fieldHooks = context.__extLinkFieldRoutingTestHooks;
 assert.ok(fieldHooks, "content.js should expose field routing test hooks");
 

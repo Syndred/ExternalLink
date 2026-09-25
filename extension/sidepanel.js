@@ -2450,7 +2450,7 @@
         tabId,
         mode,
         useAgent: true,
-        fillOnly: true,
+        fillOnly: options.fillOnly !== false,
         profileId,
         expectedUrl,
         commentText: options.commentText || "",
@@ -3073,7 +3073,7 @@
   $("btnDetect")?.addEventListener("click", detectCurrentPage);
 
   // ─── Fill ───
-  async function fillPage(mode) {
+  async function fillPage(mode, options = {}) {
     // chrome.tabs.onActivated can lag behind rapid tab switches. Resolve the
     // real active tab again at action time so one Product Hunt draft never
     // drives another same-title tab in the background.
@@ -3097,15 +3097,18 @@
       return;
     }
 
-    const btn = mode === "comment" ? $("btnFillComment") : $("btnFillForm");
+    const submitRequested = mode === "form" && options.submit === true;
+    const btn = mode === "comment"
+      ? $("btnFillComment")
+      : $(submitRequested ? "btnSubmitPage" : "btnFillForm");
     if (!btn) return;
     const confirmProductHuntCreate =
       mode === "form" && productHuntReadyToCreateTabId === activeTabId;
     const origText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = "填写中…";
+    btn.textContent = submitRequested ? "提交中…" : "填写中…";
     if (mode === "form") resetMediaUploadState();
-    setAutoFillStatus("正在填写…");
+    setAutoFillStatus(submitRequested ? "正在核对并提交…" : "正在填写…");
 
     try {
       const commentOverride = ($("spCommentText")?.value || "").trim();
@@ -3114,6 +3117,7 @@
         expectedUrl: requestedUrl,
         profileId: requestedProfileId,
         mode,
+        fillOnly: !submitRequested,
         commentText: commentOverride,
         confirmProductHuntCreate,
       });
@@ -3129,12 +3133,13 @@
       showToast(err.message, true);
     } finally {
       btn.disabled = false;
-      if (mode === "form") updateProductHuntFillButton();
+      if (mode === "form" && !submitRequested) updateProductHuntFillButton();
       else btn.textContent = origText;
     }
   }
 
   $("btnFillForm")?.addEventListener("click", () => fillPage("form"));
+  $("btnSubmitPage")?.addEventListener("click", () => fillPage("form", { submit: true }));
 
   // ─── Batch (from popup) ───
   function log(msg, cls) {

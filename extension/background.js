@@ -4111,7 +4111,7 @@ async function runSidepanelFill(msg) {
     validationIssues: validation?.issues || [],
   };
 
-  if (msg.fillOnly !== true && (submitReady || lastEmpty.emptyCount === 0)) {
+  if (msg.fillOnly !== true && submitReady) {
     const mismatch = self.ExtLinkProfiles.fillIdentityMismatch(config, profile);
     if (mismatch) {
       broadcastAutoFillUpdate({

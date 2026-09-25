@@ -783,6 +783,12 @@
       /\basset[_\s-]?permission\b|\b(?:permission|rights?|licen[cs]e)\b.{0,100}\b(?:share|use|reproduce|publish|assets?|logos?|screenshots?)\b|(?:授权|许可).{0,30}(?:使用|发布|图片|素材)/.test(hint);
   }
 
+  function isHumanDeclarationField(field) {
+    if (isLegalAcceptanceField(field)) return true;
+    const hint = `${getSnapshotLabel(field)} ${field?.name || ""} ${field?.id || ""}`.toLowerCase();
+    return /\b(?:i\s+(?:confirm|understand|acknowledge|agree|certify)|acknowledg(?:e|ement)|confirm(?:ation)?|declaration|guarantee|permission|rights?)\b/.test(hint);
+  }
+
   function detectDirectoryLegalAgreement(scope) {
     // Read only the active form or its visible form area. A site's footer may
     // link to its policies without making the current submit action an assent.
@@ -801,10 +807,10 @@
         const required = field.required || field.getAttribute("aria-required") === "true";
         const checked = field.checked === true || field.getAttribute("aria-checked") === "true";
         if (!required || checked) return false;
-        return isLegalAcceptanceField(field);
+        return isHumanDeclarationField(field);
       });
     if (requiredLegalCheckbox) {
-      return "提交表单要求勾选法律条款，需人工确认后再提交";
+      return "提交表单要求确认条款、素材权限或声明，需人工确认后再提交";
     }
 
     const legalNotice = Array.from(root.querySelectorAll('label, p, small, span, div, [role="note"]'))
@@ -6365,7 +6371,7 @@
     for (const [key, options] of groups) {
       options.forEach((element) => handled.add(element));
       if (options.some((element) => element.checked)) continue;
-      if (options.some(isLegalAcceptanceField)) continue;
+      if (options.some(isHumanDeclarationField)) continue;
       if (!choiceGroupRequired(key, options)) continue;
 
       const ranked = options
@@ -6440,6 +6446,11 @@
         } catch { return false; }
       }))].slice(0, 4).join("\n");
     }
+    // A description placeholder may mention its audience, use cases, or
+    // features. The field's explicit description label takes precedence.
+    if (/\b(?:short|full(?:\s+product)?|long|detailed|product)\s+description\b/.test(visibleHint)) {
+      return pickDescriptionForField(config, element);
+    }
 
     // Field intent must outrank the HTML input type and historical mappings.
     // TipSeason labels its email and social fields inconsistently, and the
@@ -6474,6 +6485,19 @@
         pf["Use Case"] ||
         "";
       return fitValueToConstraints(useCase || "", getFieldConstraints(element));
+    }
+    if (/\b(?:target\s+audience|intended\s+users?|ideal\s+customers?)\b/.test(visibleHint)) {
+      const audience = config.targetAudience || pf["Target Audience"] || pf["Target audience"] || pf.Audience || "";
+      return fitValueToConstraints(audience, getFieldConstraints(element));
+    }
+    if (/\b(?:pros|advantages|strengths)\b/.test(visibleHint) && !/\b(?:cons|disadvantages)\b/.test(visibleHint)) {
+      return fitValueToConstraints(pf.Pros || pf.Advantages || "", getFieldConstraints(element));
+    }
+    if (/\b(?:cons|disadvantages|limitations)\b/.test(visibleHint)) {
+      return fitValueToConstraints(pf.Cons || pf.Limitations || "", getFieldConstraints(element));
+    }
+    if (/\bfounder\s+or\s+company\s+name\b/.test(visibleHint)) {
+      return fitValueToConstraints(pf.Founder || pf.Company || config.username || "", getFieldConstraints(element));
     }
 
     // A repository URL is not the product homepage. Resolve it before legacy

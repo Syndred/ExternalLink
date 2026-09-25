@@ -408,11 +408,25 @@ function statusElement(text = "") {
     chrome: { runtime: { openOptionsPage() {} } },
   };
   vm.createContext(context);
-  vm.runInContext(slice("  async function fillPage(mode)", '  $("btnFillForm")'), context);
+  vm.runInContext(slice("  async function fillPage(mode, options = {})", '  $("btnFillForm")'), context);
   await vm.runInContext('fillPage("form")', context);
   assert.equal(button.disabled, false, "fill button should be enabled after a failed request");
   assert.equal(button.textContent, "填表", "fill button label should recover after a failed request");
   assert.deepEqual(statuses, [["正在填写…", undefined], ["后台请求失败", "err"]]);
+
+  const submitButton = statusElement("提交本页");
+  let submitOptions;
+  context.$ = (id) => (id === "btnSubmitPage" ? submitButton : null);
+  context.runSidepanelFill = async (options) => {
+    submitOptions = options;
+    return {};
+  };
+  await vm.runInContext('fillPage("form", { submit: true })', context);
+  assert.equal(submitOptions.fillOnly, false, "explicit submit action must request background submission");
+  assert.equal(submitOptions.tabId, 7, "submission must target the active tab at click time");
+  assert.equal(submitOptions.profileId, "TextComparison", "submission must retain the selected Profile");
+  assert.equal(submitButton.disabled, false, "submit button should recover after the request");
+  assert.equal(submitButton.textContent, "提交本页", "submit button label should recover after the request");
 }
 
 // Comment generation also checks the captured tab/Profile after every awaited

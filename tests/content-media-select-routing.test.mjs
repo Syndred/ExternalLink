@@ -158,6 +158,24 @@ assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "Young");
 assert.equal(resolveValue({ projectFields: { "Feature description": "Side-by-side replay" } },
   { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }), "Side-by-side replay");
+assert.equal(resolveValue({ targetAudience: "Daily puzzle players", projectFields: {} },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Target audience", label: "Target audience" }), "Daily puzzle players");
+assert.equal(resolveValue({ useCases: ["Compare AI game decisions"], projectFields: {} },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Short description. Who is this for and what is its primary use case?", label: "Short description. Who is this for and what is its primary use case?" }),
+  "JevPlay is a free browser game against Jev.", "a description hint mentioning a use case must remain a description");
+assert.equal(resolveValue({ useCases: ["Compare AI game decisions"], projectFields: {} },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Full product description. Explain core use cases and features.", label: "Full product description. Explain core use cases and features." }),
+  "JevPlay is a free browser game against Jev.", "a full description must not receive only a feature list");
+assert.equal(resolveValue({ projectFields: {} },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Target audience", label: "Target audience" }), "",
+  "a required audience field must not receive the whole product description");
+assert.equal(resolveValue({ projectFields: {} },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Pros (one per line)", label: "Pros (one per line)" }), "",
+  "pros must not receive the whole product description");
+assert.equal(resolveValue({ projectFields: { Pros: "No account needed to play" } },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Pros (one per line)", label: "Pros (one per line)" }), "No account needed to play");
+assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Founder or company name", label: "Founder or company name", getAttribute: () => null }), "Syndred Young");
 assert.equal(resolveValue({ useCases: ["Compare daily puzzle decisions"] },
   { tagName: "TEXTAREA", type: "textarea", hint: "Use cases", label: "Use cases" }), "Compare daily puzzle decisions");
 assert.equal(resolveValue({ projectFields: { Pricing: "Free: 1 photo/day. Pro: $19.99/month." } },

@@ -314,7 +314,7 @@ assert.ok(
 );
 assert.match(
   sidepanel,
-  /async function\s+fillPage\(mode\)[\s\S]*?await refreshActiveTab\(\)/,
+  /async function\s+fillPage\(mode(?:,\s*options\s*=\s*\{\})?\)[\s\S]*?await refreshActiveTab\(\)/,
   "single-site actions must resolve the real active tab again at click time",
 );
 assert.match(

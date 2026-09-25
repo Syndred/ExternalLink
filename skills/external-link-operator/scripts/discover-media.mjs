@@ -5,6 +5,10 @@ import { isMain, parseArgs, readJson, repoRoot, skillRoot } from "./shared.mjs";
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".avif"]);
 const NEGATIVE = /(?:stripe|paypal|creem|avatar|node_modules|framework|shadcn|tailwind|react|nextjs|vercel|admin|demo|template|archive|design-reference)/i;
+const SEED_PROFILE_ALIASES = {
+  "OldPhotoLive AI": "OldPhotoLive",
+  "Graffiti Name AI": "GraffitiName",
+};
 
 async function walkImages(directory) {
   const result = [];
@@ -66,9 +70,9 @@ export async function discoverMedia({
   rootsPath = path.join(skillRoot, "references/project-roots.json"),
 } = {}) {
   const [library, roots] = await Promise.all([readJson(libraryPath), readJson(rootsPath)]);
-  const fields = library.projects?.[profile];
+  const fields = library.projects?.[SEED_PROFILE_ALIASES[profile] || profile];
   if (!fields) throw new Error(`Unknown Profile: ${profile}`);
-  const relativeRoot = roots[profile];
+  const relativeRoot = roots[profile] || roots[SEED_PROFILE_ALIASES[profile] || profile];
   if (!relativeRoot) throw new Error(`No project root configured for Profile: ${profile}`);
   const projectRoot = path.resolve(repoRoot, relativeRoot);
   const publicRoot = path.join(projectRoot, "public");

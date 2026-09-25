@@ -5874,7 +5874,10 @@ async function updateLibraryPreferences(msg = {}) {
       updatedAt: library.updatedAt,
     };
     annotations[key] = annotation;
-    annotations[domain] = annotation;
+    // A route-specific group choice must not tag the homepage on this host.
+    if (key === domain || !Object.prototype.hasOwnProperty.call(library, "groups")) {
+      annotations[domain] = annotation;
+    }
     await chrome.storage.local.set({ siteAnnotations: annotations });
     return { ok: true, key, domain, annotation, library };
   });
@@ -6710,7 +6713,7 @@ function scopeDestinationGroupsByLibraryCategory(groups = [], category = "") {
     .filter((group) => group.category === requestedCategory);
 }
 
-function scopeDestinationGroupsByLibraryGroup(groups = [], groupId = "", annotations = {}, records = {}) {
+function scopeDestinationGroupsByLibraryGroup(groups = [], groupId = "", annotations = {}, records = {}, monitorResults = {}) {
   const requestedGroup = String(groupId || "").trim();
   if (!requestedGroup) return groups;
   if (!self.ExtLinkLibraryGroups.GROUPS.some(([id]) => id === requestedGroup)) {
@@ -6728,6 +6731,9 @@ function scopeDestinationGroupsByLibraryGroup(groups = [], groupId = "", annotat
     });
     const profileStatuses = recordsForDestination(records, group.destinationKey)
       .map(([, record]) => ({ success: record?.status === "success" }));
+    const monitorStatuses = recordsForDestination(records, group.destinationKey)
+      .map(([recordKey]) => monitorResults[recordKey]?.status)
+      .filter(Boolean);
     return self.ExtLinkLibraryGroups.matches({
       url: group.url,
       annotation,
@@ -6736,6 +6742,7 @@ function scopeDestinationGroupsByLibraryGroup(groups = [], groupId = "", annotat
       category: classification.category,
       accessModel: classification.accessModel,
       profileStatuses,
+      monitorStatus: monitorStatuses.includes("missing") ? "missing" : "",
     }, requestedGroup);
   });
 }
@@ -6755,6 +6762,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     "domainBlacklist",
     "targetFilters",
     "domainMetricsCache",
+    "linkMonitorResults",
   ]);
   const tableData = await loadTableLibrary();
   const seeded = await ensureProfilesFromTable(
@@ -6835,6 +6843,7 @@ async function loadPendingSubmissionTasks(options = {}) {
     requestedLibraryGroup,
     annotations,
     submissionRecords,
+    storage.linkMonitorResults || {},
   );
 
   const deletedKeys = storage.deletedSubmissionKeys || [];

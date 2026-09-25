@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-25 / 3.7.41 外链续办与回执纠错**：本轮 OldPhotoLive AI 新增 FutureTools、SmartBizTools、AI Tool Finder 三站回执；SmartBizTools 已有公开页，其余两站待审核。SoMuch 待业务邮箱确认，AIWebsiteDirectory 待官网徽章，均不计完成。Startup Collections、Startup Stash、AI SuperHub、Launchpedia 的 OldPhoto 被误重复提交，9 月 24 日已有同产品回执。插件侧栏只在队列自建标签的精确账本保存后自动关页；新增后置徽章/邮箱确认拦截。源码未重载到 Ego，Neon 未回读，未运行测试。详见 `docs/外链续办与自动关页-2026-09-25.md`。
+
 - **2026-09-25 / 3.7.39 外链库双分组**：新增“高质量优先”“免费可提交”动态候选组，站点可手动入组/移出，选择写入 `siteAnnotations.library.groups` 并沿用 Neon 同步；设置页和侧栏可筛选，侧栏可按组建批次，原提交安全闸门不变。最近五站主要经 Ego 人工提交和插件人工记账，不能宣称大部分表单由插件自动提交。Ego 原空间有暂停旧批次，已另建验收空间；浏览器 URL 安全策略拒绝打开扩展管理页，禁止绕行，因此新版尚未完成浏览器重载和云端分组回读。见 `docs/外链库分组与插件能力-2026-09-25.md`。
 
 - **2026-09-25 / 当前实站续办完成**：The Next AI、ListAi、Launching Next、Free AI Tools Directory、BestOfAI 五个来源站各自取得 JevPlay、OldPhotoLive AI、Graffiti Name AI 的站方免费申请或既有待审核证据，按 Profile 登记 `待审核` 并刷新确认各来源云端动态最新。ListAi OldPhoto 是站方已有 `pending review`，未重复提交；Launching Next 三款免费排队编号为 153624–153626；BestOfAI 登录后三款 `Awaiting Approval / Not Sponsored`；付费推广均未购买。Viesearch JevPlay/OldPhoto 邮件确认后选择 BASIC 免费等待队列并获 `Plan Selected!`，故该站不标 `付费`；Graffiti 缺当前 Gmail 确认邮件。TAIFY 验证失败，仅记笔记不计成功。`aitoolsdirectory.com` 标 `跳过`，Aitoolnet 标 `付费`，BestOfAI 标 `需登录`，对应页面重载后仍保留。9 月 24 日的 13 个三产品完整站点仍为历史基线，按基线加本轮五站可超过 15 站目标；缺少全量 Neon 账本，不宣称当前精确总数。详见 `docs/外链提交验收与误填保护-2026-09-25.md`。

@@ -21,6 +21,12 @@
     "startupcollections.com/submit-product",
     "aisuperhub.io/ai-tools/submit/free",
     "launchpedia.co/submit",
+    "ainave.com/submit/products",
+    "somuch.com/submit-links",
+    "offo.dev/submit",
+    "insidr.ai/submit-tools",
+    "foundrlist.com/submit",
+    "forwardfuture.com/tools/submit",
   ]);
   const EXCLUDED_STATUSES = new Set(["broken", "skip", "deleted"]);
   const PRIORITY_CATEGORIES = new Set([

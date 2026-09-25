@@ -1,6 +1,10 @@
 # PROJECT_CONTEXT
 
-- **2026-09-25 / 3.7.42 外链续办与回执纠错**：本轮 OldPhotoLive AI 新增 FutureTools、SmartBizTools、AI Tool Finder、AllToolsDirectory 四站回执；SmartBizTools 已有公开页，其余三站待审核，距再交十站还差六站。SoMuch 待业务邮箱确认，AIWebsiteDirectory 待官网徽章，均不计完成。Startup Collections、Startup Stash、AI SuperHub、Launchpedia 的 OldPhoto 被误重复提交，9 月 24 日已有同产品回执；新版将这四站主页/投稿路径统一去重。插件侧栏只在队列自建标签的精确账本保存后自动关页，并拦截后置徽章/邮箱确认伪成功。ToolsCourt 站方报错无回执，Zearches 已填表待条款授权。源码未重载到 Ego，Neon 未回读，未运行测试。详见 `docs/外链续办与自动关页-2026-09-25.md`。
+- **2026-09-25 / 本轮十站完成**：OldPhotoLive AI 又在 Insidr AI、FoundrList、Forward Future 取得站方回执，本轮合计 10 个不同新站：SmartBizTools、AINave、Offo 已公开，FoundrList 免费排期约 2026-10-19，上述其余 6 站待审核。申请主要经 Ego 手工完成；未把排期、审核或浏览器回执冒充已发布、插件自动提交或 Neon 同步。完成页签已关闭。Firsto 仅审查免费入口，未登录提交。3.7.43 免费路径组也补入这三站，源码待实机重载与云端回读。详见 `docs/外链续办与自动关页-2026-09-25.md`。
+
+- **2026-09-25 / 3.7.43 免费路径与媒体修正**：AINave、SoMuch、Offo、Insidr AI、FoundrList、Forward Future 的已核实免费路径加入分组；OldPhoto 内置失效截图 URL 改为逐一确认可访问的官方 CDN 图片，品牌图改为官方 512px 图。源码未在 Ego 重载，Neon 未回读。详见 `docs/外链续办与自动关页-2026-09-25.md`。
+
+- **2026-09-25 / 3.7.42 外链续办与回执纠错**：本轮 OldPhotoLive AI 新增 FutureTools、SmartBizTools、AI Tool Finder、AllToolsDirectory、AINave、SoMuch、Offo 七站回执；SmartBizTools、AINave、Offo 已有公开页，另四站待审核，距再交十站还差三站。SoMuch 邮箱确认已完成；AIWebsiteDirectory 待官网徽章，不计完成。Startup Collections、Startup Stash、AI SuperHub、Launchpedia 的 OldPhoto 被误重复提交，9 月 24 日已有同产品回执；新版将这四站主页/投稿路径统一去重。插件侧栏只在队列自建标签的精确账本保存后自动关页，并拦截后置徽章/邮箱确认伪成功。ToolsCourt 站方报错无回执，Zearches 与 NeuroToolsHub 已填表待条款授权。源码未重载到 Ego，Neon 未回读，未运行测试。详见 `docs/外链续办与自动关页-2026-09-25.md`。
 
 - **2026-09-25 / 3.7.39 外链库双分组**：新增“高质量优先”“免费可提交”动态候选组，站点可手动入组/移出，选择写入 `siteAnnotations.library.groups` 并沿用 Neon 同步；设置页和侧栏可筛选，侧栏可按组建批次，原提交安全闸门不变。最近五站主要经 Ego 人工提交和插件人工记账，不能宣称大部分表单由插件自动提交。Ego 原空间有暂停旧批次，已另建验收空间；浏览器 URL 安全策略拒绝打开扩展管理页，禁止绕行，因此新版尚未完成浏览器重载和云端分组回读。见 `docs/外链库分组与插件能力-2026-09-25.md`。
 

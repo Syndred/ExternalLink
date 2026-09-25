@@ -64406,6 +64406,28 @@
       "Local Screenshot 2": "/Users/syndred/Desktop/projects/media/GraffitiName/02-showcases.png",
       "Local Screenshot 3": "/Users/syndred/Desktop/projects/media/GraffitiName/03-pricing.png",
       "Local Screenshot 4": "/Users/syndred/Desktop/projects/media/GraffitiName/04-guide.png"
+    },
+    "JevPlay": {
+      "Business mail": "syndredyoung@gmail.com",
+      "Feature description": "Code Breaker, Word Ladder, Dungeon Crawler, and Snake Challenge; shared seeds and legal actions; server-scored moves; hidden Jev path during play; completed replay; optional leaderboard; Chat Intent Analyzer; clearly labeled Practice Bot fallback.",
+      "Featured image": "https://jevplay.com/og-default.png",
+      "LOGO": "https://jevplay.com/logo.svg",
+      "Long description (250-500 words)": "JevPlay is an independent browser playground for free daily decision games that let people compare their choices with TypeSafe Jev. Every challenge starts from a shared seed, state, rules, and legal-action set. The human plays first while the opponent's exact path stays hidden. The server validates each action, locks the human score, and then reveals the completed paths in a replay so the comparison can be inspected instead of relying on a staged example.\n\nThe current game directory includes Code Breaker, Word Ladder, Dungeon Crawler, and Snake Challenge. Code Breaker asks players to solve a four-symbol code in up to eight guesses. Word Ladder changes one letter at a time to reach a target word. Dungeon Crawler is a seeded strategy route with legal actions, survival, loot, and efficiency metrics. Snake Challenge uses a shared board and food order, with every move checked by the server. The games are designed for short daily sessions and expose the comparison metrics for each challenge.\n\nNo account is required to complete a game. A user can sign in to save a score to the daily leaderboard. Finished runs show the recorded opponent identity and decision evidence; if TypeSafe Jev cannot return a valid action, the result is explicitly labeled Practice Bot rather than fabricating an AI score. JevPlay also includes a Chat Intent Analyzer that sends a short conversation to Jev and returns structured estimates such as likely intent, reply urgency, risk, tone, and a recommended next action with visible probabilities.\n\nJevPlay is free to start and currently has no paid plan or checkout. It is an independent community project, not an official TypeSafe product or endorsement. The site is intended for people who want to play decision games, inspect server-verified AI behavior, and learn how structured decision systems can be used in interactive tools.",
+      "Name": "JevPlay",
+      "Note": "Independent free daily decision games against live TypeSafe Jev. Same seed and rules, server-checked moves, hidden opponent path, and replay evidence. Practice Bot is labeled when live Jev is unavailable.",
+      "PRICING TYPE": "Free to play.",
+      "Pricing": "Free to play; no paid plan or checkout.",
+      "Screenshot 1": "https://jevplay.com/og-default.png",
+      "Screenshot 2": "https://jevplay.com/imgs/generated/jevplay-dungeon-card-v2.png",
+      "Short Discription(100-150 words)": "JevPlay is an independent browser playground for free daily decision games against TypeSafe Jev. Each challenge gives the human and Jev the same seed, state, rules, and legal actions. The player moves first while Jev's exact route stays hidden; the server checks and scores every action, then reveals a side-by-side replay when the run is complete. Current games include Code Breaker, Word Ladder, Dungeon Crawler, and Snake Challenge, covering logic, word transformation, strategy, and reflexes. Guests can play without an account; sign in only to save a leaderboard score. Completed results show the actual provider and decision evidence, and a failed Jev request is labeled Practice Bot instead of inventing a result. JevPlay is an independent community project and is not affiliated with or endorsed by TypeSafe.",
+      "Short description(20-30 words)": "Play free daily decision games against TypeSafe Jev on the same seed and rules, with server-checked scores, hidden opponent paths, and replayable results.",
+      "Tags Keywords/Hashtags": "AI games, decision games, human vs AI, TypeSafe Jev, daily challenge, server verified games, replayable games, Code Breaker, Word Ladder, Dungeon Crawler, Snake Challenge, #JevPlay #JevAI #AIGames #DecisionGames",
+      "Title": "Jev AI Games — Play Daily vs TypeSafe Jev | JevPlay",
+      "Url": "https://jevplay.com",
+      "Screenshot 3": "",
+      "Screenshot 4": "",
+      "Screenshot-3": "",
+      "Screenshot-4": ""
     }
   },
   "profileNotes": {
@@ -64480,6 +64502,13 @@
       "Local Screenshot 2": "Local file paths are relative to the ExternalLink repository.",
       "Local Screenshot 3": "Local file paths are relative to the ExternalLink repository.",
       "Local Screenshot 4": "Local file paths are relative to the ExternalLink repository."
+    },
+    "JevPlay": {
+      "Screenshot 1": "Verified direct image URL for submission uploads.",
+      "Screenshot 2": "Marketing illustration, not an actual gameplay screenshot; use only when a directory accepts product/gallery images.",
+      "Screenshot 3": "No verified direct image URL configured.",
+      "Screenshot 4": "No verified direct image URL configured.",
+      "LOGO": "SVG logo; upload-only forms that reject SVG should use Featured image instead."
     }
   },
   "tasks": [
@@ -65433,6 +65462,70 @@
       "publicUrl": "",
       "publicationStatus": "",
       "updatedAt": "2026-08-26T15:25:30.273252+00:00",
+      "schemaVersion": 2
+    },
+    "aitoolfinder.org/submit::JevPlay": {
+      "recordKey": "aitoolfinder.org/submit::JevPlay",
+      "destinationKey": "aitoolfinder.org/submit",
+      "destinationUrl": "https://aitoolfinder.org/submit",
+      "profileId": "JevPlay",
+      "profileName": "JevPlay",
+      "status": "success",
+      "submittedAt": "2026-09-25T08:04:07.605Z",
+      "confirmedBy": "agent",
+      "evidence": "Received for editorial review. Reference 49dc88bc-d0bd-481d-b091-b18eb6b9caef. This is a request only: nothing has been added to the directory, and inclusion, timing, ranking and link treatment are not guaranteed.",
+      "evidenceUrl": "https://aitoolfinder.org/submit",
+      "publicUrl": "",
+      "publicationStatus": "submitted",
+      "updatedAt": "2026-09-25T08:04:07.605Z",
+      "schemaVersion": 2
+    },
+    "aitoolfinder.org/submit::GraffitiName": {
+      "recordKey": "aitoolfinder.org/submit::GraffitiName",
+      "destinationKey": "aitoolfinder.org/submit",
+      "destinationUrl": "https://aitoolfinder.org/submit",
+      "profileId": "GraffitiName",
+      "profileName": "Graffiti Name AI",
+      "status": "success",
+      "submittedAt": "2026-09-25T08:04:07.605Z",
+      "confirmedBy": "agent",
+      "evidence": "Received for editorial review. Reference b41f2248-f017-45a7-aece-953b07423348. This is a request only: nothing has been added to the directory, and inclusion, timing, ranking and link treatment are not guaranteed.",
+      "evidenceUrl": "https://aitoolfinder.org/submit",
+      "publicUrl": "",
+      "publicationStatus": "submitted",
+      "updatedAt": "2026-09-25T08:04:07.605Z",
+      "schemaVersion": 2
+    },
+    "alltoolsdirectory.com/submit::JevPlay": {
+      "recordKey": "alltoolsdirectory.com/submit::JevPlay",
+      "destinationKey": "alltoolsdirectory.com/submit",
+      "destinationUrl": "https://www.alltoolsdirectory.com/submit",
+      "profileId": "JevPlay",
+      "profileName": "JevPlay",
+      "status": "success",
+      "submittedAt": "2026-09-25T08:04:07.605Z",
+      "confirmedBy": "agent",
+      "evidence": "Live submit API: Tool submitted successfully",
+      "evidenceUrl": "https://www.alltoolsdirectory.com/submit",
+      "publicUrl": "",
+      "publicationStatus": "submitted",
+      "updatedAt": "2026-09-25T08:04:07.605Z",
+      "schemaVersion": 2
+    },
+    "alltoolsdirectory.com/submit::GraffitiName": {
+      "recordKey": "alltoolsdirectory.com/submit::GraffitiName",
+      "destinationKey": "alltoolsdirectory.com/submit",
+      "destinationUrl": "https://www.alltoolsdirectory.com/submit",
+      "profileId": "GraffitiName",
+      "profileName": "Graffiti Name AI",
+      "status": "success",
+      "submittedAt": "2026-09-25T08:04:07.605Z",
+      "confirmedBy": "agent",
+      "evidence": "Live submit API: Tool submitted successfully",
+      "evidenceUrl": "https://www.alltoolsdirectory.com/submit",
+      "publicUrl": "",
+      "publicationStatus": "submitted",
+      "updatedAt": "2026-09-25T08:04:07.605Z",
       "schemaVersion": 2
     }
   },

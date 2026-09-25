@@ -8677,6 +8677,8 @@ async function runRuleBasedFill(tabId, task, entry, extra = {}) {
 }
 
 async function sendExecuteSubmit(tabId, task, config, platformType) {
+  const direct = await trySiteSpecificDirectSubmit(tabId, task, config, platformType || task.platformType);
+  if (direct) return direct;
   const review = await understandFormBeforeFill(tabId, config, platformType || task.platformType);
   if (review) return review;
   const result = await chrome.tabs.sendMessage(tabId, {
@@ -8689,6 +8691,238 @@ async function sendExecuteSubmit(tabId, task, config, platformType) {
     throw new Error("content script returned an invalid fill result");
   }
   return result;
+}
+
+async function trySiteSpecificDirectSubmit(tabId, task, config, platformType) {
+  if (config?.fillOnly || config?.autoSubmitDirectory === false) return null;
+  const taskUrl = task?.url || task?.link || "";
+  if (isAllToolsDirectorySubmitUrl(taskUrl)) {
+    return submitAllToolsDirectoryApi(config, taskUrl, platformType).catch((err) => {
+      log(`${task?.domain || "alltoolsdirectory.com"}: AllToolsDirectory API 兜底失败，回到页面填表 - ${err.message}`, "warn");
+      return null;
+    });
+  }
+  return null;
+}
+
+function isAllToolsDirectorySubmitUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    return host === "alltoolsdirectory.com" && /^\/submit\/?$/i.test(url.pathname || "/");
+  } catch {
+    return false;
+  }
+}
+
+async function submitAllToolsDirectoryApi(config, taskUrl, platformType = "directory") {
+  const payload = buildAllToolsDirectoryPayload(config);
+  const response = await fetch("https://www.alltoolsdirectory.com/api/submit-tool", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    redirect: "follow",
+  });
+  const text = await response.text();
+  const evidence = shortText(allToolsDirectoryEvidenceText(text) || `HTTP ${response.status}`, 260);
+  if (!response.ok || !/success|submitted/i.test(`${text} ${response.statusText}`)) {
+    throw new Error(`HTTP ${response.status}: ${evidence}`);
+  }
+  return {
+    ok: true,
+    platform: platformType || "directory",
+    clickedSubmit: false,
+    submitted: true,
+    matched: true,
+    publicationStatus: "submitted",
+    evidence: `Live submit API: ${evidence}`,
+    evidenceUrl: taskUrl || "https://www.alltoolsdirectory.com/submit",
+    publicUrl: "",
+    evidenceSignals: [{
+      type: "visible_confirmation",
+      text: `Live submit API: ${evidence}`,
+      url: taskUrl || "https://www.alltoolsdirectory.com/submit",
+      publicationStatus: "submitted",
+      matched: true,
+    }],
+    networkEvidence: {
+      method: "POST",
+      url: "https://www.alltoolsdirectory.com/api/submit-tool",
+      status: response.status,
+      responseText: evidence,
+      payloadSummary: {
+        toolName: payload.toolName,
+        websiteUrl: payload.websiteUrl,
+        category: payload.category,
+        pricingModel: payload.pricingModel,
+        email: payload.email,
+      },
+    },
+  };
+}
+
+function allToolsDirectoryEvidenceText(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.message || parsed?.error || raw;
+  } catch {
+    return raw;
+  }
+}
+
+function buildAllToolsDirectoryPayload(config) {
+  const pf = config?.projectFields || {};
+  const name = firstFilledValue(pf.Name, config?.brandName, "Not available");
+  const url = firstFilledValue(config?.targetDomain, pf.Url, config?.promoUrl, "Not available");
+  const shortDescription = firstFilledValue(
+    pf["Short description(20-30 words)"],
+    pf.Note,
+    config?.valueProposition,
+    pickAllToolsDescription(config, 180),
+    "Not available",
+  );
+  const longDescription = firstFilledValue(
+    pf["Long description (250-500 words)"],
+    pf["Short Discription(100-150 words)"],
+    config?.commentTemplate,
+    shortDescription,
+    "Not available",
+  );
+  const screenshots = allToolsMediaLines(config).join("\n");
+  return {
+    toolType: "AI Tool",
+    toolName: name,
+    shortDescription: shortText(shortDescription, 300),
+    longDescription: shortText(longDescription, 3000),
+    author: firstFilledValue(pf.Author, pf.Founder, pf.Owner, config?.username, name, "Not available"),
+    websiteUrl: url,
+    // The live form says a product homepage is acceptable here when there is
+    // no repository. Do not infer or claim a GitHub repo exists.
+    githubUrl: allToolsRepositoryUrl(pf, url),
+    category: allToolsDirectoryCategory(config),
+    platforms: ["Web"],
+    tags: allToolsTags(config),
+    pricingModel: allToolsPricingModel(config),
+    keyFeatures: shortText(firstFilledValue(
+      pf["Feature description"],
+      Array.isArray(config?.sellablePoints) ? config.sellablePoints.join("; ") : "",
+      shortDescription,
+    ), 1200),
+    email: firstFilledValue(config?.email, pf["Business mail"], pf["Feedback mail"], "Not available"),
+    socialProfiles: firstFilledValue(pf.Twitter, pf.X, pf.LinkedIn, pf.Facebook, "Not available"),
+    screenshots: screenshots || "Not available",
+    additionalNotes: allToolsAdditionalNotes(config),
+    agreeToTerms: false,
+    agreeToContact: false,
+  };
+}
+
+function firstFilledValue(...values) {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickAllToolsDescription(config, limit) {
+  const pf = config?.projectFields || {};
+  return shortText(firstFilledValue(
+    pf["Short Discription(100-150 words)"],
+    pf["Long description (250-500 words)"],
+    config?.commentTemplate,
+    config?.valueProposition,
+  ), limit || 500);
+}
+
+function allToolsRepositoryUrl(pf, fallbackUrl) {
+  const entry = Object.entries(pf || {}).find(([key]) => /\bgithub\b/i.test(key));
+  const repositoryUrl = String(entry?.[1] || "").trim();
+  if (/^https?:\/\/(?:www\.)?github\.com\/[^\s]+$/i.test(repositoryUrl)) return repositoryUrl;
+  return fallbackUrl || "Not available";
+}
+
+function allToolsMediaLines(config) {
+  const pf = config?.projectFields || {};
+  const candidates = [
+    pf["Featured image"],
+    config?.featuredImage,
+    ...(Array.isArray(config?.screenshots) ? config.screenshots : []),
+    ...[1, 2, 3, 4].flatMap((index) => [pf[`Screenshot ${index}`], pf[`Screenshot-${index}`]]),
+  ];
+  const seen = new Set();
+  const urls = [];
+  for (const candidate of candidates) {
+    const text = String(candidate || "").trim();
+    if (!text || seen.has(text)) continue;
+    try {
+      const url = new URL(text, config?.targetDomain || "https://example.com");
+      if (!/^https?:$/.test(url.protocol)) continue;
+      if (!/\.(?:png|jpe?g|webp|gif|svg|avif)(?:$|\?)/i.test(url.pathname + url.search)) continue;
+      const normalized = url.href;
+      seen.add(normalized);
+      urls.push(normalized);
+    } catch {
+      /* Skip private cloud refs and invalid media values. */
+    }
+  }
+  return urls.slice(0, 4);
+}
+
+function allToolsTags(config) {
+  const pf = config?.projectFields || {};
+  const tags = String(config?.tags || pf["Tags Keywords/Hashtags"] || "")
+    .split(/[,;|/]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 12)
+    .join(", ");
+  return tags || "AI tool, web app";
+}
+
+function allToolsDirectoryCategory(config) {
+  const pf = config?.projectFields || {};
+  const text = [
+    config?.brandName,
+    config?.tags,
+    pf["Short description(20-30 words)"],
+    pf["Short Discription(100-150 words)"],
+    pf["Long description (250-500 words)"],
+    pf["Feature description"],
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (/\b(developer|api|programming|repository|web development|code generation|code editor|coding assistant)\b/.test(text)) return "Developer Tools";
+  if (/\b(photo|image|design|logo|art|graffiti|colori[sz]ation|restoration|animation|png|visual)\b/.test(text)) return "Design Tool";
+  if (/\bdata|analytics|analysis|spreadsheet|dashboard\b/.test(text)) return "Data Analysis";
+  if (/\bsecurity|privacy|password|encryption\b/.test(text)) return "Security";
+  if (/\bfile|document|pdf|storage\b/.test(text)) return "File Management";
+  if (/\bchat|email|message|communication|meeting\b/.test(text)) return "Communication";
+  if (/\btask|productivity|workflow|calendar|notes\b/.test(text)) return "Productivity";
+  return "AI & ML";
+}
+
+function allToolsPricingModel(config) {
+  const pf = config?.projectFields || {};
+  const text = String(firstFilledValue(config?.pricing, pf.Pricing, pf["PRICING TYPE"], "")).toLowerCase();
+  if (/\bopen[-\s]?source\b/.test(text)) return "Open-Source";
+  if (/\bno paid\b|\bno checkout\b|\bfree to play\b/.test(text)) return "Free";
+  if (/\bfree\b/.test(text) && /\b(paid|credit|membership|plan|month|year|\$)\b/.test(text)) return "Freemium";
+  if (/\b(paid|premium|credit|membership|plan|month|year|\$)\b/.test(text)) return "Premium";
+  if (/\bfree\b/.test(text)) return "Free";
+  return "Freemium";
+}
+
+function allToolsAdditionalNotes(config) {
+  const pf = config?.projectFields || {};
+  const notes = [
+    pf.Note,
+    pf.Pricing,
+    Array.isArray(config?.avoidContent) ? config.avoidContent.join(" ") : "",
+  ].filter(Boolean).join(" ");
+  return shortText(notes || "Submitted via the free directory submission form.", 1200);
 }
 
 function markTaskFilled(tabId, task, entry, reason) {

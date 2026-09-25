@@ -37,6 +37,9 @@
       comparisontext: "TextComparison",
       graffitiname: "GraffitiName",
       graffitinameai: "GraffitiName",
+      jevplay: "JevPlay",
+      jev: "JevPlay",
+      typesafejev: "JevPlay",
     };
     return aliases[token] || "";
   }
@@ -376,6 +379,9 @@
       rspai: "RspAi",
       textcomparison: "TextComparison",
       graffitiname: "GraffitiName",
+      jevplay: "JevPlay",
+      jev: "JevPlay",
+      typesafejev: "JevPlay",
     };
     const alias = aliases[lower.replace(/[\s_-]/g, "")];
     if (alias && profiles[alias]) return profiles[alias];

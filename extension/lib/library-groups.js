@@ -16,6 +16,11 @@
     "free-ai-tools-directory.com/submit-request",
     "bestofai.com/tool/add",
     "viesearch.com/submit",
+    "futuretools.io/submit-a-tool",
+    "startupstash.com/add-listing",
+    "startupcollections.com/submit-product",
+    "aisuperhub.io/ai-tools/submit/free",
+    "launchpedia.co/submit",
   ]);
   const EXCLUDED_STATUSES = new Set(["broken", "skip", "deleted"]);
   const PRIORITY_CATEGORIES = new Set([

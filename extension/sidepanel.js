@@ -176,6 +176,18 @@
   let detectionRequestId = 0;
   let sidepanelFillRequestId = 0;
   const sidepanelFillRequests = new Map();
+  // Only tabs opened by this panel's queue navigation may be closed automatically.
+  // User-opened tabs, manual gates and tabs restored after the panel closes stay untouched.
+  const ownedSubmissionTabs = new Map();
+  let skipActivationFromVerifiedClose = false;
+  // A side panel belongs to one browser window. The last focused window can
+  // change while another Space is active, so pin every tab action to this one.
+  const ownerWindowIdPromise = chrome.windows.getCurrent().then((win) => win.id);
+  async function getOwnerActiveTab() {
+    const windowId = await ownerWindowIdPromise;
+    const [tab] = await chrome.tabs.query({ active: true, windowId });
+    return tab;
+  }
   const SIDEPANEL_FILL_TIMEOUT_MS = 30_000;
   const SIDEPANEL_FILL_STALE_MS = 90_000;
   let productHuntReadyToCreateTabId = null;
@@ -815,7 +827,7 @@
       return;
     }
     try {
-      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const tab = await getOwnerActiveTab();
       const url = syncUrl || tab?.url || "";
       const result = await chrome.runtime.sendMessage({
         action: "getSubmissionQueue",
@@ -1368,25 +1380,68 @@
       showToast("没有待提交站点，请更新 Table.xlsx 或外链库", true);
       return;
     }
-    submissionIndex = (submissionIndex + delta + submissionTasks.length) % submissionTasks.length;
+    const anchoredIndex = options.targetKey
+      ? submissionTasks.findIndex((task) => task.key === options.targetKey)
+      : -1;
+    submissionIndex = anchoredIndex >= 0
+      ? anchoredIndex
+      : (submissionIndex + delta + submissionTasks.length) % submissionTasks.length;
     await chrome.storage.local.set({ submissionQueueIndex: submissionIndex });
     renderSubmissionNav();
     const task = submissionTasks[submissionIndex];
     const url = task.url.startsWith("http") ? task.url : "https://" + task.url;
     const keepCurrent = options.keepCurrent === true;
     if (keepCurrent) {
-      // Gate/dead-end: leave the current tab for login/captcha review; open next in a new tab.
-      setAutoFillStatus(`保留当前页，打开下一站 ${task.domain || task.url}…`);
-      await chrome.tabs.create({ url, active: true });
+      // Gates keep their tab; a verified, saved success may already have closed its owned tab.
+      setAutoFillStatus(`${options.completedTabClosed ? "已关闭完成页" : "保留当前页"}，打开下一站 ${task.domain || task.url}…`);
+      const opened = await chrome.tabs.create({ url, active: true, windowId: await ownerWindowIdPromise });
+      if (opened?.id) ownedSubmissionTabs.set(opened.id, url);
       return;
     }
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const tab = await getOwnerActiveTab();
     if (tab?.id) {
       activeTabId = tab.id;
       setAutoFillStatus(`正在打开 ${task.domain || task.url}…`);
       await chrome.tabs.update(tab.id, { url });
+      if (ownedSubmissionTabs.has(tab.id)) ownedSubmissionTabs.set(tab.id, url);
     }
   }
+
+  function captureFillContext(tabId, expectedUrl, profileId) {
+    const index = Q.findSubmissionIndex(expectedUrl, submissionTasks);
+    return {
+      tabId,
+      expectedUrl,
+      profileId,
+      ownedUrl: ownedSubmissionTabs.get(tabId) || "",
+      destinationKey: index >= 0 ? submissionTasks[index]?.key || "" : "",
+    };
+  }
+
+  async function closeVerifiedOwnedTab(result, context) {
+    if (!(result?.submitted && result?.matched && result?.evidence && result?.ledgerSaved === true)) return false;
+    if (
+      !context?.ownedUrl ||
+      Q.normalizeUrlKey(context.ownedUrl) !== Q.normalizeUrlKey(context.expectedUrl)
+    ) return false;
+    if (activeTabId !== context.tabId || activeSiteId !== context.profileId) return false;
+    if (ownedSubmissionTabs.get(context.tabId) !== context.ownedUrl) return false;
+    const tab = await chrome.tabs.get(context.tabId).catch(() => null);
+    if (!tab || !tab.active) return false;
+    try {
+      // Closing an active tab briefly activates the previous page. Do not
+      // auto-detect and refill that page while opening the next queue target.
+      skipActivationFromVerifiedClose = true;
+      await chrome.tabs.remove(context.tabId);
+      ownedSubmissionTabs.delete(context.tabId);
+      return true;
+    } catch {
+      skipActivationFromVerifiedClose = false;
+      return false;
+    }
+  }
+
+  chrome.tabs.onRemoved.addListener((tabId) => ownedSubmissionTabs.delete(tabId));
 
   $("btnPrevSite")?.addEventListener("click", () => cycleSubmission(-1));
   $("btnNextSite")?.addEventListener("click", () => cycleSubmission(1));
@@ -2378,6 +2433,7 @@
       settled: false,
       timeoutTimer: null,
       staleTimer: null,
+      fillContext: captureFillContext(tabId, expectedUrl, profileId),
     };
     sidepanelFillRequests.set(request.id, request);
 
@@ -2405,7 +2461,7 @@
         clearTimeout(request.timeoutTimer);
         try {
           if (request.timedOut && !request.detached && isCurrentFillContext(tabId, expectedUrl, profileId)) {
-            await handleFillResult(result, mode);
+            await handleFillResult(result, mode, request.fillContext);
           }
         } finally {
           releaseSidepanelFillRequest(request);
@@ -2464,6 +2520,7 @@
     if (!P.profileConfigured(profile)) return { error: "请先在设置页配置网站资料" };
     resetMediaUploadState();
     setAutoFillStatus("检测完成，正在自动填写…");
+    const fillContext = captureFillContext(tabId, expectedUrl, profileId);
     const result = await runSidepanelFill({
       tabId,
       expectedUrl,
@@ -2471,11 +2528,11 @@
       mode: "form",
     });
     if (result?.timedOut || result?.busy || result?.stale) return result;
-    await handleFillResult(result, "form");
+    await handleFillResult(result, "form", fillContext);
     return result;
   }
 
-  async function handleFillResult(result, mode) {
+  async function handleFillResult(result, mode, context = null) {
     if (mode === "form") refreshMediaUploadResult(result).catch(() => {});
     if (result?.submitted && result?.matched && result?.evidence) {
       if (result?.platform === "product_hunt") {
@@ -2483,17 +2540,34 @@
         updateProductHuntFillButton();
       }
       const successLabel =
-        result.publicationStatus === "pending_moderation"
+        result.ledgerSaved !== true
+          ? "已看到站方回执，账本保存仍待核验"
+          : result.publicationStatus === "pending_moderation"
           ? "已提交，站点显示待审核"
           : result.publicationStatus === "published"
             ? "已提交并看到上线回执"
             : "已提交并记入账本";
-      setAutoFillStatus(successLabel, "ok");
+      setAutoFillStatus(successLabel, result.ledgerSaved === true ? "ok" : "warn");
       await loadClassifiedList();
       await loadSubmissionQueue(currentPageUrl);
-      if (result.advance) {
-        showToast(`${successLabel} — 打开下一站`);
-        cycleSubmission(1, { keepCurrent: true }).catch(() => {});
+      const completedStillQueued = context?.destinationKey
+        ? submissionTasks.some((task) => task.key === context.destinationKey)
+        : !!context?.expectedUrl && Q.findSubmissionIndex(context.expectedUrl, submissionTasks) >= 0;
+      const nextTask = submissionTasks.length
+        ? submissionTasks[(submissionIndex + (completedStillQueued ? 1 : 0)) % submissionTasks.length]
+        : null;
+      const completedTabClosed = await closeVerifiedOwnedTab(result, context);
+      if (result.advance && result.ledgerSaved === true) {
+        if (nextTask) {
+          showToast(`${successLabel} — ${completedTabClosed ? "已关闭当前页，" : ""}打开下一站`);
+          cycleSubmission(0, {
+            keepCurrent: true,
+            completedTabClosed,
+            targetKey: nextTask.key,
+          }).catch(() => {});
+        } else {
+          showToast(`${successLabel} — 待提交队列已完成`);
+        }
       }
       return;
     }
@@ -2752,7 +2826,7 @@
   async function refreshActiveTab() {
     const previousTabId = activeTabId;
     const previousPageUrl = currentPageUrl;
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const tab = await getOwnerActiveTab();
     activeTabId = tab?.id || null;
     currentPageUrl = tab?.url?.startsWith("http") ? tab.url : "";
     if (activeTabId !== previousTabId || currentPageUrl !== previousPageUrl) {
@@ -2783,7 +2857,14 @@
     updateProductHuntFillButton();
   }
 
-  chrome.tabs.onActivated.addListener(async () => {
+  chrome.tabs.onActivated.addListener(async ({ windowId }) => {
+    if (windowId !== await ownerWindowIdPromise) return;
+    if (skipActivationFromVerifiedClose) {
+      skipActivationFromVerifiedClose = false;
+      await refreshActiveTab();
+      await loadSubmissionQueue(currentPageUrl);
+      return;
+    }
     await refreshActiveTab();
     if (!currentPageUrl?.startsWith("http")) return;
     await loadSubmissionQueue(currentPageUrl);
@@ -2995,6 +3076,7 @@
     const requestedTabId = activeTabId;
     const requestedUrl = currentPageUrl;
     const requestedProfileId = activeSiteId;
+    const fillContext = captureFillContext(requestedTabId, requestedUrl, requestedProfileId);
     const profile = activeSiteId ? siteProfiles[activeSiteId] : null;
     if (!P.profileConfigured(profile)) {
       showToast("请先在设置页配置网站资料", true);
@@ -3024,7 +3106,7 @@
       });
 
       if (!result?.timedOut && !result?.busy && !result?.stale) {
-        await handleFillResult(result, mode);
+        await handleFillResult(result, mode, fillContext);
         if (mode === "form" && result?.submitted && result?.matched) setWorkflowStep("done");
         else if (mode === "form" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
         else if (mode === "comment" && (result?.ok || result?.fillOnly)) setWorkflowStep("submit");
@@ -3516,7 +3598,7 @@
           try {
             const url = new URL(task.url);
             if (!["https:", "http:"].includes(url.protocol)) throw new Error("无法打开此站点地址");
-            await chrome.tabs.create({ url: url.href, active: true });
+            await chrome.tabs.create({ url: url.href, active: true, windowId: await ownerWindowIdPromise });
             showToast("已打开待办页面，请核查站点状态后处理");
           } catch (err) { showToast(err.message, true); }
           return;

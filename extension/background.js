@@ -4747,8 +4747,9 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
 
   if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
     const pageUrl = await getTabUrlSafe(tabId);
+    let ledgerSaved = false;
     if (pageUrl && options.recordLedger !== false) {
-      await recordSubmittedProject({
+      const record = await recordSubmittedProject({
         url: pageUrl,
         profileId: profile.id,
         profileName: profile.name || profile.id,
@@ -4766,21 +4767,27 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
           }],
         },
       });
+      ledgerSaved = record?.status === "success";
+      if (!ledgerSaved) throw new Error("成功回执已出现，但精确账本记录未持久化");
     }
     const doneMsg =
-      submitResult.publicationStatus === "pending_moderation"
+      !ledgerSaved
+        ? "已取得站方回执，成功账本仍待核验"
+        : submitResult.publicationStatus === "pending_moderation"
         ? "已提交，站点显示待审核"
         : submitResult.publicationStatus === "published"
           ? "已提交并看到上线回执"
           : "已提交并记入账本";
-    broadcastAutoFillUpdate({ tabId, status: "done", ledgerSaved: true, message: doneMsg });
+    broadcastAutoFillUpdate({ tabId, status: ledgerSaved ? "done" : "verifying", ledgerSaved, message: doneMsg });
     return {
       ok: true,
       submitted: true,
       matched: true,
       evidence: submitResult.evidence,
       publicationStatus: submitResult.publicationStatus || "submitted",
-      advance: true,
+      ledgerSaved,
+      advance: ledgerSaved || options.recordLedger === false,
+      keepTab: !ledgerSaved,
     };
   }
 

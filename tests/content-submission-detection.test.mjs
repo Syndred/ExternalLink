@@ -173,6 +173,17 @@ vm.runInContext(source, context, { filename: "extension/content.js" });
 
 const hooks = context.__extLinkSubmissionTestHooks;
 assert.ok(hooks, "content.js should expose submission detection test hooks");
+const auditHooks = context.__extLinkContentAuditTestHooks;
+assert.equal(
+  auditHooks.isLegalAcceptanceField(new FakeField({ type: "checkbox", name: "asset_permission", required: true })),
+  true,
+  "a required permission to reuse product assets must stay with the submitter",
+);
+assert.equal(
+  auditHooks.isLegalAcceptanceField(new FakeField({ type: "checkbox", name: "newsletter_opt_in" })),
+  false,
+  "an optional newsletter choice is not a legal permission",
+);
 const fieldHooks = context.__extLinkFieldRoutingTestHooks;
 assert.ok(fieldHooks, "content.js should expose field routing test hooks");
 

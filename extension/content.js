@@ -779,7 +779,8 @@
       getSnapshotLabel(field), field.name, field.id,
       parentText.length < 240 ? parentText : "",
     ].filter(Boolean).join(" "), 320).toLowerCase();
-    return LEGAL_POLICY_REFERENCE_PATTERN.test(hint);
+    return LEGAL_POLICY_REFERENCE_PATTERN.test(hint) ||
+      /\basset[_\s-]?permission\b|\b(?:permission|rights?|licen[cs]e)\b.{0,100}\b(?:share|use|reproduce|publish|assets?|logos?|screenshots?)\b|(?:授权|许可).{0,30}(?:使用|发布|图片|素材)/.test(hint);
   }
 
   function detectDirectoryLegalAgreement(scope) {
@@ -3325,6 +3326,7 @@
     detectWPComment,
     identifyPlatform,
     detectSubmitBlockers,
+    isLegalAcceptanceField,
     isCommentLikeField,
     submitArticleComment,
     submitWPComment,

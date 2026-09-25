@@ -6,6 +6,7 @@
   const P = self.ExtLinkProfiles;
   const Q = self.ExtLinkQueue;
   const Timeline = self.ExtLinkSubmissionTimeline;
+  const LibraryGroups = self.ExtLinkLibraryGroups;
 
   let siteProfiles = {};
   let activeSiteId = "";
@@ -904,6 +905,24 @@
     return Q.normalizeAnnotationStatuses(annotation);
   }
 
+  function matchedLibraryGroups(item) {
+    return LibraryGroups.GROUPS.filter(([groupId]) => LibraryGroups.matches(item, groupId));
+  }
+
+  async function toggleLibraryGroup(item, groupId) {
+    const currentGroups = matchedLibraryGroups(item).map(([id]) => id);
+    const groups = currentGroups.includes(groupId)
+      ? currentGroups.filter((id) => id !== groupId)
+      : [...currentGroups, groupId];
+    const result = await chrome.runtime.sendMessage({
+      action: "updateLibraryPreferences",
+      url: item.url,
+      groups,
+    });
+    if (!result?.ok) throw new Error(result?.error || "保存外链分组失败");
+    await loadLibrary();
+  }
+
   function activityLabel(type) {
     return (
       {
@@ -1189,9 +1208,54 @@
     return wrap;
   }
 
+  function createLibraryGroupPanel(item) {
+    const wrap = document.createElement("section");
+    wrap.className = "library-group-panel";
+    const title = document.createElement("div");
+    title.className = "library-mark-title";
+    title.textContent = "外链分组";
+    const scope = document.createElement("p");
+    scope.className = "library-mark-scope";
+    scope.textContent = "自动筛选候选站，也可手动加入或移出。免费提交条件仍须在新站申请前复核。";
+    const buttons = document.createElement("div");
+    buttons.className = "library-group-buttons";
+    const siteStatuses = annotationStatuses(item.annotation);
+    for (const [groupId, label] of LibraryGroups.GROUPS) {
+      const selected = LibraryGroups.matches(item, groupId);
+      const unavailableReason = item.library?.enabled === false
+        ? "站点已禁用，启用后才能加入分组"
+        : siteStatuses.some((status) => ["broken", "skip", "deleted"].includes(status))
+          ? "该站点当前标记为无法提交、跳过或已删除"
+          : groupId === "free_submit" && siteStatuses.includes("paid")
+            ? "已标记为付费，不能加入免费可提交分组"
+            : "";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `library-group-button${selected ? " active" : ""}`;
+      button.textContent = label;
+      button.setAttribute("aria-pressed", String(selected));
+      button.setAttribute("aria-label", `${selected ? "移出" : "加入"}${label}分组`);
+      button.disabled = Boolean(unavailableReason);
+      if (unavailableReason) button.title = unavailableReason;
+      button.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        button.disabled = true;
+        try {
+          await toggleLibraryGroup(item, groupId);
+        } catch (error) {
+          alert(error.message);
+          button.disabled = false;
+        }
+      });
+      buttons.append(button);
+    }
+    wrap.append(title, scope, buttons);
+    return wrap;
+  }
+
   function renderTimelinePanel(item, panel) {
     panel.replaceChildren();
-    panel.append(createLibraryMarkPanel(item));
+    panel.append(createLibraryMarkPanel(item), createLibraryGroupPanel(item));
     const events = Array.isArray(item.events) ? item.events : [];
     const list = document.createElement("div");
     list.className = "timeline-list";
@@ -1304,9 +1368,11 @@
     const statusFilter = $("libraryStatusFilter")?.value || "";
     const progressFilter = $("libraryProgressFilter")?.value || "";
     const qualityFilter = Number($("libraryQualityFilter")?.value || 0);
+    const groupFilter = $("libraryGroupFilter")?.value || "";
     const sortMode = $("librarySort")?.value || "quality";
     const filtered = libraryItems.filter((item) => {
       const statuses = annotationStatuses(item.annotation);
+      const groups = matchedLibraryGroups(item);
       const progress = Timeline.deriveLibraryProgress(item);
       const haystack = [
         item.domain,
@@ -1318,6 +1384,7 @@
         ...(item.tags || []),
         ...statuses,
         ...statuses.map((value) => annotationLabel(value)),
+        ...groups.map(([, label]) => label),
         item.note,
         item.record,
         item.detail,
@@ -1330,6 +1397,7 @@
         (!query || haystack.includes(query)) &&
         (!categoryFilter || item.category === categoryFilter) &&
         (!statusFilter || statuses.includes(statusFilter)) &&
+        (!groupFilter || groups.some(([id]) => id === groupFilter)) &&
         Timeline.matchesLibraryProgress(progress, progressFilter) &&
         Number(item.quality?.score || 0) >= qualityFilter
       );
@@ -1435,6 +1503,12 @@
         (item.quality?.reasons || []).join(" · ") ||
         "0–100 机会质量分：优先≥75，可做≥55，观察≥35，低于 35 为低质";
       qualityRow.append(qualityScore);
+      for (const [, label] of matchedLibraryGroups(item)) {
+        const groupTag = document.createElement("span");
+        groupTag.className = "library-group-chip";
+        groupTag.textContent = label;
+        qualityRow.append(groupTag);
+      }
       const metricPairs = [
         ["DR", item.metrics?.dr],
         ["DA", item.metrics?.da],
@@ -1657,6 +1731,7 @@
   $("libraryStatusFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryProgressFilter")?.addEventListener("change", resetLibraryAndRender);
   $("libraryQualityFilter")?.addEventListener("change", resetLibraryAndRender);
+  $("libraryGroupFilter")?.addEventListener("change", resetLibraryAndRender);
   $("librarySort")?.addEventListener("change", resetLibraryAndRender);
   $("btnLibraryLoadMore")?.addEventListener("click", () => {
     libraryVisibleLimit += LIBRARY_PAGE_SIZE;

@@ -312,9 +312,17 @@
 }
 
 #panel-library .library-toolbar {
-  grid-template-columns: minmax(0, 1fr) repeat(4, minmax(116px, 148px));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 8px;
   margin-bottom: 8px;
+}
+
+#panel-library .library-toolbar #librarySearch {
+  grid-column: 1 / -1;
+}
+
+#panel-library .library-group-hint {
+  margin: 4px 0 8px;
 }
 
 #panel-library .quality-row {
@@ -326,6 +334,7 @@
 }
 
 #panel-library .quality-score,
+#panel-library .library-group-chip,
 #panel-library .metric-tag,
 #panel-library .monitor-tag {
   display: inline-flex;
@@ -343,6 +352,11 @@
 #panel-library .quality-score.workable { border-color: #0284c7; color: #bae6fd; }
 #panel-library .quality-score.watch { border-color: #ca8a04; color: #fef08a; }
 #panel-library .quality-score.low { border-color: #dc2626; color: #fecaca; }
+#panel-library .library-group-chip {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.16);
+  color: #bfdbfe;
+}
 #panel-library .monitor-tag.live { border-color: #16a34a; color: #bbf7d0; }
 #panel-library .monitor-tag.missing,
 #panel-library .monitor-tag.unreachable { border-color: #dc2626; color: #fecaca; }
@@ -815,6 +829,45 @@
   margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid #334155;
+}
+
+#panel-library .library-group-panel {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #334155;
+}
+
+#panel-library .library-group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+#panel-library .library-group-button {
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#panel-library .library-group-button:hover:not([disabled]) {
+  border-color: #64748b;
+  background: #1e293b;
+}
+
+#panel-library .library-group-button.active {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.16);
+  color: #bfdbfe;
+}
+
+#panel-library .library-group-button:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 2px;
 }
 
 #panel-library .library-mark-title {

@@ -123,6 +123,7 @@
   const Controls = self.ExtLinkBatchControls;
   const Sidepanel = self.ExtLinkSidepanel;
   const LibraryClassifier = self.ExtLinkLibraryClassifier;
+  const LibraryGroups = self.ExtLinkLibraryGroups;
 
   let activeTabId = null;
   let siteProfiles = {};
@@ -265,9 +266,22 @@
     }
   }
 
+  function populateSidepanelLibraryGroups(items) {
+    const select = $("sidepanelLibraryGroup");
+    if (!select) return;
+    const selected = select.value;
+    select.replaceChildren(new Option("全部分组", ""));
+    for (const [groupId, label] of LibraryGroups.GROUPS) {
+      const count = items.filter((item) => LibraryGroups.matches(item, groupId)).length;
+      select.append(new Option(`${label}（${count}）`, groupId));
+    }
+    select.value = selected;
+  }
+
   function sidepanelLibraryFilteredItems() {
     const query = String($("sidepanelLibrarySearch")?.value || "").trim().toLowerCase();
     const category = $("sidepanelLibraryCategory")?.value || "";
+    const group = $("sidepanelLibraryGroup")?.value || "";
     const access = $("sidepanelLibraryAccess")?.value || "";
     const favorite = $("sidepanelLibraryFavorite")?.value || "";
     const enabled = $("sidepanelLibraryEnabled")?.value || "";
@@ -278,6 +292,7 @@
       return (
         (!query || haystack.includes(query)) &&
         (!category || item.category === category) &&
+        (!group || LibraryGroups.matches(item, group)) &&
         (!access || item.accessModel === access) &&
         (!favorite || (favorite === "favorite" ? preferences.favorite : !preferences.favorite)) &&
         (!enabled || (enabled === "enabled" ? preferences.enabled : !preferences.enabled))
@@ -312,6 +327,7 @@
     if (!result?.ok) throw new Error(result?.error || "保存个人外链设置失败");
     item.annotation = result.annotation || item.annotation;
     item.library = result.library || LibraryClassifier.libraryPreferences(item.annotation);
+    populateSidepanelLibraryGroups(sidepanelLibraryItems);
     renderSidepanelLibrary();
   }
 
@@ -321,6 +337,16 @@
     const category = $("sidepanelLibraryCategory")?.value || "";
     button.disabled = !category || running || batchStatus === "paused";
     button.textContent = category ? `提交「${category}」` : "从此分类开始提交";
+  }
+
+  function updateLibraryGroupStartButton() {
+    const button = $("btnStartLibraryGroup");
+    if (!button) return;
+    const groupId = $("sidepanelLibraryGroup")?.value || "";
+    const group = LibraryGroups.GROUPS.find(([id]) => id === groupId);
+    const count = group ? sidepanelLibraryItems.filter((item) => LibraryGroups.matches(item, groupId)).length : 0;
+    button.disabled = !count || running || batchStatus === "paused";
+    button.textContent = group ? `提交「${group[1]}」组（${count} 站）` : "从此分组开始提交";
   }
 
   function renderSidepanelLibrary() {
@@ -375,6 +401,9 @@
       const chips = document.createElement("div");
       chips.className = "sidepanel-library-chips";
       const values = [item.category, libraryAccessLabel(item.accessModel), item.language];
+      for (const [groupId, label] of LibraryGroups.GROUPS) {
+        if (LibraryGroups.matches(item, groupId)) values.push(label);
+      }
       if (Number.isFinite(item.classification?.dr)) values.push(`DR ${item.classification.dr}`);
       if (Number.isFinite(item.classification?.organicTraffic)) values.push(`流量 ${formatLibraryMetric(item.classification.organicTraffic)}`);
       for (const value of values.filter(Boolean)) {
@@ -409,6 +438,32 @@
       });
       actions.append(favoriteButton, enabledButton);
 
+      const groupActions = document.createElement("div");
+      groupActions.className = "sidepanel-library-group-actions";
+      for (const [groupId, label] of LibraryGroups.GROUPS) {
+        const active = LibraryGroups.matches(item, groupId);
+        const groupButton = document.createElement("button");
+        groupButton.type = "button";
+        groupButton.className = `sidepanel-library-action${active ? " in-group" : ""}`;
+        groupButton.textContent = `${active ? "✓" : "+"} ${label}`;
+        groupButton.setAttribute("aria-pressed", String(active));
+        groupButton.setAttribute("aria-label", `${active ? "从" : "加入"}${label}${active ? "分组移出" : "分组"}：${item.name || item.domain || item.url}`);
+        groupButton.addEventListener("click", () => {
+          const next = new Set(LibraryGroups.GROUPS
+            .filter(([id]) => LibraryGroups.matches(item, id))
+            .map(([id]) => id));
+          if (active) next.delete(groupId);
+          else next.add(groupId);
+          groupButton.disabled = true;
+          updateLibraryItemPreferences(item, { groups: [...next] })
+            .catch((error) => {
+              groupButton.disabled = false;
+              showToast(error.message, true);
+            });
+        });
+        groupActions.append(groupButton);
+      }
+
       const profileAssignment = document.createElement("details");
       profileAssignment.className = "library-profile-assignment";
       const profileSummary = document.createElement("summary");
@@ -436,7 +491,7 @@
       profileHint.className = "library-profile-hint";
       profileHint.textContent = "未勾选时全部 Profile 可用；勾选后只进入指定 Profile 的队列。";
       profileAssignment.append(profileSummary, profileOptions, profileHint);
-      card.append(head, chips, status, actions, profileAssignment);
+      card.append(head, chips, status, actions, groupActions, profileAssignment);
       list.append(card);
     }
     const more = $("btnSidepanelLibraryMore");
@@ -445,6 +500,7 @@
       more.textContent = `加载更多（剩余 ${Math.max(0, filtered.length - shown.length)} 条）`;
     }
     updateQuickOpenControls();
+    updateLibraryGroupStartButton();
   }
 
   async function loadSidepanelLibrary() {
@@ -463,13 +519,16 @@
     }));
     sidepanelLibraryLoaded = true;
     populateSidepanelLibraryCategories(sidepanelLibraryItems);
+    populateSidepanelLibraryGroups(sidepanelLibraryItems);
     updateLibraryCategoryStartButton();
+    updateLibraryGroupStartButton();
     renderSidepanelLibrary();
   }
 
   for (const id of [
     "sidepanelLibrarySearch",
     "sidepanelLibraryCategory",
+    "sidepanelLibraryGroup",
     "sidepanelLibraryAccess",
     "sidepanelLibraryFavorite",
     "sidepanelLibraryEnabled",
@@ -477,6 +536,7 @@
     $(id)?.addEventListener(id === "sidepanelLibrarySearch" ? "input" : "change", () => {
       sidepanelLibraryVisibleLimit = 60;
       updateLibraryCategoryStartButton();
+      updateLibraryGroupStartButton();
       renderSidepanelLibrary();
     });
   }
@@ -3224,6 +3284,7 @@
       if ($(id)) $(id).disabled = ["running", "paused"].includes(batchStatus);
     }
     updateLibraryCategoryStartButton();
+    updateLibraryGroupStartButton();
   }
 
   function setBatchStatus(status, save = true) {
@@ -3279,7 +3340,7 @@
     }
   }
 
-  async function startSubmissionBatch({ category = "", button = null, switchToBatch = false } = {}) {
+  async function startSubmissionBatch({ category = "", group = "", button = null, switchToBatch = false } = {}) {
     if (running || batchStatus === "paused") return;
     if (!selectedSiteIds.length) {
       showToast("请至少勾选一个自家网站", true);
@@ -3289,8 +3350,13 @@
       showToast("请先选择有效的外链分类", true);
       return;
     }
+    if (group && !LibraryGroups.GROUPS.some(([id]) => id === group)) {
+      showToast("请先选择有效的外链分组", true);
+      return;
+    }
     const startButton = button || $("btnStart");
-    const idleText = category ? `提交「${category}」` : "开始提交";
+    const groupLabel = LibraryGroups.GROUPS.find(([id]) => id === group)?.[1];
+    const idleText = groupLabel ? `提交「${groupLabel}」组` : category ? `提交「${category}」` : "开始提交";
     startButton.disabled = true;
     startButton.textContent = "正在构建队列…";
     try {
@@ -3298,6 +3364,7 @@
         action: "start",
         selectedSiteIds,
         category,
+        group,
         config: {
           ...Sidepanel.buildBatchConfig({
             concurrency: batchConcurrency,
@@ -3326,6 +3393,7 @@
       startButton.disabled = false;
       startButton.textContent = idleText;
       updateLibraryCategoryStartButton();
+      updateLibraryGroupStartButton();
     }
   }
 
@@ -3338,6 +3406,16 @@
     startSubmissionBatch({
       category,
       button: $("btnStartLibraryCategory"),
+      switchToBatch: true,
+    }).catch((err) => showToast(err.message, true));
+  });
+
+  $("btnStartLibraryGroup")?.addEventListener("click", () => {
+    const group = $("sidepanelLibraryGroup")?.value || "";
+    if (!group) return;
+    startSubmissionBatch({
+      group,
+      button: $("btnStartLibraryGroup"),
       switchToBatch: true,
     }).catch((err) => showToast(err.message, true));
   });

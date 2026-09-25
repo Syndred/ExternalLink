@@ -229,6 +229,12 @@ body {
 .library-filter-row select {
   flex: 1;
 }
+#btnStartLibraryGroup {
+  margin-top: 7px;
+}
+.library-filter-card .library-submit-note {
+  margin-top: 7px;
+}
 .library-summary {
   margin-top: 8px;
   color: #64748b;
@@ -309,6 +315,12 @@ body {
   flex-wrap: wrap;
   margin-top: 8px;
 }
+.sidepanel-library-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
 .sidepanel-library-action {
   border: 1px solid #cbd5e1;
   border-radius: 7px;
@@ -327,6 +339,11 @@ body {
   border-color: #fecaca;
   background: #fef2f2;
   color: #991b1b;
+}
+.sidepanel-library-action.in-group {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
 }
 .library-profile-assignment {
   margin-top: 8px;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ExternalLink - 外链批量提交",
-  "version": "3.7.38",
+  "version": "3.7.39",
   "description": "云端保存外链库、完整资料字段、提交审核上线时间线与私有媒体",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications", "sidePanel", "alarms", "contextMenus", "debugger", "webNavigation"],
   "host_permissions": ["<all_urls>"],

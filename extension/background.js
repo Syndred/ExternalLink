@@ -13,6 +13,7 @@ importScripts(
   "lib/cloud-sync.js",
   "lib/url-library.js",
   "lib/library-classifier.js",
+  "lib/library-groups.js",
   "lib/submify-import.js",
   "lib/opportunity-score.js",
   "lib/context-menu.js",
@@ -2674,18 +2675,22 @@ async function startBatchRun(msg) {
   const previousStorage = await chrome.storage.local.get(["activeBatchRun"]);
   const previousBatch = previousStorage.activeBatchRun;
   const requestedCategory = String(msg.category || "").trim();
+  const requestedLibraryGroup = String(msg.group || "").trim();
   const pending = await loadPendingSubmissionTasks({
     selectedProfileIds: selectedSiteIds,
     category: requestedCategory,
+    group: requestedLibraryGroup,
   });
   if (state.lifecycleVersion !== lifecycleVersion) {
     throw new Error("批次启动已取消");
   }
   if (!pending.tasks.length) {
     throw new Error(
-      requestedCategory
-        ? `分类「${requestedCategory}」没有新的待提交组合；原批次记录和待办已保留`
-        : "所选网站没有新的待提交组合；原批次记录和待办已保留",
+      requestedLibraryGroup
+        ? `分组「${self.ExtLinkLibraryGroups.GROUPS.find(([id]) => id === requestedLibraryGroup)?.[1] || requestedLibraryGroup}」没有新的待提交组合；原批次记录和待办已保留`
+        : requestedCategory
+          ? `分类「${requestedCategory}」没有新的待提交组合；原批次记录和待办已保留`
+          : "所选网站没有新的待提交组合；原批次记录和待办已保留",
     );
   }
   state.stopped = false;
@@ -2705,10 +2710,14 @@ async function startBatchRun(msg) {
 
   state.runId = `run-${Date.now().toString(36)}`;
   await resetBatchLog(state.runId, selectedSiteIds);
-  log(`${requestedCategory ? `正在从「${requestedCategory}」分类` : "正在"}为 ${selectedSiteIds.length} 个 Profile 构建批量队列`, "", {
+  const scopeLabel = requestedLibraryGroup
+    ? `「${self.ExtLinkLibraryGroups.GROUPS.find(([id]) => id === requestedLibraryGroup)?.[1] || requestedLibraryGroup}」分组`
+    : requestedCategory ? `「${requestedCategory}」分类` : "";
+  log(`${scopeLabel ? `正在从${scopeLabel}` : "正在"}为 ${selectedSiteIds.length} 个 Profile 构建批量队列`, "", {
     event: "queue_build_started",
     selectedSiteIds,
     category: requestedCategory,
+    group: requestedLibraryGroup,
   });
   await chrome.storage.local.set({ selectedSiteIds });
   assertBatchStartCurrent(lifecycleVersion);
@@ -2721,6 +2730,7 @@ async function startBatchRun(msg) {
   state.config = {
     ...(msg.config || {}),
     libraryCategory: requestedCategory,
+    libraryGroup: requestedLibraryGroup,
     fillOnly: msg.config?.fillOnly === true,
     autoSubmitDirectory:
       storedFlags.autoSubmitDirectoryListings !== false && msg.config?.fillOnly !== true,
@@ -5840,12 +5850,22 @@ async function updateLibraryPreferences(msg = {}) {
       : previousPreferences.profileIds;
     const invalidProfileIds = requestedProfileIds.filter((profileId) => !validProfileIds.has(profileId));
     if (invalidProfileIds.length) throw new Error("包含不存在的 Profile，请刷新后重试");
+    const previousLibrary = previous.library && typeof previous.library === "object" && !Array.isArray(previous.library)
+      ? previous.library
+      : {};
     const library = {
+      ...previousLibrary,
       favorite: typeof msg.favorite === "boolean" ? msg.favorite : previousPreferences.favorite,
       enabled: typeof msg.enabled === "boolean" ? msg.enabled : previousPreferences.enabled,
       profileIds: requestedProfileIds,
       updatedAt: new Date().toISOString(),
     };
+    if (Object.prototype.hasOwnProperty.call(msg, "groups")) {
+      if (!Array.isArray(msg.groups)) throw new Error("外链分组格式无效");
+      library.groups = self.ExtLinkLibraryClassifier.normalizeLibraryGroups(msg.groups);
+    } else if (Object.prototype.hasOwnProperty.call(previousLibrary, "groups")) {
+      library.groups = self.ExtLinkLibraryClassifier.normalizeLibraryGroups(previousLibrary.groups);
+    }
     const annotation = {
       ...previous,
       url: parsed.href,
@@ -6690,6 +6710,36 @@ function scopeDestinationGroupsByLibraryCategory(groups = [], category = "") {
     .filter((group) => group.category === requestedCategory);
 }
 
+function scopeDestinationGroupsByLibraryGroup(groups = [], groupId = "", annotations = {}, records = {}) {
+  const requestedGroup = String(groupId || "").trim();
+  if (!requestedGroup) return groups;
+  if (!self.ExtLinkLibraryGroups.GROUPS.some(([id]) => id === requestedGroup)) {
+    throw new Error("外链分组无效，请重新选择");
+  }
+  return groups.filter((group) => {
+    const annotation = annotations[group.destinationKey] || annotations[group.domain] || null;
+    const classification = group.classification || self.ExtLinkLibraryClassifier.describe({
+      entry: group.entry || {},
+      url: group.url,
+      domain: group.domain,
+      note: group.note || group.entry?.note || "",
+      detail: group.entry?.detail || "",
+      metrics: group.quality?.metrics || group.entry?.metrics || {},
+    });
+    const profileStatuses = recordsForDestination(records, group.destinationKey)
+      .map(([, record]) => ({ success: record?.status === "success" }));
+    return self.ExtLinkLibraryGroups.matches({
+      url: group.url,
+      annotation,
+      quality: group.quality,
+      metrics: group.quality?.metrics || group.entry?.metrics || {},
+      category: classification.category,
+      accessModel: classification.accessModel,
+      profileStatuses,
+    }, requestedGroup);
+  });
+}
+
 async function loadPendingSubmissionTasks(options = {}) {
   const storage = await chrome.storage.local.get([
     "siteProfiles",
@@ -6778,7 +6828,14 @@ async function loadPendingSubmissionTasks(options = {}) {
     return { ...group, quality };
   }).sort(self.ExtLinkOpportunityScore.compareOpportunities);
   const requestedCategory = String(options.category || "").trim();
-  const groups = scopeDestinationGroupsByLibraryCategory(allGroups, requestedCategory);
+  const requestedLibraryGroup = String(options.group || "").trim();
+  const categoryGroups = scopeDestinationGroupsByLibraryCategory(allGroups, requestedCategory);
+  const groups = scopeDestinationGroupsByLibraryGroup(
+    categoryGroups,
+    requestedLibraryGroup,
+    annotations,
+    submissionRecords,
+  );
 
   const deletedKeys = storage.deletedSubmissionKeys || [];
   const filters = normalizeTargetFilters(storage.targetFilters);
@@ -6826,6 +6883,7 @@ async function loadPendingSubmissionTasks(options = {}) {
       total: filtered.length,
       destinationTotal: groups.length,
       category: requestedCategory,
+      group: requestedLibraryGroup,
       selectedProfileTotal: selectedProfileIds.length,
       successfulSkipped: Object.values(submissionRecords).filter(
         (record) =>

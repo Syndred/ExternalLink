@@ -610,12 +610,18 @@
               <option value="55">可做（55+）</option>
               <option value="35">观察（35+）</option>
             </select>
+            <select id="libraryGroupFilter" aria-label="外链分组">
+              <option value="">全部分组</option>
+              <option value="high_quality">高质量优先</option>
+              <option value="free_submit">免费可提交</option>
+            </select>
             <select id="librarySort" aria-label="外链排序">
               <option value="quality">质量分优先</option>
               <option value="position">原始顺序</option>
               <option value="domain">域名 A-Z</option>
             </select>
           </div>
+          <p class="hint library-group-hint">分组用于筛选优先候选站；免费资格请在每次提交前核对站点当前规则。</p>
           <p class="hint" id="libraryCount">正在加载外链库…</p>
           <div
             class="library-list"
@@ -891,6 +897,7 @@
     <script src="lib/queue.js"></script>
     <script src="lib/submission-timeline.js"></script>
     <script src="lib/library-classifier.js"></script>
+    <script src="lib/library-groups.js"></script>
     <script src="settings.js"></script>
   </body>
 </html>

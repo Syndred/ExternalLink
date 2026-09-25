@@ -241,6 +241,11 @@
           <select id="sidepanelLibraryCategory" aria-label="外链分类">
             <option value="">全部分类</option>
           </select>
+          <select id="sidepanelLibraryGroup" aria-label="外链分组">
+            <option value="">全部分组</option>
+          </select>
+        </div>
+        <div class="library-filter-row">
           <select id="sidepanelLibraryAccess" aria-label="费用类型">
             <option value="">全部费用</option>
             <option value="free">免费</option>
@@ -264,6 +269,10 @@
         <button type="button" class="btn btn-primary btn-block" id="btnStartLibraryCategory" disabled>
           从此分类开始提交
         </button>
+        <button type="button" class="btn btn-ghost btn-block" id="btnStartLibraryGroup" disabled>
+          从此分组开始提交
+        </button>
+        <p class="library-submit-note">“高质量优先”和“免费可提交”是可调整的候选分组；每次提交前仍须复核站点规则与费用。</p>
         <p class="library-submit-note">使用当前勾选的 Profile；已成功、付费、跳过、登录和验证码等安全闸门仍然生效。</p>
         <div class="library-summary" id="sidepanelLibrarySummary" role="status">打开后加载外链库…</div>
       </section>
@@ -357,6 +366,7 @@
     <script src="lib/batch-report.js"></script>
     <script src="lib/url-library.js"></script>
     <script src="lib/library-classifier.js"></script>
+    <script src="lib/library-groups.js"></script>
     <script src="sidepanel.js"></script>
   </body>
 </html>

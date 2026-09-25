@@ -104,6 +104,12 @@
     return [...new Set(value.map((item) => compact(item)).filter(Boolean))];
   }
 
+  function normalizeLibraryGroups(value) {
+    if (!Array.isArray(value)) return [];
+    const allowed = new Set(["high_quality", "free_submit"]);
+    return [...new Set(value.map((item) => compact(item)).filter((item) => allowed.has(item)))];
+  }
+
   function libraryPreferences(annotation = {}) {
     const library = annotation && typeof annotation.library === "object" && !Array.isArray(annotation.library)
       ? annotation.library
@@ -112,6 +118,7 @@
       favorite: library.favorite === true,
       enabled: library.enabled !== false,
       profileIds: normalizeProfileIds(library.profileIds),
+      groups: normalizeLibraryGroups(library.groups),
       updatedAt: compact(library.updatedAt),
     };
   }
@@ -133,6 +140,7 @@
     libraryEligibility,
     libraryPreferences,
     normalizeAccessModel,
+    normalizeLibraryGroups,
     normalizeProfileIds,
     normalizeTags,
   };

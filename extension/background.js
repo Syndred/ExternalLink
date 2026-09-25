@@ -95,6 +95,9 @@ const autoFillInProgress = new Set();
 let sidePanelOpen = false;
 let cloudSyncTimer = null;
 let cloudSyncFlushPromise = null;
+// A restarted device may carry old pending documents. Read the cloud first;
+// never replay that queue automatically before the operator resolves it.
+let cloudSyncStartupHold = true;
 const cloudSyncPendingKeys = new Set();
 const cloudSyncConflictKeys = new Set();
 const cloudSyncPendingPatches = new Map();
@@ -728,7 +731,8 @@ async function restoreCloudSyncQueue() {
       }
     }
   }
-  if (cloudSyncPendingKeys.size) scheduleCloudSync(0, false);
+  // The startup cloud pull will either reconcile this queue or leave it for
+  // an explicit operator choice. Do not replay stale values on boot.
 }
 
 function markCloudSyncConflict(key) {
@@ -1328,6 +1332,10 @@ async function pullCloudState(options = {}) {
     await backfillVerifiedSiteMarkers().catch((err) => {
       log(`已回读云端，站点标记补全暂未完成：${err.message}`, "warn");
     });
+    if (!baselinePending.size || discardLocalChanges) {
+      cloudSyncStartupHold = false;
+      if (cloudSyncPendingKeys.size) scheduleCloudSync();
+    }
     return {
       ok: true,
       applied: true,
@@ -1684,6 +1692,7 @@ async function ensureCloudRevisions(configOverride = null) {
 }
 
 function scheduleCloudSync(delayMs = CLOUD_SYNC_DEBOUNCE_MS, resetRetry = true) {
+  if (cloudSyncStartupHold) return;
   if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
   if (resetRetry) cloudSyncRetryAttempt = 0;
   cloudSyncTimer = setTimeout(() => {
@@ -1709,11 +1718,14 @@ function cloudSyncConfigChangedError() {
   return error;
 }
 
-async function flushCloudState(keys = null) {
+async function flushCloudState(keys = null, options = {}) {
   if (cloudSyncFlushPromise) return cloudSyncFlushPromise;
   const hadPendingSubmissionLedger = SUBMISSION_LEDGER_CLOUD_KEYS.some((key) => cloudSyncPendingKeys.has(key));
   cloudSyncFlushPromise = (async () => {
     if (typeof initializationPromise !== "undefined") await initializationPromise;
+    if (cloudSyncStartupHold && options.allowBeforePull !== true) {
+      return { ok: true, skipped: true, reason: "awaiting_cloud_pull" };
+    }
     const config = await getCloudConfig();
     const configFingerprint = submissionLedgerCloudConfigFingerprint(config);
     if (!config.configured) return { ok: true, skipped: true };
@@ -1870,7 +1882,11 @@ async function pushCloudState() {
   const writablePendingKeys = [...cloudSyncPendingKeys].filter((key) =>
     self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && !cloudSyncConflictKeys.has(key),
   );
-  return flushCloudState(writablePendingKeys);
+  const result = await flushCloudState(writablePendingKeys, { allowBeforePull: true });
+  if (Array.isArray(result?.saved) && result.saved.length && !cloudSyncPendingKeys.size) {
+    cloudSyncStartupHold = false;
+  }
+  return result;
 }
 
 // ─── Target gating: domain blacklist + registration age ───

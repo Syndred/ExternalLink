@@ -104,7 +104,7 @@ async function waitForCall(calls) {
   assert.ok(calls.length, "cloud request did not start");
 }
 
-function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = {}) {
+function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], startupHold = false } = {}) {
   const storageData = clone(initial) || {};
   const writes = [];
   const context = {
@@ -141,6 +141,7 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
     cloudSyncPendingPersistence: Promise.resolve(),
     cloudSyncRetryAttempt: 0,
     cloudSyncTimer: null,
+    cloudSyncStartupHold: startupHold,
     cloudPullPromise: null,
     getCloudConfig: async () => clone(config || {
       configured: true,
@@ -395,6 +396,41 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [] } = 
   assert.deepEqual(harness.storageData.cloudSyncPendingKeys, []);
   assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
   assert.doesNotMatch(JSON.stringify(harness.storageData.cloudSyncMetadata), /token/);
+}
+
+// A restarted device must not replay old pending data before the operator
+// explicitly replaces it with the canonical cloud workspace.
+{
+  const calls = [];
+  const harness = createHarness({
+    startupHold: true,
+    initial: {
+      submissionRecords: { local: "stale" },
+      cloudSyncPendingKeys: ["submissionRecords"],
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { submissionRecords: 7 },
+      },
+    },
+    cloudRequest: async (path) => {
+      calls.push(path);
+      if (path === "/v1/revisions") return { revisions: { submissionRecords: 8 } };
+      if (path === "/v1/state/submissionRecords") {
+        return { documentKey: "submissionRecords", data: { remote: "canonical" }, revision: 8 };
+      }
+      throw new Error(`unexpected path ${path}`);
+    },
+  });
+  const skipped = await harness.context.flushCloudState();
+  assert.equal(skipped.reason, "awaiting_cloud_pull");
+  assert.deepEqual(calls, [], "startup must not replay the old pending value");
+  assert.equal((await harness.context.pullCloudState()).status, "pending");
+  assert.equal(harness.context.cloudSyncStartupHold, true);
+  const applied = await harness.context.pullCloudState({ discardLocalChanges: true });
+  assert.equal(applied.status, "applied");
+  assert.equal(harness.context.cloudSyncStartupHold, false);
+  assert.deepEqual(harness.storageData.submissionRecords, { remote: "canonical" });
+  assert.deepEqual(calls, ["/v1/revisions", "/v1/state/submissionRecords"]);
 }
 
 // A copied browser profile may explicitly discard pure pending writes and

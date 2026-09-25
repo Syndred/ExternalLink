@@ -284,4 +284,4 @@ tests/local-agent-unit.test.py
 - AI Tools Directory 投稿页及其 `aitool.paperform.co` 嵌入表单拒收 AI 生成或复制文案。插件在该站自动填表/提交入口一律停放；浏览器页签保留了产品名、URL、Freemium、标签、Syndred、不购买广告，原创描述/差异说明/邮箱未填，也未提交。
 - 普通免费目录在站方回执后须核对本地精确成功记录、Neon 对应记录与时间线才自动关页/推进。云端未回读时保留页签、防重复点击，后续同步完成有界续跑；法律条款同意停放人工。
 - OldPhotoLive 首装备用 Profile 已清理过期订阅/价格文案；上轮停在备用种子，Neon 正本更新见下方续办。3.7.44 未获浏览器重载/实站验收，不把源码能力写成已上线能力。详见 `docs/整站自动提交与原创投稿交接-2026-09-25.md`。
-- 续办实绩：Neon `siteProfiles.OldPhotoLive.fields` 中 13 个旧种子字段已按修订 88 → 89 更新，GET 回读全数一致；其他 7 个 Profile 未变。Ego 本地缓存仍为 88，pending/conflict 均为 0，需浏览器回读才能目视生效。用户要求复测后已补 Worker 依赖与回归覆盖，最终主项目套件仍待合并后执行；Ego 画面捕捉失败且扩展内部页接管被浏览器拒绝，实站加载 3.7.44 尚未完成。
+- 续办实绩：Neon `siteProfiles.OldPhotoLive.fields` 中 13 个旧种子字段已按修订 88 → 89 更新，GET 回读全数一致；其他 7 个 Profile 未变。Ego 本地缓存仍为 88，pending/conflict 均为 0，需浏览器回读才能目视生效。用户要求复测后已补 Worker 依赖与回归覆盖，Desktop 主项目完整回归 52/52 通过；Ego 画面捕捉失败且扩展内部页接管被浏览器拒绝，实站加载 3.7.44 尚未完成。

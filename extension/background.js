@@ -5189,6 +5189,9 @@ async function runValidateAndFixFill(tabId, config, options = {}) {
 // a later queue pass cannot schedule the same Profile again.
 const DISPLAY_HOST_DESTINATIONS = new Set([
   "startupstash.com",
+  "startupcollections.com",
+  "aisuperhub.io",
+  "launchpedia.co",
   "tipseason.com",
   "library.phygital.plus",
   "aisotools.com",
@@ -5207,7 +5210,7 @@ function siteKeyForUrl(url) {
   const domain = self.ExtLinkQueue.extractDomain(url);
   // Keep this function self-contained because destination-memory helpers are
   // also loaded in isolation by the form-learning regression tests.
-  return ["startupstash.com", "tipseason.com", "library.phygital.plus", "aisotools.com"].includes(String(domain || "").toLowerCase())
+  return ["startupstash.com", "startupcollections.com", "aisuperhub.io", "launchpedia.co", "tipseason.com", "library.phygital.plus", "aisotools.com"].includes(String(domain || "").toLowerCase())
     ? String(domain || "").toLowerCase()
     : normalized;
 }

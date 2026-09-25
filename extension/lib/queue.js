@@ -17,6 +17,10 @@
     "aitools.neilpatel.com",
     "producthunt.com",
     "aisotools.com",
+    "startupcollections.com",
+    "startupstash.com",
+    "aisuperhub.io",
+    "launchpedia.co",
   ]);
   const NON_RECEIPT_MIGRATION_EVIDENCE = new Set([
     "table.xlsx submitted seed",

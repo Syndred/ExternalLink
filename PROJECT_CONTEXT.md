@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-25 / 3.7.50 侧栏整站提交入口**：会话启动抓取并快进 `origin/main` 至 `70ccac9`。Ego 3.7.48 SmartBizTools 实测暴露目标受众、Pros、Founder 误填和编辑声明代勾；3.7.49 重载后前述字段与声明已现场纠正。Chrome 3.7.49 在 AI Valley 由插件填好 JevPlay 表单，但未点击 Submit、无回执。3.7.50 源码新增明确“提交本页”入口，复用后台预检和账本流程，补修短/完整描述路由；53/53 回归通过。窗口控制中断使 3.7.50 尚未实机重载，Neon 无新增回读，十站目标仍未完成。见 `docs/三产品十站插件实测-2026-09-25.md`。
+
 - **2026-09-25 / 3.7.48 十站续验**：AI Tool Finder 已补 JevPlay / Graffiti Name AI 并取得两个 `Received for editorial review` UUID；AllToolsDirectory 已补 JevPlay / Graffiti Name AI，站方官方 `/api/submit-tool` 返回 `Tool submitted successfully`。源码将 JevPlay 补回内置 Profile，四条回执写入本地种子账本，并新增 AllToolsDirectory API 兜底。AINave JevPlay 已填完、上传图片并选 Free / Artificial Intelligence / Games，但最终提交弹登录；Offo JevPlay 已生成草稿但需登录发布。SmartBizTools 与 SoMuch 因必选确认框停放，FutureTools 因 CAPTCHA 停放，FoundrList 因登录停放。3.7.48 测试通过但尚未在 Chrome 扩展内部页重载或 Neon 回读。详见 `docs/三产品十站插件实测-2026-09-25.md`。
 
 - **2026-09-25 / 本轮十站完成**：OldPhotoLive AI 又在 Insidr AI、FoundrList、Forward Future 取得站方回执，本轮合计 10 个不同新站：SmartBizTools、AINave、Offo 已公开，FoundrList 免费排期约 2026-10-19，上述其余 6 站待审核。申请主要经 Ego 手工完成；未把排期、审核或浏览器回执冒充已发布、插件自动提交或 Neon 同步。完成页签已关闭。Firsto 仅审查免费入口，未登录提交。3.7.43 免费路径组也补入这三站，源码待实机重载与云端回读。详见 `docs/外链续办与自动关页-2026-09-25.md`。

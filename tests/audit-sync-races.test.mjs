@@ -104,7 +104,7 @@ async function waitForCall(calls) {
   assert.ok(calls.length, "cloud request did not start");
 }
 
-function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], startupHold = false } = {}) {
+function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], startupHold = false, stateKeys = ["submissionRecords", "submissionTimeline"] } = {}) {
   const storageData = clone(initial) || {};
   const writes = [];
   const context = {
@@ -127,7 +127,7 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
     },
     self: {
       ExtLinkCloudSync: {
-        STATE_DOCUMENT_KEYS: ["submissionRecords", "submissionTimeline"],
+        STATE_DOCUMENT_KEYS: stateKeys,
         documentsToState: (documents) => clone(documents || {}),
         supportsPatch: (key) => patchKeys.includes(key),
       },
@@ -405,18 +405,23 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
   const harness = createHarness({
     startupHold: true,
     initial: {
-      submissionRecords: { local: "stale" },
-      cloudSyncPendingKeys: ["submissionRecords"],
+      siteProfiles: { OldPhotoLive: { fields: { pricing: "stale" } } },
+      cloudSyncPendingKeys: ["siteProfiles"],
+      cloudSyncPendingPatches: {
+        siteProfiles: [{ op: "set", path: ["OldPhotoLive", "fields", "pricing"], value: "stale" }],
+      },
       cloudSyncMetadata: {
         configIdentity: "https://cloud.example\u0000default",
-        revisions: { submissionRecords: 7 },
+        revisions: { siteProfiles: 88 },
       },
     },
+    patchKeys: ["siteProfiles"],
+    stateKeys: ["siteProfiles"],
     cloudRequest: async (path) => {
       calls.push(path);
-      if (path === "/v1/revisions") return { revisions: { submissionRecords: 8 } };
-      if (path === "/v1/state/submissionRecords") {
-        return { documentKey: "submissionRecords", data: { remote: "canonical" }, revision: 8 };
+      if (path === "/v1/revisions") return { revisions: { siteProfiles: 89 } };
+      if (path === "/v1/state/siteProfiles") {
+        return { documentKey: "siteProfiles", data: { OldPhotoLive: { fields: { pricing: "canonical" } } }, revision: 89 };
       }
       throw new Error(`unexpected path ${path}`);
     },
@@ -429,8 +434,8 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
   const applied = await harness.context.pullCloudState({ discardLocalChanges: true });
   assert.equal(applied.status, "applied");
   assert.equal(harness.context.cloudSyncStartupHold, false);
-  assert.deepEqual(harness.storageData.submissionRecords, { remote: "canonical" });
-  assert.deepEqual(calls, ["/v1/revisions", "/v1/state/submissionRecords"]);
+  assert.deepEqual(harness.storageData.siteProfiles, { OldPhotoLive: { fields: { pricing: "canonical" } } });
+  assert.deepEqual(calls, ["/v1/revisions", "/v1/state/siteProfiles"]);
 }
 
 // A copied browser profile may explicitly discard pure pending writes and

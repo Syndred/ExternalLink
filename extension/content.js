@@ -49,6 +49,8 @@
   const ACTION_WAIT_LIMIT_MS = 5000;
   const VISUAL_OVERLAY_ATTR = "data-extlink-visual-overlay";
   const SENSITIVE_URL_PARAM_PATTERN = /token|key|secret|code|session|csrf|nonce/i;
+  const LEGAL_POLICY_REFERENCE_PATTERN = /\bterms(?:\s+(?:of\s+(?:service|use)|and\s+conditions))?\b|\bprivacy\s+policy\b|\buser\s+agreement\b|\bsubmission\s+guidelines\b|\blisting\s+(?:terms|guidelines)\b|服务条款|使用条款|隐私政策|提交规则|收录规则/;
+  const AI_TOOLS_DIRECTORY_MANUAL_REASON = "AI Tools Directory 拒收 AI 生成或复制的文案；请用户独立撰写原创介绍并手动提交";
   const STARTUP_STASH_RECEIPT = "Thank you for applying to get listed on StartupStash! We will get back to you as early as possible :)";
   const PRODUCT_HUNT_STAGES = Object.freeze([
     "entry",
@@ -70,6 +72,33 @@
   // but SPA route changes keep it alive and otherwise let an old response
   // write into the newly-rendered page.
   let pageContextVersion = 0;
+
+  function isAiToolsDirectoryHost() {
+    const host = String(location.hostname || "").toLowerCase();
+    if (/^(?:www\.)?aitoolsdirectory\.com$/.test(host)) return true;
+    // The site's live submission form runs in this specific cross-origin
+    // Paperform iframe. Content scripts run in all frames, so the parent-host
+    // guard alone would leave its form writable by a frame-targeted message.
+    if (host !== "aitool.paperform.co") return false;
+    if (/^\/?$/.test(String(location.pathname || ""))) return true;
+    try {
+      return /^(?:www\.)?aitoolsdirectory\.com$/i.test(new URL(document.referrer).hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  function aiToolsDirectoryManualGate() {
+    return {
+      ok: false,
+      needs_manual: true,
+      keepTab: true,
+      submitted: false,
+      clickedSubmit: false,
+      filledCount: 0,
+      reason: AI_TOOLS_DIRECTORY_MANUAL_REASON,
+    };
+  }
 
   function capturePageContext() {
     return {
@@ -491,6 +520,7 @@
   // ─── Main Execution ───
   async function executeSubmit(config, platformType, taskIndex) {
     try {
+      if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
       // Determine platform
       let platform = platformType;
       if (platform === "auto" || !platform) {
@@ -739,6 +769,56 @@
     return /captcha|h[\s-]?captcha|one[\s-]?time|\botp\b|verification|verify|security\s*code|confirmation\s*code|auth(?:entication)?\s*code|email\s*code|验证码|校验码|验证(?:码|代码)/i.test(hint);
   }
 
+  function isLegalAcceptanceField(field) {
+    if (!field) return false;
+    const parent = field.parentElement;
+    const parentText = parent && !/^(?:FORM|MAIN|BODY)$/.test(parent.tagName || "")
+      ? compactText(parent.textContent, 260)
+      : "";
+    const hint = compactText([
+      getSnapshotLabel(field), field.name, field.id,
+      parentText.length < 240 ? parentText : "",
+    ].filter(Boolean).join(" "), 320).toLowerCase();
+    return LEGAL_POLICY_REFERENCE_PATTERN.test(hint);
+  }
+
+  function detectDirectoryLegalAgreement(scope) {
+    // Read only the active form or its visible form area. A site's footer may
+    // link to its policies without making the current submit action an assent.
+    const root = scope === document
+      ? document.querySelector("main, [role='main']") || document
+      : scope;
+    const assentAction = /\bby\s+(?:submitting|continuing|clicking|pressing|selecting)\b|\bupon\s+(?:submission|submitting|continuing)\b|\bwhen\s+you\s+(?:submit|continue)\b|点击.{0,12}(?:提交|继续)|提交(?:即|后|代表)|继续(?:即|后|代表)/;
+    const assent = /\b(?:agree|accept|consent|acknowledge|bound\s+by|agreement|acceptance)\b|同意|接受|确认|视为/;
+
+    const requiredLegalCheckbox = Array.from(root.querySelectorAll('input[type="checkbox"], [role="checkbox"]'))
+      .find((field) => {
+        const visibleControl = isVisibleHumanGate(field) ||
+          Array.from(field.labels || []).some(isVisibleHumanGate) ||
+          isVisibleHumanGate(field.closest?.("label"));
+        if (!visibleControl || field.disabled) return false;
+        const required = field.required || field.getAttribute("aria-required") === "true";
+        const checked = field.checked === true || field.getAttribute("aria-checked") === "true";
+        if (!required || checked) return false;
+        return isLegalAcceptanceField(field);
+      });
+    if (requiredLegalCheckbox) {
+      return "提交表单要求勾选法律条款，需人工确认后再提交";
+    }
+
+    const legalNotice = Array.from(root.querySelectorAll('label, p, small, span, div, [role="note"]'))
+      .find((element) => {
+        if (!isVisibleHumanGate(element) || element.closest("footer, [role='contentinfo']")) return false;
+        const text = compactText(
+          typeof element.innerText === "string" ? element.innerText : element.textContent,
+          420,
+        ).toLowerCase();
+        if (!text || text.length > 360 || !LEGAL_POLICY_REFERENCE_PATTERN.test(text) || !assentAction.test(text)) return false;
+        return assent.test(text);
+      });
+    return legalNotice ? "当前表单声明提交或继续即表示同意法律条款，需人工确认" : "";
+  }
+
   function detectSubmitBlockers() {
     if (typeof detectCaptcha === "function" && detectCaptcha()) return { captcha: true };
     let activeScope = document;
@@ -749,6 +829,12 @@
     }
     if (findVisibleHumanGate('input[type="password"]', activeScope)) {
       return { needs_manual: true, reason: "需要登录或注册" };
+    }
+    if (isAiToolsDirectoryHost()) {
+      return {
+        needs_manual: true,
+        reason: AI_TOOLS_DIRECTORY_MANUAL_REASON,
+      };
     }
     const paid = detectPaidSubmit();
     if (paid?.classification === "confirmed_payment") {
@@ -768,6 +854,8 @@
         paymentEvidence: paid.evidence,
       };
     }
+    const legalAgreement = detectDirectoryLegalAgreement(activeScope);
+    if (legalAgreement) return { needs_manual: true, reason: legalAgreement };
     return null;
   }
 
@@ -921,6 +1009,9 @@
   }
 
   function inspectAutoFillGuard(targetDomain = "") {
+    if (isAiToolsDirectoryHost()) {
+      return { blocked: true, ...aiToolsDirectoryManualGate() };
+    }
     const evidence = classifyVisibleEvidence({ destinationUrl: location.href });
     if (evidence?.matched && evidence.evidence) {
       return {
@@ -3819,6 +3910,7 @@
   async function submitDirectoryLink(config) {
     logStep("🔍 检测到目录提交表单");
     const result = await smartFillFromConfig(config);
+    if (result?.needs_manual) return result;
     if (result?.stale) return result;
     if (result.filledCount === 0) {
       const submissionLink = findSubmissionLink();
@@ -3948,6 +4040,7 @@
 
   // ─── Generic Form Submission ───
   async function submitGenericForm(config) {
+    if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
     const pageContext = capturePageContext();
     logStep("🔍 检测到通用提交表单");
     let filledCount = 0;
@@ -4034,6 +4127,7 @@
 
   // ─── Finalize After Captcha ───
   async function finalizeSubmit(config, taskIndex) {
+    if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
     // Click submit button
     const submitBtn = findSubmitButton(
       'input[type="submit"], button[type="submit"], #submit, .form-submit input',
@@ -4410,6 +4504,9 @@
   }
 
   async function executeActionPlan(actions) {
+    if (isAiToolsDirectoryHost()) {
+      return { ...aiToolsDirectoryManualGate(), results: [] };
+    }
     if (!Array.isArray(actions)) {
       return {
         ok: false,
@@ -4555,6 +4652,13 @@
           return actionFailure(action, "selector is not checkable");
         }
         if (element.disabled) return actionFailure(action, "field is disabled");
+        if (isLegalAcceptanceField(element)) {
+          return {
+            ...actionFailure(action, "法律条款勾选需要人工确认"),
+            needs_manual: true,
+            humanGate: "legal",
+          };
+        }
         setCheckedValue(element, action.value !== false && action.checked !== false);
         element.dispatchEvent(new Event("input", { bubbles: true }));
         element.dispatchEvent(new Event("change", { bubbles: true }));
@@ -5077,6 +5181,13 @@
     }
     if (/\b(i agree|accept terms|agree to (the )?(terms|privacy)|legal agreement|consent)\b|同意.*(条款|协议|隐私)|接受.*(条款|协议)/.test(context)) {
       return { type: "legal", reason: "检测到明确法律条款确认，需要人工处理" };
+    }
+    if (isModelSubmissionControl(element, label) || isLikelyNavigationControl(label)) {
+      if (isAiToolsDirectoryHost()) {
+        return { type: "legal", reason: AI_TOOLS_DIRECTORY_MANUAL_REASON };
+      }
+      const legalAgreement = detectDirectoryLegalAgreement(element.closest("form, [role='form']") || getActiveFillScope());
+      if (legalAgreement) return { type: "legal", reason: legalAgreement };
     }
     return null;
   }
@@ -6022,6 +6133,7 @@
   }
 
   async function applyFieldCorrections(corrections) {
+    if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
     let applied = 0;
     for (const item of corrections) {
       if (!item || !item.selector) continue;
@@ -6251,6 +6363,7 @@
     for (const [key, options] of groups) {
       options.forEach((element) => handled.add(element));
       if (options.some((element) => element.checked)) continue;
+      if (options.some(isLegalAcceptanceField)) continue;
       if (!choiceGroupRequired(key, options)) continue;
 
       const ranked = options
@@ -6905,6 +7018,7 @@
   }
 
   async function smartFillFromConfig(config) {
+    if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
     const pageContext = capturePageContext();
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);

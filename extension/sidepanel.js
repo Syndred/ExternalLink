@@ -179,6 +179,7 @@
   // Only tabs opened by this panel's queue navigation may be closed automatically.
   // User-opened tabs, manual gates and tabs restored after the panel closes stay untouched.
   const ownedSubmissionTabs = new Map();
+  const cloudReceiptCompletionTabs = new Set();
   let skipActivationFromVerifiedClose = false;
   // A side panel belongs to one browser window. The last focused window can
   // change while another Space is active, so pin every tab action to this one.
@@ -1419,7 +1420,8 @@
   }
 
   async function closeVerifiedOwnedTab(result, context) {
-    if (!(result?.submitted && result?.matched && result?.evidence && result?.ledgerSaved === true)) return false;
+    if (!(result?.submitted && result?.matched && result?.evidence
+      && result?.ledgerSaved === true && result?.cloudSynced === true)) return false;
     if (
       !context?.ownedUrl ||
       Q.normalizeUrlKey(context.ownedUrl) !== Q.normalizeUrlKey(context.expectedUrl)
@@ -1428,6 +1430,7 @@
     if (ownedSubmissionTabs.get(context.tabId) !== context.ownedUrl) return false;
     const tab = await chrome.tabs.get(context.tabId).catch(() => null);
     if (!tab || !tab.active) return false;
+    if (result.receiptTabUrl && Q.normalizeUrlKey(tab.url || "") !== Q.normalizeUrlKey(result.receiptTabUrl)) return false;
     try {
       // Closing an active tab briefly activates the previous page. Do not
       // auto-detect and refill that page while opening the next queue target.
@@ -1441,7 +1444,10 @@
     }
   }
 
-  chrome.tabs.onRemoved.addListener((tabId) => ownedSubmissionTabs.delete(tabId));
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    ownedSubmissionTabs.delete(tabId);
+    cloudReceiptCompletionTabs.delete(tabId);
+  });
 
   $("btnPrevSite")?.addEventListener("click", () => cycleSubmission(-1));
   $("btnNextSite")?.addEventListener("click", () => cycleSubmission(1));
@@ -2542,12 +2548,14 @@
       const successLabel =
         result.ledgerSaved !== true
           ? "已看到站方回执，账本保存仍待核验"
+          : result.cloudSynced !== true
+          ? `已提交并保存本地账本，保留页签等待云端回读${result.cloudReason ? `；${result.cloudReason}` : ""}`
           : result.publicationStatus === "pending_moderation"
           ? "已提交，站点显示待审核"
           : result.publicationStatus === "published"
             ? "已提交并看到上线回执"
             : "已提交并记入账本";
-      setAutoFillStatus(successLabel, result.ledgerSaved === true ? "ok" : "warn");
+      setAutoFillStatus(successLabel, result.cloudSynced === true ? "ok" : "warn");
       await loadClassifiedList();
       await loadSubmissionQueue(currentPageUrl);
       const completedStillQueued = context?.destinationKey
@@ -2557,14 +2565,19 @@
         ? submissionTasks[(submissionIndex + (completedStillQueued ? 1 : 0)) % submissionTasks.length]
         : null;
       const completedTabClosed = await closeVerifiedOwnedTab(result, context);
-      if (result.advance && result.ledgerSaved === true) {
+      if (result.receiptTabUrl && !completedTabClosed) {
+        throw new Error("云端已确认，但当前页签未安全关闭；保留当前页等待重试");
+      }
+      if (result.advance && result.ledgerSaved === true && result.cloudSynced === true) {
         if (nextTask) {
           showToast(`${successLabel} — ${completedTabClosed ? "已关闭当前页，" : ""}打开下一站`);
-          cycleSubmission(0, {
+          const nextOpen = cycleSubmission(0, {
             keepCurrent: true,
             completedTabClosed,
             targetKey: nextTask.key,
-          }).catch(() => {});
+          });
+          if (result.receiptTabUrl) await nextOpen;
+          else nextOpen.catch(() => {});
         } else {
           showToast(`${successLabel} — 待提交队列已完成`);
         }
@@ -3657,6 +3670,28 @@
       return;
     }
     if (msg.action === "autoFillUpdate") {
+      if (msg.status === "cloudReceiptConfirmed") {
+        const ownedUrl = ownedSubmissionTabs.get(msg.tabId);
+        if (!ownedUrl || cloudReceiptCompletionTabs.has(msg.tabId)
+          || activeTabId !== msg.tabId || activeSiteId !== msg.profileId
+          || Q.normalizeDestinationKey(ownedUrl) !== Q.normalizeDestinationKey(msg.url)
+          || Q.normalizeUrlKey(currentPageUrl) !== Q.normalizeUrlKey(msg.url)) return;
+        cloudReceiptCompletionTabs.add(msg.tabId);
+        handleFillResult({
+          submitted: true, matched: true, evidence: msg.evidence,
+          publicationStatus: msg.publicationStatus || "submitted",
+          ledgerSaved: true, cloudSynced: true, advance: true, receiptTabUrl: msg.url,
+        }, "form", captureFillContext(msg.tabId, ownedUrl, msg.profileId))
+          .then(() => chrome.runtime.sendMessage({
+            action: "ackPendingSubmissionCloudTab",
+            tabId: msg.tabId, url: msg.url, profileId: msg.profileId,
+          }))
+          .catch((err) => {
+            cloudReceiptCompletionTabs.delete(msg.tabId);
+            setAutoFillStatus(`云端已确认，但继续队列失败：${err.message}`, "warn");
+          });
+        return;
+      }
       if (msg.status === "classified") {
         const label = SITE_STATUS_MAP[msg.classifyStatus]?.label || msg.classifyStatus;
         setAutoFillStatus(

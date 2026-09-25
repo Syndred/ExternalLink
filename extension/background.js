@@ -118,6 +118,9 @@ const SUBMISSION_LEDGER_CLOUD_KEYS = Object.freeze([
 const SUBMISSION_LEDGER_PULL_COOLDOWN_MS = 60000;
 let submissionLedgerPullPromise = null;
 let submissionLedgerPullStartedAt = 0;
+let submissionCloudReconcilePromise = null;
+const PENDING_SUBMISSION_CLOUD_TABS_KEY = "pendingSubmissionCloudTabs";
+const pendingSubmissionCloudTabsWrite = self.ExtLinkBatchControls.createSerialExecutor();
 let batchLogWritePromise = Promise.resolve();
 let pendingBatchLogEntries = [];
 let batchLogFlushTimer = null;
@@ -229,6 +232,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
   if (alarm.name === AUTOMATION_OUTBOX_ALARM) {
     flushAutomationOutbox().catch(() => {});
+    reconcilePendingSubmissionCloudTasks().catch((err) =>
+      log(`成功记录云端复核失败：${err.message}`, "warn"));
   }
   if (alarm.name === UNATTENDED_WATCHDOG_ALARM) {
     watchdogUnattendedBatch().catch((err) =>
@@ -263,6 +268,17 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+chrome.tabs.onRemoved.addListener((tabId) => {
+  pendingSubmissionCloudTabsWrite(async () => {
+    const storage = await chrome.storage.local.get(PENDING_SUBMISSION_CLOUD_TABS_KEY);
+    const pending = { ...(storage[PENDING_SUBMISSION_CLOUD_TABS_KEY] || {}) };
+    const remaining = Object.fromEntries(Object.entries(pending).filter(([, item]) => item?.tabId !== tabId));
+    if (Object.keys(remaining).length !== Object.keys(pending).length) {
+      await chrome.storage.local.set({ [PENDING_SUBMISSION_CLOUD_TABS_KEY]: remaining });
+    }
+  }).catch(() => {});
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   switch (msg.action) {
     case "sidepanelDetect":
@@ -283,6 +299,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     case "sidepanelFill":
       handleSidepanelFill(msg)
         .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "ackPendingSubmissionCloudTab":
+      rememberPendingSubmissionCloudTab(msg.tabId, msg.url, msg.profileId, { submittedAt: "" }, true)
+        .then(() => sendResponse({ ok: true }))
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "fetchSubmissionMedia":
@@ -1690,6 +1711,7 @@ function cloudSyncConfigChangedError() {
 
 async function flushCloudState(keys = null) {
   if (cloudSyncFlushPromise) return cloudSyncFlushPromise;
+  const hadPendingSubmissionLedger = SUBMISSION_LEDGER_CLOUD_KEYS.some((key) => cloudSyncPendingKeys.has(key));
   cloudSyncFlushPromise = (async () => {
     if (typeof initializationPromise !== "undefined") await initializationPromise;
     const config = await getCloudConfig();
@@ -1823,6 +1845,10 @@ async function flushCloudState(keys = null) {
     await assertConfigStable();
     await updateCloudMetadata({ lastPushAt: new Date().toISOString(), lastError: "" });
     cloudSyncRetryAttempt = 0;
+    if (hadPendingSubmissionLedger) {
+      setTimeout(() => reconcilePendingSubmissionCloudTasks().catch((err) =>
+        log(`成功记录云端复核失败：${err.message}`, "warn")), 0);
+    }
     return { ok: true, saved };
   })();
   try {
@@ -3792,6 +3818,19 @@ async function runSidepanelFill(msg) {
       return { error: `资料与当前网站不一致（${mismatch}），已阻止提交`, fillOnly: true };
     }
 
+    const previousRecord = await existingSubmissionRecord(pageUrl, profile.id);
+    if (previousRecord) {
+      const cloud = await confirmSubmissionRecordInCloud(pageUrl, profile.id, previousRecord);
+      await rememberPendingSubmissionCloudTab(tabId, pageUrl, profile.id, previousRecord, cloud.synced);
+      return {
+        ok: true, platform: "product_hunt", submitted: true, matched: true,
+        evidence: previousRecord.evidence, publicationStatus: previousRecord.publicationStatus || "submitted",
+        ledgerSaved: true, cloudSynced: cloud.synced, cloudReason: cloud.reason || "",
+        advance: msg.fillOnly !== true && cloud.synced, keepTab: !cloud.synced,
+        existingSubmission: true,
+      };
+    }
+
     broadcastAutoFillUpdate({
       tabId,
       status: "filling",
@@ -3809,7 +3848,7 @@ async function runSidepanelFill(msg) {
       return { ok: false, platform: "product_hunt", keepTab: true, fillOnly: true };
     }
     if (result.submittedAttempt && result.matched && result.evidence) {
-      await recordSubmittedProject({
+      const record = await recordSubmittedProject({
         url: pageUrl,
         profileId: profile.id,
         profileName: profile.name || profile.id,
@@ -3829,15 +3868,24 @@ async function runSidepanelFill(msg) {
           }],
         },
       });
+      const cloud = await confirmSubmissionRecordInCloud(pageUrl, profile.id, record);
+      await rememberPendingSubmissionCloudTab(tabId, pageUrl, profile.id, record, cloud.synced);
       broadcastAutoFillUpdate({
         tabId,
-        status: "done",
+        status: cloud.synced ? "done" : "verifying",
         ledgerSaved: true,
-        message: result.publicationStatus === "published"
+        cloudSynced: cloud.synced,
+        message: !cloud.synced
+          ? `Product Hunt 草稿已创建并保存本地账本，保留页签等待云端回读；${cloud.reason}`
+          : result.publicationStatus === "published"
           ? "Product Hunt 草稿已创建并看到公开回执"
           : "Product Hunt 草稿已创建并记入账本",
       });
-      return { ...result, ok: true, platform: "product_hunt", submitted: true, advance: msg.fillOnly !== true };
+      return {
+        ...result, ok: true, platform: "product_hunt", submitted: true,
+        ledgerSaved: true, cloudSynced: cloud.synced, cloudReason: cloud.reason || "",
+        advance: msg.fillOnly !== true && cloud.synced, keepTab: !cloud.synced,
+      };
     }
     if (result.submittedAttempt) {
       broadcastAutoFillUpdate({
@@ -4588,6 +4636,25 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     });
     return { error: `资料与当前网站不一致（${mismatch}），已阻止提交`, fillOnly: true };
   }
+  const previousRecord = await existingSubmissionRecord(currentUrl, profile?.id);
+  if (previousRecord) {
+    const cloud = await confirmSubmissionRecordInCloud(currentUrl, profile.id, previousRecord);
+    if (!batchEntry) await rememberPendingSubmissionCloudTab(tabId, currentUrl, profile.id, previousRecord, cloud.synced);
+    const message = cloud.synced
+      ? "此前已提交，精确账本和云端动态均已核对；不会重复点击提交"
+      : `此前已提交，保留页签等待云端回读；${cloud.reason}`;
+    broadcastAutoFillUpdate({
+      tabId, status: cloud.synced ? "done" : "verifying",
+      ledgerSaved: true, cloudSynced: cloud.synced, message,
+    });
+    return {
+      ok: true, submitted: true, matched: true, evidence: previousRecord.evidence,
+      publicationStatus: previousRecord.publicationStatus || "submitted",
+      ledgerSaved: true, cloudSynced: cloud.synced,
+      advance: cloud.synced, keepTab: !cloud.synced,
+      existingSubmission: true, cloudReason: cloud.reason || "",
+    };
+  }
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
   const beforeEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   assertBatchCurrent();
@@ -4748,6 +4815,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
     const pageUrl = await getTabUrlSafe(tabId);
     let ledgerSaved = false;
+    let cloud = { synced: false, reason: "本地成功记录待云端核对" };
     if (pageUrl && options.recordLedger !== false) {
       const record = await recordSubmittedProject({
         url: pageUrl,
@@ -4769,16 +4837,20 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       });
       ledgerSaved = record?.status === "success";
       if (!ledgerSaved) throw new Error("成功回执已出现，但精确账本记录未持久化");
+      cloud = await confirmSubmissionRecordInCloud(pageUrl, profile.id, record);
+      if (!batchEntry) await rememberPendingSubmissionCloudTab(tabId, pageUrl, profile.id, record, cloud.synced);
     }
     const doneMsg =
       !ledgerSaved
         ? "已取得站方回执，成功账本仍待核验"
+        : !cloud.synced
+          ? `已提交并保存本地账本，保留页签等待云端回读；${cloud.reason}`
         : submitResult.publicationStatus === "pending_moderation"
         ? "已提交，站点显示待审核"
         : submitResult.publicationStatus === "published"
           ? "已提交并看到上线回执"
           : "已提交并记入账本";
-    broadcastAutoFillUpdate({ tabId, status: ledgerSaved ? "done" : "verifying", ledgerSaved, message: doneMsg });
+    broadcastAutoFillUpdate({ tabId, status: cloud.synced ? "done" : "verifying", ledgerSaved, cloudSynced: cloud.synced, message: doneMsg });
     return {
       ok: true,
       submitted: true,
@@ -4786,8 +4858,10 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       evidence: submitResult.evidence,
       publicationStatus: submitResult.publicationStatus || "submitted",
       ledgerSaved,
-      advance: ledgerSaved || options.recordLedger === false,
-      keepTab: !ledgerSaved,
+      cloudSynced: cloud.synced,
+      cloudReason: cloud.reason || "",
+      advance: options.recordLedger === false || cloud.synced,
+      keepTab: options.recordLedger === false ? false : !cloud.synced,
     };
   }
 
@@ -4974,6 +5048,7 @@ async function submitUntilAccepted(tabId, config, profile, platformType, options
       options,
     );
     if (!submitted) return null;
+    if (submitted.existingSubmission) return { ...submitted, lastEmpty, issues: lastIssues };
     if (submitted.stageAdvanced) {
       stageCount += 1;
       await sleep(900);
@@ -5566,6 +5641,152 @@ function isPersistedSuccessRecord(records, recordKey, destinationKey, profileId)
     String(record.profileId || "").trim() === String(profileId || "").trim() &&
     String(recordKey || "") === self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId),
   );
+}
+
+async function confirmSubmissionRecordInCloud(url, profileId, expectedRecord, options = {}) {
+  const destinationKey = String(siteKeyForUrl(url) || "").trim();
+  const recordKey = self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId);
+  if (!isPersistedSuccessRecord({ [recordKey]: expectedRecord }, recordKey, destinationKey, profileId)) {
+    return { synced: false, reason: "本地成功记录身份不匹配" };
+  }
+  const config = await getCloudConfig();
+  if (!config.configured) return { synced: false, reason: "云端尚未连接，本地成功记录待同步" };
+  if (SUBMISSION_LEDGER_CLOUD_KEYS.some((key) => cloudSyncConflictKeys.has(key))) {
+    return { synced: false, reason: "外链账本存在云端冲突，已保留本地记录" };
+  }
+  const fingerprint = submissionLedgerCloudConfigFingerprint(config);
+  try {
+    // An unrelated scheduled flush may already be running. Wait for it, then
+    // explicitly flush both ledger documents written for this exact receipt.
+    if (cloudSyncFlushPromise) await cloudSyncFlushPromise;
+    const pushed = options.skipFlush === true
+      ? { ok: true }
+      : await flushCloudState(SUBMISSION_LEDGER_CLOUD_KEYS);
+    if (pushed?.skipped || SUBMISSION_LEDGER_CLOUD_KEYS.some((key) =>
+      cloudSyncPendingKeys.has(key) || cloudSyncConflictKeys.has(key))) {
+      return { synced: false, reason: "外链账本仍在等待云端同步" };
+    }
+    if (submissionLedgerCloudConfigFingerprint(await getCloudConfig()) !== fingerprint) {
+      return { synced: false, reason: "云端配置已变化，成功记录待重新核对" };
+    }
+    const [recordsRow, timelineRow] = await Promise.all(SUBMISSION_LEDGER_CLOUD_KEYS.map((key) =>
+      cloudRequest(`/v1/state/${key}`, {}, config),
+    ));
+    const cloudRecord = recordsRow?.documentKey === "submissionRecords"
+      ? recordsRow.data?.[recordKey]
+      : null;
+    const cloudTimeline = timelineRow?.documentKey === "submissionTimeline"
+      ? timelineRow.data
+      : null;
+    const sameReceipt = cloudRecord
+      && ["submittedAt", "evidence", "evidenceUrl", "publicUrl", "publicationStatus"].every((key) =>
+        String(cloudRecord[key] || "") === String(expectedRecord[key] || ""));
+    if (!sameReceipt || !submissionTimelineContainsRecord(cloudTimeline, recordKey, expectedRecord)) {
+      return { synced: false, reason: "云端未回读到本次精确成功记录和对应动态" };
+    }
+    if (submissionLedgerCloudConfigFingerprint(await getCloudConfig()) !== fingerprint) {
+      return { synced: false, reason: "云端配置已变化，成功记录待重新核对" };
+    }
+    return { synced: true };
+  } catch (err) {
+    return { synced: false, reason: `云端回读暂不可用：${err.message || "读取失败"}` };
+  }
+}
+
+async function existingSubmissionRecord(url, profileId) {
+  const destinationKey = String(siteKeyForUrl(url) || "").trim();
+  if (!destinationKey || !profileId) return null;
+  const recordKey = self.ExtLinkQueue.submissionRecordKey(destinationKey, profileId);
+  return submissionLedgerWrite(async () => {
+    const storage = await chrome.storage.local.get(SUBMISSION_LEDGER_CLOUD_KEYS);
+    const record = storage.submissionRecords?.[recordKey];
+    if (!isPersistedSuccessRecord(storage.submissionRecords || {}, recordKey, destinationKey, profileId)) return null;
+    if (!submissionTimelineContainsRecord(storage.submissionTimeline, recordKey, record)) {
+      const event = buildSubmissionTimelineEventForRecord(record, destinationKey, url, profileId, recordKey);
+      await chrome.storage.local.set({
+        submissionTimeline: self.ExtLinkSubmissionTimeline.append(storage.submissionTimeline || {}, event),
+        timelineSchemaVersion: self.ExtLinkSubmissionTimeline.SCHEMA_VERSION,
+      });
+    }
+    return record;
+  });
+}
+
+async function rememberPendingSubmissionCloudTab(tabId, url, profileId, record, synced) {
+  if (!tabId || !url || !profileId || !record) return;
+  return pendingSubmissionCloudTabsWrite(async () => {
+    const storage = await chrome.storage.local.get(PENDING_SUBMISSION_CLOUD_TABS_KEY);
+    const pending = { ...(storage[PENDING_SUBMISSION_CLOUD_TABS_KEY] || {}) };
+    const key = `${tabId}:${profileId}`;
+    if (synced) {
+      if (pending[key]?.url === url) delete pending[key];
+    }
+    else pending[key] = { tabId, url, profileId, submittedAt: record.submittedAt };
+    await chrome.storage.local.set({ [PENDING_SUBMISSION_CLOUD_TABS_KEY]: pending });
+  });
+}
+
+async function reconcilePendingSubmissionCloudTasks() {
+  if (submissionCloudReconcilePromise) return submissionCloudReconcilePromise;
+  submissionCloudReconcilePromise = (async () => {
+    if (typeof initializationPromise !== "undefined") await initializationPromise;
+    const pending = (state.stopped || state.paused ? [] : state.tasks).filter((task) =>
+      task.status === "verifying"
+      && /^(本地成功记录已保存|本地已有成功回执)/.test(String(task.skipReason || ""))
+      && task.manualTabId && (task.profileId || task.projectKey),
+    ).slice(0, 8);
+    for (const task of pending) {
+      const tabId = Number(task.manualTabId);
+      const entry = state.activeTabs.get(tabId);
+      if (!entry || entry.taskId !== task.id || !state.parkedTaskIds.has(task.id)) continue;
+      const profileId = task.profileId || task.projectKey;
+      const record = await existingSubmissionRecord(task.url, profileId);
+      if (!record) continue;
+      const cloud = await confirmSubmissionRecordInCloud(task.url, profileId, record, { skipFlush: true });
+      if (!cloud.synced || state.activeTabs.get(tabId) !== entry || entry.taskId !== task.id) continue;
+      task.status = "ok";
+      task.skipReason = "";
+      task.executionPhase = "";
+      task.taskDeadlineAt = 0;
+      task.manualTabId = 0;
+      task.manualTabUrl = "";
+      entry.agentPaused = false;
+      entry.agentDone = true;
+      entry.slotActive = true;
+      state.parkedTaskIds.delete(task.id);
+      if (unattendedEnabled()) state.unattended = self.ExtLinkUnattended.removeManualTodo(state.unattended, task.id);
+      await persistParkedTaskIds();
+      await syncUnattendedManualCapacity();
+      await recordUnattendedSuccess();
+      broadcastTaskUpdate(task);
+      log(`${task.domain}: 云端已回读精确成功记录与动态，继续队列`, "ok");
+      await advanceDestinationGroup(tabId, task);
+    }
+    const stored = await chrome.storage.local.get(PENDING_SUBMISSION_CLOUD_TABS_KEY);
+    const pendingTabs = Object.values(stored[PENDING_SUBMISSION_CLOUD_TABS_KEY] || {}).slice(0, 8);
+    for (const item of pendingTabs) {
+      const tab = await chrome.tabs.get(item.tabId).catch(() => null);
+      if (!tab || siteKeyForUrl(tab.url || "") !== siteKeyForUrl(item.url)) {
+        await rememberPendingSubmissionCloudTab(item.tabId, item.url, item.profileId, { submittedAt: item.submittedAt }, true);
+        continue;
+      }
+      const record = await existingSubmissionRecord(item.url, item.profileId);
+      if (!record || record.submittedAt !== item.submittedAt) continue;
+      const cloud = await confirmSubmissionRecordInCloud(item.url, item.profileId, record, { skipFlush: true });
+      if (!cloud.synced) continue;
+      broadcastAutoFillUpdate({
+        tabId: item.tabId, status: "cloudReceiptConfirmed", url: item.url,
+        profileId: item.profileId, evidence: record.evidence,
+        publicationStatus: record.publicationStatus || "submitted",
+        message: "云端已回读精确成功记录和动态，可继续队列",
+      });
+    }
+  })();
+  try {
+    return await submissionCloudReconcilePromise;
+  } finally {
+    submissionCloudReconcilePromise = null;
+  }
 }
 
 async function recordSubmittedProject(task) {
@@ -9164,6 +9385,25 @@ function isExplicitHumanGateJudge(judge, snapshot) {
 }
 
 function completeTaskFromSubmit(tabId, task, result) {
+  if (result.existingSubmission) {
+    const entry = state.activeTabs.get(tabId);
+    if (result.cloudSynced !== true) {
+      task.status = "verifying";
+      task.skipReason = `本地已有成功回执，云端仍待回读：${result.cloudReason || "待同步"}`;
+      broadcastTaskUpdate(task);
+      parkTaskEntry(tabId, entry, task.skipReason);
+      return;
+    }
+    task.status = "ok";
+    task.skipReason = "";
+    task.executionPhase = "";
+    task.taskDeadlineAt = 0;
+    if (entry) entry.agentDone = true;
+    broadcastTaskUpdate(task);
+    advanceDestinationGroup(tabId, task).catch((err) =>
+      log(`${task.domain}: 已回读云端但队列推进失败：${err.message}`, "warn"));
+    return;
+  }
   completeTaskFromJudge(tabId, task, {
     evidence: result.evidence || "",
     reason: result.evidence || "directory auto-submit evidence",
@@ -9246,9 +9486,18 @@ function completeTaskFromJudge(tabId, task, judge) {
   };
   log(`${task.domain}: 已取得证据，正在写入成功账本 - ${proof.evidence}`, "ok");
   recordSubmittedProject(task)
-    .then((record) => {
+    .then(async (record) => {
       if (!record || record.status !== "success") {
         throw new Error("成功记录写入失败：未返回已持久化的成功账本记录");
+      }
+      const cloud = await confirmSubmissionRecordInCloud(task.url, record.profileId, record);
+      if (!cloud.synced) {
+        task.status = "verifying";
+        task.skipReason = `本地成功记录已保存，云端仍待回读：${cloud.reason}`;
+        broadcastTaskUpdate(task);
+        parkTaskEntry(tabId, entry, task.skipReason);
+        log(`${task.domain}: ${task.skipReason}；保留页签且不重复提交`, "warn");
+        return;
       }
       task.status = "ok";
       recordAutomationEvent(task, {

@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:23 / Ego 窗口对照与 Bounty Board 预检
+
+- CUA Ego 原生绑定先 `-3811`，Finder 桌面可绑定，随后 Ego 可绑定但指向正在工作的另一任务 SEO 窗口；再次绑定仍 `-3811`。未重启 Ego、未操作其他任务。Apple 官方说明单窗口捕捉不参考 `sourceRect`，Sky 上轮矩形错误的具体配置尚未定位。
+- Bounty Board Arcade 免费接收游戏，但先要 studio 账号，要求 16:9 封面、操作说明、至少 100 字简介，外链游戏必须可 iframe 嵌入；Jev 可嵌入性未证，未注册或提交，候选暂不入固定十站。研究页全部关闭并回读；无新插件尝试/Neon 回读。细节见 Jev 十站验收文档。
+
 ## 2026-09-26 20:19 / CUA 捕捉矩形故障实证
 
 - 本轮实际使用 Computer Use，`native pipe is closed` 经 `cua_repl.js_reset()` 恢复清单，未重启 Ego。Ego/Chrome 原生控制继续间歇报 `-3811/-3812`；`SkyComputerUseService` 同时段三次记录 `SCStream validateStreamConfiguration: contentRect does not contain sourceRect`，指向捕捉配置矩形校验失败，具体源窗口未定位。Ego 曾绑到另一任务 SEO 空间，故没有操作本任务插件。

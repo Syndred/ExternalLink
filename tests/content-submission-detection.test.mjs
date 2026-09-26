@@ -232,6 +232,9 @@ const oldPhotoConfig = {
     "Extra Link:X/Twitter/YouTube/Instagram/..": "Not specified in the project.",
   },
 };
+assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig,
+  new FakeField({ ariaLabel: "Open-source licence (optional)", placeholder: "Apache-2.0" })), "",
+"a proprietary tool must not inherit a made-up open-source licence from its description");
 context.location.hostname = "docs.google.com";
 context.location.pathname = "/forms/d/e/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ/viewform";
 assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig, new FakeField({ ariaLabel: "Contact person" })), "Syndred");

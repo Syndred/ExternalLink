@@ -6607,6 +6607,20 @@
       options.forEach((element) => handled.add(element));
       if (options.some((element) => element.checked)) continue;
       if (options.some(isHumanDeclarationField)) continue;
+      const promptHive = typeof location !== "undefined" &&
+        location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname || "");
+      if (promptHive && key.startsWith("checkbox:")) {
+        const oldPhoto = /old.?photo/i.test(String(config.brandName || ""));
+        for (const element of options) {
+          const label = String(getSnapshotLabel(element) || "").toLowerCase();
+          if (!/^web app\b/.test(label) && !(oldPhoto && /^free plan\b/.test(label))) continue;
+          setCheckedValue(element, true);
+          element.dispatchEvent(new Event("input", { bubbles: true }));
+          element.dispatchEvent(new Event("change", { bubbles: true }));
+          filledCount++;
+        }
+        continue;
+      }
       if (!choiceGroupRequired(key, options)) continue;
 
       const ranked = options
@@ -6691,6 +6705,12 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    // A licence is a legal fact, not a free-text description. Only use one
+    // explicitly supplied in the Profile; never infer one from product copy.
+    if (/\b(?:open[- ]source|spdx)\s+licen[cs]e\b/.test(`${visibleHint} ${normalizedHint}`)) {
+      return pf["Open-source licence"] || pf["Open-source license"] || pf["SPDX License"] || "";
+    }
 
     // Credible AI Tools reveals this text field only when its category picker
     // selects Other (Specify). Leave it to the exact product category instead
@@ -7421,6 +7441,14 @@
       const media =
         type === "file" ? resolveFileMedia(config, element, screenshotCursor) : null;
       const value = media ? media.value : resolveValueForField(config, element);
+      if (!value && typeof location !== "undefined" && location.hostname === "prompthive.pages.dev" &&
+          /\bopen[- ]source\s+licen[cs]e\b/i.test(getSnapshotLabel(element)) &&
+          String(getElementFillValue(element) || "").trim() ===
+            String(pf["Short description(20-30 words)"] || "").slice(0, String(getElementFillValue(element) || "").length).trim()) {
+        setFieldValue(element, "");
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      }
       if (!value && type !== "file") {
         if (fieldNeedsRefill(element)) {
           /* fall through to re-fill below */

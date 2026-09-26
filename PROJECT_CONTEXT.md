@@ -1,5 +1,13 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:40 / Computer Use 实际操作、Neon 回读与捕捉故障复现
+
+- 本轮重新 `git fetch origin`，工作区无改动，`HEAD` 与 `origin/main` 都是 `ac8c55a`。按用户要求直接用 CUA 操作 Ego：公开标签 API 成功打开 Neon 控制台并运行只读 SQL；原生窗口捕捉成功一次，点击 ExternalLink 工具栏后侧栏显示当前 Profile `JevPlay`、云端媒体 2 个文件。该读回证明插件侧栏这次确实可用，但没有查看实载版本，也没有点击“检测/填表/提交”。
+- Neon 唯一生产项目 `dark-night-20420985`、生产分支 `br-quiet-scene-b4gw8ygn`、数据库 `neondb`。`default/submissionRecords` revision 123（`updated_at=2026-09-26T11:25:56.337494Z`）；只读查询 `key LIKE '%::JevPlay'` 返回 26 条 `status=success`。完整键清单和防重规则见 `docs/Jev插件独立十站验收-2026-09-26.md`。Alieradox Jev、AI Tools Ratings Jev 的站方回执没有出现在这 26 条中；遵守不重投要求，不能补造账本。
+- 新打开的普通页面可持续用 CUA 读取。原生 `getAXState/getApp` 随后重复报 ScreenCaptureKit `-3812 (invalidParameter)`；Finder 对照捕捉成功。Ego 仍在运行，但错误时没有可靠原生控制句柄，未声称或执行重启。之前普通页与一次侧栏操作成功、之后原生捕捉失败，说明这是间歇的**原生捕捉通道**故障，不代表整台浏览器无法操作；此前把两条路径混为一谈是判断失误。
+- 直接预检确认 Rando 需要可 iframe 加载的游戏直达 URL（兼容性未证）；DeskLink 提交会同意内容规则；AxoGamer/iDev 要注册；Paizix 与 TapCraftBox 只收邮件；AIToolsDirectory.com 会丢弃 AI 文案。Google、DuckDuckGo 都出现 CAPTCHA，人机挑战页已标记保留，没有解题。无站点开始插件填表，故本轮真实插件尝试 0、提交 0、独立闭环 0/10；固定队列尚未冻结。
+- 已关闭 Rando、Jev 游戏详情、AIToolsDirectory.com、Paizix、TapCraftBox、404 与 Neon 查询页，并回读清单。保留两个人机挑战、DeskLink 条款、AxoGamer/iDev 登录现场及用户原新标签页。Neon 查询页所在的“🔎 ExternalLink 云端回读”标签分组关闭状态无法在后续 `-3812` 下复核；下次捕捉恢复时先确认并清理空分组。
+
 ## 2026-09-26 20:33 / CrazyGames 门槛预检
 
 - CUA Ego 原生短暂绑定到新标签页，但地址栏已有输入中的 `b`，来源不明，未争用该窗口。独立公开标签核查 CrazyGames 官方 Basic Launch 可无 SDK；开发者投稿入口 `developer.crazygames.com/games` 现场为登录页，未获表单，未登录/投稿。研究页关闭，Ego 原页保留。详情见 Jev 十站验收文档。

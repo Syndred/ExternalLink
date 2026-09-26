@@ -376,7 +376,18 @@ context.location.href = "https://rb6zn ef2.typeform.com/to/RB6ZnEf2".replace(" "
 document.body.innerText = "Thank you for applying to get listed on StartupStash! We will get back to you as early as possible :)";
 let receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupstash.com/submit" });
 assert.equal(receipt.matched, true, "the exact StartupStash Typeform receipt should be accepted in a cross-origin frame");
+context.location.href = "https://aitoolsratings.com/submit-ai-tools/?submit=sent";
+context.location.hostname = "aitoolsratings.com";
+document.body.innerText = "Thanks — we received your message and will get back to you soon.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitoolsratings.com/submit-ai-tools/" });
+assert.equal(receipt.matched, true, "AI Tools Ratings post-submit message should be recognized");
+assert.equal(receipt.publicationStatus, "pending_moderation");
+document.body.innerText = "Submit a listing for review. Complete submissions typically go live within 24–72 hours.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitoolsratings.com/submit-ai-tools/" });
+assert.equal(receipt.matched, false, "AI Tools Ratings review instructions must not be treated as a receipt");
 document.body.innerText = "Thank you for your response. Sponsored by Typeform.";
+context.location.href = "https://rb6znef2.typeform.com/to/RB6ZnEf2";
+context.location.hostname = "rb6znef2.typeform.com";
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://startupstash.com/submit" });
 assert.equal(receipt.matched, false, "generic Typeform thank-you copy must not count as StartupStash success");
 

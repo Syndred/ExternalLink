@@ -80,6 +80,16 @@ const P = playbookSelf.ExtLinkPlaybooks;
 }
 
 {
+  const ratings = P.lookup("https://aitoolsratings.com/submit-ai-tools/");
+  assert.equal(ratings?.id, "ai-tools-ratings");
+  assert.equal(P.classifyEvidence("Submit a listing for review. Complete submissions typically go live within 24–72 hours.", ratings).matched, false,
+    "pre-submit review copy must not count as a receipt");
+  const receipt = P.classifyEvidence("Thanks — we received your message and will get back to you soon.", ratings);
+  assert.equal(receipt.matched, true);
+  assert.equal(receipt.publicationStatus, "pending_moderation");
+}
+
+{
   const come = P.lookup("https://www.iatool.online/submit-tool/");
   assert.equal(come?.id, "come-ai");
   assert.equal(P.classifyEvidence("We review each submission and add approved tools to the directory.", come).matched, false,

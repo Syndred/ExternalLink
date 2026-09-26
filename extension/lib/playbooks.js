@@ -4,6 +4,15 @@
 
   const PLAYBOOKS = [
     {
+      id: "ai-tools-ratings",
+      hosts: ["aitoolsratings.com"],
+      kind: "directory",
+      title: "AI Tools Ratings",
+      notes: "仅表单完成后的收到消息回执计入待审核；不要把页面上的审核说明当成回执。",
+      hints: ["核对提交后 ?submit=sent 页面和完整收到消息文案"],
+      pendingPatterns: ["Thanks — we received your message and will get back to you soon."],
+    },
+    {
       id: "come-ai",
       hosts: ["iatool.online"],
       kind: "directory",

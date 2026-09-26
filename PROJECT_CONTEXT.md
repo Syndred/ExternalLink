@@ -1,5 +1,12 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 21:09 / 原生捕捉失败根因复核，定时已暂停
+
+- 用户询问 Chrome/Ego 为何从可验收变为不可操作。本轮回看：20:40 曾成功打开 ExternalLink 侧栏并只读查询 Neon；20:53 Chrome 原生捕捉成功但 Ego 已间歇报错；20:59 起 Chrome/Ego 原生绑定返回 `SCStreamErrorDomain -3811`，而普通 Chrome 公共标签仍可操作、Finder 捕捉正常。应用清单显示 Chrome 与 Ego 都在运行。
+- Apple 将 ScreenCaptureKit `-3811` 定义为 `internalError`（捕捉流无法启动，框架内部失败），不是权限拒绝码。最近 20 分钟 `SkyComputerUseService` 日志可见窗口枚举和全屏捕捉流配置，但没有对应 `-3811/-3812`、`contentRect does not contain sourceRect` 或权限拒绝日志。部分窗口坐标在屏幕左侧之外；日志隐藏窗口所有者，无法证明与 Chrome/Ego 失败相关。
+- 结论边界：**已经定位到 Computer Use 原生捕捉/窗口绑定层间歇失效**，解释了为什么普通网页可读而扩展工具栏/侧栏不能操作；没有证据证明 Chrome/Ego 插件崩溃、macOS 权限被撤销，或窗口坐标就是根因。Neon Console 的 Cloudflare 验证是另一独立阻塞，导致本轮不能做账本回读。没有可靠句柄，未重启 Ego。
+- 用户要求后，现有 `externallink` heartbeat 已由自动化工具设为 `PAUSED`；不再定时续办。恢复只可由用户明确要求。
+
 ## 2026-09-26 21:04 / Chrome 普通页预检已执行，原生绑定复测仍失败
 
 - 本轮先同步远端并读取项目上下文、Jev 十站验收、中文交接与进度；分支干净，起始 HEAD `239a8a1` 与远端一致。上一轮已实际使用 CUA，本轮继续通过 `cua_repl` 操作 Chrome 普通网页。

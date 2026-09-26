@@ -235,6 +235,31 @@ const oldPhotoConfig = {
 assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig,
   new FakeField({ ariaLabel: "Open-source licenceOptional", placeholder: "Apache-2.0" })), "",
 "a proprietary tool must not inherit a made-up open-source licence from its description");
+context.location.hostname = "prompthive.pages.dev";
+context.location.pathname = "/submit/";
+const promptHiveOldPhoto = {
+  ...oldPhotoConfig,
+  projectFields: {
+    ...oldPhotoConfig.projectFields,
+    Pricing: "Free: one photo a day. One-time Starter Pack: $4.99 for 10 credits.",
+    LOGO: "https://oldphotoliveai.com/brand-icon.png",
+    "Screenshot 1": "https://cdn.oldphotoliveai.com/example/01-restored.jpg",
+  },
+};
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "Logo URLOptional", type: "url" })),
+"https://oldphotoliveai.com/brand-icon.png");
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "Screenshot URLsOptional", tagName: "textarea" })), "",
+"before-and-after example images must not be offered as product UI screenshots");
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "DiscordOptional", type: "url" })), "",
+"the product homepage must not fill an absent community link");
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "Plans and prices", tagName: "textarea" })),
+promptHiveOldPhoto.projectFields.Pricing);
+context.location.hostname = "directory.example";
+context.location.pathname = "/";
 context.location.hostname = "docs.google.com";
 context.location.pathname = "/forms/d/e/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ/viewform";
 assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig, new FakeField({ ariaLabel: "Contact person" })), "Syndred");

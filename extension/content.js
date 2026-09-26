@@ -6705,6 +6705,34 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+    const promptHive = typeof location !== "undefined" &&
+      location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname || "");
+
+    if (promptHive) {
+      const field = `${visibleHint} ${normalizedHint}`;
+      if (/plans and prices/i.test(field)) return pf.Pricing || pf["Cost & Subscription"] || "";
+      if (/logo url/i.test(field)) {
+        const logo = String(pf.LOGO || "").trim();
+        return /^https:\/\/[^\s]+\.(?:png|svg|jpe?g|webp)(?:[?#]|$)/i.test(logo) ? logo : "";
+      }
+      if (/screenshot urls/i.test(field)) {
+        const screenshot = String(pf["Product UI Screenshot URLs"] || "").trim();
+        return screenshot.split(/\s+/).every((url) => /^https:\/\/[^\s]+\.(?:png|jpe?g|webp)(?:[?#]|$)/i.test(url))
+          ? screenshot : "";
+      }
+      if (/documentation/i.test(field)) {
+        const docs = String(pf.Documentation || pf.Docs || "").trim();
+        return isValidHttpUrlValue(docs) ? docs : "";
+      }
+      if (/discord/i.test(field)) {
+        const discord = String(pf.Discord || "").trim();
+        return /^https:\/\/(?:discord\.gg|discord\.com)\//i.test(discord) ? discord : "";
+      }
+      if (/product hunt/i.test(field)) {
+        const productHunt = String(pf["Product Hunt URL"] || "").trim();
+        return /^https:\/\/(?:www\.)?producthunt\.com\//i.test(productHunt) ? productHunt : "";
+      }
+    }
 
     // A licence is a legal fact, not a free-text description. Only use one
     // explicitly supplied in the Profile; never infer one from product copy.
@@ -7395,7 +7423,8 @@
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);
     const baseUrl = config.targetDomain || pf.Url || location.href;
-    if (location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname)) {
+    const promptHive = location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname);
+    if (promptHive) {
       const oldPhoto = /old.?photo/i.test(String(config.brandName || ""));
       for (const element of document.querySelectorAll('input[type="checkbox"]')) {
         if (!isVisible(element) || element.checked || isHumanDeclarationField(element)) continue;
@@ -7502,6 +7531,22 @@
 
       const existingValue = getElementFillValue(element);
       let existing = existingValue && String(existingValue).trim();
+      if (promptHive && existing) {
+        const label = String(getSnapshotLabel(element) || "").toLowerCase();
+        const staleMedia = /screenshot urls/.test(label) &&
+          [pf["Short Discription(100-150 words)"], pf["Long description (250-500 words)"]]
+            .some((description) => description && String(description).startsWith(existing));
+        const staleHome = /(?:documentation|discord|product hunt)/.test(label) &&
+          existing === String(config.targetDomain || pf.Url || "").trim();
+        const staleFavicon = /logo url/.test(label) && /\/favicon\.ico(?:[?#]|$)/i.test(existing) &&
+          value && value !== existing;
+        if (staleMedia || staleHome || staleFavicon) {
+          setFieldValue(element, "");
+          element.dispatchEvent(new Event("input", { bubbles: true }));
+          element.dispatchEvent(new Event("change", { bubbles: true }));
+          existing = "";
+        }
+      }
       if (existing && shouldClearStaleProtectedValue(element, existing)) {
         setFieldValue(element, "");
         element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));

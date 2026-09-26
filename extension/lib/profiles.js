@@ -75,7 +75,17 @@
   }
 
   function buildAgentConfigFromProfile(profile, globalConfig = {}) {
-    const fields = profile.fields || {};
+    const storedFields = profile.fields || {};
+    // This old Graffiti contact domain has no MX record. Keep an already
+    // synced Profile intact, but never send another directory a dead address.
+    const fields = profile.id === "GraffitiName" &&
+      /^support@graffitinameai\.com$/i.test(String(storedFields["Business mail"] || "").trim())
+      ? {
+          ...storedFields,
+          "Business mail": "syndredyoung@gmail.com",
+          "Feedback mail": "syndredyoung@gmail.com",
+        }
+      : storedFields;
     const name = fields.Name || profile.name || "";
     const url = profile.promoUrl || profile.url || fields.Url || "";
     const email = fields["Business mail"] || globalConfig.email || "";

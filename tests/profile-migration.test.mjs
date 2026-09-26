@@ -231,6 +231,14 @@ assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profil
   assert.equal(leakedGlobal.commentTemplate, "VideoToArticleAI turns video into articles.");
   assert.equal(leakedGlobal.projectKey, "VideoToArticleAI");
 
+  const graffitiWithUndeliverableContact = P.buildAgentConfigFromProfile({
+    id: "GraffitiName",
+    name: "Graffiti Name AI",
+    fields: { Name: "Graffiti Name AI", "Business mail": "support@graffitinameai.com" },
+  });
+  assert.equal(graffitiWithUndeliverableContact.email, "syndredyoung@gmail.com");
+  assert.equal(graffitiWithUndeliverableContact.projectFields["Business mail"], "syndredyoung@gmail.com");
+
   const explicitComment = P.buildAgentConfigFromProfile(video, {
     applyCommentTemplate: true,
     commentTemplate: "custom comment for this page",

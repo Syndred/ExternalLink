@@ -460,8 +460,10 @@ function statusElement(text = "") {
 // after a receipt or a manual gate. Queue-owned tabs may still advance.
 {
   const opened = [];
+  const listed = [];
   const context = {
     Promise,
+    chrome: { runtime: { sendMessage: async (message) => { listed.push(message); return { ok: true }; } } },
     SITE_STATUS_MAP: { needs_manual: { label: "需人工" } },
     currentPageUrl: "https://directory.example/submit",
     submissionTasks: [{ key: "next", url: "https://next.example/submit" }],
@@ -481,6 +483,8 @@ function statusElement(text = "") {
   await vm.runInContext(`handleFillResult({ submitted: true, matched: true, evidence: "Submission Received", receiptTabUrl: "https://directory.example/receipt", ledgerSaved: true, cloudSynced: true, advance: true }, "form", ${JSON.stringify(page)})`, context);
   await vm.runInContext(`handleFillResult({ needs_manual: true, classified: "needs_manual", advance: true }, "form", ${JSON.stringify(page)})`, context);
   assert.deepEqual(opened, [], "single-page actions must not open the global queue");
+  assert.equal(listed.length, 1, "newly confirmed source must be added to the library once");
+  assert.equal(listed[0].url, page.expectedUrl);
 }
 
 // Comment generation also checks the captured tab/Profile after every awaited

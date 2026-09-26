@@ -2556,6 +2556,16 @@
             ? "已提交并看到上线回执"
             : "已提交并记入账本";
       setAutoFillStatus(successLabel, result.cloudSynced === true ? "ok" : "warn");
+      if (result.ledgerSaved === true && result.cloudSynced === true && context?.expectedUrl && !context.destinationKey) {
+        const listed = await chrome.runtime.sendMessage({
+          action: "addToUrlList",
+          url: context.expectedUrl,
+          platformType: result.platform || "directory",
+        }).catch(() => null);
+        if (!listed?.ok) {
+          showToast("回执已入云端账本，新来源加入外链库失败；请手动登记", true);
+        }
+      }
       await loadClassifiedList();
       await loadSubmissionQueue(currentPageUrl);
       const completedStillQueued = context?.destinationKey

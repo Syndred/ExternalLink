@@ -337,7 +337,7 @@ tests/local-agent-unit.test.py
 - 本轮从 `c31e948` 开始，代码迭代至 **3.7.88 / `1a68643`，已推送 `origin/main`**。Ego 已自主逐版重载并现场核对至 3.7.87；3.7.88 因原生窗口捕捉故障尚未实载。54/54 Node 测试通过。
 - 参考 Bitwarden、Automa、Playwright、Browser Use、BrowserGym 的字段语义、可操作性、逐步验证和独立回执机制，沿项目原有 DOM/AI/Neon 流程修分类、定价、R2 媒体、折叠付费表单、Select2、成功后自动入库与 Credible AI 瞬时回执。
 - 本轮站方明确收件 6 个组合：ToolPilot 2、ThatsMyAI 3、Credible AI 1。**插件独立闭环且云端精确回读 4/30**：ToolPilot OldPhoto 与 ThatsMyAI 三款。ToolPilot Graffiti 有辅助回执和云端记录；Credible AI Graffiti 插件独立提交且站方显示回执，但插件漏记，Neon 精确记录待安全补录和回读，禁止重投。AppStackBuilder 无回执，不计成功。
-- 本轮已用 AppStackBuilder、ToolPilot、ThatsMyAI、PromptHive、ProductReveal、B2B 预检页已关闭；Credible AI 当前页与扩展详情页待续办后关闭。原有 SEO 空间不动。用户目标 10 站×三产品、至少 15/30 尚未达成。详见 `docs/插件自动投稿开源对照与十站验收-2026-09-26.md`。
+- 本轮已用 AppStackBuilder、ToolPilot、ThatsMyAI、PromptHive、Credible AI、ProductReveal、B2B 预检页已关闭；仅扩展详情页因 Ego 原生捕捉故障且浏览器安全策略拒绝内部页接管，待恢复后关闭。原有 SEO 空间不动。用户目标 10 站×三产品、至少 15/30 尚未达成。详见 `docs/插件自动投稿开源对照与十站验收-2026-09-26.md`。
 ## 2026-09-25 / 3.7.45 台式机云端优先启动保护
 
 - 旧版扩展重启时可能自动重放本地待上传队列；`siteProfiles` 支持无整份修订号的逐字段 PATCH，旧队列甚至可能改写已更新的 OldPhoto 字段，不能依赖 409 冲突保护。3.7.45 启动先回读云端，待上传/冲突期间暂停自动上传，待明确回读覆盖或手动成功上传后放行。台式机必须先完整退出旧浏览器，再拉代码、重载新版、回读云端；Ego 实机尚未验收。详见 `docs/整站自动提交与原创投稿交接-2026-09-25.md`。

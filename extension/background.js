@@ -3502,7 +3502,11 @@ async function detectPageAcrossFrames(tabId) {
   )[0] || top;
   if (!best) throw new Error("页面脚本未响应，请刷新当前页后重试");
   const topGate = top?.submitBlocker;
-  if (topGate?.blocked || topGate?.payment_uncertain || topGate?.needs_manual) {
+  const unrelatedTopPaymentHint = topGate?.payment_uncertain &&
+    best?.frameId !== 0 && best?.operable === true &&
+    Number(best?.formFieldCount || 0) >= 2 && Number(top?.formFieldCount || 0) <= 1 &&
+    !best?.submitBlocker;
+  if (topGate?.blocked || (topGate?.payment_uncertain && !unrelatedTopPaymentHint) || topGate?.needs_manual) {
     return { ...best, submitBlocker: topGate };
   }
   return best;
@@ -4722,7 +4726,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
   const formDetection = await sendTabMessage(tabId, { action: "detectPage" });
   const formFrameId = formDetection?.frameId ?? 0;
-  const beforeEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+  const beforeEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence", destinationUrl: currentUrl }).catch(() => ({}));
   assertBatchCurrent();
   const priorSubmissionAttempted = batchEntry ? unattendedTaskForEntry(batchEntry)?.submissionAttempted === true : false;
   if (batchEntry) {
@@ -4743,8 +4747,8 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     });
   } catch (err) {
     await sleep(2000);
-    submitResult = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" })
-      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence" }))
+    submitResult = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence", destinationUrl: currentUrl })
+      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence", destinationUrl: currentUrl }))
       .catch(() => ({
         submitted: true,
         matched: false,
@@ -4786,8 +4790,8 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   // submission as unconfirmed.
   if (submitResult?.submitted && !submitResult?.matched) {
     await sleep(1200);
-    const currentEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" })
-      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence" }))
+    const currentEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence", destinationUrl: currentUrl })
+      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence", destinationUrl: currentUrl }))
       .catch(() => ({}));
     const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
     const currentText = String(currentEvidence?.evidence || "").replace(/\s+/g, " ").trim();

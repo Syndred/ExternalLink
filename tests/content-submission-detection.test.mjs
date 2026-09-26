@@ -222,6 +222,7 @@ assert.ok(fieldHooks, "content.js should expose field routing test hooks");
 const oldPhotoConfig = {
   targetDomain: "https://oldphotoliveai.com",
   brandName: "OldPhotoLive AI",
+  username: "Syndred",
   email: "",
   useCases: ["Restore and animate old family photos"],
   projectFields: {
@@ -231,6 +232,32 @@ const oldPhotoConfig = {
     "Extra Link:X/Twitter/YouTube/Instagram/..": "Not specified in the project.",
   },
 };
+context.location.hostname = "docs.google.com";
+context.location.pathname = "/forms/d/e/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ/viewform";
+assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig, new FakeField({ ariaLabel: "Contact person" })), "Syndred");
+assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig, new FakeField({ tagName: "textarea", ariaLabel: "Comments or questions?" })), "");
+context.location.hostname = "futuretools.io";
+context.location.pathname = "/";
+assert.match(source, /isAiGenerationGoogleForm\(\)[\s\S]*?direct\.push\([\s\S]*?\[role="button"\]/,
+  "the known Google Form must route its role-button Submit through the plugin");
+{
+  const originalQuery = document.querySelector;
+  document.querySelector = (selector) => selector.includes("usp=form_confirm")
+    ? { href: "https://docs.google.com/forms/d/e/example/viewform?usp=form_confirm" }
+    : originalQuery(selector);
+  context.location.hostname = "docs.google.com";
+  context.location.pathname = "/forms/u/0/d/e/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ/formResponse";
+  context.location.href = `https://docs.google.com${context.location.pathname}`;
+  document.body.innerText = "Add Listing / Contact Us Thanks for contributing to the directory!";
+  const receipt = context.__extLinkSubmissionTestHooks.classifyVisibleEvidence({ destinationUrl: "https://www.theaigeneration.com/add/" });
+  assert.equal(receipt.matched, true);
+  assert.equal(receipt.evidence, "Thanks for contributing to the directory!");
+  document.querySelector = originalQuery;
+  document.body.innerText = "";
+  context.location.hostname = "futuretools.io";
+  context.location.pathname = "/";
+  context.location.href = "https://futuretools.io/";
+}
 const emailField = new FakeField({ name: "email", ariaLabel: "Email address" });
 assert.equal(
   fieldHooks.resolveValueForField(oldPhotoConfig, emailField),

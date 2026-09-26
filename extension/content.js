@@ -981,6 +981,19 @@
         matched: true,
       };
     }
+    if (
+      googleFormReceipt &&
+      isAiGenerationGoogleForm() &&
+      /Thanks for contributing to the directory!/i.test(text)
+    ) {
+      const evidence = "Thanks for contributing to the directory!";
+      return {
+        publicationStatus: "submitted",
+        evidence,
+        evidenceSignals: [{ type: "visible_confirmation", text: evidence, url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     // AI Marketing Directory's embedded Tally form replaces the fields with
     // this status after a real submit. Scope the signal to its known form so
     // an unrelated page containing the same words cannot create a record.
@@ -3497,7 +3510,7 @@
 
     logStep("🚀 无验证码，代点提交…");
     const beforeUrl = location.href;
-    const beforeEvidence = classifyVisibleEvidence();
+    const beforeEvidence = classifyVisibleEvidence({ destinationUrl: config.sidepanelContext?.url || "" });
     const beforeStage = formStageSignature();
     const submitStartedAt = performance.now();
     if (!isCurrentPageContext(pageContext)) return stalePageResult(platform, fillResult);
@@ -3505,7 +3518,7 @@
     pluginSubmitInProgress = true;
     try {
       submitBtn.click();
-      classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence, 15000, submitStartedAt);
+      classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence, 15000, submitStartedAt, config.sidepanelContext?.url || "");
     } finally {
       pluginSubmitInProgress = false;
     }
@@ -3610,12 +3623,12 @@
     };
   }
 
-  async function waitForSubmissionEvidence(beforeUrl, baseline = {}, timeoutMs = 15000, submitStartedAt = null) {
+  async function waitForSubmissionEvidence(beforeUrl, baseline = {}, timeoutMs = 15000, submitStartedAt = null, destinationUrl = "") {
     const deadline = Date.now() + timeoutMs;
-    let last = classifyVisibleEvidence();
+    let last = classifyVisibleEvidence({ destinationUrl });
     const baselineEvidence = String(baseline?.evidence || "").replace(/\s+/g, " ").trim();
     while (Date.now() < deadline) {
-      last = classifyVisibleEvidence();
+      last = classifyVisibleEvidence({ destinationUrl });
       if (submitStartedAt !== null && detectSubmissionTransportFailure(submitStartedAt)) break;
       const currentEvidence = String(last?.evidence || "").replace(/\s+/g, " ").trim();
       if (last?.matched && currentEvidence && currentEvidence !== baselineEvidence) return last;
@@ -6440,6 +6453,12 @@
       /^https:\/\/(?:www\.)?tools\.so\//i.test(document.referrer || "");
   }
 
+  function isAiGenerationGoogleForm() {
+    return typeof location !== "undefined" &&
+      /^(?:www\.)?docs\.google\.com$/i.test(location.hostname) &&
+      /\/forms\/(?:u\/\d+\/)?d\/e\/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ\/(?:viewform|formResponse)/i.test(location.pathname || "");
+  }
+
   function fillChoiceGroups(elements, config) {
     const groups = collectChoiceGroups(elements);
     const corpus = profileChoiceCorpus(config);
@@ -6536,6 +6555,15 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    // This embedded Google Form has a required contact person and an optional
+    // general feedback box. The textarea fallback otherwise pastes the entire
+    // product description into both Description and Comments or questions.
+    const isAiGenerationForm = typeof isAiGenerationGoogleForm === "function" && isAiGenerationGoogleForm();
+    if (isAiGenerationForm && /\bcomments?\s+or\s+questions?\b/.test(visibleHint)) return "";
+    if (isAiGenerationForm && /\bcontact\s+person\b/.test(visibleHint)) {
+      return fitValueToConstraints(config.username || pf["Contact person"] || pf.Founder || "", getFieldConstraints(element));
+    }
 
     // YAATD uses an app title rather than an SEO headline and validates
     // required fields in Svelte without HTML `required` attributes.
@@ -7610,6 +7638,11 @@
   function findSubmitButton(selector, textMatches) {
     const labels = textMatches.map((text) => text.toLowerCase());
     const direct = Array.from(document.querySelectorAll(selector));
+    if (isAiGenerationGoogleForm()) {
+      direct.push(...Array.from(document.querySelectorAll('[role="button"]')).filter((element) =>
+        /^(?:submit|提交)$/i.test(getElementLabel(element).replace(/\s+/g, " ").trim()),
+      ));
+    }
     const candidates = Array.from(new Set([
       ...direct,
       ...Array.from(

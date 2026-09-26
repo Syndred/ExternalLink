@@ -40,8 +40,20 @@ detected = await routeContext.sendTabMessage(42, { action: "detectPage" });
 assert.equal(detected.frameId, 2);
 assert.equal(detected.formFieldCount, 5,
   "a real embedded submission form must remain detectable");
+frameDetections = {
+  0: { operable: true, platform: "directory", formFieldCount: 1, submitBlocker: { payment_uncertain: true, reason: "newsletter subscribe" } },
+  2: { operable: true, platform: "directory", formFieldCount: 5 },
+};
+detected = await routeContext.sendTabMessage(42, { action: "detectPage" });
+assert.equal(detected.frameId, 2);
+assert.equal(detected.submitBlocker, undefined,
+  "a parent newsletter Subscribe button must not block an embedded submission form");
+frameDetections[0].submitBlocker = { blocked: true, reason: "payment required to list" };
+detected = await routeContext.sendTabMessage(42, { action: "detectPage" });
+assert.equal(detected.submitBlocker.blocked, true,
+  "a confirmed parent-page payment gate must still block the embedded form");
 assert.deepEqual(topFrameCalls.filter(({ action }) => action === "detectPage").map(({ frameId }) => frameId),
-  [0, 2, 0, 2]);
+  [0, 2, 0, 2, 0, 2, 0, 2]);
 
 const start = source.indexOf("async function getFillableFrameIds(");
 const end = source.indexOf("async function refreshContentScriptsForManualWatch(", start);

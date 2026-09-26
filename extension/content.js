@@ -940,6 +940,23 @@
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    // Alieradox clears the form after an AJAX submit and briefly shows a
+    // Sonner notification. Its exact success copy is the only receipt here;
+    // the permanent "we review all submissions" form copy is not evidence.
+    if (/^(?:www\.)?alieradox\.com$/i.test(String(location.hostname || "")) &&
+        (() => {
+          try { return /^(?:www\.)?alieradox\.com$/i.test(new URL(String(destinationUrl || "")).hostname); }
+          catch { return false; }
+        })() &&
+        /Tool submitted successfully!\s*Our team will review it shortly\.?/i.test(text)) {
+      const evidence = "Tool submitted successfully! Our team will review it shortly.";
+      return {
+        publicationStatus: "submitted",
+        evidence,
+        evidenceSignals: [{ type: "visible_confirmation", text: evidence, url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     // Forminator resets the free form immediately after a successful AJAX
     // response, and hides its message a few seconds later. Only its visible,
     // source-scoped success alert is a receipt; retained hidden text is not.

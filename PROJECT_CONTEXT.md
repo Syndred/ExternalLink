@@ -1,5 +1,12 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 21:13 / CUA 会话重置未修复原生捕捉
+
+- 用户询问是否能修复间歇故障。本轮按受支持接口先回读应用清单，确认 Chrome/Ego 均运行，再做 Finder、Chrome、Ego 原生捕捉对照：Finder 成功，Chrome/Ego 都返回 `SCStreamErrorDomain -3811`。
+- 执行 `cua_repl.js_reset()` 只重置 Computer Use JavaScript 会话，随后 `getState()` 成功重新枚举浏览器；它没有重启 Ego。会话重置后再测 Chrome/Ego 仍是 `-3811`，Finder 仍成功。由此排除“仅是 CUA JS 会话陈旧”这一简单修复，根因仍在更下层捕捉流/目标绑定，系统日志没有给出具体触发源。
+- 因 Chrome/Ego 没有返回原生 App 句柄，无法通过受支持的窗口 API 向它们发送关闭快捷键；没有使用命令、CDP 或其他绕行方式。当前没有可由 ExternalLink 仓库修补的证据：失败发生在 ScreenCaptureKit/CUA 层，插件源码路径尚未执行。
+- `externallink` 定时任务保持 `PAUSED`。下一步只有在原生句柄恢复，或 Computer Use 服务本身有受支持恢复入口时，才能继续验证/尝试 Ego 正常重开；不要反复重置 REPL 或把它说成修复。
+
 ## 2026-09-26 21:09 / 原生捕捉失败根因复核，定时已暂停
 
 - 用户询问 Chrome/Ego 为何从可验收变为不可操作。本轮回看：20:40 曾成功打开 ExternalLink 侧栏并只读查询 Neon；20:53 Chrome 原生捕捉成功但 Ego 已间歇报错；20:59 起 Chrome/Ego 原生绑定返回 `SCStreamErrorDomain -3811`，而普通 Chrome 公共标签仍可操作、Finder 捕捉正常。应用清单显示 Chrome 与 Ego 都在运行。

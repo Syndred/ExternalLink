@@ -3987,13 +3987,13 @@ async function runSidepanelFill(msg) {
       status: classified?.status || "manual",
       message: agentResult.reason || "需要人工处理",
       classifyStatus: classified?.status,
-      advance: msg.fillOnly !== true,
+      advance: false,
       keepTab: true,
     });
     return {
       ...agentResult,
       classified: classified?.status,
-      advance: msg.fillOnly !== true,
+      advance: false,
       keepTab: true,
       deadEnd: classified ? self.ExtLinkQueue.isDeadEndStatus(classified.status) : false,
     };
@@ -4006,10 +4006,10 @@ async function runSidepanelFill(msg) {
       status: "captcha",
       message: "请完成验证码",
       classifyStatus: "needs_captcha",
-      advance: msg.fillOnly !== true,
+      advance: false,
       keepTab: true,
     });
-    return { captcha: true, classified: "needs_captcha", advance: msg.fillOnly !== true, keepTab: true };
+    return { captcha: true, classified: "needs_captcha", advance: false, keepTab: true };
   }
   if (agentResult?.blocked) {
     const pageUrl = await getTabUrlSafe(tabId);
@@ -4021,14 +4021,14 @@ async function runSidepanelFill(msg) {
       status: "blocked",
       message: agentResult.reason || "无法提交",
       classifyStatus: classified?.status,
-      advance: msg.fillOnly !== true,
+      advance: false,
       keepTab: true,
     });
     return {
       blocked: true,
       reason: agentResult.reason,
       classified: classified?.status,
-      advance: msg.fillOnly !== true,
+      advance: false,
       keepTab: true,
       deadEnd: true,
     };
@@ -4753,6 +4753,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   }
 
   if (submitResult?.captcha) {
+    const advance = Boolean(batchEntry);
     const pageUrl = await getTabUrlSafe(tabId);
     if (pageUrl) await autoClassifySite(pageUrl, "请完成验证码", "needs_captcha");
     broadcastAutoFillUpdate({
@@ -4760,12 +4761,13 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       status: "captcha",
       message: "请完成验证码；页签已留下",
       classifyStatus: "needs_captcha",
-      advance: true,
+      advance,
       keepTab: true,
     });
-    return { captcha: true, classified: "needs_captcha", advance: true, keepTab: true };
+    return { captcha: true, classified: "needs_captcha", advance, keepTab: true };
   }
   if (submitResult?.needs_manual) {
+    const advance = Boolean(batchEntry) && submitResult.advance !== false;
     const pageUrl = await getTabUrlSafe(tabId);
     const classified = submitResult.semanticReview
       ? { status: "needs_manual" }
@@ -4775,7 +4777,7 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       status: classified?.status || "manual",
       message: submitResult.reason || "需要人工处理",
       classifyStatus: classified?.status,
-      advance: true,
+      advance,
       keepTab: true,
     });
     return {
@@ -4785,12 +4787,13 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       paymentEvidence: submitResult.paymentEvidence,
       reason: submitResult.reason,
       classified: classified?.status,
-      advance: true,
+      advance,
       keepTab: true,
       deadEnd: classified ? self.ExtLinkQueue.isDeadEndStatus(classified.status) : false,
     };
   }
   if (submitResult?.blocked) {
+    const advance = Boolean(batchEntry);
     const pageUrl = await getTabUrlSafe(tabId);
     const classified = pageUrl
       ? await autoClassifySite(pageUrl, submitResult.reason || "无法提交", "broken")
@@ -4800,14 +4803,14 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       status: "blocked",
       message: submitResult.reason || "无法提交",
       classifyStatus: classified?.status,
-      advance: true,
+      advance,
       keepTab: true,
     });
     return {
       blocked: true,
       reason: submitResult.reason,
       classified: classified?.status,
-      advance: true,
+      advance,
       keepTab: true,
       deadEnd: true,
     };

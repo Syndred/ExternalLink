@@ -2614,6 +2614,7 @@
     }
     if (result?.needs_manual || result?.captcha || result?.blocked) {
       const label =
+        (result.semanticReview && result.reason) ||
         SITE_STATUS_MAP[result.classified]?.label ||
         result.reason ||
         (result.captcha ? "请手动完成验证码" : "需要人工处理");

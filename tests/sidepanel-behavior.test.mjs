@@ -429,6 +429,28 @@ function statusElement(text = "") {
   assert.equal(submitButton.textContent, "提交本页", "submit button label should recover after the request");
 }
 
+// An explicit single-page submission failure stays on that page for review.
+{
+  let nextOpened = false;
+  const statuses = [];
+  const context = {
+    Promise,
+    SITE_STATUS_MAP: { needs_manual: { label: "需人工" } },
+    currentPageUrl: "https://aivalley.ai/submit-tool/",
+    refreshMediaUploadResult: async () => {},
+    setAutoFillStatus: (message) => statuses.push(message),
+    loadClassifiedList: async () => {},
+    loadSubmissionQueue: async () => {},
+    cycleSubmission: () => { nextOpened = true; },
+    showToast() {},
+  };
+  vm.createContext(context);
+  vm.runInContext(slice("  async function handleFillResult(", "  async function refreshSiteAnnotation"), context);
+  await vm.runInContext('handleFillResult({ needs_manual: true, classified: "needs_manual", semanticReview: true, reason: "站方表单发送失败", advance: false }, "form")', context);
+  assert.equal(nextOpened, false, "single-page failure must not open another directory");
+  assert.deepEqual(statuses, ["站方表单发送失败"], "show the site failure instead of a generic gate");
+}
+
 // Comment generation also checks the captured tab/Profile after every awaited
 // background call, so a slow old draft cannot be written into a new page.
 {

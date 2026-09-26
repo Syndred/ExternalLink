@@ -174,6 +174,14 @@ vm.runInContext(source, context, { filename: "extension/content.js" });
 const hooks = context.__extLinkSubmissionTestHooks;
 assert.ok(hooks, "content.js should expose submission detection test hooks");
 const auditHooks = context.__extLinkContentAuditTestHooks;
+assert.equal(auditHooks.detectSubmissionTransportFailure(), "", "ordinary forms have no transport failure");
+const transportQuerySelector = document.querySelector;
+document.querySelector = (selector) => selector.startsWith(".wpcf7 form.failed")
+  ? { querySelector: () => ({ textContent: "There was an error trying to send your message. Please try again later." }) }
+  : transportQuerySelector(selector);
+assert.match(auditHooks.detectSubmissionTransportFailure(), /error trying to send your message/,
+  "a failed Contact Form 7 response must be treated as a site error, not a login or success receipt");
+document.querySelector = transportQuerySelector;
 assert.equal(
   auditHooks.isLegalAcceptanceField(new FakeField({ type: "checkbox", name: "asset_permission", required: true })),
   true,

@@ -67,6 +67,7 @@
 
   // ─── Message Handler (registered at end of IIFE) ───
   let manualSubmissionWatch = null;
+  let pluginSubmitInProgress = false;
   // Every async fill/comment/media operation captures this lightweight page
   // context before it starts. Full navigations tear down the content script,
   // but SPA route changes keep it alive and otherwise let an old response
@@ -130,7 +131,7 @@
   }
 
   function observeManualSubmission(event) {
-    if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch) return;
+    if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch || pluginSubmitInProgress) return;
     const control = event.target?.closest?.('button, input[type="submit"], [role="button"]');
     const siteHost = (value) => {
       try {
@@ -864,6 +865,13 @@
     const legalAgreement = detectDirectoryLegalAgreement(activeScope);
     if (legalAgreement) return { needs_manual: true, reason: legalAgreement };
     return null;
+  }
+
+  function detectSubmissionTransportFailure() {
+    const failedForm = document.querySelector('.wpcf7 form.failed, .wpcf7 form[data-status="failed"]');
+    if (!failedForm) return "";
+    return String(failedForm.querySelector('.wpcf7-response-output')?.textContent || "")
+      .replace(/\s+/g, " ").trim() || "站方表单发送失败";
   }
 
   function shouldAutoSubmitStandardWp(config, preflight) {
@@ -3332,6 +3340,7 @@
     detectWPComment,
     identifyPlatform,
     detectSubmitBlockers,
+    detectSubmissionTransportFailure,
     isLegalAcceptanceField,
     isCommentLikeField,
     submitArticleComment,
@@ -3456,9 +3465,29 @@
     const beforeEvidence = classifyVisibleEvidence();
     const beforeStage = formStageSignature();
     if (!isCurrentPageContext(pageContext)) return stalePageResult(platform, fillResult);
-    submitBtn.click();
-    const classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
+    let classified;
+    pluginSubmitInProgress = true;
+    try {
+      submitBtn.click();
+      classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
+    } finally {
+      pluginSubmitInProgress = false;
+    }
     const urlChanged = location.href !== beforeUrl;
+    const transportFailure = detectSubmissionTransportFailure();
+    if (transportFailure) {
+      return {
+        needs_manual: true,
+        semanticReview: true,
+        reason: `站方表单发送失败：${transportFailure}`,
+        clickedSubmit: true,
+        submitted: false,
+        keepTab: true,
+        advance: false,
+        platform,
+        ...fillResult,
+      };
+    }
     const matched = classified.matched === true && Boolean(classified.evidence);
     if (matched) {
       return {

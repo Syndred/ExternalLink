@@ -456,6 +456,33 @@ function statusElement(text = "") {
   assert.deepEqual(statuses, ["站方表单发送失败"], "show the site failure instead of a generic gate");
 }
 
+// A manually opened directory must not launch an unrelated global queue item
+// after a receipt or a manual gate. Queue-owned tabs may still advance.
+{
+  const opened = [];
+  const context = {
+    Promise,
+    SITE_STATUS_MAP: { needs_manual: { label: "需人工" } },
+    currentPageUrl: "https://directory.example/submit",
+    submissionTasks: [{ key: "next", url: "https://next.example/submit" }],
+    submissionIndex: 0,
+    refreshMediaUploadResult: async () => {},
+    setAutoFillStatus() {},
+    loadClassifiedList: async () => {},
+    loadSubmissionQueue: async () => {},
+    closeVerifiedOwnedTab: async () => false,
+    cycleSubmission: (...args) => opened.push(args),
+    showToast() {},
+    Q: { findSubmissionIndex: () => -1 },
+  };
+  vm.createContext(context);
+  vm.runInContext(slice("  async function handleFillResult(", "  async function refreshSiteAnnotation"), context);
+  const page = { tabId: 7, expectedUrl: "https://directory.example/submit", profileId: "OldPhotoLive", ownedUrl: "" };
+  await vm.runInContext(`handleFillResult({ submitted: true, matched: true, evidence: "Submission Received", receiptTabUrl: "https://directory.example/receipt", ledgerSaved: true, cloudSynced: true, advance: true }, "form", ${JSON.stringify(page)})`, context);
+  await vm.runInContext(`handleFillResult({ needs_manual: true, classified: "needs_manual", advance: true }, "form", ${JSON.stringify(page)})`, context);
+  assert.deepEqual(opened, [], "single-page actions must not open the global queue");
+}
+
 // Comment generation also checks the captured tab/Profile after every awaited
 // background call, so a slow old draft cannot be written into a new page.
 {

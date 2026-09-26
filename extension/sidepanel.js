@@ -2565,10 +2565,10 @@
         ? submissionTasks[(submissionIndex + (completedStillQueued ? 1 : 0)) % submissionTasks.length]
         : null;
       const completedTabClosed = await closeVerifiedOwnedTab(result, context);
-      if (result.receiptTabUrl && !completedTabClosed) {
+      if (result.receiptTabUrl && context?.ownedUrl && !completedTabClosed) {
         throw new Error("云端已确认，但当前页签未安全关闭；保留当前页等待重试");
       }
-      if (result.advance && result.ledgerSaved === true && result.cloudSynced === true) {
+      if (result.advance && context?.ownedUrl && result.ledgerSaved === true && result.cloudSynced === true) {
         if (nextTask) {
           showToast(`${successLabel} — ${completedTabClosed ? "已关闭当前页，" : ""}打开下一站`);
           const nextOpen = cycleSubmission(0, {
@@ -2621,7 +2621,7 @@
       setAutoFillStatus(label, result.deadEnd ? "err" : "warn");
       await loadClassifiedList();
       await loadSubmissionQueue(currentPageUrl);
-      if (result.advance !== false) {
+      if (result.advance !== false && context?.ownedUrl) {
         showToast(`${label} — 保留页签，打开下一站`);
         cycleSubmission(1, { keepCurrent: true }).catch(() => {});
       }

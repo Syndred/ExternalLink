@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:19 / CUA 捕捉矩形故障实证
+
+- 本轮实际使用 Computer Use，`native pipe is closed` 经 `cua_repl.js_reset()` 恢复清单，未重启 Ego。Ego/Chrome 原生控制继续间歇报 `-3811/-3812`；`SkyComputerUseService` 同时段三次记录 `SCStream validateStreamConfiguration: contentRect does not contain sourceRect`，指向捕捉配置矩形校验失败，具体源窗口未定位。Ego 曾绑到另一任务 SEO 空间，故没有操作本任务插件。
+- 五分钟 `externallink` 任务已写入 REPL 重置、矩形错误排障与动作前后窗口/URL/空间回读，回读 ACTIVE。本任务研究页和误开空白页已用 CUA 关闭，清单只剩另一任务 SEO 与 Search Console。Jev 公开游戏页可打开，但 iframe 实测 `data:` 页被浏览器自动安全审核拒绝，未换入口绕过，Rando 可嵌入性仍待证。
+- 源码 3.7.106、浏览器实载、站方回执与 Neon 云端分开计；本轮无新插件尝试/提交/云回读，固定十站仍未成立，新 Jev 独立闭环 0/10。详见 `docs/Jev插件独立十站验收-2026-09-26.md`。
+
 ## 2026-09-26 / 五分钟续办：Neon 控制台验证门槛
 
 - `origin/main` 核对至 `4dfef6d`；上一轮 Computer Use 使用和清页记录已复核。本轮 Ego 原生绑定仍报 `-3811`，未取得退出重启句柄。

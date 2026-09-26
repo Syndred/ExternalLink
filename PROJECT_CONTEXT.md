@@ -1,5 +1,14 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:59 / Chrome 网页验收可用，原生捕捉当前失效
+
+- 本轮重新 fetch，工作树干净，HEAD `9468646` 与远端一致；已读项目上下文、Jev 十站验收与中文交接。上一轮确实使用了 CUA，并推送两笔验收交接文档提交。
+- 按用户要求在 CUA Chrome（浏览器 ID `6`）打开并读取 `https://jevplay.com/games/code-breaker`，标题与 JevPlay 页面内容正常；此页保留为后续插件验收续办现场。公开 Chrome 标签 API 可正常使用。
+- 这一轮原生捕捉复测中，Ego 与 Google Chrome 均报 ScreenCaptureKit `-3811`；Finder 原生捕捉成功。结合上一轮 Chrome 原生捕捉成功一次，可确认 Chromium 原生窗口捕捉是间歇故障，不是所有应用都失效。当前没有可靠原生句柄，因此无法读工具栏/侧栏，未重启 Ego，也未验证 Chrome/浏览器实载插件版本。
+- 新查 20:55–20:58 系统日志看到全屏捕捉区域 `[0,0,1470,956]`，另有小区域 `x=-233`、宽 168、高 170；未见 `contentRect does not contain sourceRect`、直接的 `-3811` 根因或权限拒绝记录。几何位置值得下轮与窗口位置对照，但现阶段不能据此断定根因。
+- CUA 当前标签清单显示 Ego 浏览器仅有原新标签；Chrome 里有 Jev Code Breaker 与原新标签。已将 Jev 页标记续办；没有创建标签分组。此前 Google/DuckDuckGo CAPTCHA 等页当前不在活跃标签清单中；因原生组状态捕捉失败，未声称已关闭任何保存分组。
+- 本轮没有侧栏插件调用/真实填表尝试、站方提交或回执，也没有 Neon 实时读取；独立目标仍 0/10。继续只测 Jev，不重投 Alieradox、AI Tools Ratings；Chrome 普通网页预检可继续，插件闭环必须等待受支持的工具栏/侧栏访问并实时 Neon 查重。
+
 ## 2026-09-26 20:53 / CUA 对照 Chrome 与新增游戏目录预检
 
 - 本轮 `git fetch origin` 后分支 `codex/jev-acceptance-handoff-0926` 与跟踪远端一致，HEAD `185ea3f`，工作区干净；已读取项目上下文、十站验收与中文交接。上一轮确实使用 CUA，普通 Ego 标签 API 可直接打开和读取页面。

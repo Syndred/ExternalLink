@@ -56,6 +56,15 @@ assert.equal(
   mediaHelper({ projectFields: { LOGO: "https://cdn.example.com/logo.png" } }, "product icon url"),
   "https://cdn.example.com/logo.png",
 );
+assert.equal(
+  mediaHelper({ projectFields: { "Screenshot 1": "https://example.com/og.png", "Featured image": "https://example.com/og.png" } }, "screenshot url"),
+  "",
+  "a featured marketing image must not be relabeled as a screenshot",
+);
+assert.equal(
+  mediaHelper({ projectFields: { "Screenshot 1": "https://example.com/real-screen.png", "Featured image": "https://example.com/og.png" } }, "screenshot url"),
+  "https://example.com/real-screen.png",
+);
 
 const selectTokens = new Function(
   "getFieldHint",
@@ -176,6 +185,14 @@ assert.equal(resolveValue({ projectFields: { Pros: "No account needed to play" }
   { tagName: "TEXTAREA", type: "textarea", hint: "Pros (one per line)", label: "Pros (one per line)" }), "No account needed to play");
 assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "Founder or company name", label: "Founder or company name", getAttribute: () => null }), "Syndred Young");
+assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Founder / company", label: "Founder / company", getAttribute: () => null }), "Syndred");
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: { "Short description(20-30 words)": "Play free daily decision games against TypeSafe Jev." } },
+  { tagName: "INPUT", type: "text", hint: "One-line description one_liner", label: "One-line description", getAttribute: () => null }),
+  "Play free daily decision games against TypeSafe Jev.", "a one-line field must use the short Profile copy");
+assert.equal(resolveValue({ projectFields: { Note: "Free server-verified games with replay evidence." } },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Why should we list it?", label: "Why should we list it?" }),
+  "Free server-verified games with replay evidence.");
 assert.equal(resolveValue({ useCases: ["Compare daily puzzle decisions"] },
   { tagName: "TEXTAREA", type: "textarea", hint: "Use cases", label: "Use cases" }), "Compare daily puzzle decisions");
 assert.equal(resolveValue({ projectFields: { Pricing: "Free: 1 photo/day. Pro: $19.99/month." } },

@@ -6451,6 +6451,18 @@
   function publicMediaUrlForField(config, hint) {
     const pf = getProfileFields(config);
     const normalizedHint = String(hint || "").replace(/[_-]+/g, " ");
+    if (/\b(?:screenshot|screen shot)\b/.test(normalizedHint)) {
+      const screenshot = String(pf["Screenshot 1"] || config.screenshots?.[0] || "").trim();
+      const featured = String(pf["Featured image"] || config.featuredImage || "").trim();
+      if (!screenshot || screenshot === featured || screenshot === String(pf.LOGO || config.logoUrl || "").trim()) return "";
+      try {
+        const parsed = new URL(screenshot);
+        return /^https?:$/.test(parsed.protocol) && /\.(?:png|jpe?g|gif|webp|svg|avif|ico)$/i.test(parsed.pathname)
+          ? parsed.toString() : "";
+      } catch {
+        return "";
+      }
+    }
     const iconField = /\b(icon|logo|avatar|favicon)\b/.test(normalizedHint);
     const candidates = iconField
       ? [pf.LOGO, config.logoUrl, pf["Featured image"], config.featuredImage]
@@ -6476,6 +6488,14 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    if (tag === "input" && /\b(?:one[\s_-]?line|one[\s_-]?liner)\b/.test(`${visibleHint} ${normalizedHint}`)) {
+      const constraints = getFieldConstraints(element);
+      return fitValueToConstraints(
+        pf["Short description(20-30 words)"] || pf.Note || config.brandName || "",
+        { ...constraints, maxWords: constraints.maxWords || 30, maxLength: constraints.maxLength || 200 },
+      );
+    }
 
     if (tag === "textarea" && /\bscreenshots?\b/.test(visibleHint) && /\b(?:image\s+urls?|urls?|one\s+image)\b/.test(visibleHint)) {
       const sources = [
@@ -6539,8 +6559,11 @@
     if (/\b(?:cons|disadvantages|limitations)\b/.test(visibleHint)) {
       return fitValueToConstraints(pf.Cons || pf.Limitations || "", getFieldConstraints(element));
     }
-    if (/\bfounder\s+or\s+company\s+name\b/.test(visibleHint)) {
+    if (/\bfounder\s*(?:\/|or)\s*company(?:\s+name)?\b/.test(visibleHint)) {
       return fitValueToConstraints(pf.Founder || pf.Company || config.username || "", getFieldConstraints(element));
+    }
+    if (/\bwhy\s+(?:should|would)\s+(?:we|you)\s+list\b/.test(visibleHint)) {
+      return fitValueToConstraints(pf.Note || pf["Short description(20-30 words)"] || "", getFieldConstraints(element));
     }
 
     // A repository URL is not the product homepage. Resolve it before legacy

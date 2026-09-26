@@ -6708,7 +6708,7 @@
 
     // A licence is a legal fact, not a free-text description. Only use one
     // explicitly supplied in the Profile; never infer one from product copy.
-    if (/\b(?:open[- ]source|spdx)\s+licen[cs]e\b/.test(`${visibleHint} ${normalizedHint}`)) {
+    if (/\b(?:open[- ]source|spdx)\s+licen[cs]e/i.test(`${visibleHint} ${normalizedHint}`)) {
       return pf["Open-source licence"] || pf["Open-source license"] || pf["SPDX License"] || "";
     }
 
@@ -7395,6 +7395,21 @@
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);
     const baseUrl = config.targetDomain || pf.Url || location.href;
+    if (location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname)) {
+      const oldPhoto = /old.?photo/i.test(String(config.brandName || ""));
+      for (const element of document.querySelectorAll('input[type="checkbox"]')) {
+        if (!isVisible(element) || element.checked || isHumanDeclarationField(element)) continue;
+        const label = compactText([
+          ...Array.from(element.labels || []).map((node) => node.textContent || ""),
+          element.closest("label")?.textContent || "",
+          element.parentElement?.textContent || "",
+        ].join(" "), 180).toLowerCase();
+        if (!/^web app\b/.test(label) && !(oldPhoto && /^free plan\b/.test(label))) continue;
+        setCheckedValue(element, true);
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
     const elements = queryFillableElements();
     clearStaleProfileListingForm(elements, config);
     const choiceResult = fillChoiceGroups(elements, config);
@@ -7442,7 +7457,7 @@
         type === "file" ? resolveFileMedia(config, element, screenshotCursor) : null;
       const value = media ? media.value : resolveValueForField(config, element);
       if (!value && typeof location !== "undefined" && location.hostname === "prompthive.pages.dev" &&
-          /\bopen[- ]source\s+licen[cs]e\b/i.test(getSnapshotLabel(element)) &&
+          /\bopen[- ]source\s+licen[cs]e/i.test(getSnapshotLabel(element)) &&
           String(getElementFillValue(element) || "").trim() ===
             String(pf["Short description(20-30 words)"] || "").slice(0, String(getElementFillValue(element) || "").length).trim()) {
         setFieldValue(element, "");

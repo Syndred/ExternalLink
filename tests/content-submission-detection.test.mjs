@@ -322,7 +322,26 @@ assert.equal(hooks.hasLikelySubmissionFields(directory), true, "URL, title, and 
 assert.equal(hooks.detectDirectory(), true, "a product directory keyword paired with a URL field should retain directory detection");
 assert.equal(hooks.detectSubmissionForm(), true, "valid directory fields should remain detectable");
 assert.equal(hooks.identifyPlatform(), "directory", "directory form detection should retain its specific platform");
+document.body.textContent = "Submit your AI tool. Popular categories: AI Image Editing. Settings";
+context.location.href = "https://aitoolsratings.com/submit-ai-tools/";
+context.location.pathname = "/submit-ai-tools/";
+assert.equal(hooks.identifyPlatform(), "directory", "a directory website field and unrelated Edit/Settings copy must not become a profile form");
 assert.equal(hooks.queryFillableElements(directory).length, 3, "directory fields should remain eligible for filling");
+
+forms.length = 0;
+forms.push(new FakeForm({
+  action: "/account/settings",
+  fields: [new FakeField({ type: "url", name: "website" })],
+}));
+context.location.href = "https://example.com/account/settings";
+context.location.pathname = "/account/settings";
+document.body.textContent = "Account settings";
+assert.equal(hooks.identifyPlatform(), "profile", "an actual account settings form should retain profile routing");
+forms.length = 0;
+forms.push(directory);
+context.location.href = "https://futuretools.io/submit-tool";
+context.location.pathname = "/submit-tool";
+document.body.textContent = "Submit your AI tool";
 
 directory.fields[0].value = "https://oldphotoliveai.com/";
 let guard = hooks.inspectAutoFillGuard("https://graffitinameai.com");

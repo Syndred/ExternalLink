@@ -584,12 +584,6 @@
     // the page into a blog-comment target.
     if (detectWPComment()) return "wp_comment";
     if (detectArticleComment()) return "article";
-    if (
-      document.querySelector(
-        'input[name="url"], input[name="website"], input[name="pf_phpbb_website"]',
-      )
-    )
-      return "profile";
     if (detectSubmissionForm()) return "submission";
     return null;
   }
@@ -605,19 +599,17 @@
     if (document.querySelector('input[name="site"]')) return true;
     if (location.href.includes("op=info") && document.querySelector('input[name="site"]'))
       return true;
-    // Generic profile edit
-    if (
-      document.querySelector('input[name="url"]') &&
-      (document.body.textContent.includes("profile") ||
-        document.body.textContent.includes("Profile"))
-    )
-      return true;
-    if (
-      document.querySelector('input[name="website"]') &&
-      (document.body.textContent.includes("Edit") || document.body.textContent.includes("Settings"))
-    )
-      return true;
-    return false;
+    // Generic profile pages need local page identity. Directory pages often
+    // contain a website field and unrelated footer text such as "AI Image
+    // Editing" or "Settings", neither of which identifies a profile editor.
+    const profileContext = /(?:^|\/)(?:profile|account|settings|user|member|edit-profile|edit-account)(?:\/|$)/i.test(
+      location.pathname || "",
+    ) || Array.from(document.querySelectorAll("h1, h2, form legend")).some((heading) =>
+      /^(?:edit|update|manage|my)?\s*(?:user\s+)?(?:profile|account)(?:\s+(?:settings|details))?$/i.test(
+        String(heading.textContent || "").trim(),
+      ));
+    if (!profileContext) return false;
+    return !!document.querySelector('input[name="url"], input[name="website"]');
   }
 
   function detectWPComment() {

@@ -158,6 +158,10 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Pricing Model", options: [
   { value: "Free", label: "Free" }, { value: "Freemium", label: "Freemium" }, { value: "Paid", label: "Paid" },
 ] }, { brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" } }),
 "Paid", "directory pricing choice must reflect paid generation");
+assert.equal(selectValue({ tagName: "SELECT", hint: "Pricing Model", options: [
+  { value: "Free", label: "Free" }, { value: "Freemium", label: "Freemium" }, { value: "Paid", label: "Paid" },
+] }, { brandName: "OldPhotoLive AI", projectFields: { "PRICING TYPE": "Freemium" } }),
+"Freemium", "a free default must not misstate an OldPhoto freemium product");
 assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based", options: [
   { value: "", label: "Not sure / prefer not to say" }, { value: "US", label: "United States" },
 ] }, { brandName: "Graffiti Name AI" }), "",
@@ -190,8 +194,8 @@ const clipped = new Function("document", "window",
 );
 assert.equal(clipped(formInCollapsedPanel), true, "zero-height clipped paid panels must be excluded from form selection");
 assert.match(content, /select2-hidden-accessible/, "hidden Select2 native control must be eligible when its form is open");
-assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
-  "default-selected free pricing must be eligible for replacement");
+assert.ok(content.includes("const wrongPricingDefault = (selectedDefault || controlledFreeDefault)"),
+  "native and controlled Free defaults must be eligible for Profile pricing reconciliation");
 
 const isCustomDropdownEmpty = new Function(
   "compactText",

@@ -7469,7 +7469,13 @@
       if (tag === "select") {
         const selectHint = getFieldHint(element);
         const selectedDefault = !!element.selectedOptions?.[0]?.defaultSelected;
-        const wrongPricingDefault = selectedDefault && /\bpric(?:e|ing)?\b|\bbilling\b/.test(selectHint) &&
+        // Alieradox renders its default Free choice as controlled React state,
+        // without defaultSelected on the underlying option. Reconcile that
+        // initial value with the Profile before treating it as user input.
+        const controlledFreeDefault = typeof location !== "undefined" &&
+          /(?:^|\.)alieradox\.com$/i.test(location.hostname) &&
+          /^free$/i.test(String(element.value || "").trim());
+        const wrongPricingDefault = (selectedDefault || controlledFreeDefault) && /\bpric(?:e|ing)?\b|\bbilling\b/.test(selectHint) &&
           !/\b(?:listing|featured|upgrade|promotion)\b/.test(selectHint);
         if (!isSelectEmpty(element) && !fieldNeedsRefill(element) && !wrongPricingDefault) continue;
         const selectValue = resolveSelectValueForField(element, config);

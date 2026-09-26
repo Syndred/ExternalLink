@@ -7493,12 +7493,6 @@
         element.dispatchEvent(new Event("input", { bubbles: true }));
         element.dispatchEvent(new Event("change", { bubbles: true }));
       }
-      if (!value && type !== "file") {
-        if (fieldNeedsRefill(element)) {
-          /* fall through to re-fill below */
-        } else continue;
-      }
-
       if (type === "file") {
         if (element.files?.length) continue;
         const ok = await tryFillFileFromUrl(element, value, baseUrl, config, {
@@ -7532,15 +7526,20 @@
       const existingValue = getElementFillValue(element);
       let existing = existingValue && String(existingValue).trim();
       if (promptHive && existing) {
-        const label = String(getSnapshotLabel(element) || "").toLowerCase();
+        const label = `${getSnapshotLabel(element)} ${Array.from(element.labels || [])
+          .map((node) => node.textContent || "").join(" ")}`.toLowerCase();
         const staleMedia = /screenshot urls/.test(label) &&
-          [pf["Short Discription(100-150 words)"], pf["Long description (250-500 words)"]]
-            .some((description) => description && String(description).startsWith(existing));
-        const staleHome = /(?:documentation|discord|product hunt)/.test(label) &&
-          existing === String(config.targetDomain || pf.Url || "").trim();
+          !existing.split(/\s+/).every((url) => /^https:\/\/[^\s]+\.(?:png|jpe?g|webp)(?:[?#]|$)/i.test(url));
+        const home = String(config.targetDomain || pf.Url || "").trim();
+        const staleHome = /documentation/.test(label) &&
+          existing.replace(/\/$/, "") === home.replace(/\/$/, "");
+        const staleDiscord = /discord/.test(label) &&
+          !/^https:\/\/(?:discord\.gg|discord\.com)\//i.test(existing);
+        const staleProductHunt = /product hunt/.test(label) &&
+          !/^https:\/\/(?:www\.)?producthunt\.com\//i.test(existing);
         const staleFavicon = /logo url/.test(label) && /\/favicon\.ico(?:[?#]|$)/i.test(existing) &&
           value && value !== existing;
-        if (staleMedia || staleHome || staleFavicon) {
+        if (staleMedia || staleHome || staleDiscord || staleProductHunt || staleFavicon) {
           setFieldValue(element, "");
           element.dispatchEvent(new Event("input", { bubbles: true }));
           element.dispatchEvent(new Event("change", { bubbles: true }));

@@ -521,6 +521,24 @@ document.querySelector = tallyQuerySelector;
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://launchpedia.co/submit/" });
 assert.equal(receipt.matched, false, "generic text without a Tally final status is not enough");
 const originalQuerySelector = document.querySelector.bind(document);
+context.location.href = "https://credibleaitools.com/submit-tool/";
+context.location.hostname = "credibleaitools.com";
+const credibleReceipt = {
+  textContent: "Thanks! We’ve received your submission and will get back to you shortly.",
+  getBoundingClientRect: () => ({ width: 320, height: 38 }),
+  parentElement: null,
+};
+document.querySelector = (selector) => selector === "#panel-free .forminator-response-message.forminator-success"
+  ? credibleReceipt : originalQuerySelector(selector);
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://credibleaitools.com/submit-tool/" });
+assert.equal(receipt.matched, true, "visible Credible AI free-form success alert proves receipt");
+credibleReceipt.getBoundingClientRect = () => ({ width: 0, height: 0 });
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://credibleaitools.com/submit-tool/" });
+assert.equal(receipt.matched, false, "hidden retained Forminator success text must not prove a new receipt");
+credibleReceipt.getBoundingClientRect = () => ({ width: 320, height: 38 });
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://another-directory.example/submit" });
+assert.equal(receipt.matched, false, "Credible AI receipt must not be attributed to another source");
+document.querySelector = originalQuerySelector;
 context.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSfxtP1hx6kN9nkAYXquRq2eTG24_YPEx5-pHov2POonNLeuOw/viewform";
 document.body.innerText = "您的回复已记录。另填写一份回复";
 document.querySelector = (selector) => selector.includes("usp=form_confirm") ? { href: "https://docs.google.com/forms/d/e/example/viewform?usp=form_confirm" } : originalQuerySelector(selector);

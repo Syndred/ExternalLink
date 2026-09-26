@@ -939,6 +939,25 @@
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    // Forminator resets the free form immediately after a successful AJAX
+    // response, and hides its message a few seconds later. Only its visible,
+    // source-scoped success alert is a receipt; retained hidden text is not.
+    if (/^(?:www\.)?credibleaitools\.com$/i.test(String(location.hostname || "")) &&
+        /^(?:www\.)?credibleaitools\.com$/i.test((() => {
+          try { return new URL(String(destinationUrl || location.href)).hostname; } catch { return ""; }
+        })())) {
+      const receiptNode = document.querySelector("#panel-free .forminator-response-message.forminator-success");
+      const receiptText = String(receiptNode?.textContent || "").replace(/\s+/g, " ").trim();
+      if (receiptNode && isVisible(receiptNode) &&
+          /^Thanks! We[’']ve received your submission and will get back to you shortly\.?$/i.test(receiptText)) {
+        return {
+          publicationStatus: "submitted",
+          evidence: receiptText,
+          evidenceSignals: [{ type: "visible_confirmation", text: receiptText, url: String(location.href || ""), matched: true }],
+          matched: true,
+        };
+      }
+    }
     const sourceBoundTallyReceipt = (() => {
       try {
         const page = new URL(String(location.href || ""));

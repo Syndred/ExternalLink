@@ -978,6 +978,39 @@
         matched: true,
       };
     }
+    // FormSubmit hosts the final confirmation outside the directory's
+    // origin. Attribute it only when its visible return link points back to
+    // the directory that the plugin just submitted.
+    const formSubmitReceipt = (() => {
+      try {
+        const page = new URL(String(location.href || ""));
+        const source = new URL(String(destinationUrl || ""));
+        if (page.hostname !== "formsubmit.co" || source.hostname === "formsubmit.co") return false;
+        if (!/^\/[^/]+@[^/]+$/i.test(page.pathname)) return false;
+        const heading = String(document.querySelector("h1")?.textContent || "").trim();
+        const hasSourceLink = Array.from(document.querySelectorAll("a[href]")).some((link) => {
+          try {
+            const href = new URL(link.href || link.getAttribute?.("href") || "");
+            return href.hostname === source.hostname && isVisible(link);
+          } catch {
+            return false;
+          }
+        });
+        return heading === "Thanks!" && hasSourceLink &&
+          /The form was submitted successfully\. Return to original site:/i.test(text);
+      } catch {
+        return false;
+      }
+    })();
+    if (formSubmitReceipt) {
+      const evidence = "The form was submitted successfully.";
+      return {
+        publicationStatus: "submitted",
+        evidence,
+        evidenceSignals: [{ type: "visible_confirmation", text: evidence, url: String(location.href || ""), matched: true }],
+        matched: true,
+      };
+    }
     // Google Forms shows this confirmation link only after a completed
     // response. Wording elsewhere on the form is not submission evidence.
     const googleFormReceipt = (() => {

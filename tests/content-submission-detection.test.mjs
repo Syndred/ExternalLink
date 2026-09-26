@@ -520,6 +520,27 @@ assert.equal(receipt.matched, false, "a Tally receipt without an external source
 document.querySelector = tallyQuerySelector;
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://launchpedia.co/submit/" });
 assert.equal(receipt.matched, false, "generic text without a Tally final status is not enough");
+const formSubmitQuerySelector = document.querySelector.bind(document);
+const formSubmitQuerySelectorAll = document.querySelectorAll.bind(document);
+context.location.href = "https://formsubmit.co/hansraj.kumararlani@gmail.com";
+context.location.hostname = "formsubmit.co";
+document.body.innerText = "Thanks!\nThe form was submitted successfully.\nReturn to original site: https://aitoolsdirectory.site/";
+document.querySelector = (selector) => selector === "h1" ? { textContent: "Thanks!" } : formSubmitQuerySelector(selector);
+document.querySelectorAll = (selector) => selector === "a[href]" ? [{
+  href: "https://aitoolsdirectory.site/",
+  getBoundingClientRect: () => ({ width: 140, height: 20 }),
+  parentElement: null,
+}] : formSubmitQuerySelectorAll(selector);
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitoolsdirectory.site/submit.html" });
+assert.equal(receipt.matched, true, "FormSubmit's visible return link and final success text prove the source submission");
+assert.equal(receipt.evidence, "The form was submitted successfully.");
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://another-directory.example/submit" });
+assert.equal(receipt.matched, false, "a FormSubmit receipt must not be attributed to another directory");
+document.body.innerText = "Submit your tool. Return to original site: https://aitoolsdirectory.site/";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://aitoolsdirectory.site/submit.html" });
+assert.equal(receipt.matched, false, "FormSubmit's recipient form page must not count as its final receipt");
+document.querySelector = formSubmitQuerySelector;
+document.querySelectorAll = formSubmitQuerySelectorAll;
 const originalQuerySelector = document.querySelector.bind(document);
 context.location.href = "https://credibleaitools.com/submit-tool/";
 context.location.hostname = "credibleaitools.com";

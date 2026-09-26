@@ -4662,7 +4662,8 @@ async function observeManualSubmissionReceipt(tabId, token, frameId, details = {
       const expectedOrigin = new URL(watch.pageUrl || watch.url).origin;
       const currentHost = new URL(currentUrl).hostname.replace(/^www\./, "").toLowerCase();
       const isTypeformPage = currentHost === "typeform.com" || currentHost.endsWith(".typeform.com");
-      if (currentOrigin !== expectedOrigin && !isTypeformPage) break;
+      const isFormSubmitPage = currentHost === "formsubmit.co";
+      if (currentOrigin !== expectedOrigin && !isTypeformPage && !isFormSubmitPage) break;
       const receipt = await sendTabMessageToFrame(tabId, normalizedFrameId, {
         action: "classifySubmitEvidence",
         destinationUrl: watch.destinationUrl,
@@ -4962,16 +4963,18 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
 
   if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
     const pageUrl = await getTabUrlSafe(tabId);
+    const destinationUrl = currentUrl || pageUrl;
     let ledgerSaved = false;
     let cloud = { synced: false, reason: "本地成功记录待云端核对" };
     if (pageUrl && options.recordLedger !== false) {
       const record = await recordSubmittedProject({
-        url: pageUrl,
+        url: destinationUrl,
         profileId: profile.id,
         profileName: profile.name || profile.id,
         confirmedBy: "agent",
         successEvidence: submitResult.evidence,
         publicationStatus: submitResult.publicationStatus || "submitted",
+        evidenceUrl: pageUrl,
         successProof: {
           source: "deterministic_submit",
           actionObserved: true,
@@ -4986,8 +4989,8 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
       });
       ledgerSaved = record?.status === "success";
       if (!ledgerSaved) throw new Error("成功回执已出现，但精确账本记录未持久化");
-      cloud = await confirmSubmissionRecordInCloud(pageUrl, profile.id, record);
-      if (!batchEntry) await rememberPendingSubmissionCloudTab(tabId, pageUrl, profile.id, record, cloud.synced);
+      cloud = await confirmSubmissionRecordInCloud(destinationUrl, profile.id, record);
+      if (!batchEntry) await rememberPendingSubmissionCloudTab(tabId, destinationUrl, profile.id, record, cloud.synced);
     }
     const doneMsg =
       !ledgerSaved

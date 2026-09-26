@@ -136,8 +136,9 @@ assert.ok(routing.indexOf("publicMediaUrlForField(config, normalizedHint)") < ro
 assert.ok(routing.indexOf('element.getAttribute("role") === "combobox"') < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('element.parentElement?.querySelector(\'input[type="hidden"][name*="category"]\')') < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('pickDescriptionForField(config, element)') < routing.indexOf("const learnedKey"));
+const testLocation = { hostname: "www.iatool.online" };
 const resolveValue = new Function(
-  "getProfileFields", "getFieldHint", "getSnapshotLabel", "fitValueToConstraints", "getFieldConstraints", "pickDescriptionForField",
+  "getProfileFields", "getFieldHint", "getSnapshotLabel", "fitValueToConstraints", "getFieldConstraints", "pickDescriptionForField", "location",
   `${fieldHelpers}; ${routing}; return resolveValueForField;`,
 )(
   (config) => config.projectFields || {},
@@ -146,7 +147,18 @@ const resolveValue = new Function(
   (value) => value,
   () => ({}),
   () => "JevPlay is a free browser game against Jev.",
+  testLocation,
 );
+assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: {}, tags: "graffiti name generator, bubble letters" },
+  { tagName: "INPUT", type: "text", hint: "Category (optional)", label: "Category (optional)", getAttribute: () => null }),
+  "Image Generation & Editing", "Come AI category must describe the tool rather than repeat a search keyword");
+assert.equal(resolveValue({ brandName: "OldPhotoLive AI", projectFields: {}, tags: "old photo restoration, animation" },
+  { tagName: "INPUT", type: "text", hint: "Category (optional)", label: "Category (optional)", getAttribute: () => null }),
+  "Image Generation & Editing");
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, tags: "AI games, decision games" },
+  { tagName: "INPUT", type: "text", hint: "Category (optional)", label: "Category (optional)", getAttribute: () => null }),
+  "", "an optional category without a matching site taxonomy must remain empty");
+testLocation.hostname = "example.com";
 const wrongLearned = { "viesearch.com": { title: { value: "https://jevplay.com/games" } } };
 assert.equal(resolveValue({ brandName: "JevPlay", projectFields: {}, learnedFieldMappings: wrongLearned },
   { tagName: "INPUT", type: "text", hint: "Title (Optional) Leave blank to auto-fetch from website", getAttribute: () => null }), "JevPlay");

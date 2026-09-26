@@ -6608,6 +6608,13 @@
       /\b(tags?|categor(?:y|ies)|keywords?)\b/.test(visibleHint) &&
       !/\be-?mail\b/.test(visibleHint)
     ) {
+      if (/\bcategory\b/.test(visibleHint) && /^(?:www\.)?iatool\.online$/i.test(location.hostname)) {
+        const product = String(config.brandName || pf.Name || "").trim().toLowerCase();
+        if (/^(?:graffiti name ai|oldphotolive ai)$/.test(product)) return "Image Generation & Editing";
+        // Come AI has no gaming category. Its category field is optional, so
+        // leave an unrepresented product blank rather than submit a keyword.
+        return "";
+      }
       const tags = String(config.tags || pf["Tags Keywords/Hashtags"] || "")
         .split(/[,;|/]+/).map((value) => value.trim().replace(/^#+/, "")).filter(Boolean);
       return /\b(tags|keywords)\b/.test(visibleHint) ? tags.slice(0, 5).join(", ") : (tags[0] || "");

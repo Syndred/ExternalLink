@@ -5825,6 +5825,14 @@
     ).filter((el) => isVisible(el) && isFillableField(el));
   }
 
+  function shouldReconcileDefaultCustomPricing(trigger, config) {
+    if (typeof location === "undefined" || !/(?:^|\.)alieradox\.com$/i.test(location.hostname)) return false;
+    if (!/\bpric(?:e|ing)?\b/i.test(getFieldHint(trigger))) return false;
+    const current = compactText(trigger.textContent || trigger.getAttribute("aria-valuetext"), 120).toLowerCase();
+    const desired = resolveSelectTokens(trigger, config)[0]?.toLowerCase();
+    return current === "free" && (desired === "freemium" || desired === "paid");
+  }
+
   async function tryFillCustomDropdown(trigger, config) {
     const desiredTokens = resolveSelectTokens(trigger, config);
     if (!desiredTokens.length) return false;
@@ -5835,7 +5843,8 @@
         : trigger.textContent || trigger.getAttribute("aria-valuetext"),
       120,
     );
-    if (current && !/select|choose|pick|please/i.test(current)) return false;
+    if (current && !/select|choose|pick|please/i.test(current) &&
+        !shouldReconcileDefaultCustomPricing(trigger, config)) return false;
 
     trigger.focus();
     trigger.click();
@@ -5921,9 +5930,9 @@
       if (match) {
         match.el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
         await sleep(80);
-        if (isCustomDropdownEmpty(trigger)) match.el.click();
+        if (isCustomDropdownEmpty(trigger) || shouldReconcileDefaultCustomPricing(trigger, config)) match.el.click();
         await sleep(150);
-        if (!isCustomDropdownEmpty(trigger)) return true;
+        if (!isCustomDropdownEmpty(trigger) && !shouldReconcileDefaultCustomPricing(trigger, config)) return true;
       }
       if (trigger.tagName?.toLowerCase() === "input") {
         setFieldValue(trigger, "");
@@ -7616,7 +7625,7 @@
           inferredFields: [...inferredFields],
         });
       }
-      if (!isCustomDropdownEmpty(trigger)) continue;
+      if (!isCustomDropdownEmpty(trigger) && !shouldReconcileDefaultCustomPricing(trigger, config)) continue;
       const ok = await tryFillCustomDropdown(trigger, config);
       if (!isCurrentPageContext(pageContext)) {
         return stalePageResult("form", {

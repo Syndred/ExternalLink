@@ -167,6 +167,22 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based"
 ] }, { brandName: "Graffiti Name AI" }), "",
 "unknown company location must not be fabricated as United States");
 
+const reconcileCustomPricing = new Function(
+  "location", "getFieldHint", "compactText", "resolveSelectTokens",
+  `${extractFunction("shouldReconcileDefaultCustomPricing", "tryFillCustomDropdown")}; return shouldReconcileDefaultCustomPricing;`,
+)(
+  { hostname: "alieradox.com" },
+  (element) => element.hint,
+  (value) => String(value || "").trim(),
+  (_element, config) => [config.projectFields?.["PRICING TYPE"]?.toLowerCase().startsWith("freemium") ? "freemium" : "free"],
+);
+assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Free" }, {
+  projectFields: { "PRICING TYPE": "Freemium with credits" },
+}), true, "a controlled Free default must be corrected for a freemium Profile");
+assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Freemium" }, {
+  projectFields: { "PRICING TYPE": "Freemium with credits" },
+}), false, "the matching choice should be left alone");
+
 const freePanelClick = { count: 0, click() { this.count++; }, textContent: "Verify & get listed free" };
 const openFreePanel = new Function(
   "document", "isInsideCollapsedPanel", "isVisible", "sleep",

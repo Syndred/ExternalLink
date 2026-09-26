@@ -6613,7 +6613,7 @@
         const oldPhoto = /old.?photo/i.test(String(config.brandName || ""));
         for (const element of options) {
           const label = String(getSnapshotLabel(element) || "").toLowerCase();
-          if (!/^web app\b/.test(label) && !(oldPhoto && /^free plan\b/.test(label))) continue;
+          if (!/^web app/.test(label) && !(oldPhoto && /^free plan/.test(label))) continue;
           setCheckedValue(element, true);
           element.dispatchEvent(new Event("input", { bubbles: true }));
           element.dispatchEvent(new Event("change", { bubbles: true }));
@@ -7404,7 +7404,7 @@
           element.closest("label")?.textContent || "",
           element.parentElement?.textContent || "",
         ].join(" "), 180).toLowerCase();
-        if (!/^web app\b/.test(label) && !(oldPhoto && /^free plan\b/.test(label))) continue;
+        if (!/^web app/.test(label) && !(oldPhoto && /^free plan/.test(label))) continue;
         setCheckedValue(element, true);
         element.dispatchEvent(new Event("input", { bubbles: true }));
         element.dispatchEvent(new Event("change", { bubbles: true }));

@@ -286,6 +286,28 @@ const resolveValue = new Function(
   () => "JevPlay is a free browser game against Jev.",
   testLocation,
 );
+testLocation.hostname = "thereisanaitool.com";
+testLocation.pathname = "/submit-tool/";
+assert.equal(resolveValue({ brandName: "JevPlay", projectFields: { "PRICING TYPE": "Free" } },
+  { tagName: "INPUT", type: "text", hint: "Function tag", label: "Function tag", getAttribute: () => null }),
+  "AI game");
+assert.equal(resolveValue({ brandName: "OldPhotoLive AI", projectFields: { "PRICING TYPE": "Freemium" } },
+  { tagName: "INPUT", type: "text", hint: "Starting price", label: "Starting price", getAttribute: () => null }),
+  "Free tier ($0)");
+assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" } },
+  { tagName: "INPUT", type: "text", hint: "Starting price", label: "Starting price", getAttribute: () => null }),
+  "", "do not invent a paid product's starting price");
+assert.equal(resolveValue({ targetAudience: "Daily puzzle players", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Best for", label: "Best for", getAttribute: () => null }),
+  "Daily puzzle players");
+assert.equal(resolveValue({ projectFields: { "Feature description": "Live races; server-verified results; side-by-side replay" } },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }),
+  "Live races\nserver-verified results\nside-by-side replay");
+assert.equal(resolveValue({ projectFields: { "Feature description": "One broad marketing sentence" } },
+  { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }),
+  "", "a three-item requirement must not be filled with one unstructured sentence");
+testLocation.pathname = "";
+testLocation.hostname = "www.iatool.online";
 assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: {}, tags: "graffiti name generator, bubble letters" },
   { tagName: "INPUT", type: "text", hint: "Category (optional)", label: "Category (optional)", getAttribute: () => null }),
   "Image Generation & Editing", "Come AI category must describe the tool rather than repeat a search keyword");

@@ -6716,6 +6716,41 @@
     const visibleHint = getSnapshotLabel(element).toLowerCase();
     const promptHive = typeof location !== "undefined" &&
       location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname || "");
+    const thereIsAiTool = typeof location !== "undefined" &&
+      /(?:^|\.)thereisanaitool\.com$/i.test(location.hostname) &&
+      /^\/submit-tool\/?$/.test(location.pathname || "");
+
+    if (thereIsAiTool) {
+      const field = `${visibleHint} ${normalizedHint}`;
+      const identity = `${config.brandName || ""} ${pf.Name || ""}`.toLowerCase();
+      if (/\bfunction tag\b/.test(field)) {
+        if (/\bjevplay\b/.test(identity)) return "AI game";
+        if (/old.?photo/.test(identity)) return "Photo restoration";
+        if (/graffiti/.test(identity)) return "Graffiti art";
+        return "";
+      }
+      if (/\bstarting price\b/.test(field)) {
+        const explicit = String(pf["Starting price"] || pf["Starting Price"] || "").trim();
+        if (explicit) return fitValueToConstraints(explicit, getFieldConstraints(element));
+        const pricing = String(pf["PRICING TYPE"] || pf.Pricing || config.pricing || "").toLowerCase();
+        if (/freemium/.test(pricing)) return "Free tier ($0)";
+        if (/^free\b/.test(pricing)) return "Free";
+        return "";
+      }
+      if (/\bbest for\b/.test(field)) {
+        return fitValueToConstraints(
+          config.targetAudience || pf["Target Audience"] || pf["Target audience"] || pf.Audience || "",
+          getFieldConstraints(element),
+        );
+      }
+      if (/\bkey features\b/.test(field)) {
+        const features = String(pf["Feature description"] || pf.Features || "")
+          .split(/\s*(?:\r?\n|;|•)\s*/)
+          .map((part) => part.trim())
+          .filter(Boolean);
+        return features.length >= 3 ? features.slice(0, 8).join("\n") : "";
+      }
+    }
 
     if (promptHive) {
       const field = `${visibleHint} ${normalizedHint}`;

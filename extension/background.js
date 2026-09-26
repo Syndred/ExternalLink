@@ -4700,13 +4700,24 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     }));
     const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
     const afterText = String(submitResult?.evidence || "").replace(/\s+/g, " ").trim();
+    const recoveredReceipt = Boolean(submitResult?.matched && afterText && afterText !== beforeText);
+    const recoveredSignals = Array.isArray(submitResult?.evidenceSignals) && submitResult.evidenceSignals.length
+      ? submitResult.evidenceSignals
+      : recoveredReceipt
+        ? [{
+            type: submitResult.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
+            text: afterText,
+            url: await getTabUrlSafe(tabId),
+            matched: true,
+          }]
+        : [];
     submitResult = {
       ...submitResult,
       submitted: true,
       clickedSubmit: true,
-      matched: Boolean(submitResult?.matched && afterText && afterText !== beforeText),
+      matched: recoveredReceipt,
       evidence: afterText && afterText !== beforeText ? submitResult.evidence : "",
-      evidenceSignals: afterText && afterText !== beforeText ? submitResult.evidenceSignals || [] : [],
+      evidenceSignals: recoveredReceipt ? recoveredSignals : [],
     };
   }
 
@@ -4732,7 +4743,8 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
         matched: true,
         evidence: currentEvidence.evidence,
         publicationStatus: currentEvidence.publicationStatus || "submitted",
-        evidenceSignals: currentEvidence.evidenceSignals || [{
+        evidenceSignals: Array.isArray(currentEvidence.evidenceSignals) && currentEvidence.evidenceSignals.length
+          ? currentEvidence.evidenceSignals : [{
           type: currentEvidence.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
           text: currentEvidence.evidence,
           url: await getTabUrlSafe(tabId),
@@ -4846,7 +4858,8 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
         successProof: {
           source: "deterministic_submit",
           actionObserved: true,
-          evidenceSignals: submitResult.evidenceSignals || [{
+          evidenceSignals: Array.isArray(submitResult.evidenceSignals) && submitResult.evidenceSignals.length
+            ? submitResult.evidenceSignals : [{
             type: submitResult.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
             text: submitResult.evidence,
             url: pageUrl,

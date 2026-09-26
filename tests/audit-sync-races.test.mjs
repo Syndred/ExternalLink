@@ -679,4 +679,46 @@ assert.doesNotMatch(background, /cloudSyncMute/, "pulls must not suppress other 
   assert.deepEqual(messages, [], "cloud reconciliation must not submit a second time");
 }
 
+// A full-page navigation can detach the old content script after the click.
+// The receipt read from the new document must carry a concrete evidence signal
+// into the hard success gate instead of an empty array.
+{
+  let evidenceReads = 0;
+  let recorded = null;
+  const context = {
+    state: { activeTabs: new Map() },
+    getTabUrlSafe: async () => "https://aitoolsratings.com/submit-ai-tools/?submit=sent",
+    isCustomLaunchUrl: () => false,
+    self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" } },
+    existingSubmissionRecord: async () => null,
+    sendTabMessage: async (_tabId, message) => {
+      if (message.action === "classifySubmitEvidence") {
+        evidenceReads += 1;
+        return evidenceReads === 1 ? { matched: false, evidence: "" } : {
+          matched: true,
+          evidence: "Thanks — we received your message and will get back to you soon.",
+          publicationStatus: "pending_moderation",
+        };
+      }
+      if (message.action === "submitFilledForm") throw new Error("old document detached");
+      throw new Error(`unexpected message: ${message.action}`);
+    },
+    sleep: async () => {},
+    broadcastAutoFillUpdate: () => {},
+    recordSubmittedProject: async (task) => {
+      recorded = task;
+      return { status: "success", evidence: task.successEvidence };
+    },
+    confirmSubmissionRecordInCloud: async () => ({ synced: true }),
+    rememberPendingSubmissionCloudTab: async () => {},
+  };
+  vm.createContext(context);
+  vm.runInContext(extractFunction(background, "tryAutoSubmitFilledForm"), context);
+  const result = await context.tryAutoSubmitFilledForm(7, {}, { id: "OldPhotoLive", name: "OldPhotoLive AI" }, "directory");
+  assert.equal(result.matched, true);
+  assert.equal(recorded?.successProof?.evidenceSignals?.length, 1);
+  assert.equal(recorded.successProof.evidenceSignals[0].matched, true);
+  assert.equal(recorded.successProof.evidenceSignals[0].url, "https://aitoolsratings.com/submit-ai-tools/?submit=sent");
+}
+
 console.log("cloud sync race audit tests passed");

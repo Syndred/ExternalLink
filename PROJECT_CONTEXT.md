@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-26 / 3.7.57 跨页回执硬闸门修复**：OldPhotoLive AI 在 3.7.56 已由插件向 AI Tools Ratings 提交，站方 `?submit=sent` 显示完整收到消息回执；插件后台补读新页时因证据列表为空被成功硬闸门拒绝入账。已修导航断联回退和零长度信号兜底，回归与全量 53 个测试文件通过。JevPlay、OldPhoto 均已送达站方但账本/Neon 尚待补记，不再重复提交；自行重载 3.7.57，用 Graffiti 实测自动记账。详见 `docs/三产品十站插件实测-2026-09-25.md`。
+
 - **2026-09-26 / 3.7.56 AI Tools Ratings 回执规则**：自行重载 3.7.55 后，JevPlay 插件提交跳到 `?submit=sent`，站方显示完整 `Thanks — we received your message and will get back to you soon.`。插件旧规则漏识别，故没有自动账本/Neon；不可重复投稿。已为该站补精确回执规则和测试，须自行重载 3.7.56 后用另两产品核对自动记账；JevPlay 依据已见回执补记并云端回读。详见 `docs/三产品十站插件实测-2026-09-25.md`。
 
 - **2026-09-26 / 3.7.55 目录误判资料页**：AI Tools Ratings JevPlay 在 3.7.54 已填 13 字段，点击“提交本页”时出现“无验证码，正在提交…”，15 秒后回到可提交但站方无变化、无回执。源码定位 `input[name=website]` 与页脚 `AI Image Editing` 让资料页检测先命中；3.7.55 收紧资料页语境、移除裸字段兜底，目录页/真实资料页回归及 53 个测试文件通过。须自行重载 3.7.55 后在保留的表单现场提交并核对账本/Neon。AI SuperHub 与 Launchpedia 三产品已有历史回执，跳过避免重复。详见 `docs/三产品十站插件实测-2026-09-25.md`。

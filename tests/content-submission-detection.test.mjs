@@ -182,6 +182,18 @@ document.querySelector = (selector) => selector.startsWith(".wpcf7 form.failed")
 assert.match(auditHooks.detectSubmissionTransportFailure(), /error trying to send your message/,
   "a failed Contact Form 7 response must be treated as a site error, not a login or success receipt");
 document.querySelector = transportQuerySelector;
+context.location.hostname = "www.iatool.online";
+context.location.href = "https://www.iatool.online/submit-tool/";
+context.performance = {
+  getEntriesByType: () => [
+    { name: "https://www.iatool.online/api/submit-tool", startTime: 10, responseStatus: 500 },
+  ],
+};
+assert.equal(auditHooks.detectSubmissionTransportFailure(11), "", "old failed requests must not affect a new attempt");
+assert.match(auditHooks.detectSubmissionTransportFailure(10), /HTTP 500/, "Come AI API failure must not become a success receipt");
+context.location.hostname = "futuretools.io";
+context.location.href = "https://futuretools.io/";
+delete context.performance;
 assert.equal(
   auditHooks.isLegalAcceptanceField(new FakeField({ type: "checkbox", name: "asset_permission", required: true })),
   true,

@@ -867,11 +867,24 @@
     return null;
   }
 
-  function detectSubmissionTransportFailure() {
+  function detectSubmissionTransportFailure(sinceStartTime = 0) {
     const failedForm = document.querySelector('.wpcf7 form.failed, .wpcf7 form[data-status="failed"]');
-    if (!failedForm) return "";
-    return String(failedForm.querySelector('.wpcf7-response-output')?.textContent || "")
-      .replace(/\s+/g, " ").trim() || "站方表单发送失败";
+    if (failedForm) {
+      return String(failedForm.querySelector('.wpcf7-response-output')?.textContent || "")
+        .replace(/\s+/g, " ").trim() || "站方表单发送失败";
+    }
+    if (/^(?:www\.)?iatool\.online$/i.test(location.hostname) && typeof performance !== "undefined") {
+      const failedRequest = performance.getEntriesByType?.("resource")?.find((entry) => {
+        try {
+          return new URL(entry.name).pathname === "/api/submit-tool" &&
+            entry.startTime >= sinceStartTime && Number(entry.responseStatus) >= 400;
+        } catch {
+          return false;
+        }
+      });
+      if (failedRequest) return `Come AI 提交接口返回 HTTP ${failedRequest.responseStatus}`;
+    }
+    return "";
   }
 
   function shouldAutoSubmitStandardWp(config, preflight) {
@@ -3464,6 +3477,7 @@
     const beforeUrl = location.href;
     const beforeEvidence = classifyVisibleEvidence();
     const beforeStage = formStageSignature();
+    const submitStartedAt = performance.now();
     if (!isCurrentPageContext(pageContext)) return stalePageResult(platform, fillResult);
     let classified;
     pluginSubmitInProgress = true;
@@ -3474,7 +3488,7 @@
       pluginSubmitInProgress = false;
     }
     const urlChanged = location.href !== beforeUrl;
-    const transportFailure = detectSubmissionTransportFailure();
+    const transportFailure = detectSubmissionTransportFailure(submitStartedAt);
     if (transportFailure) {
       return {
         needs_manual: true,

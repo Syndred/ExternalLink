@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / 3.7.90 Graffiti 本人邮箱写回保护
+
+- 用户明确要求涂鸦站投稿联系邮箱使用本人 `syndredyoung@gmail.com`。3.7.89 已将本地种子和填表运行配置换成该地址；3.7.90 在启动云端回读成功后，仅对云端 Graffiti Profile 中明确的旧 `support@graffitinameai.com` 做字段级更正，并交给原有 `siteProfiles` 自动 PATCH 同步。其他 Profile 与有效的自定义邮箱不改。
+- 54/54 Node 测试和语法检查通过；Ego 原生窗口仍返回 macOS 捕捉/无效辅助元素错误，**3.7.90 尚未实载、云端正本尚未回读确认**。不能声称云端已更正或继续使用旧版本投 Graffiti。用户既有 SEO 页签未动。
+
 ## 2026-09-26 / 3.7.77 同类实现对照与表单归属修正
 
 - 参考 Bitwarden 的先确定表单/字段再操作、Automa 的显式表单控件定位及 Playwright 的可访问名称定位。项目现有 `getActiveFillScope()`、多步骤补填、提交前校验和回执基线可复用。本轮优先让投稿字段表单胜过同页较大的账户表单；最终按钮按活动表单归属筛选，支持 `button.form` 指向的外部按钮和通用 `role=button`，排除订阅、搜索、登录控件。必填错误和禁用提交检查也限制到活动表单；提交前重新识别按钮，避免 SPA 替换旧节点后盲点。参考：`https://contributing.bitwarden.com/architecture/deep-dives/autofill/collecting-page-details/`、`https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/form`、`https://playwright.dev/docs/locators`。

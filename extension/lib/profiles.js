@@ -74,18 +74,26 @@
     };
   }
 
+  function useVerifiedGraffitiContact(profileId, storedFields = {}) {
+    if (profileId !== "GraffitiName" ||
+        !/^support@graffitinameai\.com$/i.test(String(storedFields["Business mail"] || "").trim())) {
+      return storedFields;
+    }
+    const fields = { ...storedFields, "Business mail": "syndredyoung@gmail.com" };
+    if (/^support@graffitinameai\.com$/i.test(String(fields["Feedback mail"] || "").trim())) {
+      fields["Feedback mail"] = "syndredyoung@gmail.com";
+    }
+    const links = String(fields["Extra Link:X/Twitter/YouTube/Instagram/.."] || "");
+    if (/mailto:support@graffitinameai\.com/i.test(links)) {
+      fields["Extra Link:X/Twitter/YouTube/Instagram/.."] = links
+        .replace(/^Email:\s*mailto:support@graffitinameai\.com\s*\n?/i, "")
+        .trim() || "Other social links are not specified in the project.";
+    }
+    return fields;
+  }
+
   function buildAgentConfigFromProfile(profile, globalConfig = {}) {
-    const storedFields = profile.fields || {};
-    // This old Graffiti contact domain has no MX record. Keep an already
-    // synced Profile intact, but never send another directory a dead address.
-    const fields = profile.id === "GraffitiName" &&
-      /^support@graffitinameai\.com$/i.test(String(storedFields["Business mail"] || "").trim())
-      ? {
-          ...storedFields,
-          "Business mail": "syndredyoung@gmail.com",
-          "Feedback mail": "syndredyoung@gmail.com",
-        }
-      : storedFields;
+    const fields = useVerifiedGraffitiContact(profile.id, profile.fields || {});
     const name = fields.Name || profile.name || "";
     const url = profile.promoUrl || profile.url || fields.Url || "";
     const email = fields["Business mail"] || globalConfig.email || "";
@@ -447,6 +455,18 @@
       }
       changed = true;
       profiles[projectKey] = next;
+    }
+
+    // The source table is only a seed. Repair this one documented dead
+    // contact in the stored Profile so the normal storage/cloud patch path
+    // persists the owner's requested address without replacing other fields.
+    const graffiti = profiles.GraffitiName;
+    if (graffiti?.fields) {
+      const corrected = useVerifiedGraffitiContact("GraffitiName", graffiti.fields);
+      if (corrected !== graffiti.fields) {
+        profiles.GraffitiName = { ...graffiti, fields: corrected };
+        changed = true;
+      }
     }
 
     return { profiles, idRemap, changed };

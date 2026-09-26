@@ -138,6 +138,24 @@ assert.equal(
 );
 
 const repeated = P.stabilizeTableProfiles(tableProjects, stabilized.profiles);
+const staleGraffiti = {
+  ...stabilized.profiles,
+  GraffitiName: {
+    ...stabilized.profiles.GraffitiName,
+    fields: {
+      ...stabilized.profiles.GraffitiName.fields,
+      "Business mail": "support@graffitinameai.com",
+      "Feedback mail": "support@graffitinameai.com",
+      "Extra Link:X/Twitter/YouTube/Instagram/..": "Email: mailto:support@graffitinameai.com\nOther social links are not specified in the project.",
+    },
+  },
+};
+const repairedGraffiti = P.stabilizeTableProfiles(tableProjects, staleGraffiti);
+assert.equal(repairedGraffiti.changed, true, "the stale cloud Profile should be corrected through normal sync");
+assert.equal(repairedGraffiti.profiles.GraffitiName.fields["Business mail"], "syndredyoung@gmail.com");
+assert.equal(repairedGraffiti.profiles.GraffitiName.fields["Feedback mail"], "syndredyoung@gmail.com");
+assert.doesNotMatch(repairedGraffiti.profiles.GraffitiName.fields["Extra Link:X/Twitter/YouTube/Instagram/.."], /graffitinameai\.com/);
+assert.equal(P.stabilizeTableProfiles(tableProjects, repairedGraffiti.profiles).changed, false, "email repair should be idempotent");
 assert.equal(repeated.changed, false, "stable profile migration should be idempotent");
 assert.deepEqual(JSON.parse(JSON.stringify(repeated.idRemap)), {});
 

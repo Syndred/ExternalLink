@@ -151,12 +151,25 @@ let initializationPromise = restoreActiveBatchRun()
   }));
 
 initializationPromise.then(() => {
-  pullCloudState().then((result) => {
-    if (result?.applied) log(`启动时已从云端更新 ${result.documentCount || 0} 类数据`, "ok");
+  pullCloudState().then(async (result) => {
+    if (result?.applied) {
+      log(`启动时已从云端更新 ${result.documentCount || 0} 类数据`, "ok");
+      await repairKnownGraffitiContact();
+    }
   }).catch((err) => {
     log(`启动时云端回读跳过: ${err.message}`, "warn");
   });
 });
+
+async function repairKnownGraffitiContact() {
+  const { siteProfiles } = await chrome.storage.local.get("siteProfiles");
+  const repaired = self.ExtLinkProfiles.stabilizeTableProfiles({}, siteProfiles || {});
+  if (repaired.changed) {
+    // This precise migration enters the existing field-level cloud patch
+    // queue after the startup pull, preserving unrelated Profile changes.
+    await chrome.storage.local.set({ siteProfiles: repaired.profiles });
+  }
+}
 
 self.addEventListener?.("unhandledrejection", (event) => {
   const reason = event?.reason;

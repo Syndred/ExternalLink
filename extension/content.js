@@ -5873,7 +5873,10 @@
       // dropzone. Keep that control available for DataTransfer injection, but
       // only when the nearby visible label is clearly an upload/media target.
       if (type === "file") return isAutomatableFileInput(element);
-      if (!isFillableField(element)) return false;
+      if (!isFillableField(element) && !(
+        type === "radio" && isToolsSoTallyForm() &&
+        Array.from(element.labels || []).some(isVisible)
+      )) return false;
       if (isContentEditableField(element) && element.parentElement?.isContentEditable) return false;
       if (type === "hidden" || type === "submit" || type === "button" || type === "reset")
         return false;
@@ -6418,6 +6421,12 @@
     return score;
   }
 
+  function isToolsSoTallyForm() {
+    return /^(?:www\.)?tally\.so$/i.test(location.hostname) &&
+      /^\/embed\/3EPN9B\/?$/i.test(location.pathname || "") &&
+      /^https:\/\/(?:www\.)?tools\.so\//i.test(document.referrer || "");
+  }
+
   function fillChoiceGroups(elements, config) {
     const groups = collectChoiceGroups(elements);
     const corpus = profileChoiceCorpus(config);
@@ -6443,9 +6452,16 @@
           ),
         }))
         .sort((a, b) => b.score - a.score);
-      let selected = ranked[0];
+      const toolsSoMakerForm = isToolsSoTallyForm() &&
+        /^(?:JevPlay|OldPhotoLive AI|Graffiti Name AI)$/i.test(String(config.brandName || "").trim());
+      const makerChoice = toolsSoMakerForm
+        ? ranked.find((item) => /i['’]?m the maker of this tool/i.test(
+            `${item.label} ${item.element?.parentElement?.parentElement?.innerText || ""}`,
+          ))
+        : null;
+      let selected = makerChoice || ranked[0];
       if (!selected || selected.score <= 0) {
-        selected = ranked.find((item) => /miscellaneous|other/.test(item.label.toLowerCase()));
+        selected = makerChoice || ranked.find((item) => /miscellaneous|other/.test(item.label.toLowerCase()));
       }
       if (!selected) continue;
 

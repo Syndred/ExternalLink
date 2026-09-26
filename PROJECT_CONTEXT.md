@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 19:49 / 续验与本地审计空结果保护
+
+- AIToolnet 现场仅见 $9.9 / $49.9 投稿档、最终按钮 `Submit Pay $9.9`，旧 START/Free 候选说明不再适用；ToolScout 免费但登录前要求同意条款。两站未投稿，本轮页签已关闭。
+- Ego 原生绑定仍 `-3811`，没有完成重启、插件实载或最新 Neon 去重。独立闭环无新增，目标仍为固定十站至少 6/10。
+- 本地 `audit-state.mjs` 原先对 Jev 缺失数据返回 `0/0 ok`，现明确输出 `source=local_seed_backup`、`liveCloudVerified=false`；没有成功证据返回 `reason=no_evidence`、CLI 退出码 2。既有有效本地对账仍可通过，但不能代表实时 Neon 审计。插件源码版本仍 3.7.106。
+
 ## 2026-09-26 19:44 / 新任务接手与候选门槛校正
 
 - 已从 `06df6fe` 接手；现有五分钟 `externallink` heartbeat 已迁入任务 `01a0dd85-e567-7273-a836-7a179de56ddb` 并回读确认 ACTIVE，没有重复新建。

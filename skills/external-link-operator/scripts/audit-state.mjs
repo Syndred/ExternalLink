@@ -22,9 +22,13 @@ export async function auditState({
     readJson(aliasesPath),
   ]);
   const aliasLookup = buildAliasLookup(aliases);
+  const profileTableRecords = (library.entries || [])
+    .filter((entry) => (entry?.projects || []).includes(profile));
+  const profileLedgerRecords = Object.values(handoff.submissionRecords || {})
+    .filter((record) => record?.profileId === profile);
   const tablePairs = [];
-  for (const entry of library.entries || []) {
-    if (!entry?.submitted || !(entry.projects || []).includes(profile)) continue;
+  for (const entry of profileTableRecords) {
+    if (!entry?.submitted) continue;
     const sourceKey = String(entry.indexPage || entry.link || "").trim();
     if (!sourceKey) continue;
     tablePairs.push({
@@ -42,8 +46,8 @@ export async function auditState({
   }
 
   const ledgerPairs = new Map();
-  for (const record of Object.values(handoff.submissionRecords || {})) {
-    if (record?.profileId !== profile || record.status !== "success") continue;
+  for (const record of profileLedgerRecords) {
+    if (record.status !== "success") continue;
     const sourceKey = record.destinationKey || record.destinationUrl;
     ledgerPairs.set(canonicalDestinationKey(sourceKey, aliasLookup), record);
   }
@@ -55,15 +59,21 @@ export async function auditState({
     .filter(([, values]) => values.length > 1)
     .map(([canonicalKey, sources]) => ({ canonicalKey, sources }));
   const ledgerOnly = [...ledgerPairs.keys()].filter((key) => !grouped.has(key));
+  const hasSuccessEvidence = tablePairs.length > 0 || ledgerPairs.size > 0;
+  const reason = hasSuccessEvidence ? null : "no_evidence";
 
   return {
     profile,
+    source: "local_seed_backup",
+    liveCloudVerified: false,
+    reason,
+    profileRecordCount: profileTableRecords.length + profileLedgerRecords.length,
     tableSuccessPairs: grouped.size,
     ledgerSuccessPairs: ledgerPairs.size,
     missingInLedger,
     duplicateTableAliases,
     ledgerOnly,
-    ok: missingInLedger.length === 0 && duplicateTableAliases.length === 0,
+    ok: hasSuccessEvidence && missingInLedger.length === 0 && duplicateTableAliases.length === 0,
   };
 }
 

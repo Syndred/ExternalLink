@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-26 / 3.7.53 Come AI 现场提交**：JevPlay 五个字段由插件完整填写，点击“提交本页”后站方 API 返回 HTTP 500，无成功回执/Neon 记录。已加本次请求的 HTTP 错误识别和回归，待自行重载继续验收；Chrome 原生捕捉失败时可用系统辅助功能操作插件。见 `docs/三产品十站插件实测-2026-09-25.md`。
+
 - **2026-09-26 / 3.7.52 Come AI 预检**：Come AI 免费投稿表单已在 Chrome 现场核对，5 个字段、无可见 CAPTCHA/声明；前端成功态显示完整审核回执。新增站点专用 `pending_moderation` 识别并通过测试，源码已推送。插件窗口控制中断，尚未重载 3.7.52，也未提交 JevPlay、OldPhotoLive AI 或 Graffiti Name AI；不要把预检当成功。详见 `docs/三产品十站插件实测-2026-09-25.md`。
 
 - **2026-09-26 / 3.7.51 AI Valley 实站故障**：Chrome 3.7.50 已显示“提交本页”，AI Valley JevPlay 六项主要资料由插件正确填写。插件最终点击后站方 Contact Form 7 返回 `failed` / `There was an error trying to send your message`，无成功回执或 Neon 新记录。旧版错误地将该站标为 `需登录` 并打开 Devpost 下一站，尽管页面没有登录栏。3.7.51 源码识别发送失败并阻止单页失败自动跳站、隔离人工提交监听；待重载、清除误标并在其他免费站实测。见 `docs/三产品十站插件实测-2026-09-25.md`。

@@ -1,5 +1,13 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:53 / CUA 对照 Chrome 与新增游戏目录预检
+
+- 本轮 `git fetch origin` 后分支 `codex/jev-acceptance-handoff-0926` 与跟踪远端一致，HEAD `185ea3f`，工作区干净；已读取项目上下文、十站验收与中文交接。上一轮确实使用 CUA，普通 Ego 标签 API 可直接打开和读取页面。
+- 捕捉对照结果：Chrome 原生 `getApp` 本轮成功，窗口为 Chrome“新标签页”；Ego 原生第一次报 ScreenCaptureKit `-3811`，随后一次成功并读到本任务 Google CAPTCHA 页，再次绑定又报 `-3811`。因此不是 Chrome 全局持续失控；Ego 原生捕捉间歇失败，但公开标签操作仍可用。没有可靠稳定的 Ego 窗口句柄，不执行、不声称重启。
+- 通过 Ego CUA 公开标签预检 PLAXZY：免费投稿，但明确要求 Google 或邮箱账户登录，未登录或提交。预检 PLIX.GG：页面称免费、无 SDK，通过联系表单接收游戏 URL/标题/描述/缩略图，要求游戏可被 iframe 嵌入；Jev 的 iframe 兼容性及当前 Neon 精确去重未核实，不入固定队列。没有填表、发信或插件操作。
+- 已关闭本轮创建的 Bing 搜索、PLAXZY、PLIX.GG 三个完成页；CUA 标签清单确认三页已消失。保留 Google/DuckDuckGo 人机验证、DeskLink 条款、AxoGamer/iDev 登录现场及用户原标签；`🔎 ExternalLink 云端回读` 分组因仍含人工门槛现场而保留。未动其他任务的 Chrome 空白页与关闭分组。
+- 本轮插件真实尝试 0、站方提交/回执 0、Neon 实时回读 0；新 Jev 独立闭环仍 0/10，固定十站队列未冻结。Alieradox 与 AI Tools Ratings Jev 仍禁止重投。下一步在稳定绑定后才触及正确 Jev 站点侧栏；先实时精确去重，PLIX 需先验证 iframe，不用手工填表冒充插件成功。
+
 ## 2026-09-26 20:40 / Computer Use 实际操作、Neon 回读与捕捉故障复现
 
 - 本轮重新 `git fetch origin`，工作区无改动，`HEAD` 与 `origin/main` 都是 `ac8c55a`。按用户要求直接用 CUA 操作 Ego：公开标签 API 成功打开 Neon 控制台并运行只读 SQL；原生窗口捕捉成功一次，点击 ExternalLink 工具栏后侧栏显示当前 Profile `JevPlay`、云端媒体 2 个文件。该读回证明插件侧栏这次确实可用，但没有查看实载版本，也没有点击“检测/填表/提交”。

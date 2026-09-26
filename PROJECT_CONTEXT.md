@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / 3.7.77 同类实现对照与表单归属修正
+
+- 参考 Bitwarden 的先确定表单/字段再操作、Automa 的显式表单控件定位及 Playwright 的可访问名称定位。项目现有 `getActiveFillScope()`、多步骤补填、提交前校验和回执基线可复用。本轮优先让投稿字段表单胜过同页较大的账户表单；最终按钮按活动表单归属筛选，支持 `button.form` 指向的外部按钮和通用 `role=button`，排除订阅、搜索、登录控件。必填错误和禁用提交检查也限制到活动表单；提交前重新识别按钮，避免 SPA 替换旧节点后盲点。参考：`https://contributing.bitwarden.com/architecture/deep-dives/autofill/collecting-page-details/`、`https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/form`、`https://playwright.dev/docs/locators`。
+- 定向测试覆盖通用 `role=button` 与账户表单更大的竞争页面；全部 53 个 Node 测试文件通过，语法与 diff 检查通过。Chrome/Ego 原生窗口接管连续返回 ScreenCaptureKit `-10005/-3811`，内部扩展页不能由浏览器标签 API 接管，因此 3.7.77 **未完成自行重载或真实站点验收**。没有新增第三方提交或 Neon 记录；已使用的原有提交页签仍按上轮记录关闭。本轮新开的 Chrome 空白标签待清理。历史十站站方回执成立，但多数站插件闭环仍未证实。
+
 ## 2026-09-26 / AI Generation 三产品与 3.7.76 交接
 
 - 14:13 Chrome 插件设置页实机重试上传后成功保存提交账本、提交时间线 2 类修改，再从云端回读 1 类新修订；14:13:59 显示 `default` 工作区版本一致、待上传 0、冲突 0。设置页重载后 AI Generation `/add/` 同一站点显示 Graffiti、JevPlay、OldPhoto 三个精确 Profile 均“已提交”，右侧分别显示 13:54、13:53、13:47 的三条动态与站方 Google 表单回执链接。可认定这三条账本和时间线已进入当前云端修订并在本机回显；无公开产品页，不计已收录。已关闭本轮 Chrome 的 25 个已用提交/候选页签，Ego 的 Come AI 核查分组也已关闭；用户原有的其他工作页签未动。多数站插件全流程标准仍未达成。

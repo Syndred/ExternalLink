@@ -3,7 +3,7 @@
 ## 2026-09-26 / 3.7.90 Graffiti 本人邮箱写回保护
 
 - 用户明确要求涂鸦站投稿联系邮箱使用本人 `syndredyoung@gmail.com`。3.7.89 已将本地种子和填表运行配置换成该地址；3.7.90 在启动云端回读成功后，仅对云端 Graffiti Profile 中明确的旧 `support@graffitinameai.com` 做字段级更正，并交给原有 `siteProfiles` 自动 PATCH 同步。其他 Profile 与有效的自定义邮箱不改。
-- 54/54 Node 测试和语法检查通过；Ego 原生窗口仍返回 macOS 捕捉/无效辅助元素错误，**3.7.90 尚未实载、云端正本尚未回读确认**。不能声称云端已更正或继续使用旧版本投 Graffiti。用户既有 SEO 页签未动。
+- 54/54 Node 测试和语法检查通过。16:11 在 Ego 扩展管理页自行重载并看到 3.7.90 与“已重新加载”；插件启动回读后自动上传 Graffiti 邮箱修正。16:12 轻量核对与手动云端回读显示工作区 `default` 版本一致、待上传 0 类、冲突 0 类；回读后 Graffiti Name AI 的联系邮箱、`Business mail`、`Feedback mail` 均为 `syndredyoung@gmail.com`，旧无 MX 邮箱已不在这三项。云端资料更正已验收，未新增投稿。用户既有 SEO 页签未动，本轮插件页签已关闭。
 
 ## 2026-09-26 / 3.7.77 同类实现对照与表单归属修正
 

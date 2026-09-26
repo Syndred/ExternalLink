@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / AI Generation 三产品与 3.7.76 交接
+
+- Chrome 已由代理自行重载并回读 3.7.76。AI Generation 的 OldPhoto、JevPlay、Graffiti 三份官方 Google 表单均有 `Thanks for contributing to the directory!` 回执；OldPhoto 最终按钮为代理点击，Jev/Graffiti 为插件全程提交。三份同站动态在侧栏可见，Jev/Graffiti 有插件自动本地账本；不要再次提交。
+- 3.7.75 修复嵌入 Google 表单提交控件双重标签识别和未找到按钮的错误反馈。3.7.76 识别 Linkrena 提交后跳 `/login?callbackUrl=%2Fsubmit`；Graffiti 在该站没有成功回执，Jev/OldPhoto 未试。站方登录即接受条款，不代登录。
+- 设置页显示云端已连接但 5 类本机修改待确认，重试上传后仍未清零；AI Generation 的 Neon 精确记录/时间线未回读。优先排查这 5 类待上传原因并做云端读取校验，再扩大插件闭环站数。历史每款十站收到申请已达成，但插件多数站全流程与云端回读未达成。详见 `docs/三产品十站插件实测-2026-09-25.md`。
+
 ## 2026-09-26 / YAATD 插件实站与免费候补故障
 
 - 3.7.71 插件由代理自行在 Chrome 重载；OldPhoto 的 YAATD 9 栏与图片现场填齐，插件最终点击后站方创建 `oldphotoliveai-com` 待发布记录。免费候补约 56 天、nofollow，确认两次均返回 `Could not switch to the free waitlist`；不得计免费提交、公开外链或 Neon 已同步，也不得重投 OldPhoto。JevPlay/Graffiti 在该站未提交。

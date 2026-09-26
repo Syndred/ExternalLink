@@ -241,6 +241,23 @@ context.location.pathname = "/";
 assert.match(source, /isAiGenerationGoogleForm\(\)[\s\S]*?direct\.push\([\s\S]*?\[role="button"\]/,
   "the known Google Form must route its role-button Submit through the plugin");
 {
+  const originalQueryAll = document.querySelectorAll;
+  const submitButton = {
+    tagName: "DIV", innerText: "提交", textContent: "提交", disabled: false,
+    getAttribute(name) { return name === "aria-label" ? "提交" : ""; },
+    getBoundingClientRect() { return { width: 100, height: 36 }; },
+    closest() { return null; },
+  };
+  document.querySelectorAll = (selector) => selector === '[role="button"]' ? [submitButton] : [];
+  context.location.hostname = "docs.google.com";
+  context.location.pathname = "/forms/d/e/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ/viewform";
+  assert.equal(hooks.findSubmitButton('button[type="submit"], input[type="submit"]', ["submit"]), submitButton,
+    "duplicate text and aria-label on a Google role-button must still match Submit");
+  document.querySelectorAll = originalQueryAll;
+  context.location.hostname = "futuretools.io";
+  context.location.pathname = "/";
+}
+{
   const originalQuery = document.querySelector;
   document.querySelector = (selector) => selector.includes("usp=form_confirm")
     ? { href: "https://docs.google.com/forms/d/e/example/viewform?usp=form_confirm" }

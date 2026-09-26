@@ -107,4 +107,16 @@ const unavailable = await context.countEmptyFieldsAcrossFrames(42);
 assert.equal(unavailable.validationFailed, true, "missing frame responses must fail closed");
 assert.equal(unavailable.emptyCount, 1, "missing frame responses must not claim an empty form is complete");
 
+const loginGateStart = source.indexOf("function isLinkrenaPostSubmitLogin(");
+const loginGateEnd = source.indexOf("async function assertFillContext(", loginGateStart);
+assert.ok(loginGateStart >= 0 && loginGateEnd > loginGateStart);
+const loginGateContext = { URL };
+vm.createContext(loginGateContext);
+vm.runInContext(source.slice(loginGateStart, loginGateEnd), loginGateContext);
+assert.equal(loginGateContext.isLinkrenaPostSubmitLogin(
+  "https://linkrena.com/submit", "https://linkrena.com/login?callbackUrl=%2Fsubmit"), true,
+  "a post-submit Linkrena login redirect needs a login gate, not a submission receipt");
+assert.equal(loginGateContext.isLinkrenaPostSubmitLogin(
+  "https://linkrena.com/submit", "https://linkrena.com/tools/example"), false);
+
 console.log("cross-frame fill routing tests passed");

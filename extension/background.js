@@ -4822,6 +4822,14 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     }
   }
 
+  const afterSubmitUrl = await getTabUrlSafe(tabId);
+  if (!submitResult?.matched && isLinkrenaPostSubmitLogin(currentUrl, afterSubmitUrl)) {
+    const reason = "站方在最终提交后跳转邮箱登录，未产生投稿回执；登录页要求同意条款";
+    await autoClassifySite(currentUrl, reason, "needs_login");
+    broadcastAutoFillUpdate({ tabId, status: "manual", message: reason, keepTab: true, advance: false });
+    return { needs_manual: true, reason, classified: "needs_login", keepTab: true, advance: false };
+  }
+
   if (submitResult?.captcha) {
     const advance = Boolean(batchEntry);
     const pageUrl = await getTabUrlSafe(tabId);
@@ -4901,6 +4909,14 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     return { stageAdvanced: true, submitted: false, matched: false };
   }
 
+  if (submitResult?.manual || submitResult?.reason === "no_submit_button") {
+    const reason = submitResult.reason === "no_submit_button"
+      ? "未找到当前表单的提交按钮，已保留页面供检查"
+      : submitResult.reason || "当前页面需要人工检查";
+    broadcastAutoFillUpdate({ tabId, status: "manual", message: reason, keepTab: true });
+    return { needs_manual: true, reason, keepTab: true, advance: false };
+  }
+
   if (submitResult?.submitted && submitResult?.matched && submitResult?.evidence) {
     const pageUrl = await getTabUrlSafe(tabId);
     let ledgerSaved = false;
@@ -4972,6 +4988,18 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   }
 
   return null;
+}
+
+function isLinkrenaPostSubmitLogin(beforeUrl, afterUrl) {
+  try {
+    const before = new URL(beforeUrl);
+    const after = new URL(afterUrl);
+    return before.hostname === "linkrena.com" && before.pathname === "/submit" &&
+      after.hostname === "linkrena.com" && after.pathname === "/login" &&
+      after.searchParams.get("callbackUrl") === "/submit";
+  } catch {
+    return false;
+  }
 }
 
 async function assertFillContext(tabId, config) {

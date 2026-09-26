@@ -3383,6 +3383,7 @@
     queryFillableElements,
     classifyVisibleEvidence,
     inspectAutoFillGuard,
+    findSubmitButton,
   };
   self.__extLinkContentAuditTestHooks = {
     detectWPComment,
@@ -7640,7 +7641,8 @@
     const direct = Array.from(document.querySelectorAll(selector));
     if (isAiGenerationGoogleForm()) {
       direct.push(...Array.from(document.querySelectorAll('[role="button"]')).filter((element) =>
-        /^(?:submit|提交)$/i.test(getElementLabel(element).replace(/\s+/g, " ").trim()),
+        [element.getAttribute("aria-label"), element.innerText, element.textContent]
+          .some((label) => /^(?:submit|提交)$/i.test(String(label || "").replace(/\s+/g, " ").trim())),
       ));
     }
     const candidates = Array.from(new Set([

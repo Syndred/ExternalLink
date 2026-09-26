@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / 五分钟续办：Neon 控制台验证门槛
+
+- `origin/main` 核对至 `4dfef6d`；上一轮 Computer Use 使用和清页记录已复核。本轮 Ego 原生绑定仍报 `-3811`，未取得退出重启句柄。
+- Computer Use 打开的 Neon 官方控制台停在 Cloudflare 安全验证，没有解题或绕过，未得到数据库读回；页签已关闭。本轮只余用户原有 Chrome 设置页，本任务无未清页签/分组。Neon 精确去重、插件实载、固定十站与 6/10 仍未完成。
+
 ## 2026-09-26 / Computer Use 恢复诊断与游戏目录预检
 
 - 已将现有 `externallink` 五分钟 heartbeat 更新为每轮检查 Computer Use 实际使用与中断原因、受支持的 Ego 普通故障恢复，以及本任务已完成页签/分组清理；ACTIVE、目标任务不变。

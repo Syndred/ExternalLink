@@ -1,5 +1,13 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 21:04 / Chrome 普通页预检已执行，原生绑定复测仍失败
+
+- 本轮先同步远端并读取项目上下文、Jev 十站验收、中文交接与进度；分支干净，起始 HEAD `239a8a1` 与远端一致。上一轮已实际使用 CUA，本轮继续通过 `cua_repl` 操作 Chrome 普通网页。
+- Chrome 公开标签 API 打开并完整读取 NoAdsGames 投稿规则和表单，候选页 `https://noadsgames.org/en/publish-game` 未填表、未点检查或提交。该站要求独立域名的公开 HTTPS 游戏直链且允许 iframe；表单还要求发布权利及规则确认，需能真实确认后才能提交。Jev iframe 条件尚未验证，NoAdsGames 仅为预检候选，不加入已固定队列、不计插件尝试。
+- 原生捕捉对照：Finder `getApp` 正常；本轮 Chrome 及 Ego 绑定返回 ScreenCaptureKit `-3811`，随后再次绑定 Chrome 仍为 `-3811`。应用清单显示 Ego 和 Chrome 都在运行。没有可靠原生句柄，未重启 Ego、未操作工具栏/侧栏；当前不能据此检查实载版本。
+- Neon Console 普通标签停留 Cloudflare 安全验证页，没有处理验证或读账本。已关闭 NoAdsGames 研究标签并通过 `getState()` 回读确认移除；保留 Neon 验证页与 Jev Code Breaker 续办页。公开标签清单未提供标签组状态，本轮未触碰或声称清理分组。
+- 本轮无插件独立填表/提交、站方回执及 Neon 精确回读；新 Jev 样本仍 0/10，固定十站未完成。Alieradox 与 AI Tools Ratings Jev 既有回执继续禁止重投。细节见 `docs/Jev插件独立十站验收-2026-09-26.md`。
+
 ## 2026-09-26 20:59 / Chrome 网页验收可用，原生捕捉当前失效
 
 - 本轮重新 fetch，工作树干净，HEAD `9468646` 与远端一致；已读项目上下文、Jev 十站验收与中文交接。上一轮确实使用了 CUA，并推送两笔验收交接文档提交。

@@ -1,8 +1,13 @@
 # PROJECT_CONTEXT
 
+## 2026-09-27 / 3.7.109 实载刷新复验成功
+
+- Chrome 扩展页面显示 ExternalLink `3.7.109`；按用户要求点击“重新加载”。回到 Bai Tools 后点击插件“填表”，现场字段为 `JevPlay`、`https://jevplay.com`，侧栏回读“当前表单 2 个字段已填写，可提交”。未点击“提交本页”，随后关闭测试页。
+- 本轮仅验证插件刷新和首页字段，站方新提交 0、站方新回执 0、云端新成功 0；旧批次仍暂停、仅 JevPlay 选择。
+
 ## 2026-09-27 / Jev 官网字段与 Ego 实载复测
 
-- 复测当前 Ego 的“填表”按钮仍把 JevPlay 填为 `https://jevplay.com/games`。源码继续收紧为 3.7.109：JevPlay 现在按 `id` 或 `name` 任一字段识别，兼容云端随机 Profile ID；55/55 测试通过，待受支持的插件重载后再复验。
+- 复测旧实载的“填表”按钮曾把 JevPlay 填为 `https://jevplay.com/games`。源码继续收紧为 3.7.109：JevPlay 现在按 `id` 或 `name` 任一字段识别，兼容云端随机 Profile ID；55/55 测试通过，现已完成受支持的插件重载复验。
 - Bai Tools 免费表单由当前 Ego 插件自动填成 `https://jevplay.com/games`；JevPlay 的历史 Profile 同时有首页 `url` 和游戏中心 `promoUrl`，旧源码优先推广地址。3.7.107 改普通目录优先官网首页，3.7.108 兼容旧 Profile 的 `/games` 值；55/55 测试通过，`92b4a7d`、`39dbe9a` 已推送。
 - Ego 已正常退出并重新启动，独立空间复测仍填 `/games`；**不能认定新版已实载**。未提交 Bai Tools，旧批次保持暂停且批量选择缩为仅 JevPlay。Bai Tools 云端动态刷新未见 Jev；AI Tools Ratings 旧回执仍未入当前精确账本。详情见 `docs/Jev官网填表修复-2026-09-27.md`。
 

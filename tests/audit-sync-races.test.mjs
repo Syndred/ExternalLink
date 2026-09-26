@@ -692,6 +692,11 @@ assert.doesNotMatch(background, /cloudSyncMute/, "pulls must not suppress other 
     self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" } },
     existingSubmissionRecord: async () => null,
     sendTabMessage: async (_tabId, message) => {
+      if (message.action === "detectPage") return { frameId: 0 };
+      if (message.action === "classifySubmitEvidence") return { matched: false, evidence: "" };
+      throw new Error(`unexpected message: ${message.action}`);
+    },
+    sendTabMessageToFrame: async (_tabId, _frameId, message) => {
       if (message.action === "classifySubmitEvidence") {
         evidenceReads += 1;
         return evidenceReads === 1 ? { matched: false, evidence: "" } : {

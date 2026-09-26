@@ -350,13 +350,21 @@ function runtimeSchemaKey(snapshot) {
 
 {
   const gate = { needs_manual: true, semanticReview: true, reason: "payment meaning unclear", paymentClassification: "uncertain_payment", paymentEvidence: { label: "Paid" } };
+  const submitFrames = [];
   const ctx = {
     state: { activeTabs: new Map() },
     existingSubmissionRecord: async () => null,
     getTabUrlSafe: async () => "https://directory.example/submit",
     isCustomLaunchUrl: () => false,
     self: { ExtLinkProfiles: { fillIdentityMismatch: () => "" }, ExtLinkQueue: { isDeadEndStatus: () => false } },
-    sendTabMessage: async (_id, msg) => msg.action === "submitFilledForm" ? gate : {},
+    sendTabMessage: async (_id, msg) => msg.action === "detectPage" ? { frameId: 2 } : {},
+    sendTabMessageToFrame: async (_id, frameId, msg) => {
+      if (msg.action === "submitFilledForm") {
+        submitFrames.push(frameId);
+        return gate;
+      }
+      return {};
+    },
     broadcastAutoFillUpdate() {},
     autoClassifySite() { throw new Error("uncertainty must not classify a destination"); },
   };
@@ -366,6 +374,7 @@ function runtimeSchemaKey(snapshot) {
   assert.equal(result.semanticReview, true);
   assert.equal(result.paymentClassification, "uncertain_payment");
   assert.equal(result.paymentEvidence.label, "Paid");
+  assert.deepEqual(submitFrames, [2], "embedded forms must submit in their own frame");
   let parkedOptions;
   Object.assign(ctx, {
     getTaskConfig: () => ({}), recordAutomationEvent: async () => {},

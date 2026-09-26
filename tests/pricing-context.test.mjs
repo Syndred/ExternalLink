@@ -65,6 +65,7 @@ function loadHooks() {
   return {
     payment: context.__extLinkPaymentTestHooks,
     fields: context.__extLinkFieldMappingTestHooks,
+    document,
   };
 }
 
@@ -73,6 +74,10 @@ assert.ok(hooks.payment, "content.js should expose the payment-context test surf
 assert.ok(hooks.fields, "content.js should expose the shared-field test surface");
 
 const classify = hooks.payment.classifyPaymentContext;
+hooks.document.body.innerText = "Free listing information. Every listing carries a fee — submitting takes you to Stripe checkout. The total above is what you’ll be charged.";
+assert.equal(hooks.payment.detectPaidSubmit().classification, "confirmed_payment",
+  "a paid listing page must be blocked before its fee widget finishes loading");
+hooks.document.body.innerText = "";
 
 assert.equal(
   classify({
@@ -128,6 +133,7 @@ for (const input of [
   { label: "Card number", local: "Billing details" },
   { label: "Place subscription order", local: "Subscription plan" },
   { label: "Submit", local: "Pay to submit this listing" },
+  { label: "File submission $9.99", local: "Listing fee required. Premium Tool Submission Subscription is a monthly subscription rate. Stripe checkout." },
 ]) {
   assert.equal(
     classify(input).classification,

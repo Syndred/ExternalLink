@@ -3,6 +3,46 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const source = readFileSync("extension/background.js", "utf8");
+const routeStart = source.indexOf("async function sendTabMessage(");
+const routeEnd = source.indexOf("async function getFillableFrameIds(", routeStart);
+assert.ok(routeStart >= 0 && routeEnd > routeStart);
+const topFrameCalls = [];
+let frameDetections = {
+  0: { operable: true, platform: "directory", formFieldCount: 25, submitBlocker: { blocked: true, reason: "listing fee" } },
+  2: { operable: false, platform: "unknown", formFieldCount: 0 },
+};
+const routeContext = {
+  ensureContentScript: async () => {},
+  getSubmissionWatchFrameIds: async () => ({ frameIds: [0, 2] }),
+  chrome: {
+    tabs: {
+      sendMessage: async (_tabId, message, options) => {
+        topFrameCalls.push({ action: message.action, frameId: options?.frameId });
+        return message.action === "detectPage"
+          ? frameDetections[options?.frameId]
+          : { ok: true };
+      },
+    },
+  },
+};
+vm.createContext(routeContext);
+vm.runInContext(source.slice(routeStart, routeEnd), routeContext);
+let detected = await routeContext.sendTabMessage(42, { action: "detectPage" });
+assert.equal(detected.frameId, 0);
+assert.equal(detected.formFieldCount, 25);
+assert.equal(detected.submitBlocker.blocked, true,
+  "a zero-field Stripe/payment iframe must not hide the main form or its fee");
+frameDetections = {
+  0: { operable: false, platform: "unknown", formFieldCount: 0 },
+  2: { operable: true, platform: "directory", formFieldCount: 5 },
+};
+detected = await routeContext.sendTabMessage(42, { action: "detectPage" });
+assert.equal(detected.frameId, 2);
+assert.equal(detected.formFieldCount, 5,
+  "a real embedded submission form must remain detectable");
+assert.deepEqual(topFrameCalls.filter(({ action }) => action === "detectPage").map(({ frameId }) => frameId),
+  [0, 2, 0, 2]);
+
 const start = source.indexOf("async function getFillableFrameIds(");
 const end = source.indexOf("async function refreshContentScriptsForManualWatch(", start);
 assert.ok(start >= 0 && end > start);

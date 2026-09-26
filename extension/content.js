@@ -313,6 +313,9 @@
         const hasComment = detectWPComment() || detectArticleComment();
         const scopedFields = queryFillableElements();
         const operable = !!(platform || scopedFields.length > 0 || hasComment);
+        const submitBlocker = operable && platform !== "wp_comment" && platform !== "article"
+          ? detectSubmitBlockers()
+          : null;
         const playbook =
           self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
             ? self.ExtLinkPlaybooks.lookup(location.href)
@@ -347,7 +350,13 @@
           formFieldCount: scopedFields.length,
           formCount: snapshot.meta.formCount,
           hasCaptcha: snapshot.meta.hasCaptcha,
-          inModal: getActiveFillScope() !== document,
+          submitBlocker: submitBlocker ? {
+            blocked: submitBlocker.blocked === true,
+            needs_manual: submitBlocker.needs_manual === true,
+            payment_uncertain: submitBlocker.payment_uncertain === true,
+            reason: String(submitBlocker.reason || ""),
+          } : null,
+          inModal: !!getActiveFillScope()?.closest?.('dialog[open], [role="dialog"], [role="alertdialog"], .modal.show, .modal.in'),
           fields: scopedFields.slice(0, 20).map((el) => ({
             label: getSnapshotLabel(el),
             name: el.getAttribute("name") || "",
@@ -698,11 +707,9 @@
     // free. The action and its local form scope must describe an actual charge.
     const text = String(document.body?.innerText || "").slice(0, 4000).toLowerCase();
     const hasFreeSubmit = /free (submit|listing|launch)|submit for free|no credit card/.test(text);
-    const pagePaymentGate =
-      !hasFreeSubmit &&
-      /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|listing fee|submission fee|fee to (?:submit|publish|list)|checkout to continue|credit card required/.test(
-        text,
-      );
+    const mandatoryCharge = /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|every listing carries a fee|submitting takes you to (?:stripe )?checkout|charged on submission|credit card required/.test(text);
+    const pagePaymentGate = mandatoryCharge ||
+      (!hasFreeSubmit && /listing fee|submission fee|fee to (?:submit|publish|list)|checkout to continue/.test(text));
     if (pagePaymentGate) {
       return {
         classification: "confirmed_payment",
@@ -3311,6 +3318,7 @@
   self.__extLinkPaymentTestHooks = {
     classifyPaymentContext,
     getPaymentElementContext,
+    detectPaidSubmit,
   };
   self.__extLinkFieldMappingTestHooks = {
     sharedLearnedMappingMatches,

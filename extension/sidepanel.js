@@ -2938,6 +2938,7 @@
   function shouldAutoFillAfterDetection(result = {}) {
     const platform = String(result.platform || "").trim().toLowerCase();
     if (!result.operable || Number(result.formFieldCount || 0) <= 0) return false;
+    if (result.submitBlocker?.blocked || result.submitBlocker?.payment_uncertain) return false;
     if (!["directory", "submission", "profile", "forum"].includes(platform)) return false;
     // A blog comment form is operable, but its Description-like textarea must
     // never receive the selected Profile's directory copy automatically.
@@ -2990,7 +2991,7 @@
       detection = detectResult;
       renderDetection(detectResult);
       updateCommentAvailability(null);
-      setWorkflowStep(detectResult.operable ? "fill" : "detect");
+      setWorkflowStep(detectResult.operable && !detectResult.submitBlocker?.blocked && !detectResult.submitBlocker?.payment_uncertain ? "fill" : "detect");
 
       // Detection should hand off to the deterministic fill path immediately.
       // Quality metrics and the richer page snapshot are background decoration
@@ -3007,7 +3008,7 @@
           }
         });
       } else if (!detectResult.submissionRecovered) {
-        showToast("检测完成");
+        showToast(detectResult.submitBlocker?.reason || "检测完成", Boolean(detectResult.submitBlocker?.blocked));
       }
 
       Promise.allSettled([prescanPromise, metricsPromise]).then((results) => {
@@ -3056,7 +3057,9 @@
       summary.textContent = d.operable
         ? `检测到 ${d.platform || "表单"}${d.inModal ? " 弹窗" : ""}，当前区域 ${d.formFieldCount} 个可填字段。${
             d.standardWpComment ? " 标准 WordPress 评论表单。" : ""
-          }${d.playbook?.title ? ` 熟站 ${d.playbook.title}。` : ""}`
+          }${d.playbook?.title ? ` 熟站 ${d.playbook.title}。` : ""}${
+            d.submitBlocker?.reason ? ` 提交门槛：${d.submitBlocker.reason}。` : ""
+          }`
         : "当前区域未发现可填字段，请打开提交弹窗或导航到提交页。";
     }
 

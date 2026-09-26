@@ -127,6 +127,11 @@ function statusElement(text = "") {
     true,
     "recognized directory forms should keep automatic fill enabled",
   );
+  assert.equal(
+    vm.runInContext('shouldAutoFillAfterDetection({ operable: true, platform: "directory", formFieldCount: 3, submitBlocker: { blocked: true, reason: "listing fee" } })', context),
+    false,
+    "a confirmed listing fee must stop the automatic fill handoff",
+  );
 }
 
 // Detection starts fill as soon as sidepanelDetect returns. Slow quality

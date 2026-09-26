@@ -3445,7 +3445,7 @@ async function resolveTargetTabId(preferredTabId) {
 
 async function pingContentScript(tabId) {
   try {
-    const resp = await chrome.tabs.sendMessage(tabId, { action: "ping" });
+    const resp = await chrome.tabs.sendMessage(tabId, { action: "ping" }, { frameId: 0 });
     return resp?.ok === true;
   } catch {
     return false;
@@ -3477,7 +3477,35 @@ async function ensureContentScript(tabId) {
 
 async function sendTabMessage(tabId, message) {
   await ensureContentScript(tabId);
-  return chrome.tabs.sendMessage(tabId, message);
+  if (message?.action === "detectPage") return detectPageAcrossFrames(tabId);
+  // Ordinary page actions use the top frame. Frame-aware fill and submission
+  // explicitly target the selected frame below.
+  return chrome.tabs.sendMessage(tabId, message, { frameId: 0 });
+}
+
+async function detectPageAcrossFrames(tabId) {
+  const { frameIds } = await getSubmissionWatchFrameIds(tabId);
+  const frames = [...new Set([0, ...(frameIds || [])])].slice(0, 24);
+  const responses = await Promise.allSettled(frames.map((frameId) =>
+    chrome.tabs.sendMessage(tabId, { action: "detectPage" }, { frameId }),
+  ));
+  const detected = responses.flatMap((response, index) =>
+    response.status === "fulfilled" && response.value && !response.value.error
+      ? [{ ...response.value, frameId: frames[index] }]
+      : [],
+  );
+  const top = detected.find((item) => item.frameId === 0);
+  const best = detected.sort((a, b) =>
+    Number(b.operable === true) - Number(a.operable === true) ||
+    Number(b.formFieldCount || 0) - Number(a.formFieldCount || 0) ||
+    Number(a.frameId !== 0) - Number(b.frameId !== 0),
+  )[0] || top;
+  if (!best) throw new Error("页面脚本未响应，请刷新当前页后重试");
+  const topGate = top?.submitBlocker;
+  if (topGate?.blocked || topGate?.payment_uncertain || topGate?.needs_manual) {
+    return { ...best, submitBlocker: topGate };
+  }
+  return best;
 }
 
 async function sendTopTabMessage(tabId, message) {
@@ -3781,9 +3809,29 @@ async function runSidepanelFill(msg) {
     storage.autoSubmitDirectoryListings !== false && msg.mode !== "comment" && msg.fillOnly !== true;
   config.learnedFieldMappings = profile.learnedFieldMappings || {};
   config.sidepanelContext = { profileId: profile.id, url: await getTabUrlSafe(tabId), tabId };
+  const formDetection = msg.mode !== "comment"
+    ? await sendTabMessage(tabId, { action: "detectPage" }).catch(() => null)
+    : null;
+
+  // Auto-fill may be requested separately from sidepanel detection while a
+  // page hydrates. Recheck the live submit gate immediately before any write.
+  if (msg.auto === true && msg.mode !== "comment") {
+    if (!formDetection) {
+      return {
+        ok: false, fillOnly: true, keepTab: true, needs_manual: true,
+        error: "无法确认当前表单与付款门槛，已停止自动填表",
+      };
+    }
+    if (formDetection?.submitBlocker?.blocked || formDetection?.submitBlocker?.payment_uncertain) {
+      return {
+        ok: false, fillOnly: true, keepTab: true, needs_manual: true,
+        error: formDetection.submitBlocker.reason || "当前提交页存在付款门槛，已停止自动填表",
+      };
+    }
+  }
 
   if (msg.mode !== "comment") {
-    const guard = await sendTabMessage(tabId, {
+    const guard = await sendTabMessageToFrame(tabId, formDetection?.frameId ?? 0, {
       action: "inspectAutoFillGuard",
       targetDomain: config.targetDomain || "",
     }).catch(() => null);
@@ -3804,7 +3852,7 @@ async function runSidepanelFill(msg) {
     platformType = "wp_comment";
   } else {
     try {
-      const detection = await sendTabMessage(tabId, { action: "detectPage" });
+      const detection = formDetection || await sendTabMessage(tabId, { action: "detectPage" });
       if (detection.platform && detection.platform !== "unknown") {
         platformType = detection.platform;
       }
@@ -4672,7 +4720,9 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
     };
   }
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "无验证码，正在提交…" });
-  const beforeEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+  const formDetection = await sendTabMessage(tabId, { action: "detectPage" });
+  const formFrameId = formDetection?.frameId ?? 0;
+  const beforeEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" }).catch(() => ({}));
   assertBatchCurrent();
   const priorSubmissionAttempted = batchEntry ? unattendedTaskForEntry(batchEntry)?.submissionAttempted === true : false;
   if (batchEntry) {
@@ -4686,18 +4736,20 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   }
   let submitResult = {};
   try {
-    submitResult = await sendTabMessage(tabId, {
+    submitResult = await sendTabMessageToFrame(tabId, formFrameId, {
       action: "submitFilledForm",
       config,
       platform: platformType || "directory",
     });
   } catch (err) {
     await sleep(2000);
-    submitResult = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({
-      submitted: true,
-      matched: false,
-      reason: err.message,
-    }));
+    submitResult = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" })
+      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence" }))
+      .catch(() => ({
+        submitted: true,
+        matched: false,
+        reason: err.message,
+      }));
     const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
     const afterText = String(submitResult?.evidence || "").replace(/\s+/g, " ").trim();
     const recoveredReceipt = Boolean(submitResult?.matched && afterText && afterText !== beforeText);
@@ -4734,7 +4786,9 @@ async function tryAutoSubmitFilledForm(tabId, config, profile, platformType, opt
   // submission as unconfirmed.
   if (submitResult?.submitted && !submitResult?.matched) {
     await sleep(1200);
-    const currentEvidence = await sendTabMessage(tabId, { action: "classifySubmitEvidence" }).catch(() => ({}));
+    const currentEvidence = await sendTabMessageToFrame(tabId, formFrameId, { action: "classifySubmitEvidence" })
+      .catch(() => sendTabMessage(tabId, { action: "classifySubmitEvidence" }))
+      .catch(() => ({}));
     const beforeText = String(beforeEvidence?.evidence || "").replace(/\s+/g, " ").trim();
     const currentText = String(currentEvidence?.evidence || "").replace(/\s+/g, " ").trim();
     if (currentEvidence?.matched && currentText && currentText !== beforeText) {
@@ -7330,6 +7384,7 @@ async function handleRequestAutoFill(msg, sender) {
         const fillablePlatforms = ["directory", "submission", "profile", "forum"];
         if (!fillablePlatforms.includes(String(detection?.platform || "").toLowerCase())) return;
         if (!detection?.operable && !(detection?.formFieldCount > 0)) return;
+        if (detection?.submitBlocker?.blocked || detection?.submitBlocker?.payment_uncertain) return;
 
         const targetDomain = profile.url || profile.promoUrl || profile.fields?.Url || profile.fields?.URL || "";
         const guard = await sendTabMessage(tabId, {
@@ -7770,7 +7825,7 @@ async function waitForTabContentReady(tabId, entry, initialData = {}) {
     let snapshot;
     try {
       detection = await sendTabMessage(tabId, { action: "detectPage" });
-      snapshot = await chrome.tabs.sendMessage(tabId, { action: "getPageSnapshot" });
+      snapshot = await chrome.tabs.sendMessage(tabId, { action: "getPageSnapshot" }, { frameId: detection?.frameId ?? 0 });
       lastProbeError = "";
     } catch (err) {
       lastProbeError = err.message || String(err);
@@ -8984,7 +9039,8 @@ async function getTabSnapshot(tabId) {
   for (let attempt = 0; attempt < SNAPSHOT_RETRY_ATTEMPTS; attempt++) {
     try {
       if (attempt === 0) await ensureContentScript(tabId);
-      snapshot = await chrome.tabs.sendMessage(tabId, { action: "getPageSnapshot" });
+      const detection = await detectPageAcrossFrames(tabId);
+      snapshot = await chrome.tabs.sendMessage(tabId, { action: "getPageSnapshot" }, { frameId: detection?.frameId ?? 0 });
       lastError = null;
       break;
     } catch (err) {

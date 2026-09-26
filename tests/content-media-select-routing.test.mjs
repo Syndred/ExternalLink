@@ -106,6 +106,15 @@ assert.equal(selectTokens({ hint: "Category *" }, {
 assert.equal(selectTokens({ hint: "Category *" }, {
   brandName: "JevPlay", tags: "AI games, decision games",
 })[0], "AI Tools (Other)");
+assert.equal(selectTokens({ hint: "Primary Use Case *" }, {
+  brandName: "JevPlay", tags: "AI games, decision games",
+})[0], "General Purpose", "JevPlay must not be classified as a business workflow");
+assert.equal(selectTokens({ hint: "Primary Use Case *" }, {
+  brandName: "OldPhotoLive AI",
+})[0], "For Content Creators");
+assert.equal(selectTokens({ hint: "Primary Use Case *" }, {
+  brandName: "Graffiti Name AI",
+})[0], "For Designers");
 assert.equal(selectTokens({ hint: "Pricing Model Free Freemium Paid" }, {
   brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" },
 })[0], "paid");

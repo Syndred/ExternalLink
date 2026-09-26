@@ -5688,6 +5688,13 @@
       else tokens.push("freemium", "free", "paid");
     }
 
+    if (/use\s*case|purpose/.test(hint)) {
+      const identity = `${config.brandName || ""} ${pf.Name || ""}`.toLowerCase();
+      if (/\bjevplay\b/.test(identity)) tokens.push("General Purpose");
+      else if (/old.?photo/.test(identity)) tokens.push("For Content Creators", "General Purpose");
+      else if (/graffiti/.test(identity)) tokens.push("For Designers", "For Content Creators");
+    }
+
     if (/categ|industry|sector|niche|vertical|topic|type/.test(hint)) {
       // Directory taxonomies often use broad labels instead of a product's SEO tags.
       // Prefer an accurate broad class before trying the product-specific keywords.

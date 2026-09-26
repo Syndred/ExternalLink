@@ -5363,6 +5363,11 @@
     if (parent && parent.querySelectorAll('input:not([type="hidden"]), textarea, select').length === 1) {
       const siblingLabel = parent.querySelector(":scope > label");
       if (siblingLabel) labels.push(siblingLabel.textContent);
+      const preceding = element.previousElementSibling || parent.previousElementSibling;
+      if (preceding && !preceding.querySelector?.('input, textarea, select, button')) {
+        const text = compactText(preceding.textContent, 90);
+        if (text && text.length <= 60) labels.push(text);
+      }
     }
     labels.push(
       element.getAttribute("aria-label"),
@@ -5683,7 +5688,17 @@
       else tokens.push("freemium", "free", "paid");
     }
 
-    if (/categor|industry|sector|niche|vertical|topic|type/.test(hint)) {
+    if (/categ|industry|sector|niche|vertical|topic|type/.test(hint)) {
+      // Directory taxonomies often use broad labels instead of a product's SEO tags.
+      // Prefer an accurate broad class before trying the product-specific keywords.
+      const identity = `${config.brandName || ""} ${pf.Name || ""} ${config.tags || ""}`.toLowerCase();
+      if (/graffiti|logo|design|illustration/.test(identity)) {
+        tokens.push("Design Assets & Icons", "Image Generation", "Design", "AI Generation (Image, Video, Text)");
+      } else if (/old.?photo|photo restor|image animat|image generat/.test(identity)) {
+        tokens.push("Image Generation", "AI Generation (Image, Video, Text)", "Design Assets & Icons");
+      } else if (/\bjevplay\b|\bai games?\b|decision games?/.test(identity)) {
+        tokens.push("AI Tools (Other)", "Entertainment", "Other", "AI & LLM");
+      }
       tokens.push(...profileTags.filter((tag) => tag.length >= 4));
     }
 
@@ -5720,7 +5735,7 @@
 
     const tokens = resolveSelectTokens(element, config);
     const hint = getFieldHint(element);
-    const isCategoryOrPersona = /categor|industry|sector|niche|vertical|profession|audience|persona/.test(hint);
+    const isCategoryOrPersona = /categ|industry|sector|niche|vertical|profession|audience|persona/.test(hint);
     for (const token of tokens) {
       if (isCategoryOrPersona && String(token).trim().length < 4) continue;
       const match = findBestSelectOption(options, token);
@@ -5768,6 +5783,12 @@
       "[class*='option']",
       "[class*='Option']",
     ];
+    const visibleListboxLeaves = () => Array.from(document.querySelectorAll('[role="listbox"]'))
+      .filter(isVisible)
+      .flatMap((listbox) => Array.from(listbox.querySelectorAll("*"))
+        .filter((el) => isVisible(el) && compactText(el.textContent, 120) &&
+          !Array.from(el.children).some((child) => compactText(child.textContent, 120) === compactText(el.textContent, 120)))
+        .map((el) => ({ el, label: compactText(el.textContent, 120) })));
     const visibleOptions = () => {
       const reactSelect = trigger.closest?.('[class*="css-"][class*="-container"]');
       if (reactSelect && trigger.id) {
@@ -5777,6 +5798,8 @@
           .map((el) => ({ el, label: compactText(el.textContent, 120) }))
           .filter((option) => option.label);
       }
+      const listboxLeaves = visibleListboxLeaves();
+      if (listboxLeaves.length) return listboxLeaves;
       for (const sel of optionSelectors) {
         const options = Array.from(document.querySelectorAll(sel))
           .filter(isVisible)
@@ -5815,6 +5838,18 @@
           const label = normalizeOptionText(o.label);
           return label === n || label.includes(n) || n.includes(label);
         });
+      }
+      if (!match) {
+        const search = Array.from(document.querySelectorAll('input[placeholder], input[aria-label]'))
+          .find((el) => isVisible(el) && /search\s+categor|search\s+option/i.test(
+            `${el.placeholder || ""} ${el.getAttribute("aria-label") || ""}`));
+        if (search) {
+          setFieldValue(search, token);
+          search.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: token }));
+          await sleep(180);
+          options = visibleListboxLeaves();
+          match = options.find((o) => normalizeOptionText(o.label) === n);
+        }
       }
       if (match) {
         match.el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
@@ -6654,6 +6689,9 @@
       const affiliate = pf["Affiliate Link"] || pf["Affiliate URL"] || pf["Referral Link"] || pf["Referral URL"] || "";
       return /^https?:\/\/[^\s]+$/i.test(String(affiliate).trim()) ? String(affiliate).trim() : "";
     }
+    if (/paste\s+the\s+page\s+you\s+added\s+it\s+to|backlink\s+(?:verification|proof|page)|badge\s+(?:url|page)/.test(`${hint} ${visibleHint}`)) {
+      return "";
+    }
     if (/\bprimary\s+use\s+case\b/.test(`${hint} ${visibleHint}`)) {
       const useCase =
         (Array.isArray(config.useCases) ? config.useCases.find(Boolean) : "") ||
@@ -7261,9 +7299,13 @@
       if (choiceResult.handled.has(element)) continue;
 
       if (tag === "select") {
-        if (!isSelectEmpty(element) && !fieldNeedsRefill(element)) continue;
+        const selectHint = getFieldHint(element);
+        const selectedDefault = !!element.selectedOptions?.[0]?.defaultSelected;
+        const wrongPricingDefault = selectedDefault && /\bpric(?:e|ing)?\b|\bbilling\b/.test(selectHint) &&
+          !/\b(?:listing|featured|upgrade|promotion)\b/.test(selectHint);
+        if (!isSelectEmpty(element) && !fieldNeedsRefill(element) && !wrongPricingDefault) continue;
         const selectValue = resolveSelectValueForField(element, config);
-        if (selectValue && setSelectValue(element, selectValue)) {
+        if (selectValue && selectValue !== element.value && setSelectValue(element, selectValue)) {
           filledCount++;
           mappings[fieldMappingKey(element)] = {
             profileKey: inferProfileKeyForValue(config, selectValue) || "select",

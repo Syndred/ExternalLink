@@ -298,7 +298,11 @@
         normalizedHint,
       );
     if (screenshotField) {
-      const screenshots = getScreenshotValuesFromConfig(config);
+      // A profile's legacy Screenshot fields may contain example output art.
+      // Upload only private cloud screenshots or URLs clearly naming a UI capture.
+      const screenshots = getScreenshotValuesFromConfig(config).filter((value) =>
+        /^cloud-media:\/\//i.test(value) ||
+        /(?:^|[\/_-])(?:screenshots?|screen[-_]?shots?|screen|dashboard|editor|homepage|home|ui)(?=[\/_.-]|$)/i.test(value));
       const explicit = normalizedHint.match(
         /\b(?:screenshot|screen shot|gallery|image|photo)[^\d]{0,8}([1-4])\b/,
       );

@@ -58,6 +58,10 @@ assert.equal(
   P.resolveMediaField(mediaConfig, "Main Image *", 0).value,
   "https://example.com/featured.jpg",
 );
+assert.equal(P.resolveMediaField({ screenshots: ["https://example.com/graffiti-examples/throw-up-kilo.png"] },
+  "Product Screenshot", 0).value, "", "example artwork is not a product screenshot");
+assert.equal(P.resolveMediaField({ screenshots: ["cloud-media://actual-home-capture"] },
+  "Product Screenshot", 0).value, "cloud-media://actual-home-capture");
 
 const tableProjects = {
   OldPhotoLive: {

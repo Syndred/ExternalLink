@@ -36,6 +36,14 @@ assert.equal(snapshotLabel({
   },
   getAttribute: (name) => name === "placeholder" ? "e.g. ChatGPT" : null,
 }), "Tool name * e.g. ChatGPT", "an adjacent visible label must identify unbound React inputs");
+assert.equal(snapshotLabel({
+  id: "", textContent: "Free Freemium Paid", closest: () => null,
+  parentElement: {
+    querySelectorAll: () => [{}], querySelector: () => null,
+    previousElementSibling: { textContent: "Pricing Model", querySelector: () => null },
+  },
+  getAttribute: () => null,
+}), "Pricing Model Free Freemium Paid", "unbound native selects must inherit a preceding label");
 
 const mediaHelper = new Function(
   "getProfileFields",
@@ -79,7 +87,7 @@ const selectTokens = new Function(
   "getFieldHint",
   "getProfileFields",
   `${extractFunction("resolveSelectTokens", "resolveSelectValueForField")}; return resolveSelectTokens;`,
-)((element) => element.hint, (config) => config.projectFields || {});
+)((element) => String(element.hint || "").toLowerCase(), (config) => config.projectFields || {});
 const tags = selectTokens(
   { hint: "tags max 5" },
   { brandName: "JevPlay", tags: "AI games, decision games, human vs AI, TypeSafe Jev, daily challenge, sixth tag" },
@@ -89,6 +97,18 @@ assert.equal(tags.includes("sixth tag"), false, "the custom tag selector should 
 assert.equal(selectTokens({ hint: "pricing model" }, {
   projectFields: { "PRICING TYPE": "Paid generation with credits. Public browsing is free." },
 })[0], "paid", "free browsing must not classify paid generation as free");
+assert.equal(selectTokens({ hint: "Category *", label: "Category *" }, {
+  brandName: "Graffiti Name AI", tags: "graffiti name generator, bubble letters",
+})[0], "Design Assets & Icons", "broad directory category must precede SEO tags");
+assert.equal(selectTokens({ hint: "Category *" }, {
+  brandName: "OldPhotoLive AI", tags: "old photo animation, photo restoration",
+})[0], "Image Generation");
+assert.equal(selectTokens({ hint: "Category *" }, {
+  brandName: "JevPlay", tags: "AI games, decision games",
+})[0], "AI Tools (Other)");
+assert.equal(selectTokens({ hint: "Pricing Model Free Freemium Paid" }, {
+  brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" },
+})[0], "paid");
 
 const selectValue = new Function(
   "getNativeSelectOptions", "resolveSelectTokens", "getFieldHint", "findBestSelectOption",
@@ -106,6 +126,12 @@ const industrySelect = { tagName: "SELECT", hint: "Primary industry", options: [
 ] };
 assert.equal(selectValue(industrySelect, { brandName: "JevPlay", tags: "AI games, decision games" }), "other",
   "an unrelated category must not be picked from a generic token or first option");
+assert.equal(selectValue({ tagName: "SELECT", hint: "Pricing Model", options: [
+  { value: "Free", label: "Free" }, { value: "Freemium", label: "Freemium" }, { value: "Paid", label: "Paid" },
+] }, { brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" } }),
+"Paid", "directory pricing choice must reflect paid generation");
+assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
+  "default-selected free pricing must be eligible for replacement");
 
 const isCustomDropdownEmpty = new Function(
   "compactText",
@@ -176,6 +202,9 @@ assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", email: "c
 assert.equal(resolveValue({ targetDomain: "https://jevplay.com/games", projectFields: {} },
   { tagName: "INPUT", type: "url", hint: "Affiliate Link", label: "Affiliate Link", getAttribute: () => null }),
   "", "an optional affiliate URL must not reuse the product homepage");
+assert.equal(resolveValue({ targetDomain: "https://graffitinameai.com", projectFields: {} },
+  { tagName: "INPUT", type: "url", hint: "2. Paste the page you added it to, then verify", label: "2. Paste the page you added it to, then verify", getAttribute: () => null }),
+  "", "a backlink verification field must stay blank until a backlink exists");
 assert.equal(resolveValue({ projectFields: { "Affiliate Link": "https://partner.example.com/jev" } },
   { tagName: "INPUT", type: "url", hint: "Affiliate Link", label: "Affiliate Link", getAttribute: () => null }),
   "https://partner.example.com/jev");

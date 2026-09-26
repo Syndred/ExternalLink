@@ -2054,6 +2054,36 @@ async function listCloudSubmissionMedia() {
   return { ok: true, assets: response.assets || [] };
 }
 
+async function preferCloudSubmissionMedia(config) {
+  if (!config || config.__cloudMediaChecked) return;
+  config.__cloudMediaChecked = true;
+  const profileId = self.ExtLinkProfiles.canonicalProfileId(config.projectKey || config.brandName);
+  if (!profileId) return;
+  let timeoutId;
+  try {
+    const response = await Promise.race([
+      listCloudSubmissionMedia(),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("云端媒体清单超时")), 4000);
+      }),
+    ]);
+    const assets = (response.assets || []).filter((asset) =>
+      self.ExtLinkProfiles.canonicalProfileId(asset.profile_id) === profileId &&
+      /^image\//i.test(String(asset.content_type || "")) && asset.asset_id);
+    const logo = assets.find((asset) => asset.media_kind === "logo");
+    const screenshots = assets.filter((asset) => asset.media_kind === "screenshot")
+      .sort((a, b) => Number(a.media_index || 0) - Number(b.media_index || 0));
+    if (logo) {
+      config.projectFields = { ...(config.projectFields || {}), "Cloud LOGO": `cloud-media://${logo.asset_id}` };
+    }
+    if (screenshots.length) config.screenshots = screenshots.map((asset) => `cloud-media://${asset.asset_id}`);
+  } catch (error) {
+    log(`云端媒体暂不可用：${error.message}`, "warn");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // ─── AI comment drafts ───
 async function generateCommentDrafts(msg = {}) {
   const filters = await getTargetFilters();
@@ -5032,6 +5062,7 @@ async function fillFormUntilReady(tabId, config, platformType, options = {}) {
   let formState = { validationFailed: false, issues: [] };
 
   await assertFillContext(tabId, config);
+  await preferCloudSubmissionMedia(config);
   await applyDestinationFormKnowledge(tabId, config);
   broadcastAutoFillUpdate({ tabId, status: "filling", message: "正在按字段名称填写产品名、网址、描述等资料…" });
 

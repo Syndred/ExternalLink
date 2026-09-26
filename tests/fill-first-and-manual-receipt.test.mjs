@@ -7,6 +7,7 @@ async function fillHarness({ empty = 0, planFails = false } = {}) {
   const calls = [];
   const context = {
     MAX_FILL_ROUNDS: 1,
+    preferCloudSubmissionMedia: async () => calls.push('cloudMedia'),
     applyDestinationFormKnowledge: async () => calls.push('knowledge'),
     broadcastAutoFillUpdate: (event) => calls.push(event.message),
     assertFillContext: async () => {},
@@ -35,6 +36,7 @@ async function fillHarness({ empty = 0, planFails = false } = {}) {
 }
 let run = await fillHarness();
 assert.ok(run.calls.includes('smartFillAcrossFrames'));
+assert.ok(run.calls.indexOf('cloudMedia') < run.calls.indexOf('smartFillAcrossFrames'));
 assert.equal(run.calls.includes('plan'), false, 'complete local fields must not wait for a model');
 run = await fillHarness({ empty: 1 });
 assert.ok(run.calls.indexOf('smartFillAcrossFrames') < run.calls.indexOf('plan'));

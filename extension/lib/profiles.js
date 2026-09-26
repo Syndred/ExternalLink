@@ -95,7 +95,7 @@
   function buildAgentConfigFromProfile(profile, globalConfig = {}) {
     const fields = useVerifiedGraffitiContact(profile.id, profile.fields || {});
     const name = fields.Name || profile.name || "";
-    const url = profile.promoUrl || profile.url || fields.Url || "";
+    const url = submissionWebsiteUrl(profile);
     const email = fields["Business mail"] || globalConfig.email || "";
     const title = fields.Title || name;
     const shortDesc =
@@ -221,6 +221,14 @@
     }
   }
 
+  function submissionWebsiteUrl(profile = {}) {
+    const homepage = profile.url || profile.fields?.Url || "";
+    // JevPlay's promoUrl is its game hub. General directory website fields
+    // should point to its homepage.
+    if (canonicalProfileId(profile.id || profile.name) === "JevPlay" && homepage) return homepage;
+    return profile.promoUrl || homepage;
+  }
+
   function mergeFillConfig(runtimeConfig = {}, profileConfig = {}, extraConfig = {}) {
     const runtime = pickKeys(runtimeConfig, FILL_RUNTIME_KEYS);
     const extraRuntime = pickKeys(extraConfig, FILL_RUNTIME_KEYS);
@@ -273,9 +281,7 @@
     const expectedName = String(profile.fields?.Name || profile.name || "").trim();
     const actualName = String(config.brandName || "").trim();
     if (expectedName && actualName && expectedName !== actualName) return "brandName";
-    const expectedUrl = normalizeIdentityUrl(
-      profile.promoUrl || profile.url || profile.fields?.Url || "",
-    );
+    const expectedUrl = normalizeIdentityUrl(submissionWebsiteUrl(profile));
     const actualUrl = normalizeIdentityUrl(config.targetDomain || config.projectFields?.Url || "");
     if (expectedUrl && actualUrl && expectedUrl !== actualUrl) return "targetDomain";
     return "";
@@ -769,6 +775,7 @@
     canonicalProfileId,
     emptySiteProfile,
     buildAgentConfigFromProfile,
+    submissionWebsiteUrl,
     mergeFillConfig,
     fillIdentityMismatch,
     taskConfigIdentityMismatch,

@@ -249,6 +249,18 @@ assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profil
   assert.equal(leakedGlobal.commentTemplate, "VideoToArticleAI turns video into articles.");
   assert.equal(leakedGlobal.projectKey, "VideoToArticleAI");
 
+  const jev = {
+    id: "JevPlay",
+    name: "JevPlay",
+    url: "https://jevplay.com",
+    promoUrl: "https://jevplay.com/games",
+    fields: { Name: "JevPlay", Url: "https://jevplay.com" },
+  };
+  const jevSubmission = P.buildAgentConfigFromProfile(jev);
+  assert.equal(jevSubmission.targetDomain, "https://jevplay.com");
+  assert.equal(P.fillIdentityMismatch(jevSubmission, jev), "");
+  assert.equal(P.submissionWebsiteUrl({ id: "AISpeakLearn", url: "https://aispeaklearn.com", promoUrl: "https://aispeaklearn.com/voice" }), "https://aispeaklearn.com/voice");
+
   const graffitiWithUndeliverableContact = P.buildAgentConfigFromProfile({
     id: "GraffitiName",
     name: "Graffiti Name AI",

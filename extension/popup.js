@@ -262,7 +262,7 @@
   function buildAgentConfigFromProfile(profile) {
     const fields = profile.fields || {};
     const name = fields.Name || profile.name || "";
-    const url = profile.promoUrl || profile.url || fields.Url || "";
+    const url = self.ExtLinkProfiles.submissionWebsiteUrl(profile);
     const email = fields["Business mail"] || "";
     const title = fields.Title || name;
     const shortDesc =

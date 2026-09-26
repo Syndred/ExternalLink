@@ -65,6 +65,15 @@ assert.equal(
   mediaHelper({ projectFields: { "Screenshot 1": "https://example.com/real-screen.png", "Featured image": "https://example.com/og.png" } }, "screenshot url"),
   "https://example.com/real-screen.png",
 );
+assert.equal(
+  mediaHelper({ projectFields: { "Screenshot 1": "https://graffitinameai.com/images/graffiti-examples/throw-up-kilo.png" } }, "screenshot url"),
+  "",
+  "a generated graffiti example is not a product-screen screenshot",
+);
+assert.equal(
+  mediaHelper({ projectFields: { "Screenshot 1": "https://cdn.example.com/01-home.png" } }, "screenshot url"),
+  "https://cdn.example.com/01-home.png",
+);
 
 const selectTokens = new Function(
   "getFieldHint",

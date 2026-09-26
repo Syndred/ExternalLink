@@ -1,5 +1,7 @@
 # PROJECT_CONTEXT
 
+- **2026-09-26 / 3.7.58 截图 URL 语义保护**：Graffiti Name AI 在 AI Tools Ratings 由 3.7.57 插件填完，但将作品示例图误填为可选产品界面 `Screenshot URL`，未提交。3.7.58 仅让路径明确表示界面截图的公开图片进入 URL 栏，否则留空；53/53 测试文件通过。须自行重载并重填后继续 Graffiti 实机提交与精确云账本验收。详见 `docs/三产品十站插件实测-2026-09-25.md`。
+
 - **2026-09-26 / 3.7.57 跨页回执硬闸门修复**：OldPhotoLive AI 在 3.7.56 已由插件向 AI Tools Ratings 提交，站方 `?submit=sent` 显示完整收到消息回执；插件后台补读新页时因证据列表为空被成功硬闸门拒绝入账。已修导航断联回退和零长度信号兜底，回归与全量 53 个测试文件通过。JevPlay、OldPhoto 均已送达站方但账本/Neon 尚待补记，不再重复提交；自行重载 3.7.57，用 Graffiti 实测自动记账。详见 `docs/三产品十站插件实测-2026-09-25.md`。
 
 - **2026-09-26 / 3.7.56 AI Tools Ratings 回执规则**：自行重载 3.7.55 后，JevPlay 插件提交跳到 `?submit=sent`，站方显示完整 `Thanks — we received your message and will get back to you soon.`。插件旧规则漏识别，故没有自动账本/Neon；不可重复投稿。已为该站补精确回执规则和测试，须自行重载 3.7.56 后用另两产品核对自动记账；JevPlay 依据已见回执补记并云端回读。详见 `docs/三产品十站插件实测-2026-09-25.md`。

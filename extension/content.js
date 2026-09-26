@@ -6449,7 +6449,11 @@
       if (!screenshot || screenshot === featured || screenshot === String(pf.LOGO || config.logoUrl || "").trim()) return "";
       try {
         const parsed = new URL(screenshot);
-        return /^https?:$/.test(parsed.protocol) && /\.(?:png|jpe?g|gif|webp|svg|avif|ico)$/i.test(parsed.pathname)
+        // A Profile can also store example output art under "Screenshot 1".
+        // A URL-only field needs an actual product-screen image, so leave it
+        // blank when the public path does not identify a screen capture.
+        const screenPath = /(?:^|[\/_-])(?:screenshots?|screen[-_]?shots?|screen|dashboard|editor|homepage|home|ui)(?=[\/_.-]|$)/i.test(parsed.pathname);
+        return /^https?:$/.test(parsed.protocol) && screenPath && /\.(?:png|jpe?g|gif|webp|svg|avif)$/i.test(parsed.pathname)
           ? parsed.toString() : "";
       } catch {
         return "";

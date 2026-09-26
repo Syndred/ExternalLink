@@ -80,6 +80,19 @@ const P = playbookSelf.ExtLinkPlaybooks;
 }
 
 {
+  const come = P.lookup("https://www.iatool.online/submit-tool/");
+  assert.equal(come?.id, "come-ai");
+  assert.equal(P.classifyEvidence("We review each submission and add approved tools to the directory.", come).matched, false,
+    "Come AI pre-submit copy must not count as a receipt");
+  const comeReceipt = P.classifyEvidence(
+    "Thank you for your submission. We’ll review it and add your tool to the directory if it meets our guidelines.",
+    come,
+  );
+  assert.equal(comeReceipt.matched, true);
+  assert.equal(comeReceipt.publicationStatus, "pending_moderation");
+}
+
+{
   const thejo = P.lookup("https://www.thejoai.com/aitools/submissions/");
   assert.equal(thejo?.id, "thejoai");
   const classified = P.classifyEvidence("Excellent submission +100 points. Submitted for Review", thejo);

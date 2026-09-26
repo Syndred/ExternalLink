@@ -4,6 +4,15 @@
 
   const PLAYBOOKS = [
     {
+      id: "come-ai",
+      hosts: ["iatool.online"],
+      kind: "directory",
+      title: "Come AI",
+      notes: "免费表单成功后显示审核提示；仅成功页完整回执计入待审核。",
+      hints: ["选择免费提交", "核对成功页审核提示"],
+      pendingPatterns: ["Thank you for your submission. We’ll review it and add your tool to the directory if it meets our guidelines."],
+    },
+    {
       id: "aisotools",
       hosts: ["aisotools.com"],
       kind: "directory",

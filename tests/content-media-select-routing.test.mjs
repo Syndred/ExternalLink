@@ -122,6 +122,14 @@ assert.equal(selectTokens({ hint: "Primary Use Case *" }, {
 assert.equal(selectTokens({ hint: "Pricing Model Free Freemium Paid" }, {
   brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" },
 })[0], "paid");
+const matchOption = new Function("normalizeOptionText",
+  `${extractFunction("findBestSelectOption", "resolveSelectTokens")}; return findBestSelectOption;`,
+)((value) => String(value || "").toLowerCase());
+assert.equal(matchOption([
+  { value: "Design", label: "Image & Video Generators" },
+  { value: "Development", label: "Design Generators" },
+], "Design")?.label, "Design Generators",
+"visible category label must outrank opaque Select2 option values");
 
 const selectValue = new Function(
   "getNativeSelectOptions", "resolveSelectTokens", "getFieldHint", "findBestSelectOption", "getProfileFields",
@@ -175,6 +183,7 @@ const clipped = new Function("document", "window",
   { getComputedStyle: () => ({ overflow: "hidden", overflowY: "hidden" }) },
 );
 assert.equal(clipped(formInCollapsedPanel), true, "zero-height clipped paid panels must be excluded from form selection");
+assert.match(content, /select2-hidden-accessible/, "hidden Select2 native control must be eligible when its form is open");
 assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
   "default-selected free pricing must be eligible for replacement");
 

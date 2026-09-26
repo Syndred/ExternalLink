@@ -5661,8 +5661,9 @@
     const n = normalizeOptionText(String(needle || ""));
     if (!n || n.length < 2) return null;
     return (
-      options.find((o) => normalizeOptionText(o.value) === n) ||
       options.find((o) => normalizeOptionText(o.label) === n) ||
+      options.find((o) => normalizeOptionText(o.label).includes(n)) ||
+      options.find((o) => normalizeOptionText(o.value) === n) ||
       options.find(
         (o) => normalizeOptionText(o.label).includes(n) || normalizeOptionText(o.value).includes(n),
       ) ||
@@ -5972,11 +5973,15 @@
       const type = (element.type || "").toLowerCase();
       const owningForm = element.closest?.("form") || (root.matches?.("form") ? root : null);
       if (owningForm && isMarketingOptInForm(owningForm)) return false;
+      const select2Proxy = element.tagName?.toLowerCase() === "select" &&
+        element.classList?.contains("select2-hidden-accessible") &&
+        !isInsideCollapsedPanel(element) &&
+        isVisible(element.closest(".forminator-field") || element.parentElement);
       // Modern upload UIs usually hide the real file control behind a visible
       // dropzone. Keep that control available for DataTransfer injection, but
       // only when the nearby visible label is clearly an upload/media target.
       if (type === "file") return isAutomatableFileInput(element);
-      if (!isFillableField(element) && !(
+      if (!isFillableField(element) && !select2Proxy && !(
         type === "radio" && isToolsSoTallyForm() &&
         Array.from(element.labels || []).some(isVisible)
       )) return false;

@@ -7,7 +7,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const content = readFileSync(resolve(root, "extension/content.js"), "utf8");
 
 function extractFunction(name, nextName) {
-  const start = content.indexOf(`  function ${name}(`);
+  const plain = content.indexOf(`  function ${name}(`);
+  const asyncStart = content.indexOf(`  async function ${name}(`);
+  const start = plain >= 0 ? plain : asyncStart;
   const end = content.indexOf(`  function ${nextName}(`, start);
   assert.ok(start >= 0 && end > start, `${name} source must exist`);
   return content.slice(start, end).trim();
@@ -144,6 +146,21 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based"
   { value: "", label: "Not sure / prefer not to say" }, { value: "US", label: "United States" },
 ] }, { brandName: "Graffiti Name AI" }), "",
 "unknown company location must not be fabricated as United States");
+
+const freePanelClick = { count: 0, click() { this.count++; }, textContent: "Verify & get listed free" };
+const openFreePanel = new Function(
+  "document", "isInsideCollapsedPanel", "isVisible", "sleep",
+  `${extractFunction("openFreeListingPanelIfNeeded", "queryFillableElements")}; return openFreeListingPanelIfNeeded;`,
+)(
+  { querySelector: (selector) => selector === "#panel-free.st-form-panel"
+    ? { querySelector: () => ({}) }
+    : selector === ".card-free button" ? freePanelClick : null },
+  () => true,
+  () => true,
+  async () => {},
+);
+await openFreePanel();
+assert.equal(freePanelClick.count, 1, "collapsed free listing panel must open before selecting a form");
 assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
   "default-selected free pricing must be eligible for replacement");
 

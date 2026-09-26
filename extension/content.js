@@ -5916,7 +5916,7 @@
     let bestForm = null;
     let bestScore = 0;
     for (const form of document.querySelectorAll("form")) {
-      if (!isVisible(form) || isMarketingOptInForm(form)) continue;
+      if (!isVisible(form) || isMarketingOptInForm(form) || isInsideCollapsedPanel(form)) continue;
       const fields = queryFillableElements(form).length;
       const score = fields + (hasLikelyListingFields(form) ? 100 : hasLikelySubmissionFields(form) ? 40 : 0);
       if (score > bestScore) {
@@ -5941,6 +5941,25 @@
       return candidate.element;
     }
     return bestForm || document;
+  }
+
+  function isInsideCollapsedPanel(element) {
+    for (let parent = element?.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const style = window.getComputedStyle(parent);
+      if (/hidden|clip/.test(`${style.overflow} ${style.overflowY}`) && parent.getBoundingClientRect().height < 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function openFreeListingPanelIfNeeded() {
+    const panel = document.querySelector("#panel-free.st-form-panel");
+    if (!panel || !isInsideCollapsedPanel(panel.querySelector("form"))) return;
+    const button = document.querySelector(".card-free button");
+    if (!button || !isVisible(button) || !/\bfree\b/i.test(button.textContent || "")) return;
+    button.click();
+    await sleep(300);
   }
 
   function queryFillableElements(scope) {
@@ -7281,6 +7300,7 @@
 
   async function smartFillFromConfig(config) {
     if (isAiToolsDirectoryHost()) return aiToolsDirectoryManualGate();
+    await openFreeListingPanelIfNeeded();
     const pageContext = capturePageContext();
     logStep("🧠 智能填写全部表单字段…");
     const pf = getProfileFields(config);

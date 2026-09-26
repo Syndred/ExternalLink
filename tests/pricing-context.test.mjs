@@ -66,12 +66,26 @@ function loadHooks() {
     payment: context.__extLinkPaymentTestHooks,
     fields: context.__extLinkFieldMappingTestHooks,
     document,
+    context,
   };
 }
 
 const hooks = loadHooks();
 assert.ok(hooks.payment, "content.js should expose the payment-context test surface");
 assert.ok(hooks.fields, "content.js should expose the shared-field test surface");
+
+{
+  hooks.context.location.hostname = "yaatd.com";
+  hooks.context.location.pathname = "/submit/form/checkout/";
+  hooks.document.querySelectorAll = (selector) => selector === "button"
+    ? [{ innerText: "Skip — list for free in ~56 days", hidden: false, getAttribute: () => null, closest: () => null }]
+    : [];
+  assert.equal(hooks.payment.detectSubmitBlockers()?.needs_manual, true,
+    "YAATD checkout with a free waitlist must park for that path, not label the destination paid-only");
+  hooks.context.location.hostname = "directory.example";
+  hooks.context.location.pathname = "/submit";
+  hooks.document.querySelectorAll = () => [];
+}
 
 const classify = hooks.payment.classifyPaymentContext;
 hooks.document.body.innerText = "Submit for a free listing. No credit card required. We review every tool manually.";

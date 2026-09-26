@@ -14,6 +14,23 @@ const envExample = readFileSync(resolve(root, ".env.example"), "utf8");
 const manifestText = readFileSync(resolve(root, "extension/manifest.json"), "utf8");
 const manifest = JSON.parse(manifestText);
 
+{
+  const start = content.indexOf("  function fieldIsRequired(element) {");
+  const end = content.indexOf("  function collectFillLearnings", start);
+  const source = content.slice(start, end);
+  const context = {
+    location: { hostname: "yaatd.com", pathname: "/submit/form/" },
+    getSnapshotLabel: (element) => element.label,
+  };
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  assert.equal(vm.runInContext('fieldIsRequired({label: "Use Cases", required: false, getAttribute: () => null})', context), true);
+  assert.equal(vm.runInContext('fieldIsRequired({label: "Short Overview", required: false, getAttribute: () => null})', context), true);
+  context.location.hostname = "example.com";
+  assert.equal(vm.runInContext('fieldIsRequired({label: "Use Cases", required: false, getAttribute: () => null})', context), false);
+  assert.match(content, /submitButtons\.every\(\(button\) => button\.disabled/);
+}
+
 // The directory's live form is a cross-origin Paperform iframe. Both the
 // parent page and that exact form must stop Profile copy before any fill.
 {

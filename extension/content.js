@@ -846,6 +846,18 @@
         reason: AI_TOOLS_DIRECTORY_MANUAL_REASON,
       };
     }
+    if (
+      /(?:^|\.)yaatd\.com$/i.test(location.hostname) &&
+      /^\/submit\/form\/checkout\/?$/.test(location.pathname) &&
+      Array.from(document.querySelectorAll("button")).some((button) =>
+        isVisibleHumanGate(button) && /skip\s*[—-]\s*list\s+for\s+free/i.test(button.innerText || button.textContent || ""),
+      )
+    ) {
+      return {
+        needs_manual: true,
+        reason: "YAATD 同页有付费精选和免费候补；仅可走免费候补，需确认站方最终回执",
+      };
+    }
     const paid = detectPaidSubmit();
     if (paid?.classification === "confirmed_payment") {
       return {
@@ -3328,6 +3340,7 @@
     classifyPaymentContext,
     getPaymentElementContext,
     detectPaidSubmit,
+    detectSubmitBlockers,
   };
   self.__extLinkFieldMappingTestHooks = {
     sharedLearnedMappingMatches,
@@ -6116,7 +6129,7 @@
       const lastSpace = text.lastIndexOf(" ");
       if (lastSpace > constraints.maxLength * 0.65) text = text.slice(0, lastSpace);
       text = text.trim();
-      if (text && !/[.!?]$/.test(text)) text += ".";
+      if (text && text.length < constraints.maxLength && !/[.!?]$/.test(text)) text += ".";
     }
 
     if (constraints.minLength && text.length < constraints.minLength) {
@@ -6523,6 +6536,32 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    // YAATD uses an app title rather than an SEO headline and validates
+    // required fields in Svelte without HTML `required` attributes.
+    const isYaatdForm = typeof location !== "undefined" &&
+      /(?:^|\.)yaatd\.com$/i.test(location.hostname) && /^\/submit\/form\/?$/.test(location.pathname);
+    if (isYaatdForm && /\bapp\s+title\b/.test(visibleHint)) {
+      return fitValueToConstraints(config.brandName || pf.Name || "", getFieldConstraints(element));
+    }
+    if (isYaatdForm && /\bkey\s+features\b/.test(visibleHint)) {
+      const source = String(pf["Feature description"] || pf.Features || "");
+      const maxLength = getFieldConstraints(element).maxLength || 255;
+      const parts = source.split(/\s*;\s*/).map((part) => part.trim()).filter(Boolean);
+      const complete = [];
+      for (const part of parts) {
+        if ([...complete, part].join(", ").length > maxLength) break;
+        complete.push(part);
+      }
+      return complete.join(", ") || fitValueToConstraints(source, getFieldConstraints(element));
+    }
+    if (isYaatdForm && /\buse\s+cases?\b/.test(visibleHint)) {
+      const useCases = Array.isArray(config.useCases) ? config.useCases.filter(Boolean).join(", ") : "";
+      return fitValueToConstraints(
+        useCases || pf["Primary Use Case"] || pf["Use Case"] || pf["Short description(20-30 words)"] || "",
+        getFieldConstraints(element),
+      );
+    }
 
     if (tag === "input" && /\b(?:one[\s_-]?line|one[\s_-]?liner)\b/.test(`${visibleHint} ${normalizedHint}`)) {
       const constraints = getFieldConstraints(element);
@@ -7387,6 +7426,20 @@
       emptyCount = Math.max(emptyCount, 1);
     }
 
+    // Some client-side forms omit `required` attributes and expose readiness
+    // only through a disabled primary submit button (YAATD is one example).
+    // Never tell the operator a form is ready while the site disables submit.
+    if (elements.length > 0) {
+      const submitButtons = Array.from(document.querySelectorAll('button, input[type="submit"]'))
+        .filter((button) => isVisible(button) &&
+          /\b(?:submit|publish|send|add\s+(?:app|tool|product)|create\s+(?:listing|app|tool))\b/i.test(
+            [button.innerText, button.value, button.getAttribute("aria-label")].filter(Boolean).join(" "),
+          ));
+      if (submitButtons.length && submitButtons.every((button) => button.disabled || button.getAttribute("aria-disabled") === "true")) {
+        emptyCount = Math.max(emptyCount, 1);
+      }
+    }
+
     return {
       emptyCount,
       invalidCount,
@@ -7444,6 +7497,11 @@
   function fieldIsRequired(element) {
     if (!element) return false;
     if (element.required || element.getAttribute("aria-required") === "true") return true;
+    if (typeof location !== "undefined" && /(?:^|\.)yaatd\.com$/i.test(location.hostname) && /^\/submit\/form\/?$/.test(location.pathname)) {
+      if (/\b(?:app\s+title|your\s+email|app\s+url|short\s+overview|full\s+description|key\s+features|use\s+cases|app\s+image)\b/i.test(getSnapshotLabel(element))) {
+        return true;
+      }
+    }
     // AISuperHub's free form validates these fields in React but omits HTML
     // required attributes; an empty form otherwise appears ready to submit.
     if (typeof location !== "undefined" && /(?:^|\.)aisuperhub\.io$/i.test(location.hostname)) {

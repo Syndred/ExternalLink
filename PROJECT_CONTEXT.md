@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / 3.7.105 Radix 定价与两条辅助投稿
+
+- 用户报告已重载；Chrome 侧栏一度恢复控制，但未从扩展管理页目视确认实载版本。Alieradox 的 OldPhotoLive AI、Graffiti Name AI 分别由插件填写产品名、官网、分类、描述及正确联系邮箱；可见 Radix 定价仍错误保留默认 `Free`，提交前代理分别手动改为 `Freemium`、`Paid`，再由插件点击提交。站方两次明确显示 `Tool submitted successfully! Our team will review it shortly.`。
+- 两条精确 Neon 账本经设置页待上传归零、云端回读、再导出本机快照核对：`alieradox.com/submit::OldPhotoLive`、`alieradox.com/submit::GraffitiName` 均为 `success / submitted`，证据为同一站方回执。Graffiti 投稿邮箱目视为本人 `syndredyoung@gmail.com`；OldPhoto 为 `support@oldphotoliveai.com`。JevPlay 早前已有站方回执但仍缺精确云账本，不重投。站方明确收到的矩阵组合至少 14 个；两条新记录均有人工价格校正，独立闭环仍 **8/30（26.7%）**。
+- 参考 Radix Select 官方 `select.tsx` 的 `onPointerUp` 提交机制，在项目既有自定义下拉处理器中对 Radix 选项补鼠标 `pointerdown/pointerup` 和选后值验证；There Is An AI Tool 的真实必填字段再补受众缺省值及 Graffiti Profile 明确价格套餐的简写，不编造起价。源码升 3.7.105，54/54 回归、语法及 diff 检查通过；**尚未实载复验**。新站仅打开表单预检，未发送；Chrome 原生窗口随后再次报 ScreenCaptureKit -3812，公开预检页已关闭。已用 Alieradox 和设置页清理仍待工具恢复，不得将源码验收算成现场成功。
+
 ## 2026-09-26 / 3.7.104 Alieradox 实站回执漏识别
 
 - 按用户要求用 Chrome 原生控制新开窗口，Alieradox OldPhoto 由已实载插件填对产品资料与邮箱，但可见定价仍为错误的 `Free`；未发送。切换 JevPlay 时插件主动拦截页面中其他 Profile URL，刷新清空后插件独立填入 JevPlay 六栏，定价 `Free` 正确，并点击最终提交。站方原页明确弹出 `Tool submitted successfully! Our team will review it shortly.`，表单清空；JevPlay 已送达站方待审。

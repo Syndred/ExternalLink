@@ -21,6 +21,38 @@ assert.doesNotMatch(
   "site badge loading must not block the Detect and Fill active-tab refresh",
 );
 
+// A marker click belongs to the page visible at click time. A slow annotation
+// read must not redirect the subsequent write to whichever tab is active later.
+{
+  const firstRead = deferred();
+  const messages = [];
+  const context = {
+    currentPageUrl: "https://launch.ignlab.net/submit.html",
+    activeTabId: 7,
+    activeSiteId: "OldPhotoLive",
+    SITE_STATUS_MAP: { needs_captcha: { label: "需验证码" } },
+    Q: { normalizeAnnotationStatuses: () => [] },
+    chrome: { runtime: { sendMessage(message) {
+      messages.push(message);
+      return message.action === "getSiteAnnotation" ? firstRead.promise : Promise.resolve({ ok: true });
+    } } },
+    refreshSiteAnnotation: async () => {},
+    loadSubmissionQueue: async () => {},
+    loadClassifiedList: async () => {},
+    showToast() {},
+  };
+  vm.createContext(context);
+  vm.runInContext(slice("  async function markCurrentSite(", "  async function addCurrentToUrlList("), context);
+  const marking = vm.runInContext('markCurrentSite("needs_captcha")', context);
+  context.currentPageUrl = "https://listai.cc/submit";
+  context.activeTabId = 8;
+  firstRead.resolve({ annotation: null });
+  await marking;
+  assert.equal(messages[1].url, "https://launch.ignlab.net/submit.html");
+  assert.equal(messages[1].tabId, 7);
+  assert.equal(messages[1].profileId, "OldPhotoLive");
+}
+
 // A receipt closes only an owned, still-active tab after canonical cloud
 // readback. Local ledger success alone must leave the page available.
 {

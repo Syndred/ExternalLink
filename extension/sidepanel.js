@@ -140,6 +140,7 @@
   let submissionIndex = 0;
   let submissionMeta = { fromTable: 0, fromPlugin: 0, excluded: 0, total: 0 };
   let submissionQueueLoadToken = 0;
+  let siteAnnotationRefreshToken = 0;
   let currentTimelineItem = null;
   let currentPageUrl = "";
   let selectedSiteIds = [];
@@ -2701,6 +2702,7 @@
 
   async function refreshSiteAnnotation(url) {
     const pageUrl = url || currentPageUrl;
+    const requestToken = ++siteAnnotationRefreshToken;
     if (!pageUrl?.startsWith("http")) {
       $("siteStatusBadge")?.setAttribute("hidden", "");
       $("btnAddToUrlList")?.setAttribute("hidden", "");
@@ -2713,6 +2715,7 @@
 
     try {
       const info = await chrome.runtime.sendMessage({ action: "getSiteAnnotation", url: pageUrl });
+      if (requestToken !== siteAnnotationRefreshToken || pageUrl !== currentPageUrl) return;
       const badge = $("siteStatusBadge");
       const addBtn = $("btnAddToUrlList");
       const rememberedFields = Object.keys(info?.annotation?.formKnowledge?.mappings || {}).length;
@@ -2759,14 +2762,17 @@
   }
 
   async function markCurrentSite(status) {
-    if (!currentPageUrl?.startsWith("http")) {
+    const pageUrl = currentPageUrl;
+    const tabId = activeTabId;
+    const profileId = activeSiteId;
+    if (!pageUrl?.startsWith("http")) {
       showToast("当前页不是有效网址", true);
       return;
     }
     try {
       const currentInfo = await chrome.runtime.sendMessage({
         action: "getSiteAnnotation",
-        url: currentPageUrl,
+        url: pageUrl,
       });
       const currentStatuses = Q.normalizeAnnotationStatuses(currentInfo?.annotation);
       const selected = currentStatuses.includes(status);
@@ -2775,15 +2781,17 @@
       }
       const result = await chrome.runtime.sendMessage({
         action: "markSubmissionSite",
-        url: currentPageUrl,
+        url: pageUrl,
         status,
         toggle: true,
-        tabId: activeTabId,
-        profileId: activeSiteId,
+        tabId,
+        profileId,
       });
       if (!result?.ok) throw new Error(result?.error || "标记失败");
-      await refreshSiteAnnotation(currentPageUrl);
-      await loadSubmissionQueue(currentPageUrl);
+      if (currentPageUrl === pageUrl) {
+        await refreshSiteAnnotation(pageUrl);
+        await loadSubmissionQueue(pageUrl);
+      }
       await loadClassifiedList();
       showToast(selected ? "已取消标记" : SITE_STATUS_MAP[status]?.label || "已标记");
     } catch (err) {
@@ -2792,16 +2800,19 @@
   }
 
   async function addCurrentToUrlList() {
-    if (!currentPageUrl?.startsWith("http")) return;
+    const pageUrl = currentPageUrl;
+    if (!pageUrl?.startsWith("http")) return;
     try {
       const result = await chrome.runtime.sendMessage({
         action: "addToUrlList",
-        url: currentPageUrl,
+        url: pageUrl,
         platformType: detection?.platform || "directory",
       });
       if (!result?.ok) throw new Error(result?.error || "添加失败");
-      await refreshSiteAnnotation(currentPageUrl);
-      await loadSubmissionQueue(currentPageUrl);
+      if (currentPageUrl === pageUrl) {
+        await refreshSiteAnnotation(pageUrl);
+        await loadSubmissionQueue(pageUrl);
+      }
       showToast(result.added ? "已加入外链列表（置顶）" : "此外链已在列表中");
     } catch (err) {
       showToast(err.message, true);

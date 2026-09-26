@@ -238,7 +238,8 @@ assert.match(background, /fillIdentityMismatch\(config, profile\)/);
 assert.match(background, /taskConfigIdentityMismatch\(task, fillConfig\)/);
 assert.match(background, /profileId:\s*latestProfile\.id/);
 assert.doesNotMatch(background, /commentTemplate:\s*storage\.cfgCommentTemplate/);
-assert.match(sidepanelJs, /profileId:\s*activeSiteId/);
+assert.match(sidepanelJs, /const profileId = activeSiteId;[\s\S]*?action: "markSubmissionSite",[\s\S]*?profileId,/,
+  "site marker writes must use the Profile captured before asynchronous lookup");
 assert.doesNotMatch(sidepanelJs, /commentTemplate:\s*items\.cfgCommentTemplate/);
 assert.match(sidepanelJs, /loadCommentTemplate\(\{\s*force:\s*true\s*\}\)/);
 assert.match(background, /function fillFormUntilReady/);

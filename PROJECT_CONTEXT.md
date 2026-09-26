@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 19:54 / Ego 普通窗口恢复与已公开 Jev 去重
+
+- Ego 原生窗口绑定和普通页面点击/导航已恢复。本轮新建独立空间（空间计数 1 → 2）后仅做公开页核验；未退出整个 Ego，未改动其他任务页。恢复普通窗口不等于解除此前扩展管理页/设置页的安全拒绝，未借原生界面访问被拒资源，插件实载路径/版本及最新 Neon 仍未验证。
+- 直接打开 `https://techbasedirectory.com/product/jevplay`，页面标题 JevPlay，介绍四款日常游戏，`View Product Website` 指向 `https://jevplay.com/?utm_source=TechBaseDirectory`。可确认已有公开条目，应防重投；不是本轮新投稿，不计插件独立闭环。Neon 精确记录待回读。
+- 本轮目录页及搜索页均已关闭；独立空间可供后续普通页面验收复用。未新增投稿，目标仍未达到 6/10。
+
 ## 2026-09-26 19:49 / 续验与本地审计空结果保护
 
 - AIToolnet 现场仅见 $9.9 / $49.9 投稿档、最终按钮 `Submit Pay $9.9`，旧 START/Free 候选说明不再适用；ToolScout 免费但登录前要求同意条款。两站未投稿，本轮页签已关闭。

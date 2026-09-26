@@ -5945,6 +5945,18 @@
         }
       }
       if (match) {
+        const radixOption = match.el.closest?.('[role="option"][data-radix-collection-item]');
+        if (radixOption && typeof PointerEvent === "function") {
+          // Radix Select commits mouse selections on pointerup. A synthetic
+          // mousedown/click on its inner text can leave the default unchanged.
+          const pointer = (type) => new PointerEvent(type, {
+            bubbles: true, cancelable: true, pointerType: "mouse", button: 0,
+          });
+          radixOption.dispatchEvent(pointer("pointerdown"));
+          radixOption.dispatchEvent(pointer("pointerup"));
+          await sleep(250);
+          if (normalizeOptionText(trigger.textContent) === n) return true;
+        }
         match.el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
         await sleep(80);
         if (isCustomDropdownEmpty(trigger) || shouldReconcileDefaultCustomPricing(trigger, config)) match.el.click();
@@ -6748,17 +6760,23 @@
       }
       if (/\bstarting price\b/.test(field)) {
         const explicit = String(pf["Starting price"] || pf["Starting Price"] || "").trim();
-        if (explicit) return fitValueToConstraints(explicit, getFieldConstraints(element));
+        if (explicit) {
+          // The site's 80-character field needs the actual entry price, not a
+          // truncated plan summary. Derive this only from a verified Profile.
+          const creditPack = /graffiti/.test(identity) && explicit.match(/\$\d+(?:\.\d+)?\s+for\s+\d+\s+credits?\b/i);
+          return fitValueToConstraints(creditPack ? `From ${creditPack[0]}` : explicit, getFieldConstraints(element));
+        }
         const pricing = String(pf["PRICING TYPE"] || pf.Pricing || config.pricing || "").toLowerCase();
         if (/freemium/.test(pricing)) return "Free tier ($0)";
         if (/^free\b/.test(pricing)) return "Free";
         return "";
       }
       if (/\bbest for\b/.test(field)) {
-        return fitValueToConstraints(
-          config.targetAudience || pf["Target Audience"] || pf["Target audience"] || pf.Audience || "",
-          getFieldConstraints(element),
-        );
+        const audience = config.targetAudience || pf["Target Audience"] || pf["Target audience"] || pf.Audience ||
+          (/old.?photo/.test(identity) ? "Families, Photo archivists" :
+            /graffiti/.test(identity) ? "Graffiti name creators, Digital artists" :
+              /\bjevplay\b/.test(identity) ? "Daily game players, Puzzle fans" : "");
+        return fitValueToConstraints(audience, getFieldConstraints(element));
       }
       if (/\bkey features\b/.test(field)) {
         const features = String(pf["Feature description"] || pf.Features || "")

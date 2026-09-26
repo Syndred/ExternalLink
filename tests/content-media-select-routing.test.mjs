@@ -162,6 +162,11 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Pricing Model", options: [
   { value: "Free", label: "Free" }, { value: "Freemium", label: "Freemium" }, { value: "Paid", label: "Paid" },
 ] }, { brandName: "OldPhotoLive AI", projectFields: { "PRICING TYPE": "Freemium" } }),
 "Freemium", "a free default must not misstate an OldPhoto freemium product");
+const thereIsAiCategories = ["Chat", "Writing", "Image", "Video", "Voice", "Coding", "Search", "Productivity", "Music"]
+  .map((label) => ({ value: label, label }));
+assert.equal(selectValue({ tagName: "SELECT", hint: "category *", options: thereIsAiCategories },
+  { brandName: "JevPlay", tags: "AI games, decision games" }), "",
+"the site has no gaming category, so JevPlay must not be placed in an unrelated category");
 assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based", options: [
   { value: "", label: "Not sure / prefer not to say" }, { value: "US", label: "United States" },
 ] }, { brandName: "Graffiti Name AI" }), "",
@@ -297,9 +302,19 @@ assert.equal(resolveValue({ brandName: "OldPhotoLive AI", projectFields: { "PRIC
 assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" } },
   { tagName: "INPUT", type: "text", hint: "Starting price", label: "Starting price", getAttribute: () => null }),
   "", "do not invent a paid product's starting price");
+assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: {
+  "Starting Price": "Public browsing is free. Paid credits start at $4.99 for 50 credits; subscription starts at $9.99/month.",
+} }, { tagName: "INPUT", type: "text", hint: "Starting price", label: "Starting price", getAttribute: () => null }),
+"From $4.99 for 50 credits", "derive a concise paid starting price from the Profile's verified credit pack");
 assert.equal(resolveValue({ targetAudience: "Daily puzzle players", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "Best for", label: "Best for", getAttribute: () => null }),
   "Daily puzzle players");
+assert.equal(resolveValue({ brandName: "OldPhotoLive AI", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Best for", label: "Best for", getAttribute: () => null }),
+  "Families, Photo archivists", "a required audience field should have a factual product fallback");
+assert.equal(resolveValue({ brandName: "Graffiti Name AI", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Best for", label: "Best for", getAttribute: () => null }),
+  "Graffiti name creators, Digital artists");
 assert.equal(resolveValue({ projectFields: { "Feature description": "Live races; server-verified results; side-by-side replay" } },
   { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }),
   "Live races\nserver-verified results\nside-by-side replay");
@@ -390,6 +405,36 @@ const aiSuperRequired = new Function("getSnapshotLabel", "location",
 assert.equal(aiSuperRequired({ name: "email", required: false, getAttribute: () => null }), true);
 assert.equal(aiSuperRequired({ name: "shortDescription", required: false, getAttribute: () => null }), true);
 assert.equal(aiSuperRequired({ name: "socialUrl", required: false, getAttribute: () => null }), false);
+const radixTrigger = {
+  tagName: "BUTTON", textContent: "Free", focus() {}, click() {}, getAttribute: () => null,
+};
+const pointerEvents = [];
+const radixOption = {
+  textContent: "Freemium",
+  closest: (selector) => selector.includes("data-radix-collection-item") ? radixOption : null,
+  dispatchEvent(event) {
+    pointerEvents.push(event.type);
+    if (event.type === "pointerup") radixTrigger.textContent = "Freemium";
+  },
+};
+const fillRadixPricing = new Function(
+  "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing", "sleep",
+  "document", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "PointerEvent",
+  `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
+)(
+  () => ["freemium"],
+  (value) => String(value || "").trim(),
+  (trigger) => trigger.textContent === "Free",
+  async () => {},
+  { querySelectorAll: (selector) => selector === '[role="option"]' ? [radixOption] : [], body: { click() {} } },
+  () => true,
+  (value) => String(value || "").toLowerCase(),
+  (trigger) => trigger.textContent === "Free",
+  class { constructor(type) { this.type = type; } },
+);
+assert.equal(await fillRadixPricing(radixTrigger, {}), true);
+assert.equal(radixTrigger.textContent, "Freemium");
+assert.deepEqual(pointerEvents, ["pointerdown", "pointerup"], "Radix selects on pointerup");
 assert.doesNotMatch(content, /options\[0\]\.el\.click\(\)/, "custom selects must not choose an arbitrary first option");
 assert.match(content, /new KeyboardEvent\("keydown"[\s\S]*key: "ArrowDown"/);
 assert.match(content, /new MouseEvent\("mousedown"/);

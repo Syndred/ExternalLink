@@ -225,7 +225,9 @@
     const homepage = profile.url || profile.fields?.Url || "";
     // JevPlay's promoUrl is its game hub. General directory website fields
     // should point to its homepage.
-    if (canonicalProfileId(profile.id || profile.name) === "JevPlay") {
+    const isJevPlay = [profile.id, profile.name]
+      .some((value) => canonicalProfileId(value) === "JevPlay");
+    if (isJevPlay) {
       for (const candidate of [profile.url, profile.fields?.Url, profile.promoUrl]) {
         try {
           const url = new URL(candidate);

@@ -263,6 +263,7 @@ assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profil
   assert.equal(P.submissionWebsiteUrl({ ...jev, url: "https://jevplay.com/games", fields: { Url: "https://jevplay.com/games" } }), "https://jevplay.com");
   assert.equal(P.submissionWebsiteUrl({ ...jev, url: "", fields: { Url: "" } }), "https://jevplay.com");
   assert.equal(P.submissionWebsiteUrl({ ...jev, url: "http://www.jevplay.com/games" }), "https://jevplay.com");
+  assert.equal(P.submissionWebsiteUrl({ id: "site-mu4wlxu0", name: "JevPlay", url: "https://jevplay.com/games" }), "https://jevplay.com");
   assert.equal(P.submissionWebsiteUrl({ id: "AISpeakLearn", url: "https://aispeaklearn.com", promoUrl: "https://aispeaklearn.com/voice" }), "https://aispeaklearn.com/voice");
 
   const graffitiWithUndeliverableContact = P.buildAgentConfigFromProfile({

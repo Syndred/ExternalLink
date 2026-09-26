@@ -5753,9 +5753,9 @@
       // Prefer an accurate broad class before trying the product-specific keywords.
       const identity = `${config.brandName || ""} ${pf.Name || ""} ${config.tags || ""}`.toLowerCase();
       if (/graffiti|logo|design|illustration/.test(identity)) {
-        tokens.push("Design Assets & Icons", "Image Generation", "Design", "AI Generation (Image, Video, Text)");
+        tokens.push("Design Assets & Icons", "Design Generators", "Image & Video Generators", "Image Generation", "Design", "AI Generation (Image, Video, Text)");
       } else if (/old.?photo|photo restor|image animat|image generat/.test(identity)) {
-        tokens.push("Image Generation", "AI Generation (Image, Video, Text)", "Design Assets & Icons");
+        tokens.push("Image Generation", "Image & Video Generators", "AI Generation (Image, Video, Text)", "Design Assets & Icons");
       } else if (/\bjevplay\b|\bai games?\b|decision games?/.test(identity)) {
         tokens.push("AI Tools (Other)", "Entertainment", "Other", "AI & LLM");
       }
@@ -6689,6 +6689,17 @@
     const tag = element.tagName.toLowerCase();
     const normalizedHint = hint.replace(/[_-]+/g, " ");
     const visibleHint = getSnapshotLabel(element).toLowerCase();
+
+    // Credible AI Tools reveals this text field only when its category picker
+    // selects Other (Specify). Leave it to the exact product category instead
+    // of treating a nonempty picker label as a completed answer.
+    if (typeof location !== "undefined" && /(?:^|\.)credibleaitools\.com$/i.test(location.hostname) &&
+        tag === "input" && /other\s*\(specify\)/i.test(`${visibleHint} ${normalizedHint}`)) {
+      const identity = `${config.brandName || ""} ${pf.Name || ""}`.toLowerCase();
+      if (/\bjevplay\b/.test(identity)) return "AI Games & Entertainment";
+      if (/old.?photo/.test(identity)) return "Photo Restoration & Animation";
+      if (/graffiti/.test(identity)) return "Graffiti Name Generator";
+    }
 
     // This embedded Google Form has a required contact person and an optional
     // general feedback box. The textarea fallback otherwise pastes the entire

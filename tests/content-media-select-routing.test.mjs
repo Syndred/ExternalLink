@@ -107,6 +107,12 @@ assert.equal(selectTokens({ hint: "Category *", label: "Category *" }, {
 assert.equal(selectTokens({ hint: "Category *" }, {
   brandName: "OldPhotoLive AI", tags: "old photo animation, photo restoration",
 })[0], "Image Generation");
+assert.ok(selectTokens({ hint: "Category *" }, {
+  brandName: "OldPhotoLive AI", tags: "old photo animation, photo restoration",
+}).includes("Image & Video Generators"), "photo tools must match a directory's exact image and video category");
+assert.ok(selectTokens({ hint: "Category *" }, {
+  brandName: "Graffiti Name AI", tags: "graffiti name generator, bubble letters",
+}).includes("Design Generators"), "design tools must match a directory's exact design category");
 assert.equal(selectTokens({ hint: "Category *" }, {
   brandName: "JevPlay", tags: "AI games, decision games",
 })[0], "AI Tools (Other)");

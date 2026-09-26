@@ -335,6 +335,7 @@ tests/local-agent-unit.test.py
 ## 2026-09-26 插件十站三产品实测续办（当前）
 
 - 用户追问投稿邮箱后核查：JevPlay `syndredyoung@gmail.com` 的 Gmail 收件箱当前可访问；OldPhotoLive `support@oldphotoliveai.com` 有 Cloudflare MX，Gmail 搜索到发往该地址的近期邮件；Graffiti 原 `support@graffitinameai.com` **无 MX**，不能可靠收件。3.7.89 将本地种子与运行时旧值回退到已验证 Gmail，云端 Profile 正本尚未改写或回读，3.7.89 尚未实载。邮箱核验 Gmail 页签已关闭。
+- 新增候选 `aitoolsdirectory.site/submit.html` 经 Ego 页面预检，免费、类别覆盖三产品、需有效邮箱并声明会发确认信，尚未投稿；`freeaitools.fyi/submit` 404 剔除。两个预检页均已关闭。Ego 原生窗口仍报 ScreenCaptureKit 捕捉失败，插件详情页不能由浏览器标签 API 接管。
 - 本轮从 `c31e948` 开始，代码迭代至 **3.7.89**，已推送的基线见 Git；Ego 已自主逐版重载并现场核对至 3.7.87，用户后续表示已重载但原生窗口捕捉故障使版本无法回读；3.7.89 尚未实载。54/54 Node 测试通过。
 - 参考 Bitwarden、Automa、Playwright、Browser Use、BrowserGym 的字段语义、可操作性、逐步验证和独立回执机制，沿项目原有 DOM/AI/Neon 流程修分类、定价、R2 媒体、折叠付费表单、Select2、成功后自动入库与 Credible AI 瞬时回执。
 - 本轮站方明确收件 6 个组合：ToolPilot 2、ThatsMyAI 3、Credible AI 1。**插件独立闭环且云端精确回读 4/30**：ToolPilot OldPhoto 与 ThatsMyAI 三款。ToolPilot Graffiti 有辅助回执和云端记录；Credible AI Graffiti 插件独立提交且站方显示回执，但插件漏记，Neon 精确记录待安全补录和回读，禁止重投。AppStackBuilder 无回执，不计成功。

@@ -515,6 +515,36 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
   });
 }
 
+// Resolving the only startup conflict must release the automatic-sync hold;
+// otherwise every later local edit remains pending until another manual pull.
+{
+  const harness = createHarness({
+    startupHold: true,
+    initial: {
+      submissionTimeline: { local: "conflicted" },
+      cloudSyncPendingKeys: ["submissionTimeline"],
+      cloudSyncConflictKeys: ["submissionTimeline"],
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { submissionTimeline: 2 },
+      },
+    },
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") return { revisions: { submissionTimeline: 3 } };
+      return {
+        documentKey: "submissionTimeline",
+        data: { remote: "value" },
+        revision: 3,
+      };
+    },
+  });
+  const result = await harness.context.pullCloudState({ resolveConflicts: true });
+  assert.equal(result.status, "applied");
+  assert.equal(harness.context.cloudSyncStartupHold, false);
+  assert.deepEqual(harness.storageData.cloudSyncPendingKeys, []);
+  assert.deepEqual(harness.storageData.cloudSyncConflictKeys, []);
+}
+
 {
   const gate = deferred();
   const calls = [];

@@ -1345,7 +1345,12 @@ async function pullCloudState(options = {}) {
     await backfillVerifiedSiteMarkers().catch((err) => {
       log(`已回读云端，站点标记补全暂未完成：${err.message}`, "warn");
     });
-    if (!baselinePending.size || discardLocalChanges) {
+    // Release the startup hold once the applied snapshot has cleared the
+    // durable queue.  A conflict-only resolution starts with pending keys,
+    // but applyCloudSnapshot removes those keys after adopting the remote
+    // document; checking the current queue avoids leaving automatic uploads
+    // paused forever after that explicit resolution.
+    if (!cloudSyncPendingKeys.size || discardLocalChanges) {
       cloudSyncStartupHold = false;
       if (cloudSyncPendingKeys.size) scheduleCloudSync();
     }

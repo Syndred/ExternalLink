@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 / 3.7.101 新十站矩阵与浏览器控制交接
+
+- 新十站验收的插件独立闭环 **8/30（26.7%）**：ToolPilot OldPhoto 1、ThatsMyAI 三款 3、AI Tools Directory.site Jev/OldPhoto 2、Credible AI Tools Jev/OldPhoto 2。站方另收到 3 个辅助或云账本未闭环的组合；不能混计，也不能重复提交。详见 `docs/插件自动投稿开源对照与十站验收-2026-09-26.md`。
+- Graffiti 本人邮箱已在 Neon Profile 回读为 `syndredyoung@gmail.com`；Jev 同邮箱，OldPhoto 用 `support@oldphotoliveai.com`。OldPhoto PromptHive 六步草稿待两项提交者声明决定，未发送；Alieradox OldPhoto 草稿的定价仍显示错误的 Free，未发送。
+- 3.7.100 实载修复无效后，3.7.101 改 Radix 可见 `role=combobox` 默认值协调，源码已推送；模拟控件回归与全量 54/54 通过，**未实载**。Chrome 原生窗口捕捉失败，浏览器安全策略拒绝扩展管理页，不绕过。Chrome 留 PromptHive 与 Alieradox 两个待处理页，另有一个先前打开的扩展管理页因浏览器策略无法关闭；预检页已关闭。恢复操作能力后自行重载 3.7.101、现场核准 Freemium、再发送；提交后需要站方回执与 Neon 精确回读。
+
 ## 2026-09-26 / 3.7.90 Graffiti 本人邮箱写回保护
 
 - 用户明确要求涂鸦站投稿联系邮箱使用本人 `syndredyoung@gmail.com`。3.7.89 已将本地种子和填表运行配置换成该地址；3.7.90 在启动云端回读成功后，仅对云端 Graffiti Profile 中明确的旧 `support@graffitinameai.com` 做字段级更正，并交给原有 `siteProfiles` 自动 PATCH 同步。其他 Profile 与有效的自定义邮箱不改。

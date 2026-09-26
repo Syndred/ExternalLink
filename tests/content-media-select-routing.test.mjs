@@ -183,6 +183,37 @@ assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Freem
   projectFields: { "PRICING TYPE": "Freemium with credits" },
 }), false, "the matching choice should be left alone");
 
+const pricingTrigger = {
+  tagName: "BUTTON", hint: "Pricing Model", textContent: "Free",
+  focus() {}, click() {}, getAttribute: () => null, closest: () => null,
+};
+const pricingOption = {
+  textContent: "Freemium", children: [],
+  dispatchEvent() {}, click() { pricingTrigger.textContent = "Freemium"; },
+};
+const listbox = { querySelectorAll: () => [pricingOption] };
+const fillCustomDropdown = new Function(
+  "document", "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing",
+  "sleep", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "MouseEvent", "KeyboardEvent",
+  `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
+)(
+  { querySelectorAll: (selector) => selector === '[role="listbox"]' ? [listbox] : [],
+    body: { click() {} } },
+  selectTokens,
+  (value, limit) => String(value || "").replace(/\s+/g, " ").trim().slice(0, limit),
+  reconcileCustomPricing,
+  async () => {},
+  () => true,
+  (value) => String(value || "").toLowerCase().trim(),
+  (trigger) => !String(trigger.textContent || "").trim(),
+  class MouseEvent {},
+  class KeyboardEvent {},
+);
+assert.equal(await fillCustomDropdown(pricingTrigger, {
+  projectFields: { "PRICING TYPE": "Freemium with credits" },
+}), true, "the visible Radix pricing control must change from Free to Freemium");
+assert.equal(pricingTrigger.textContent, "Freemium");
+
 const freePanelClick = { count: 0, click() { this.count++; }, textContent: "Verify & get listed free" };
 const openFreePanel = new Function(
   "document", "isInsideCollapsedPanel", "isVisible", "sleep",

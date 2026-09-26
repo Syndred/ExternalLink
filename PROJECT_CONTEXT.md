@@ -1,5 +1,9 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 20:33 / CrazyGames 门槛预检
+
+- CUA Ego 原生短暂绑定到新标签页，但地址栏已有输入中的 `b`，来源不明，未争用该窗口。独立公开标签核查 CrazyGames 官方 Basic Launch 可无 SDK；开发者投稿入口 `developer.crazygames.com/games` 现场为登录页，未获表单，未登录/投稿。研究页关闭，Ego 原页保留。详情见 Jev 十站验收文档。
+
 ## 2026-09-26 20:28 / 直接 CUA 浏览器标签路径验证
 
 - 已按用户要求直接用 Computer Use 绑定 Ego 公开标签，进入并回读 SlowDen 表单；即使 Ego 原生控制仍间歇报 `-3811`，普通网页标签可操作。SlowDen 明确 iframe 展示游戏，Jev 的嵌入兼容性尚未验证；未填表/提交。

@@ -6,6 +6,7 @@ function loadProfilesModule() {
   const context = {
     self: {},
     console,
+    URL,
   };
   vm.createContext(context);
   vm.runInContext(readFileSync("extension/lib/profiles.js", "utf8"), context);
@@ -259,6 +260,9 @@ assert.equal(learned.profile.learnedFieldMappings["demo.example"].website.profil
   const jevSubmission = P.buildAgentConfigFromProfile(jev);
   assert.equal(jevSubmission.targetDomain, "https://jevplay.com");
   assert.equal(P.fillIdentityMismatch(jevSubmission, jev), "");
+  assert.equal(P.submissionWebsiteUrl({ ...jev, url: "https://jevplay.com/games", fields: { Url: "https://jevplay.com/games" } }), "https://jevplay.com");
+  assert.equal(P.submissionWebsiteUrl({ ...jev, url: "", fields: { Url: "" } }), "https://jevplay.com");
+  assert.equal(P.submissionWebsiteUrl({ ...jev, url: "http://www.jevplay.com/games" }), "https://jevplay.com");
   assert.equal(P.submissionWebsiteUrl({ id: "AISpeakLearn", url: "https://aispeaklearn.com", promoUrl: "https://aispeaklearn.com/voice" }), "https://aispeaklearn.com/voice");
 
   const graffitiWithUndeliverableContact = P.buildAgentConfigFromProfile({

@@ -225,7 +225,16 @@
     const homepage = profile.url || profile.fields?.Url || "";
     // JevPlay's promoUrl is its game hub. General directory website fields
     // should point to its homepage.
-    if (canonicalProfileId(profile.id || profile.name) === "JevPlay" && homepage) return homepage;
+    if (canonicalProfileId(profile.id || profile.name) === "JevPlay") {
+      for (const candidate of [profile.url, profile.fields?.Url, profile.promoUrl]) {
+        try {
+          const url = new URL(candidate);
+          if (/^(?:www\.)?jevplay\.com$/i.test(url.hostname) && /^https?:$/.test(url.protocol)) {
+            return "https://jevplay.com";
+          }
+        } catch { /* try the next configured URL */ }
+      }
+    }
     return profile.promoUrl || homepage;
   }
 

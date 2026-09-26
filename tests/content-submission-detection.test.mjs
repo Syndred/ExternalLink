@@ -258,6 +258,54 @@ assert.match(source, /isAiGenerationGoogleForm\(\)[\s\S]*?direct\.push\([\s\S]*?
   context.location.pathname = "/";
 }
 {
+  const originalQueryAll = document.querySelectorAll;
+  const makeAction = (tagName, innerText, ariaLabel = "") => ({
+    tagName, innerText, textContent: innerText, value: "", disabled: false,
+    getAttribute(name) { return name === "aria-label" ? ariaLabel : ""; },
+    getBoundingClientRect() { return { width: 120, height: 36 }; },
+    closest() { return null; },
+  });
+  const newsletterButton = makeAction("BUTTON", "Subscribe");
+  const listingButton = makeAction("DIV", "→", "Submit for review");
+  document.querySelectorAll = (selector) => {
+    if (selector === 'button[type="submit"], input[type="submit"]') return [newsletterButton];
+    if (selector === '[role="button"]') return [listingButton];
+    if (selector.includes('button, input[type="submit"]')) return [newsletterButton];
+    return [];
+  };
+  assert.equal(hooks.findSubmitButton('button[type="submit"], input[type="submit"]', ["submit"]), listingButton,
+    "a generic accessible Submit action should win over an unrelated newsletter submit button");
+  document.querySelectorAll = originalQueryAll;
+}
+{
+  const originalQueryAll = document.querySelectorAll;
+  const website = new FakeField({ type: "url", name: "website" });
+  website.compareDocumentPosition = () => 0;
+  const listingForm = new FakeForm({ id: "listing", fields: [website] });
+  const newsletterForm = new FakeForm({ id: "newsletter", text: "Subscribe to newsletter", fields: [new FakeField({ type: "email", name: "email" })] });
+  const otherForm = new FakeForm({ id: "account", fields: [new FakeField({ name: "first_name" }), new FakeField({ name: "last_name" })] });
+  const action = (text, form) => ({
+    tagName: "BUTTON", innerText: text, textContent: text, value: "", disabled: false, form,
+    getAttribute() { return ""; },
+    getBoundingClientRect() { return { width: 120, height: 36 }; },
+    closest(selector) { return selector === "form" ? null : null; },
+  });
+  const unrelated = action("Submit for review", otherForm);
+  const owned = action("Submit", listingForm);
+  forms.push(listingForm, newsletterForm, otherForm);
+  context.Node = { DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2 };
+  document.querySelectorAll = (selector) => {
+    if (selector === "form") return forms;
+    if (selector === "select" || selector === '[role="button"]') return [];
+    if (selector === 'button[type="submit"], input[type="submit"]' || selector.includes('button, input[type="submit"]')) return [unrelated, owned];
+    return originalQueryAll(selector);
+  };
+  assert.equal(hooks.findSubmitButton('button[type="submit"], input[type="submit"]', ["submit"]), owned,
+    "the active listing form's externally associated button should beat another form's stronger action label");
+  forms.length = 0;
+  document.querySelectorAll = originalQueryAll;
+}
+{
   const originalQuery = document.querySelector;
   document.querySelector = (selector) => selector.includes("usp=form_confirm")
     ? { href: "https://docs.google.com/forms/d/e/example/viewform?usp=form_confirm" }

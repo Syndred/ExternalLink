@@ -3509,6 +3509,15 @@
       };
     }
 
+    // A React form can replace its action while validation runs. Re-read the
+    // current action and let the next fill cycle handle a changed stage.
+    const liveSubmitBtn = findSubmitButton('button[type="submit"], input[type="submit"]', [
+      "submit", "add", "list", "publish", "send",
+    ]);
+    if (liveSubmitBtn !== submitBtn || submitBtn.isConnected === false) {
+      return { ok: true, platform, stageAdvanced: true, submitted: false, matched: false, ...fillResult };
+    }
+
     logStep("🚀 无验证码，代点提交…");
     const beforeUrl = location.href;
     const beforeEvidence = classifyVisibleEvidence({ destinationUrl: config.sidepanelContext?.url || "" });
@@ -5861,7 +5870,8 @@
     let bestScore = 0;
     for (const form of document.querySelectorAll("form")) {
       if (!isVisible(form) || isMarketingOptInForm(form)) continue;
-      const score = queryFillableElements(form).length;
+      const fields = queryFillableElements(form).length;
+      const score = fields + (hasLikelyListingFields(form) ? 100 : hasLikelySubmissionFields(form) ? 40 : 0);
       if (score > bestScore) {
         bestScore = score;
         bestForm = form;
@@ -7459,8 +7469,9 @@
     // only through a disabled primary submit button (YAATD is one example).
     // Never tell the operator a form is ready while the site disables submit.
     if (elements.length > 0) {
+      const scope = getActiveFillScope();
       const submitButtons = Array.from(document.querySelectorAll('button, input[type="submit"]'))
-        .filter((button) => isVisible(button) &&
+        .filter((button) => (scope === document || scope.contains?.(button) || button.form === scope) && isVisible(button) &&
           /\b(?:submit|publish|send|add\s+(?:app|tool|product)|create\s+(?:listing|app|tool))\b/i.test(
             [button.innerText, button.value, button.getAttribute("aria-label")].filter(Boolean).join(" "),
           ));
@@ -7479,8 +7490,11 @@
 
   function collectVisibleFieldErrors() {
     const issues = [];
-    const nodes = document.querySelectorAll(
-      "form [aria-invalid='true'], form .invalid-feedback, form .field-error, form .error-message, form .form-error, form .help-block, form [role='alert']",
+    const scope = getActiveFillScope();
+    const nodes = scope.querySelectorAll(
+      scope === document
+        ? "form [aria-invalid='true'], form .invalid-feedback, form .field-error, form .error-message, form .form-error, form .help-block, form [role='alert']"
+        : "[aria-invalid='true'], .invalid-feedback, .field-error, .error-message, .form-error, .help-block, [role='alert']",
     );
     const looksLikeError =
       /required|必填|请填写|请选择|this field|is required|cannot be empty|can't be empty|can’t be empty|missing|invalid|填写|选择一项|不能为空/i;
@@ -7639,12 +7653,37 @@
   function findSubmitButton(selector, textMatches) {
     const labels = textMatches.map((text) => text.toLowerCase());
     const direct = Array.from(document.querySelectorAll(selector));
+    const activeScope = getActiveFillScope();
+    const scopedSubmission = activeScope !== document;
+    const actionBelongsToScope = (element) => {
+      if (!scopedSubmission) return true;
+      if (activeScope.matches?.("form")) {
+        // HTML permits a submit button outside its form via the form attribute.
+        // The DOM `form` property resolves that owner; closest(form) does not.
+        const owner = element.form || element.closest?.("form");
+        return owner ? owner === activeScope : activeScope.contains?.(element) === true;
+      }
+      return activeScope.contains?.(element) === true;
+    };
+    const actionLabel = (element) => [
+      element.getAttribute?.("aria-label"),
+      element.innerText,
+      element.value,
+      element.textContent,
+      element.getAttribute?.("title"),
+    ].map((value) => String(value || "").replace(/\s+/g, " ").trim().toLowerCase()).find(Boolean) || "";
     if (isAiGenerationGoogleForm()) {
       direct.push(...Array.from(document.querySelectorAll('[role="button"]')).filter((element) =>
         [element.getAttribute("aria-label"), element.innerText, element.textContent]
           .some((label) => /^(?:submit|提交)$/i.test(String(label || "").replace(/\s+/g, " ").trim())),
       ));
     }
+    // Many hosted forms use a non-button element with an accessible button
+    // role. Match its visible action name, rather than every role button on
+    // the page (which may include navigation, login, or newsletter controls).
+    direct.push(...Array.from(document.querySelectorAll('[role="button"]')).filter((element) =>
+      /^(?:submit(?:\s+(?:(?:your|a|the)\s+)?(?:tool|product|app|listing|site|website|form)|\s+for\s+review)?|send(?:\s+for\s+review)?|publish|add\s+(?:tool|product|app|listing|site|website)|list\s+(?:tool|product|app|listing)|提交|发布|发送)$/i.test(actionLabel(element)),
+    ));
     const candidates = Array.from(new Set([
       ...direct,
       ...Array.from(
@@ -7664,11 +7703,15 @@
         // Links styled as buttons usually reopen or navigate to a submission
         // page; they are entry points, not the form action itself.
         if (element.tagName.toLowerCase() === "a") return false;
-        const label = getElementLabel(element);
+        if (!actionBelongsToScope(element)) return false;
+        const label = actionLabel(element) || getElementLabel(element);
+        if (/^(?:subscribe|sign\s*up|join\s+(?:our\s+)?newsletter|search|log\s*in|sign\s*in)\b/i.test(label)) return false;
+        const form = element.form || element.closest("form");
+        if (form && isMarketingOptInForm(form)) return false;
         return direct.includes(element) || labels.some((text) => label.includes(text));
       })
       .map((element, index) => {
-        const label = getElementLabel(element).replace(/\s+/g, " ").trim();
+        const label = (actionLabel(element) || getElementLabel(element)).replace(/\s+/g, " ").trim();
         let score = direct.includes(element) ? 20 : 0;
         if (labels.some((text) => label.includes(text))) score += 15;
         // Prefer the action belonging to the latest visible form stage. This
@@ -7681,8 +7724,11 @@
           if (relation & Node.DOCUMENT_POSITION_FOLLOWING) score += 30;
           if (relation & Node.DOCUMENT_POSITION_PRECEDING) score -= 20;
         }
-        const form = element.closest("form");
-        if (form) score += Math.min(25, queryFillableElements(form).length * 5);
+        const form = element.form || element.closest("form");
+        if (form) {
+          score += Math.min(25, queryFillableElements(form).length * 5);
+          if (hasLikelySubmissionFields(form)) score += 50;
+        }
         return { element, score, index };
       })
       .sort((a, b) => b.score - a.score || b.index - a.index)[0]?.element || null;

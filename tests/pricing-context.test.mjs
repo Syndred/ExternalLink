@@ -91,6 +91,12 @@ const classify = hooks.payment.classifyPaymentContext;
 hooks.document.body.innerText = "Submit for a free listing. No credit card required. We review every tool manually.";
 assert.equal(hooks.payment.detectPaidSubmit().classification, "safe",
   "page-level no-credit-card wording must not trip the credit-card-required gate");
+hooks.document.body.innerText = "It costs nothing: no listing fee, no monthly fee, no paid fast-track. Six short steps to send a tool for manual review.";
+assert.equal(hooks.payment.detectPaidSubmit().classification, "safe",
+  "an explicit no-listing-fee assurance must not block a free multistep submission");
+assert.equal(classify({ label: "Continue", local: "No listing fee. We review each tool by hand." }).classification,
+  "safe", "a nearby fee negation must not turn Continue into a payment action");
+hooks.document.body.innerText = "Submit for a free listing. No credit card required. We review every tool manually.";
 assert.equal(
   classify({
     label: "Submit My Tool",

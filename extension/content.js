@@ -708,7 +708,8 @@
     const text = String(document.body?.innerText || "").slice(0, 4000).toLowerCase();
     const chargeText = text
       .replace(/\b(?:no|without)\s+credit\s*card(?:\s+required)?\b/g, "")
-      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "");
+      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "")
+      .replace(/\b(?:no|without|zero)\s+(?:listing|submission)\s+fees?\b/g, "");
     const hasFreeSubmit = /free (submit|listing|launch)|submit for free|no credit card/.test(text);
     const mandatoryCharge = /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|every listing carries a fee|submitting takes you to (?:stripe )?checkout|charged on submission|credit card required/.test(chargeText);
     const pagePaymentGate = mandatoryCharge ||
@@ -5200,7 +5201,8 @@
     // of payment-method matching while retaining actual fee and action text.
     const chargeContext = context
       .replace(/\b(?:no|without)\s+credit\s*card(?:\s+required)?\b/g, "")
-      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "");
+      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "")
+      .replace(/\b(?:no|without|zero)\s+(?:listing|submission)\s+fees?\b/g, "");
     const actionType = String(input.actionType || "click").toLowerCase();
     const choiceControl = input.choiceControl === true;
     const matched = [];
@@ -5215,7 +5217,7 @@
     ].reduce((count, pattern) => count + (pattern.test(options) ? 1 : 0), 0);
     const pricingContext =
       /\bpricing(?:\s+(?:model|type|plan))?\b|\bprice\b|\bcost\b|\bplan(?:s)?\b|\btier(?:s)?\b|\bpricing\b|\bfree\b|\bfreemium\b|\bpaid\b|\bpremium\b|\bsubscription\b|定价|价格|费用|套餐|方案|免费|付费|订阅/.test(
-        context,
+        chargeContext,
       );
     const productBillingQuestion =
       (/(?:does|do|is|are|can|will|would|should)\b.{0,100}\b(?:your|the)\b.{0,80}\b(?:website|product|tool|app|service|business)\b.{0,100}\b(?:require|accept|support|offer|charge|have|use)\b.{0,60}\b(?:payment|payments|paid|billing|pricing|subscription|free|freemium|stripe|paypal|credit\s+card)\b/.test(
@@ -5229,7 +5231,7 @@
       );
     const explicitSubmissionPayment =
       /\bpay\s+to\s+(?:submit|publish|list|post)\b|\bpayment\s+(?:is\s+)?required\s+to\s+(?:submit|publish|list|post)\b|\b(?:listing|submission)\s+fee\b|\bfee\s+to\s+(?:submit|publish|list|post)\b|\bpay\s+for\s+(?:the\s+)?(?:listing|submission)\b|\bpaid\s+(?:placement|listing)\b|\bpromote\s+(?:this|your)\s+(?:launch|listing)\b|\bboost\s+(?:this|your)\s+(?:launch|listing)\b/.test(
-        context,
+        chargeContext,
       );
     const paymentMethodContext = /\bpayment\s+method\b/.test(chargeContext);
     const paymentProviderContext = /\bstripe\b|\bpaypal\b/.test(context);

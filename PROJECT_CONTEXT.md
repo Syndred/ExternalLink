@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-26 21:22 / Ego 重载与 Jev 五站测试受阻
+
+- 用户要求重载 Ego 插件并从外链库选五条优质外链测试 Jev。已 fetch / pull --ff-only，基线 `ac8c55a`，远端无新增，源码版本 3.7.106。
+- CUA 清单确认 `com.citrolabs.ego.lite` 正在运行；三次绑定（含重置 CUA 会话后）均报 ScreenCaptureKit `-3811`，未取得窗口句柄。没有重启 Ego、没有重载插件、没有读取当前云端库或提交任何站点；未新增浏览器标签。实载版本与五站测试均未完成。
+
 ## 2026-09-26 20:33 / CrazyGames 门槛预检
 
 - CUA Ego 原生短暂绑定到新标签页，但地址栏已有输入中的 `b`，来源不明，未争用该窗口。独立公开标签核查 CrazyGames 官方 Basic Launch 可无 SDK；开发者投稿入口 `developer.crazygames.com/games` 现场为登录页，未获表单，未登录/投稿。研究页关闭，Ego 原页保留。详情见 Jev 十站验收文档。

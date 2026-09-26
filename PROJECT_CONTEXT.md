@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT
 
+## 2026-09-27 / Jev 官网字段与 Ego 实载复测
+
+- Bai Tools 免费表单由当前 Ego 插件自动填成 `https://jevplay.com/games`；JevPlay 的历史 Profile 同时有首页 `url` 和游戏中心 `promoUrl`，旧源码优先推广地址。3.7.107 改普通目录优先官网首页，3.7.108 兼容旧 Profile 的 `/games` 值；55/55 测试通过，`92b4a7d`、`39dbe9a` 已推送。
+- Ego 已正常退出并重新启动，独立空间复测仍填 `/games`；**不能认定新版已实载**。未提交 Bai Tools，旧批次保持暂停且批量选择缩为仅 JevPlay。Bai Tools 云端动态刷新未见 Jev；AI Tools Ratings 旧回执仍未入当前精确账本。详情见 `docs/Jev官网填表修复-2026-09-27.md`。
+
 ## 2026-09-26 21:22 / Ego 重载与 Jev 五站测试受阻
 
 - 用户要求重载 Ego 插件并从外链库选五条优质外链测试 Jev。已 fetch / pull --ff-only，基线 `ac8c55a`，远端无新增，源码版本 3.7.106。

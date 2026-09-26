@@ -5916,21 +5916,15 @@
       if (!token) continue;
       let options = visibleOptions();
       const n = normalizeOptionText(token);
-      let match = options.find(
-        (o) =>
-          normalizeOptionText(o.label) === n ||
-          normalizeOptionText(o.label).includes(n) ||
-          n.includes(normalizeOptionText(o.label)),
-      );
+      // Share native-select ranking: an exact label must beat an earlier
+      // partial match (for example Free must not select Freemium).
+      let match = findBestSelectOption(options, token);
       if (!match && trigger.tagName?.toLowerCase() === "input") {
         setFieldValue(trigger, token);
         trigger.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: token }));
         await sleep(180);
         options = visibleOptions();
-        match = options.find((o) => {
-          const label = normalizeOptionText(o.label);
-          return label === n || label.includes(n) || n.includes(label);
-        });
+        match = findBestSelectOption(options, token);
       }
       if (!match) {
         const search = Array.from(document.querySelectorAll('input[placeholder], input[aria-label]'))

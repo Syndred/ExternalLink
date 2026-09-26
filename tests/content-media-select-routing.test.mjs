@@ -199,7 +199,7 @@ const pricingOption = {
 const listbox = { querySelectorAll: () => [pricingOption] };
 const fillCustomDropdown = new Function(
   "document", "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing",
-  "sleep", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "MouseEvent", "KeyboardEvent",
+  "sleep", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "MouseEvent", "KeyboardEvent", "findBestSelectOption",
   `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
 )(
   { querySelectorAll: (selector) => selector === '[role="listbox"]' ? [listbox] : [],
@@ -213,6 +213,7 @@ const fillCustomDropdown = new Function(
   (trigger) => !String(trigger.textContent || "").trim(),
   class MouseEvent {},
   class KeyboardEvent {},
+  matchOption,
 );
 assert.equal(await fillCustomDropdown(pricingTrigger, {
   projectFields: { "PRICING TYPE": "Freemium with credits" },
@@ -417,24 +418,36 @@ const radixOption = {
     if (event.type === "pointerup") radixTrigger.textContent = "Freemium";
   },
 };
+const freeOption = {
+  textContent: "Free",
+  closest: () => freeOption,
+  dispatchEvent(event) {
+    if (event.type === "pointerup") radixTrigger.textContent = "Free";
+  },
+};
 const fillRadixPricing = new Function(
   "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing", "sleep",
-  "document", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "PointerEvent",
+  "document", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "PointerEvent", "findBestSelectOption",
   `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
 )(
-  () => ["freemium"],
+  (_trigger, config) => [config.desired || "freemium"],
   (value) => String(value || "").trim(),
   (trigger) => trigger.textContent === "Free",
   async () => {},
-  { querySelectorAll: (selector) => selector === '[role="option"]' ? [radixOption] : [], body: { click() {} } },
+  { querySelectorAll: (selector) => selector === '[role="option"]' ? [radixOption, freeOption] : [], body: { click() {} } },
   () => true,
   (value) => String(value || "").toLowerCase(),
   (trigger) => trigger.textContent === "Free",
   class { constructor(type) { this.type = type; } },
+  matchOption,
 );
 assert.equal(await fillRadixPricing(radixTrigger, {}), true);
 assert.equal(radixTrigger.textContent, "Freemium");
 assert.deepEqual(pointerEvents, ["pointerdown", "pointerup"], "Radix selects on pointerup");
+radixTrigger.textContent = "Select pricing";
+assert.equal(await fillRadixPricing(radixTrigger, { desired: "free" }), true);
+assert.equal(radixTrigger.textContent, "Free", "Jev Free must beat the earlier Freemium partial match");
+assert.equal(pointerEvents.length, 2, "the conflicting partial option must never receive a selection event");
 assert.doesNotMatch(content, /options\[0\]\.el\.click\(\)/, "custom selects must not choose an arbitrary first option");
 assert.match(content, /new KeyboardEvent\("keydown"[\s\S]*key: "ArrowDown"/);
 assert.match(content, /new MouseEvent\("mousedown"/);

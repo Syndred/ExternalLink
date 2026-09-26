@@ -706,10 +706,13 @@
     // that a product is paid, while the directory submission itself remains
     // free. The action and its local form scope must describe an actual charge.
     const text = String(document.body?.innerText || "").slice(0, 4000).toLowerCase();
+    const chargeText = text
+      .replace(/\b(?:no|without)\s+credit\s*card(?:\s+required)?\b/g, "")
+      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "");
     const hasFreeSubmit = /free (submit|listing|launch)|submit for free|no credit card/.test(text);
-    const mandatoryCharge = /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|every listing carries a fee|submitting takes you to (?:stripe )?checkout|charged on submission|credit card required/.test(text);
+    const mandatoryCharge = /payment required to (?:submit|publish|list)|pay to (?:submit|publish|list)|every listing carries a fee|submitting takes you to (?:stripe )?checkout|charged on submission|credit card required/.test(chargeText);
     const pagePaymentGate = mandatoryCharge ||
-      (!hasFreeSubmit && /listing fee|submission fee|fee to (?:submit|publish|list)|checkout to continue/.test(text));
+      (!hasFreeSubmit && /listing fee|submission fee|fee to (?:submit|publish|list)|checkout to continue/.test(chargeText));
     if (pagePaymentGate) {
       return {
         classification: "confirmed_payment",
@@ -867,6 +870,12 @@
   }
 
   function detectSubmissionTransportFailure(sinceStartTime = 0) {
+    if (/^(?:www\.)?aitoolclaw\.com$/i.test(location.hostname)) {
+      const error = document.querySelector("#submit-error");
+      if (error && isVisibleHumanGate(error)) {
+        return String(error.textContent || "").replace(/\s+/g, " ").trim() || "AI Tool Claw 提交失败";
+      }
+    }
     const failedForm = document.querySelector('.wpcf7 form.failed, .wpcf7 form[data-status="failed"]');
     if (failedForm) {
       return String(failedForm.querySelector('.wpcf7-response-output')?.textContent || "")
@@ -3483,7 +3492,7 @@
     pluginSubmitInProgress = true;
     try {
       submitBtn.click();
-      classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence);
+      classified = await waitForSubmissionEvidence(beforeUrl, beforeEvidence, 15000, submitStartedAt);
     } finally {
       pluginSubmitInProgress = false;
     }
@@ -3588,12 +3597,13 @@
     };
   }
 
-  async function waitForSubmissionEvidence(beforeUrl, baseline = {}, timeoutMs = 15000) {
+  async function waitForSubmissionEvidence(beforeUrl, baseline = {}, timeoutMs = 15000, submitStartedAt = null) {
     const deadline = Date.now() + timeoutMs;
     let last = classifyVisibleEvidence();
     const baselineEvidence = String(baseline?.evidence || "").replace(/\s+/g, " ").trim();
     while (Date.now() < deadline) {
       last = classifyVisibleEvidence();
+      if (submitStartedAt !== null && detectSubmissionTransportFailure(submitStartedAt)) break;
       const currentEvidence = String(last?.evidence || "").replace(/\s+/g, " ").trim();
       if (last?.matched && currentEvidence && currentEvidence !== baselineEvidence) return last;
       const titleAndText = `${document.title || ""} ${document.body?.innerText || ""}`.slice(0, 1000);
@@ -5098,6 +5108,11 @@
     const options = normalizePaymentContextText(input.options, 900);
     const local = normalizePaymentContextText(input.local, 1200);
     const context = [label, fieldset, options, local].filter(Boolean).join(" ");
+    // Free-listing assurances describe the absence of checkout. Keep them out
+    // of payment-method matching while retaining actual fee and action text.
+    const chargeContext = context
+      .replace(/\b(?:no|without)\s+credit\s*card(?:\s+required)?\b/g, "")
+      .replace(/\bno\s+payment\s+(?:method\s+)?required\b/g, "");
     const actionType = String(input.actionType || "click").toLowerCase();
     const choiceControl = input.choiceControl === true;
     const matched = [];
@@ -5128,11 +5143,11 @@
       /\bpay\s+to\s+(?:submit|publish|list|post)\b|\bpayment\s+(?:is\s+)?required\s+to\s+(?:submit|publish|list|post)\b|\b(?:listing|submission)\s+fee\b|\bfee\s+to\s+(?:submit|publish|list|post)\b|\bpay\s+for\s+(?:the\s+)?(?:listing|submission)\b|\bpaid\s+(?:placement|listing)\b|\bpromote\s+(?:this|your)\s+(?:launch|listing)\b|\bboost\s+(?:this|your)\s+(?:launch|listing)\b/.test(
         context,
       );
-    const paymentMethodContext = /\bpayment\s+method\b/.test(context);
+    const paymentMethodContext = /\bpayment\s+method\b/.test(chargeContext);
     const paymentProviderContext = /\bstripe\b|\bpaypal\b/.test(context);
     const checkoutContext =
       /\bcheckout\b|\bcredit\s*card\b|\bcard\s+number\b|\bcvv\b|\bcvc\b|\bexpir(?:y|ation)\s+date\b|\bbilling\s+address\b|\bamount\s+due\b|\btotal\s+due\b|\bplace\s+(?:the\s+)?order\b|\bcomplete\s+(?:the\s+)?order\b|\border\s+(?:a\s+)?subscription\b|\bsubscription\s+(?:order|checkout|payment)\b/.test(
-        context,
+        chargeContext,
       ) ||
       ((!productBillingQuestion) && (paymentMethodContext || paymentProviderContext));
     const actionPayment =

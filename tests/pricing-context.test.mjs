@@ -74,6 +74,18 @@ assert.ok(hooks.payment, "content.js should expose the payment-context test surf
 assert.ok(hooks.fields, "content.js should expose the shared-field test surface");
 
 const classify = hooks.payment.classifyPaymentContext;
+hooks.document.body.innerText = "Submit for a free listing. No credit card required. We review every tool manually.";
+assert.equal(hooks.payment.detectPaidSubmit().classification, "safe",
+  "page-level no-credit-card wording must not trip the credit-card-required gate");
+assert.equal(
+  classify({
+    label: "Submit My Tool",
+    local: "Submit My Tool. Free listing. No credit card. We review every tool manually.",
+    actionType: "submit",
+  }).classification,
+  "safe",
+  "a no-credit-card assurance beside a free submit button must not look like checkout",
+);
 hooks.document.body.innerText = "Free listing information. Every listing carries a fee — submitting takes you to Stripe checkout. The total above is what you’ll be charged.";
 assert.equal(hooks.payment.detectPaidSubmit().classification, "confirmed_payment",
   "a paid listing page must be blocked before its fee widget finishes loading");

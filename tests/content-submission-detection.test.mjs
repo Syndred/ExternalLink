@@ -176,6 +176,14 @@ assert.ok(hooks, "content.js should expose submission detection test hooks");
 const auditHooks = context.__extLinkContentAuditTestHooks;
 assert.equal(auditHooks.detectSubmissionTransportFailure(), "", "ordinary forms have no transport failure");
 const transportQuerySelector = document.querySelector;
+context.location.hostname = "aitoolclaw.com";
+document.querySelector = (selector) => selector === "#submit-error"
+  ? { textContent: "Something went wrong. Please try again or email us at submit@aitoolclaw.com." }
+  : transportQuerySelector(selector);
+assert.match(auditHooks.detectSubmissionTransportFailure(), /Something went wrong/,
+  "a visible AI Tool Claw error must stop receipt polling without recording success");
+document.querySelector = transportQuerySelector;
+context.location.hostname = "futuretools.io";
 document.querySelector = (selector) => selector.startsWith(".wpcf7 form.failed")
   ? { querySelector: () => ({ textContent: "There was an error trying to send your message. Please try again later." }) }
   : transportQuerySelector(selector);

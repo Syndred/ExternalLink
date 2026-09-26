@@ -6710,6 +6710,8 @@
 
     if (promptHive) {
       const field = `${visibleHint} ${normalizedHint}`;
+      if (/your name/i.test(field)) return config.username || pf["Contact person"] || "Syndred";
+      if (/your role/i.test(field)) return pf["Your role"] || "Founder";
       if (/plans and prices/i.test(field)) return pf.Pricing || pf["Cost & Subscription"] || "";
       if (/logo url/i.test(field)) {
         const logo = String(pf.LOGO || "").trim();
@@ -7539,7 +7541,11 @@
           !/^https:\/\/(?:www\.)?producthunt\.com\//i.test(existing);
         const staleFavicon = /logo url/.test(label) && /\/favicon\.ico(?:[?#]|$)/i.test(existing) &&
           value && value !== existing;
-        if (staleMedia || staleHome || staleDiscord || staleProductHunt || staleFavicon) {
+        const staleName = /your name/.test(label) &&
+          [pf["Short description(20-30 words)"], pf["Short Discription(100-150 words)"]]
+            .some((description) => description && String(description).startsWith(existing));
+        const staleRole = /your role/.test(label) && existing === String(pf.Title || "").trim();
+        if (staleMedia || staleHome || staleDiscord || staleProductHunt || staleFavicon || staleName || staleRole) {
           setFieldValue(element, "");
           element.dispatchEvent(new Event("input", { bubbles: true }));
           element.dispatchEvent(new Event("change", { bubbles: true }));

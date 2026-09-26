@@ -258,6 +258,10 @@ assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
 assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
   new FakeField({ ariaLabel: "Plans and prices", tagName: "textarea" })),
 promptHiveOldPhoto.projectFields.Pricing);
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "Your name" })), "Syndred");
+assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
+  new FakeField({ ariaLabel: "Your role" })), "Founder");
 context.location.hostname = "directory.example";
 context.location.pathname = "/";
 context.location.hostname = "docs.google.com";

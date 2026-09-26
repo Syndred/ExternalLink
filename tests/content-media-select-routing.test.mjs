@@ -120,13 +120,14 @@ assert.equal(selectTokens({ hint: "Pricing Model Free Freemium Paid" }, {
 })[0], "paid");
 
 const selectValue = new Function(
-  "getNativeSelectOptions", "resolveSelectTokens", "getFieldHint", "findBestSelectOption",
+  "getNativeSelectOptions", "resolveSelectTokens", "getFieldHint", "findBestSelectOption", "getProfileFields",
   `${extractFunction("resolveSelectValueForField", "queryCustomDropdowns")}; return resolveSelectValueForField;`,
 )(
   (element) => element.options,
   selectTokens,
   (element) => element.hint,
   (options, token) => options.find((option) => option.label.toLowerCase() === String(token).toLowerCase()) || null,
+  (config) => config.projectFields || {},
 );
 const industrySelect = { tagName: "SELECT", hint: "Primary industry", options: [
   { value: "retail", label: "E-commerce & Retail" },
@@ -139,6 +140,10 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Pricing Model", options: [
   { value: "Free", label: "Free" }, { value: "Freemium", label: "Freemium" }, { value: "Paid", label: "Paid" },
 ] }, { brandName: "Graffiti Name AI", projectFields: { "PRICING TYPE": "Paid generation with credits" } }),
 "Paid", "directory pricing choice must reflect paid generation");
+assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based", options: [
+  { value: "", label: "Not sure / prefer not to say" }, { value: "US", label: "United States" },
+] }, { brandName: "Graffiti Name AI" }), "",
+"unknown company location must not be fabricated as United States");
 assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
   "default-selected free pricing must be eligible for replacement");
 

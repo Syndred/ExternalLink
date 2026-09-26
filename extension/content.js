@@ -5713,8 +5713,9 @@
       return [...new Set(profileTags.slice(0, 5))];
     }
 
-    if (/countr|region|location|market/.test(hint)) {
-      tokens.push("united states", "us", "usa", "global", "worldwide", "international");
+    if (/countr|region|location|where.*based/.test(hint)) {
+      const actualLocation = pf.Country || pf.Region || pf.Location || pf["Company country"] || "";
+      if (actualLocation) tokens.push(actualLocation);
     }
 
     if (/lang/.test(hint)) {
@@ -5742,6 +5743,10 @@
 
     const tokens = resolveSelectTokens(element, config);
     const hint = getFieldHint(element);
+    if (/countr|region|location|where.*based/.test(hint)) {
+      const pf = getProfileFields(config);
+      if (!(pf.Country || pf.Region || pf.Location || pf["Company country"])) return "";
+    }
     const isCategoryOrPersona = /categ|industry|sector|niche|vertical|profession|audience|persona/.test(hint);
     for (const token of tokens) {
       if (isCategoryOrPersona && String(token).trim().length < 4) continue;

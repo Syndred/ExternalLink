@@ -5956,7 +5956,7 @@
   async function openFreeListingPanelIfNeeded() {
     const panel = document.querySelector("#panel-free.st-form-panel");
     if (!panel || !isInsideCollapsedPanel(panel.querySelector("form"))) return;
-    const button = document.querySelector(".card-free button");
+    const button = document.querySelector("#card-free button");
     if (!button || !isVisible(button) || !/\bfree\b/i.test(button.textContent || "")) return;
     button.click();
     await sleep(300);
@@ -7860,7 +7860,7 @@
     if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")
       return false;
     const rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
+    return rect.width > 0 && rect.height > 0 && !isInsideCollapsedPanel(el);
   }
 
   // ─── Rel Verification ───

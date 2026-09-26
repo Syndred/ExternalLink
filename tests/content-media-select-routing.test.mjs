@@ -10,7 +10,9 @@ function extractFunction(name, nextName) {
   const plain = content.indexOf(`  function ${name}(`);
   const asyncStart = content.indexOf(`  async function ${name}(`);
   const start = plain >= 0 ? plain : asyncStart;
-  const end = content.indexOf(`  function ${nextName}(`, start);
+  const nextPlain = content.indexOf(`  function ${nextName}(`, start);
+  const nextAsync = content.indexOf(`  async function ${nextName}(`, start);
+  const end = nextPlain >= 0 ? nextPlain : nextAsync;
   assert.ok(start >= 0 && end > start, `${name} source must exist`);
   return content.slice(start, end).trim();
 }
@@ -154,13 +156,25 @@ const openFreePanel = new Function(
 )(
   { querySelector: (selector) => selector === "#panel-free.st-form-panel"
     ? { querySelector: () => ({}) }
-    : selector === ".card-free button" ? freePanelClick : null },
+    : selector === "#card-free button" ? freePanelClick : null },
   () => true,
   () => true,
   async () => {},
 );
 await openFreePanel();
 assert.equal(freePanelClick.count, 1, "collapsed free listing panel must open before selecting a form");
+const collapsedPanel = {
+  parentElement: null,
+  getBoundingClientRect: () => ({ height: 0 }),
+};
+const formInCollapsedPanel = { parentElement: collapsedPanel };
+const clipped = new Function("document", "window",
+  `${extractFunction("isInsideCollapsedPanel", "openFreeListingPanelIfNeeded")}; return isInsideCollapsedPanel;`,
+)(
+  { body: {} },
+  { getComputedStyle: () => ({ overflow: "hidden", overflowY: "hidden" }) },
+);
+assert.equal(clipped(formInCollapsedPanel), true, "zero-height clipped paid panels must be excluded from form selection");
 assert.ok(content.includes("const wrongPricingDefault = selectedDefault"),
   "default-selected free pricing must be eligible for replacement");
 

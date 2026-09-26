@@ -331,6 +331,13 @@ tests/local-agent-unit.test.py
 - 普通免费目录在站方回执后须核对本地精确成功记录、Neon 对应记录与时间线才自动关页/推进。云端未回读时保留页签、防重复点击，后续同步完成有界续跑；法律条款同意停放人工。
 - OldPhotoLive 首装备用 Profile 已清理过期订阅/价格文案；上轮停在备用种子，Neon 正本更新见下方续办。3.7.44 未获浏览器重载/实站验收，不把源码能力写成已上线能力。详见 `docs/整站自动提交与原创投稿交接-2026-09-25.md`。
 - 续办实绩：Neon `siteProfiles.OldPhotoLive.fields` 中 13 个旧种子字段已按修订 88 → 89 更新，GET 回读全数一致；其他 7 个 Profile 未变。Ego 本地缓存仍为 88，pending/conflict 均为 0，需浏览器回读才能目视生效。用户要求复测后已补 Worker 依赖与回归覆盖，Desktop 主项目完整回归 52/52 通过；Ego 画面捕捉失败且扩展内部页接管被浏览器拒绝，实站加载 3.7.44 尚未完成。
+
+## 2026-09-26 插件十站三产品实测续办（当前）
+
+- 本轮从 `c31e948` 开始，代码迭代至 **3.7.88 / `1a68643`，已推送 `origin/main`**。Ego 已自主逐版重载并现场核对至 3.7.87；3.7.88 因原生窗口捕捉故障尚未实载。54/54 Node 测试通过。
+- 参考 Bitwarden、Automa、Playwright、Browser Use、BrowserGym 的字段语义、可操作性、逐步验证和独立回执机制，沿项目原有 DOM/AI/Neon 流程修分类、定价、R2 媒体、折叠付费表单、Select2、成功后自动入库与 Credible AI 瞬时回执。
+- 本轮站方明确收件 6 个组合：ToolPilot 2、ThatsMyAI 3、Credible AI 1。**插件独立闭环且云端精确回读 4/30**：ToolPilot OldPhoto 与 ThatsMyAI 三款。ToolPilot Graffiti 有辅助回执和云端记录；Credible AI Graffiti 插件独立提交且站方显示回执，但插件漏记，Neon 精确记录待安全补录和回读，禁止重投。AppStackBuilder 无回执，不计成功。
+- 本轮已用 AppStackBuilder、ToolPilot、ThatsMyAI、PromptHive、ProductReveal、B2B 预检页已关闭；Credible AI 当前页与扩展详情页待续办后关闭。原有 SEO 空间不动。用户目标 10 站×三产品、至少 15/30 尚未达成。详见 `docs/插件自动投稿开源对照与十站验收-2026-09-26.md`。
 ## 2026-09-25 / 3.7.45 台式机云端优先启动保护
 
 - 旧版扩展重启时可能自动重放本地待上传队列；`siteProfiles` 支持无整份修订号的逐字段 PATCH，旧队列甚至可能改写已更新的 OldPhoto 字段，不能依赖 409 冲突保护。3.7.45 启动先回读云端，待上传/冲突期间暂停自动上传，待明确回读覆盖或手动成功上传后放行。台式机必须先完整退出旧浏览器，再拉代码、重载新版、回读云端；Ego 实机尚未验收。详见 `docs/整站自动提交与原创投稿交接-2026-09-25.md`。

@@ -1017,9 +1017,9 @@ for (const action of ["pause", "stop"]) {
   await stopIfNeeded(runtime);
 }
 
-// A new run carries an unresolved prior Profile as manual-only work, while the
-// newly selected Profile is the only pending task opened automatically. The
-// rebuilt indexes and destinations must remain unambiguous across reload.
+// A new scoped run must not carry an unresolved prior Profile into the active
+// queue. An open human handoff is covered by the preserved-tab test below;
+// persisted work from an unselected Profile remains in the prior-run backup.
 {
   const previous = task({
     index: 1,
@@ -1061,29 +1061,22 @@ for (const action of ["pause", "stop"]) {
   await settle(40);
 
   const byProfile = new Map(runtime.hooks.state.tasks.map((item) => [item.profileId, item]));
-  assert.deepEqual([...byProfile.keys()].sort(), ["P1", "P2"]);
-  assert.equal(byProfile.get("P1")?.status, "submitted_unconfirmed");
-  assert.equal(byProfile.get("P1")?.executionPhase, "manual_review");
-  assert.ok(runtime.hooks.state.parkedTaskIds.has(previous.id));
-  assert.equal(
-    runtime.mock.calls.tabsCreate.length,
-    1,
-    "the inherited uncertain Profile must remain manual while the selected Profile runs",
-  );
+  assert.deepEqual([...byProfile.keys()].sort(), ["P2"]);
+  assert.equal(byProfile.has("P1"), false, "an unselected Profile must not leak into the new queue");
+  assert.equal(runtime.mock.calls.tabsCreate.length, 1, "the selected Profile opens automatically");
   assert.equal(runtime.mock.calls.tabsCreate[0].url, candidate.url);
   assert.equal(byProfile.get("P2")?.status, "running");
 
   const indexes = runtime.hooks.state.tasks.map((item) => item.index);
   const groupIndexes = runtime.hooks.state.tasks.map((item) => item.destinationGroupIndex);
-  assert.equal(new Set(indexes).size, 2, "new task indexes must not collide with inherited indexes");
-  assert.equal(new Set(groupIndexes).size, 2, "destination group indexes must not collide");
+  assert.equal(new Set(indexes).size, 1, "new task indexes must remain unique");
+  assert.equal(new Set(groupIndexes).size, 1, "destination group indexes must remain unique");
   const persisted = runtime.mock.storageData.activeBatchRun;
   const persistedDestinations = new Map(
     persisted.destinations.map((row) => [Number(row[0]), row[1]]),
   );
   for (const row of persisted.tasks) {
-    const expectedDestination = row[2] === "P1" ? previous.destinationKey : candidate.destinationKey;
-    assert.equal(persistedDestinations.get(Number(row[1])), expectedDestination);
+    assert.equal(persistedDestinations.get(Number(row[1])), candidate.destinationKey);
   }
 
   const openTabs = await runtime.mock.chrome.tabs.query({});
@@ -1094,7 +1087,6 @@ for (const action of ["pause", "stop"]) {
   const restoredByProfile = new Map(
     restarted.hooks.state.tasks.map((item) => [item.profileId, item]),
   );
-  assert.equal(restoredByProfile.get("P1")?.destinationKey, previous.destinationKey);
   assert.equal(restoredByProfile.get("P2")?.destinationKey, candidate.destinationKey);
   assert.equal(
     restarted.mock.calls.tabsCreate.length,

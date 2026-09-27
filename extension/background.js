@@ -2865,7 +2865,15 @@ async function startBatchRun(msg) {
   });
   const nextTaskIds = new Set(nextTasks.map((task) => task.id));
   for (const previous of previousTasks) {
-    if (!unresolvedStatuses.has(previous.status) || nextTaskIds.has(previous.id)) continue;
+    // A new scoped batch must not requeue unresolved work from an unrelated
+    // Profile. Still preserve an open human handoff through the dedicated
+    // `preservedManualTabs` path below; this loop is for selected Profiles'
+    // persisted tasks only.
+    if (
+      !selectedProfiles.has(previous.profileId) ||
+      !unresolvedStatuses.has(previous.status) ||
+      nextTaskIds.has(previous.id)
+    ) continue;
     const inherited = previous.status === "running"
       ? self.ExtLinkUnattended.interruptedTaskStatus(previous)
       : null;

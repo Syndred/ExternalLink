@@ -1905,7 +1905,10 @@ async function pushCloudState() {
   const writablePendingKeys = [...cloudSyncPendingKeys].filter((key) =>
     self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && !cloudSyncConflictKeys.has(key),
   );
-  const result = await flushCloudState(writablePendingKeys, { allowBeforePull: true });
+  // Manual upload must respect the cloud-first startup hold. The previous
+  // override could PUT a stale copied browser cache before the first pull and
+  // replace fields that were already canonical in Neon.
+  const result = await flushCloudState(writablePendingKeys);
   if (Array.isArray(result?.saved) && result.saved.length && !cloudSyncPendingKeys.size) {
     cloudSyncStartupHold = false;
   }

@@ -196,6 +196,29 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
   assert.equal(harness.context.cloudSyncPendingKeys.has("siteProfiles"), false);
 }
 
+// A manual upload during the cloud-first startup hold must remain blocked just
+// like the automatic writer. It must not bypass the first canonical pull.
+{
+  const calls = [];
+  const harness = createHarness({
+    startupHold: true,
+    stateKeys: ["siteProfiles"],
+    initial: {
+      siteProfiles: { local: "stale" },
+      cloudSyncPendingKeys: ["siteProfiles"],
+    },
+    cloudRequest: async (path) => {
+      calls.push(path);
+      return { revision: 2 };
+    },
+  });
+  const result = await harness.context.pushCloudState();
+  assert.equal(result.skipped, true);
+  assert.equal(result.reason, "awaiting_cloud_pull");
+  assert.deepEqual(calls, []);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("siteProfiles"), true);
+}
+
 // Cloud-first patch writes merge the changed path on the server and refresh
 // the local cache from the authoritative response without a client revision.
 {

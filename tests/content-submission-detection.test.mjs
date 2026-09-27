@@ -445,6 +445,15 @@ assert.equal(hooks.queryFillableElements(document).length, 0,
 document.querySelectorAll = originalQuerySelectorAll;
 document.body.innerText = "";
 
+const navigationSelect = new FakeField({ tagName: "select", name: "navigation" });
+const navigationForm = new FakeForm({ id: "navigation", name: "initial", fields: [navigationSelect] });
+forms.push(navigationForm);
+assert.equal(hooks.isNonSubmissionUtilityField(navigationSelect), true,
+  "an isolated navigation select must not look like a submission form");
+assert.equal(hooks.queryFillableElements(document).length, 0,
+  "navigation-only controls must not trigger automatic fill");
+forms.length = 0;
+
 const newsletterWithName = new FakeForm({
   action: "/newsletter/subscribe",
   text: "Join our newsletter and tell us what you want to read",

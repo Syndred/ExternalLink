@@ -1459,6 +1459,17 @@
     return marketingOnlyPage && !(owner && hasLikelySubmissionFields(owner));
   }
 
+  function isNonSubmissionUtilityField(element) {
+    const owner = element?.closest?.("form");
+    if (!owner) return false;
+    if (hasLikelyListingFields(owner) || hasLikelySubmissionFields(owner)) return false;
+    const pageHasSubmission = hasLikelyListingFields(document) || hasLikelySubmissionFields(document);
+    // A page with no listing/contact semantics can still contain a visible
+    // navigation, filter, survey, or account form. Never treat those controls
+    // as an ExternalLink submission target merely because they are fillable.
+    return !pageHasSubmission;
+  }
+
   // ─── Waiting banner overlay (injected into page DOM) ───
   function showWaitingBanner(config, platformType, taskIndex) {
     if (document.getElementById("__extlink_wait_banner")) return;
@@ -3530,6 +3541,7 @@
     hasLikelyListingFields,
     isMarketingOptInForm,
     isMarketingOptInField,
+    isNonSubmissionUtilityField,
     queryFillableElements,
     classifyVisibleEvidence,
     inspectAutoFillGuard,
@@ -6138,7 +6150,7 @@
     ).filter((element) => {
       const type = (element.type || "").toLowerCase();
       const owningForm = element.closest?.("form") || (root.matches?.("form") ? root : null);
-      if (isMarketingOptInField(element)) return false;
+      if (isMarketingOptInField(element) || isNonSubmissionUtilityField(element)) return false;
       const select2Proxy = element.tagName?.toLowerCase() === "select" &&
         element.classList?.contains("select2-hidden-accessible") &&
         !isInsideCollapsedPanel(element) &&

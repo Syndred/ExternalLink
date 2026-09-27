@@ -78,6 +78,7 @@ const source = [
   extractFunction(background, "submissionLedgerCloudConfigFingerprint"),
   extractFunction(background, "cloudSyncConfigIdentity"),
   extractFunction(background, "normalizeCloudRevisions"),
+  extractFunction(background, "getCloudSyncStatus"),
   extractFunction(background, "fetchChangedCloudDocuments"),
   extractFunction(background, "applyCloudSnapshot"),
   extractFunction(background, "pullCloudState"),
@@ -91,6 +92,60 @@ function deferred() {
     resolve = nextResolve;
   });
   return { promise, resolve };
+}
+
+// An operator-confirmed local baseline may be uploaded after a lightweight
+// revision check. A remote revision advance is converted into a conflict.
+{
+  const calls = [];
+  const harness = createHarness({
+    startupHold: true,
+    stateKeys: ["siteProfiles"],
+    initial: {
+      siteProfiles: { local: "latest" },
+      cloudSyncPendingKeys: ["siteProfiles"],
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { siteProfiles: 2 },
+      },
+    },
+    cloudRequest: async (path, options) => {
+      calls.push({ path, options: clone(options) });
+      if (path === "/v1/revisions") return { revisions: { siteProfiles: 2 } };
+      if (path === "/v1/state/siteProfiles") return { revision: 3 };
+      throw new Error(`unexpected path ${path}`);
+    },
+  });
+  const result = await harness.context.pushCloudState({ allowBeforePull: true });
+  assert.deepEqual([...result.saved], ["siteProfiles"]);
+  assert.deepEqual(calls.map(({ path }) => path), ["/v1/revisions", "/v1/state/siteProfiles"]);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("siteProfiles"), false);
+  assert.equal(harness.context.cloudSyncStartupHold, false);
+}
+
+{
+  const harness = createHarness({
+    startupHold: true,
+    stateKeys: ["siteProfiles"],
+    initial: {
+      siteProfiles: { local: "latest" },
+      cloudSyncPendingKeys: ["siteProfiles"],
+      cloudSyncMetadata: {
+        configIdentity: "https://cloud.example\u0000default",
+        revisions: { siteProfiles: 2 },
+      },
+    },
+    cloudRequest: async (path) => {
+      if (path === "/v1/revisions") return { revisions: { siteProfiles: 3 } };
+      throw new Error(`unexpected path ${path}`);
+    },
+  });
+  await assert.rejects(
+    harness.context.pushCloudState({ allowBeforePull: true }),
+    /云端版本已变化/,
+  );
+  assert.equal(harness.context.cloudSyncPendingKeys.has("siteProfiles"), true);
+  assert.equal(harness.context.cloudSyncConflictKeys.has("siteProfiles"), true);
 }
 
 function clone(value) {

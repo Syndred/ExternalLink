@@ -486,7 +486,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     case "cloudSyncPush":
-      pushCloudState()
+      pushCloudState({ allowBeforePull: msg.allowBeforePull === true })
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
@@ -1896,7 +1896,7 @@ async function flushCloudState(keys = null, options = {}) {
   }
 }
 
-async function pushCloudState() {
+async function pushCloudState(options = {}) {
   // The MV3 worker may be woken by the settings-page message before its
   // durable outbox has been restored. Wait before taking the snapshot so a
   // manual upload cannot incorrectly return "nothing pending" on a cold
@@ -1905,10 +1905,27 @@ async function pushCloudState() {
   const writablePendingKeys = [...cloudSyncPendingKeys].filter((key) =>
     self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && !cloudSyncConflictKeys.has(key),
   );
-  // Manual upload must respect the cloud-first startup hold. The previous
-  // override could PUT a stale copied browser cache before the first pull and
-  // replace fields that were already canonical in Neon.
-  const result = await flushCloudState(writablePendingKeys);
+  const allowBeforePull = options.allowBeforePull === true;
+  if (allowBeforePull && cloudSyncStartupHold && writablePendingKeys.length) {
+    // An explicit operator action may choose the local pending documents as
+    // the baseline after a lightweight revision check. If Neon advanced
+    // since the local metadata was read, stop and mark those documents as a
+    // conflict instead of silently replacing a newer remote value.
+    const status = await getCloudSyncStatus();
+    if (!status?.connected) {
+      throw new Error(status?.error || "云端当前不可用，未上传本机修改");
+    }
+    const remoteChangedKeys = (status.sync?.outOfDateKeys || [])
+      .filter((key) => writablePendingKeys.includes(key));
+    if (remoteChangedKeys.length) {
+      for (const key of remoteChangedKeys) await markCloudSyncConflict(key);
+      throw new Error(`云端版本已变化，已暂停上传：${remoteChangedKeys.join("、")}`);
+    }
+  }
+  // The normal path still respects the cloud-first startup hold. The explicit
+  // settings-page action above is the only path allowed to establish the
+  // local pending documents as the operator-confirmed baseline.
+  const result = await flushCloudState(writablePendingKeys, { allowBeforePull });
   if (Array.isArray(result?.saved) && result.saved.length && !cloudSyncPendingKeys.size) {
     cloudSyncStartupHold = false;
   }

@@ -225,7 +225,7 @@
       if (sync.conflictKeys?.length) parts.push(`冲突项：${describeKeys(sync.conflictKeys)}`);
       tone = "warning";
     } else if (sync.status === "pending") {
-      parts.push(`${sync.pendingCount} 类本机修改待云端确认；可重试上传。`);
+      parts.push(`${sync.pendingCount} 类本机修改待云端确认；可确认本机为准上传。`);
       if (sync.pendingKeys?.length) parts.push(`待上传项：${describeKeys(sync.pendingKeys)}`);
       tone = "warning";
     } else if (sync.status === "out_of_date") {
@@ -1866,7 +1866,13 @@
     const btn = $("btnCloudPush");
     btn.disabled = true;
     try {
-      const result = await chrome.runtime.sendMessage({ action: "cloudSyncPush" });
+      const result = await chrome.runtime.sendMessage({
+        action: "cloudSyncPush",
+        // This is an explicit operator action. The Worker still performs a
+        // revision check and turns a remote advance into a conflict before it
+        // can write a pending local document.
+        allowBeforePull: true,
+      });
       if (!result?.ok) throw new Error(result?.error || "云端保存失败");
       const savedCount = Array.isArray(result.saved) ? result.saved.length : 0;
       const statusResult = await loadCloudSyncStatus();

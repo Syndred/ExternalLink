@@ -1406,6 +1406,51 @@
     return hasEmail && onlyOptInControls;
   }
 
+  // Some sites render newsletter widgets without a <form> element (or mount
+  // the email input in a cross-component container). Treat those controls as
+  // marketing-only when the local/page context has no listing fields. This
+  // keeps the deterministic fill path aligned with the semantic form
+  // detectors instead of letting a bare email input make a landing page
+  // appear operable.
+  function isMarketingOptInField(element) {
+    if (!element) return false;
+    const owner = element.closest?.("form");
+    if (owner && (isMarketingOptInForm(owner) || isEmailOnlyOptInForm(owner))) return true;
+
+    const type = String(element.type || "").toLowerCase();
+    if (type !== "email") return false;
+
+    const nearby = element.closest?.(
+      "section, article, aside, footer, header, [class*='newsletter' i], [id*='newsletter' i], " +
+        "[class*='subscribe' i], [id*='subscribe' i], [class*='mailing' i], [id*='mailing' i]",
+    );
+    const localText = compactText(
+      [
+        getSnapshotLabel(element),
+        element.name,
+        element.id,
+        element.getAttribute?.("placeholder"),
+        nearby?.innerText || nearby?.textContent || "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      900,
+    ).toLowerCase();
+    const marketingSignal =
+      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|join\s+[\d,]+\s+(?:readers|subscribers)|briefing/.test(localText);
+    if (marketingSignal && !hasLikelyListingFields(nearby || owner || document)) return true;
+
+    const pageText = compactText(
+      document.body?.innerText || document.body?.textContent || "",
+      2400,
+    ).toLowerCase();
+    const marketingOnlyPage =
+      !hasLikelyListingFields(document) &&
+      !hasLikelySubmissionFields(document) &&
+      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|briefing/.test(pageText);
+    return marketingOnlyPage && !(owner && hasLikelySubmissionFields(owner));
+  }
+
   // ─── Waiting banner overlay (injected into page DOM) ───
   function showWaitingBanner(config, platformType, taskIndex) {
     if (document.getElementById("__extlink_wait_banner")) return;
@@ -3476,6 +3521,7 @@
     hasLikelySubmissionFields,
     hasLikelyListingFields,
     isMarketingOptInForm,
+    isMarketingOptInField,
     queryFillableElements,
     classifyVisibleEvidence,
     inspectAutoFillGuard,
@@ -6084,7 +6130,7 @@
     ).filter((element) => {
       const type = (element.type || "").toLowerCase();
       const owningForm = element.closest?.("form") || (root.matches?.("form") ? root : null);
-      if (owningForm && isMarketingOptInForm(owningForm)) return false;
+      if (isMarketingOptInField(element)) return false;
       const select2Proxy = element.tagName?.toLowerCase() === "select" &&
         element.classList?.contains("select2-hidden-accessible") &&
         !isInsideCollapsedPanel(element) &&

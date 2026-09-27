@@ -424,6 +424,27 @@ assert.equal(hooks.detectSubmissionForm(), false, "a newsletter signup must not 
 assert.equal(hooks.identifyPlatform(), null, "a newsletter home page must remain an unclassified page");
 assert.equal(hooks.queryFillableElements(newsletter).length, 0, "newsletter inputs must be excluded from automatic fill candidates");
 
+// GrowthHackers and similar landing pages sometimes mount the newsletter
+// email control without a real <form>. It must still stay outside the
+// automatic submission fill path when the page has no listing fields.
+const originalQuerySelectorAll = document.querySelectorAll;
+const standaloneNewsletterEmail = new FakeField({
+  type: "email",
+  name: "email",
+  placeholder: "Enter your Email",
+});
+document.querySelectorAll = (selector) => {
+  if (/^input, textarea, select/.test(selector)) return [standaloneNewsletterEmail];
+  return originalQuerySelectorAll(selector);
+};
+document.body.innerText = "GrowthHackers Newsletter — Subscribe for the latest marketing trends in your inbox";
+assert.equal(hooks.isMarketingOptInField(standaloneNewsletterEmail), true,
+  "a standalone newsletter email control should be recognized as marketing-only");
+assert.equal(hooks.queryFillableElements(document).length, 0,
+  "a standalone newsletter email control must not trigger automatic fill");
+document.querySelectorAll = originalQuerySelectorAll;
+document.body.innerText = "";
+
 const newsletterWithName = new FakeForm({
   action: "/newsletter/subscribe",
   text: "Join our newsletter and tell us what you want to read",

@@ -1387,7 +1387,7 @@
         .join(" "),
       1200,
     );
-    return /newsletter|subscribe|mailing\s+list|join\s+[\d,]+\s+(?:readers|subscribers)|free\s+(?:ai\s+)?database|briefing/i.test(
+    return /newsletter|subscribe|mailing\s+list|join\s+[\d,]+\s+(?:readers|subscribers)|free\s+(?:ai\s+)?database|briefing|tasklist|playbook|growth[_\s-]*services|state[_\s-]*of[_\s-]*growth|survey|cohort|voucher|download/i.test(
       context,
     );
   }
@@ -1448,7 +1448,7 @@
       900,
     ).toLowerCase();
     const marketingSignal =
-      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|join\s+[\d,]+\s+(?:readers|subscribers)|briefing/.test(localText);
+      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|join\s+[\d,]+\s+(?:readers|subscribers)|briefing|cadence|playbook|tasklist|survey|cohort|voucher/.test(localText);
     if (marketingSignal && !hasLikelyListingFields(nearby || owner || document)) return true;
 
     const pageText = compactText(
@@ -1458,7 +1458,7 @@
     const marketingOnlyPage =
       !hasLikelyListingFields(document) &&
       !hasLikelySubmissionFields(document) &&
-      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|briefing/.test(pageText);
+      /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|briefing|cadence|playbook|tasklist|survey|cohort|voucher/.test(pageText);
     return marketingOnlyPage && !(owner && hasLikelySubmissionFields(owner));
   }
 

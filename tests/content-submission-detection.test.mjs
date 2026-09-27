@@ -484,6 +484,8 @@ forms.length = 0;
 forms.push(newsletterWithHoneypot);
 assert.equal(hooks.isEmailOnlyOptInForm(newsletterWithHoneypot), true,
   "an email opt-in with an invisible honeypot must stay marketing-only");
+assert.equal(hooks.isMarketingOptInForm(newsletterWithHoneypot), true,
+  "a tasklist/playbook email form must be recognized by its semantic form identity");
 assert.equal(hooks.queryFillableElements(newsletterWithHoneypot).length, 0,
   "an invisible honeypot must not expose the email opt-in to auto-fill");
 

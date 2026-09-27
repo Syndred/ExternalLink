@@ -34,8 +34,11 @@ function json(payload, init = {}) {
 
 function requestOrigin(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const configured = String(env.ALLOWED_ORIGIN || "").trim();
-  return configured && origin === configured ? origin : "";
+  const allowed = String(env.ALLOWED_ORIGIN || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return allowed.includes(origin) ? origin : "";
 }
 
 function corsHeaders(request, env) {
@@ -61,9 +64,14 @@ function unauthorized(request, env) {
 }
 
 async function isAuthorised(request, env) {
-  const expected = String(env.APP_ACCESS_TOKEN || "").trim();
   const supplied = parseBearerToken(request.headers.get("Authorization"));
-  return Boolean(expected && supplied && (await secureEqual(expected, supplied)));
+  if (!supplied) return false;
+  const primary = String(env.APP_ACCESS_TOKEN || "").trim();
+  const device = String(env.DEVICE_ACCESS_TOKEN || "").trim();
+  return Boolean(
+    (primary && (await secureEqual(primary, supplied))) ||
+    (device && (await secureEqual(device, supplied)))
+  );
 }
 
 async function requestJson(request) {

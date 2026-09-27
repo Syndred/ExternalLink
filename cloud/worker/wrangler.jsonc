@@ -11,7 +11,7 @@
     "redact_query_string": false
   },
   "vars": {
-    "ALLOWED_ORIGIN": "chrome-extension://pbddnjpahdahahnpkhgjoeiionagmaia",
+    "ALLOWED_ORIGIN": "chrome-extension://pbddnjpahdahahnpkhgjoeiionagmaia,chrome-extension://eagomdoflagkgjklppjfboddedgjjigm",
     "ALLOWED_WORKSPACE_ID": "default",
     "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
     "DEEPSEEK_MODEL": "deepseek-v4-pro",

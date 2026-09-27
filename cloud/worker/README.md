@@ -26,3 +26,9 @@
 日常编辑优先使用 `PATCH /v1/state/:key` 发送字段级变更。Worker 会在数据库当前最新版上原子合并并用修订号重试并发写入，避免另一台设备仅因持有旧的整份文档而覆盖新资料。迁移、恢复和不适合字段级合并的运行态文档仍使用带修订校验的 `PUT`；浏览器启动时会先自动回读云端状态。
 
 部署不创建 Google OAuth，也不读取 Google Sheet。数据库连接串和 DeepSeek 密钥仅在 Worker 中使用。
+
+## 新设备连接
+
+原 `APP_ACCESS_TOKEN` 不可从 Cloudflare 反查时，可生成新的随机设备密钥，写入 `DEVICE_ACCESS_TOKEN` secret 后重新部署 Worker。Worker 接受原密钥或新设备密钥；不要覆盖原密钥，也不要把密钥写进仓库。将 Worker URL、新设备密钥和 `default` 工作区填入扩展「云端数据中心」，先点「连接云端」，再点「回读云端更新」。已有云端资料时不要点「首次迁移到云端」或「确认本机为准并上传」。
+
+`ALLOWED_ORIGIN` 是逗号分隔的扩展来源列表；部署新扩展 ID 时将其加入列表，并保留仍在使用的旧 ID。当前允许的两个 ID 在 `wrangler.jsonc` 中维护。

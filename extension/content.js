@@ -1341,10 +1341,20 @@
   function hasLikelySubmissionFields(scope = document) {
     if (!scope?.querySelector) return false;
     if (hasLikelyListingFields(scope)) return true;
-    return !!scope.querySelector(
+    return hasVisibleMessageField(scope);
+  }
+
+  function hasVisibleMessageField(scope = document) {
+    if (!scope?.querySelectorAll) return false;
+    const candidates = Array.from(scope.querySelectorAll(
       'textarea[name*="message" i], textarea[id*="message" i], ' +
         'textarea[aria-label*="message" i], textarea[placeholder*="message" i]',
-    );
+    ));
+    return candidates.some((element) => {
+      const tag = String(element.tagName || "").toLowerCase();
+      if (tag !== "textarea") return false;
+      return isVisible(element);
+    });
   }
 
   function hasLikelyListingFields(scope) {
@@ -1451,13 +1461,22 @@
       /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|join\s+[\d,]+\s+(?:readers|subscribers)|briefing|cadence|playbook|tasklist|survey|cohort|voucher/.test(localText);
     if (marketingSignal && !hasLikelyListingFields(nearby || owner || document)) return true;
 
+    // Elementor playbook/newsletter widgets often expose only the generic
+    // “Enter your Email” control. A real contact/submission form must still
+    // have a visible message field; hidden honeypots do not count.
+    if (
+      /(?:enter\s+your\s+e-?mail|you@example\.com)/.test(fieldHint) &&
+      !hasLikelyListingFields(document) &&
+      !hasVisibleMessageField(document)
+    ) return true;
+
     const pageText = compactText(
       document.body?.innerText || document.body?.textContent || "",
       2400,
     ).toLowerCase();
     const marketingOnlyPage =
       !hasLikelyListingFields(document) &&
-      !hasLikelySubmissionFields(document) &&
+      !hasVisibleMessageField(document) &&
       /newsletter|subscribe|mailing\s+list|in\s+your\s+inbox|briefing|cadence|playbook|tasklist|survey|cohort|voucher/.test(pageText);
     return marketingOnlyPage && !(owner && hasLikelySubmissionFields(owner));
   }

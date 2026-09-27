@@ -445,6 +445,22 @@ assert.equal(hooks.queryFillableElements(document).length, 0,
 document.querySelectorAll = originalQuerySelectorAll;
 document.body.innerText = "";
 
+const genericOptInEmail = new FakeField({
+  type: "email",
+  name: "form_fields[email]",
+  placeholder: "Enter your Email",
+});
+const genericOptInForm = new FakeForm({
+  id: "tasklist_form",
+  fields: [genericOptInEmail],
+});
+forms.push(genericOptInForm);
+assert.equal(hooks.isMarketingOptInField(genericOptInEmail), true,
+  "a generic Enter your Email control without a visible message field must stay marketing-only");
+assert.equal(hooks.queryFillableElements(genericOptInForm).length, 0,
+  "generic opt-in email controls must not be auto-filled");
+forms.length = 0;
+
 const navigationSelect = new FakeField({ tagName: "select", name: "navigation" });
 const navigationForm = new FakeForm({ id: "navigation", name: "initial", fields: [navigationSelect] });
 forms.push(navigationForm);

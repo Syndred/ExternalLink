@@ -295,6 +295,32 @@ function createContentContext({ elements = [], bodyText = "", href = "https://di
   const gated = createContentContext({ elements: [captcha] });
   const visibleCaptchaBlock = gated.context.__extLinkContentAuditTestHooks.detectSubmitBlockers();
   assert.equal(visibleCaptchaBlock?.captcha, true, "visible captcha remains a human gate");
+
+  const newsletterCaptcha = new FakeElement({ className: "g-recaptcha" });
+  const newsletterEmail = new FakeInput({ type: "email", name: "email" });
+  const newsletterSubmit = new FakeButton({ text: "Subscribe" });
+  const newsletter = new FakeForm({
+    text: "Subscribe to our newsletter",
+    children: [newsletterEmail, newsletterCaptcha, newsletterSubmit],
+  });
+  const newsletterPage = createContentContext({
+    elements: [newsletter, newsletterEmail, newsletterCaptcha, newsletterSubmit],
+  });
+  assert.equal(
+    newsletterPage.context.__extLinkContentAuditTestHooks.detectSubmitBlockers(),
+    null,
+    "newsletter-only captcha must not block a directory submission attempt",
+  );
+  const embeddedNewsletterCaptcha = new FakeElement({ className: "g-recaptcha" });
+  const embeddedNewsletterPage = createContentContext({
+    elements: [embeddedNewsletterCaptcha],
+    bodyText: "Subscribe for the latest marketing trends and choose your cadence in your inbox.",
+  });
+  assert.equal(
+    embeddedNewsletterPage.context.__extLinkContentAuditTestHooks.detectSubmitBlockers(),
+    null,
+    "cross-origin newsletter captcha without a parent form must not become a directory gate",
+  );
 }
 
 // A comment submit click without a changed, matched receipt must park the tab

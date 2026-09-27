@@ -727,6 +727,16 @@
       };
     }
 
+    // A page with only a newsletter/search form has no submission action to
+    // classify. Do not let words such as "subscribe" become an ambiguous
+    // payment gate for directory automation.
+    const hasSubmissionForm = Array.from(document.querySelectorAll("form")).some((form) =>
+      !isMarketingOptInForm(form) && hasLikelySubmissionFields(form),
+    );
+    if (!submitBtn && !hasSubmissionForm) {
+      return { classification: "safe", type: "safe", reason: "", evidence: submitClassification.evidence };
+    }
+
     if (submitClassification.classification === "uncertain_payment") {
       return submitClassification;
     }
@@ -831,12 +841,14 @@
   }
 
   function detectSubmitBlockers() {
-    if (typeof detectCaptcha === "function" && detectCaptcha()) return { captcha: true };
     let activeScope = document;
     try {
       activeScope = getActiveFillScope() || document;
     } catch {
       /* fall back to page scope when a framework exposes a partial DOM */
+    }
+    if (typeof detectSubmissionCaptcha === "function" && detectSubmissionCaptcha()) {
+      return { captcha: true };
     }
     if (findVisibleHumanGate('input[type="password"]', activeScope)) {
       return { needs_manual: true, reason: "需要登录或注册" };
@@ -1378,6 +1390,20 @@
     return /newsletter|subscribe|mailing\s+list|join\s+[\d,]+\s+(?:readers|subscribers)|free\s+(?:ai\s+)?database|briefing/i.test(
       context,
     );
+  }
+
+  function isEmailOnlyOptInForm(form) {
+    if (!form?.querySelectorAll || hasLikelyListingFields(form)) return false;
+    const fields = Array.from(
+      form.querySelectorAll(
+        'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select',
+      ),
+    );
+    const hasEmail = fields.some((field) => String(field.type || "").toLowerCase() === "email");
+    const onlyOptInControls = fields.length > 0 && fields.every((field) =>
+      ["email", "checkbox", "radio"].includes(String(field.type || "text").toLowerCase()),
+    );
+    return hasEmail && onlyOptInControls;
   }
 
   // ─── Waiting banner overlay (injected into page DOM) ───
@@ -4404,7 +4430,7 @@
       evidenceSignals,
       meta: {
         platform: identifyPlatform() || "unknown",
-        hasCaptcha: detectCaptcha(),
+        hasCaptcha: detectSubmissionCaptcha(),
         fieldCount: fields.length,
         buttonCount: buttons.length,
         formCount: forms.length,
@@ -7954,6 +7980,60 @@
     return false;
   }
 
+  // A directory page may embed a reCAPTCHA only for a newsletter or other
+  // marketing opt-in form. That gate must not turn an otherwise non-submittable
+  // page into a directory CAPTCHA result. Keep the broad detector for page
+  // prescans, but only treat a gate as a submission blocker when it is not
+  // owned by a marketing form.
+  function detectSubmissionCaptcha() {
+    const inSubframe = typeof window !== "undefined" && window.top && window.top !== window;
+    const hasLocalSubmissionForm = Array.from(document.querySelectorAll("form")).some((form) =>
+      !isMarketingOptInForm(form) && (hasLikelySubmissionFields(form) || queryFillableElements(form).length > 1),
+    );
+    // A reCAPTCHA iframe is itself a content-script frame. It has no listing
+    // fields and must not become the winning frame for a directory detection;
+    // the parent or actual submission frame owns the gate decision.
+    if (inSubframe && !hasLikelySubmissionFields(document) && !hasLocalSubmissionForm) return false;
+    const pageText = compactText(
+      document.body?.innerText || document.body?.textContent || "",
+      2400,
+    ).toLowerCase();
+    const hasMarketingOnlyForm = Array.from(document.querySelectorAll("form")).some((form) =>
+      isMarketingOptInForm(form) || isEmailOnlyOptInForm(form),
+    );
+    const marketingOnlyPage =
+      !hasLikelyListingFields(document) &&
+      (hasMarketingOnlyForm || /newsletter|mailing\s+list|subscribe|cadence|weekly\s*(?:&|and)?\s*daily|in\s+your\s+inbox/.test(pageText));
+    const selectors = [
+      '.g-recaptcha, [data-sitekey], iframe[src*="recaptcha"], iframe[src*="captcha"], .grecaptcha-badge',
+      '.h-captcha, iframe[src*="hcaptcha"]',
+      '.cf-turnstile, iframe[src*="challenges.cloudflare"]',
+      'img[src*="captcha"], img.captcha, img[alt*="captcha" i]',
+      'input[name*="captcha"], input[id*="captcha"], input[placeholder*="captcha" i]',
+      'input[name*="math"], input[name*="spam"]',
+    ].join(", ");
+    const hasRelevantElement = Array.from(document.querySelectorAll(selectors)).some((element) => {
+      if (!isVisibleHumanGate(element)) return false;
+      const owner = element.closest?.("form");
+      if (!owner && marketingOnlyPage) return false;
+      if (owner && (isMarketingOptInForm(owner) || (marketingOnlyPage && isEmailOnlyOptInForm(owner)))) return false;
+      return true;
+    });
+    if (hasRelevantElement) return true;
+
+    const verificationInput = Array.from(document.querySelectorAll(
+      'input[name*="code"], input[id*="code"], input[name*="otp"], input[id*="otp"], ' +
+        'input[name*="verification"], input[id*="verification"], input[name*="emailCode"], input[id*="emailCode"]',
+    )).find((element) => {
+      if (!isVisibleHumanGate(element) || !isVerificationCodeField(element)) return false;
+      const owner = element.closest?.("form");
+      if (!owner && marketingOnlyPage) return false;
+      if (owner && (isMarketingOptInForm(owner) || (marketingOnlyPage && isEmailOnlyOptInForm(owner)))) return false;
+      return true;
+    });
+    return !!verificationInput;
+  }
+
   function highlightCaptchaArea() {
     const captchaEl = findVisibleHumanGate(
       '.g-recaptcha, .h-captcha, iframe[src*="captcha"], iframe[src*="recaptcha"], ' +
@@ -8210,7 +8290,7 @@
       commentNofollow,
       dofollowLikely,
       hasCommentForm: detectWPComment() || detectArticleComment(),
-      hasCaptcha: detectCaptcha(),
+      hasCaptcha: detectSubmissionCaptcha(),
       formFieldCount: queryFillableElements().length,
       articleChars: extractArticleText(12000).length,
       commentMaxLength: commentMaxLength > 0 ? commentMaxLength : null,

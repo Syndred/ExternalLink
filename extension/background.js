@@ -1897,6 +1897,11 @@ async function flushCloudState(keys = null, options = {}) {
 }
 
 async function pushCloudState() {
+  // The MV3 worker may be woken by the settings-page message before its
+  // durable outbox has been restored. Wait before taking the snapshot so a
+  // manual upload cannot incorrectly return "nothing pending" on a cold
+  // worker and leave the restored queue untouched.
+  if (typeof initializationPromise !== "undefined") await initializationPromise;
   const writablePendingKeys = [...cloudSyncPendingKeys].filter((key) =>
     self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS.includes(key) && !cloudSyncConflictKeys.has(key),
   );

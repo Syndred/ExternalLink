@@ -104,7 +104,7 @@ async function waitForCall(calls) {
   assert.ok(calls.length, "cloud request did not start");
 }
 
-function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], startupHold = false, stateKeys = ["submissionRecords", "submissionTimeline"] } = {}) {
+function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], startupHold = false, stateKeys = ["submissionRecords", "submissionTimeline"], initializationPromise = Promise.resolve() } = {}) {
   const storageData = clone(initial) || {};
   const writes = [];
   const context = {
@@ -143,6 +143,7 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
     cloudSyncTimer: null,
     cloudSyncStartupHold: startupHold,
     cloudPullPromise: null,
+    initializationPromise,
     getCloudConfig: async () => clone(config || {
       configured: true,
       endpoint: "https://cloud.example",
@@ -168,6 +169,31 @@ function createHarness({ initial = {}, cloudRequest, config, patchKeys = [], sta
   vm.createContext(context);
   vm.runInContext(source, context);
   return { context, storageData, writes };
+}
+
+// A cold MV3 worker must restore its durable outbox before taking the manual
+// upload snapshot. Otherwise pushCloudState() can freeze an empty key list,
+// return success without a request, and leave the restored queue pending.
+{
+  const initialization = deferred();
+  const calls = [];
+  const harness = createHarness({
+    initializationPromise: initialization.promise,
+    stateKeys: ["siteProfiles"],
+    initial: { siteProfiles: { local: "value" } },
+    cloudRequest: async (path) => {
+      calls.push(path);
+      return { revision: 4 };
+    },
+  });
+  const push = harness.context.pushCloudState();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(calls, []);
+  harness.context.cloudSyncPendingKeys.add("siteProfiles");
+  initialization.resolve();
+  await push;
+  assert.deepEqual(calls, ["/v1/state/siteProfiles"]);
+  assert.equal(harness.context.cloudSyncPendingKeys.has("siteProfiles"), false);
 }
 
 // Cloud-first patch writes merge the changed path on the server and refresh

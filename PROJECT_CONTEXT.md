@@ -1,6 +1,8 @@
 # PROJECT_CONTEXT
 
-## 2026-09-27 / 3.7.120 实机分组提交与云端一致性
+## 2026-09-27 / 3.7.121 实机分组提交与云端一致性
+
+- 3.7.121 根据检测详情锁定首页 `Email / Enter your Email` 仍被暴露的问题：投稿语义改为要求可见 message 字段；通用订阅占位符、隐藏 honeypot 和无表单消息的邮箱控件统一排除。
 
 - 3.7.120 继续修复 GrowthHackers 首页：Elementor 的 `tasklist_form`/playbook、cohort、survey 等营销表单不依赖 honeypot 可见性，按表单身份和页面语义整体排除；跨域 Growth OS 邮箱 iframe 的 `cadence`/订阅语义也不会成为投稿字段。
 

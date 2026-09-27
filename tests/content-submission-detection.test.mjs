@@ -467,6 +467,26 @@ assert.equal(hooks.isMarketingOptInForm(newsletterWithName), true, "newsletter f
 forms.push(newsletterWithName);
 assert.equal(hooks.identifyPlatform(), null, "newsletter forms with submit-like actions and extra fields must not trigger auto-fill");
 
+const newsletterWithHoneypot = new FakeForm({
+  id: "tasklist_form",
+  name: "tasklist",
+  text: "Get your latest playbook by email",
+  fields: [
+    new FakeField({ type: "text", name: "field_honeypot" }),
+    new FakeField({ type: "email", name: "form_fields[email]" }),
+  ],
+});
+// The real Elementor markup hides this anti-spam field with inline CSS. The
+// fake field models that state so the detector cannot regress to counting it
+// as a second submission field.
+newsletterWithHoneypot.fields[0].getBoundingClientRect = () => ({ width: 0, height: 0 });
+forms.length = 0;
+forms.push(newsletterWithHoneypot);
+assert.equal(hooks.isEmailOnlyOptInForm(newsletterWithHoneypot), true,
+  "an email opt-in with an invisible honeypot must stay marketing-only");
+assert.equal(hooks.queryFillableElements(newsletterWithHoneypot).length, 0,
+  "an invisible honeypot must not expose the email opt-in to auto-fill");
+
 forms.length = 0;
 const directory = new FakeForm({
   action: "/submit-tool",

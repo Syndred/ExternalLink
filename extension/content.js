@@ -1398,7 +1398,10 @@
       form.querySelectorAll(
         'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select',
       ),
-    );
+    ).filter(isVisible);
+    // Elementor and similar marketing widgets commonly add a visible email
+    // control plus an invisible honeypot text input. The honeypot must not
+    // make an email-only opt-in look like a real multi-field submission form.
     const hasEmail = fields.some((field) => String(field.type || "").toLowerCase() === "email");
     const onlyOptInControls = fields.length > 0 && fields.every((field) =>
       ["email", "checkbox", "radio"].includes(String(field.type || "text").toLowerCase()),
@@ -3540,6 +3543,7 @@
     hasLikelySubmissionFields,
     hasLikelyListingFields,
     isMarketingOptInForm,
+    isEmailOnlyOptInForm,
     isMarketingOptInField,
     isNonSubmissionUtilityField,
     queryFillableElements,

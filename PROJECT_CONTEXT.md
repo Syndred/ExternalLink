@@ -1,6 +1,8 @@
 # PROJECT_CONTEXT
 
-## 2026-09-27 / 3.7.119 实机分组提交与云端一致性
+## 2026-09-27 / 3.7.120 实机分组提交与云端一致性
+
+- 3.7.120 继续修复 GrowthHackers 首页：Elementor 的 `tasklist_form`/playbook、cohort、survey 等营销表单不依赖 honeypot 可见性，按表单身份和页面语义整体排除；跨域 Growth OS 邮箱 iframe 的 `cadence`/订阅语义也不会成为投稿字段。
 
 - 3.7.119 修复 GrowthHackers Elementor 订阅/下载表单带隐藏 honeypot 文本控件时仍暴露邮箱字段的问题：`isEmailOnlyOptInForm` 只按可见控件判断，隐藏反垃圾字段不会把营销表单伪装成投稿表单；新增回归覆盖 `tasklist_form` 结构。
 

@@ -1,0 +1,15 @@
+{
+  "name": "externallink-browser-selection",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "fixture": "node fixture.mjs",
+    "trial": "node trial.mjs"
+  },
+  "dependencies": {
+    "agent-browser": "0.38.1",
+    "playwright": "1.63.0"
+  }
+}

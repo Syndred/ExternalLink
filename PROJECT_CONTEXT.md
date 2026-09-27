@@ -1,5 +1,12 @@
 # PROJECT_CONTEXT
 
+## 2026-09-27 / 独立浏览器已实测，浏览器层完成选型
+
+- 实际安装并测试 agent-browser 0.38.1/Chrome 154 与 Playwright 1.63.0/Chromium 153，使用隔离 Node 24 和全新无凭据 profile，只操作自有合成表单及 Selenium 普通 HTTPS 页面。没有访问被拒绝的扩展内部页、接管 Ego 或写生产数据。
+- 两轮每工具各 18 次合成提交均核对服务器字段、中文、文件哈希与回执。Playwright 正常重启 6/6、强制结束后显式重新打开 2/2、profile 隔离 2/2，通过；这只证明已保存浏览器状态恢复，不证明在途任务恢复或防重投。
+- agent-browser 首轮长 socket 路径超过限制，改短 namespace 后隔离通过；复测仍在一次关闭重开时报 `Failed to connect`，下一次调用恢复，保留原失败。选择 Playwright＋专用 Chromium 做主执行器浏览器层；agent-browser 仅辅助候选。Steel/Browserbase 未实测。
+- 证据与固定依赖诊断脚本见 `docs/浏览器连接实测与选型-2026-09-27.md`、`experiments/browser-selection/`。下一关仍是隔离队列/Neon/R2 回读、防重投和真实小批；生产迁移未放行，新增真实投稿 0。
+
 ## 2026-09-27 / 先验证可行性，生产迁移未放行
 
 - 用户要求先证明可用再改造。当前结论降为“有架构依据，当前环境端到端未验证”，不能把官方资料或本地测试当成独立浏览器已经接通。详见 `docs/执行方案可行性判定-2026-09-27.md`。

@@ -1,0 +1,530 @@
+{
+  "startedAt": "2026-09-27T05:41:00.385Z",
+  "node": "v24.21.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "fixture": "http://127.0.0.1:60615",
+  "scope": "Synthetic HTTP fixture and public HTTPS navigation; no extension, credentials or production submissions",
+  "results": {
+    "agent-browser": {
+      "checks": [
+        {
+          "name": "cold-start-and-empty-state",
+          "pass": true,
+          "ms": 779,
+          "data": {
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": false,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": true,
+              "saveStatus": "not_attempted"
+            },
+            "targetId": "7698415F07CCC2764F5E5D0A8107A07A",
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/"
+          }
+        },
+        {
+          "name": "normal-restart-1",
+          "pass": true,
+          "ms": 943,
+          "data": {
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": true,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": false,
+              "saveStatus": "not_attempted"
+            },
+            "targetId": "0507AAE99062793AC2D281077AC87BA4",
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/"
+          }
+        },
+        {
+          "name": "form-cycle-1",
+          "pass": true,
+          "ms": 1799,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "normal-restart-2",
+          "pass": true,
+          "ms": 1043,
+          "data": {
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": true,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": false,
+              "saveStatus": "not_attempted"
+            },
+            "targetId": "6CC122476A2236BDC288EE46168326A1",
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/"
+          }
+        },
+        {
+          "name": "form-cycle-2",
+          "pass": true,
+          "ms": 1649,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "normal-restart-3",
+          "pass": true,
+          "ms": 958,
+          "data": {
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": true,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": false,
+              "saveStatus": "not_attempted"
+            },
+            "targetId": "ECBBB08FC4AB42D70C0699FC66D32BD3",
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/"
+          }
+        },
+        {
+          "name": "form-cycle-3",
+          "pass": true,
+          "ms": 1640,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "crash-and-explicit-relaunch",
+          "pass": true,
+          "ms": 475,
+          "data": {
+            "killedPid": 28616,
+            "recoveryMs": 455,
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": false,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": true,
+              "saveStatus": "not_configured"
+            },
+            "targetId": "0A165C8F0083B98191882EDF3DAFF844",
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/"
+          }
+        },
+        {
+          "name": "fresh-profile-isolation",
+          "pass": false,
+          "ms": 52,
+          "error": "Error: Command failed: /private/tmp/externallink-browser-trial.wnAi9D/node_modules/.bin/agent-browser --config /private/tmp/externallink-browser-trial.wnAi9D/agent-browser.json --namespace externallink-externallink-browser-trial.wnAi9D --session trial-isolated --profile /private/tmp/externallink-browser-trial.wnAi9D/profile-agent-isolated --executable-path /Users/syndred/.agent-browser/browsers/chrome-154.0.8037.57/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --json close\n"
+        },
+        {
+          "name": "public-https",
+          "pass": true,
+          "ms": 2381,
+          "data": {
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": true,
+                "engine": "chrome",
+                "launchHash": 9279504735629156000
+              },
+              "launched": false,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": true,
+              "saveStatus": "not_configured"
+            },
+            "targetId": "0A165C8F0083B98191882EDF3DAFF844",
+            "title": "Web form",
+            "url": "https://www.selenium.dev/selenium/web/web-form.html"
+          }
+        },
+        {
+          "name": "close-owned-browser",
+          "pass": true,
+          "ms": 85,
+          "data": {
+            "closed": true,
+            "lifecycle": {
+              "effectiveLaunch": {
+                "browserLaunched": false,
+                "engine": "chrome",
+                "launchHash": null
+              },
+              "launched": false,
+              "relaunchedBrowser": false,
+              "restartedBackground": false,
+              "restoreStatus": "not_configured",
+              "reused": false,
+              "saveStatus": "not_configured"
+            },
+            "restoreStatus": "not_configured",
+            "saveStatus": "not_configured"
+          }
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt-1",
+          "receivedAt": "2026-09-27T05:41:02.433Z",
+          "product": "agent-browser-1-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-2",
+          "receivedAt": "2026-09-27T05:41:03.248Z",
+          "product": "agent-browser-1-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-3",
+          "receivedAt": "2026-09-27T05:41:03.614Z",
+          "product": "agent-browser-1-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-4",
+          "receivedAt": "2026-09-27T05:41:05.268Z",
+          "product": "agent-browser-2-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-5",
+          "receivedAt": "2026-09-27T05:41:06.085Z",
+          "product": "agent-browser-2-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-6",
+          "receivedAt": "2026-09-27T05:41:06.468Z",
+          "product": "agent-browser-2-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-7",
+          "receivedAt": "2026-09-27T05:41:07.883Z",
+          "product": "agent-browser-3-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-8",
+          "receivedAt": "2026-09-27T05:41:08.701Z",
+          "product": "agent-browser-3-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-9",
+          "receivedAt": "2026-09-27T05:41:09.066Z",
+          "product": "agent-browser-3-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        }
+      ],
+      "normalRestartMs": [
+        806,
+        848,
+        822
+      ],
+      "errors": [
+        "Error: Command failed: /private/tmp/externallink-browser-trial.wnAi9D/node_modules/.bin/agent-browser --config /private/tmp/externallink-browser-trial.wnAi9D/agent-browser.json --namespace externallink-externallink-browser-trial.wnAi9D --session trial-isolated --profile /private/tmp/externallink-browser-trial.wnAi9D/profile-agent-isolated --executable-path /Users/syndred/.agent-browser/browsers/chrome-154.0.8037.57/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --json close\n"
+      ]
+    },
+    "playwright": {
+      "checks": [
+        {
+          "name": "cold-start-and-empty-state",
+          "pass": true,
+          "ms": 1600,
+          "data": {
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "normal-restart-1",
+          "pass": true,
+          "ms": 102,
+          "data": {
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "form-cycle-1",
+          "pass": true,
+          "ms": 1175,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "normal-restart-2",
+          "pass": true,
+          "ms": 97,
+          "data": {
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "form-cycle-2",
+          "pass": true,
+          "ms": 1158,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "normal-restart-3",
+          "pass": true,
+          "ms": 98,
+          "data": {
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "form-cycle-3",
+          "pass": true,
+          "ms": 1157,
+          "data": {
+            "verifiedReceipts": 3,
+            "delayedForms": 1
+          }
+        },
+        {
+          "name": "crash-and-explicit-relaunch",
+          "pass": true,
+          "ms": 114,
+          "data": {
+            "killedPid": 28776,
+            "recoveryMs": 89,
+            "title": "ExternalLink browser trial",
+            "url": "http://127.0.0.1:60615/",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "fresh-profile-isolation",
+          "pass": true,
+          "ms": 104
+        },
+        {
+          "name": "public-https",
+          "pass": true,
+          "ms": 2247,
+          "data": {
+            "title": "Web form",
+            "url": "https://www.selenium.dev/selenium/web/web-form.html",
+            "browser": "153.0.8010.12"
+          }
+        },
+        {
+          "name": "close-owned-browser",
+          "pass": true,
+          "ms": 9
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt-10",
+          "receivedAt": "2026-09-27T05:41:13.999Z",
+          "product": "playwright-1-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-11",
+          "receivedAt": "2026-09-27T05:41:14.908Z",
+          "product": "playwright-1-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-12",
+          "receivedAt": "2026-09-27T05:41:15.032Z",
+          "product": "playwright-1-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-13",
+          "receivedAt": "2026-09-27T05:41:15.271Z",
+          "product": "playwright-2-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-14",
+          "receivedAt": "2026-09-27T05:41:16.176Z",
+          "product": "playwright-2-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-15",
+          "receivedAt": "2026-09-27T05:41:16.286Z",
+          "product": "playwright-2-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-16",
+          "receivedAt": "2026-09-27T05:41:16.528Z",
+          "product": "playwright-3-1",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-17",
+          "receivedAt": "2026-09-27T05:41:17.434Z",
+          "product": "playwright-3-2",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        },
+        {
+          "id": "receipt-18",
+          "receivedAt": "2026-09-27T05:41:17.543Z",
+          "product": "playwright-3-3",
+          "website": "https://example.com/",
+          "description": "Synthetic browser trial 中文字段检查",
+          "category": "games",
+          "confirmed": "yes",
+          "fileName": "attachment.txt",
+          "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+        }
+      ],
+      "normalRestartMs": [
+        83,
+        79,
+        81
+      ],
+      "errors": []
+    }
+  },
+  "finishedAt": "2026-09-27T05:41:20.056Z"
+}

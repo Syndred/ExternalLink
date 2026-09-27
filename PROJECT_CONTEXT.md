@@ -2,6 +2,10 @@
 
 ## 2026-09-27 / 3.7.121 实机分组提交与云端一致性
 
+- 3.7.121 已在 Ego 扩展详情页确认并重载；随后刷新 GrowthHackers 首页，订阅邮箱保持空白。插件检测详情实际回读为“页面状态无表单、提交表单未找到”，没有再把首页 playbook/newsletter 控件当成投稿表单，也没有新的可信提交回执。
+
+- 3.7.121 的最后一个误判根因是 Elementor 隐藏 `referer_title` 元数据命中 `title` 列表字段规则。提交 `3f5fe5b` 后，列表字段只接受可见、用户可编辑控件，并加入隐藏框架元数据回归测试；全量 55/55 通过。已关闭扩展详情页和设置页，未完成人工交接页保留。
+
 - 3.7.121 根据检测详情锁定首页 `Email / Enter your Email` 仍被暴露的问题：投稿语义改为要求可见 message 字段；通用订阅占位符、隐藏 honeypot 和无表单消息的邮箱控件统一排除。
 
 - 3.7.120 继续修复 GrowthHackers 首页：Elementor 的 `tasklist_form`/playbook、cohort、survey 等营销表单不依赖 honeypot 可见性，按表单身份和页面语义整体排除；跨域 Growth OS 邮箱 iframe 的 `cadence`/订阅语义也不会成为投稿字段。

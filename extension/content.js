@@ -1418,7 +1418,18 @@
     if (owner && (isMarketingOptInForm(owner) || isEmailOnlyOptInForm(owner))) return true;
 
     const type = String(element.type || "").toLowerCase();
-    if (type !== "email") return false;
+    const fieldHint = [
+      type,
+      element.name,
+      element.id,
+      element.getAttribute?.("aria-label"),
+      element.getAttribute?.("placeholder"),
+      getSnapshotLabel(element),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (type !== "email" && !/\b(?:e[-\s]?mail|邮箱)\b/.test(fieldHint)) return false;
 
     const nearby = element.closest?.(
       "section, article, aside, footer, header, [class*='newsletter' i], [id*='newsletter' i], " +
@@ -1426,10 +1437,7 @@
     );
     const localText = compactText(
       [
-        getSnapshotLabel(element),
-        element.name,
-        element.id,
-        element.getAttribute?.("placeholder"),
+        fieldHint,
         nearby?.innerText || nearby?.textContent || "",
       ]
         .filter(Boolean)

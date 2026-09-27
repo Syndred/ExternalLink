@@ -429,7 +429,7 @@ assert.equal(hooks.queryFillableElements(newsletter).length, 0, "newsletter inpu
 // automatic submission fill path when the page has no listing fields.
 const originalQuerySelectorAll = document.querySelectorAll;
 const standaloneNewsletterEmail = new FakeField({
-  type: "email",
+  type: "text",
   name: "email",
   placeholder: "Enter your Email",
 });

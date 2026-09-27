@@ -19,6 +19,7 @@ class FakeField {
     minLength = 0,
     maxLength = 0,
     required = false,
+    hidden = false,
   } = {}) {
     this.type = type;
     this.tagName = tagName.toUpperCase();
@@ -29,6 +30,7 @@ class FakeField {
     this.minLength = minLength;
     this.maxLength = maxLength;
     this.required = required;
+    this.hidden = hidden;
     this.value = "";
     this.disabled = false;
     this.readOnly = false;
@@ -51,6 +53,7 @@ class FakeField {
   }
 
   getBoundingClientRect() {
+    if (this.hidden) return { width: 0, height: 0 };
     return { width: 160, height: 32 };
   }
 }
@@ -504,6 +507,23 @@ assert.equal(hooks.isMarketingOptInForm(newsletterWithHoneypot), true,
   "a tasklist/playbook email form must be recognized by its semantic form identity");
 assert.equal(hooks.queryFillableElements(newsletterWithHoneypot).length, 0,
   "an invisible honeypot must not expose the email opt-in to auto-fill");
+
+const elementorOptIn = new FakeForm({
+  id: "tasklist_form",
+  name: "tasklist",
+  fields: [
+    new FakeField({ type: "hidden", name: "post_id", hidden: true }),
+    new FakeField({ type: "hidden", name: "form_id", hidden: true }),
+    new FakeField({ type: "hidden", name: "referer_title", hidden: true }),
+    new FakeField({ type: "email", name: "form_fields[email]", placeholder: "Enter your Email" }),
+  ],
+});
+assert.equal(hooks.hasLikelyListingFields(elementorOptIn), false,
+  "hidden framework title metadata must not count as a listing field");
+assert.equal(hooks.isMarketingOptInForm(elementorOptIn), true,
+  "an Elementor opt-in with hidden metadata must remain marketing-only");
+assert.equal(hooks.queryFillableElements(elementorOptIn).length, 0,
+  "an Elementor opt-in email must not be auto-filled");
 
 forms.length = 0;
 const directory = new FakeForm({

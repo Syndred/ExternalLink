@@ -1358,16 +1358,31 @@
   }
 
   function hasLikelyListingFields(scope) {
-    if (!scope?.querySelector) return false;
-    return !!scope.querySelector(
-      'input[type="url"], input[name*="url" i], input[id*="url" i], ' +
-        'input[name*="website" i], input[id*="website" i], input[name*="link" i], input[id*="link" i], ' +
-        'input[name*="product" i], input[id*="product" i], input[name*="title" i], input[id*="title" i], ' +
-        'input[aria-label*="url" i], input[aria-label*="website" i], input[placeholder*="https"], ' +
-        'input[placeholder*="url" i], input[placeholder*="website" i], ' +
-        'textarea[name*="description" i], textarea[id*="description" i], textarea[name*="summary" i], ' +
-        'textarea[id*="summary" i]',
-    );
+    if (!scope?.querySelectorAll) return false;
+    // Hidden framework metadata such as Elementor's `referer_title` must not
+    // turn an email opt-in into a listing form. Only visible, user-editable
+    // controls can establish listing intent.
+    const candidates = Array.from(scope.querySelectorAll(
+      'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+    ));
+    return candidates.some((element) => {
+      if (!isVisible(element)) return false;
+      const type = String(element.type || "").toLowerCase();
+      if (["hidden", "submit", "button", "reset"].includes(type)) return false;
+      const hint = [
+        type,
+        element.name,
+        element.id,
+        element.getAttribute?.("aria-label"),
+        element.getAttribute?.("placeholder"),
+        getSnapshotLabel(element),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return type === "url" || /(?:\burl\b|website|web\s*site|\blink\b|product|title|description|summary)/.test(hint) ||
+        /https?:\/\//.test(hint);
+    });
   }
 
   function isMarketingOptInForm(form) {

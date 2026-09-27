@@ -1,5 +1,12 @@
 # PROJECT_CONTEXT
 
+## 2026-09-27 / 总控接管与执行进程故障恢复实测通过
+
+- Playwright 与 agent-browser 各完成一次定位故障 → worker 暂停 → 主代理原生 Computer Use 修改原表单 → worker 恢复 → 唯一合成回执。独立 Chrome for Testing 的 AX、原生输入及截图本次均可用；不代表历史 Ego 捕捉故障已修复。
+- 另将 Playwright prepare worker SIGKILL，独立 Browser Host 保留页面；主代理原生介入后启动新 worker，用官方 connectOverCDP 连回相同 target ID，提交一次，第三条回执通过。没有测试网络分区、浏览器宿主崩溃或在途提交中断。
+- 独立服务器回读三条合成记录，字段/文件哈希全部相符。证据、失败记录、复现脚本与生产所有权要求见 `docs/总控接管实测-2026-09-27.md`。真实投稿新增 0，生产总控/持久队列/Neon/R2 闭环尚未实施。
+- 主选 Node 24/TypeScript + Playwright + 本机专用有头 Chromium，浏览器宿主与执行 worker 分离；主代理监督、接管、验收。所有权租约、一次性恢复命令、待核验防重投、单站异常分流是下一阶段门槛。
+
 ## 2026-09-27 / 独立浏览器已实测，浏览器层完成选型
 
 - 实际安装并测试 agent-browser 0.38.1/Chrome 154 与 Playwright 1.63.0/Chromium 153，使用隔离 Node 24 和全新无凭据 profile，只操作自有合成表单及 Selenium 普通 HTTPS 页面。没有访问被拒绝的扩展内部页、接管 Ego 或写生产数据。

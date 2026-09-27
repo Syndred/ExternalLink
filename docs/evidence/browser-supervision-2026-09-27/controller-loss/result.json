@@ -1,0 +1,22 @@
+{
+  "pass": true,
+  "fault": "SIGKILL of connected worker process",
+  "originalWorkerPid": 30177,
+  "recoveryWorkerPid": 30193,
+  "targetIdBefore": "2E8AAA0538E1BF7B7E2B9E1454B655E6",
+  "targetIdAfter": "2E8AAA0538E1BF7B7E2B9E1454B655E6",
+  "sameTarget": true,
+  "newReceiptCount": 1,
+  "receipt": {
+    "id": "receipt-3",
+    "receivedAt": "2026-09-27T05:56:00.572Z",
+    "product": "controller-loss-synthetic",
+    "website": "https://example.com/",
+    "description": "Supervisor restored after controller loss",
+    "category": "games",
+    "confirmed": "yes",
+    "fileName": "attachment.txt",
+    "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+  },
+  "limitation": "Browser host survived; no network partition, browser-host crash or in-flight submit tested"
+}

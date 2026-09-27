@@ -33,3 +33,34 @@ TRIAL_AGENT_CHROME='/实际安装的 Chrome for Testing 可执行文件路径' n
 agent-browser 能完成相同网页任务，但复测中关闭后重开出现一次 `Failed to connect: No such file or directory`，下一次普通调用恢复；该故障的根因未定位。首轮另有 namespace/session 组合过长超过 macOS socket 长度的问题，第二轮采用短名称后隔离测试通过。两类问题分别记录，不能归因于网页安全拒绝。
 
 完整结果和证据见 [实测报告](../../docs/浏览器连接实测与选型-2026-09-27.md)。
+
+## 总控接管诊断
+
+`handoff.mjs`、`agent-handoff.mjs`、`controller-loss.mjs` 是本次现场演练的原始脚本，分别测试 Playwright 定位失败接管、agent-browser 定位失败接管、独立 Browser Host 下执行 worker 被强制结束后的接管与重连。它们不是生产总控，恢复文件不是可靠的多任务锁。结果和限制见 [接管报告](../../docs/总控接管实测-2026-09-27.md)。
+
+每次完整演练都使用新目录，不复用 profile、恢复文件、状态文件或旧 fixture。先在已安装上述依赖的本目录运行：
+
+```sh
+trial_dir=$(mktemp -d /tmp/externallink-supervision.XXXXXX)
+cp fixture.mjs "$trial_dir/fixture.mjs"
+echo 'synthetic upload for supervised browser trial' > "$trial_dir/attachment.txt"
+node "$trial_dir/fixture.mjs"
+```
+
+另一个终端把输出目录的绝对路径设为 `TRIAL_WORKDIR`，按顺序运行下列脚本。Playwright 定位演练要求 fixture 初始回执为零；后两项在已有回执数上校验只增加一条。
+
+```sh
+TRIAL_WORKDIR='/实际的新目录' node handoff.mjs
+TRIAL_WORKDIR='/实际的新目录' TRIAL_AGENT_CHROME='/专用 Chrome for Testing 可执行文件' node agent-handoff.mjs
+TRIAL_WORKDIR='/实际的新目录' node controller-loss.mjs
+```
+
+每项输出暂停状态后，由主代理在对应的独立原生窗口中核对 URL 与产品名，再修改 Description，并保存原生截图。不得同时运行两个控制器的写操作；不要自行点击 Submit test。十分钟内完成接管并把以下对应命令保存至新目录，执行器才会继续：
+
+| 脚本 | 接管后 Description | 恢复文件及 JSON |
+|---|---|---|
+| handoff.mjs | `Supervisor verified draft` | `resume.json`：`{"owner":"worker","action":"resume","takeoverMethod":"实际接管方法","nativeCua":"实际观察结果"}` |
+| agent-handoff.mjs | `Supervisor verified draft` | `agent-resume.json`：`{"action":"resume"}` |
+| controller-loss.mjs | `Supervisor restored after controller loss` | `controller-loss-resume.json`：`{"action":"resume","attemptId":"本次输出的 attemptId"}` |
+
+前两项结果中的 `samePage` 是现场记录，脚本未比较不可变页面 ID；第三项 `sameTarget` 来自实际 target ID 比较。原生接管方法由主代理工具记录与截图证明，不能凭报告中的文字字段认定。测试结束停止本次 fixture；脚本只关闭自己的浏览器会话，不接管日常浏览器。

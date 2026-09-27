@@ -1,0 +1,19 @@
+{
+  "pass": true,
+  "takeoverMethod": "native Computer Use AX setValue",
+  "receipt": {
+    "id": "receipt-2",
+    "receivedAt": "2026-09-27T05:54:30.974Z",
+    "product": "agent-browser-supervisor-synthetic",
+    "website": "https://example.com/",
+    "description": "Supervisor verified draft",
+    "category": "games",
+    "confirmed": "yes",
+    "fileName": "attachment.txt",
+    "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+  },
+  "newReceiptCount": 1,
+  "samePage": true,
+  "limitation": "Injected selector error; daemon/CDP remained alive",
+  "namespace": "h-mujejiob"
+}

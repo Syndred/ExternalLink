@@ -1,0 +1,31 @@
+{
+  "createdAt": "2026-09-27T05:58:46.014Z",
+  "scriptsIdenticalToExecutedCopies": true,
+  "scriptSha256": {
+    "handoff.mjs": "283183d6ec4ed1903faee8ce547cf4209e84be84118c880dd65ef9836b7621fc",
+    "agent-handoff.mjs": "19b673aa0294e85abdc1f02f47b3f2502def7af517bb3195a03a2b38d202980e",
+    "controller-loss.mjs": "f92d4d7c4c025a663c9fdd8769a9097a93ef2e4f8c38d76f8ac0d6229ed1a54c"
+  },
+  "artifactSha256": {
+    "handoff-events.jsonl": "aa840aac1cd0e7f39a6f2bacd1ef3b93d03eb851607fb61818d7201813e083e7",
+    "independent-readback.json": "b3a5051f561bfc57b8073c75de14321cff415ee6b9e85865b65b01e77e2f5adc",
+    "native-cua-correction.png": "378d34a57b9eb2f40cb1608268b1eafea10f6990eda656c1f1197494ebd4e10e",
+    "paused.png": "646f034d5b65ffbf3eee922be74385ebe72d4d1a43eac9a71d52a94258436e2d",
+    "result.json": "1eca1ac6d7472ac4194100800cb5726acffdfc48b01262afb14b2f47bc3fe52f",
+    "server-receipts.jsonl": "585929863ad84e12b90e48a17fb2df0aca8ce047438a6634216b9194a3bf8ad0",
+    "supervisor-corrected.png": "d1a6e5ab283065c42ee57eb2f20f900cb7344e1792e0b0aee08dbe5846444009",
+    "verified-receipt.png": "baa8a7557241ef93b3af14996718492ffb088616cda466b67fee6ff9c9077b8a",
+    "controller-loss/events.jsonl": "c97b142901ebaacf8fc9389264dacb5689d6751eb51e55164a980a035911cb51",
+    "controller-loss/native-cua-correction.png": "ba1594d0bb8cee9ac76726b8b2eb65c88c63859535f98eb0b260fb401082319f",
+    "controller-loss/reconnected-before-submit.png": "41265bfdcfa2ac3fcce45145aecb2d0e157a624b8ec613084b176b8c2d2ca38b",
+    "controller-loss/result.json": "ed241dc1c4091f29a7ccbc39025ce1060aedf81873d2b8b5e91883d1507a5ca3",
+    "controller-loss/verified-receipt.png": "fa59ba79cd05b3c16d0f42d6ad0ba3feee1dde793cfa94ec0fa86639d44c6912",
+    "controller-loss/worker-dead-browser-alive.png": "69daccb8644a3e94f574df438f76d23c53581c716c8121129916255f577b73b8",
+    "agent-browser/events.jsonl": "26b2d856d407d889bc2e3f10614bc7ba52169cba288ff879a188342e46ca07a1",
+    "agent-browser/native-cua-correction.png": "25c9696397f075ea73aa09c64626c25100d8765c37082658bd8eabc5bb10d082",
+    "agent-browser/paused.png": "238af9e0b11cc2c47f45b37c87b106518b31c96c43c8386013145f9a2f59c77c",
+    "agent-browser/result.json": "ef2f2db675879dc7e92a6102e2f3f1254157a96c36f619af1b2631a444585bb8",
+    "agent-browser/supervisor-corrected.png": "82624e8e3365476b8f5d12542f5f9363d0fb7e69265630f58c3bfeeae97e81c0",
+    "agent-browser/verified-receipt.png": "57b831ea9a7013ec0caabd3004ab4b4bce0dfdde7edee56b653276078e8841de"
+  }
+}

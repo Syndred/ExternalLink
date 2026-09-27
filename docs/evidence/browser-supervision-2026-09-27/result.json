@@ -1,0 +1,19 @@
+{
+  "pass": true,
+  "takeoverMethod": "native Computer Use AX setValue",
+  "receipt": {
+    "id": "receipt-1",
+    "receivedAt": "2026-09-27T05:51:48.895Z",
+    "product": "supervisor-takeover-synthetic",
+    "website": "https://example.com/",
+    "description": "Supervisor verified draft",
+    "category": "games",
+    "confirmed": "yes",
+    "fileName": "attachment.txt",
+    "fileSha256": "086256f266b1cf3aa52d99a995fc04c049d3cb02c7839ec4bfe4ebd57b59b0ce"
+  },
+  "receiptCount": 1,
+  "samePage": true,
+  "limitation": "Injected selector fault; not a killed Playwright process or failed Chromium protocol",
+  "nativeCua": "getApp, setValue, AX readback and screenshot succeeded on owned Chrome for Testing"
+}

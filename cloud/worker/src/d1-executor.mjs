@@ -5,15 +5,18 @@ import {automationSummary} from './submission-journal.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
 import '../../../core/queue.js';
 import '../../../core/library-classifier.js';
+import '../../../core/opportunity-score.js';
 import '../../../core/submission-timeline.js';
 import '../../../core/executor-contract.js';
 import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
 import {profileMediaReferences} from '../../../core/media-assets.mjs';
+import {backupKeys} from '../../../core/application-backup.mjs';
+import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
-export async function d1Executor(request,env,workspace,plan){
+export async function d1Executor(request,env,workspace,plan,assistant){
  const db=env.LEDGER_DB,store=new D1Store(db,env.MEDIA_BUCKET,workspace),url=new URL(request.url),path=url.pathname.replace(/^\/v[12]\/executor\//,'');
  try{
   const token=parseBearerToken(request.headers.get('Authorization'))||'',admin=!!env.APP_ACCESS_TOKEN&&await secureEqual(token,env.APP_ACCESS_TOKEN);
@@ -31,14 +34,19 @@ export async function d1Executor(request,env,workspace,plan){
   if(path==='revoke'&&request.method==='POST'){if(!admin)fail('未授权',401);await db.prepare('UPDATE executor_devices SET revoked=1 WHERE workspace=? AND id=?').bind(workspace,input.deviceId).run();return json({ok:true});}
   const device=token.startsWith('eld_')?await db.prepare('SELECT id FROM executor_devices WHERE workspace=? AND token_hash=? AND revoked=0').bind(workspace,await hash(token)).first():null;
   if(!device)fail('设备未授权或已撤销',401);const deviceId=device.id;
+  if(/^ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
+   if(!assistant)fail('资料与评论服务暂不可用',503);
+   return json(await assistant(path.slice(3),input));
+  }
   if(path.startsWith('workspace/')){
    const target=path.slice('workspace/'.length);
-   const readable=/^(journal-documents|submission-tasks|media\/[a-zA-Z0-9._-]+|automation\/artifacts\/[a-zA-Z0-9._-]+)$/.test(target);
+   const readable=/^(journal-documents|submission-tasks|media|media\/[a-zA-Z0-9._-]+|automation\/artifacts\/[a-zA-Z0-9._-]+)$/.test(target);
    if(!(request.method==='GET'&&readable)&&!(request.method==='POST'&&target==='timeline'))fail('工作台接口未授权',403);
    const next=new URL(url);next.pathname='/v2/'+target;
    const forwarded=new Request(next,{method:request.method,headers:request.headers,...(request.method==='GET'?{}:{body:raw})});
    return d1Api(forwarded,env,async()=>true);
   }
+  if(path==='revisions'&&request.method==='GET')return json({ok:true,deviceId,workspaceId:workspace,revisions:await store.revisions()});
   if(path==='runs'&&url.pathname.startsWith('/v1/')&&request.headers.get('X-Executor-Protocol')!=='2')return json({ok:false,error:'执行器需要更新以支持分页恢复；本机任务保持不变',code:'EXECUTOR_UPGRADE_REQUIRED'},426);
   const readTask=async id=>{
    const row=await db.prepare('SELECT c.*,j.object_key,j.checksum,j.item_index FROM executor_controls c JOIN journal_tasks j ON j.workspace=c.workspace AND j.id=c.id WHERE c.workspace=? AND c.id=? AND c.device_id=?').bind(workspace,id,deviceId).first();
@@ -53,14 +61,15 @@ export async function d1Executor(request,env,workspace,plan){
    const object=await store.object(payload);await db.prepare('INSERT INTO executor_events VALUES(?,?,?,?,?,?,?,NULL,?)').bind(workspace,payload.id,deviceId,'diagnostic',object.checksum,object.key,object.checksum,payload.at).run();
    const read=await store.readObject(object.key,object.checksum),after=await store.revisions();return json({ok:true,diagnostic:read,r2Readback:JSON.stringify(read)===JSON.stringify(payload),businessDocumentsUnchanged:JSON.stringify(before)===JSON.stringify(after),before,after});
   }
-  if(path==='snapshot'&&request.method==='GET')return json(await snapshot());
+  if(path==='snapshot'&&request.method==='GET')return await deviceSnapshotResponse(store,deviceId);
   if(path.startsWith('media-assets/')&&request.method==='GET')return json({ok:true,asset:await readDeviceMedia(env.MEDIA_BUCKET,workspace,path.slice(13))});
   if(path==='media-upload'&&request.method==='POST')return json({ok:true,asset:await putDeviceMedia(env.MEDIA_BUCKET,workspace,input,(await store.document('siteProfiles'))?.data)});
   if(path==='library'&&request.method==='POST'){
-   const documents={};for(const key of ['sheetTableData','siteAnnotations','siteProfiles'])documents[key]=(await store.document(key))?.data;
-   const change=libraryMutation(documents,input.operation),current=await store.document(change.key);
-   if((current?.revision||0)!==input.revision)fail('外链库已由其他客户端更新，请先回读');
-   return json({ok:true,key:change.key,data:change.data,...await store.putDocument(change.key,change.data,input.revision)});
+   const type=input.operation?.type,dependencies=type==='pin'?['urlList']:type==='clear_deleted'?['deletedSubmissionKeys']:type==='backup_merge'?backupKeys:type==='domain_metrics'?['domainMetricsCache']:type==='submify_refs'||type==='submify_import'||type==='create'||type==='import'||type==='edit'?['sheetTableData']:type==='monitor_result'?['submissionRecords','linkMonitorResults']:type==='monitor_publication'?['submissionRecords','linkMonitorResults','siteProfiles']:type==='submify_gates'||type==='mark'?['siteAnnotations']:type==='preferences'?['siteAnnotations','siteProfiles']:type==='timeline'?['submissionTimeline']:type==='settings'?[input.operation.key]:['siteProfiles'];
+   if(dependencies.some(key=>!backupKeys.includes(key)))fail('外链库字段未授权',403);const documents={},revisions={};for(const key of dependencies){const row=await store.document(key);documents[key]=row?.data;revisions[key]=row?.revision||0;}
+   const change=libraryMutation(documents,input.operation,{inPlace:true});
+   if(revisions[change.key]!==input.revision)fail('外链库已由其他客户端更新，请先回读');
+   return json({ok:true,key:change.key,...await store.putDocument(change.key,change.data,input.revision)});
   }
   if(path==='profile'&&request.method==='POST'){
    const current=await store.document('siteProfiles');if(current?.revision!==input.revision||!current.data[input.profileId]||input.profile?.id!==input.profileId)fail('资料身份或版本不匹配');

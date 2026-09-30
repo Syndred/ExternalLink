@@ -10,7 +10,7 @@ export class Cloud {
     url.searchParams.set('workspace', this.config.workspaceId);
     let response;
     for(let attempt=0;attempt<3;attempt++){
-      try{response = await fetch(url, { method, signal: AbortSignal.timeout(route==='plan'&&body?.mode==='prepare_takeover'?60000:20000), headers: { Authorization: `Bearer ${this.config.deviceToken}`, 'Content-Type': 'application/json','X-Executor-Protocol':'2' }, body: body ? JSON.stringify(body) : undefined });}
+      try{response = await fetch(url, { method, signal: AbortSignal.timeout(route.startsWith('ai/')?90000:route==='plan'&&body?.mode==='prepare_takeover'?60000:20000), headers: { Authorization: `Bearer ${this.config.deviceToken}`, 'Content-Type': 'application/json','X-Executor-Protocol':'2' }, body: body ? JSON.stringify(body) : undefined });}
       catch(error){const code=error.name==='TimeoutError'?'TIMEOUT':error.cause?.code||error.code||error.name;
         if(method==='GET'&&['ECONNRESET','ETIMEDOUT','EAI_AGAIN','UND_ERR_CONNECT_TIMEOUT'].includes(code)&&attempt<2){await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));continue;}
         const failure=Object.assign(new Error(`云端连接失败 (${code})`),{cloudNetwork:true,cloudFailure:true,status:502,code});

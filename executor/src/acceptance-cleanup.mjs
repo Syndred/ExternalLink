@@ -1,10 +1,11 @@
 import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';import {recoveryCheckpoint} from './tab-cleanup.mjs';import {getTargetInfo} from './browser-target.mjs';
 export async function closeAcceptanceTask(runtime,task){
- if(!task.acceptanceId||!task.targetId||task.tabClosedAt)return;
+ if(!(task.acceptanceId||task.workbenchBatchId)||!task.targetId||task.tabClosedAt)return;
  if(task.attemptBoundary&&!task.receipt)return; // Preserve original verification page.
  if(!task.screenshot||!['needs_manual','finished','excluded'].includes(task.status))return;
  const frozen=runtime.store.get('acceptance:'+task.acceptanceId),execution=runtime.store.get('acceptanceExecution:'+task.acceptanceId);
- if(!frozen?.combinations.some(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id))throw Error('原任务不属于固定范围，禁止关页');
+ const workbench=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);
+ if(!frozen?.combinations.some(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id)&&!workbench?.items.some(i=>i.taskId===task.id))throw Error('原任务不属于固定范围，禁止关页');
  const bytes=await readFile(task.screenshot),sha256=createHash('sha256').update(bytes).digest('hex');
  const original=await runtime.findPage(task),closedAt=new Date().toISOString();
  const checkpoint={...recoveryCheckpoint(task,original,task.screenshot,closedAt),screenshotSha256:sha256,cloudSyncPending:!task.artifactRef};

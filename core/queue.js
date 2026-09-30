@@ -772,7 +772,7 @@
     if (!metrics) {
       return options.requireKnownDomainAge ? "domain_age_unknown" : null;
     }
-    const age = Number(metrics.ageMonths);
+    const age = metrics.ageMonths === null || metrics.ageMonths === undefined || metrics.ageMonths === "" ? NaN : Number(metrics.ageMonths);
     if (!Number.isFinite(age)) {
       return options.requireKnownDomainAge ? "domain_age_unknown" : null;
     }
@@ -1035,6 +1035,7 @@
     filterSubmissionTasks,
     normalizeBlacklistEntry,
     buildBlacklistMatcher,
+    domainAgeGate,
     buildDestinationGroups,
     flattenDestinationGroups,
     matchSubmissionTarget,

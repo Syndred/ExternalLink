@@ -100,6 +100,12 @@
   function parseTime(value) {
     const raw = text(value);
     if (!raw) return Number.NaN;
+    if (/^\d{5}(?:\.\d+)?$/.test(raw)) {
+      const serial=Number(raw);
+      if(serial>=20000&&serial<=60000)return Date.UTC(1899,11,30)+serial*86400000;
+    }
+    const legacy=raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s*(上午|下午)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if(legacy){let hour=Number(legacy[5]);if(legacy[4]==='上午'&&hour===12)hour=0;if(legacy[4]==='下午'&&hour<12)hour+=12;const pad=n=>String(n).padStart(2,'0');return Date.parse(`${legacy[1]}-${pad(legacy[2])}-${pad(legacy[3])}T${pad(hour)}:${legacy[6]}:${legacy[7]||'00'}+08:00`);}
     const parsed = Date.parse(raw);
     return Number.isFinite(parsed) ? parsed : Number.NaN;
   }
@@ -758,6 +764,7 @@
     submissionTimelineKey: timelineKey,
     splitTimelineKey,
     normalizeEvent,
+    parseTime,
     normalizeTimeline,
     validateTimeline,
     append,

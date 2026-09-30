@@ -8637,6 +8637,12 @@
   let manualIconsEnabled = false;
   let manualIconTimer = null;
   let manualIconObserver = null;
+  let manualIconsClosed = false;
+  window.__extLinkDisableManualIcons=()=>{
+    manualIconsClosed=true;manualIconsEnabled=false;manualIconObserver?.disconnect();clearTimeout(manualIconTimer);
+    document.querySelectorAll('['+MANUAL_ICON_ATTR+']').forEach(node=>node.remove());
+    document.getElementById(MANUAL_ICON_STYLE_ID)?.remove();
+  };
 
   if (services.onSettingsChanged) {
     services.onSettingsChanged((changes, area) => {
@@ -8835,6 +8841,7 @@
   }
 
   async function initManualIcons() {
+    if(manualIconsClosed)return;
     if (manualIconsEnabled || !document.body) return;
     // Only decorate pages that look like a comment or directory submission form.
     if (!pageLooksLikeManualFillTarget()) return;
@@ -8847,7 +8854,7 @@
     } catch {
       return;
     }
-    if (!filters || filters.showManualFillIcons === false) return;
+    if (manualIconsClosed || !filters || filters.showManualFillIcons === false) return;
 
     manualIconsEnabled = true;
     syncManualIcons();

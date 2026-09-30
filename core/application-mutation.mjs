@@ -1,8 +1,12 @@
 import {libraryMutation,libraryMutationSatisfied} from './library-mutation.mjs';
-export function applicationMutation(documents,operation){
- if(!['profile','profile_create','profile_archive','profile_media'].includes(operation.type))return libraryMutation(documents,operation);
+export function applicationMutation(documents,operation,options){
+ if(!['profile','profile_create','profile_delete','profile_archive','profile_media'].includes(operation.type))return libraryMutation(documents,operation,options);
  if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(operation.profileId||'')||['constructor','prototype','__proto__'].includes(operation.profileId))throw Error('无效资料身份');
  const original=documents.siteProfiles?.[operation.profileId],patch=operation.profile;
+ if(operation.type==='profile_delete'){
+  if(!original)throw Error('产品资料已不存在');
+  const data={...documents.siteProfiles};delete data[operation.profileId];return{key:'siteProfiles',data};
+ }
  if(operation.type==='profile_media'){
   if(!original||!['logo','featured','screenshot1','screenshot2','screenshot3','screenshot4'].includes(operation.kind)||!['disable','restore'].includes(operation.action))throw Error('无效媒体操作');
   const media={...original.media},fields={...original.fields},mediaDisabled={...original.mediaDisabled,[operation.kind]:operation.action==='disable'};
@@ -18,7 +22,11 @@ export function applicationMutation(documents,operation){
  }
  if(operation.type==='profile_create'&&original)throw Error('资料身份已存在，不能覆盖');
  if(operation.type==='profile'&&!original||patch?.id!==operation.profileId)throw Error('资料身份不匹配');
- if(Object.keys(patch).some(key=>!['id','name','url','fields','media','mediaVersions','mediaDisabled'].includes(key)))throw Error('无效资料字段');
+ if(Object.keys(patch).some(key=>!['id','name','url','fields','media','mediaVersions','mediaDisabled','language','targetAudience','valueProposition','useCases','sellablePoints','avoidContent','anchorRules','blogRules'].includes(key)))throw Error('无效资料字段');
+ for(const key of ['language','targetAudience','valueProposition'])if(patch[key]!==undefined&&(typeof patch[key]!=='string'||patch[key].length>10000))throw Error('无效资料说明');
+ for(const key of ['useCases','sellablePoints','avoidContent'])if(patch[key]!==undefined&&(!Array.isArray(patch[key])||patch[key].length>100||patch[key].some(v=>typeof v!=='string'||v.length>10000)))throw Error('无效资料列表');
+ if(patch.anchorRules!==undefined){const rules=patch.anchorRules;if(!rules||typeof rules!=='object'||Array.isArray(rules)||Object.entries(rules).some(([k,v])=>k==='allowExactMatch'?typeof v!=='boolean':!['brandKeywords','urlKeywords','naturalExpressions','keywordExpressions','avoidWords'].includes(k)||!Array.isArray(v)||v.length>100||v.some(s=>typeof s!=='string'||s.length>10000)))throw Error('无效推广链接规则');}
+ if(patch.blogRules!==undefined){const rules=patch.blogRules;if(!rules||typeof rules!=='object'||Array.isArray(rules)||Object.entries(rules).some(([k,v])=>k==='tone'?!['helpful','professional','casual','enthusiastic'].includes(v):k==='maxLinksPerDraft'?(!Number.isInteger(v)||v<0||v>5):k==='preferredAnchor'?!['natural','brand','keyword','url'].includes(v):true))throw Error('无效评论规则');}
  if(patch.mediaVersions!==undefined&&(!Array.isArray(patch.mediaVersions)||(original?.mediaVersions||[]).some((asset,index)=>JSON.stringify(asset)!==JSON.stringify(patch.mediaVersions[index]))))throw Error('历史媒体版本只能保留并追加，不能改写或删除');
  for(const [key,value]of Object.entries(patch.fields||{}))if(typeof value!=='string'||value.length>100000||/password|secret|token|api.?key/i.test(key))throw Error('无效或敏感资料字段');
  if(patch.name!==undefined&&(typeof patch.name!=='string'||!patch.name.trim()||patch.name.length>200))throw Error('无效产品名称');
@@ -28,7 +36,8 @@ export function applicationMutation(documents,operation){
  return{key:'siteProfiles',data:{...documents.siteProfiles,[operation.profileId]:profile}};
 }
 export function applicationMutationSatisfied(documents,operation){
- if(!['profile','profile_create','profile_archive','profile_media'].includes(operation.type))return libraryMutationSatisfied(documents,operation);
+ if(!['profile','profile_create','profile_delete','profile_archive','profile_media'].includes(operation.type))return libraryMutationSatisfied(documents,operation);
+ if(operation.type==='profile_delete')return !Object.hasOwn(documents.siteProfiles||{},operation.profileId);
  const actual=documents.siteProfiles?.[operation.profileId];if(!actual)return false;
  if(operation.type==='profile_archive')return actual.archived===operation.archived;
  if(operation.type==='profile_media'){
@@ -36,5 +45,5 @@ export function applicationMutationSatisfied(documents,operation){
   const asset=actual.mediaVersions?.find(a=>a.assetId===operation.assetId&&a.kind===operation.kind),ref=operation.kind==='logo'?actual.fields?.['Cloud LOGO']:operation.kind==='featured'?actual.fields?.['Cloud Featured image']:actual.media?.screenshots?.[Number(operation.kind.slice(10))-1];
   return !!asset&&actual.mediaDisabled?.[operation.kind]===false&&ref===asset.ref;
  }
- return Object.entries(operation.profile).every(([key,value])=>key==='fields'||key==='media'||key==='mediaDisabled'?Object.entries(value||{}).every(([field,desired])=>JSON.stringify(actual[key]?.[field])===JSON.stringify(desired)):key==='mediaVersions'?JSON.stringify(actual[key])===JSON.stringify(value):actual[key]===value);
+ return Object.entries(operation.profile).every(([key,value])=>key==='fields'||key==='media'||key==='mediaDisabled'?Object.entries(value||{}).every(([field,desired])=>JSON.stringify(actual[key]?.[field])===JSON.stringify(desired)):JSON.stringify(actual[key])===JSON.stringify(value));
 }

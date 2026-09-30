@@ -1,0 +1,10 @@
+import './queue.js';import './library-classifier.js';import './submify-import.js';
+export async function fetchSubmifyPublicLibrary(fetcher=globalThis.fetch){
+ const pageSize=50,read=async page=>{const response=await fetcher('https://submify.app/api/banklinks?page='+page+'&pageSize='+pageSize,{method:'GET',cache:'no-store',signal:AbortSignal.timeout(20000)});if(!response.ok)throw Error('Submify 接口返回 HTTP '+response.status);const payload=await response.json();if(payload?.code!==0||!Array.isArray(payload.data?.list))throw Error(payload?.message||'Submify 返回格式无法识别');return payload.data;};
+ const first=await read(1),advertisedTotal=Math.max(0,Number(first.pagination?.total)||first.list.length);if(!advertisedTotal||advertisedTotal>5000)throw Error('公共库返回数量无效或超过原插件上限 5000');const items=[...first.list];for(let page=2;page<=Math.ceil(advertisedTotal/pageSize);page++){const data=await read(page);if(data.pagination?.total!=null&&Number(data.pagination.total)!==advertisedTotal)throw Error('公共库数量在分页期间发生变化，停止写入');items.push(...data.list);}
+ const unique=[...new Map(items.map(item=>[String(item?.id||item?.link||'').trim(),item]).filter(([id])=>id)).values()];if(unique.length!==advertisedTotal)throw Error('公共库声明 '+advertisedTotal+' 条，但只读取 '+unique.length+' 条唯一记录，停止写入');return{items:unique,advertisedTotal};
+}
+export function mergeSubmify(documents,items,at){return globalThis.ExtLinkSubmifyImport.mergeLibrary(documents.sheetTableData||{},items,{normalizeKey:globalThis.ExtLinkQueue.normalizeDestinationKey,importedAt:at});}
+export function applySubmifyGates(annotations,gates,at,id){
+ const next=structuredClone(annotations||{});for(const gate of gates){const key=globalThis.ExtLinkQueue.normalizeDestinationKey(gate.url),domain=globalThis.ExtLinkQueue.extractDomain(gate.url),previous=next[key]||next[domain]||{};const annotation={...previous,url:gate.url,domain,library:{...globalThis.ExtLinkLibraryClassifier.libraryPreferences(previous),enabled:false,updatedAt:at},importGate:{source:'submify-public',reason:gate.reason,createdAt:at,importId:id},updatedAt:at};next[key]=annotation;next[domain]=annotation;}return next;
+}

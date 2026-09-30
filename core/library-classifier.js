@@ -64,7 +64,7 @@
       input.note,
       input.detail,
     ].filter(Boolean).join(" ");
-    return categoryFromText(combined) || "其他目录";
+    return CATEGORY_ORDER.includes(explicit)?explicit:categoryFromText(combined) || "其他目录";
   }
 
   function normalizeAccessModel(value) {

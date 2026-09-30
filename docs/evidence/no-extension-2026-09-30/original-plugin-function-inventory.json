@@ -1,0 +1,798 @@
+{
+  "kind": "original_source_inventory_not_completion_proof",
+  "buttons": [
+    {
+      "source": "extension/settings.html",
+      "id": "tab-sites",
+      "label": "网站资料",
+      "mapping": "我的网站",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "tab-library",
+      "label": "外链库",
+      "mapping": "外链库",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "tab-config",
+      "label": "全局配置",
+      "mapping": "设置与备份",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "tab-journal",
+      "label": "外链总览",
+      "mapping": "提交总览",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnAddSite",
+      "label": "+ 添加",
+      "mapping": "我的网站 / 新增网站",
+      "verification": "界面及共享变更回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRemoveSite",
+      "label": "删除",
+      "mapping": "我的网站 / 删除产品资料",
+      "verification": "共享变更回归通过，真实删除未执行",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnExtractSite",
+      "label": "🔍 从网址提取资料",
+      "mapping": "资料与媒体 / 从网站提取资料",
+      "verification": "真实云端草稿回读",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnGenerateSite",
+      "label": "✨ 完善当前资料",
+      "mapping": "资料与媒体 / AI 补全产品资料",
+      "verification": "界面及鉴权回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnClearLogo",
+      "label": "清除图片",
+      "mapping": "资料与媒体 / 停用图片",
+      "verification": "媒体版本回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveSite",
+      "label": "💾 保存当前站点资料",
+      "mapping": "资料与媒体 / 保存资料",
+      "verification": "真实云端保存及界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnLibraryLoadMore",
+      "label": "加载更多外链",
+      "mapping": "外链库 / 分页",
+      "verification": "界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudRefresh",
+      "label": "轻量核对版本",
+      "mapping": "设置与备份 / 轻量核对云端版本",
+      "verification": "真实设备鉴权轻量版本回读，配置输入刷新保护回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudConnect",
+      "label": "连接云端",
+      "mapping": "首次连接页面 / setup / 本机登记文件",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudMigrate",
+      "label": "首次迁移到云端",
+      "mapping": "首次迁移到云端 / 原备份预览合并",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudPull",
+      "label": "回读云端更新",
+      "mapping": "刷新云端",
+      "verification": "真实云端回读",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudPush",
+      "label": "确认本机为准并上传",
+      "mapping": "设置与备份 / 上传本机待同步修改",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "对应原待同步键上传，保持冲突与未知响应；真实验证待补"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSyncSubmifyLibrary",
+      "label": "同步 Submify 最新库",
+      "mapping": "外链库 / 同步公共外链库",
+      "verification": "100 条来源真实独立读回",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRunLinkMonitor",
+      "label": "立即复查",
+      "mapping": "设置与备份 / 立即检测外链",
+      "verification": "原89条全部完成云读回；5可见78未发现6无法访问；112原收件证据无变化",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveLinkMonitor",
+      "label": "保存复查频率",
+      "mapping": "设置与备份 / 保存外链监测设置",
+      "verification": "配置回归，定时任务真实启动",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnExportLedger",
+      "label": "导出 JSON",
+      "mapping": "设置与备份 / 导出原格式备份",
+      "verification": "真实导出不含配对凭证",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnImportLedger",
+      "label": "导入 JSON",
+      "mapping": "设置与备份 / 导入原插件备份",
+      "verification": "真实预览和隔离合并，大型历史素材待验收",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveConfig",
+      "label": "💾 保存全局配置",
+      "mapping": "设置与备份 / 保存配置",
+      "verification": "云端配置回读及回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnClearData",
+      "label": "🗑 清除所有数据",
+      "mapping": "清空本机工作区 / 完整私有备份 / 确认文字",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveTargetGate",
+      "label": "保存闸门设置",
+      "mapping": "设置与备份 / 质量门槛",
+      "verification": "共享质量门槛回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnPrefetchDomainAge",
+      "label": "预取当前队列域名年龄",
+      "mapping": "外链库 / 查询域名年龄",
+      "verification": "真实未知结果回读，成功 RDAP 待验收",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveAssistant",
+      "label": "保存助手设置",
+      "mapping": "浏览器助手设置 / 原任务访问填表 / 人工字段按钮",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRefreshMediaLibrary",
+      "label": "检查云端媒体",
+      "mapping": "设置与备份 / 检查云端媒体",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "真实53个素材，6个配置引用，缺失0"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnOpenSettings",
+      "label": "⚙",
+      "mapping": "设置与备份",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnPrevSite",
+      "label": "◀",
+      "mapping": "资料与媒体 / 上一个产品",
+      "verification": "已实现并保护未保存编辑，界面专项核验待补",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnNextSite",
+      "label": "▶",
+      "mapping": "资料与媒体 / 下一个产品",
+      "verification": "已实现并保护未保存编辑，界面专项核验待补",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRefreshSidepanelTimeline",
+      "label": "刷新",
+      "mapping": "时间线 / 刷新云端",
+      "verification": "真实动态回读",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnAddTimelineEvent",
+      "label": "登记外链动态",
+      "mapping": "时间线 / 登记人工动态",
+      "verification": "共享及界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSaveTimelineEvent",
+      "label": "保存人工动态",
+      "mapping": "时间线 / 保存动态",
+      "verification": "共享及界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnCancelTimelineEvent",
+      "label": "取消",
+      "mapping": "关闭详情",
+      "verification": "界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnDetect",
+      "label": "检测",
+      "mapping": "运行任务 / 检测原页",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离真实浏览器原引擎检测，字段保持空白，零投稿"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnFillForm",
+      "label": "填表",
+      "mapping": "运行任务 / 准备原页",
+      "verification": "原任务准备已实现，通用人工页面入口待补",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSubmitPage",
+      "label": "提交本页",
+      "mapping": "运行任务 / 继续原任务",
+      "verification": "仅固定范围已对应，人工任意页面待補",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnFillComment",
+      "label": "填入评论",
+      "mapping": "AI 评论 / 填入原任务评论区",
+      "verification": "隔离真实浏览器表单回读零投稿",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnLaunchNext",
+      "label": "下一站",
+      "mapping": "运行任务 / 冻结批次游标",
+      "verification": "固定范围已对应，原人工下一站待核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRegenComment",
+      "label": "生成 3 条",
+      "mapping": "AI 评论 / 生成 3 条评论",
+      "verification": "真实云端生成",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRestoreComment",
+      "label": "恢复上一版",
+      "mapping": "AI 评论 / 恢复上一版",
+      "verification": "真实云端新生成及界面上一版恢复，刷新保留编辑",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRefreshMedia",
+      "label": "刷新",
+      "mapping": "资料与媒体 / 媒体预览",
+      "verification": "云端素材回读，原设备缺失素材待验收",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnAddToUrlList",
+      "label": "加入外链列表（置顶）",
+      "mapping": "浏览器当前页加入库并置顶",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnOpenLibrarySettings",
+      "label": "完整管理",
+      "mapping": "外链库",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnUseLibraryFilter",
+      "label": "将当前筛选送到工作台",
+      "mapping": "外链库筛选 / 批量提交预览",
+      "verification": "原筛选和冻结范围回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnQuickOpenSelectFiltered",
+      "label": "选择当前筛选",
+      "mapping": "外链库 / 选择当前筛选",
+      "verification": "界面回归",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnQuickOpenBatch",
+      "label": "打开下一批",
+      "mapping": "外链库 / 批量打开网站",
+      "verification": "真实原生浏览器连接恢复，同一原任务1/1打开，失败证据保留，未填表未投稿",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSidepanelLibraryMore",
+      "label": "加载更多",
+      "mapping": "外链库 / 分页",
+      "verification": "界面回归",
+      "status": "mapped_requires_full_acceptance"
+    }
+  ],
+  "backgroundActions": [
+    "ackPendingSubmissionCloudTab",
+    "addSubmissionTimelineEvent",
+    "addToUrlList",
+    "advanceSubmission",
+    "captchaResolved",
+    "clearSiteAnnotation",
+    "cloudAiExtractSite",
+    "cloudAiGenerateSite",
+    "cloudSyncConnect",
+    "cloudSyncMigrate",
+    "cloudSyncPull",
+    "cloudSyncPush",
+    "cloudSyncStatus",
+    "confirmSubmissionSuccess",
+    "contentReady",
+    "exportSubmissionData",
+    "fetchCloudSubmissionMedia",
+    "fetchSubmissionMedia",
+    "generateCommentDrafts",
+    "generateCommentPreview",
+    "getActiveFillConfig",
+    "getBatchLog",
+    "getDomainMetrics",
+    "getLibraryManagerState",
+    "getLinkMonitorState",
+    "getSiteAnnotation",
+    "getState",
+    "getSubmissionQueue",
+    "getTargetGateState",
+    "importSubmissionData",
+    "listCloudSubmissionMedia",
+    "listSiteAnnotations",
+    "log",
+    "manualContinue",
+    "manualSkip",
+    "manualSubmissionClicked",
+    "manualSubmissionWatchReady",
+    "manualSubmissionWatchRequest",
+    "manualSubmit",
+    "markSubmissionSite",
+    "pause",
+    "pinLibraryUrl",
+    "prescanPage",
+    "quickOpenLibraryUrls",
+    "refreshSubmissionLedger",
+    "removeFromSubmissionQueue",
+    "removeSubmissionTimelineEvent",
+    "requestAutoFill",
+    "resume",
+    "runLinkMonitor",
+    "saveLinkMonitorSchedule",
+    "saveTargetFilters",
+    "sidepanelClosed",
+    "sidepanelDetect",
+    "sidepanelFill",
+    "sidepanelOpened",
+    "start",
+    "stop",
+    "submissionJournalArtifact",
+    "submissionJournalCloud",
+    "submissionJournalDocuments",
+    "submissionJournalProgress",
+    "submissionJournalRecoverLocal",
+    "syncSubmifyLibrary",
+    "updateDomainBlacklist",
+    "updateLibraryPreferences",
+    "updateSubmissionTimelineEvent"
+  ],
+  "backgroundMappings": [
+    {
+      "action": "ackPendingSubmissionCloudTab",
+      "mapping": "原事件 outbox 回读确认",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "addSubmissionTimelineEvent",
+      "mapping": "时间线 / 新增动态 → journalProgress",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "addToUrlList",
+      "mapping": "addBrowserPage / 原 URL 置顶与偏好保留",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "advanceSubmission",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "captchaResolved",
+      "mapping": "continueTask 原页人工验证恢复",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "clearSiteAnnotation",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "cloudAiExtractSite",
+      "mapping": "extractProfile",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "cloudAiGenerateSite",
+      "mapping": "generateProfile",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "cloudSyncConnect",
+      "mapping": "首次连接 setup，隔离 HTTP 流程",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "cloudSyncMigrate",
+      "mapping": "原备份导入，原浏览器全部数据待验收",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "cloudSyncPull",
+      "mapping": "appData refresh",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "cloudSyncPush",
+      "mapping": "cloudSyncPush / 原待同步变更及版本冲突保护",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "cloudSyncStatus",
+      "mapping": "appData 缓存/版本/待同步状态",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "confirmSubmissionSuccess",
+      "mapping": "verify / review 原站回执",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "contentReady",
+      "mapping": "attachEngine 注入就绪",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "exportSubmissionData",
+      "mapping": "exportBackup",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "fetchCloudSubmissionMedia",
+      "mapping": "原任务 bridge / media",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "fetchSubmissionMedia",
+      "mapping": "原任务媒体读取及云端上传",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "generateCommentDrafts",
+      "mapping": "commentDrafts / 原任务 bridge",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "generateCommentPreview",
+      "mapping": "AI 评论生成三候选",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "getActiveFillConfig",
+      "mapping": "浏览器助手原产品配置",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "getBatchLog",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "getDomainMetrics",
+      "mapping": "startDomainAge / domainMetricsCache",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getLibraryManagerState",
+      "mapping": "appData library",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getLinkMonitorState",
+      "mapping": "appData linkMonitorJobs/linkMonitorResults",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getSiteAnnotation",
+      "mapping": "appData library.annotation",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getState",
+      "mapping": "status / appData",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getSubmissionQueue",
+      "mapping": "appData tasks / workbenchBatches",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "getTargetGateState",
+      "mapping": "appData settings / 原队列门槛",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "importSubmissionData",
+      "mapping": "previewBackup/importBackup",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "listCloudSubmissionMedia",
+      "mapping": "mediaLibrary / 全库媒体目录",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "listSiteAnnotations",
+      "mapping": "appData library.annotation",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "log",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "manualContinue",
+      "mapping": "continueTask 原任务恢复",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "manualSkip",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "manualSubmissionClicked",
+      "mapping": "manualWatchMessage / 原任务边界和新回执核验",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "manualSubmissionWatchReady",
+      "mapping": "manualWatchMessage / 页面区域证据基线",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "manualSubmissionWatchRequest",
+      "mapping": "manualWatchMessage / 已准备原任务监听",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "manualSubmit",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "markSubmissionSite",
+      "mapping": "libraryMutation mark",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "pause",
+      "mapping": "pause",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "pinLibraryUrl",
+      "mapping": "libraryMutation pin",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "prescanPage",
+      "mapping": "detectOriginalTask / 共享引擎 detectPage",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "quickOpenLibraryUrls",
+      "mapping": "quickOpenLibrary",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "refreshSubmissionLedger",
+      "mapping": "appData refresh",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "removeFromSubmissionQueue",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "removeSubmissionTimelineEvent",
+      "mapping": "时间线 / 删除动态 → libraryMutation timeline",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "requestAutoFill",
+      "mapping": "浏览器助手原任务 fillAssistantTask，通用新页面一致性待验收",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "action": "resume",
+      "mapping": "resume",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "runLinkMonitor",
+      "mapping": "startLinkMonitor",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "saveLinkMonitorSchedule",
+      "mapping": "libraryMutation settings linkMonitorSchedule",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "saveTargetFilters",
+      "mapping": "libraryMutation settings targetFilters",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "sidepanelClosed",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "sidepanelDetect",
+      "mapping": "detectOriginalTask / 只检测原任务页",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "sidepanelFill",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "sidepanelOpened",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "start",
+      "mapping": "startBatch / startAcceptance",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "stop",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "submissionJournalArtifact",
+      "mapping": "workspace/automation/artifacts 与 taskDetails",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalCloud",
+      "mapping": "workspace journal 接口",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalDocuments",
+      "mapping": "workbenchDocuments / workspace/journal-documents",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalProgress",
+      "mapping": "journalProgress",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalRecoverLocal",
+      "mapping": "待逐项迁移或核对原交互",
+      "status": "pending"
+    },
+    {
+      "action": "syncSubmifyLibrary",
+      "mapping": "startPublicLibrarySync",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "updateDomainBlacklist",
+      "mapping": "libraryMutation settings domainBlacklist",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "updateLibraryPreferences",
+      "mapping": "libraryMutation preferences",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "updateSubmissionTimelineEvent",
+      "mapping": "时间线 / 编辑动态 → libraryMutation timeline",
+      "status": "mapped_requires_full_acceptance"
+    }
+  ],
+  "updatedAt": "2026-10-01",
+  "completion": "not_complete",
+  "note": "逐项入口映射用于暴露缺口，不能替代真实产品验收；动态入口和内容脚本仍需核对。"
+}

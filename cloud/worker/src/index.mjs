@@ -273,6 +273,7 @@ async function handleComment(request, env) {
     JSON.stringify({
       task: "Generate distinct comment candidates grounded in the page excerpt.",
       count,
+      tone: input.tone || "helpful",
       maxChars,
       allowLink: input.allowLink !== false,
       language: input.language || "auto",
@@ -584,7 +585,7 @@ async function handleDomainMetrics(request) {
   const domains = [...new Set((Array.isArray(input.domains) ? input.domains : []).map((value) => String(value || "").toLowerCase().trim()).filter((value) => /^[a-z0-9.-]+$/.test(value)))].slice(0, 20);
   const results = await Promise.all(domains.map(async (domain) => {
     try {
-      const response = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, { headers: { Accept: "application/rdap+json, application/json" } });
+      const response = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, { headers: { Accept: "application/rdap+json, application/json" },signal:AbortSignal.timeout(15000) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) return { domain, status: "unknown", message: `RDAP HTTP ${response.status}` };
       const createdAt = rdapEventDate(data.events, ["registration", "registered"]);
@@ -605,7 +606,15 @@ async function router(request, env) {
   if(requestPath.startsWith('/v2/executor/')||(env.EXECUTOR_BACKEND==='d1'&&requestPath.startsWith('/v1/executor/'))){
     const scope=authorisedWorkspaceId(new URL(request.url).searchParams.get('workspace'),env);
     if(!scope)return json({ok:false,error:'工作区未授权'},{status:403});
-    return d1Executor(request,env,scope,input=>handlePlan(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env));
+    return d1Executor(request,env,scope,input=>handlePlan(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env),async(action,input)=>{
+      if(action==='comment'&&!input.pageText){
+        const target=new URL(input.pageUrl);if(!/^https?:$/.test(target.protocol))throw Error('仅支持普通网页');
+        const response=await fetch(target.href,{headers:{Accept:'text/html'},redirect:'follow'});if(!response.ok)throw Error('评论页面读取失败：HTTP '+response.status);
+        const html=(await response.text()).slice(0,500000);input={...input,pageTitle:(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||'').slice(0,600),pageText:textFromHtml(html)};
+      }
+      const handler={'extract-site':handleExtractSite,'generate-site':handleGenerateSite,comment:handleComment,'domain-metrics':handleDomainMetrics}[action];
+      return handler(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env);
+    });
   }
   if(env.STATE_BACKEND==='d1'&&requestPath.startsWith('/v1/')){
     if(/^\/v1\/(ai\/|media(?:\/|$)|domain\/)/.test(requestPath)){const next=new URL(request.url);next.pathname=next.pathname.replace('/v1/','/v2/');return router(new Request(next,request),env);}

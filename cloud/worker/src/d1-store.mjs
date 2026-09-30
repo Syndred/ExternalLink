@@ -15,12 +15,15 @@ export class D1Store {
     if(!await this.bucket.head(key))await this.bucket.put(key,bytes,{httpMetadata:{contentType:'application/json'},customMetadata:{sha256:checksum}});
     return{key,checksum,bytes:bytes.length};
   }
-  async readObject(key,checksum){
+  async readObjectBytes(key,checksum){
     const object=await this.bucket.get(key);
     if(!object)fail('迁移数据对象缺失',503);
     const bytes=await object.arrayBuffer();
     if(await sha256(bytes)!==checksum)fail('数据校验失败',503);
-    return JSON.parse(new TextDecoder().decode(bytes));
+    return new Uint8Array(bytes);
+  }
+  async readObject(key,checksum){
+    return JSON.parse(new TextDecoder().decode(await this.readObjectBytes(key,checksum)));
   }
   async revisions(){
     const rows=await this.db.prepare('SELECT key,revision FROM documents WHERE workspace=? ORDER BY key').bind(this.workspace).all();

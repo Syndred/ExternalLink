@@ -1,9 +1,85 @@
 import './queue.js';
+import './submission-timeline.js';
+import {backupKeys,mergeApplicationBackup} from './application-backup.mjs';
+import {mergeSubmify,applySubmifyGates} from './submify-sync.mjs';
+import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
-export function libraryMutation(documents,operation){
+export function libraryMutation(documents,operation,options={}){
+ const copy=value=>options.inPlace?value:structuredClone(value);
  const at=operation.at||'',id=operation.id;if(!id||!at)fail('缺少修改身份');
+ if(operation.type==='pin'){
+  const key=keyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return keyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return keyOf(s.split('|')[0])!==key;}catch{return true;}});
+  return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
+ }
+ if(operation.type==='clear_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
+ if(operation.type==='submify_refs'){
+  if(!Array.isArray(operation.items)||operation.items.length>5000)fail('公共库来源编号无效');const table=copy(documents.sheetTableData||{entries:[]}),rows=new Map();for(const row of table.entries){const key=storedKey(row);if(key&&!rows.has(key))rows.set(key,row);}
+  for(const item of operation.items){const key=keyOf(item.link||item.url),row=rows.get(key);if(!row)fail('公共库入口已变化，请先核对原同步');if(item.id)row.sourceRefs=[...new Set([row.sourceId,...(row.sourceRefs||[]),item.id].map(v=>String(v||'').trim()).filter(Boolean))];}
+  return{key:'sheetTableData',data:table};
+ }
+ if(operation.type==='submify_import'){
+  if(!Array.isArray(operation.items)||!operation.items.length||operation.items.length>5000)fail('公共库记录无效');for(const item of operation.items){keyOf(item?.link||item?.url);if(item.id!=null&&typeof item.id!=='string'&&typeof item.id!=='number')fail('公共库身份无效');}
+  return{key:'sheetTableData',data:mergeSubmify(documents,operation.items,at).tableData};
+ }
+ if(operation.type==='submify_gates'){
+  if(!Array.isArray(operation.gates)||operation.gates.length>5000)fail('导入门槛无效');for(const gate of operation.gates){keyOf(gate?.url);if(!['paid','skip'].includes(gate.reason))fail('导入门槛无效');}
+  return{key:'siteAnnotations',data:applySubmifyGates(documents.siteAnnotations,operation.gates,at,id)};
+ }
+ if(operation.type==='monitor_result'){
+  const result=operation.result;if(typeof operation.recordKey!=='string'||!documents.submissionRecords?.[operation.recordKey]||!result||!['live','missing','unreachable','uncheckable'].includes(result.status)||typeof result.targetFound!=='boolean')fail('监测结果无效');
+  if(result.status==='live'&&(!result.targetFound||!result.targetHost))fail('监测没有目标链接证据');
+  return{key:'linkMonitorResults',data:{...documents.linkMonitorResults,[operation.recordKey]:{...structuredClone(result),monitorJobId:operation.jobId}}};
+ }
+ if(operation.type==='monitor_publication'){
+  const record=documents.submissionRecords?.[operation.recordKey],proof=documents.linkMonitorResults?.[operation.recordKey];
+  if(record?.status!=='success'||proof?.status!=='live'||!proof.targetFound||proof.monitorJobId!==operation.jobId||proof.inputUrl!==checkablePublicUrl(record)||proof.targetHost!==targetHostForProfile(documents.siteProfiles?.[record.profileId]))fail('原收件与监测证据不一致，不能确认上线');
+  return{key:'submissionRecords',data:{...documents.submissionRecords,[operation.recordKey]:globalThis.ExtLinkQueue.applyPublicationUpgrade(record,'published',{publicUrl:record.publicUrl||proof.url})}};
+ }
+ if(operation.type==='domain_metrics'){
+  const rows=operation.results;if(!Array.isArray(rows)||rows.length>20)fail('域名查询结果无效');
+  const cache=structuredClone(documents.domainMetricsCache||{});
+  for(const row of rows){if(!row||!/^([a-z0-9-]+\.)+[a-z0-9-]+$/.test(row.domain||'')||!['ok','unknown'].includes(row.status)||['ageDays','ageMonths'].some(k=>row[k]!=null&&(!Number.isFinite(row[k])||row[k]<0)))fail('域名查询结果无效');cache[row.domain]={...cache[row.domain],...structuredClone(row),checkedAt:at};}
+  return{key:'domainMetricsCache',data:cache};
+ }
+ if(operation.type==='backup_merge'){
+  if(!backupKeys.includes(operation.key))fail('不支持的备份字段');
+  const merged=mergeApplicationBackup(documents,operation.backup);if(!Object.hasOwn(merged,operation.key))fail('备份未包含该字段');
+  return{key:operation.key,data:merged[operation.key]};
+ }
+ if(operation.type==='timeline'){
+  const T=globalThis.ExtLinkSubmissionTimeline,events=documents.submissionTimeline||{},previous=Object.values(T.normalizeTimeline(events)).flat().find(e=>e.id===operation.eventId);
+  if(!['update','remove'].includes(operation.action)||!previous)fail('时间线动态不存在');
+  if(operation.action==='remove')return{key:'submissionTimeline',data:T.removeEvent(events,operation.eventId).timeline};
+  const patch=operation.patch||{};if(Object.keys(patch).some(k=>!['type','status','publicationStatus','occurredAt','note','evidenceUrl','publicUrl'].includes(k))||Object.values(patch).some(v=>typeof v!=='string'||v.length>10000))fail('时间线修改无效');
+  return{key:'submissionTimeline',data:T.updateEvent(events,operation.eventId,patch).timeline};
+ }
+ if(operation.type==='settings'){
+  const allowed=['domainBlacklist','targetFilters','cfgName','cfgEmail','cfgCommentTemplate','linkMonitorSchedule'];
+  if(!allowed.includes(operation.key))fail('不支持的设置');
+  const value=operation.value;
+  if(operation.key==='linkMonitorSchedule'){
+   if(!value||typeof value.enabled!=='boolean'||!Number.isFinite(value.minutes)||value.minutes<15||value.minutes>10080||value.desktopNotifications!==undefined&&typeof value.desktopNotifications!=='boolean'||Object.keys(value).some(k=>!['enabled','minutes','desktopNotifications'].includes(k)))fail('监测计划无效');
+  }else if(operation.key==='targetFilters'){
+   if(!value||typeof value!=='object'||Array.isArray(value))fail('筛选条件无效');
+   const numeric=['minOpportunityScore','minDr','minDa','minDomainAgeMonths'];
+   const booleans=['aiCommentAllowLink','aiComments','blacklistEnabled','requireKnownDomainAge','showManualFillIcons'];
+   if(Object.entries(value).some(([k,v])=>numeric.includes(k)?!Number.isFinite(v)||v<0||v>(k==='minDomainAgeMonths'?10000:100):!booleans.includes(k)||typeof v!=='boolean'))fail('筛选条件无效');
+  }else if(operation.key==='domainBlacklist'){
+   if(typeof value!=='string'||value.length>100000)fail('黑名单无效');
+  }else if(typeof value!=='string'||value.length>10000)fail('设置无效');
+  return{key:operation.key,data:structuredClone(value)};
+ }
+ if(operation.type==='create'){
+  const key=keyOf(operation.url),table=structuredClone(documents.sheetTableData||{entries:[]});
+  if(table.entries.some(r=>storedKey(r)===key))fail('该网址已在外链库中，请编辑原记录');
+  const fields=operation.fields||{};
+  for(const [k,v]of Object.entries(fields))if(!['name','category','tags','dr','da','price','note','language','accessModel'].includes(k)||typeof v!=='string'||v.length>10000)fail('网站资料无效');
+  const metrics={};for(const k of ['dr','da'])if(fields[k]?.trim()){const n=Number(fields[k]);if(!Number.isFinite(n)||n<0||n>100)fail('DR / DA 应为 0–100');metrics[k]=n;}
+  table.entries.push({...fields,link:new URL(operation.url).href,indexPage:new URL(operation.url).href,metrics,source:'application_manual',addedAt:at,mutationId:id});
+  return{key:'sheetTableData',data:table};
+ }
  if(operation.type==='import'){
   const table=structuredClone(documents.sheetTableData||{entries:[]}),known=new Set(table.entries.map(storedKey).filter(Boolean));
   const urls=operation.urls;if(!Array.isArray(urls)||urls.length<1||urls.length>500)fail('每次导入 1–500 个网址');
@@ -11,24 +87,48 @@ export function libraryMutation(documents,operation){
   return{key:'sheetTableData',data:table};
  }
  const destinationKey=keyOf(operation.url);
+ if(operation.type==='preferences'){
+  const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
+  const patch=operation.preferences;
+  if(!patch||typeof patch!=='object'||Array.isArray(patch)||Object.keys(patch).some(k=>!['favorite','enabled','pinned','groups','profileIds'].includes(k)))fail('外链偏好无效');
+  for(const k of ['favorite','enabled','pinned'])if(patch[k]!==undefined&&typeof patch[k]!=='boolean')fail('外链偏好无效');
+  if(patch.groups!==undefined&&(!Array.isArray(patch.groups)||patch.groups.some(g=>!['high_quality','free_submit'].includes(g))))fail('外链分组无效');
+  if(patch.profileIds!==undefined&&(!Array.isArray(patch.profileIds)||patch.profileIds.some(p=>!Object.hasOwn(documents.siteProfiles||{},p))))fail('产品分配无效');
+  annotations[destinationKey]={...previous,library:{...previous.library,...patch,updatedAt:at},updatedAt:at,mutationId:id};
+  return{key:'siteAnnotations',data:annotations};
+ }
  if(operation.type==='mark'){
-  if(!['can_submit','paid','broken','skip','needs_otp','needs_captcha','needs_login','needs_manual','deleted'].includes(operation.status))fail('无效站点标记');
-  const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||{};
-  annotations[destinationKey]={...previous,status:operation.status,statuses:[operation.status],note:String(operation.note||'').slice(0,10000),updatedAt:at,source:'application_manual',mutationId:id};
+  const statuses=operation.statuses??[operation.status];
+  if(!Array.isArray(statuses)||statuses.some(s=>!['can_submit','paid','broken','skip','needs_otp','needs_captcha','needs_login','needs_manual','deleted'].includes(s)))fail('无效站点标记');
+  const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
+  annotations[destinationKey]={...previous,status:statuses[0]||'',statuses:[...new Set(statuses)],note:String(operation.note??previous.note??'').slice(0,10000),updatedAt:at,source:'application_manual',mutationId:id};
   return{key:'siteAnnotations',data:annotations};
  }
  if(operation.type==='edit'){
   const table=structuredClone(documents.sheetTableData||{entries:[]}),row=table.entries.find(r=>storedKey(r)===destinationKey);if(!row)fail('该入口不是可编辑的表格行');
-  const allowed=new Set(['name','category','tags','da','dr','price','note']);
-  for(const [key,value]of Object.entries(operation.fields||{})){if(!allowed.has(key)||typeof value!=='string'||value.length>10000)fail('字段无效');row[key]=value;}
+  const allowed=new Set(['name','category','tags','da','dr','price','note','language','accessModel']);
+  for(const [key,value]of Object.entries(operation.fields||{})){if(!allowed.has(key)||typeof value!=='string'||value.length>10000)fail('字段无效');if(['dr','da'].includes(key)){const n=value.trim()?Number(value):null;if(n!==null&&(!Number.isFinite(n)||n<0||n>100))fail('DR / DA 应为 0–100');row.metrics={...row.metrics,[key]:n};}row[key]=value;}
   row.updatedAt=at;row.mutationId=id;return{key:'sheetTableData',data:table};
  }
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='pin'){try{return keyOf(String(documents.urlList||'').split('\n')[0].split('|')[0])===keyOf(operation.url);}catch{return false;}}
+ if(operation.type==='clear_deleted')return !(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
+ if(operation.type==='submify_refs'){const rows=new Map();for(const row of documents.sheetTableData?.entries||[]){const key=storedKey(row);if(key&&!rows.has(key))rows.set(key,row);}return operation.items.every(item=>!item.id||(rows.get(keyOf(item.link||item.url))?.sourceRefs||[]).map(String).includes(String(item.id)));}
+ if(operation.type==='submify_import'){const table=documents.sheetTableData;if(table?.snapshotMeta?.lastExternalImport?.importedAt!==operation.at||table.snapshotMeta.lastExternalImport.sourceTotal!==operation.items.length)return false;return operation.items.every(item=>(table.entries||[]).some(row=>storedKey(row)===keyOf(item.link||item.url)&&(!item.id||String(row.sourceId||'')===String(item.id)||(row.sourceRefs||[]).map(String).includes(String(item.id)))));}
+ if(operation.type==='submify_gates')return operation.gates.every(g=>{const a=documents.siteAnnotations?.[keyOf(g.url)];return a?.library?.enabled===false&&a?.importGate?.importId===operation.id;});
+ if(operation.type==='monitor_result')return documents.linkMonitorResults?.[operation.recordKey]?.monitorJobId===operation.jobId&&Object.entries(operation.result).every(([k,v])=>JSON.stringify(documents.linkMonitorResults[operation.recordKey][k])===JSON.stringify(v));
+ if(operation.type==='monitor_publication')return documents.submissionRecords?.[operation.recordKey]?.status==='success'&&documents.submissionRecords[operation.recordKey].publicationStatus==='published';
+ if(operation.type==='domain_metrics')return operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
+ if(operation.type==='backup_merge'){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
+ if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
+ if(operation.type==='settings')return JSON.stringify(documents[operation.key])===JSON.stringify(operation.value);
+ if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}
  if(operation.type==='import'){const known=new Set((documents.sheetTableData?.entries||[]).map(storedKey));return operation.urls.every(url=>known.has(keyOf(url)));}
  const key=keyOf(operation.url);
- if(operation.type==='mark'){const annotation=documents.siteAnnotations?.[key];return annotation?.status===operation.status&&annotation?.note===String(operation.note||'').slice(0,10000);}
+ if(operation.type==='preferences'){const library=documents.siteAnnotations?.[key]?.library;return !!library&&Object.entries(operation.preferences).every(([k,v])=>JSON.stringify(library[k])===JSON.stringify(v));}
+ if(operation.type==='mark'){const annotation=documents.siteAnnotations?.[key];return JSON.stringify(annotation?.statuses)===JSON.stringify([...new Set(operation.statuses??[operation.status])])&&(operation.note===undefined||annotation?.note===String(operation.note||'').slice(0,10000));}
  if(operation.type==='edit'){const row=documents.sheetTableData?.entries.find(r=>storedKey(r)===key);return !!row&&Object.entries(operation.fields||{}).every(([key,value])=>row[key]===value);}
  return false;
 }

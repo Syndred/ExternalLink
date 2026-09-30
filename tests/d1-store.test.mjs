@@ -5,6 +5,24 @@ import { readFileSync } from 'node:fs';
 import { D1Store } from '../cloud/worker/src/d1-store.mjs';
 import { d1Api } from '../cloud/worker/src/d1-api.mjs';
 import worker from '../cloud/worker/src/index.mjs';
+import { deviceSnapshotResponse } from '../cloud/worker/src/device-snapshot.mjs';
+
+test('device snapshot streams exact large Unicode documents and immutable revisions without parsing objects',async()=>{
+ const f=fixture(),large={rows:Array.from({length:3000},(_,i)=>({id:i,text:'中文字段和资料'.repeat(50)}))};
+ await f.store.putDocument('sheetTableData',large,0);
+ await f.store.putDocument('siteProfiles',{'产品':{id:'中文',text:'"换行\n😀'}},0);
+ await new D1Store(f.db,f.bucket,'other').putDocument('private',{secret:'unrelated'},0);
+ f.store.readObject=()=>{throw new Error('snapshot must not parse stored JSON');};
+ const response=await deviceSnapshotResponse(f.store,'device-one'),snapshot=await response.json();
+ assert.equal(response.headers.get('Cache-Control'),'no-store');
+ assert.deepEqual(snapshot.documents.sheetTableData,large);
+ assert.deepEqual(snapshot.documents.siteProfiles,{'产品':{id:'中文',text:'"换行\n😀'}});
+ assert.deepEqual(snapshot.revisions,{sheetTableData:1,siteProfiles:1});
+ assert.equal(snapshot.documents.private,undefined);
+ const row=f.sqlite.prepare("SELECT object_key FROM documents WHERE workspace='one' AND key='sheetTableData'").get();
+ f.objects.set(row.object_key,new TextEncoder().encode('{}'));
+ await assert.rejects(deviceSnapshotResponse(f.store,'device-one'),/校验失败/);
+});
 
 function fixture(){
   const sqlite=new DatabaseSync(':memory:');

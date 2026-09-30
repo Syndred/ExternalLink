@@ -12,17 +12,27 @@ import {CredentialVault} from './credential-vault.mjs';
 import {GmailSync} from './gmail-sync.mjs';
 import {enqueueProfileMutation,resolveApplicationConflict} from './application-mutations.mjs';
 import {enqueueMediaUpload} from './media-uploads.mjs';
+import {recoverDataJobs,checkMonitorSchedule} from './link-monitor.mjs';
+import {setupInfo,connectWorkbench} from './workbench-connect.mjs';
+import {resetWorkspace} from './workspace-reset.mjs';
+import {checkBrowserAssistant,stopBrowserAssistant} from './browser-assistant.mjs';
 
 const home = process.env.EXTERNALLINK_HOME || path.join(os.homedir(), '.externallink-executor');
 await mkdir(home, { recursive: true });
 const store = new Store(path.join(home, 'outbox.sqlite'));
 store.acquireOwner();
 const runtime = new Runtime(store, home);
+recoverDataJobs(runtime);
+const monitorScheduler=setInterval(()=>checkMonitorSchedule(runtime).catch(error=>console.error('外链监测计划：'+error.message)),60000);monitorScheduler.unref();
 const gmail=new GmailSync({store,vault:new CredentialVault(home)});gmail.start();
+runtime.onWorkspaceReset=async()=>{gmail.stop();await stopBrowserAssistant(runtime);};
 const code = randomBytes(18).toString('base64url');
 const codeExpires = Date.now() + 10 * 60 * 1000;
 const match = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || '')); return x.length === y.length && timingSafeEqual(x, y); };
 let serial = Promise.resolve(), pairUsed = false;
+runtime.dispatchControl=(action,input)=>{const result=serial.then(()=>runtime.withControl(()=>runtime.control(action,input)));serial=result.catch(()=>{});return result;};
+const assistantScheduler=setInterval(()=>checkBrowserAssistant(runtime).catch(error=>console.error('浏览器助手：'+error.message)),5000);assistantScheduler.unref();
+const manualWatchScheduler=setInterval(()=>{if(!runtime.controlBusy)runtime.dispatchControl('checkManualWatches',{}).catch(error=>console.error('人工提交核验：'+error.message));},2000);manualWatchScheduler.unref();
 function send(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); }
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
@@ -31,18 +41,21 @@ const server = http.createServer(async (req, res) => {
   // Host check rejects DNS rebinding; no remote website gets CORS access.
   if (![ `127.0.0.1:${port}`, `localhost:${port}` ].includes(req.headers.host)) return send(res, { ok: false, error: 'Host 未授权' }, 403);
   const extensionOrigin = /^chrome-extension:\/\/[a-p]{32}$/.test(origin);
-  if (origin && (!extensionOrigin || (pair && pair.origin !== origin))) return send(res, { ok: false, error: '插件来源未授权' }, 403);
+  const localSetupOrigin=origin==='http://127.0.0.1:'+Number(process.env.EXTERNALLINK_WEB_PORT||19389);
+  if (origin && !localSetupOrigin&&(!extensionOrigin || (pair && pair.origin !== origin))) return send(res, { ok: false, error: '插件来源未授权' }, 403);
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const route = new URL(req.url, 'http://localhost').pathname;
-  if (route !== '/pair' && !match(req.headers.authorization, `Bearer ${pair?.localToken}`)) return send(res, { ok: false, error: '尚未配对或本机凭据失效' }, 401);
+  if (!['/pair','/setupInfo','/setup'].includes(route) && !match(req.headers.authorization, `Bearer ${pair?.localToken}`)) return send(res, { ok: false, error: '尚未配对或本机凭据失效' }, 401);
   try {
     let text = '';
-    for await (const chunk of req) { text += chunk; if (text.length > (route==='/mediaUpload'?9:1)*1024 * 1024) throw new Error('请求过大'); }
+    for await (const chunk of req) { text += chunk; if (text.length > (['/mediaUpload','/previewBackup','/libraryMutation'].includes(route)?9:1)*1024 * 1024) throw new Error('请求过大'); }
     const input = text ? JSON.parse(text) : {};
+    if(route==='/setupInfo'&&req.method==='GET'){if(!localSetupOrigin)throw Error('请使用本机连接页面');send(res,await setupInfo(runtime));return;}
+    if(route==='/setup'&&req.method==='POST'){if(!localSetupOrigin)throw Error('请使用本机连接页面');send(res,await connectWorkbench(runtime,input));return;}
     if (route === '/pair' && req.method === 'POST') {
       if (pairUsed || Date.now() > codeExpires || !extensionOrigin || !match(input.code, code)) return send(res, { ok: false, error: '配对码错误、过期或已使用；重新启动执行器生成新码' }, 403);
       if (pair) return send(res, { ok: false, error: '此设备已配对，请使用插件已保存的连接' }, 409);
@@ -66,6 +79,8 @@ const server = http.createServer(async (req, res) => {
     if (route === '/catalog' && req.method === 'GET') { const snapshot = await runtime.cloud.request('snapshot'); send(res, { ok: true, profiles: snapshot.documents.siteProfiles, revision: snapshot.revisions.siteProfiles }); return; }
     if (req.method !== 'POST') { send(res, { ok: false, error: '接口不存在' }, 404); return; }
     const operation = async () => {
+      if(route==='/saveAssistantSettings')return runtime.control('saveAssistantSettings',input);
+      if(route==='/resetWorkspace')return resetWorkspace(runtime,input);
       if(route==='/gmailStatus')return{ok:true,gmail:gmail.status()};
       if(route==='/gmailMessage')return{ok:true,message:gmail.message(input.messageId)};
       if(route==='/gmailConfigure')return{ok:true,gmail:await gmail.configure(input.client)};
@@ -80,7 +95,7 @@ const server = http.createServer(async (req, res) => {
       if(route==='/registerAcceptance')return runtime.control('registerAcceptance',input);
       if(route==='/runTask')return runtime.control('runTask',input);
       if(route==='/startAcceptance')return runtime.control('startAcceptance',input);
-      if(['/appData','/taskDetails','/libraryMutation'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/appData','/taskDetails','/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'].includes(route))return runtime.control(route.slice(1),input);
       if (route === '/preview') return runtime.preview(input);
       if (route === '/annotate') {
         const task = store.get(`task:${input.taskId}`); if (!task) throw new Error('任务不存在');

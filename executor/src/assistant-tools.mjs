@@ -2,6 +2,11 @@ const string={type:'string',minLength:1},integer={type:'integer',minimum:0},obje
 const specs=[
  ['app_data','appData','读取所有产品、外链库、组合状态、待同步编辑和固定批次',{refresh:bool},[],true],
  ['preview','preview','预览指定产品的原范围，不执行投稿',{profileId:string,urls:strings},['profileId'],true],
+ ['batch_preview','previewBatch','预览多产品自选外链批次，保留每个组合及排除原因，不投稿',{profileIds:strings,urls:strings},['profileIds','urls'],true],
+ ['extract_profile','extractProfile','从官网提取产品资料草稿，不自动覆盖已保存资料',{profileId:string,url:string,language:string},['profileId','url']],
+ ['generate_profile','generateProfile','补全产品资料草稿，不自动保存',{profile:object,language:string},['profile']],
+ ['comment_drafts','commentDrafts','根据真实页面或提供正文生成三个评论草稿，不发布评论',{profileId:string,pageUrl:string,pageText:{type:'string'},tone:string,language:string,maxChars:integer,allowLink:bool},['profileId','pageUrl']],
+ ['journal_progress','journalProgress','持久记录产品在目标站的跟进动态，不代替站方收件证明',{event:object},['event']],
  ['profile_update','profile','持久保存指定产品资料，历史投稿保留旧版本',{profileId:string,revision:integer,profile:object},['profileId','revision','profile']],
  ['library_edit','libraryMutation','持久维护外链库或新增/归档/恢复产品',{operation:object},['operation']],
  ['resolve_conflict','resolveConflict','处理已比较的同步冲突，必须携带原云端版本',{id:string,choice:{enum:['cloud','local']},revision:integer},['id','choice','revision']],

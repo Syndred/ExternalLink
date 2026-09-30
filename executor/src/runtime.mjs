@@ -1,4 +1,8 @@
 import { chromium } from 'playwright';
+import {startLinkMonitor,dismissMonitorAlert} from './link-monitor.mjs';
+import {startPublicLibrarySync} from './public-library-sync.mjs';
+import {workbenchBackup} from './workbench-backup.mjs';
+import {startDomainAge} from './domain-age.mjs';
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -41,6 +45,14 @@ import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication} fro
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
+import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
+import {commentHistory,saveCommentVersion} from './comment-history.mjs';
+import {quickOpenLibrary} from './quick-open.mjs';
+import {mediaLibrary} from './media-library.mjs';
+import {cloudStatus,pushLocalChanges} from './cloud-status.mjs';
+import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
+import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
+import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -491,7 +503,7 @@ export class Runtime {
     if (!this.hydrated) { this.restoreCloud().catch(error => { this.cloudError = error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); }); return; }
     if (this.job || !this.store.get('pair')) return;
     const needsCloudRecovery = this.lastCloudNetworkFailure && this.cloudError === this.lastCloudNetworkFailure;
-    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !pendingApplication(this).length && !pendingMediaUploads(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict)) && !needsCloudRecovery) return;
+    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !pendingApplication(this).length && !pendingMediaUploads(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict)) && !needsCloudRecovery && !this.store.get('activeWorkbenchBatch')) return;
     if (this.store.get('paused') !== false) {
       const plan=this.store.get('libraryPlan'),gate=plan?.globalPause;
       if(gate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(gate?.reason||''))return;
@@ -516,17 +528,19 @@ export class Runtime {
       }).finally(() => { this.job = null; }); return;
     }
     this.job = this.work().catch(error => { this.cloudError = error.message;this.store.set('paused',true);
-      const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:error.message});
+      pauseWorkbenchBatch(this,error.message);const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:error.message});
       const plan=this.store.get('libraryPlan'),classification=classifyPauseFailure(error);if(!batch&&plan?.status==='active')this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,
         ...classification,nextProbeAt:classification.resumeEligible?Date.now()+60000:null}});
     }).finally(() => {
-      if (this.store.get('singleTaskId')) { if(!finishAcceptanceTask(this,this.store.get('singleTaskId')))this.store.set('paused', true);this.store.set('singleTaskId', null); }
+      if (this.store.get('singleTaskId')) { if(!finishWorkbenchTask(this,this.store.get('singleTaskId'))&&!finishAcceptanceTask(this,this.store.get('singleTaskId')))this.store.set('paused', true);this.store.set('singleTaskId', null); }
       this.job = null;
     });
   }
   async work() {
     await this.synchronize();
     if (!this.context) await this.connect();
+    const workbenchId=this.store.get('activeWorkbenchBatch');
+    if(workbenchId&&!this.store.get('singleTaskId')){const selected=await nextWorkbenchTask(this);if(!selected)return;}
     const fixedBatch=this.store.get('acceptanceBatch');
     if(fixedBatch?.status==='running'&&!this.store.get('singleTaskId')){const selected=await nextAcceptanceTask(this);if(!selected)return;}
     const currentPlan=this.store.get('libraryPlan');
@@ -559,7 +573,8 @@ export class Runtime {
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'user_reply',text:'用户授权全库连续免费投稿及普通注册；验证码等标记后继续下一站'}]},'continuous_scope');
     }
     const profile = task.profileSnapshot || run.profile;
-    const config = plain(profiles.buildAgentConfigFromProfile(profile));
+    const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
+    const config = plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate}));
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
@@ -748,7 +763,7 @@ export class Runtime {
           catch(error){this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'evidence_capture_deferred');}
         }
         await this.synchronize();
-        if(task.acceptanceId){
+        if(task.acceptanceId||task.workbenchBatchId){
           try{await closeAcceptanceTask(this,task);}
           catch(error){this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
         }
@@ -1153,6 +1168,28 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(action==='manualWatchMessage')return manualWatchMessage(this,input);
+    if(action==='checkManualWatches')return checkManualWatches(this);
+    if(action==='saveAssistantSettings')return saveAssistantSettings(this,input);
+    if(action==='fillAssistantTask')return fillAssistantTask(this,input);
+    if(action==='browserLibraryPages')return browserLibraryPages(this);
+    if(action==='addBrowserPage')return addBrowserPage(this,input);
+    if(action==='cloudSyncStatus')return cloudStatus(this);
+    if(action==='cloudSyncPush')return pushLocalChanges(this);
+    if(action==='mediaLibrary')return mediaLibrary(this);
+    if(action==='commentHistory')return commentHistory(this,input);
+    if(action==='saveCommentVersion')return saveCommentVersion(this,input);
+    if(action==='quickOpenLibrary')return quickOpenLibrary(this,input);
+    if(action==='startLinkMonitor')return startLinkMonitor(this,input);
+    if(action==='dismissMonitorAlert')return dismissMonitorAlert(this,input);
+    if(action==='startPublicLibrarySync')return startPublicLibrarySync(this,input);
+    if(action==='startDomainAge')return startDomainAge(this,input);
+    if(['exportBackup','previewBackup','importBackup'].includes(action))return workbenchBackup(this,action,input);
+    if(action==='detectOriginalTask')return detectOriginalTask(this,input);
+    if(action==='fillCommentDraft')return fillCommentDraft(this,input);
+    if(action==='previewBatch')return previewWorkbenchBatch(this,input);
+    if(action==='startBatch')return startWorkbenchBatch(this,input);
+    if(['extractProfile','generateProfile','commentDrafts'].includes(action))return applicationAi(this,action,input);
     if(action==='startAcceptance')return startAcceptanceBatch(this,input.acceptanceId);
     if(action==='libraryMutation')return enqueueLibraryMutation(this,input);
     if(action==='appData')return applicationData(this,input);
@@ -1209,7 +1246,7 @@ export class Runtime {
     }
     if (action === 'review' && this.job) await this.job;
     if (action === 'pause' || action === 'takeover') { this.store.set('paused', true); if (this.job) await this.job; }
-    if (action === 'pause') {const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:input.reason||'用户暂停',pausedAt:new Date().toISOString()});const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return this.status();}
+    if (action === 'pause') {pauseWorkbenchBatch(this,input.reason);const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:input.reason||'用户暂停',pausedAt:new Date().toISOString()});const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return this.status();}
     if (action === 'offlineResume') return this.resumeOffline(input);
     if (action === 'resume') { if(this.job)await this.job;await this.synchronize();this.store.recover();await this.synchronize();const plan=this.store.get('libraryPlan');if(plan)this.store.set('libraryPlan',{...plan,globalPause:null});this.store.set('paused', false); this.tick(); return this.status(); }
     if (action === 'startLibrary') return this.startLibrary(input);
@@ -1256,7 +1293,7 @@ export class Runtime {
       }
       this.update(task,{profileSnapshot:profile,profileRevision,
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
-      const config=plain(profiles.buildAgentConfigFromProfile(profile));
+      const config=plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate}));
       let prepared;
       try{prepared=await this.prepareWithAi(page,task,config,()=>!page.isClosed()&&this.store.get('paused')===true);}
       finally{const file=path.join(this.home,`${task.id}-${Date.now()}-ai-preparation.png`);
@@ -1657,6 +1694,7 @@ export class Runtime {
     throw new Error('未知控制操作');
   }
   async bridge(task, message) {
+    if(message.action==='generateCommentDrafts')return this.cloud.request('ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
     if(message.action==='fetchSubmissionMedia'){
       const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));

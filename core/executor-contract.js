@@ -30,7 +30,8 @@
     const library = inventory(snapshot, bundled), docs = snapshot.documents, exclusions = [], tasks = [];
     const requested = new Set((requestedUrls || []).map(url => queue.normalizeDestinationKey(url)));
     const records = queue.migrateSubmissionRecords({ records: docs.submissionRecords || {}, annotations: docs.siteAnnotations || {}, tableData: docs.sheetTableData || bundled || {} }).records;
-    const blacklist = queue.buildBlacklistMatcher(Array.isArray(docs.domainBlacklist) ? docs.domainBlacklist : String(docs.domainBlacklist || '').split(/[\n,]/));
+    const filters=docs.targetFilters||{};
+    const blacklist = filters.blacklistEnabled===false?null:queue.buildBlacklistMatcher(Array.isArray(docs.domainBlacklist) ? docs.domainBlacklist : String(docs.domainBlacklist || '').split(/[\n,]/));
     const blockedStatuses = new Set([...queue.DEAD_END_STATUSES, ...queue.GATE_STATUSES, 'paid', 'do_not_submit', 'not_suitable']);
     for (const item of library.candidates) {
       if (requested.size && !requested.has(item.destinationKey)) continue;
@@ -38,7 +39,10 @@
       const annotation = queue.findDestinationAnnotation(docs.siteAnnotations || {}, item.destinationKey, domain) || {};
       const mark = classifier.libraryEligibility(annotation, profileId);
       const deleted = queue.hasStoredDestinationKey(docs.deletedSubmissionKeys || [], item.destinationKey);
-      const reason = priorProductSuccess(records, profileId, item.url) ? '该产品在此站已有成功提交记录' : deleted ? '人工删除的目标' : blacklist?.(domain) ? '域名黑名单' : !mark.allowed ? mark.reason : queue.normalizeAnnotationStatuses(annotation).some(s => blockedStatuses.has(s)) ? '人工标记排除' : '';
+      const metrics={...item.row,...item.row?.metrics,...docs.domainMetricsCache?.[domain]},quality=global.ExtLinkOpportunityScore?.scoreOpportunity({metrics,annotation});
+      const ageReason=queue.domainAgeGate(domain,{...filters,domainMetrics:docs.domainMetricsCache||{}});
+      const qualityReason=filters.minOpportunityScore>0&&quality&&quality.score<filters.minOpportunityScore?'低于最低质量分':filters.minDr>0&&!(Number(metrics.dr)>=filters.minDr)?'低于最低 DR':filters.minDa>0&&!(Number(metrics.da)>=filters.minDa)?'低于最低 DA':ageReason==='domain_age_unknown'?'域名年龄未知':ageReason==='domain_too_young'?'低于最低域名年龄':'';
+      const reason = priorProductSuccess(records, profileId, item.url) ? '该产品在此站已有成功提交记录' : deleted ? '人工删除的目标' : blacklist?.(domain) ? '域名黑名单' : !mark.allowed ? mark.reason : queue.normalizeAnnotationStatuses(annotation).some(s => blockedStatuses.has(s)) ? '人工标记排除' : qualityReason;
       if (reason) exclusions.push({ url: item.url, reason }); else tasks.push({ url: item.url, destinationKey: item.destinationKey, source: item.source });
     }
     if (requested.size && tasks.length + exclusions.length < requested.size) throw new Error('部分选定站点不在现有外链库中，请先在原外链库导入');

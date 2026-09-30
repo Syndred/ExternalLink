@@ -28,6 +28,17 @@ export function flushApplicationMutations(runtime){
  if(runtime.appMutationFlush)return runtime.appMutationFlush;
  runtime.appMutationFlush=performFlush(runtime).finally(()=>{runtime.appMutationFlush=null;});return runtime.appMutationFlush;
 }
+export async function enqueueApplicationPlan(runtime,{planId,operations},onPersist){
+ const scope=workbenchScope(runtime.store.get('pair'));let plan=planId&&runtime.store.get('applicationPlan:'+planId);
+ if(planId&&(!plan||plan.scope!==scope))throw Error('原资料变更计划不存在');
+ if(!plan){const saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope||pendingApplication(runtime).length)throw Error('请先回读并同步现有资料');const working=structuredClone(saved.snapshot),id=randomUUID(),started=Date.now(),items=[];
+  for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,operation,baseData:working.documents[change.key],status:'pending',applicationPlanId:id});working.documents[change.key]=change.data;}
+  plan={id,scope,at:new Date(started).toISOString(),items,status:'queued'};runtime.store.set('applicationPlan:'+id,plan);onPersist?.(id);
+ }
+ // Recover all original entries before flushing. Saving the plan precedes every network write.
+ for(const item of plan.items)if(!runtime.store.get('appMutation:'+item.id))runtime.store.set('appMutation:'+item.id,item);
+ const result=await flushApplicationMutations(runtime),remaining=plan.items.filter(i=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+i.id)?.status)).length;plan.status=remaining?'queued':'completed';runtime.store.set('applicationPlan:'+plan.id,plan);return{ok:true,planId:plan.id,status:plan.status,remaining,...result};
+}
 async function performFlush(runtime){
  const pending=pendingApplication(runtime);if(!pending.length)return{pending:0};let snapshot;
  try{snapshot=await runtime.cloud.request('snapshot');}catch(error){return{pending:pending.length,error:error.message};}

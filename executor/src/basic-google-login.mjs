@@ -1,5 +1,6 @@
 import path from'node:path';import{randomUUID,createHash}from'node:crypto';import{readFile}from'node:fs/promises';
 import{findGooglePopup}from'./google-auth.mjs';import{capturePageEvidence}from'./page-evidence.mjs';
+import{readAfterNavigation}from'./navigation-read.mjs';
 const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'');}catch{return'';}};
 const GOOGLE=/^(?:sign in|continue|log in|login|sign up|connect) with google$/i;
 export function canAuthenticateOffline(runtime,task,input){
@@ -50,17 +51,18 @@ export function decideBasicGoogleStep(task,ui,attempt,{allowSingleRetry=false}={
  return gate('Google登录状态未唯一确认，未选择其他账号或批准额外权限');
 }
 export async function readBasicGoogleUI(page){
- return page.evaluate(()=>({url:location.origin+location.pathname,text:document.body?.innerText?.slice(0,18000)||'',
+ return readAfterNavigation(page,()=>page.evaluate(()=>({url:location.origin+location.pathname,text:document.body?.innerText?.slice(0,18000)||'',
   hasPassword:[...document.querySelectorAll('input[type=password]')].some(e=>e.getBoundingClientRect().width>0),
   hasProductForm:[...document.querySelectorAll('input,textarea')].filter(e=>e.getBoundingClientRect().width>0).some(e=>/tool name|product name|startup name|website url|tool url/i.test((e.labels?.[0]?.textContent||'')+' '+e.placeholder)),
   fields:[...document.querySelectorAll('input:not([type=hidden]):not([type=password]),textarea,select,[contenteditable=true]')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({tag:e.tagName,type:e.type,name:e.name,id:e.id,label:e.labels?.[0]?.textContent?.trim()||e.getAttribute('aria-label')||e.placeholder||'',required:e.required,min:e.min,max:e.max,maxLength:e.maxLength,accept:e.accept})),
-  controls:[...document.querySelectorAll('button,a[href],[role=button]')].filter(e=>e.getBoundingClientRect().width>0&&!e.disabled).map(e=>({role:e.getAttribute('role')||(e.tagName==='A'?'link':'button'),label:(e.getAttribute('aria-label')||e.innerText||e.textContent||'').replace(/\s+/g,' ').trim(),href:e.tagName==='A'?e.href:undefined}))}));
+  controls:[...document.querySelectorAll('button,a[href],[role=button]')].filter(e=>e.getBoundingClientRect().width>0&&!e.disabled).map(e=>({role:e.getAttribute('role')||(e.tagName==='A'?'link':'button'),label:(e.getAttribute('aria-label')||e.innerText||e.textContent||'').replace(/\s+/g,' ').trim(),href:e.tagName==='A'?e.href:undefined}))})));
 }
 export async function advanceBasicGoogleLogin(runtime,task,original,{offline=false,continueExistingAuth=false,allowSingleRetry=false}={}){
- if(task.authAttempts?.length&&!(continueExistingAuth&&task.authAttempts.length===1&&task.authAttempts[0].status==='needs_attention'))return{authenticated:false,reason:'原任务已有Google登录尝试，先核验原页，不重复登录'};
+ if(task.authAttempts?.length&&!(continueExistingAuth&&task.authAttempts.length===1&&task.authAttempts[0].onlyBasicAuthentication===true&&['needs_attention','in_progress'].includes(task.authAttempts[0].status)))return{authenticated:false,reason:'原任务已有Google登录尝试，先核验原页，不重复登录'};
  let page=original;
  const attempt=continueExistingAuth?structuredClone(task.authAttempts[0]):{id:randomUUID(),at:new Date().toISOString(),status:'in_progress',onlyBasicAuthentication:true,offline,steps:[]};
  attempt.status='in_progress';
+ if(continueExistingAuth)page=await findGooglePopup(runtime.context,original).catch(()=>original);
  const saveEvidence=async()=>{
   const file=path.join(runtime.home,`${task.id}-${Date.now()}-google-observed.png`);await capturePageEvidence(runtime.context,page,{path:file});
   const sha=createHash('sha256').update(await readFile(file)).digest('hex');
@@ -68,7 +70,7 @@ export async function advanceBasicGoogleLogin(runtime,task,original,{offline=fal
     preparationHistory:[...(task.preparationHistory||[]),{at:new Date().toISOString(),kind:'before_basic_google_login',artifactRef:task.artifactRef,artifactSha256:task.artifactSha256,screenshot:task.screenshot}],
     screenshot:file,artifactRef:''},'basic_google_evidence');
  };
- for(let i=attempt.steps.length;i<5;i++){
+ try{for(let i=attempt.steps.length;i<5;i++){
   const ui=await readBasicGoogleUI(page),decision=decideBasicGoogleStep(task,ui,attempt,{allowSingleRetry});
   if(decision.kind==='gate'){
    attempt.status='needs_attention';attempt.reason=decision.reason;
@@ -106,7 +108,7 @@ export async function advanceBasicGoogleLogin(runtime,task,original,{offline=fal
     if(!offline)await runtime.synchronize();
    }
   }
- }
+ }}catch(error){attempt.status='needs_attention';attempt.interrupted=true;attempt.reason=error.message;runtime.update(task,{authAttempts:[attempt]},'basic_google_interrupted');throw error;}
  attempt.status='needs_attention';attempt.reason='Google基本登录达到5步上限，保留原页，继续下一站';runtime.update(task,{authAttempts:[attempt]},'basic_google_step_limit');
  await saveEvidence();
  if(!offline)await runtime.synchronize();return{authenticated:false,reason:attempt.reason};

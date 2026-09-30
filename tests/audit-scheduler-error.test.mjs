@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-const source = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const code = source.slice(source.indexOf('function scheduleQueueProcessing('), source.indexOf('async function refreshBatchRunStatus('));
 const stored = { status: 'running' };
 const context = {

@@ -1,6 +1,13 @@
 import test from 'node:test';import assert from 'node:assert/strict';import{Cloud}from'../executor/src/cloud.mjs';
 import{Store}from'../executor/src/store.mjs';
 import{createHash}from'node:crypto';
+test('preparation model gets a bounded longer deadline while ledger calls keep their original timeout',async()=>{
+ const oldFetch=globalThis.fetch,oldTimeout=AbortSignal.timeout,deadlines=[];
+ try{AbortSignal.timeout=ms=>{deadlines.push(ms);return oldTimeout(ms);};globalThis.fetch=async()=>Response.json({ok:true});
+  const cloud=new Cloud({endpoint:'https://cloud.test',workspaceId:'default',deviceToken:'private'});
+  await cloud.request('plan',{mode:'prepare_takeover'});await cloud.request('snapshot');assert.deepEqual(deadlines,[60000,20000]);
+ }finally{globalThis.fetch=oldFetch;AbortSignal.timeout=oldTimeout;}
+});
 test('quota failure stops flush without another read and preserves pending event',async()=>{
  const calls=[],acked=[],cloud=new Cloud({});cloud.request=async route=>{calls.push(route);throw Object.assign(new Error('quota exceeded'),{cloudQuota:true});};
  await assert.rejects(cloud.flush({pending:()=>[{id:'e'}],ack:id=>acked.push(id)}));assert.deepEqual(calls,['event']);assert.deepEqual(acked,[]);

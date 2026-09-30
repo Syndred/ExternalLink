@@ -4,6 +4,11 @@ import { mkdtempSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Store } from '../executor/src/store.mjs';
+
+test('restarting the backend releases interrupted AI preparation without resetting its original budget',()=>{
+ const store=new Store(':memory:');store.set('task:ai',{id:'ai',version:1,status:'filling',controller:'ai',aiTakeover:{actions:7,calls:4,id:'budget'}});
+ store.recover();const recovered=store.get('task:ai');assert.equal(recovered.controller,'executor');assert.equal(recovered.aiTakeover.actions,7);assert.equal(recovered.aiTakeover.calls,4);assert.equal(recovered.status,'pending');store.close();
+});
 import { Cloud } from '../executor/src/cloud.mjs';
 
 test('SQLite recovery retains all 3101 unsynced events and never retries a submission boundary', () => {

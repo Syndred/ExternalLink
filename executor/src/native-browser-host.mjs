@@ -10,14 +10,14 @@ const root = process.env.EXTERNALLINK_HOME || path.join(os.homedir(), '.external
 const login = JSON.parse((await readFile(path.join(root, 'manual-login.json'), 'utf8')).replace(/^\uFEFF/, ''));
 const expectedProfile = path.join(root, 'browser-profile-stable');
 if (path.resolve(login.profile).toLowerCase() !== path.resolve(expectedProfile).toLowerCase()) throw new Error('人工登录目录不属于此执行器');
-const openUrl = process.env.EXTERNALLINK_OPEN_URL || 'https://www.basedtools.ai/submit';
+const openUrl = process.env.EXTERNALLINK_OPEN_URL || 'http://127.0.0.1:19389/';
 if (!['http:', 'https:'].includes(new URL(openUrl).protocol)) throw new Error('入口必须为 http/https 网站');
 const started = Date.now();
 const recordEvent=event=>appendFile(path.join(root,'host-events.jsonl'),JSON.stringify({at:new Date().toISOString(),hostPid:process.pid,...event})+'\n');
 await recordEvent({type:'native_launch',openOrigin:new URL(openUrl).origin});
 const chrome = spawn(login.executablePath, [
   `--user-data-dir=${login.profile}`, '--remote-debugging-address=127.0.0.1',
-  '--remote-debugging-port=0', '--new-window', openUrl,
+  '--remote-debugging-port=0', '--disable-extensions', '--new-window', openUrl,
 ], { stdio: 'ignore', windowsHide: false });
 let exitInfo;
 chrome.on('error', error => { exitInfo = error.message;recordEvent({type:'native_launch_error',code:error.code}).catch(()=>{}); });

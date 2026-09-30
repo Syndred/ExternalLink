@@ -4,8 +4,9 @@ import { repo } from './shared.mjs';
 
 // The same production field mapper, validation and evidence classifier runs in
 // a separate CDP isolated world. No credential is placed in the site's realm.
-const sources = await Promise.all(['lib/profiles.js', 'lib/playbooks.js', 'content.js'].map(name => readFile(path.join(repo, 'extension', name), 'utf8')));
+const sources = await Promise.all(['profiles.js', 'playbooks.js', 'form-engine.js'].map(name => readFile(path.join(repo, 'core', name), 'utf8')));
 export async function attachEngine(context, frame, bridge = async () => ({ ok: false })) {
+  if(!/^https?:\/\//.test(frame.url()))throw Error('表单引擎仅允许普通 HTTP/HTTPS 页面');
   let session;
   try { session = await context.newCDPSession(frame); }
   catch (error) {
@@ -45,11 +46,12 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
     try { response = await bridge(message); } catch (error) { response = { ok: false, error: error.message }; }
     await evaluate(`globalThis.__executorReplies.get(${id})?.(${JSON.stringify(response)});globalThis.__executorReplies.delete(${id})`, false).catch(() => {});
   });
-  await evaluate(`globalThis.__extLinkExecutor=true; globalThis.__executorReplies=new Map(); globalThis.__executorSeq=0;
-    globalThis.chrome={runtime:{onMessage:{addListener(fn){globalThis.__executorHandler=fn},removeListener(){}},
-    sendMessage(message){if(!['fetchSubmissionMedia','fetchCloudSubmissionMedia','generateCommentDrafts'].includes(message.action))return Promise.resolve({ok:false});
-    return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}},
-    storage:{local:{get:async()=>({}),set:async()=>{}},onChanged:{addListener(){}}}};`);
+  await evaluate(`globalThis.__executorReplies=new Map(); globalThis.__executorSeq=0;
+    globalThis.__externalLinkServices={authorized:true,interactive:false,
+      register(fn){globalThis.__executorHandler=fn},unregister(){globalThis.__executorHandler=null},
+      request(message){if(!['fetchSubmissionMedia','fetchCloudSubmissionMedia','generateCommentDrafts'].includes(message.action))return Promise.resolve({ok:false});
+        return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}
+    };`);
   for (const source of sources) await evaluate(source, false);
   return {
     call: message => evaluate(`new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('共享表单引擎操作超时')),45000);try{const handled=__executorHandler(${JSON.stringify(message)},null,value=>{clearTimeout(timeout);resolve(value)});if(!handled){clearTimeout(timeout);reject(new Error('未知表单操作'))}}catch(e){clearTimeout(timeout);reject(e)}})`),

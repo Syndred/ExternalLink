@@ -8,12 +8,17 @@ import { Runtime } from './runtime.mjs';
 import { Cloud } from './cloud.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import {capturePageEvidence} from './page-evidence.mjs';
+import {CredentialVault} from './credential-vault.mjs';
+import {GmailSync} from './gmail-sync.mjs';
+import {enqueueProfileMutation,resolveApplicationConflict} from './application-mutations.mjs';
+import {enqueueMediaUpload} from './media-uploads.mjs';
 
 const home = process.env.EXTERNALLINK_HOME || path.join(os.homedir(), '.externallink-executor');
 await mkdir(home, { recursive: true });
 const store = new Store(path.join(home, 'outbox.sqlite'));
 store.acquireOwner();
 const runtime = new Runtime(store, home);
+const gmail=new GmailSync({store,vault:new CredentialVault(home)});gmail.start();
 const code = randomBytes(18).toString('base64url');
 const codeExpires = Date.now() + 10 * 60 * 1000;
 const match = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || '')); return x.length === y.length && timingSafeEqual(x, y); };
@@ -36,7 +41,7 @@ const server = http.createServer(async (req, res) => {
   if (route !== '/pair' && !match(req.headers.authorization, `Bearer ${pair?.localToken}`)) return send(res, { ok: false, error: '尚未配对或本机凭据失效' }, 401);
   try {
     let text = '';
-    for await (const chunk of req) { text += chunk; if (text.length > 1024 * 1024) throw new Error('请求过大'); }
+    for await (const chunk of req) { text += chunk; if (text.length > (route==='/mediaUpload'?9:1)*1024 * 1024) throw new Error('请求过大'); }
     const input = text ? JSON.parse(text) : {};
     if (route === '/pair' && req.method === 'POST') {
       if (pairUsed || Date.now() > codeExpires || !extensionOrigin || !match(input.code, code)) return send(res, { ok: false, error: '配对码错误、过期或已使用；重新启动执行器生成新码' }, 403);
@@ -61,8 +66,21 @@ const server = http.createServer(async (req, res) => {
     if (route === '/catalog' && req.method === 'GET') { const snapshot = await runtime.cloud.request('snapshot'); send(res, { ok: true, profiles: snapshot.documents.siteProfiles, revision: snapshot.revisions.siteProfiles }); return; }
     if (req.method !== 'POST') { send(res, { ok: false, error: '接口不存在' }, 404); return; }
     const operation = async () => {
+      if(route==='/gmailStatus')return{ok:true,gmail:gmail.status()};
+      if(route==='/gmailMessage')return{ok:true,message:gmail.message(input.messageId)};
+      if(route==='/gmailConfigure')return{ok:true,gmail:await gmail.configure(input.client)};
+      if(route==='/gmailAuthorize')return gmail.authorize();
+      if(route==='/gmailSync')return{ok:true,gmail:await gmail.sync()};
+      if(route==='/gmailRefresh')return{ok:true,gmail:await gmail.refresh()};
+      if(route==='/resolveConflict')return resolveApplicationConflict(runtime,input);
+      if(route==='/mediaUpload')return enqueueMediaUpload(runtime,input);
       if(['/workbenchDocuments','/journalProgress','/journalFlush','/workbenchPending'].includes(route))return runtime.control(route.slice(1),input);
       if(route==='/basicGoogleLogin')return runtime.control('basicGoogleLogin',input);
+      if(route==='/prepareTask')return runtime.control('prepareTask',input);
+      if(route==='/registerAcceptance')return runtime.control('registerAcceptance',input);
+      if(route==='/runTask')return runtime.control('runTask',input);
+      if(route==='/startAcceptance')return runtime.control('startAcceptance',input);
+      if(['/appData','/taskDetails','/libraryMutation'].includes(route))return runtime.control(route.slice(1),input);
       if (route === '/preview') return runtime.preview(input);
       if (route === '/annotate') {
         const task = store.get(`task:${input.taskId}`); if (!task) throw new Error('任务不存在');
@@ -88,11 +106,7 @@ const server = http.createServer(async (req, res) => {
         await runtime.synchronize(); return runtime.status();
       }
       if (route === '/profile') {
-        const saved = await runtime.cloud.request('profile', input);
-        const read = await runtime.cloud.request('snapshot');
-        const actual = read.documents.siteProfiles?.[input.profileId];
-        if (!isDeepStrictEqual(actual?.fields, saved.profile.fields)) throw new Error('资料回读不一致');
-        return { ...saved, profile: actual };
+        return enqueueProfileMutation(runtime,input);
       }
       if (route === '/start') return runtime.start(input);
     if (route === '/startLibrary') return runtime.startLibrary(input);
@@ -111,4 +125,4 @@ await writeFile(path.join(home, 'server.json'), JSON.stringify({ pid: process.pi
 await writeFile(path.join(home, 'pairing.txt'), store.get('pair') ? '设备已配对，打开原插件运行工作台。' : `执行器地址：http://127.0.0.1:${server.address().port}\n一次性配对码：${code}\n有效期：10 分钟\n`);
 console.log(store.get('pair') ? 'ExternalLink 执行器已恢复配对。' : `ExternalLink 配对信息：${path.join(home, 'pairing.txt')}`);
 setInterval(() => runtime.tick(), 2000).unref();
-process.on('SIGTERM', () => { server.close(); store.close(); process.exit(); });
+process.on('SIGTERM', () => { gmail.stop(); server.close(); store.close(); process.exit(); });

@@ -2,10 +2,10 @@
 // administrator's state replacement, migration or credential-issuing powers.
 import { parseBearerToken, secureEqual } from './worker-core.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
-import '../../../extension/lib/queue.js';
-import '../../../extension/lib/submission-timeline.js';
-import '../../../extension/lib/library-classifier.js';
-import '../../../extension/lib/executor-contract.js';
+import '../../../core/queue.js';
+import '../../../core/submission-timeline.js';
+import '../../../core/library-classifier.js';
+import '../../../core/executor-contract.js';
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 // PostgreSQL builds these authenticated read envelopes as JSON text. Returning

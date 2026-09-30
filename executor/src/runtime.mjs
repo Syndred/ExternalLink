@@ -31,6 +31,16 @@ import {toolScoutFinalPreparation} from './staged-form.mjs';
 import{advanceBasicGoogleLogin,canAuthenticateOffline,readBasicGoogleUI}from'./basic-google-login.mjs';
 import{getTargetInfo}from'./browser-target.mjs';
 import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench}from'./workbench-sync.mjs';
+import { runPreparationTakeover } from './auto-takeover.mjs';
+import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
+import { materializeTaskMedia } from './task-media.mjs';
+import { readAfterNavigation, settleObservedClick } from './navigation-read.mjs';
+import { registerAcceptance } from './acceptance-register.mjs';
+import { applicationData } from './application-data.mjs';
+import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication} from './application-mutations.mjs';
+import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
+import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
+import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -144,7 +154,7 @@ export class Runtime {
       enrolled:planned.length,processed:planned.filter(t=>!['pending','opening','filling','submitting'].includes(t.status)).length,counts,
       exclusions:plan.exclusions.length,runtimeExclusions:plan.runtimeExclusions.length,batches:plan.batches.length,scopeHash:plan.scopeHash,snapshotAt:plan.offlineSnapshotAt||null,
       globalPause:plan.globalPause?{...plan.globalPause,active:globalGateActive,historical:!globalGateActive}:null}:null;
-    return { ok: true, paired: !!this.store.get('pair'), paused, busy: !!this.job,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
+    return { ok: true, runtimeMode:'standalone-core', paired: !!this.store.get('pair'), paused, busy: !!this.job,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
     runs: this.store.values('run:'), tasks: tasks.map(task => ({ ...task, pendingEvents:pending.filter(e=>e.taskId===task.id).length, syncStatus:task.syncConflict?'conflict':pending.some(e => e.taskId === task.id) || (task.receipt && !task.cloudVerified) ? 'pending' : 'confirmed' })), pendingEvents: pending.length, workbenchPendingEvents:pendingWorkbench(this).length, cloudError:activeOfflineMode?'':this.cloudError, host: this.host ? { version: this.host.version, instance: this.host.startedAt } : null }; }
   async connect() {
     this.host = JSON.parse(await readFile(path.join(this.home, 'host.json'), 'utf8'));
@@ -156,7 +166,7 @@ export class Runtime {
   }
   async preview(input) {
     const snapshot = await this.cloud.request('snapshot');
-    const bundled = JSON.parse(await readFile(path.join(repo, 'extension/table-library.json'), 'utf8'));
+    const bundled = JSON.parse(await readFile(path.join(repo, 'core/table-library.json'), 'utf8'));
     if (!snapshot.documents.siteProfiles?.[input.profileId]) throw new Error('云端不存在选定产品');
     const scope = selectScope(snapshot, bundled, input.profileId, input.urls);
     const existing = await this.cloud.request('runs?view=inventory');
@@ -304,21 +314,22 @@ export class Runtime {
   }
   async preparePublicPage(page,task){
     for(let step=0;step<3;step++){
-      const inspected=await page.evaluate(()=>({url:location.origin+location.pathname,title:document.title,text:document.body?.innerText?.slice(0,16000)||'',
+      const inspected=await readAfterNavigation(page,()=>page.evaluate(()=>({url:location.origin+location.pathname,title:document.title,text:document.body?.innerText?.slice(0,16000)||'',
         hasPassword:[...document.querySelectorAll('input[type=password]')].some(e=>e.getBoundingClientRect().width>0),
         fieldLabels:[...document.querySelectorAll('input:not([type=hidden]):not([type=password]),textarea,select')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({type:e.type,label:e.labels?.[0]?.textContent?.trim()||e.placeholder||e.name||e.id})),
         iframeSources:[...document.querySelectorAll('iframe[src]')].filter(e=>e.getBoundingClientRect().width>0).map(e=>e.src),
         freeOffers:[...document.querySelectorAll('h1,h2,h3,h4')].filter(h=>h.getBoundingClientRect().width>0&&/^(?:free|[$€£]\s*0(?:\.00)?)$/i.test(h.textContent.trim())).flatMap(h=>{
           let p=h;for(let n=0;n<6&&p;n++,p=p.parentElement){const text=p.innerText||'';const links=[...p.querySelectorAll('a[href]')].filter(a=>a.getBoundingClientRect().width>0&&/submit now|get started|start free|select/i.test(a.textContent));
           if(links.length===1&&text.length<1600&&!/[$€£]\s*[1-9]/.test(text))return[{heading:h.textContent.trim(),text,href:links[0].href,textLabel:links[0].textContent.trim()}];}return[];}),
-        links:[...document.querySelectorAll('a[href]')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({text:e.textContent.trim().slice(0,100),href:e.href}))}));
+        links:[...document.querySelectorAll('a[href]')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({text:e.textContent.trim().slice(0,100),href:e.href}))})));
       const strip=u=>{try{const parsed=new URL(u);return parsed.origin+parsed.pathname;}catch{return'';}};
       this.update(task,{publicPage:{...inspected,links:inspected.links.map(l=>({...l,href:strip(l.href)}))}},'public_page_inspected');
       const free=chooseFreeOffer(page.url(),inspected.freeOffers);
       const gate=publicPageBlocker(inspected);
-      if(gate?.attentionType==='login'&&!task.authAttempts?.length&&task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions')&&
+      const continueAuth=task.authAttempts?.length===1&&task.authAttempts[0].onlyBasicAuthentication===true&&task.authAttempts[0].status==='in_progress';
+      if(gate?.attentionType==='login'&&(!task.authAttempts?.length||continueAuth)&&task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions')&&
         (await readBasicGoogleUI(page)).controls.filter(c=>/^(?:sign in|continue|log in|login|sign up|connect) with google$/i.test(c.label)).length===1){
-        const login=await advanceBasicGoogleLogin(this,task,page);
+        const login=await advanceBasicGoogleLogin(this,task,page,{continueExistingAuth:continueAuth});
         if(login.authenticated){
           const entry=page.getByRole('link',{name:/^submit\s*\+?$/i}).filter({visible:true});
           if(await entry.count()===1&&new URL(await entry.getAttribute('href'),page.url()).href===task.url){await page.goto(task.url,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(1500);}
@@ -342,8 +353,8 @@ export class Runtime {
     }
   }
   update(task, patch, type) { Object.assign(task, patch); this.store.transition(task, type); }
-  async lease(task) {
-    if(this.store.get('offlineMode')?.enabled){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
+  async lease(task,{online=false}={}) {
+    if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;
     try { lease = await this.cloud.request('lease', { taskId: task.id, version: task.version, controllerId: this.controllerId }); }
     catch(error) {
@@ -359,6 +370,8 @@ export class Runtime {
     this.store.set(`task:${task.id}`, task);
   }
   async synchronize() {
+    if(pendingMediaUploads(this).length)await flushMediaUploads(this);
+    if(pendingApplication(this).length)await flushApplicationMutations(this);
     if(this.store.get('offlineMode')?.enabled)return this.status();
     if(pendingWorkbench(this).length){const result=await journalSync(this).flush();if(result.pending&&result.error)throw Error('工作台进度待同步：'+result.error);}
     const offline=this.store.get('offlineMode');
@@ -478,18 +491,18 @@ export class Runtime {
     if (!this.hydrated) { this.restoreCloud().catch(error => { this.cloudError = error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); }); return; }
     if (this.job || !this.store.get('pair')) return;
     const needsCloudRecovery = this.lastCloudNetworkFailure && this.cloudError === this.lastCloudNetworkFailure;
-    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict)) && !needsCloudRecovery) return;
+    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !pendingApplication(this).length && !pendingMediaUploads(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict)) && !needsCloudRecovery) return;
     if (this.store.get('paused') !== false) {
       const plan=this.store.get('libraryPlan'),gate=plan?.globalPause;
       if(gate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(gate?.reason||''))return;
-      if(plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
+      if(!this.store.get('acceptanceBatch')&&plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
         this.job=this.recoverContinuousConnection().catch(error=>{
           this.cloudError=error.message;const attempts=(gate.probes||0)+1;
           this.store.set('libraryPlan',{...this.store.get('libraryPlan'),globalPause:{...gate,probes:attempts,reason:error.message,
             resumeEligible:!error.cloudQuota&&(error.cloudNetwork||error.status>=500),attentionType:error.cloudQuota?'cloud_quota':gate.attentionType,nextProbeAt:Date.now()+Math.min(300000,60000*attempts)}});
         }).finally(()=>{this.job=null;});return;
       }
-      if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !this.store.values('task:').some(t => (t.screenshot&&!t.artifactRef)||(t.receipt && !t.cloudVerified&&!t.syncConflict))) {
+      if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !pendingApplication(this).length && !pendingMediaUploads(this).length && !this.store.values('task:').some(t => (t.screenshot&&!t.artifactRef)||(t.receipt && !t.cloudVerified&&!t.syncConflict))) {
         if (needsCloudRecovery) {
           this.job = this.cloud.request('workspace/journal-documents').then(() => { this.syncFailures=0;this.syncRetryAt=0; })
             .catch(error => { this.cloudError=error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); })
@@ -503,18 +516,22 @@ export class Runtime {
       }).finally(() => { this.job = null; }); return;
     }
     this.job = this.work().catch(error => { this.cloudError = error.message;this.store.set('paused',true);
-      const plan=this.store.get('libraryPlan'),classification=classifyPauseFailure(error);if(plan?.status==='active')this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,
+      const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:error.message});
+      const plan=this.store.get('libraryPlan'),classification=classifyPauseFailure(error);if(!batch&&plan?.status==='active')this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,
         ...classification,nextProbeAt:classification.resumeEligible?Date.now()+60000:null}});
     }).finally(() => {
-      if (this.store.get('singleTaskId')) { this.store.set('paused', true); this.store.set('singleTaskId', null); }
+      if (this.store.get('singleTaskId')) { if(!finishAcceptanceTask(this,this.store.get('singleTaskId')))this.store.set('paused', true);this.store.set('singleTaskId', null); }
       this.job = null;
     });
   }
   async work() {
     await this.synchronize();
     if (!this.context) await this.connect();
+    const fixedBatch=this.store.get('acceptanceBatch');
+    if(fixedBatch?.status==='running'&&!this.store.get('singleTaskId')){const selected=await nextAcceptanceTask(this);if(!selected)return;}
     const currentPlan=this.store.get('libraryPlan');
-    if(currentPlan?.status==='active'){
+    const singleTaskId = this.store.get('singleTaskId');
+    if(!singleTaskId&&currentPlan?.status==='active'){
       for(const old of this.store.values('task:').filter(t=>t.libraryPlanId===currentPlan.id&&!t.tabClosedAt&&
         (t.artifactRef||this.store.get('offlineMode')?.enabled&&(t.screenshot||t.status==='needs_manual'&&t.attentionType==='site_unavailable'&&!t.attemptBoundary&&
           !t.receipt&&/(?:timeout|timed out|ERR_|net::|连接|超时)/i.test(t.reason||'')))&&
@@ -522,12 +539,11 @@ export class Runtime {
         await this.finalizePriorContinuousTask(old);
       }
     }
-    const singleTaskId = this.store.get('singleTaskId');
-    const eligiblePending=t=>t.status==='pending'&&(!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId);
+    const eligiblePending=t=>t.status==='pending'&&(singleTaskId?t.id===singleTaskId:!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId);
     if(!singleTaskId&&!this.store.values('task:').some(eligiblePending))await this.queueLibraryBatch();
     const task = this.store.values('task:').find(t => eligiblePending(t) && (!singleTaskId || t.id === singleTaskId));
     if (!task || this.store.get('paused') !== false) return;
-    const offline=!!this.store.get('offlineMode')?.enabled;
+    const offline=!task.acceptanceId&&!!this.store.get('offlineMode')?.enabled;
     let snapshot=null;
     if(!offline){snapshot=await this.cloud.request('snapshot');if (priorProductSuccess(snapshot.documents.submissionRecords, task.profileId, task.url)) {this.update(task, { status: 'excluded', reason: '最新云端已有该产品提交，未打开投稿' }, 'dedup'); return;}}
     await this.lease(task);
@@ -535,7 +551,7 @@ export class Runtime {
     let run=findUnambiguousOfflineRun(this.store,task);
     if(!run)throw new Error('原任务没有唯一匹配的持久批次，停止执行');
     if(!task.runId)this.update(task,{runId:run.id},'offline_run_link_recovered');
-    const continuous=continuousPlan?.status==='active'&&continuousPlan.profileId===task.profileId;
+    const continuous=!task.acceptanceId&&continuousPlan?.status==='active'&&continuousPlan.profileId===task.profileId;
     if(continuous){
       const current=offline?(this.store.get('preview')?.profile||task.profileSnapshot):snapshot.documents.siteProfiles?.[task.profileId];
       if(current?.fields?.Url!=='https://jevplay.com')throw new Error('全库产品资料身份发生变化，停止执行');
@@ -544,7 +560,7 @@ export class Runtime {
     }
     const profile = task.profileSnapshot || run.profile;
     const config = plain(profiles.buildAgentConfigFromProfile(profile));
-    config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&c.source==='user_reply') === true;
+    config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
     config.sidepanelContext = { ...config.sidepanelContext, url: task.url };
@@ -586,7 +602,8 @@ export class Runtime {
       // Hydrated forms can appear after DOMContentLoaded. Wait on visible
       // controls/frames, rather than treating the initial HTML as a dead end.
       await page.locator('input:visible, textarea:visible, select:visible, iframe:visible, [contenteditable=true]:visible, a[href]:visible, button:visible').first().waitFor({ timeout: 15000 }).catch(() => {});
-      if(continuous){await page.waitForTimeout(1500);await this.preparePublicPage(page,task);}
+      if(continuous)await page.waitForTimeout(1500);
+      await this.preparePublicPage(page,task);
       await this.prepareKnownPage(page, task.url, task);
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_fill'); return; }
       this.update(task, { status: 'filling' }, 'filling');
@@ -605,20 +622,32 @@ export class Runtime {
         candidate = engines.find(e => e.frame === page.mainFrame());
         if (candidate) candidate.detection = { ...candidate.detection, platform: 'submission', operable: true };
       }
-      if (!candidate) throw new Error('没有可识别表单，需要监工确认投稿入口');
-      const { engine, detection } = candidate;
+      if (!candidate && !task.attemptBoundary && !task.fillOnlyRun) {
+        for(const item of engines)await item.engine.detach();engines=[];
+        const takeover=await this.prepareWithAi(page,task,config,active);
+        candidate=takeover.candidate;if(candidate)engines.push(candidate);
+      }
+      if (!candidate) throw new Error('没有可识别表单，后台 AI 已尝试原页并记录结果');
+      let { engine, detection } = candidate;
       const preparingOnly = task.fillOnlyRun && /^(?:poweredbyai\.app|navtools\.ai|aioftheday\.com)$/.test(new URL(task.url).hostname);
       if (!detection.hasCaptcha && !preparingOnly && (detection.submitBlocker?.blocked || detection.submitBlocker?.needs_manual || detection.submitBlocker?.payment_uncertain)) throw new Error(detection.submitBlocker?.reason || '需要人工处理');
       if (['wp_comment','article'].includes(detection.platform)) throw new Error('评论需要逐页审核相关性，进入待人工');
       const forceRefreshExisting = !!task.preparationHistory?.length || !!task.attemptHistory?.length || !!task.stageHistory?.length ||
         /^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(task.url);
-      const fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call({ action: 'smartFill', config: { ...config, fillOnly: true, autoSubmitDirectory: false, forceRefreshExisting } });
+      let fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call({ action: 'smartFill', config: { ...config, fillOnly: true, autoSubmitDirectory: false, forceRefreshExisting } });
       if(!task.submitPreparedRun) {
         await this.reconcileTextInputs(candidate.frame, await engine.call({ action: 'getFilledFieldsReport' }), fill.mappings);
-        await this.completeKnownForm(candidate.frame, task.url, profile, task);
+        try{await this.completeKnownForm(candidate.frame, task.url, profile, task);}
+        catch(error){this.update(task,{normalPreparationFailure:{at:new Date().toISOString(),reason:error.message}},'normal_preparation_failed');fill={...fill,ok:false,reason:error.message};}
       }
       let validation = await engine.call({ action: 'collectFormValidation' });
-      if (validation.validationFailed && active() && !task.submitPreparedRun) {
+      const initialAction=await engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:detection.platform||'directory'});
+      if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && !task.fillOnlyRun && !detection.hasCaptcha) {
+        for(const item of engines)await item.engine.detach();engines=[];
+        const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true});
+        if(takeover.candidate){candidate=takeover.candidate;engine=candidate.engine;detection=candidate.detection;engines.push(candidate);validation=await engine.call({action:'collectFormValidation'});if(takeover.ok)fill={...fill,ok:true,needs_manual:false,aiPrepared:true};}
+      }
+      if (validation.validationFailed && active() && !task.submitPreparedRun && !task.aiTakeover) {
         const snapshot = await engine.call({ action: 'getPageSnapshot' });
         const plan = offline?null:await this.cloud.request('plan', { taskId: task.id, task: { url: task.url, profileId: task.profileId }, snapshot, config, fillOnly: true }).catch(() => null);
         if (plan?.status === 'act' && plan.actions?.length && active()) {
@@ -663,7 +692,7 @@ export class Runtime {
       const submitAction = await engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:detection.platform||'directory'});
       this.update(task,{submitAction},'submit_action_preflight');
       if(submitAction.allowed===false)throw new Error('当前页面分类仅允许填写，先核对；未建立投稿边界');
-      if(!submitAction.finalFound)throw new Error(submitAction.advanceFound?'当前只有前进动作，先核对下一步；未建立投稿边界':'未找到可用最终投稿按钮；未建立投稿边界');
+      if(!submitAction.finalFound)throw new Error(submitAction.advanceFound?'当前只有前进动作，后台接管未完成下一步；未建立投稿边界':'未找到可用最终投稿按钮；未建立投稿边界');
       // Revalidate ownership and cloud dedup immediately before the mutation.
       await this.lease(task);
       const baseline = await engine.call({ action: 'classifySubmitEvidence', destinationUrl: task.url });
@@ -719,6 +748,10 @@ export class Runtime {
           catch(error){this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'evidence_capture_deferred');}
         }
         await this.synchronize();
+        if(task.acceptanceId){
+          try{await closeAcceptanceTask(this,task);}
+          catch(error){this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
+        }
         if(continuous){
           try{await withinDeadline(this.finalizeContinuousTask(task),15000,'单站页签收尾');}
           catch(error){this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'site_cleanup_deferred');}
@@ -727,6 +760,61 @@ export class Runtime {
         }
       }finally{this.activeTaskId=null;}
     }
+  }
+  async prepareWithAi(page,task,config,active,{normalFillDone=false}={}) {
+    let candidate;
+    let normalDone=normalFillDone;
+    const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
+      upload:kind=>materializeTaskMedia(this,task,config,kind)});
+    let bound=false;
+    const observe=async()=>{
+      await this.preparePublicPage(page,task);
+      if(!bound){await adapter.bind();bound=true;}
+      await candidate?.engine.detach();candidate=null;
+      const options=[];
+      for(const frame of page.frames())if(/^https?:/.test(frame.url())){
+        try{const engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config});options.push({engine,frame,detection});}catch{}
+      }
+      candidate=options.sort((a,b)=>b.detection.formFieldCount-a.detection.formFieldCount)[0];
+      for(const item of options)if(item!==candidate)await item.engine.detach();
+      if(!candidate)throw Error('原任务页面没有可观察上下文');
+      if(!normalDone&&candidate.detection.operable){
+        normalDone=true;
+        const fill=await candidate.engine.call({action:'smartFill',config:{...config,fillOnly:true,autoSubmitDirectory:false}});
+        await this.reconcileTextInputs(candidate.frame,await candidate.engine.call({action:'getFilledFieldsReport'}),fill.mappings);
+        this.update(task,{normalPreparation:{at:new Date().toISOString(),fill}},'normal_preparation_completed');
+      }
+      const snapshot=await candidate.engine.call({action:'getPageSnapshot'});
+      snapshot.preparation={validation:await candidate.engine.call({action:'collectFormValidation'}),
+        submitAction:await candidate.engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:candidate.detection.platform||'directory'}),
+        filled:await candidate.engine.call({action:'getFilledFieldsReport'})};
+      if(candidate.frame===page.mainFrame())snapshot.agentBrowser=await adapter.snapshot();
+      return snapshot;
+    };
+    const ready=async()=>{
+      if(!candidate)return false;
+      try{
+        const validation=await candidate.engine.call({action:'collectFormValidation'});
+        const action=await candidate.engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:candidate.detection.platform||'directory'});
+        const actual=await candidate.engine.call({action:'getFilledFieldsReport'});
+        return !validation.validationFailed&&action.finalFound&&action.allowed!==false&&candidate.detection.operable&&
+          !assessSubmissionQuality(actual,task.profileSnapshot||{}).length;
+      }catch{return false;}
+    };
+    const result=await runPreparationTakeover(this,{task,active,observe,ready,
+      plan:async state=>{await this.cloud.flush(this.store);return this.cloud.request('plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config,...state});},
+      act:async action=>{
+        const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
+        let result;
+        if(candidate.frame===page.mainFrame())result=await adapter.act(action);
+        // Embedded forms share the same registered task page. The normal
+        // Playwright frame executor supplies the scope that CLI selectors lack.
+        else if(action.type==='upload')result=await candidate.frame.locator(action.selector).setInputFiles(await materializeTaskMedia(this,task,config,action.mediaKind));
+        else result=await candidate.engine.call({action:'executeActionPlan',actions:[action]});
+        if(action.type==='click')await settleObservedClick(page,before);
+        return result;
+      }});
+    return {...result,candidate};
   }
   async reobserveNavigatedReceipt(page, task) {
     const hostname = url => { try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.hostname.replace(/^www\./, '').toLowerCase() : ''; } catch { return ''; } };
@@ -1065,6 +1153,29 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(action==='startAcceptance')return startAcceptanceBatch(this,input.acceptanceId);
+    if(action==='libraryMutation')return enqueueLibraryMutation(this,input);
+    if(action==='appData')return applicationData(this,input);
+    if(action==='taskDetails'){
+      const task=this.store.get('task:'+input.taskId);if(!task)throw Error('任务不存在');
+      return{ok:true,task};
+    }
+    if(action==='registerAcceptance')return registerAcceptance(this,input.acceptanceId);
+    if(action==='runTask'){
+      if(this.job||this.store.get('paused')!==true||this.store.get('singleTaskId'))throw Error('原执行器需先暂停空闲');
+      const selected=this.store.get('task:'+input.taskId);
+      if(!selected||selected.attemptBoundary||selected.receipt||!['pending','needs_manual'].includes(selected.status)||selected.controller==='supervisor')throw Error('只能继续未投稿的原任务；未知结果须核验');
+      const frozen=this.store.get('acceptance:'+input.acceptanceId),execution=this.store.get('acceptanceExecution:'+input.acceptanceId);
+      const combo=frozen?.combinations.find(c=>(c.existingTaskId===selected.id||execution?.items[c.identity]?.taskId===selected.id)&&c.profileId===selected.profileId);
+      if(!combo)throw Error('原任务不在冻结组合范围');
+      const snapshot=await this.cloud.request('snapshot');
+      if(priorProductSuccess(snapshot.documents.submissionRecords,selected.profileId,selected.url))throw Error('该产品同站已有收件，禁止重复投稿');
+      await this.lease(selected,{online:true});
+      this.update(selected,{status:'pending',controller:'executor',acceptanceId:input.acceptanceId,profileSnapshot:combo.profile,profileRevision:combo.profileRevision,
+        consentHistory:[...(selected.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准冻结范围普通免费投稿及基本登录，额外权限和本人验证留待用户'}]},'frozen_task_released');
+      if(!frozen.startedAt)this.store.set('acceptance:'+input.acceptanceId,{...frozen,startedAt:new Date().toISOString()});
+      this.store.set('singleTaskId',selected.id);this.store.set('paused',false);this.tick();return this.status();
+    }
     if(action==='workbenchDocuments')return workbenchDocuments(this);
     if(action==='journalProgress')return enqueueWorkbench(this,input);
     if(action==='journalFlush')return journalSync(this).flush();
@@ -1098,7 +1209,7 @@ export class Runtime {
     }
     if (action === 'review' && this.job) await this.job;
     if (action === 'pause' || action === 'takeover') { this.store.set('paused', true); if (this.job) await this.job; }
-    if (action === 'pause') {const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return this.status();}
+    if (action === 'pause') {const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:input.reason||'用户暂停',pausedAt:new Date().toISOString()});const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return this.status();}
     if (action === 'offlineResume') return this.resumeOffline(input);
     if (action === 'resume') { if(this.job)await this.job;await this.synchronize();this.store.recover();await this.synchronize();const plan=this.store.get('libraryPlan');if(plan)this.store.set('libraryPlan',{...plan,globalPause:null});this.store.set('paused', false); this.tick(); return this.status(); }
     if (action === 'startLibrary') return this.startLibrary(input);
@@ -1116,6 +1227,58 @@ export class Runtime {
     }
     let task = this.store.get(`task:${input.taskId}`);
     if (!task) throw new Error('任务不存在');
+    if(action==='prepareTask'){
+      if(task.attemptBoundary||task.receipt)throw Error('已有提交边界，必须先核验，禁止重新准备');
+      if(this.job||this.store.get('paused')!==true||task.controller==='supervisor')throw Error('请先暂停并等待原控制器交回任务');
+      const snapshot=await this.cloud.request('snapshot');
+      let profile=snapshot.documents.siteProfiles?.[task.profileId],profileRevision=snapshot.revisions.siteProfiles;
+      if(!profile||priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url))throw Error('资料缺失或已有收件，禁止准备新投稿');
+      if(input.acceptanceId){
+        const frozen=this.store.get('acceptance:'+input.acceptanceId);
+        const execution=this.store.get('acceptanceExecution:'+input.acceptanceId);
+        const combo=frozen?.combinations.find(c=>(c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id)&&c.profileId===task.profileId);
+        if(!combo)throw Error('任务不在固定验收范围');
+        profile=combo.profile;profileRevision=combo.profileRevision;
+        if(!frozen.startedAt)this.store.set('acceptance:'+input.acceptanceId,{...frozen,startedAt:new Date().toISOString()});
+        this.update(task,{acceptanceId:input.acceptanceId},'frozen_scope_task');
+      }
+      if(!this.context)await this.connect();
+      await this.lease(task);
+      let page;
+      try{page=await this.findPage(task);}catch{
+        const recovery=task.recoveryCheckpoint?.recoveryUrl||task.url;
+        const url=new URL(recovery);if(!/^https?:$/.test(url.protocol)||url.username||url.password)throw Error('原任务恢复地址无效');
+        page=await this.context.newPage();
+        const {targetId}=await getTargetInfo(this.context,page);
+        this.update(task,{targetId,browserInstance:this.host.startedAt,tabClosedAt:null,
+          recoveryHistory:[...(task.recoveryHistory||[]),{at:new Date().toISOString(),action:'prepare_original_task',url:recovery,targetId}],controller:'executor'},'preparation_page_registered');
+        await page.goto(recovery,{waitUntil:'domcontentloaded',timeout:45000});
+      }
+      this.update(task,{profileSnapshot:profile,profileRevision,
+        consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
+      const config=plain(profiles.buildAgentConfigFromProfile(profile));
+      let prepared;
+      try{prepared=await this.prepareWithAi(page,task,config,()=>!page.isClosed()&&this.store.get('paused')===true);}
+      finally{const file=path.join(this.home,`${task.id}-${Date.now()}-ai-preparation.png`);
+        await capturePageEvidence(this.context,page,{path:file}).then(()=>this.update(task,{screenshot:file,artifactRef:''},'ai_preparation_evidence')).catch(error=>this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message}},'ai_preparation_evidence_failed'));
+      }
+      try{
+        if(prepared.candidate){
+          const engine=prepared.candidate.engine;
+          const report=await engine.call({action:'getFilledFieldsReport'});
+          report.attachments=await prepared.candidate.frame.locator('input[type=file]').evaluateAll(async inputs=>{
+            const result=[];for(const input of inputs)for(const file of [...(input.files||[])]){
+              const sha256=globalThis.crypto?.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))].map(x=>x.toString(16).padStart(2,'0')).join(''):'';
+              result.push({field:input.name||input.id,name:file.name,type:file.type,bytes:file.size,sha256});
+            }return result;
+          });
+          this.update(task,{actualPreparation:{at:new Date().toISOString(),url:prepared.candidate.frame.url(),report,
+            validation:await engine.call({action:'collectFormValidation'}),qualityIssues:assessSubmissionQuality(report,profile),
+            prepared:prepared.ok,reason:prepared.reason}},'actual_preparation_recorded');
+        }
+      }finally{await prepared.candidate?.engine.detach();await this.cloud.flush(this.store);}
+      return{ok:true,taskId:task.id,prepared:prepared.ok,reason:prepared.reason,aiTakeover:task.aiTakeover,actualPreparation:task.actualPreparation,submitted:false};
+    }
     if(action==='openRecoveryTask'){
       if(this.job||this.store.get('paused')!==true||!this.store.get('offlineMode')?.enabled||task.status!=='needs_manual'||
         !(task.tabClosedAt||task.deferredRecovery?.targetUnavailableAt)||
@@ -1495,6 +1658,14 @@ export class Runtime {
   }
   async bridge(task, message) {
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
+    if(message.action==='fetchSubmissionMedia'){
+      const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));
+      const entries=[['logo',config.logoUrl],['featured',config.featuredImage],...(config.screenshots||[]).map((ref,index)=>['screenshot'+(index+1),ref])];
+      const entry=entries.find(([,ref])=>ref&&ref===message.url);
+      if(!entry)return{ok:false,error:'素材不属于原任务产品资料'};
+      const file=await materializeTaskMedia(this,task,config,entry[0]),used=task.usedMedia.find(m=>m.kind===entry[0]);
+      return{ok:true,dataUrl:'data:'+used.mime+';base64,'+(await readFile(file)).toString('base64')};
+    }
     return { ok: false, error: '请使用资料中已上传的云端素材；未配置的内容服务进入待办' };
   }
 }

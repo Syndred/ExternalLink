@@ -3,10 +3,13 @@ import { d1Api } from './d1-api.mjs';
 import {parseBearerToken,secureEqual,artifactObjectKey,mediaObjectKey} from './worker-core.mjs';
 import {automationSummary} from './submission-journal.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
-import '../../../extension/lib/queue.js';
-import '../../../extension/lib/library-classifier.js';
-import '../../../extension/lib/submission-timeline.js';
-import '../../../extension/lib/executor-contract.js';
+import '../../../core/queue.js';
+import '../../../core/library-classifier.js';
+import '../../../core/submission-timeline.js';
+import '../../../core/executor-contract.js';
+import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
+import {profileMediaReferences} from '../../../core/media-assets.mjs';
+import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
@@ -14,7 +17,7 @@ export async function d1Executor(request,env,workspace,plan){
  const db=env.LEDGER_DB,store=new D1Store(db,env.MEDIA_BUCKET,workspace),url=new URL(request.url),path=url.pathname.replace(/^\/v[12]\/executor\//,'');
  try{
   const token=parseBearerToken(request.headers.get('Authorization'))||'',admin=!!env.APP_ACCESS_TOKEN&&await secureEqual(token,env.APP_ACCESS_TOKEN);
-  const raw=request.method==='GET'?'{}':await request.text();if(raw.length>8*1024*1024)fail('请求过大',413);
+  const raw=request.method==='GET'?'{}':await request.text();if(raw.length>9*1024*1024)fail('请求过大',413);
   const input=JSON.parse(raw);
   if(path==='devices'&&request.method==='POST'){
    let enrollment;try{enrollment=JSON.parse(env.EXECUTOR_ENROLLMENT||'null');}catch{}
@@ -51,9 +54,17 @@ export async function d1Executor(request,env,workspace,plan){
    const read=await store.readObject(object.key,object.checksum),after=await store.revisions();return json({ok:true,diagnostic:read,r2Readback:JSON.stringify(read)===JSON.stringify(payload),businessDocumentsUnchanged:JSON.stringify(before)===JSON.stringify(after),before,after});
   }
   if(path==='snapshot'&&request.method==='GET')return json(await snapshot());
+  if(path.startsWith('media-assets/')&&request.method==='GET')return json({ok:true,asset:await readDeviceMedia(env.MEDIA_BUCKET,workspace,path.slice(13))});
+  if(path==='media-upload'&&request.method==='POST')return json({ok:true,asset:await putDeviceMedia(env.MEDIA_BUCKET,workspace,input,(await store.document('siteProfiles'))?.data)});
+  if(path==='library'&&request.method==='POST'){
+   const documents={};for(const key of ['sheetTableData','siteAnnotations','siteProfiles'])documents[key]=(await store.document(key))?.data;
+   const change=libraryMutation(documents,input.operation),current=await store.document(change.key);
+   if((current?.revision||0)!==input.revision)fail('外链库已由其他客户端更新，请先回读');
+   return json({ok:true,key:change.key,data:change.data,...await store.putDocument(change.key,change.data,input.revision)});
+  }
   if(path==='profile'&&request.method==='POST'){
    const current=await store.document('siteProfiles');if(current?.revision!==input.revision||!current.data[input.profileId]||input.profile?.id!==input.profileId)fail('资料身份或版本不匹配');
-   const original=current.data[input.profileId],profile={...original,...input.profile,fields:{...original.fields,...input.profile.fields},media:{...original.media,...input.profile.media},updatedAt:new Date().toISOString()};
+   const change=libraryMutation({siteProfiles:current.data},{type:'profile',profileId:input.profileId,profile:input.profile,at:new Date().toISOString()}),profile=change.data[input.profileId];
    return json({ok:true,profile,...await store.putDocument('siteProfiles',{...current.data,[input.profileId]:profile},input.revision)});
   }
   if(path==='runs'&&request.method==='GET'){
@@ -73,7 +84,7 @@ export async function d1Executor(request,env,workspace,plan){
    if(scope.exclusions.length||scope.tasks.length!==run.tasks.length)fail('当前范围含已提交、重复或排除目标');
    const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),status:'pending',siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
    const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=[];
-   for(const [name,ref]of Object.entries(profile.fields||{}))if(typeof ref==='string'&&ref.startsWith('cloud-media://')){const assetId=ref.slice(14),object=await env.MEDIA_BUCKET.head(mediaObjectKey(workspace,assetId));if(object)mediaManifest.push({asset_id:assetId,media_kind:/logo/i.test(name)?'logo':'screenshot',sha256:object.customMetadata?.sha256||'',file_name:object.customMetadata?.fileName||assetId});}
+   for(const {ref,kind}of profileMediaReferences(profile)){const assetId=ref.slice(14),object=await env.MEDIA_BUCKET.head(mediaObjectKey(workspace,assetId));if(object)mediaManifest.push({asset_id:assetId,media_kind:kind,sha256:object.customMetadata?.sha256||'',file_name:object.customMetadata?.fileName||assetId});}
    const savedRun={...run,profile,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
    const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt}),runObject.key,runObject.checksum)];
    // Multi-row inserts keep each statement under D1's 100 bind-parameter limit.
@@ -189,7 +200,11 @@ export async function d1Executor(request,env,workspace,plan){
    const task=await readTask(input.taskId),id=String(input.ref||'').replace(/^cloud-artifact:\/\//,'');if(!id.startsWith(`executor-${task.id}-`))fail('截图不属于任务',403);
    const object=await env.MEDIA_BUCKET.get(artifactObjectKey(workspace,id));if(!object)fail('截图不存在',404);return json({ok:true,dataUrl:'data:image/png;base64,'+encodeBase64(new Uint8Array(await object.arrayBuffer()))});
   }
-  if(path==='plan'&&request.method==='POST'){await readTask(input.taskId);return json({ok:true,...await plan(input)});}
+  if(path==='plan'&&request.method==='POST'){
+   const task=await readTask(input.taskId);
+   if(input.mode==='prepare_takeover'&&(task.data.attemptBoundary||task.data.receipt||task.version!==input.version||task.controller_id!==input.controllerId||task.lease_until<Date.now()))fail('接管任务已有提交边界或控制权变化，必须先核验',409);
+   return json({ok:true,...await plan(input)});
+  }
   return json({ok:false,error:'执行器接口不存在'},404);
  }catch(error){return json({ok:false,error:error.message},error.status||(/UNIQUE constraint/.test(error.message)?409:500));}
 }

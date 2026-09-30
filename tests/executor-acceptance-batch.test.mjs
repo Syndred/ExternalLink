@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {Store} from '../executor/src/store.mjs';import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from '../executor/src/acceptance-batch.mjs';
+test('fixed batch retains failures and verification-only entries, uses all products and never releases unrelated pending tasks',async()=>{
+ const store=new Store(':memory:');store.set('paused',true);const combos=['p','q','r'].map((profileId,index)=>({identity:'site.example::'+profileId,profileId,profile:{id:profileId},profileRevision:1}));
+ store.set('acceptance:fixed',{sha256:'scope',count:3,combinations:combos});store.set('acceptanceExecution:fixed',{scopeSha256:'scope',items:Object.fromEntries(combos.map((c,i)=>[c.identity,{taskId:'t'+i,status:'registered'}]))});
+ store.set('task:old',{id:'old',status:'pending'});store.set('task:t0',{id:'t0',status:'submitted_unconfirmed',attemptBoundary:'unknown'});store.set('task:t1',{id:'t1',status:'pending'});store.set('task:t2',{id:'t2',status:'pending'});
+ const runtime={store,tick(){},lease:async()=>{},update(t,p){Object.assign(t,p);store.set('task:'+t.id,t);}};
+ startAcceptanceBatch(runtime,'fixed');const selected=await nextAcceptanceTask(runtime);assert.equal(selected.id,'t1');assert.equal(store.get('acceptanceBatch').attempts[combos[0].identity].status,'verification_only');
+ runtime.update(selected,{status:'needs_manual',reason:'Human verification'});assert.equal(finishAcceptanceTask(runtime,'t1'),true);const next=await nextAcceptanceTask(runtime);assert.equal(next.id,'t2');runtime.update(next,{status:'finished',receipt:{evidence:'Received'},cloudVerified:true});finishAcceptanceTask(runtime,'t2');await nextAcceptanceTask(runtime);
+ const batch=store.get('acceptanceBatch');assert.equal(batch.count,3);assert.equal(batch.status,'complete');assert.equal(Object.keys(batch.attempts).length,3);assert.equal(batch.attempts[combos[1].identity].status,'needs_manual');assert.equal(store.get('task:old').status,'pending');assert.equal(store.get('paused'),true);store.close();
+});

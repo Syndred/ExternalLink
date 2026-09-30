@@ -1,6 +1,6 @@
 import { D1Store } from './d1-store.mjs';
 import { STATE_DOCUMENT_KEYS, applyPatchOperations, normalizeDocuments, parseBearerToken, secureEqual, mediaObjectKey, artifactObjectKey } from './worker-core.mjs';
-import '../../../extension/lib/submission-timeline.js';
+import '../../../core/submission-timeline.js';
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
 export async function d1Api(request,env,authorised,auxiliary){
   const url=new URL(request.url),path=url.pathname.replace(/^\/v2/,'');

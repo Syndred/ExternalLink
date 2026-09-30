@@ -1,0 +1,21 @@
+import {Store} from '../src/store.mjs';import {Cloud} from '../src/cloud.mjs';
+import {homedir} from 'node:os';import {join} from 'node:path';import {writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+const home=join(homedir(),'.externallink-executor'),store=new Store(join(home,'outbox.sqlite'),{readOnly:true}),pair=store.get('pair'),cloud=new Cloud(pair);
+const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+async function api(route,input={}){const response=await fetch('http://127.0.0.1:19388/'+route,{method:'POST',headers:{Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'},body:JSON.stringify(input),signal:AbortSignal.timeout(90000)});const result=await response.json();if(!response.ok||result.ok===false)throw Error(result.error||'API failed');return result;}
+const data=await api('appData',{refresh:true}),product=data.model.products.find(p=>p.url==='https://no-extension-acceptance.invalid');if(!product)throw Error('先通过工作台创建隔离验收产品');
+const originalProducts=digest(data.model.products.filter(p=>p.id!==product.id));
+const frozenBefore=digest(store.values('acceptance:'));
+const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=';
+const first=await api('mediaUpload',{profileId:product.id,kind:'logo',fileName:'acceptance-logo.png',dataUrl:png});assert.equal(first.pending,0);
+const second=await api('mediaUpload',{profileId:product.id,kind:'logo',fileName:'acceptance-logo-v2.png',dataUrl:png});assert.equal(second.pending,0);
+let snapshot=await cloud.request('snapshot'),p=snapshot.documents.siteProfiles[product.id];assert.equal(p.mediaVersions.length,2);assert.equal(p.media.logo,'cloud-media://'+second.assetId);
+const firstProof=await cloud.request('media-assets/'+first.assetId);assert.equal(firstProof.asset.sha256,p.mediaVersions[0].sha256);
+await api('libraryMutation',{operation:{type:'profile_media',profileId:product.id,kind:'logo',action:'disable'}});snapshot=await cloud.request('snapshot');assert.equal(snapshot.documents.siteProfiles[product.id].mediaDisabled.logo,true);
+await api('libraryMutation',{operation:{type:'profile_media',profileId:product.id,kind:'logo',action:'restore',assetId:first.assetId}});snapshot=await cloud.request('snapshot');assert.equal(snapshot.documents.siteProfiles[product.id].media.logo,'cloud-media://'+first.assetId);assert.equal(snapshot.documents.siteProfiles[product.id].mediaDisabled.logo,false);
+await api('libraryMutation',{operation:{type:'profile_archive',profileId:product.id,archived:true}});snapshot=await cloud.request('snapshot');assert.equal(snapshot.documents.siteProfiles[product.id].archived,true);
+await api('libraryMutation',{operation:{type:'profile_archive',profileId:product.id,archived:false}});snapshot=await cloud.request('snapshot');assert.equal(snapshot.documents.siteProfiles[product.id].archived,false);
+await api('libraryMutation',{operation:{type:'profile_archive',profileId:product.id,archived:true}});
+const final=await api('appData',{refresh:true}),batch=store.get('acceptanceBatch');assert.equal(digest(final.model.products.filter(p=>p.id!==product.id)),originalProducts);assert.equal(digest(store.values('acceptance:')),frozenBefore);assert.equal(batch.cursor,13);assert.equal(batch.status,'paused');assert.equal(final.runtime.paused,true);assert.equal(final.runtime.busy,false);
+const proof={at:new Date().toISOString(),source:'real_local_application_and_independent_cloud_readback',productId:product.id,productCreatedByUI:true,productArchived:true,archiveRestoreVerified:true,mediaVersionCount:2,firstAssetId:first.assetId,secondAssetId:second.assetId,oldAssetShaVerified:true,disableVerified:true,oldVersionRestored:true,originalProductsUnchanged:true,fixed30Unchanged:true,batchStatus:batch.status,batchCursor:batch.cursor,pendingEdits:final.pendingEdits.length,pendingMedia:final.pendingMedia.length};
+await writeFile('docs/evidence/no-extension-2026-09-30/app-media-real.json',JSON.stringify(proof,null,2));console.log(JSON.stringify(proof));store.close();

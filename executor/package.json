@@ -11,6 +11,7 @@
     "acceptance": "node test/windows-acceptance.mjs"
   },
   "dependencies": {
+    "@napi-rs/keyring": "2.1.0",
     "agent-browser": "0.38.1",
     "playwright": "1.63.0"
   },

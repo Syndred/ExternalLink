@@ -43,6 +43,10 @@ export class Store {
   ack(id) { this.db.prepare('DELETE FROM outbox WHERE id=?').run(id); }
   recover() {
     for (const task of this.values('task:')) {
+      if(task.controller==='ai'&&!task.attemptBoundary&&!task.receipt){
+        this.transition({...task,controller:'executor',aiTakeover:{...task.aiTakeover,interruptedAt:new Date().toISOString(),reason:'后台重启，原 AI 动作预算保留；重新观察原页后恢复'}},'recovered_ai_control');
+        task.controller='executor';task.aiTakeover=this.get('task:'+task.id).aiTakeover;
+      }
       const resolvedAttempt = task.attemptBoundary && task.status === 'needs_manual' && ['rejected','not_submitted'].includes(task.siteStatus);
       if (task.status === 'submitting' || (task.attemptBoundary && !resolvedAttempt && !['submitted_unconfirmed','finished'].includes(task.status))) {
         if (!task.receipt) this.transition({ ...task, status: 'submitted_unconfirmed', siteStatus: 'sent_unconfirmed', reason: task.reason || '执行中断，必须先核验原页面；禁止自动重投' }, 'recovered_unknown');

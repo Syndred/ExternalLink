@@ -27,11 +27,14 @@ test('D1 executor preserves ownership, atomic run creation, lease fences, immuta
  const other=await call('devices','admin-test',{name:'other'});assert.equal((await call('tasks/task0',other.deviceToken)).http,403);
  assert.equal((await call('lease',token,{taskId:'task0',version:1,controllerId:'one'})).http,200);
  assert.equal((await call('lease',token,{taskId:'task0',version:1,controllerId:'two'})).http,409);
+ assert.equal((await call('plan',token,{mode:'prepare_takeover',taskId:'task0',version:1,controllerId:'one'})).http,200);
+ assert.equal((await call('plan',token,{mode:'prepare_takeover',taskId:'task0',version:1,controllerId:'two'})).http,409);
  const event={id:'evt',taskId:'task0',version:1,type:'attempt_boundary',at:'2026-09-29T00:00:00Z',state:{...started.tasks[0],controllerId:'one',status:'submitting',actualSubmission:{website:'https://jevplay.com'},attemptBoundary:'2026-09-29T00:00:00Z'}};
  const written=await call('event',token,event);assert.equal(written.http,200,JSON.stringify(written));assert.equal((await call('event',token,event)).duplicate,true);
  assert.deepEqual((await call('events/evt',token)).event,event);assert.equal((await call('events/evt?proof=1',token)).checksum,written.checksum);
  assert.equal((await call('event',token,{...event,type:'changed'})).http,409);
  assert.equal((await call('tasks/task0',token)).task.status,'submitting');
+ assert.equal((await call('plan',token,{mode:'prepare_takeover',taskId:'task0',version:1,controllerId:'one'})).http,409);
  const handoff=await call('handoff',token,{taskId:'task0',version:1,previousControllerId:'one',controllerId:'two'});assert.equal(handoff.version,2);
  assert.equal((await call('event',token,{...event,id:'stale'})).http,409);assert.equal((await call('event',token,event)).duplicate,true);
  const record={taskId:'task0',profileId:'JevPlay',destinationKey:makeTask(0).destinationKey,status:'success',evidence:'Submission received',actualSubmission:{website:'https://jevplay.com'},publicationStatus:'submitted',submittedAt:'2026-09-29T00:00:00Z'};

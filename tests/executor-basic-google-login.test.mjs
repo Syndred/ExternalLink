@@ -1,7 +1,13 @@
 import test from'node:test';import assert from'node:assert/strict';
-import{decideBasicGoogleStep,canAuthenticateOffline}from'../executor/src/basic-google-login.mjs';
+import{decideBasicGoogleStep,canAuthenticateOffline,advanceBasicGoogleLogin}from'../executor/src/basic-google-login.mjs';
 const task={id:'task',url:'https://thejoai.com/aitools/submissions/',status:'needs_manual',controller:'executor',controllerId:'owner',version:1,
  browserInstance:'host',targetId:'target',profileId:'JevPlay',profileSnapshot:{fields:{Url:'https://jevplay.com','Business mail':'owner@example.com'}}};
+
+test('an interrupted authentication preserves its original attempt instead of leaving an unrecorded in-progress state',async()=>{
+ const copy=structuredClone(task);const runtime={update(t,p){Object.assign(t,p);}};
+ await assert.rejects(advanceBasicGoogleLogin(runtime,copy,{evaluate:async()=>{throw Error('Target closed');}},{offline:true}),/Target closed/);
+ assert.equal(copy.authAttempts[0].status,'needs_attention');assert.match(copy.authAttempts[0].reason,/Target closed/);assert.equal(copy.authAttempts[0].steps.length,0);
+});
 test('basic Google login uses a unique visible entry and its same-site confirmation',()=>{
  const ui={url:'https://thejoai.com/accounts/login/',text:'Log in',hasPassword:true,controls:[{role:'link',label:'Log in with Google',href:'https://thejoai.com/accounts/google/login/'}]};
  assert.equal(decideBasicGoogleStep(task,ui,{steps:[]}).kind,'open_google');

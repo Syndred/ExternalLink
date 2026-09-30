@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const extensionRoot = resolve(root, "extension");
-const backgroundSource = readFileSync(resolve(extensionRoot, "background.js"), "utf8");
+const backgroundSource = readFileSync(resolve(extensionRoot, "background.js"), "utf8").replace(/\r\n/g, "\n");
 const moduleSources = new Map(
   [
     "lib/profiles.js",

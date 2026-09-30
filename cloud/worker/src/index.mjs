@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { d1Api } from "./d1-api.mjs";
 import { d1Executor } from "./d1-executor.mjs";
 import { executorApi } from "./executor-api.mjs";
+import { planPreparation } from "../../../core/preparation-planner.mjs";
 import { readJournal, automationSummary } from "./submission-journal.mjs";
 import {
   applyPatchOperations,
@@ -199,17 +200,19 @@ function parseModelJson(content) {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
-async function callDeepSeek(env, system, user) {
+async function callDeepSeek(env, system, user, options = {}) {
   const key = String(env.DEEPSEEK_API_KEY || "").trim();
   if (!key) throw new AiProviderRequestError("Worker 未配置 DEEPSEEK_API_KEY", 0);
   const base = String(env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
+    ...(options.preparation?{signal:AbortSignal.timeout(55000)}:{}),
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: String(env.DEEPSEEK_MODEL || "deepseek-chat"),
       temperature: 0.35,
       response_format: { type: "json_object" },
+      ...(options.preparation?{thinking:{type:'disabled'},max_tokens:1800}:{}),
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -292,6 +295,7 @@ async function handleComment(request, env) {
 
 async function handlePlan(request, env) {
   const input = await requestJson(request);
+  if(input.mode==='prepare_takeover')return planPreparation(input,(system,user)=>callDeepSeek(env,system,user,{preparation:true}));
   const result = await callDeepSeek(
     env,
     "You are a cautious browser form-filling planner. Return JSON only in this shape: {status:'act'|'needs_manual'|'blocked', reason:string, actions:[{type:string, selector?:string, value?:string, index?:number}]}. Never submit a form, solve CAPTCHA, log in, pay, or bypass access controls. At most 24 actions. If uncertain, choose needs_manual.",

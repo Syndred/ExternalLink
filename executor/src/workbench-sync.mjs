@@ -1,6 +1,6 @@
 import{randomUUID}from'node:crypto';
-import'../../extension/lib/submission-timeline.js';
-import'../../extension/lib/journal-sync.js';
+import'../../core/submission-timeline.js';
+import'../../core/journal-sync.js';
 export const workbenchScope=pair=>String(pair?.endpoint||'')+'|'+String(pair?.workspaceId||'default');
 export const pendingWorkbench=runtime=>(runtime.store.get('workbenchJournalPending')||[]).filter(item=>item.scope===workbenchScope(runtime.store.get('pair')));
 export function journalSync(runtime){

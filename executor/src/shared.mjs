@@ -6,7 +6,7 @@ export const repo = fileURLToPath(new URL('../../', import.meta.url));
 const sandbox = { self: {}, URL, crypto: globalThis.crypto };
 vm.createContext(sandbox);
 for (const name of ['profiles','queue','submission-timeline','url-library','library-classifier','executor-contract']) {
-  vm.runInContext(readFileSync(path.join(repo, `extension/lib/${name}.js`), 'utf8'), sandbox);
+  vm.runInContext(readFileSync(path.join(repo, `core/${name}.js`), 'utf8'), sandbox);
 }
 export const queue = sandbox.self.ExtLinkQueue;
 export const profiles = sandbox.self.ExtLinkProfiles;

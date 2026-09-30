@@ -13,4 +13,4 @@ if(process.argv.includes('--watch')){const address=watchdogAddress(process.platf
 await ensureServices();
 if(process.argv.includes('--services-only')){console.log('外链助手后台服务已就绪');process.exit(0);}
 const browser=browserLaunch(process.platform,`http://127.0.0.1:19389/#access=${encodeURIComponent(pair.localToken)}`);
-const child=spawn(browser.command,browser.args,{detached:true,stdio:'ignore',windowsHide:true});child.on('error',()=>{console.error('浏览器启动失败，请检查 Chrome 是否已安装');process.exitCode=1;});child.unref();console.log('已打开外链助手工作台');
+const child=spawn(browser.command,browser.args,{detached:true,stdio:'ignore',windowsHide:false});child.on('error',()=>{console.error('浏览器启动失败，请检查 Chrome 是否已安装');process.exitCode=1;});child.unref();console.log('已请求打开外链助手工作台');

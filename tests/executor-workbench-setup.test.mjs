@@ -1,12 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { initializeWorkbench } from '../executor/src/workbench-setup.mjs';
 import { browserLaunch, watchdogAddress } from '../executor/src/workbench-platform.mjs';
 import { Store } from '../executor/src/store.mjs';
+
+test('Windows launch requests a visible new window in the existing Chrome profile', async () => {
+  const root=await mkdtemp(join(tmpdir(),'el-chrome-launch-'));
+  try {
+    const directory=join(root,'Google','Chrome','Application');
+    await mkdir(directory,{recursive:true});await writeFile(join(directory,'chrome.exe'),'fixture');
+    const launch=browserLaunch('win32','http://127.0.0.1:19389/',{PROGRAMFILES:root});
+    assert.equal(launch.command,join(directory,'chrome.exe'));
+    assert.deepEqual(launch.args,['--new-window','http://127.0.0.1:19389/']);
+    assert.ok(!launch.args.some(arg=>arg.startsWith('--user-data-dir')),'opening must preserve the existing browser profile');
+  } finally {await rm(root,{recursive:true,force:true});}
+});
 
 test('Mac opens the normal workbench through Chrome and uses a bounded Unix socket', () => {
   assert.deepEqual(browserLaunch('darwin', 'http://127.0.0.1:19389/#access=test'), {

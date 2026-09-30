@@ -13,5 +13,5 @@ export function browserLaunch(platform, url, env = process.env) {
   const chrome = [env.PROGRAMFILES, env['PROGRAMFILES(X86)'], env.LOCALAPPDATA].filter(Boolean)
     .map(p => join(p, 'Google', 'Chrome', 'Application', 'chrome.exe')).find(existsSync);
   if (!chrome) throw Error('未找到 Chrome');
-  return { command: chrome, args: [url] };
+  return { command: chrome, args: ['--new-window', url] };
 }

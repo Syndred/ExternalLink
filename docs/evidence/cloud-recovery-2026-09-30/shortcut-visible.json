@@ -1,0 +1,23 @@
+{
+  "visibleWindows": [
+    {
+      "Id": 8744,
+      "MainWindowTitle": "外链助手 · 工作台 - Google Chrome",
+      "MainWindowHandle": {
+        "value": 6948270
+      }
+    }
+  ],
+  "runtime": [
+    {
+      "LocalPort": 19389,
+      "OwningProcess": 15832
+    },
+    {
+      "LocalPort": 19388,
+      "OwningProcess": 12568
+    }
+  ],
+  "shortcutExit": 0,
+  "at": "2026-09-30T12:47:26.0640725+08:00"
+}

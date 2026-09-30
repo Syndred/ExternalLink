@@ -9,6 +9,7 @@ importScripts(
   "lib/unattended.js",
   "lib/scheduler.js",
   "lib/submission-timeline.js",
+  "lib/journal-sync.js",
   "lib/backup.js",
   "lib/cloud-sync.js",
   "lib/url-library.js",
@@ -19,6 +20,8 @@ importScripts(
   "lib/context-menu.js",
   "lib/automation-ledger.js",
 );
+
+const journalSync = self.ExtLinkJournalSync.create({storage:chrome.storage.local,request:(...args)=>cloudRequest(...args),config:()=>getCloudConfig()});
 
 let state = {
   running: false,
@@ -296,6 +299,20 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === 'executorProvisionDevice') {
+    if (sender.tab || sender.id !== chrome.runtime.id) { sendResponse({ ok: false, error: '请在原插件界面配对' }); return false; }
+    (async () => {
+      const stored = await chrome.storage.local.get('cloudSyncConfig');
+      const config = self.ExtLinkCloudSync.normalizeConfig(stored.cloudSyncConfig || {});
+      const device = await cloudRequest('/v1/executor/devices', { method: 'POST', body: { name: 'Windows 常驻执行器' } });
+      return { ...device, endpoint: config.endpoint, workspaceId: config.workspaceId };
+    })().then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message }));
+    return true;
+  }
+  if (['start','stop','pause','resume','sidepanelFill','requestAutoFill','manualContinue','captchaResolved','advanceSubmission'].includes(msg.action)) {
+    sendResponse({ ok: false, migrated: true, error: '自动执行已迁入 Windows 执行器，请使用上方运行工作台。' });
+    return false;
+  }
   switch (msg.action) {
     case "sidepanelDetect":
       handleSidepanelDetect(msg.tabId)
@@ -459,6 +476,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       importSubmissionData(msg.data)
         .then(sendResponse)
         .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    case "submissionJournalCloud":
+      cloudRequest('/v2/submission-tasks' + (msg.taskId ? '?taskId='+encodeURIComponent(msg.taskId) : '?after='+encodeURIComponent(msg.after||'')))
+        .then(sendResponse).catch(err=>sendResponse({ok:false,error:err.message}));
+      return true;
+    case "submissionJournalArtifact":
+      (async()=>{const id=String(msg.ref||'').replace(/^cloud-artifact:\/\//,'');if(!/^[a-zA-Z0-9._-]{1,180}$/.test(id))throw new Error('无效截图引用');return{ok:true,...await binaryResponseToDataUrl(await cloudRequest('/v2/automation/artifacts/'+id,{raw:true}))};})()
+        .then(sendResponse).catch(err=>sendResponse({ok:false,error:err.message}));
+      return true;
+    case "submissionJournalDocuments":
+      journalSync.flush().then(async sync=>({...await cloudRequest('/v2/journal-documents'),sync})).then(sendResponse).catch(err=>sendResponse({ok:false,error:err.message}));
+      return true;
+    case "submissionJournalRecoverLocal":
+      recoverJournalLocalDocuments().then(sendResponse).catch(err=>sendResponse({ok:false,error:err.message}));
+      return true;
+    case "submissionJournalProgress":
+      journalSync.enqueue(self.ExtLinkSubmissionTimeline.normalizeEvent({...msg,id:msg.id||crypto.randomUUID(),source:'manual',confirmedBy:'manual'}))
+        .then(sendResponse).catch(err=>sendResponse({ok:false,error:err.message}));
       return true;
     case "cloudSyncStatus":
       getCloudSyncStatus()
@@ -703,7 +738,32 @@ async function fetchSubmissionMedia(rawUrl) {
   };
 }
 
-// ─── Cloud data source (Neon + Worker + R2) ───
+// ─── Cloud data source (legacy state plus D1 journal migration) ───
+async function recoverJournalLocalDocuments() {
+  const config=await getCloudConfig();
+  const identity=submissionLedgerCloudConfigFingerprint(config);
+  const keys=self.ExtLinkCloudSync.STATE_DOCUMENT_KEYS;
+  const documents=await chrome.storage.local.get(keys);
+  if(!Object.keys(documents.siteProfiles||{}).length)throw new Error('本机没有站点资料，不能作为恢复来源；请在保留原始资料的浏览器操作');
+  const {revisions}=await cloudRequest('/v2/revisions',{},config);
+  const saved=[],recovered={},recoveredRevisions={};
+  for(const [key,data] of Object.entries(documents)){
+    if(identity!==submissionLedgerCloudConfigFingerprint(await getCloudConfig()))throw new Error('工作区已切换，已停止资料迁移');
+    const result=await cloudRequest('/v2/recover-local-document',{method:'POST',body:{key,data,revision:revisions[key]||0}},config);
+    const proof=await cloudRequest('/v2/state/'+key,{},config);
+    if(proof.revision!==result.revision)throw new Error(key+' 回读期间发生变更，已保留本机资料');
+    if(JSON.stringify(proof.data)!==JSON.stringify(result.data))throw new Error(key+' 回读内容不一致');
+    recovered[key]=proof.data;recoveredRevisions[key]=proof.revision;
+    saved.push(key);
+  }
+  if(identity!==submissionLedgerCloudConfigFingerprint(await getCloudConfig()))throw new Error('工作区已切换，未切换同步后端');
+  const nextConfig={...config,storageBackend:'d1',lastError:'',migratedAt:new Date().toISOString()};
+  const localNow=await chrome.storage.local.get(keys);
+  if(Object.entries(documents).some(([key,value])=>JSON.stringify(localNow[key])!==JSON.stringify(value)))throw new Error('恢复期间本机资料发生修改；已保存云端副本，请重试以保留最新修改');
+  await applyCloudSnapshot({documents:recovered,revisions:recoveredRevisions},{configIdentity:cloudSyncConfigIdentity(nextConfig),discardedLocalKeys:saved});
+  await saveCloudConfig(nextConfig);
+  return{ok:true,saved};
+}
 function cloudSyncQueueSnapshot() {
   return {
     [CLOUD_SYNC_PENDING_STORAGE_KEY]: [...cloudSyncPendingKeys],
@@ -776,6 +836,7 @@ async function saveCloudConfig(config) {
 }
 
 function cloudUrl(config, pathname) {
+  if(config.storageBackend==='d1')pathname=pathname.replace(/^\/v1\//,'/v2/');
   const url = new URL(`${config.endpoint}${pathname}`);
   url.searchParams.set("workspace", config.workspaceId);
   return url.href;
@@ -1005,7 +1066,7 @@ function recordAutomationEvent(task, event = {}, options = {}) {
     outbox.push({ run: runSummary, event: normalized });
     await chrome.storage.local.set({
       [AUTOMATION_LEDGER_KEY]: next,
-      [AUTOMATION_OUTBOX_KEY]: outbox.slice(-AUTOMATION_OUTBOX_LIMIT),
+      [AUTOMATION_OUTBOX_KEY]: outbox,
     });
     return next;
   });
@@ -1142,7 +1203,7 @@ async function getCloudSyncStatus() {
 }
 
 async function connectCloudSync(rawConfig) {
-  const config = self.ExtLinkCloudSync.normalizeConfig(rawConfig || {});
+  const config = self.ExtLinkCloudSync.normalizeConfig({...rawConfig,storageBackend:'d1'});
   if (!config.configured) throw new Error("请填写有效的 HTTPS Worker 地址和设备密钥");
   await cloudRequest("/v1/health", {}, config);
   const saved = await saveCloudConfig({
@@ -1397,14 +1458,14 @@ function submissionLedgerPullMetadata(storage = {}) {
 }
 
 function submissionLedgerCloudConfigFingerprint(config = {}) {
-  return [config.endpoint, config.workspaceId, config.accessToken].map((value) => String(value || "")).join("\u0000");
+  return [config.endpoint, config.workspaceId, config.accessToken,...(config.storageBackend==='d1'?['d1']:[])].map((value) => String(value || "")).join("\u0000");
 }
 
 function cloudSyncConfigIdentity(config = {}) {
   // Revisions are scoped to endpoint + workspace. Keep the access token in
   // the in-memory fingerprint used for race checks, but never persist it in
   // cloudSyncMetadata.
-  return [config.endpoint, config.workspaceId].map((value) => String(value || "")).join("\u0000");
+  return [config.endpoint, config.workspaceId,...(config.storageBackend==='d1'?['d1']:[])].map((value) => String(value || "")).join("\u0000");
 }
 
 async function prepareSubmissionLedgerCloudPull({ force = false } = {}) {
@@ -2093,8 +2154,9 @@ async function fetchCloudSubmissionMedia(msg = {}) {
 }
 
 async function listCloudSubmissionMedia() {
-  const response = await cloudRequest("/v1/media");
-  return { ok: true, assets: response.assets || [] };
+  const assets=[],seen=new Set();let cursor='';
+  do{const response=await cloudRequest('/v1/media'+(cursor?'?cursor='+encodeURIComponent(cursor):''));assets.push(...(response.assets||[]));cursor=response.next||'';if(cursor&&seen.has(cursor))throw new Error('素材分页游标重复');if(cursor)seen.add(cursor);}while(cursor);
+  return { ok: true, assets };
 }
 
 async function preferCloudSubmissionMedia(config) {
@@ -3119,6 +3181,8 @@ function getBatchStatus(hasParkedTasks = null) {
 }
 
 async function restoreActiveBatchRun() {
+  // Preserve the legacy snapshot as evidence; never resume a second driver.
+  return;
   const storage = await chrome.storage.local.get([
     "activeBatchRun",
     "submissionRecords",
@@ -7413,7 +7477,12 @@ function isParkedUnattendedTarget(url, profileId) {
   );
 }
 
+function isAutoFillOnVisitEnabled(value) {
+  return value === true;
+}
+
 async function handleRequestAutoFill(msg, sender) {
+  return { ok: false, migrated: true }; // The executor owns all automatic filling.
   const tabId = msg.tabId || sender?.tab?.id;
   if (!tabId) return;
 
@@ -7437,7 +7506,7 @@ async function handleRequestAutoFill(msg, sender) {
     "activeSiteId",
     "siteAnnotations",
   ]);
-  if (storage.autoFillOnVisit === false) return;
+  if (!isAutoFillOnVisitEnabled(storage.autoFillOnVisit)) return;
 
   const profile = self.ExtLinkProfiles.getActiveProfile(storage);
   if (!self.ExtLinkProfiles.profileConfigured(profile)) return;
@@ -7674,6 +7743,7 @@ async function processQueue() {
 }
 
 function scheduleQueueProcessing() {
+  return; // The Windows executor is the sole scheduler.
   if (processQueuePromise) return processQueuePromise;
   const scheduledRunId = state.runId;
   processQueuePromise = processQueue()

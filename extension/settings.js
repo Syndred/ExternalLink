@@ -21,6 +21,12 @@
   let draggingSiteId = "";
   let siteEditorDirty = false;
   let siteEditorBaseline = null;
+  let executorProfileRevision = null;
+  window.addEventListener('externallink:catalog', event => {
+    if (siteEditorDirty) return;
+    executorProfileRevision = event.detail.revision;
+    adoptPulledSiteProfiles({ siteProfiles: event.detail.profiles });
+  });
   const nonProfileDirtyScopes = new Set();
   let nonProfileEditorRevision = 0;
   const LIBRARY_STORAGE_KEYS = new Set([
@@ -208,7 +214,7 @@
       return result;
     }
     const sync = result.sync || {};
-    const parts = [`云端已连接 · 工作区 ${config.workspaceId || "default"}`];
+    const parts = [`云端已连接 · ${config.storageBackend==='d1'?'D1 + R2':'旧存储（请在外链总览恢复到 D1）'} · 工作区 ${config.workspaceId || "default"}`];
     const cloudKeyLabels = {
       submissionRecords: "提交账本",
       submissionTimeline: "提交时间线",
@@ -787,11 +793,21 @@
     persistProfiles();
   });
 
-  $("btnSaveSite")?.addEventListener("click", () => {
+  $("btnSaveSite")?.addEventListener("click", async () => {
     const profile = formToProfile(activeSiteId || undefined);
     if (!profile.name && !profile.url) {
       alert("请至少填写站点名称或首页地址");
       return;
+    }
+    const { executorConnection } = await chrome.storage.local.get('executorConnection');
+    if (executorConnection) {
+      try {
+        if (executorProfileRevision === null) throw new Error('先连接执行器并回读当前资料');
+        const response = await fetch(executorConnection.endpoint + '/profile', { method: 'POST', headers: { Authorization: `Bearer ${executorConnection.localToken}`, 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(30000), body: JSON.stringify({ profileId: profile.id, profile: { ...siteProfiles[profile.id], ...profile }, revision: executorProfileRevision }) });
+        const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.error || '云端保存失败');
+        Object.assign(profile, data.profile); executorProfileRevision = data.revision;
+      } catch (error) { alert(`资料未保存：${error.message}`); return; }
     }
     activeSiteId = profile.id;
     siteProfiles[profile.id] = profile;
@@ -2236,7 +2252,7 @@
       if (items.cfgCommentTemplate) $("cfgCommentTemplate").value = items.cfgCommentTemplate;
       if (items.cfgConcurrency) $("cfgConcurrency").value = items.cfgConcurrency;
       $("cfgPingIndex").checked = items.cfgPingIndex !== false;
-      $("autoFillOnVisit").checked = items.autoFillOnVisit !== false;
+      $("autoFillOnVisit").checked = items.autoFillOnVisit === true;
       if ($("autoSubmitDirectoryListings")) {
         $("autoSubmitDirectoryListings").checked = items.autoSubmitDirectoryListings !== false;
       }

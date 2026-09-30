@@ -1,0 +1,58 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { repo } from './shared.mjs';
+
+// The same production field mapper, validation and evidence classifier runs in
+// a separate CDP isolated world. No credential is placed in the site's realm.
+const sources = await Promise.all(['lib/profiles.js', 'lib/playbooks.js', 'content.js'].map(name => readFile(path.join(repo, 'extension', name), 'utf8')));
+export async function attachEngine(context, frame, bridge = async () => ({ ok: false })) {
+  let session;
+  try { session = await context.newCDPSession(frame); }
+  catch (error) {
+    if (!/part of the parent frame's session/.test(error.message)) throw error;
+    session = await context.newCDPSession(frame.page());
+  }
+  const tree = await session.send('Page.getFrameTree');
+  let frameUrl = frame.url();
+  if (!frameUrl) {
+    const info = (await session.send('Target.getTargetInfo')).targetInfo;
+    if (info.type === 'iframe' && info.targetId === tree.frameTree.frame.id) frameUrl = tree.frameTree.frame.url;
+  }
+  const ancestry = [];
+  for (let current = frame; current.parentFrame(); current = current.parentFrame()) ancestry.unshift(current.parentFrame().childFrames().indexOf(current));
+  let target = tree.frameTree;
+  for (const index of ancestry) target = target?.childFrames?.[index];
+  // An OOP iframe has its own CDP target rooted at that frame; a same-process
+  // iframe shares the page session and must be resolved through the frame tree.
+  if (!target || target.frame.url !== frameUrl) {
+    const matches=[];
+    const visit=node=>{if(node.frame.url===frameUrl && (!frame.name() || node.frame.name===frame.name()))matches.push(node);for(const child of node.childFrames||[])visit(child);};
+    visit(tree.frameTree);
+    if(matches.length===1)target=matches[0];
+  }
+  if (!target || target.frame.url !== frameUrl) { await session.detach(); throw new Error(`iframe 身份已变化，请重新观察：${frameUrl} / CDP ${tree.frameTree.frame.url}`); }
+  const { executionContextId } = await session.send('Page.createIsolatedWorld', { frameId: target.frame.id, worldName: 'ExternalLinkExecutor', grantUniveralAccess: false });
+  const evaluate = async (expression, awaitPromise = true) => {
+    const result = await session.send('Runtime.evaluate', { expression, contextId: executionContextId, returnByValue: true, awaitPromise });
+    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
+    return result.result.value;
+  };
+  await session.send('Runtime.addBinding', { name: '__executorRpc', executionContextId });
+  session.on('Runtime.bindingCalled', async event => {
+    if (event.name !== '__executorRpc' || event.executionContextId !== executionContextId) return;
+    const { id, message } = JSON.parse(event.payload);
+    let response;
+    try { response = await bridge(message); } catch (error) { response = { ok: false, error: error.message }; }
+    await evaluate(`globalThis.__executorReplies.get(${id})?.(${JSON.stringify(response)});globalThis.__executorReplies.delete(${id})`, false).catch(() => {});
+  });
+  await evaluate(`globalThis.__extLinkExecutor=true; globalThis.__executorReplies=new Map(); globalThis.__executorSeq=0;
+    globalThis.chrome={runtime:{onMessage:{addListener(fn){globalThis.__executorHandler=fn},removeListener(){}},
+    sendMessage(message){if(!['fetchSubmissionMedia','fetchCloudSubmissionMedia','generateCommentDrafts'].includes(message.action))return Promise.resolve({ok:false});
+    return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}},
+    storage:{local:{get:async()=>({}),set:async()=>{}},onChanged:{addListener(){}}}};`);
+  for (const source of sources) await evaluate(source, false);
+  return {
+    call: message => evaluate(`new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('共享表单引擎操作超时')),45000);try{const handled=__executorHandler(${JSON.stringify(message)},null,value=>{clearTimeout(timeout);resolve(value)});if(!handled){clearTimeout(timeout);reject(new Error('未知表单操作'))}}catch(e){clearTimeout(timeout);reject(e)}})`),
+    detach: () => session.detach().catch(() => {}),
+  };
+}

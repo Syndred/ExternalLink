@@ -1,26 +1,38 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "externallink-cloud",
-  "main": "src/index.mjs",
-  "compatibility_date": "2026-09-09",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1,
-    "redact_query_string": false
-  },
-  "vars": {
-    "ALLOWED_ORIGIN": "chrome-extension://pbddnjpahdahahnpkhgjoeiionagmaia",
-    "ALLOWED_WORKSPACE_ID": "default",
-    "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
-    "DEEPSEEK_MODEL": "deepseek-v4-pro",
-    "DEEPSEEK_VISION_MODEL": "deepseek-v4-flash-vision-exp"
-  },
-  "r2_buckets": [
-    {
-      "binding": "MEDIA_BUCKET",
-      "bucket_name": "externallink-media"
-    }
-  ]
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "externallink-cloud",
+	"main": "src/index.mjs",
+	"compatibility_date": "2026-09-09",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": true,
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"redact_query_string": false
+	},
+	"vars": {
+		"STATE_BACKEND": "d1",
+		"EXECUTOR_BACKEND": "d1",
+		"ALLOW_AUTHENTICATED_EXTENSIONS": "true",
+		"ALLOWED_ORIGIN": "chrome-extension://pbddnjpahdahahnpkhgjoeiionagmaia,chrome-extension://eagomdoflagkgjklppjfboddedgjjigm",
+		"ALLOWED_WORKSPACE_ID": "default",
+		"DEEPSEEK_BASE_URL": "https://api.deepseek.com",
+		"DEEPSEEK_MODEL": "deepseek-v4-pro",
+		"DEEPSEEK_VISION_MODEL": "deepseek-v4-flash-vision-exp"
+	},
+	"r2_buckets": [
+		{
+			"binding": "MEDIA_BUCKET",
+			"bucket_name": "externallink-media"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "LEDGER_DB",
+			"database_name": "externallink-ledger",
+			"database_id": "7bc9d04c-0fff-45ff-b6b1-b47252181c01"
+		}
+	]
 }

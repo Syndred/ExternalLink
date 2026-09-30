@@ -26,6 +26,11 @@ vm.runInContext(source.slice(source.indexOf('async function pauseBatchRun('), so
 vm.runInContext(source.slice(source.indexOf('async function persistActiveBatchStatus('), source.indexOf('function replaceActiveBatchRun(')), context);
 vm.runInContext(code, context);
 await context.scheduleQueueProcessing();
+assert.equal(stored.status, 'running', 'retired scheduler must preserve stored evidence');
+assert.equal(context.processQueuePromise, null, 'retired scheduler must not launch work');
+// Exercise the historical recovery implementation only in this isolated fixture.
+vm.runInContext(code.replace('  return; // The Windows executor is the sole scheduler.\n', ''), context);
+await context.scheduleQueueProcessing();
 assert.equal(stored.status, 'paused', 'a scheduler failure must persist a resumable state instead of leaving a phantom running batch');
 assert.equal(context.state.paused, true);
 assert.equal(context.state.activeTabs.get(1).pauseRequested, true, 'active automated tabs must pause with the queue');

@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{canObserveEmbeddedForm}from'../executor/src/observation.mjs';
+const href='https://pharm-alaa.formaloo.net/tool';const task={observationHistory:[{targetId:'parent',browserInstance:'host',artifactRef:'proof',artifactSha256:'sha',frames:[{iframeSources:[href]}]}]};
+test('Only the exact public form iframe recorded on a current registered parent may open',()=>assert.equal(canObserveEmbeddedForm(task,{parentTargetId:'parent'},new URL(href),'host'),true));
+test('Guessed paths, unknown parents, old hosts and protected URLs are refused',()=>{for(const [input,url,host]of [[{parentTargetId:'other'},href,'host'],[{parentTargetId:'parent'},href+'/guessed','host'],[{parentTargetId:'parent'},href,'other'],[{parentTargetId:'parent'},'chrome://extensions','host']])assert.equal(canObserveEmbeddedForm(task,input,new URL(url),host),false);});

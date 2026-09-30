@@ -262,9 +262,14 @@ assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
   new FakeField({ ariaLabel: "Plans and prices", tagName: "textarea" })),
 promptHiveOldPhoto.projectFields.Pricing);
 assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
-  new FakeField({ ariaLabel: "Your name" })), "Syndred");
+  new FakeField({ ariaLabel: "Your name" })), "",
+"a submitter name must come from an explicit person profile field");
 assert.equal(fieldHooks.resolveValueForField(promptHiveOldPhoto,
   new FakeField({ ariaLabel: "Your role" })), "Founder");
+assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig,
+  new FakeField({ tagName: "textarea", ariaLabel: "Website Name" })), "OldPhotoLive AI");
+assert.equal(fieldHooks.resolveValueForField(oldPhotoConfig,
+  new FakeField({ tagName: "textarea", ariaLabel: "Website URL" })), "https://oldphotoliveai.com");
 context.location.hostname = "directory.example";
 context.location.pathname = "/";
 context.location.hostname = "docs.google.com";
@@ -680,6 +685,32 @@ credibleReceipt.getBoundingClientRect = () => ({ width: 320, height: 38 });
 receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://another-directory.example/submit" });
 assert.equal(receipt.matched, false, "Credible AI receipt must not be attributed to another source");
 document.querySelector = originalQuerySelector;
+context.location.href = "https://www.tools-ai.online/submit-tool";
+context.location.hostname = "www.tools-ai.online";
+document.body.innerText = "Submit Your AI Tool Share your innovative AI tools with our community.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.tools-ai.online/tool-submit" });
+assert.equal(receipt.matched, false, "Tools AI Online pre-submit copy is not a receipt");
+document.body.innerText = "Tool Submitted Successfully! Thank you for your submission. We❛ll review your tool and notify you via email once it❛s published.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://www.tools-ai.online/tool-submit" });
+assert.equal(receipt.matched, true, "Tools AI Online final confirmation proves receipt");
+assert.equal(receipt.publicationStatus, "pending_moderation", "Tools AI Online says the accepted tool awaits review");
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://another-directory.example/submit" });
+assert.equal(receipt.matched, false, "Tools AI Online receipt cannot be attributed to another source");
+context.location.href = "https://bai.tools/submit-ai-tools";
+context.location.hostname = "bai.tools";
+context.location.pathname = "/submit-ai-tools";
+document.body.innerText = "Submit your AI tools. All submissions are reviewed by our team.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://bai.tools/submit-ai-tools" });
+assert.equal(receipt.matched, false, "BAI's ordinary review policy is not a receipt");
+context.location.href = "https://bai.tools/finish";
+context.location.pathname = "/finish";
+document.body.innerText = "Submission Successful Thank you for submitting your AI tool to BAI.tools! All submissions are reviewed by our team.";
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://bai.tools/submit-ai-tools" });
+assert.equal(receipt.matched, true, "BAI's actual finish page proves receipt");
+assert.equal(receipt.publicationStatus, "pending_moderation", "BAI's successful free submission is awaiting review");
+receipt = hooks.classifyVisibleEvidence({ destinationUrl: "https://another-directory.example/submit" });
+assert.equal(receipt.matched, false, "BAI receipt cannot be attributed to another directory");
+context.location.pathname = "/submit";
 context.location.href = "https://alieradox.com/submit";
 context.location.hostname = "alieradox.com";
 document.body.innerText = "Submit an AI Tool We review all submissions to ensure quality and relevance.";

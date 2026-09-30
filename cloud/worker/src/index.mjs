@@ -1,4 +1,8 @@
 import { neon } from "@neondatabase/serverless";
+import { d1Api } from "./d1-api.mjs";
+import { d1Executor } from "./d1-executor.mjs";
+import { executorApi } from "./executor-api.mjs";
+import { readJournal, automationSummary } from "./submission-journal.mjs";
 import {
   applyPatchOperations,
   artifactObjectKey,
@@ -34,15 +38,21 @@ function json(payload, init = {}) {
 
 function requestOrigin(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const configured = String(env.ALLOWED_ORIGIN || "").trim();
-  return configured && origin === configured ? origin : "";
+  const allowed = String(env.ALLOWED_ORIGIN || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  // Unpacked installs can have different IDs on another browser/computer.
+  // CORS is not authentication: every data route still requires its bearer token.
+  const extension=env.ALLOW_AUTHENTICATED_EXTENSIONS==='true'&&/^chrome-extension:\/\/[a-p]{32}$/.test(origin);
+  return allowed.includes(origin)||extension ? origin : "";
 }
 
 function corsHeaders(request, env) {
   const origin = requestOrigin(request, env);
   const headers = {
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Asset-Name, X-Asset-Sha256, X-Profile-Id, X-Media-Kind, X-Media-Index, X-Run-Id, X-Task-Id, X-Artifact-Kind",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Asset-Name, X-Asset-Sha256, X-Profile-Id, X-Media-Kind, X-Media-Index, X-Run-Id, X-Task-Id, X-Artifact-Kind, X-Executor-Protocol",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -61,9 +71,14 @@ function unauthorized(request, env) {
 }
 
 async function isAuthorised(request, env) {
-  const expected = String(env.APP_ACCESS_TOKEN || "").trim();
   const supplied = parseBearerToken(request.headers.get("Authorization"));
-  return Boolean(expected && supplied && (await secureEqual(expected, supplied)));
+  if (!supplied) return false;
+  const primary = String(env.APP_ACCESS_TOKEN || "").trim();
+  const device = String(env.DEVICE_ACCESS_TOKEN || "").trim();
+  return Boolean(
+    (primary && (await secureEqual(primary, supplied))) ||
+    (device && (await secureEqual(device, supplied)))
+  );
 }
 
 async function requestJson(request) {
@@ -582,12 +597,65 @@ async function handleDomainMetrics(request) {
 
 async function router(request, env) {
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+  const requestPath=new URL(request.url).pathname;
+  if(requestPath.startsWith('/v2/executor/')||(env.EXECUTOR_BACKEND==='d1'&&requestPath.startsWith('/v1/executor/'))){
+    const scope=authorisedWorkspaceId(new URL(request.url).searchParams.get('workspace'),env);
+    if(!scope)return json({ok:false,error:'工作区未授权'},{status:403});
+    return d1Executor(request,env,scope,input=>handlePlan(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env));
+  }
+  if(env.STATE_BACKEND==='d1'&&requestPath.startsWith('/v1/')){
+    if(/^\/v1\/(ai\/|media(?:\/|$)|domain\/)/.test(requestPath)){const next=new URL(request.url);next.pathname=next.pathname.replace('/v1/','/v2/');return router(new Request(next,request),env);}
+    return json({ok:false,error:'云端已迁移至 D1。已保留本机资料，请在新版外链总览恢复本机最新资料后切换同步。',code:'LOCAL_SNAPSHOT_REQUIRED'},{status:428});
+  }
+  if (new URL(request.url).pathname.startsWith('/v2/')) return d1Api(request,env,isAuthorised,async(path,req)=>{
+    const ai={'/ai/comment':handleComment,'/ai/plan':handlePlan,'/ai/vision-plan':handleVisionPlan,'/ai/extract-site':handleExtractSite,'/ai/generate-site':handleGenerateSite,'/ai/judge':handleJudge,'/ai/validate-fill':handleValidateFill};
+    if(ai[path])return json(await ai[path](req,env));
+    if(path==='/domain/metrics')return json(await handleDomainMetrics(req));
+    const match=path.match(/^\/(media|automation\/artifacts)\/([a-zA-Z0-9._-]+)$/);
+    if(match&&req.method==='PUT'){
+      const bytes=await req.arrayBuffer();if(!bytes.byteLength||bytes.byteLength>MAX_MEDIA_BYTES)return json({ok:false,error:'图片大小不合要求'},413);
+      const type=normaliseContentType(req.headers.get('Content-Type'));verifyImageSignature(bytes,type);
+      const checksum=await sha256Hex(bytes);if(checksum!==req.headers.get('X-Asset-Sha256'))return json({ok:false,error:'图片校验失败'},400);
+      const workspace=authorisedWorkspaceId(new URL(req.url).searchParams.get('workspace'),env);
+      const key=match[1]==='media'?mediaObjectKey(workspace,match[2]):artifactObjectKey(workspace,match[2]);
+      const old=await env.MEDIA_BUCKET.head(key);
+      if(old){const previousHash=old.customMetadata?.sha256||await sha256Hex(await(await env.MEDIA_BUCKET.get(key)).arrayBuffer());if(previousHash!==checksum)return json({ok:false,error:'图片编号已有不同内容'},409);}
+      await env.MEDIA_BUCKET.put(key,bytes,{httpMetadata:{contentType:type},customMetadata:{sha256:checksum,profileId:req.headers.get('X-Profile-Id')||'',kind:req.headers.get('X-Media-Kind')||'',fileName:safeAssetName(req.headers.get('X-Asset-Name'),match[2])}});
+      return json({ok:true,assetId:match[2],artifactId:match[2],ref:(match[1]==='media'?'cloud-media://':'cloud-artifact://')+match[2],byteLength:bytes.byteLength,contentType:type});
+    }
+    return json({ok:false,error:'接口不存在'},404);
+  });
+  if (new URL(request.url).pathname.startsWith('/v1/executor/')) {
+    const scope = authorisedWorkspaceId(new URL(request.url).searchParams.get('workspace'), env);
+    if (!scope) return json({ ok: false, error: '工作区未授权' }, { status: 403 });
+    const sql = sqlFor(env);
+    return executorApi(request, env, sql, scope, {
+      listSnapshot, artifactObjectKey,
+      plan: input => handlePlan(new Request(request.url, { method: 'POST', body: JSON.stringify(input) }), env),
+      recordEvent: async ({ runId, task, input, deviceId }) => {
+        const runs = await sql`select data->>'createdAt' as created_at,jsonb_array_length(data->'tasks') as total from externallink_executor_runs where workspace_id=${scope} and run_id=${runId}`;
+        const states = await sql`select count(*)::int as total,bool_and(data->>'status' in ('finished','excluded')) as finished,bool_or(data->>'status' in ('pending','opening','filling','submitting')) as pending from externallink_executor_tasks where workspace_id=${scope} and run_id=${runId}`;
+        const run = runs[0] || {};
+        const finished = states[0].total > 0 && states[0].finished;
+        const pending = states[0].pending;
+        return handleAutomationEvent(new Request(request.url, { method: 'POST', body: JSON.stringify({
+        run: { runId, status: finished ? 'finished' : pending ? 'running' : 'needs_attention', taskTotal: run.total || states[0].total, destinationTotal: run.total || states[0].total, selectedProfileIds: [task.data.profileId], config: { deviceId, driver: 'windows-playwright' }, startedAt: run.created_at || input.at, finishedAt: finished ? input.at : null },
+        event: { id: input.id, runId, taskId: task.task_id, profileId: task.data.profileId, destinationKey: task.data.destinationKey,
+          at: input.at, type: input.type, status: input.state.status, after: automationSummary(input.state), result: input.state.reason || '', recoveryPoint: input.state.attemptBoundary || '' }
+      }) }), sql, scope);
+      }
+    });
+  }
   if (!(await isAuthorised(request, env))) return unauthorized(request, env);
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
   const workspaceId = authorisedWorkspaceId(url.searchParams.get("workspace"), env);
   if (!workspaceId) return json({ ok: false, error: "工作区未授权" }, { status: 403 });
   const sql = sqlFor(env);
+
+  if(request.method==='GET' && path==='/v1/submission-tasks'){
+    return json(await readJournal(sql,workspaceId,url.searchParams));
+  }
 
   if (request.method === "GET" && path === "/v1/health") {
     await sql`select 1 as ready`;

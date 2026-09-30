@@ -1047,4 +1047,4 @@
     GATE_STATUSES,
     DEFAULT_PROJECT,
   };
-})(typeof self !== "undefined" ? self : window);
+})(typeof self !== "undefined" ? self : globalThis);

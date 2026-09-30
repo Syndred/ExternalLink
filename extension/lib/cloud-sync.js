@@ -124,6 +124,7 @@
       endpoint,
       accessToken,
       workspaceId,
+      storageBackend: raw.storageBackend === 'd1' ? 'd1' : 'legacy',
       connectedAt: raw.connectedAt || "",
       migratedAt: raw.migratedAt || "",
       lastPullAt: raw.lastPullAt || "",

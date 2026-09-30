@@ -18,6 +18,7 @@ const moduleSources = new Map(
     "lib/unattended.js",
     "lib/scheduler.js",
     "lib/submission-timeline.js",
+    "lib/journal-sync.js",
     "lib/backup.js",
     "lib/cloud-sync.js",
     "lib/url-library.js",
@@ -299,7 +300,7 @@ function makeTestDate(clock) {
   return clock.Date;
 }
 
-function makeContext(mock) {
+function makeContext(mock, { legacy = false } = {}) {
   const context = {
     console: { log() {}, warn() {}, error() {} },
     chrome: mock.chrome,
@@ -351,7 +352,12 @@ function makeContext(mock) {
     }
   };
   vm.createContext(context);
-  vm.runInContext(backgroundSource, context, { filename: "extension/background.js" });
+  // Keep historical recovery fixtures isolated; production guards are tested
+  // below with the untouched source and must create no automatic browser work.
+  const fixtureSource = legacy ? backgroundSource
+    .replace('  // Preserve the legacy snapshot as evidence; never resume a second driver.\n  return;\n', '')
+    .replace('  return; // The Windows executor is the sole scheduler.\n', '') : backgroundSource;
+  vm.runInContext(fixtureSource, context, { filename: "extension/background.js" });
   return context;
 }
 
@@ -363,7 +369,7 @@ async function loadRuntime(options = {}) {
     tabMessage: options.tabMessage,
     clock,
   });
-  const context = makeContext(mock);
+  const context = makeContext(mock, { legacy: options.legacy !== false });
   const hooks = vm.runInContext(
     `({
       state,
@@ -1414,4 +1420,18 @@ for (const action of ["pauseBatchRun", "stopBatchRun"]) {
   await stopIfNeeded(runtime);
 }
 
-console.log("unattended runtime tests passed");
+{
+  const saved = batchStorage({ status: 'running', tasks: [task({ index: 1, profileId: 'P1', status: 'running' })] });
+  const runtime = await loadRuntime({ legacy: false, storage: saved });
+  await runtime.hooks.restoreActiveBatchRun();
+  await runtime.hooks.scheduleQueueProcessing();
+  assert.equal(runtime.hooks.state.running, false, 'the real extension must not resurrect the retired driver');
+  assert.deepEqual(runtime.mock.storageData.activeBatchRun, saved.activeBatchRun, 'legacy evidence must remain intact');
+  for (const action of ['start','resume','sidepanelFill','requestAutoFill','manualContinue','captchaResolved']) {
+    let response;
+    runtime.mock.events.runtimeMessage.emit({ action }, {}, value => { response = value; });
+    assert.equal(response?.migrated, true, `${action} must route to the sole executor`);
+  }
+  assert.equal(runtime.mock.calls.tabsCreate.length, 0);
+}
+console.log("legacy recovery fixtures and production migration guards passed");

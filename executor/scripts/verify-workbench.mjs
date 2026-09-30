@@ -1,0 +1,12 @@
+import{DatabaseSync}from'node:sqlite';import{join}from'node:path';import{homedir}from'node:os';import{writeFileSync}from'node:fs';import assert from'node:assert/strict';
+const db=new DatabaseSync(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true}),pair=JSON.parse(db.prepare('SELECT value FROM state WHERE id=?').get('pair').value);db.close();const base='http://127.0.0.1:19389';
+assert.equal((await fetch(base+'/connection')).status,401);
+const auth=await fetch(base+'/connection',{headers:{Authorization:'Bearer '+pair.localToken}});assert.equal(auth.status,200);const cookie=auth.headers.get('set-cookie')?.split(';')[0];assert.ok(cookie);
+assert.equal((await fetch(base+'/connection',{headers:{Cookie:cookie}})).status,200);
+assert.equal((await fetch(base+'/status',{headers:{Cookie:cookie,Origin:'https://foreign.example'}})).status,403);
+assert.equal((await fetch(base+'/cloud/workspace/state/siteProfiles',{headers:{Cookie:cookie}})).status,502);
+const status=await(await fetch(base+'/status',{headers:{Cookie:cookie}})).json();assert.equal(status.ok,true);assert.equal(status.paused,true);
+const docs=await(await fetch(base+'/cloud/workspace/journal-documents',{headers:{Cookie:cookie}})).json();assert.equal(docs.ok,true);
+const notes=Object.values(docs.documents.submissionTimeline||{}).flat().filter(e=>String(e.note||'').includes('工作台迁移核对'));
+assert.equal(notes.length,1);assert.equal(notes[0].type,'note');
+const report={at:new Date().toISOString(),unauthorized:401,crossOrigin:403,sessionReopen:true,tasks:status.tasks.length,pendingEvents:status.pendingEvents,paused:status.paused,progressNoteReadback:true,noteId:notes[0].id,submissionsPerformed:0};writeFileSync('docs/evidence/workbench-live-2026-09-29.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

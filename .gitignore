@@ -14,4 +14,13 @@ __pycache__/
 *.db-shm
 *.db-wal
 cloud/worker/.wrangler/
+.wrangler/
 cloud/worker/node_modules/
+executor/node_modules/
+executor/test-output/
+
+# Per-device pairing and durable local state must never enter a checkout.
+enrollment.json
+pairing.txt
+outbox.sqlite*
+.externallink-executor/

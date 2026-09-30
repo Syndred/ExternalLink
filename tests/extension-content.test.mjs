@@ -15,6 +15,46 @@ const manifestText = readFileSync(resolve(root, "extension/manifest.json"), "utf
 const manifest = JSON.parse(manifestText);
 
 {
+  const start = content.indexOf("  function gameSubmissionFieldKind(fieldText) {");
+  const end = content.indexOf("  function resolveValueForField(config, element) {", start);
+  assert.ok(start >= 0 && end > start, "game submission guards should precede generic profile fallbacks");
+  const source = content.slice(start, end);
+  const context = {
+    URL,
+    fitValueToConstraints: (value) => String(value || "").trim(),
+  };
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  const resolve = (config, label) => {
+    context.config = config;
+    context.pf = config.projectFields || {};
+    context.label = label;
+    return vm.runInContext("resolveGameSubmissionFieldValue(config, pf, label, {})", context);
+  };
+  const jevHubProfile = {
+    brandName: "JevPlay",
+    targetDomain: "https://jevplay.com",
+    projectFields: {
+      Name: "Jev AI Games — Play Daily vs TypeSafe Jev | JevPlay",
+      Title: "Jev AI Games — Play Daily vs TypeSafe Jev | JevPlay",
+      Url: "https://jevplay.com",
+    },
+  };
+  assert.equal(resolve(jevHubProfile, "What your game is called"), "",
+    "a hub SEO title must not populate an individual game title");
+  assert.equal(resolve(jevHubProfile, "Playable link"), "",
+    "a game directory must not receive the hub homepage as a playable URL");
+  assert.equal(resolve({ ...jevHubProfile, projectFields: { ...jevHubProfile.projectFields, "Game Name": "Code Breaker" } }, "Game name"), "Code Breaker");
+  assert.equal(resolve({ ...jevHubProfile, projectFields: { ...jevHubProfile.projectFields, "Game URL": "https://jevplay.com/games/code-breaker" } }, "Embeddable URL"), "https://jevplay.com/games/code-breaker");
+  assert.equal(resolve({ ...jevHubProfile, projectFields: { ...jevHubProfile.projectFields, "Game URL": "http://jevplay.com/games/code-breaker" } }, "Game URL"), "",
+    "game submission URLs must be public HTTPS URLs");
+  assert.equal(resolve(jevHubProfile, "Tool name"), null,
+    "ordinary product name fields should keep their existing mapping");
+  assert.match(content, /资料里没有单款游戏名称，已留空/);
+  assert.match(content, /资料里没有单款游戏直达 URL，已留空/);
+}
+
+{
   const start = content.indexOf("  function fieldIsRequired(element) {");
   const end = content.indexOf("  function collectFillLearnings", start);
   const source = content.slice(start, end);

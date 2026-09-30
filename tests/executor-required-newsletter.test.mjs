@@ -1,0 +1,4 @@
+import test from'node:test';import assert from'node:assert/strict';import{canAcceptRequiredNewsletter}from'../executor/src/login-link.mjs';
+const input={authorization:'explicit_user_all_permissions'},field={id:'submit-signin-newsletter',type:'checkbox',required:true,label:'I want to receive the early.tools newsletter'};
+test('Explicit existing ordinary permission permits the observed required newsletter field',()=>assert.equal(canAcceptRequiredNewsletter('https://www.early.tools/submit',input,field),true));
+test('Optional subscriptions, unknown declarations, other sites and missing authorization remain untouched',()=>{for(const [url,i,f]of [['https://other.test',input,field],['https://www.early.tools/submit',{},field],['https://www.early.tools/submit',input,{...field,required:false}],['https://www.early.tools/submit',input,{...field,label:'I certify ownership and copyright'}]])assert.equal(canAcceptRequiredNewsletter(url,i,f),false);});

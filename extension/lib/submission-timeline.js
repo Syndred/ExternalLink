@@ -782,4 +782,4 @@
     mergeBackup,
     mergeTimelineBackup: mergeBackup,
   };
-})(typeof self !== "undefined" ? self : window);
+})(typeof self !== "undefined" ? self : globalThis);

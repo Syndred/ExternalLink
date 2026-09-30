@@ -215,6 +215,10 @@
   document.addEventListener("submit", observeManualSubmission, true);
 
   function onExtensionMessage(msg, sender, sendResponse) {
+    if (!globalThis.__extLinkExecutor && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
+      sendResponse({ ok: false, migrated: true, error: '自动填写与提交已迁入 Windows 执行器' });
+      return true;
+    }
     if (msg.action === "watchManualSubmission") {
       manualSubmissionWatch = {
         token: msg.token,
@@ -277,6 +281,11 @@
       }));
       return true;
     }
+    if (msg.action === "inspectSubmitAction") {
+      const button = findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
+      sendResponse({ finalFound: !!button, label: button ? getElementLabel(button) : '', advanceFound: !!findSafeAdvanceButton(), allowed: shouldAutoSubmitListing(msg.config || {},msg.platform || 'directory') });
+      return true;
+    }
     if (msg.action === "inspectAutoFillGuard") {
       sendResponse(inspectAutoFillGuard(msg.targetDomain || ""));
       return true;
@@ -314,7 +323,7 @@
         const scopedFields = queryFillableElements();
         const operable = !!(platform || scopedFields.length > 0 || hasComment);
         const submitBlocker = operable && platform !== "wp_comment" && platform !== "article"
-          ? detectSubmitBlockers()
+          ? detectSubmitBlockers(msg.config || {})
           : null;
         const playbook =
           self.ExtLinkPlaybooks && typeof self.ExtLinkPlaybooks.lookup === "function"
@@ -585,6 +594,8 @@
 
   // ─── Platform Detection ───
   function identifyPlatform() {
+    if (location.hostname === '10015.io' && location.pathname === '/product-finder/submit' &&
+        document.querySelector('input#name') && document.querySelector('input#url') && document.querySelector('textarea#description')) return 'submission';
     for (const [name, handler] of Object.entries(PLATFORMS)) {
       if (handler.match()) return name;
     }
@@ -683,6 +694,14 @@
   }
 
   function detectPaidSubmit() {
+    // NavTools presents paid upgrades beside a selected $0 Basic listing.
+    // The visible upgrades do not make the Basic submit action a charge.
+    if (/^(?:www\.)?navtools\.ai$/i.test(String(location.hostname || '')) &&
+        document.querySelector('button#free[role="radio"]')?.getAttribute('aria-checked') === 'true' &&
+        /\$0\b/.test(String(document.querySelector('label[for="free"]')?.textContent || '')) &&
+        Array.from(document.querySelectorAll('form button[type="submit"]')).some(button => /submit ai tool/i.test(button.textContent || ''))) {
+      return { classification: 'safe', type: 'free_listing', reason: '', evidence: { matched: ['selected_basic_zero_cost'] } };
+    }
     const submitBtn = findSubmitButton(
       'button[type="submit"], input[type="submit"]',
       ["submit", "add", "list", "publish", "pay", "buy", "checkout", "upgrade"],
@@ -840,7 +859,7 @@
     return legalNotice ? "当前表单声明提交或继续即表示同意法律条款，需人工确认" : "";
   }
 
-  function detectSubmitBlockers() {
+  function detectSubmitBlockers(config = {}) {
     let activeScope = document;
     try {
       activeScope = getActiveFillScope() || document;
@@ -890,7 +909,10 @@
       };
     }
     const legalAgreement = detectDirectoryLegalAgreement(activeScope);
-    if (legalAgreement) return { needs_manual: true, reason: legalAgreement };
+    if (legalAgreement && !(config.ordinaryTermsAuthorized === true &&
+        legalAgreement === "当前表单声明提交或继续即表示同意法律条款，需人工确认")) {
+      return { needs_manual: true, reason: legalAgreement };
+    }
     return null;
   }
 
@@ -949,9 +971,46 @@
     return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
   }
 
+  function classify10015Receipt(text, destinationUrl) {
+    let source;try { source = new URL(String(destinationUrl)); } catch { return null; }
+    if (location.hostname !== '10015.io' || location.pathname !== '/product-finder/submit' || source.hostname !== '10015.io') return null;
+    const named = String(text).match(/"[^"\n]{1,120}" has been submitted successfully\./);
+    if (!named || !/Thanks for submitting your product!/i.test(text) || !/Every product submission goes through a review queue/i.test(text)) return null;
+    const evidence = `Thanks for submitting your product! ${named[0]}`;
+    return { matched: true, publicationStatus: 'pending_moderation', evidence,
+      evidenceSignals: [{ type: 'visible_confirmation', text: evidence, url: String(location.href), matched: true }] };
+  }
+
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    const productFinderReceipt = classify10015Receipt(text, destinationUrl);
+    if (productFinderReceipt) return productFinderReceipt;
+    if (/^(?:www\.)?bai\.tools$/i.test(String(location.hostname || "")) &&
+        String(location.pathname || "") === "/finish" &&
+        !(() => { try { return /^(?:www\.)?bai\.tools$/i.test(new URL(String(destinationUrl)).hostname); } catch { return false; } })()) {
+      return { matched: false, publicationStatus: "unknown", evidence: "" };
+    }
+    if (/^(?:www\.)?bai\.tools$/i.test(String(location.hostname || "")) &&
+        String(location.pathname || "") === "/finish" &&
+        (() => { try { return /^(?:www\.)?bai\.tools$/i.test(new URL(String(destinationUrl)).hostname); } catch { return false; } })() &&
+        /Submission Successful/i.test(text) &&
+        /Thank you for submitting your AI tool to BAI\.tools!/i.test(text) &&
+        /All submissions are reviewed by our team/i.test(text)) {
+      const evidence = "Submission Successful. Thank you for submitting your AI tool to BAI.tools! All submissions are reviewed by our team.";
+      return { publicationStatus: "pending_moderation", evidence,
+        evidenceSignals: [{ type: "visible_confirmation", text: evidence, url: String(location.href || ""), matched: true }], matched: true };
+    }
+    // Tools AI Online replaces its form with this confirmation screen after
+    // accepting the tool for review. Its ordinary form contains neither line.
+    if (/^(?:www\.)?tools-ai\.online$/i.test(String(location.hostname || "")) &&
+        (() => { try { return /^(?:www\.)?tools-ai\.online$/i.test(new URL(String(destinationUrl)).hostname); } catch { return false; } })() &&
+        /Tool Submitted Successfully!/i.test(text) &&
+        /Thank you for your submission\. We\Sll review your tool and notify you via email once it\Ss published\./i.test(text)) {
+      const evidence = "Tool Submitted Successfully! Thank you for your submission. We'll review your tool and notify you via email once it's published.";
+      return { publicationStatus: 'pending_moderation', evidence,
+        evidenceSignals: [{ type: 'visible_confirmation', text: evidence, url: String(location.href || ''), matched: true }], matched: true };
+    }
     // Alieradox clears the form after an AJAX submit and briefly shows a
     // Sonner notification. Its exact success copy is the only receipt here;
     // the permanent "we review all submissions" form copy is not evidence.
@@ -1287,6 +1346,14 @@
     const identitySignal = commentContextPattern.test(identity);
     const textSignal = commentContextPattern.test(localText);
     if (!actionSignal && !identitySignal && !textSignal) return false;
+    // Filled product copy can contain "reply" or "comments". Airtable's
+    // contenteditable URL/description controls have no input name to identify
+    // the listing, so prefer its explicit product label over body text.
+    const productLabel = Array.from(form.querySelectorAll?.("label") || []).some(label =>
+      /^(?:tool|product|app|website)\s+name\b|^(?:产品|工具|网站)名称/.test(
+        String(label.textContent || "").trim().toLowerCase(),
+      ));
+    if (productLabel && !actionSignal && !identitySignal) return false;
 
     // When a generic POST form also has listing fields, a message/body
     // textarea is product copy. Do not let that form become a comment target
@@ -1497,6 +1564,11 @@
   }
 
   function isNonSubmissionUtilityField(element) {
+    const type=String(element?.type||'').toLowerCase();
+    const label=String(getSnapshotLabel(element)||'').trim().toLowerCase();
+    const hint=String(getFieldHint(element)||'').toLowerCase();
+    if(type==='search'||/^(?:search\b|query\b|搜索|检索)/.test(label)||element?.closest?.('[role="search"]')||
+      (/^(?:s|q)$/.test(element?.name||'')&&/\b(?:search|query)\b/.test(hint)))return true;
     const owner = element?.closest?.("form");
     if (!owner) return false;
     if (hasLikelyListingFields(owner) || hasLikelySubmissionFields(owner)) return false;
@@ -3559,6 +3631,8 @@
   };
   self.__extLinkFieldRoutingTestHooks = {
     resolveValueForField,
+    gameSubmissionFieldKind,
+    resolveGameSubmissionFieldValue,
     getFieldConstraints,
     fitValueToConstraints,
     modelFillGuard,
@@ -3602,7 +3676,7 @@
 
   async function submitFilledForm(config, platform = "directory", fillResult = {}) {
     const pageContext = capturePageContext();
-    const blocker = detectSubmitBlockers();
+    const blocker = detectSubmitBlockers(config);
     if (blocker?.captcha) {
       logStep("🤖 检测到验证码 — 页签留下等人，不代点提交");
       highlightCaptchaArea();
@@ -3771,7 +3845,7 @@
       };
     }
 
-    const afterBlocker = detectSubmitBlockers();
+    const afterBlocker = detectSubmitBlockers(config);
     if (afterBlocker?.captcha) {
       highlightCaptchaArea();
       return { captcha: true, keepTab: true, clickedSubmit: true, platform, ...fillResult };
@@ -5845,7 +5919,7 @@
         label: (o.textContent || o.label || "").trim(),
         disabled: !!o.disabled,
       }))
-      .filter((o) => o.value && !/^(-+|choose|select|pick|please)/i.test(o.label));
+      .filter((o) => o.value && !/^(-+|choose|select|pick|please|选择|请选择)/i.test(o.label));
   }
 
   function isSelectEmpty(element) {
@@ -5854,7 +5928,7 @@
     const opt = element.selectedOptions?.[0];
     if (!opt) return true;
     const label = (opt.textContent || "").trim();
-    if (!label || /^(select|choose|pick|please|--)/i.test(label)) return true;
+    if (!label || /^(select|choose|pick|please|--|选择|请选择)/i.test(label)) return true;
     return false;
   }
 
@@ -5897,7 +5971,7 @@
       else if (/graffiti/.test(identity)) tokens.push("For Designers", "For Content Creators");
     }
 
-    if (/categ|industry|sector|niche|vertical|topic|type/.test(hint)) {
+    if (/categ|industry|sector|niche|vertical|topic|type|分类|类别/.test(hint)) {
       // Directory taxonomies often use broad labels instead of a product's SEO tags.
       // Prefer an accurate broad class before trying the product-specific keywords.
       const identity = `${config.brandName || ""} ${pf.Name || ""} ${config.tags || ""}`.toLowerCase();
@@ -5905,8 +5979,11 @@
         tokens.push("Design Assets & Icons", "Design Generators", "Image & Video Generators", "Image Generation", "Design", "AI Generation (Image, Video, Text)");
       } else if (/old.?photo|photo restor|image animat|image generat/.test(identity)) {
         tokens.push("Image Generation", "Image & Video Generators", "AI Generation (Image, Video, Text)", "Design Assets & Icons");
+      } else if (/\bchat intent analysis\b|\bconversation analysis\b/.test(
+          [config.tags, pf["Tags Keywords/Hashtags"], pf.Note].join(" ").toLowerCase())) {
+        tokens.push("Communication", "Decision Support", "Productivity", "AI Tools (Other)", "Other", "AI & LLM");
       } else if (/\bjevplay\b|\bai games?\b|decision games?/.test(identity)) {
-        tokens.push("AI Tools (Other)", "Entertainment", "Other", "AI & LLM");
+        tokens.push("AI Tools (Other)", "Entertainment", "Gaming", "Games", "实用有趣", "娱乐", "Other", "AI & LLM");
       }
       tokens.push(...profileTags.filter((tag) => tag.length >= 4));
     }
@@ -5949,7 +6026,7 @@
       const pf = getProfileFields(config);
       if (!(pf.Country || pf.Region || pf.Location || pf["Company country"])) return "";
     }
-    const isCategoryOrPersona = /categ|industry|sector|niche|vertical|profession|audience|persona/.test(hint);
+    const isCategoryOrPersona = /categ|industry|sector|niche|vertical|profession|audience|persona|分类|类别/.test(hint);
     for (const token of tokens) {
       if (isCategoryOrPersona && String(token).trim().length < 4) continue;
       const match = findBestSelectOption(options, token);
@@ -6369,7 +6446,11 @@
 
     for (const container of searchRoots) {
       if (!container?.textContent) continue;
-      const text = container.textContent;
+      // A whole row/form can also contain another field's counter. Only an
+      // owned field wrapper or a standalone counter supplies this limit.
+      const controls = Array.from(container.querySelectorAll?.('input:not([type="hidden"]),textarea,select,[contenteditable="true"]') || []);
+      if (controls.some(control => control !== element)) continue;
+      const text = container.textContent.replace(/(\d),(?=\d{3}(?:\D|$))/g, "$1");
       const match = text.match(/(\d+)\s*\/\s*(\d+)\s*(words?)?/i);
       if (match) {
         const max = parseInt(match[2], 10);
@@ -6388,7 +6469,7 @@
   function getFieldConstraints(element) {
     const label = getSnapshotLabel(element);
     const hint = getFieldHint(element);
-    const combined = `${label} ${hint} ${element.getAttribute("placeholder") || ""}`;
+    const combined = `${label} ${hint} ${element.getAttribute("placeholder") || ""}`.replace(/(\d),(?=\d{3}(?:\D|$))/g, "$1");
     let maxLength = element.maxLength > 0 ? element.maxLength : null;
     let minLength = element.minLength > 0 ? element.minLength : null;
     let maxWords = null;
@@ -6407,8 +6488,10 @@
       if (minWord) minWords = parseInt(minWord[1], 10);
     }
 
-    const charLimit = combined.match(/(?:max|up to|limit)\s*(\d+)\s*(?:character|char)/i);
+    const charLimit = combined.match(/(?:max(?:imum)?\.?|up to|limit)\s*:?\s*(\d+)\s*(?:character|char)/i);
     if (charLimit) maxLength = maxLength || parseInt(charLimit[1], 10);
+    const charRange = combined.match(/(\d+)\s*(?:[-–—]|to)\s*(\d+)\s*(?:characters?|chars?|字符)/i);
+    if(charRange){minLength=minLength||parseInt(charRange[1],10);maxLength=maxLength||parseInt(charRange[2],10);}
 
     const counter = findCharCounter(element);
     if (counter?.max) {
@@ -6450,7 +6533,16 @@
     return text;
   }
 
+  function getExternalSelectedTags(element) {
+    if (typeof location === 'undefined' || location.hostname !== '10015.io' || location.pathname !== '/product-finder/submit' || element.id !== 'tag') return null;
+    const section = element.closest?.('[class*="css-"][class*="-container"]')?.parentElement?.parentElement;
+    return Array.from(section?.querySelectorAll('button') || []).filter(isVisible)
+      .map(button => compactText(button.innerText || button.textContent || '', 100)).filter(Boolean);
+  }
+
   function getElementFillValue(element) {
+    const externalTags = getExternalSelectedTags(element);
+    if (externalTags) return externalTags.join(', ');
     const type = (element.type || "").toLowerCase();
     if (type === "file") return element.files?.length ? element.files[0].name : "";
     if (type === "checkbox" || type === "radio") {
@@ -6860,6 +6952,70 @@
     return "";
   }
 
+  function gameSubmissionFieldKind(fieldText) {
+    const text = String(fieldText || "").toLowerCase().replace(/[_-]+/g, " ");
+    if (/\bgame\s+(?:name|title)\b|\b(?:name|title)\s+of\s+(?:the\s+)?game\b|\bwhat\s+(?:your|the)\s+game\s+is\s+called\b/.test(text)) {
+      return "title";
+    }
+    const hasGameContext = /\bgame\b|\bplayable\b|\bembeddable\b/.test(text);
+    if (hasGameContext && /\b(?:url|link|website)\b/.test(text)) return "url";
+    return "";
+  }
+
+  function resolveGameSubmissionFieldValue(config, pf, fieldText, constraints) {
+    const kind = gameSubmissionFieldKind(fieldText);
+    if (!kind) return null;
+
+    const keys = kind === "title"
+      ? ["Game title", "Game Title", "Game name", "Game Name", "Single game title", "Individual game title"]
+      : ["Game URL", "Game Url", "Playable URL", "Playable link", "Embeddable URL", "Direct game URL", "Single game URL", "Individual game URL"];
+    const configKeys = kind === "title"
+      ? ["gameTitle", "gameName", "singleGameTitle", "individualGameTitle"]
+      : ["gameUrl", "playableUrl", "embeddableUrl", "singleGameUrl", "directGameUrl"];
+    const candidate = [
+      ...configKeys.map((key) => config?.[key]),
+      ...keys.map((key) => pf?.[key]),
+    ].map((value) => String(value || "").trim()).find(Boolean) || "";
+
+    if (kind === "url") {
+      try {
+        const url = new URL(candidate);
+        if (url.protocol !== "https:") return "";
+        return url.toString();
+      } catch {
+        return "";
+      }
+    }
+    return candidate ? fitValueToConstraints(candidate, constraints) : "";
+  }
+
+  function resolveContactIdentityValue(config, pf, fieldText, constraints) {
+    const text = String(fieldText || "").toLowerCase().replace(/[_-]+/g, " ");
+    const explicitPerson = String(pf["Contact person"] || pf["Contact Name"] || pf.Founder || "").trim();
+    if (/\b(?:e[- ]?mail|email)\b/.test(text)) return null;
+    if (/\b(?:phone|telephone|mobile|whatsapp)\b/.test(text)) {
+      const phone = String(pf.Phone || pf["Contact Phone"] || pf.Telephone || pf.Mobile || "").trim();
+      return /^\+?[\d\s().-]{7,25}$/.test(phone) && (phone.match(/\d/g) || []).length >= 7
+        ? fitValueToConstraints(phone, constraints) : "";
+    }
+    if (/\bfirst\s+name\b|\bgiven\s+name\b/.test(text)) return explicitPerson.split(/\s+/)[0] || "";
+    if (/\blast\s+name\b|\bsurname\b|\bfamily\s+name\b/.test(text)) {
+      const parts = explicitPerson.split(/\s+/).filter(Boolean);
+      return parts.length > 1 ? parts.slice(1).join(" ") : "";
+    }
+    if ((/\b(?:your\s+name|contact\s+name|submitter(?:\s+name)?|author(?:\s+name)?)\b|联系人/.test(text)) &&
+        !/\b(?:product|tool|app|company|business)\s+name\b|产品名称|工具名称|网站名称/.test(text)) {
+      return fitValueToConstraints(explicitPerson, constraints);
+    }
+    if (/\bcompany\s+name\b|\blegal\s+(?:business|entity)\s+name\b/.test(text)) {
+      return fitValueToConstraints(pf.Company || pf["Organization Name"] || "", constraints);
+    }
+    if (/\b(?:nickname|user\s*name)\b|昵称|用户名/.test(text)) {
+      return fitValueToConstraints(pf.Nickname || pf.Username || pf.username || "", constraints);
+    }
+    return null;
+  }
+
   function resolveValueForField(config, element) {
     const pf = getProfileFields(config);
     const hint = getFieldHint(element);
@@ -6872,6 +7028,30 @@
     const thereIsAiTool = typeof location !== "undefined" &&
       /(?:^|\.)thereisanaitool\.com$/i.test(location.hostname) &&
       /^\/submit-tool\/?$/.test(location.pathname || "");
+
+    // Game directories ask for one playable title and its direct URL. A Profile
+    // that describes a game hub must not reuse its SEO title or homepage URL.
+    const gameFieldValue = resolveGameSubmissionFieldValue(
+      config,
+      pf,
+      `${visibleHint} ${normalizedHint}`,
+      getFieldConstraints(element),
+    );
+    if (gameFieldValue !== null) return gameFieldValue;
+
+    // Personal and legal identity cannot be inferred from product copy.
+    const contactValue = resolveContactIdentityValue(
+      config, pf, `${visibleHint} ${normalizedHint}`, getFieldConstraints(element),
+    );
+    if (contactValue !== null) return contactValue;
+
+    if (/产品名称|工具名称|网站名称|^tool\s+name\b/.test(visibleHint)) {
+      return fitValueToConstraints(config.brandName || pf.Name || "", getFieldConstraints(element));
+    }
+    if (/标签|关键词/.test(visibleHint) && (tag === "textarea" || tag === "input")) {
+      return String(config.tags || pf["Tags Keywords/Hashtags"] || "")
+        .split(/[,;|/]+/).map((part) => part.trim().replace(/^#+/, "")).filter(Boolean).slice(0, 5).join(", ");
+    }
 
     if (thereIsAiTool) {
       const field = `${visibleHint} ${normalizedHint}`;
@@ -7155,15 +7335,14 @@
         getFieldConstraints(element),
       );
     }
+    if (/^website\s+name\b/.test(visibleHint)) {
+      return fitValueToConstraints(config.brandName || pf.Name || "", getFieldConstraints(element));
+    }
+    if (/^website\s+url\b/.test(visibleHint)) {
+      return config.targetDomain || pf.Url || "";
+    }
     if (tag === "textarea" || /\b(descrip\w*|describ\w*|summary|about|details?)\b/.test(visibleHint)) {
       return pickDescriptionForField(config, element);
-    }
-    if (/\bfirst\s+name\b/.test(hint)) {
-      return String(config.username || "").trim().split(/\s+/)[0] || "";
-    }
-    if (/\blast\s+name\b|\bsurname\b|\bfamily\s+name\b/.test(hint)) {
-      const parts = String(config.username || "").trim().split(/\s+/).filter(Boolean);
-      return parts.length > 1 ? parts.slice(1).join(" ") : "";
     }
     const host = location.hostname;
     const learnedKey = fieldMappingKey(element);
@@ -7680,7 +7859,7 @@
           /^free$/i.test(String(element.value || "").trim());
         const wrongPricingDefault = (selectedDefault || controlledFreeDefault) && /\bpric(?:e|ing)?\b|\bbilling\b/.test(selectHint) &&
           !/\b(?:listing|featured|upgrade|promotion)\b/.test(selectHint);
-        if (!isSelectEmpty(element) && !fieldNeedsRefill(element) && !wrongPricingDefault) continue;
+        if (!config.forceRefreshExisting && !isSelectEmpty(element) && !fieldNeedsRefill(element) && !wrongPricingDefault) continue;
         const selectValue = resolveSelectValueForField(element, config);
         if (selectValue && selectValue !== element.value && setSelectValue(element, selectValue)) {
           filledCount++;
@@ -7767,7 +7946,7 @@
         element.dispatchEvent(new Event("change", { bubbles: true }));
         existing = "";
       }
-      if (existing && !fieldNeedsRefill(element) &&
+      if (existing && !config.forceRefreshExisting && !fieldNeedsRefill(element) &&
           !shouldReplaceExistingProfileEmail(element, existing, value)) continue;
 
       const resolved = value || resolveValueForField(config, element);
@@ -7844,6 +8023,8 @@
   }
 
   function isCustomDropdownEmpty(trigger) {
+    const externalTags = getExternalSelectedTags(trigger);
+    if (externalTags) return externalTags.length === 0;
     const reactSelect = trigger.closest?.('[class*="css-"][class*="-container"]');
     if (reactSelect?.querySelector?.('[class*="singleValue"], [class*="multiValue"]')) {
       return false;
@@ -7869,6 +8050,7 @@
     const choiceElements = new Set([...choiceGroups.values()].flat());
     let emptyCount = 0;
     let invalidCount = 0;
+    let submitDisabled = false;
     const totalCount =
       elements.length - choiceElements.size - elements.filter((element) => customDropdownSet.has(element)).length +
       choiceGroups.size + customDropdowns.length;
@@ -7922,7 +8104,7 @@
             [button.innerText, button.value, button.getAttribute("aria-label")].filter(Boolean).join(" "),
           ));
       if (submitButtons.length && submitButtons.every((button) => button.disabled || button.getAttribute("aria-disabled") === "true")) {
-        emptyCount = Math.max(emptyCount, 1);
+        submitDisabled = true;
       }
     }
 
@@ -7930,7 +8112,8 @@
       emptyCount,
       invalidCount,
       totalCount,
-      allValid: emptyCount === 0 && invalidCount === 0,
+      submitDisabled,
+      allValid: emptyCount === 0 && invalidCount === 0 && !submitDisabled,
     };
   }
 
@@ -7976,6 +8159,7 @@
     const issues = collectVisibleFieldErrors();
     if (empty.emptyCount > 0) issues.unshift(`还有 ${empty.emptyCount} 个必填栏未填`);
     if (empty.invalidCount > 0) issues.unshift(`${empty.invalidCount} 个字段校验未通过`);
+    if (empty.submitDisabled) issues.push('站方提交按钮尚不可用，需要核对验证码或表单状态');
     return {
       ...empty,
       issues,
@@ -8057,11 +8241,27 @@
   }
 
   // ─── Captcha Detection ───
+  function isPassiveRecaptchaElement(element) {
+    if (element.closest?.('.grecaptcha-badge')) return true;
+    if (element.matches?.('.g-recaptcha, [data-sitekey]') && element.getAttribute('data-size') === 'invisible') return true;
+    if (element.matches?.('iframe[src*="recaptcha"]')) {
+      try {
+        const url = new URL(element.src, location.href);
+        return /\/recaptcha\/api2\/anchor/.test(url.pathname) && url.searchParams.get('size') === 'invisible';
+      } catch { return false; }
+    }
+    return false;
+  }
+  function hasCompletedAiOfDayCaptcha() {
+    return location.hostname === 'aioftheday.com' && location.pathname === '/submit-a-tool' &&
+      Array.from(document.querySelectorAll('textarea[name="g-recaptcha-response"]')).some(element => Boolean(element.value?.trim()));
+  }
   function detectCaptcha() {
+    if (hasCompletedAiOfDayCaptcha()) return false;
     // reCAPTCHA
-    if (findVisibleHumanGate(
+    if (Array.from(document.querySelectorAll(
       '.g-recaptcha, [data-sitekey], iframe[src*="recaptcha"], iframe[src*="captcha"], .grecaptcha-badge',
-    )) return true;
+    )).some(element => isVisibleHumanGate(element) && !isPassiveRecaptchaElement(element))) return true;
     // hCaptcha
     if (findVisibleHumanGate('.h-captcha, iframe[src*="hcaptcha"]')) return true;
     // Cloudflare Turnstile
@@ -8090,6 +8290,7 @@
   // prescans, but only treat a gate as a submission blocker when it is not
   // owned by a marketing form.
   function detectSubmissionCaptcha() {
+    if (hasCompletedAiOfDayCaptcha()) return false;
     const inSubframe = typeof window !== "undefined" && window.top && window.top !== window;
     const hasLocalSubmissionForm = Array.from(document.querySelectorAll("form")).some((form) =>
       !isMarketingOptInForm(form) && (hasLikelySubmissionFields(form) || queryFillableElements(form).length > 1),
@@ -8117,7 +8318,7 @@
       'input[name*="math"], input[name*="spam"]',
     ].join(", ");
     const hasRelevantElement = Array.from(document.querySelectorAll(selectors)).some((element) => {
-      if (!isVisibleHumanGate(element)) return false;
+      if (!isVisibleHumanGate(element) || isPassiveRecaptchaElement(element)) return false;
       const owner = element.closest?.("form");
       if (!owner && marketingOnlyPage) return false;
       if (owner && (isMarketingOptInForm(owner) || (marketingOnlyPage && isEmailOnlyOptInForm(owner)))) return false;
@@ -8205,8 +8406,15 @@
         if (element.tagName.toLowerCase() === "a") return false;
         if (!actionBelongsToScope(element)) return false;
         const label = actionLabel(element) || getElementLabel(element);
-        if (/^(?:subscribe|sign\s*up|join\s+(?:our\s+)?newsletter|search|log\s*in|sign\s*in)\b/i.test(label)) return false;
+        if (/^(?:subscribe|sign\s*up|join\s+(?:our\s+)?newsletter|search|log\s*(?:in|out)|sign\s*(?:in|out)|save\s+(?:this\s+)?tool|bookmark)\b/i.test(label)) return false;
+        if (/^select\s+(?:a\s+)?plan(?:\s|[>→»]|$)/i.test(label)) return false;
+        // A submit-type control may only gather metadata or advance a draft.
+        // Its HTML type cannot establish the final listing boundary.
+        if (/^(?:preview|save\s+(?:as\s+)?draft|fetch|import|scrape|next|continue|proceed|预览|保存草稿|下一步|继续)(?:\s|[>→»]|$)/i.test(label)) return false;
         const form = element.form || element.closest("form");
+        // Account menus can contain real submit buttons. Their form action
+        // remains an account action even when the visible label is generic.
+        if (/(?:^|[\/])(?:logout|signout|sign-out)(?:[\/?#]|$)/i.test(form?.getAttribute?.("action") || "")) return false;
         if (form && isMarketingOptInForm(form)) return false;
         return direct.includes(element) || labels.some((text) => label.includes(text));
       })
@@ -8539,7 +8747,12 @@
 
     if (!value) {
       icon.dataset.state = "empty";
-      icon.title = "资料里没有匹配这个字段的内容";
+      const gameFieldKind = gameSubmissionFieldKind(`${getSnapshotLabel(field)} ${getFieldHint(field)}`);
+      icon.title = gameFieldKind === "title"
+        ? "资料里没有单款游戏名称，已留空"
+        : gameFieldKind === "url"
+          ? "资料里没有单款游戏直达 URL，已留空"
+          : "资料里没有匹配这个字段的内容";
       return;
     }
 

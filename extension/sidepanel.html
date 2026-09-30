@@ -290,52 +290,6 @@
       <button type="button" class="btn btn-ghost btn-block" id="btnSidepanelLibraryMore" hidden>加载更多</button>
     </main>
 
-    <details class="card legacy-tasks">
-      <summary>旧任务与历史记录 <span id="manualTabCount"></span></summary>
-    <!-- 批量 -->
-    <section id="panel-batch">
-      <div class="card">
-        <h2 class="card-title">旧任务运行状态</h2>
-        <p class="card-desc">保留已有任务的继续、停止和导出记录；新批次请在运行工作台创建。</p>
-        <div class="stats">
-          <div class="stat"><b id="statQueue">0</b><span>排队</span></div>
-          <div class="stat ok"><b id="statDone">0</b><span>完成</span></div>
-          <div class="stat skip"><b id="statSkip">0</b><span>跳过</span></div>
-          <div class="stat err"><b id="statErr">0</b><span>失败</span></div>
-        </div>
-        <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
-        <button type="button" class="btn btn-ghost" id="btnBatchToggle" hidden>暂停批量</button>
-        <button type="button" class="btn btn-ghost" id="btnContinue" hidden>继续等待中的任务</button>
-        <button type="button" class="btn btn-danger" id="btnStop" hidden>停止</button>
-      </div>
-      <div id="taskList" class="task-list"></div>
-      <div class="card-head-row batch-log-head">
-        <div>
-          <h2 class="card-title">批量运行日志</h2>
-          <p class="card-desc" id="batchLogSummary">保留最近 400 条，关闭侧栏后仍可查看。</p>
-        </div>
-        <div>
-          <button type="button" class="btn-link" id="btnExportAutomationRun">导出执行记录</button>
-          <button type="button" class="btn-link" id="btnExportBatchReport">导出本轮报告</button>
-          <button type="button" class="btn-link" id="btnCopyBatchLog">复制日志</button>
-        </div>
-      </div>
-      <div id="log" class="log" aria-live="polite"></div>
-    </section>
-
-    <!-- 待人工 -->
-    <section id="panel-manual">
-      <div class="card">
-        <h2 class="card-title">停放中的任务</h2>
-        <p class="card-desc">登录、验证码和无法重置表单的页签会停放在这里，不占用批量并发位。</p>
-      </div>
-      <div id="manualTaskList" class="manual-task-list">
-        <div class="empty-state">暂无旧版待人工任务。新任务请在运行工作台查看。</div>
-      </div>
-    </section>
-
-    </details>
-
     <script src="lib/profiles.js"></script>
     <script src="lib/queue.js"></script>
     <script src="lib/playbooks.js"></script>

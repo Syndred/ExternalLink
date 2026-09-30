@@ -564,7 +564,6 @@
       id === "cfgEmail" ||
       id === "cfgName" ||
       id === "cfgCommentTemplate" ||
-      id === "cfgConcurrency" ||
       id === "cfgPingIndex" ||
       id === "autoFillOnVisit" ||
       id === "autoSubmitDirectoryListings" ||
@@ -877,7 +876,6 @@
       cfgEmail: $("cfgEmail").value,
       cfgName: $("cfgName").value,
       cfgCommentTemplate: $("cfgCommentTemplate").value,
-      cfgConcurrency: $("cfgConcurrency").value,
       cfgPingIndex: $("cfgPingIndex").checked,
       autoFillOnVisit: $("autoFillOnVisit").checked,
       autoSubmitDirectoryListings: $("autoSubmitDirectoryListings")?.checked !== false,
@@ -2228,7 +2226,6 @@
       "cfgEmail",
       "cfgName",
       "cfgCommentTemplate",
-      "cfgConcurrency",
       "cfgPingIndex",
       "autoFillOnVisit",
       "autoSubmitDirectoryListings",
@@ -2250,7 +2247,6 @@
       if (items.cfgEmail) $("cfgEmail").value = items.cfgEmail;
       if (items.cfgName) $("cfgName").value = items.cfgName;
       if (items.cfgCommentTemplate) $("cfgCommentTemplate").value = items.cfgCommentTemplate;
-      if (items.cfgConcurrency) $("cfgConcurrency").value = items.cfgConcurrency;
       $("cfgPingIndex").checked = items.cfgPingIndex !== false;
       $("autoFillOnVisit").checked = items.autoFillOnVisit === true;
       if ($("autoSubmitDirectoryListings")) {

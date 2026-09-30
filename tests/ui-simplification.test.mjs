@@ -75,7 +75,7 @@ test('complete pages switch panels, keep buttons bound and pass library scope wi
         const original=EventTarget.prototype.addEventListener;
         EventTarget.prototype.addEventListener=function(type,...args){(this.__uiEvents??=[]).push(type);return original.call(this,type,...args);};
         const profile={id:'JevPlay',name:'JevPlay',fields:{Name:'JevPlay',Url:'https://jevplay.com'}};
-        const data={siteProfiles:{JevPlay:profile},activeSiteId:'JevPlay',executorConnection:{endpoint:'http://127.0.0.1:19388',localToken:'test'},cloudSyncConfig:{endpoint:'https://cloud.test',workspaceId:'test'},submissionRecords:{},submissionTimeline:[],d1JournalPending:[]};
+        const data={siteProfiles:{JevPlay:profile},activeSiteId:'JevPlay',cfgConcurrency:'3',executorConnection:{endpoint:'http://127.0.0.1:19388',localToken:'test'},cloudSyncConfig:{endpoint:'https://cloud.test',workspaceId:'test'},submissionRecords:{},submissionTimeline:[],d1JournalPending:[]};
         const event={addListener:()=>{}};
         window.messages=[];
         window.chrome={storage:{local:{get:(keys,cb)=>{if(cb)cb(data);return Promise.resolve(data);},set:async value=>Object.assign(data,value)},onChanged:event},windows:{getCurrent:async()=>({id:1})},tabs:{query:async()=>[],onActivated:event,onUpdated:event,onRemoved:event},runtime:{getURL:path=>'http://ui.test/extension/'+path,openOptionsPage:async()=>{},onMessage:event,sendMessage:async msg=>{messages.push(msg);return{ok:true,items:[{key:'one',url:'https://one.test/submit',domain:'one.test',name:'One',category:'其他目录',accessModel:'free',annotation:{}}],tasks:[],profiles:{JevPlay:profile},documents:data,events:[],records:{},timeline:[],config:{},filters:{},blacklist:[],media:[],files:[],stats:{done:0,skip:0,err:0,total:0},status:'idle'};}}};
@@ -94,6 +94,7 @@ test('complete pages switch panels, keep buttons bound and pass library scope wi
       if(surface==='sidepanel') {
         await page.waitForSelector('#executor-profile option',{state:'attached'});
         assert.equal(await page.isVisible('#executor-workbench'),true);
+        assert.equal(await page.locator('.legacy-tasks,#panel-batch,#panel-manual').count(),0);
         assert.equal(await page.isVisible('#panel-home'),false);
         await page.click('[data-panel="library"]');
         await page.waitForFunction(()=>!document.querySelector('#btnUseLibraryFilter').disabled);
@@ -103,6 +104,11 @@ test('complete pages switch panels, keep buttons bound and pass library scope wi
         assert.equal(await page.inputValue('#executor-urls'),'https://one.test/submit');
         assert.equal(await page.evaluate(()=>messages.some(m=>m.action==='start')),false);
       } else if(surface==='settings') {
+        page.on('dialog',dialog=>dialog.dismiss());
+        await page.click('[data-panel="config"]');
+        assert.equal(await page.locator('#cfgConcurrency').count(),0);
+        await page.click('#btnSaveConfig');
+        assert.equal((await page.evaluate(()=>chrome.storage.local.get('cfgConcurrency'))).cfgConcurrency,'3','saving current settings preserves historical task configuration');
         await page.click('[data-panel="journal"]');
         assert.equal(await page.isVisible('#submission-journal'),true);
         assert.equal(await page.locator('#executor-workbench').count(),0);

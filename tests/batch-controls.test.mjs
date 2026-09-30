@@ -15,7 +15,7 @@ assert.match(background, /function\s+pauseBatchRun\s*\(/, "pause must persist a 
 assert.match(background, /function\s+resumeBatchRun\s*\(/, "resume must restart a paused batch state");
 const pauseFunction = background.match(/async function\s+pauseBatchRun\s*\([\s\S]*?\n}\n\nasync function/)?.[0] || "";
 assert.doesNotMatch(pauseFunction, /close(?:All|Automated)Tabs\(\)|activeTabs\.clear\(\)|queue\s*=\s*\[\]/, "pause must keep queue and tabs intact");
-assert.match(sidepanelHtml, /id="btnBatchToggle"/, "batch UI needs one pause/resume toggle button");
+assert.doesNotMatch(sidepanelHtml, /id="btnBatchToggle"/, "the primary UI must not expose the retired batch controller");
 assert.doesNotMatch(sidepanelHtml, /id="btnResumeBatch"/, "pause and resume must not be separate buttons");
 assert.match(sidepanelHtml, /lib\/batch-controls\.js/, "side panel must load the shared batch state predicates");
 assert.match(sidepanel, /btnBatchToggle/, "side panel must wire the pause/resume toggle");

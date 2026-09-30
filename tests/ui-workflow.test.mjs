@@ -11,12 +11,12 @@ const background = readFileSync("extension/background.js", "utf8").replace(/\r\n
 const popupHtml = readFileSync("extension/popup.html", "utf8");
 const popupJs = readFileSync("extension/popup.js", "utf8");
 
-for (const panel of ["home", "batch", "manual"]) {
+for (const panel of ["home", "workbench", "library"]) {
   assert.match(sidepanelHtml, new RegExp(`id="panel-${panel}"`));
 }
 assert.match(sidepanelHtml, /id="panel-workbench"/);
-assert.match(sidepanelHtml, /id="btnCopyBatchLog"/);
-assert.match(sidepanelHtml, /保留最近 400 条/);
+assert.doesNotMatch(sidepanelHtml, /legacy-tasks|id="panel-batch"|id="panel-manual"|id="btnCopyBatchLog"/);
+assert.doesNotMatch(settingsHtml, /id="cfgConcurrency"/);
 assert.match(sidepanelJs, /taskWindow\.truncated/);
 assert.match(sidepanelJs, /navigator\.clipboard\.writeText/);
 assert.match(sidepanelJs, /msg\.action === "log" && msg\.entry/);
@@ -24,7 +24,7 @@ assert.match(sidepanelJs, /run_stop_requested/);
 assert.match(sidepanelJs, /已停止/);
 assert.match(sidepanelJs, /batchRunStatusForLog\(activeRun\?\.status\)/);
 assert.match(sidepanelJs, /waiting_manual:\s*"等待人工处理"/);
-assert.match(sidepanelHtml, /id="manualTaskList"/);
+assert.doesNotMatch(sidepanelHtml, /id="manualTaskList"/);
 assert.match(sidepanelJs, /selectedSiteIds/);
 assert.match(sidepanelJs, /action:\s*"confirmSubmissionSuccess"/);
 assert.match(sidepanelJs, /外链站.*正在提交.*本站.*总进度/);

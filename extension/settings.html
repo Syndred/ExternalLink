@@ -270,6 +270,7 @@
         <img src="icons/icon48.png" width="40" height="40" alt="" />
         <div class="page-head-text">
           <h1>ExternalLink 设置</h1>
+          <a href="sidepanel.html" target="_blank" rel="noopener">打开运行工作台</a>
         </div>
       </div>
 
@@ -277,7 +278,9 @@
         <button class="tab active" id="tab-sites" type="button" role="tab" data-panel="sites" aria-controls="panel-sites" aria-selected="true">网站资料</button>
         <button class="tab" id="tab-library" type="button" role="tab" data-panel="library" aria-controls="panel-library" aria-selected="false">外链库</button>
         <button class="tab" id="tab-config" type="button" role="tab" data-panel="config" aria-controls="panel-config" aria-selected="false">全局配置</button>
+        <button class="tab" id="tab-journal" type="button" role="tab" data-panel="journal" aria-controls="panel-journal" aria-selected="false">外链总览</button>
       </div>
+      <div class="panel" id="panel-journal" role="tabpanel" aria-labelledby="tab-journal"></div>
 
       <!-- 网站资料 -->
       <div
@@ -724,6 +727,7 @@
         aria-labelledby="tab-config"
       >
         <div class="card config-general-card">
+          <p class="field-hint">这些选项用于插件当前网页助手与旧任务；新工作台的范围和上限在运行任务中设置。</p>
           <div class="form-row">
             <label>邮箱（注册/评论用）</label>
             <input
@@ -744,7 +748,7 @@
             <textarea id="cfgCommentTemplate"></textarea>
           </div>
           <div class="form-row">
-            <label>批量并发数</label>
+            <label>旧任务并发数（兼容设置）</label>
             <input
               type="text"
               id="cfgConcurrency"
@@ -790,6 +794,7 @@
           >
             💾 保存全局配置
           </button>
+          <details><summary>本机数据维护</summary>
           <button
             class="btn btn-danger"
             id="btnClearData"
@@ -797,6 +802,7 @@
           >
             🗑 清除所有数据
           </button>
+          </details>
         </div>
 
         <div class="card config-gate-card">
@@ -901,7 +907,5 @@
     <link rel="stylesheet" href="submission-journal.css">
     <script src="lib/submission-journal.js"></script>
     <script src="submission-journal.js"></script>
-    <link rel="stylesheet" href="executor-panel.css">
-    <script src="executor-panel.js"></script>
   </body>
 </html>

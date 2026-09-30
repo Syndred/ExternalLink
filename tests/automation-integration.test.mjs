@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const background = readFileSync("extension/background.js", "utf8");
+const background = readFileSync("extension/background.js", "utf8").replace(/\r\n/g, "\n");
 const content = readFileSync("extension/content.js", "utf8");
 const worker = readFileSync("cloud/worker/src/index.mjs", "utf8");
 const schema = readFileSync("cloud/worker/schema.sql", "utf8");

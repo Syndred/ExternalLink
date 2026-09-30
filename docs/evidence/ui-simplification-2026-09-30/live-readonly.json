@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-09-30T01:37:25.114Z",
+  "actions": [
+    "reload",
+    "tab navigation"
+  ],
+  "businessWritesPerformed": 0,
+  "allTaskRows": 100,
+  "connection": "云端暂不可读，已恢复本机缓存（2026-09-30T01:31:33.086Z）；新进度会持久保存在本机并重试。",
+  "directTasks": 2,
+  "foldedOpen": false,
+  "foldedTasks": "其余任务与历史结果（98 站）",
+  "journalRows": 774,
+  "status": "已暂停 · 本机待同步 0 条 · 云端连接失败 (ECONNRESET)",
+  "summary": "总目标 100 · 站方接收 0 · 待核验 0 · 待人工 2 · 待执行 98",
+  "tabs": [
+    {
+      "label": "运行任务",
+      "selected": "true"
+    },
+    {
+      "label": "外链总览与资料",
+      "selected": "false"
+    }
+  ],
+  "url": "http://127.0.0.1:19389/"
+}

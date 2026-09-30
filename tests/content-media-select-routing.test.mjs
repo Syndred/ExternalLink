@@ -252,7 +252,7 @@ assert.ok(content.includes("const wrongPricingDefault = (selectedDefault || cont
 
 const isCustomDropdownEmpty = new Function(
   "compactText",
-  `${extractFunction("isCustomDropdownEmpty", "countEmptyFillableFields")}; return isCustomDropdownEmpty;`,
+  `${extractFunction("getExternalSelectedTags", "getElementFillValue")}; ${extractFunction("isCustomDropdownEmpty", "countEmptyFillableFields")}; return isCustomDropdownEmpty;`,
 )((value, limit) => String(value || "").trim().slice(0, limit));
 const reactSelectInput = (selected, value = "") => ({
   tagName: "INPUT",
@@ -280,9 +280,10 @@ assert.ok(routing.indexOf('element.getAttribute("role") === "combobox"') < routi
 assert.ok(routing.indexOf('element.parentElement?.querySelector(\'input[type="hidden"][name*="category"]\')') < routing.indexOf("const learnedKey"));
 assert.ok(routing.indexOf('pickDescriptionForField(config, element)') < routing.indexOf("const learnedKey"));
 const testLocation = { hostname: "www.iatool.online" };
+const identityHelpers = content.slice(content.indexOf("  function gameSubmissionFieldKind("), content.indexOf("  function resolveValueForField("));
 const resolveValue = new Function(
   "getProfileFields", "getFieldHint", "getSnapshotLabel", "fitValueToConstraints", "getFieldConstraints", "pickDescriptionForField", "location",
-  `${fieldHelpers}; ${routing}; return resolveValueForField;`,
+  `${fieldHelpers}; ${identityHelpers}; ${routing}; return resolveValueForField;`,
 )(
   (config) => config.projectFields || {},
   (element) => element.hint.toLowerCase(),
@@ -358,11 +359,17 @@ assert.equal(resolveValue({ projectFields: { "Affiliate Link": "https://partner.
   { tagName: "INPUT", type: "url", hint: "Affiliate Link", label: "Affiliate Link", getAttribute: () => null }),
   "https://partner.example.com/jev");
 assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
-  { tagName: "INPUT", type: "text", hint: "First name", getAttribute: () => null }), "Syndred");
+  { tagName: "INPUT", type: "text", hint: "First name", getAttribute: () => null }), "",
+  "an account username must not be invented as the profile contact's first name");
 assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
   { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "",
   "a one-token username must not be duplicated into the surname field");
 assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
+  { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "",
+  "an account username does not supply a verified contact surname");
+assert.equal(resolveValue({ projectFields: {"Contact person":"Syndred Young"} },
+  { tagName: "INPUT", type: "text", hint: "First name", getAttribute: () => null }), "Syndred");
+assert.equal(resolveValue({ projectFields: {"Contact person":"Syndred Young"} },
   { tagName: "INPUT", type: "text", hint: "Last name", getAttribute: () => null }), "Young");
 assert.equal(resolveValue({ projectFields: { "Feature description": "Side-by-side replay" } },
   { tagName: "TEXTAREA", type: "textarea", hint: "Key features", label: "Key features" }), "Side-by-side replay");
@@ -383,9 +390,12 @@ assert.equal(resolveValue({ projectFields: {} },
 assert.equal(resolveValue({ projectFields: { Pros: "No account needed to play" } },
   { tagName: "TEXTAREA", type: "textarea", hint: "Pros (one per line)", label: "Pros (one per line)" }), "No account needed to play");
 assert.equal(resolveValue({ username: "Syndred Young", projectFields: {} },
-  { tagName: "INPUT", type: "text", hint: "Founder or company name", label: "Founder or company name", getAttribute: () => null }), "Syndred Young");
+  { tagName: "INPUT", type: "text", hint: "Founder or company name", label: "Founder or company name", getAttribute: () => null }), "",
+  "a username cannot establish the product's founder or legal company");
 assert.equal(resolveValue({ username: "Syndred", projectFields: {} },
-  { tagName: "INPUT", type: "text", hint: "Founder / company", label: "Founder / company", getAttribute: () => null }), "Syndred");
+  { tagName: "INPUT", type: "text", hint: "Founder / company", label: "Founder / company", getAttribute: () => null }), "");
+assert.equal(resolveValue({ projectFields: {Company:"Example Ltd"} },
+  { tagName: "INPUT", type: "text", hint: "Founder or company name", label: "Founder or company name", getAttribute: () => null }), "Example Ltd");
 assert.equal(resolveValue({ brandName: "JevPlay", projectFields: { "Short description(20-30 words)": "Play free daily decision games against TypeSafe Jev." } },
   { tagName: "INPUT", type: "text", hint: "One-line description one_liner", label: "One-line description", getAttribute: () => null }),
   "Play free daily decision games against TypeSafe Jev.", "a one-line field must use the short Profile copy");

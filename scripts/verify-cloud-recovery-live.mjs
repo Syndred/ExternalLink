@@ -1,0 +1,25 @@
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {homedir} from 'node:os';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const home=join(homedir(),'.externallink-executor');
+const db=new DatabaseSync(join(home,'outbox.sqlite'),{readOnly:true});
+const pair=JSON.parse(db.prepare('SELECT value FROM state WHERE id=?').get('pair').value);
+const manifest=()=>JSON.parse(readFileSync(join(home,'server.json'),'utf8'));
+const request=async(path,options={})=>{const r=await fetch(new URL(path,manifest().endpoint),{...options,headers:{Authorization:'Bearer '+pair.localToken,...options.headers},signal:AbortSignal.timeout(60000)});assert.equal(r.status,200);return r.json();};
+const checksum=()=>createHash('sha256').update(JSON.stringify(db.prepare("SELECT id,value FROM state WHERE id LIKE 'task:%' OR id LIKE 'run:%' OR id='libraryPlan' ORDER BY id").all())).digest('hex');
+const before=await request('/status');
+assert.equal(before.paused,true);assert.equal(before.busy,false);assert.equal(before.pendingEvents,0);assert.equal(before.workbenchPendingEvents,0);
+const beforePid=manifest().pid,beforeChecksum=checksum();
+execFileSync('powershell.exe',['-NoProfile','-Command',String.raw`$recoveryProcess = Get-CimInstance Win32_Process -Filter 'ProcessId=${beforePid}'; if ($recoveryProcess.CommandLine -notmatch 'ExternalLink[\\/]executor[\\/]src[\\/]server\.mjs') { throw 'Unexpected process; restart refused' }; Stop-Process -Id ${beforePid}`],{windowsHide:true,stdio:'pipe'});
+let after;
+for(let i=0;i<45;i++) {await new Promise(r=>setTimeout(r,1000));try{if(manifest().pid===beforePid)continue;after=await request('/status');if(!after.busy&&!after.cloudError)break;}catch{}}
+assert.ok(after,'watchdog must restore the executor');assert.notEqual(manifest().pid,beforePid);
+assert.equal(after.paused,true);assert.equal(after.busy,false);assert.equal(after.cloudError,'');assert.equal(after.pendingEvents,0);assert.equal(after.workbenchPendingEvents,0);assert.equal(after.tasks.length,before.tasks.length);assert.equal(checksum(),beforeChecksum,'task, run and frozen plan data must be preserved');
+const workbench=await fetch('http://127.0.0.1:19389/workbenchDocuments',{method:'POST',headers:{Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(60000)});
+assert.equal(workbench.status,200);const documents=await workbench.json();assert.equal(documents.cached,false);
+const report={at:new Date().toISOString(),beforePid,afterPid:manifest().pid,paused:after.paused,busy:after.busy,tasks:after.tasks.length,runs:after.runs.length,pendingEvents:after.pendingEvents,workbenchPendingEvents:after.workbenchPendingEvents,cloudError:after.cloudError,taskRunPlanChecksum:beforeChecksum,taskRunPlanUnchanged:true,cached:documents.cached,profiles:Object.keys(documents.documents.siteProfiles).length};
+db.close();mkdirSync('docs/evidence/cloud-recovery-2026-09-30',{recursive:true});writeFileSync('docs/evidence/cloud-recovery-2026-09-30/live-restart.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

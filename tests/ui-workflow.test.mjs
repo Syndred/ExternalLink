@@ -7,15 +7,14 @@ const settingsHtml = readFileSync("extension/settings.html", "utf8");
 const settingsJs = readFileSync("extension/settings.js", "utf8");
 const settingsCss = readFileSync("extension/settings.css", "utf8");
 const css = readFileSync("extension/sidepanel.css", "utf8");
-const background = readFileSync("extension/background.js", "utf8");
+const background = readFileSync("extension/background.js", "utf8").replace(/\r\n/g, "\n");
 const popupHtml = readFileSync("extension/popup.html", "utf8");
 const popupJs = readFileSync("extension/popup.js", "utf8");
 
 for (const panel of ["home", "batch", "manual"]) {
   assert.match(sidepanelHtml, new RegExp(`id="panel-${panel}"`));
 }
-assert.match(sidepanelHtml, /id="batchSiteChoices"/);
-assert.match(sidepanelHtml, /id="batchSelectionSummary"/);
+assert.match(sidepanelHtml, /id="panel-workbench"/);
 assert.match(sidepanelHtml, /id="btnCopyBatchLog"/);
 assert.match(sidepanelHtml, /保留最近 400 条/);
 assert.match(sidepanelJs, /taskWindow\.truncated/);
@@ -250,11 +249,9 @@ assert.match(background, /deferSubmit:\s*true/);
 assert.match(background, /validationFailed/);
 assert.match(sidepanelJs, /表单校验未通过，已让 AI 补填/);
 
-for (const panel of ["submit", "sites", "config", "log"]) {
-  assert.match(popupHtml, new RegExp(`id="panel-${panel}"`));
-}
-assert.match(popupJs, /action:\s*"getSubmissionQueue",\s*selectedSiteIds/);
-assert.match(popupJs, /action:\s*"start",\s*selectedSiteIds/);
+assert.match(popupHtml, /sidepanel.html/);
+assert.match(popupJs, /location.replace/);
+assert.doesNotMatch(popupJs, /action:\s*"start"/);
 assert.match(background, /tasks:\s*groups\.map\(toSubmissionGroupSummary\)/);
 assert.doesNotMatch(
   background.match(/async function getSubmissionQueueState[\s\S]*?\n}\n\nfunction toSubmissionGroupSummary/)?.[0] || "",

@@ -42,7 +42,7 @@
   const LIBRARY_REFRESH_DEBOUNCE_MS = 80;
   const SETTINGS_PANEL_SESSION_KEY = "externallink.settings.activePanel";
   const SETTINGS_NOTICE_SESSION_KEY = "externallink.settings.reloadNotice";
-  const SETTINGS_PANELS = new Set(["sites", "library", "config"]);
+  const SETTINGS_PANELS = new Set(["sites", "library", "config", "journal"]);
   let libraryLoadRequestId = 0;
   let libraryStorageRevision = 0;
   let libraryRefreshTimer = null;

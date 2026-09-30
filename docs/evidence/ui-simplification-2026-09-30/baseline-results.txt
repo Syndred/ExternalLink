@@ -1,0 +1,156 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: cloud pull handler should remain extractable
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/audit-ui-settings.test.mjs:309:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ tests\audit-ui-settings.test.mjs (58.2933ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: every permanent success write must use the hard evidence gate
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/automation-integration.test.mjs:12:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: /validateSuccessProof/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ tests\automation-integration.test.mjs (53.3564ms)
+<anonymous_script>:4
+    const externalTags = getExternalSelectedTags(trigger);
+                         ^
+
+ReferenceError: getExternalSelectedTags is not defined
+    at isCustomDropdownEmpty (eval at <anonymous> (file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/content-media-select-routing.test.mjs:253:31), <anonymous>:4:26)
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/content-media-select-routing.test.mjs:264:14
+
+Node.js v24.21.0
+✖ tests\content-media-select-routing.test.mjs (57.389ms)
+node:internal/fs/promises:1661
+  const result = await PromisePrototypeThen(
+                 ^
+
+Error: ENOENT: no such file or directory, scandir 'C:\Users\Administrator\AppData\Local\Temp\rainbowPetAi\public'
+    at async Object.readdir (node:internal/fs/promises:1661:18)
+    at async walkImages (file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/skills/external-link-operator/scripts/discover-media.mjs:15:23)
+    at async discoverMedia (file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/skills/external-link-operator/scripts/discover-media.mjs:79:17)
+    at async file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/external-link-operator-skill.test.mjs:32:15 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\rainbowPetAi\\public'
+}
+
+Node.js v24.21.0
+✖ tests\external-link-operator-skill.test.mjs (89.1403ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: a submitted attempt with fresh evidence must be completed before ready_to_create is parked
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/producthunt-launch.test.mjs:238:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ tests\producthunt-launch.test.mjs (62.4225ms)
+evalmachine.<anonymous>:172
+    const gameFieldValue = resolveGameSubmissionFieldValue(
+                           ^
+
+ReferenceError: resolveGameSubmissionFieldValue is not defined
+    at Object.resolveValueForField (evalmachine.<anonymous>:172:28)
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/repository-field.test.mjs:17:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0
+✖ tests\repository-field.test.mjs (52.1308ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+
+
+
+9009 !== 0
+
+    at file:///C:/Users/Administrator/AppData/Local/Temp/externallink-ui-baseline-1949326eb06f4c428c525111d7731103/tests/table-import.test.mjs:14:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 9009,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ tests\table-import.test.mjs (106.7998ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 0
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 152.0139
+
+✖ failing tests:
+
+test at tests\audit-ui-settings.test.mjs:1:1
+✖ tests\audit-ui-settings.test.mjs (58.2933ms)
+  'test failed'
+
+test at tests\automation-integration.test.mjs:1:1
+✖ tests\automation-integration.test.mjs (53.3564ms)
+  'test failed'
+
+test at tests\content-media-select-routing.test.mjs:1:1
+✖ tests\content-media-select-routing.test.mjs (57.389ms)
+  'test failed'
+
+test at tests\external-link-operator-skill.test.mjs:1:1
+✖ tests\external-link-operator-skill.test.mjs (89.1403ms)
+  'test failed'
+
+test at tests\producthunt-launch.test.mjs:1:1
+✖ tests\producthunt-launch.test.mjs (62.4225ms)
+  'test failed'
+
+test at tests\repository-field.test.mjs:1:1
+✖ tests\repository-field.test.mjs (52.1308ms)
+  'test failed'
+
+test at tests\table-import.test.mjs:1:1
+✖ tests\table-import.test.mjs (106.7998ms)
+  'test failed'

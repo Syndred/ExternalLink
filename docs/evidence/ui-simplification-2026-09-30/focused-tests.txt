@@ -1,0 +1,35 @@
+batch controls tests passed
+✔ tests\batch-controls.test.mjs (85.7012ms)
+✔ normal workbench remains unlocked after service restart, while forged cookies remain denied (320.6193ms)
+✔ Mac opens the normal workbench through Chrome and uses a bounded Unix socket (2.0062ms)
+✔ new workbench validates D1 device before persisting, stays paused and preserves an existing pair (97.438ms)
+✔ workbench progress survives executor restart and is acknowledged only after exact remote readback (47.0041ms)
+✔ workbench caches documents for offline reopening but never crosses workspace boundaries (1.3551ms)
+✔ workspace changes or mismatched proofs retain pending workbench progress (1.1437ms)
+✔ a paused app with no submission tasks still retries durable workbench progress (1.1976ms)
+✔ tests\extension-content.test.mjs (104.3762ms)
+Sidepanel comment/media tests passed
+✔ tests\sidepanel-comment-media.test.mjs (61.6716ms)
+sidepanel library classification regressions passed
+✔ tests\sidepanel-library.test.mjs (70.6762ms)
+Sidepanel timeline tests passed
+✔ tests\sidepanel-timeline.test.mjs (75.2994ms)
+✔ journal keeps product identities separate and merges host aliases without hiding task failures (14.5883ms)
+✔ later note or user review cannot erase site moderation and email is independent of link validity (1.2861ms)
+✔ new link-missing evidence supersedes older published event, without undoing receipt (1.0983ms)
+✔ task cloudVerified refers to receipt and never hides newer unsynced local events (0.9635ms)
+✔ archived-only successes stay visible but never imply current receipt, moderation or validity (1.9927ms)
+✔ a timeline-only entry is unknown, not falsely claimed to be an unexecuted task (1.019ms)
+✔ library range selects the same executor without starting or retaining a stale preview (348.1142ms)
+✔ primary navigation exposes one batch engine and maintenance is folded away (0.6617ms)
+✔ complete pages switch panels, keep buttons bound and pass library scope without an old start action (796.5398ms)
+UI workflow tests passed
+✔ tests\ui-workflow.test.mjs (76.1708ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1536.606

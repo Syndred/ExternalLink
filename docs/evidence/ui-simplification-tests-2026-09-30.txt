@@ -1,0 +1,451 @@
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'Insufficient Balance'
+}
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'rate limit exceeded'
+}
+AI provider failure response tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\ai-provider-errors.test.mjs (97.9348ms)
+AllToolsDirectory direct-submit tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\alltoolsdirectory-direct-submit.test.mjs (57.7742ms)
+batch resume persistence regression passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-batch-resume.test.mjs (58.9004ms)
+Content audit findings regression tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-content-findings.test.mjs (76.856ms)
+scheduler failure recovery regression passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-scheduler-error.test.mjs (51.957ms)
+cloud sync race audit tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-sync-races.test.mjs (107.1764ms)
+Settings conflict recovery action flow passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-ui-conflict-flow.test.mjs (49.374ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: cloud pull handler should remain extractable
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/audit-ui-settings.test.mjs:309:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-ui-settings.test.mjs (52.0957ms)
+auto-fill default opt-in regressions passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\auto-fill-default.test.mjs (44.5384ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: every permanent success write must use the hard evidence gate
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/automation-integration.test.mjs:12:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: /validateSuccessProof/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\automation-integration.test.mjs (47.8558ms)
+automation ledger tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\automation-ledger.test.mjs (114.8142ms)
+backup workflow tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\backup-workflow.test.mjs (51.5618ms)
+batch controls tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\batch-controls.test.mjs (74.7578ms)
+batch report tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\batch-report.test.mjs (57.8165ms)
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\cloud-submission-media.test.mjs (46.5468ms)
+cloud sync status tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\cloud-sync-status.test.mjs (52.6784ms)
+cloud sync workflow tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\cloud-sync-workflow.test.mjs (43.4296ms)
+cloud worker core tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\cloud-worker-core.test.mjs (46.8198ms)
+✔ 10015 expanded product submission outranks logged in account menu forum markers (1.1752ms)
+✔ The directory rule does not turn login, other pages or unrelated forums into submissions (1.9516ms)
+✔ The final explicit product receipt is pending moderation despite optional paid priority review (1.6934ms)
+✔ Preview, pricing and a mismatched directory source cannot count as product acceptance (2.7293ms)
+Content comment detector tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\content-comment-detection.test.mjs (47.4691ms)
+✔ 10015 external chips supply actual tag values and satisfy picker requiredness (1.6925ms)
+✔ Search text with no committed chips stays empty (1.462ms)
+✔ Unrelated sites never inherit the 10015 tag wrapper rule (0.9395ms)
+✔ A neighboring tagline counter cannot truncate a description with its own 1500 character limit (1.8774ms)
+✔ An owned inline counter still supplies its field limit (1.4244ms)
+✔ Thousands separators in description, instruction and FAQ counters never become a one-character limit (12.7737ms)
+✔ An explicit character range with a thousands separator supplies both bounds (0.8979ms)
+✔ Only an actual response already supplied by the human on AIoftheday resolves this gate (2.1449ms)
+<anonymous_script>:4
+    const externalTags = getExternalSelectedTags(trigger);
+                         ^
+
+ReferenceError: getExternalSelectedTags is not defined
+    at isCustomDropdownEmpty (eval at <anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/content-media-select-routing.test.mjs:253:31), <anonymous>:4:26)
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/content-media-select-routing.test.mjs:264:14
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\content-media-select-routing.test.mjs (55.9521ms)
+✔ WordPress and plain text search inputs stay outside all automatic fill/report scopes (0.8676ms)
+Content submission detection tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\content-submission-detection.test.mjs (63.7144ms)
+✔ A disabled submit prevents readiness without inventing missing required fields (2.4491ms)
+✔ An enabled submit and complete fields are ready (1.7698ms)
+✔ A genuinely missing required input remains a field error (1.062ms)
+context menu tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\context-menu.test.mjs (40.5894ms)
+✔ D1 executor preserves ownership, atomic run creation, lease fences, immutable receipts and paginated recovery (51.6693ms)
+✔ large documents live outside D1, CAS prevents another browser overwriting changes and retains history (21.8307ms)
+✔ indexed journal pages never load evidence objects; detail is scoped and verified (5.1872ms)
+✔ recovery archive retries are idempotent and corrupt or missing evidence fails closed (2.2558ms)
+✔ D1 API requires scoped credentials and works without a Neon connection (34.2129ms)
+✔ production Worker routes D1 requests without DATABASE_URL and separates two clients by workspace (7.7928ms)
+short description and sentence count routing passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\description-routing.test.mjs (45.3946ms)
+destination memory tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\destination-memory.test.mjs (64.9105ms)
+✔ AIoftheday uses the current full description and five distinct features within its published limits (0.8151ms)
+✔ Site specific summaries cannot be applied to a different product or missing source copy (0.4689ms)
+✔ basic Google login uses a unique visible entry and its same-site confirmation (1.8434ms)
+✔ Google account choice matches the verified email and blocks human checks and extra access (0.4626ms)
+✔ callback proof and action history prevent repeated authentication attempts (0.6761ms)
+✔ offline authentication is narrowly owned and never permits a product submission boundary (0.3323ms)
+✔ binary transport preserves all bytes and typed-array slices at screenshot scale (6.1886ms)
+✔ evidence decoding enforces format, canonical base64 and the existing 3 MB limit (10.2429ms)
+✔ a page that vanished from CDP after enumeration is treated as a stale target (1.3249ms)
+✔ an unrelated CDP connection failure is surfaced for browser recovery (0.6894ms)
+✔ a live task page target is returned and the CDP session is detached (0.985ms)
+✔ Chinese category placeholder is empty and JevPlay maps only to a fitting option (3.2098ms)
+✔ quota failure stops flush without another read and preserves pending event (2.032ms)
+✔ matching independent compact proof acknowledges only the exact event id (0.5058ms)
+✔ matching server proofs of changed content never acknowledge the local event (0.2932ms)
+✔ A transient connection reset retries only GET; writes and certificate errors are never replayed (524.0203ms)
+✔ a transient gateway read can recover while mutation requests are never replayed (507.5092ms)
+✔ Non-JSON cloud errors include status for diagnosis without exposing response contents or credentials (0.7596ms)
+✔ A lost write response is accepted only after independent exact immutable event readback (0.2619ms)
+✔ A failed write with missing or changed readback preserves the original outbox event (0.1751ms)
+✔ offline sync conflict holds only that task event while later safe events remain syncable (1.6011ms)
+✔ a Neon quota response remains a global quota gate even when wrapped as HTTP 500 (0.4543ms)
+✔ formal device API executes PostgreSQL constraints, scope, idempotent events and non-destructive receipt/review writes (1528.4505ms)
+✔ community page closes only after independent evidence readback: false (7.6165ms)
+✔ community page closes only after independent evidence readback: true (3.032ms)
+✔ personal and company fields require explicit profile facts (3.4426ms)
+✔ continuation preserves prior evidence and uses current facts; any attempt or receipt blocks it (6.4942ms)
+✔ a prior unknown task excludes another submit path on the same host (19.2048ms)
+✔ lost batch response is reconciled by its durable identity without a second POST (1.3005ms)
+✔ restart uses an already registered pending batch and never posts it again (0.5609ms)
+✔ cloud failure pauses continuous execution rather than starting another site (1.4293ms)
+✔ stale CDP page references are classified as browser failures, separate from Neon cloud failures (1.0948ms)
+✔ an exhausted cloud quota preserves outbox and stops timer retries and next-site execution (0.7773ms)
+✔ offline resume labels the quota pause as historical while the queue is actively running (0.6391ms)
+✔ prior-task finalization clears the active task guard even when cleanup throws (0.4015ms)
+✔ continuous plan gets its next durable batch after the prior batch only has gates (0.4715ms)
+✔ one site gate releases its slot and the next site runs without resume (0.7543ms)
+✔ a network pause probes recovery while a deliberate user pause stays paused (0.7435ms)
+✔ resumption recovers a pre-submit interruption but preserves an in-flight submission boundary (1.9721ms)
+✔ offline batches use the frozen profile, isolate existing host boundaries, and survive restart without reposting (61.2852ms)
+✔ a lost runId is recovered only from one matching offline run before any submission boundary (0.7311ms)
+✔ task tab backpressure counts only unique targets owned by this plan and browser (0.5917ms)
+✔ live page backpressure drops stale target IDs and counts task-owned OAuth popups by opener (0.7713ms)
+✔ offline resume is explicitly durable and preserves the pre-existing outbox identities (5.4408ms)
+✔ offline resume reclassifies the saved stale CDP pause without changing its cause or outbox (3.7083ms)
+✔ offline resume accepts content edits but rejects changed product identity or scope without clearing the pause (31.9685ms)
+✔ offline sync registers a locally durable batch before replaying its events (1.5116ms)
+✔ workbench takeover preserves original task and evidence when the old browser is gone (6.8126ms)
+✔ workbench takeover cannot reopen attempts, receipts, finished tasks or unsafe URLs (2.3759ms)
+✔ a failed handoff before page access does not change the cloud controller (0.8354ms)
+✔ version-only lost handoff is refreshed through a new CAS lease, preserving attempts (1.6358ms)
+✔ concurrent task changes or pending events cannot be overwritten by version refresh (1.2224ms)
+✔ timer does not start a second writer during an API operation (0.7033ms)
+✔ API owns writer until async readback resolves and releases it on failure (0.3625ms)
+✔ uploaded directory logo must match the frozen PNG and actual square dimensions (1.3339ms)
+✔ Only the exact public form iframe recorded on a current registered parent may open (0.6986ms)
+✔ Guessed paths, unknown parents, old hosts and protected URLs are refused (0.2194ms)
+✔ Google popup must belong to exact task page, personal and other-site tabs are ignored (0.8345ms)
+✔ only an authorized first login-link request on the real registered page is eligible (0.7573ms)
+✔ a different directory login page cannot be used for the original task (0.1161ms)
+✔ a rejected human check is not described as a sent login email (0.2693ms)
+✔ A login link is confirmed sent only when the visible provider confirmation names the verified email (0.1714ms)
+✔ one logout recovery requires a complete signed-in inventory with no product and the current boundary (0.7891ms)
+✔ known logout permits authentication for inventory inspection while preserving the attempt (0.2489ms)
+✔ Only proven ToolScout preparation or an explicit FutureTools CAPTCHA rejection can restore a lost page (0.7335ms)
+✔ Unknown results, HTTP500, accepted tasks, stale identities and repeated restoration cannot clear an attempt (0.3179ms)
+✔ selects the observed option with menu already open: false (1.0242ms)
+✔ selects the observed option with menu already open: true (0.1237ms)
+✔ a visible option click without a saved choice is rejected (0.6071ms)
+✔ An actual uncompleted Turnstile and disabled submit require human verification (0.9434ms)
+✔ An unrelated frame, completed response or enabled submit is not invented as a CAPTCHA failure (0.1928ms)
+✔ A stale empty iframe label is checked against the same public target frame tree (0.6389ms)
+✔ only the unique visible reject action is used, after durable registration (2.6774ms)
+✔ a saved user cookie preference is preserved when the dialog reappears (0.3158ms)
+✔ only proven non-submission actions permit one audited recovery (0.7135ms)
+✔ A once-only exact 10015 fill-only refusal preserves true unknown submissions (0.193ms)
+✔ a closed registered query can update a stale reason without modifying original attempt evidence (3.0694ms)
+✔ missing, mismatched or unverified query evidence cannot annotate a task (0.7882ms)
+✔ explicit ordinary terms assent permits the submit notice without changing default behavior (1.7573ms)
+✔ terms assent leaves declaration, payment, login and captcha gates active (2.4923ms)
+✔ timeout fallback captures only the same public page (1.4179ms)
+✔ a changed target or protected page is never used for fallback (1.3567ms)
+✔ an unresponsive page focus operation cannot hold the continuous queue indefinitely (37.6741ms)
+✔ only validated PoweredByAI details advance to plans without clearing an attempt (0.7483ms)
+✔ URL-only live page and no-button result preserve attempts while resuming same target (4.8283ms)
+✔ receipt, traffic, repeated recovery, changed boundary or expanded form prevent recovery (2.5404ms)
+✔ Human completed AIoftheday can submit the existing prepared form without a refill (4.2221ms)
+✔ Prepared submission requires the exact site and explicit human completion (1.528ms)
+✔ The original zero-traffic preview transition can be continued once on its final button (0.5462ms)
+✔ Actual submission, lost preview, identity mismatch, payment or stale ownership must stop (0.1659ms)
+✔ visible challenge and login are classified even when there is no operable submission form (1.4346ms)
+✔ entry discovery uses only unambiguous observed public links and never a guessed URL (0.9733ms)
+✔ a homepage newsletter does not hide its visible submission link (0.2562ms)
+✔ a verified free card may open signup while checkout and mixed paid cards stay blocked (0.4544ms)
+✔ a WordPress search text input cannot impersonate the product website identity (1.6362ms)
+✔ observed Chinese form mismatch stops before the submit boundary (0.6708ms)
+✔ React picker selects only an available exact option and confirms the committed value (1.1259ms)
+✔ Missing truthful option stops without choosing a fuzzy or first item (1.3057ms)
+✔ Already committed exact selection is kept (0.9123ms)
+✔ Legacy React Select with option IDs and no ARIA roles still commits the exact choice (0.2737ms)
+✔ Committed chips outside the select container are read through the observed section (0.2167ms)
+✔ Default React input IDs route to their own option prefix (0.3227ms)
+✔ Native pricing options elsewhere cannot hide the category picker options (0.2917ms)
+✔ registration requires exact site, explicit consent, real profile and no previous registration boundary (0.6546ms)
+✔ Explicit existing ordinary permission permits the observed required newsletter field (1.0105ms)
+✔ Optional subscriptions, unknown declarations, other sites and missing authorization remain untouched (0.2808ms)
+✔ unsubmitted recovery preserves original identity, old proof and latest per-task profile (4.8679ms)
+✔ recovery refuses unknown attempts, receipts, stale state and an active executor (2.0442ms)
+✔ reopening an unsubmitted task preserves closed-tab history but resets current closure (1.5668ms)
+✔ historical success on a different submit path excludes the same product and host (1.6593ms)
+✔ SQLite recovery retains all 3101 unsynced events and never retries a submission boundary (6526.3362ms)
+✔ recovery preserves an already verified unknown result and its operator reason (0.5473ms)
+✔ status summary preserves every event identity without loading full historical states (1.4265ms)
+✔ recovery keeps an explicit site rejection without retrying or making it unknown (0.4153ms)
+✔ outbox is removed only after matching readback; network loss and mismatched read retain it (1.1276ms)
+✔ disabled review action never falls through to account logout (2.8479ms)
+✔ enabled review action is selected while account actions are excluded (0.9315ms)
+✔ logout form action is excluded even when its button lacks an action label (0.6107ms)
+✔ bookmark action is not a directory submission (0.5097ms)
+✔ plan selection is an intermediate action even when rendered as submit (0.5152ms)
+✔ preview and metadata intake are never final submission actions (4.593ms)
+✔ an explicitly scoped submission never uses another form action (0.6461ms)
+✔ a failed cloud synchronization backs off instead of repeatedly querying a quota-limited backend (0.799ms)
+✔ D1 startup with a complete local checkpoint reads the lightweight index only (1.3767ms)
+✔ background synchronization bounds image uploads and continues remaining evidence next cycle (13.5283ms)
+✔ close is after registration sync and independent readback; closure is then persisted (2.9087ms)
+✔ continuous cleanup is restricted to the currently owned completed task (0.7405ms)
+✔ continuous finalization reloads independently verified state instead of stale pre-sync fields (0.6778ms)
+✔ only overflowed new unsubmitted challenge pages can be archived with explicit recovery limitations (0.8946ms)
+✔ unknown result or wrong target cannot close a page (0.499ms)
+✔ failure to independently read registration leaves page open (0.7172ms)
+✔ lost original target is recorded without closing a replacement page (0.4938ms)
+✔ JSON serialization omits absent profile revisions without preventing readback (0.5621ms)
+✔ a resolved unpaid blocker closes only after the same independent registration readback (0.6568ms)
+✔ blocker closure never closes captcha, login, or a submitted unknown page (0.5112ms)
+✔ terminal navigation failures close only after a timed evidence retry or an explicit local evidence gap (104.9913ms)
+✔ offline login and CAPTCHA pages are archived with precise same-task recovery checkpoints while unknown receipts remain open (5.0579ms)
+✔ offline recovery records login gates from older plans when their original browser target is unavailable (0.4083ms)
+✔ recovery priority never treats a directory search box as completed product fields (0.1155ms)
+✔ a matching value is preserved without typing into the currently focused control (0.6384ms)
+✔ a successful browser fill does not need a fallback (0.17ms)
+✔ misdirected typing repairs the exact observed input with native input events (0.6767ms)
+✔ a rerender which loses the exact value stops before submission (0.4269ms)
+✔ Final human gate preserves only verified current staged fields and never represents submission (0.7727ms)
+✔ Incomplete visits, enabled final action or stale product data cannot become verified final preparation (0.1803ms)
+✔ normal workbench remains unlocked after service restart, while forged cookies remain denied (357.2091ms)
+✔ Mac opens the normal workbench through Chrome and uses a bounded Unix socket (1.3528ms)
+✔ new workbench validates D1 device before persisting, stays paused and preserves an existing pair (114.8901ms)
+✔ workbench progress survives executor restart and is acknowledged only after exact remote readback (72.9676ms)
+✔ workbench caches documents for offline reopening but never crosses workspace boundaries (1.1989ms)
+✔ workspace changes or mismatched proofs retain pending workbench progress (0.8193ms)
+✔ a paused app with no submission tasks still retries durable workbench progress (0.8787ms)
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\extension-content.test.mjs (84.0873ms)
+node:internal/fs/promises:1661
+  const result = await PromisePrototypeThen(
+                 ^
+
+Error: ENOENT: no such file or directory, scandir 'C:\Users\Administrator\Desktop\project\rainbowPetAi\public'
+    at async Object.readdir (node:internal/fs/promises:1661:18)
+    at async walkImages (file:///C:/Users/Administrator/Desktop/project/ExternalLink/skills/external-link-operator/scripts/discover-media.mjs:15:23)
+    at async discoverMedia (file:///C:/Users/Administrator/Desktop/project/ExternalLink/skills/external-link-operator/scripts/discover-media.mjs:79:17)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/external-link-operator-skill.test.mjs:32:15 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: 'C:\\Users\\Administrator\\Desktop\\project\\rainbowPetAi\\public'
+}
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\external-link-operator-skill.test.mjs (82.8674ms)
+local-first fill and trusted manual receipt tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\fill-first-and-manual-receipt.test.mjs (57.3803ms)
+form understanding runtime tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\form-understanding.test.mjs (56.9116ms)
+cross-frame fill routing tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\frame-fill-routing.test.mjs (55.8968ms)
+✔ progress is durable before network failure, then acknowledged only after independent readback (1.6276ms)
+✔ workspace switching never sends one workspace progress to another and concurrent additions are retained (1.2068ms)
+library preferences and Quick Open tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\library-preferences-quick-open.test.mjs (163.617ms)
+link monitor tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\link-monitor.test.mjs (45.0952ms)
+operator audit state tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\operator-audit-state.test.mjs (50.1263ms)
+opportunity score tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\opportunity-score.test.mjs (42.0814ms)
+pricing context and shared field mapping tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\pricing-context.test.mjs (54.1717ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: a submitted attempt with fresh evidence must be completed before ready_to_create is parked
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/producthunt-launch.test.mjs:238:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\producthunt-launch.test.mjs (58.8974ms)
+profile migration tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\profile-migration.test.mjs (55.6325ms)
+profile switch stale form and learned value regressions passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\profile-switch-fill.test.mjs (48.3708ms)
+publication and playbook tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\publication-playbook.test.mjs (54.4847ms)
+queue workflow tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\queue-workflow.test.mjs (65.5037ms)
+evalmachine.<anonymous>:172
+    const gameFieldValue = resolveGameSubmissionFieldValue(
+                           ^
+
+ReferenceError: resolveGameSubmissionFieldValue is not defined
+    at Object.resolveValueForField (evalmachine.<anonymous>:172:28)
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/repository-field.test.mjs:17:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\repository-field.test.mjs (51.5508ms)
+scheduler workflow tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\scheduler-workflow.test.mjs (48.9219ms)
+settings live library regressions passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\settings-live-library.test.mjs (49.9988ms)
+Sidepanel behavior tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\sidepanel-behavior.test.mjs (51.8805ms)
+Sidepanel comment/media tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\sidepanel-comment-media.test.mjs (47.5706ms)
+sidepanel library classification regressions passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\sidepanel-library.test.mjs (44.9021ms)
+sidepanel timeline refresh tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\sidepanel-timeline-refresh.test.mjs (44.8768ms)
+Sidepanel timeline tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\sidepanel-timeline.test.mjs (45.6889ms)
+site marker migration, multiselect, queue and priority tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\site-markers.test.mjs (46.8679ms)
+StartupStash alias and tab isolation tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\startupstash-destination-alias.test.mjs (44.2064ms)
+Submify incremental import tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\submify-import.test.mjs (47.0404ms)
+✔ automation mirror retains status and source task identity without duplicating large evidence (0.5694ms)
+✔ workspace journal includes different execution devices, excludes other workspaces and paginates summaries without large task evidence (1289.6824ms)
+✔ journal keeps product identities separate and merges host aliases without hiding task failures (9.2746ms)
+✔ later note or user review cannot erase site moderation and email is independent of link validity (0.7722ms)
+✔ new link-missing evidence supersedes older published event, without undoing receipt (0.7002ms)
+✔ task cloudVerified refers to receipt and never hides newer unsynced local events (0.6164ms)
+✔ archived-only successes stay visible but never imply current receipt, moderation or validity (1.3065ms)
+✔ a timeline-only entry is unknown, not falsely claimed to be an unexecuted task (0.6867ms)
+submission ledger cloud refresh tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\submission-ledger-cloud-refresh.test.mjs (62.385ms)
+submission ledger runtime tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\submission-ledger-runtime.test.mjs (459.9536ms)
+submission timeline tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\submission-timeline.test.mjs (58.2719ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+
+
+
+9009 !== 0
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/table-import.test.mjs:14:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 9009,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\table-import.test.mjs (106.1964ms)
+✔ library range selects the same executor without starting or retaining a stale preview (357.7162ms)
+✔ primary navigation exposes one batch engine and maintenance is folded away (0.792ms)
+✔ complete pages switch panels, keep buttons bound and pass library scope without an old start action (881.9319ms)
+UI workflow tests passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\ui-workflow.test.mjs (60.8187ms)
+legacy recovery fixtures and production migration guards passed
+✔ C:\Users\Administrator\Desktop\project\ExternalLink\tests\unattended-runtime.test.mjs (2047.3976ms)
+ℹ tests 243
+ℹ suites 0
+ℹ pass 236
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8950.214
+
+✖ failing tests:
+
+test at tests\audit-ui-settings.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\audit-ui-settings.test.mjs (52.0957ms)
+  'test failed'
+
+test at tests\automation-integration.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\automation-integration.test.mjs (47.8558ms)
+  'test failed'
+
+test at tests\content-media-select-routing.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\content-media-select-routing.test.mjs (55.9521ms)
+  'test failed'
+
+test at tests\external-link-operator-skill.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\external-link-operator-skill.test.mjs (82.8674ms)
+  'test failed'
+
+test at tests\producthunt-launch.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\producthunt-launch.test.mjs (58.8974ms)
+  'test failed'
+
+test at tests\repository-field.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\repository-field.test.mjs (51.5508ms)
+  'test failed'
+
+test at tests\table-import.test.mjs:1:1
+✖ C:\Users\Administrator\Desktop\project\ExternalLink\tests\table-import.test.mjs (106.1964ms)
+  'test failed'

@@ -1,0 +1,32 @@
+{
+  "at": "2026-09-30T02:01:08.946Z",
+  "endpoint": "https://externallink-cloud.syndred.workers.dev",
+  "workspace": "default",
+  "backend": "d1",
+  "workspace/journal-documents": {
+    "ok": true,
+    "elapsedMs": 2724,
+    "profiles": 8,
+    "revisions": {
+      "siteProfiles": 2,
+      "submissionRecords": 2,
+      "submissionTimeline": 7
+    }
+  },
+  "runs?view=inventory": {
+    "ok": true,
+    "elapsedMs": 3383,
+    "profiles": 0,
+    "tasks": 751,
+    "runs": 15
+  },
+  "local": {
+    "http": 200,
+    "paused": true,
+    "busy": false,
+    "tasks": 751,
+    "pendingEvents": 0,
+    "workbenchPendingEvents": 0,
+    "cloudError": ""
+  }
+}

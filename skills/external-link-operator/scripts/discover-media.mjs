@@ -12,7 +12,10 @@ const SEED_PROFILE_ALIASES = {
 
 async function walkImages(directory) {
   const result = [];
-  for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+  let entries;
+  try { entries = await fs.readdir(directory, { withFileTypes: true }); }
+  catch (error) { if (error.code === 'ENOENT') return result; throw error; }
+  for (const entry of entries) {
     const fullPath = path.join(directory, entry.name);
     if (entry.isDirectory()) result.push(...(await walkImages(fullPath)));
     else if (IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) result.push(fullPath);

@@ -26,4 +26,8 @@ test('personal and company fields require explicit profile facts', () => {
   assert.equal(resolve(product, { Phone: '+1 212 555 0123' }, 'Phone*'), '+1 212 555 0123');
   assert.equal(resolve(product, { Phone: 'Free daily games' }, 'Phone*'), '');
   assert.equal(resolve(product, {}, 'Product Description'), null);
+  assert.equal(resolve({username:'Syndred'}, {}, 'Founder / company'), '');
+  assert.equal(resolve({username:'Syndred Young'}, {}, 'Founder or company name'), '');
+  assert.equal(resolve(product, {Founder:'Verified Founder'}, 'Founder / company'), 'Verified Founder');
+  assert.equal(resolve(product, {Company:'Example Ltd'}, 'Founder or company name'), 'Example Ltd');
 });

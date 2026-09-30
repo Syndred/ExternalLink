@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 const tempDir = mkdtempSync(join(tmpdir(), "externallink-table-import-"));
 const outputPath = join(tempDir, "table-library.json");
 const imported = spawnSync(
-  "python3",
+  process.env.EXTERNALLINK_PYTHON || (process.platform === "win32" ? "python" : "python3"),
   ["tools/import_table_xlsx.py", "--input", "Table.xlsx", "--output", outputPath],
   { encoding: "utf8" },
 );

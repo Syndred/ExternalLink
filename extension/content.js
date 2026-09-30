@@ -7007,6 +7007,9 @@
         !/\b(?:product|tool|app|company|business)\s+name\b|产品名称|工具名称|网站名称/.test(text)) {
       return fitValueToConstraints(explicitPerson, constraints);
     }
+    if (/\bfounder\s*(?:\/|or)\s*company(?:\s+name)?\b/.test(text)) {
+      return fitValueToConstraints(pf.Founder || pf.Company || pf["Organization Name"] || "", constraints);
+    }
     if (/\bcompany\s+name\b|\blegal\s+(?:business|entity)\s+name\b/.test(text)) {
       return fitValueToConstraints(pf.Company || pf["Organization Name"] || "", constraints);
     }

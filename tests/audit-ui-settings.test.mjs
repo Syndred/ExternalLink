@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const sidepanelSource = readFileSync("extension/sidepanel.js", "utf8");
-const settingsSource = readFileSync("extension/settings.js", "utf8");
+const settingsSource = readFileSync("extension/settings.js", "utf8").replace(/\r\n/g, "\n");
 
 // Exercise the UI-facing contracts without opening Chrome. These helpers are
 // the same functions used by the live side panel.

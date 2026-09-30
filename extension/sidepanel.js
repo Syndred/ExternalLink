@@ -345,29 +345,12 @@
     renderSidepanelLibrary();
   }
 
-  function updateLibraryCategoryStartButton() {
-    const button = $("btnStartLibraryCategory");
-    if (!button) return;
-    const category = $("sidepanelLibraryCategory")?.value || "";
-    button.disabled = !category || running || batchStatus === "paused";
-    button.textContent = category ? `提交「${category}」` : "从此分类开始提交";
-  }
-
-  function updateLibraryGroupStartButton() {
-    const button = $("btnStartLibraryGroup");
-    if (!button) return;
-    const groupId = $("sidepanelLibraryGroup")?.value || "";
-    const group = LibraryGroups.GROUPS.find(([id]) => id === groupId);
-    const count = group ? sidepanelLibraryItems.filter((item) => LibraryGroups.matches(item, groupId)).length : 0;
-    button.disabled = !count || running || batchStatus === "paused";
-    button.textContent = group ? `提交「${group[1]}」组（${count} 站）` : "从此分组开始提交";
-  }
-
   function renderSidepanelLibrary() {
     const list = $("sidepanelLibraryList");
     if (!list) return;
     const filtered = sidepanelLibraryFilteredItems();
     const shown = filtered.slice(0, sidepanelLibraryVisibleLimit);
+    if ($("btnUseLibraryFilter")) $("btnUseLibraryFilter").disabled = !filtered.length;
     list.replaceChildren();
     if ($("sidepanelLibrarySummary")) {
       const cloudRows = Number(sidepanelLibraryStats.cloudRows) || 0;
@@ -523,7 +506,6 @@
       more.textContent = `加载更多（剩余 ${Math.max(0, filtered.length - shown.length)} 条）`;
     }
     updateQuickOpenControls();
-    updateLibraryGroupStartButton();
   }
 
   async function loadSidepanelLibrary() {
@@ -543,8 +525,7 @@
     sidepanelLibraryLoaded = true;
     populateSidepanelLibraryCategories(sidepanelLibraryItems);
     populateSidepanelLibraryGroups(sidepanelLibraryItems);
-    updateLibraryCategoryStartButton();
-    updateLibraryGroupStartButton();
+
     renderSidepanelLibrary();
   }
 
@@ -558,8 +539,7 @@
   ]) {
     $(id)?.addEventListener(id === "sidepanelLibrarySearch" ? "input" : "change", () => {
       sidepanelLibraryVisibleLimit = 60;
-      updateLibraryCategoryStartButton();
-      updateLibraryGroupStartButton();
+
       renderSidepanelLibrary();
     });
   }
@@ -3417,8 +3397,7 @@
     for (const id of ["cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs", "cfgFillOnly"]) {
       if ($(id)) $(id).disabled = ["running", "paused"].includes(batchStatus);
     }
-    updateLibraryCategoryStartButton();
-    updateLibraryGroupStartButton();
+
   }
 
   function setBatchStatus(status, save = true) {
@@ -3474,84 +3453,11 @@
     }
   }
 
-  async function startSubmissionBatch({ category = "", group = "", button = null, switchToBatch = false } = {}) {
-    if (running || batchStatus === "paused") return;
-    if (!selectedSiteIds.length) {
-      showToast("请至少勾选一个自家网站", true);
-      return;
-    }
-    if (category && !LibraryClassifier.CATEGORY_ORDER.includes(category)) {
-      showToast("请先选择有效的外链分类", true);
-      return;
-    }
-    if (group && !LibraryGroups.GROUPS.some(([id]) => id === group)) {
-      showToast("请先选择有效的外链分组", true);
-      return;
-    }
-    const startButton = button || $("btnStart");
-    const groupLabel = LibraryGroups.GROUPS.find(([id]) => id === group)?.[1];
-    const idleText = groupLabel ? `提交「${groupLabel}」组` : category ? `提交「${category}」` : "开始提交";
-    startButton.disabled = true;
-    startButton.textContent = "正在构建队列…";
-    try {
-      const result = await chrome.runtime.sendMessage({
-        action: "start",
-        selectedSiteIds,
-        category,
-        group,
-        config: {
-          ...Sidepanel.buildBatchConfig({
-            concurrency: batchConcurrency,
-            pingIndex: batchPingIndex,
-            fillOnly: $("cfgFillOnly")?.checked === true,
-            unattended: $("cfgUnattended")?.checked === true,
-            unattendedMaxHours: $("cfgUnattendedHours")?.value,
-            unattendedMaxTasks: $("cfgUnattendedTasks")?.value,
-            unattendedMaxManualTabs: $("cfgUnattendedManualTabs")?.value,
-          }),
-        },
-      });
-      if (!result?.ok) throw new Error(result?.error || "启动失败");
-      tasks = result.tasks || [];
-      taskWindow = result.taskWindow || { start: 0, end: tasks.length, total: tasks.length, truncated: false };
-      stats = result.stats || { done: 0, skip: 0, err: 0, total: taskWindow.total || tasks.length };
-      updateStats();
-      renderTasks();
-      setBatchStatus(stats.total > 0 ? "running" : "finished");
-      updateBatchPreview();
-      if (switchToBatch) document.querySelector('.tab[data-panel="batch"]')?.click();
-    } catch (err) {
-      await syncTasksFromBackground();
-      showToast(err.message, true);
-    } finally {
-      startButton.disabled = false;
-      startButton.textContent = idleText;
-      updateLibraryCategoryStartButton();
-      updateLibraryGroupStartButton();
-    }
-  }
-
-  $("btnStart")?.addEventListener("click", () => {
-    startSubmissionBatch({ button: $("btnStart") }).catch((err) => showToast(err.message, true));
-  });
-
-  $("btnStartLibraryCategory")?.addEventListener("click", () => {
-    const category = $("sidepanelLibraryCategory")?.value || "";
-    startSubmissionBatch({
-      category,
-      button: $("btnStartLibraryCategory"),
-      switchToBatch: true,
-    }).catch((err) => showToast(err.message, true));
-  });
-
-  $("btnStartLibraryGroup")?.addEventListener("click", () => {
-    const group = $("sidepanelLibraryGroup")?.value || "";
-    if (!group) return;
-    startSubmissionBatch({
-      group,
-      button: $("btnStartLibraryGroup"),
-      switchToBatch: true,
-    }).catch((err) => showToast(err.message, true));
+  $("btnUseLibraryFilter")?.addEventListener("click", () => {
+    const urls = sidepanelLibraryFilteredItems().map(item => item.url).filter(Boolean);
+    if (!urls.length) return;
+    window.dispatchEvent(new CustomEvent("externallink:select-range", {detail: {profileId: activeSiteId, urls, label: "当前筛选"}}));
+    document.querySelector('.tab[data-panel="workbench"]')?.click();
   });
 
   $("btnStop")?.addEventListener("click", async () => {

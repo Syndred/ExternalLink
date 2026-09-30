@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
 
 export class Cloud {
-  constructor(config) { this.config = config; }
+  constructor(config, {onNetworkFailure, onSuccess} = {}) { this.config = config; this.onNetworkFailure = onNetworkFailure; this.onSuccess = onSuccess; }
   async request(route, body, method = body ? 'POST' : 'GET') {
     const base = new URL(this.config.endpoint);
     if (base.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(base.hostname)) throw new Error('云端必须使用 HTTPS');
@@ -13,7 +13,9 @@ export class Cloud {
       try{response = await fetch(url, { method, signal: AbortSignal.timeout(20000), headers: { Authorization: `Bearer ${this.config.deviceToken}`, 'Content-Type': 'application/json','X-Executor-Protocol':'2' }, body: body ? JSON.stringify(body) : undefined });}
       catch(error){const code=error.cause?.code||error.code||error.name;
         if(method==='GET'&&['ECONNRESET','ETIMEDOUT','EAI_AGAIN','UND_ERR_CONNECT_TIMEOUT'].includes(code)&&attempt<2){await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));continue;}
-        throw Object.assign(new Error(`云端连接失败 (${code})`),{cloudNetwork:true,cloudFailure:true,status:502,code});
+        const failure=Object.assign(new Error(`云端连接失败 (${code})`),{cloudNetwork:true,cloudFailure:true,status:502,code});
+        this.onNetworkFailure?.(failure);
+        throw failure;
       }
       if(method!=='GET'||![502,503,504].includes(response.status)||attempt===2)break;
       await response.body?.cancel();
@@ -34,6 +36,7 @@ export class Cloud {
         const page=await this.request('runs?'+query.toString());data.runs.push(...page.runs);data.tasks.push(...page.tasks);next=page.next;
       }data.next=null;
     }
+    this.onSuccess?.();
     return data;
   }
   async flush(store) {

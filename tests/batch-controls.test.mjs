@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const background = readFileSync(resolve(root, "extension/background.js"), "utf8");
+const background = readFileSync(resolve(root, "extension/background.js"), "utf8").replace(/\r\n/g, "\n");
 const sidepanelHtml = readFileSync(resolve(root, "extension/sidepanel.html"), "utf8");
 const sidepanel = readFileSync(resolve(root, "extension/sidepanel.js"), "utf8");
 

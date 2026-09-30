@@ -1,0 +1,16 @@
+{
+  "at": "2026-09-30T02:00:55.285Z",
+  "beforePid": 13548,
+  "afterPid": 12568,
+  "paused": true,
+  "busy": false,
+  "tasks": 751,
+  "runs": 15,
+  "pendingEvents": 0,
+  "workbenchPendingEvents": 0,
+  "cloudError": "",
+  "taskRunPlanChecksum": "28d26399e45a5b26ea5d5d488df3454d026237da9c429acabd2ef538f5d39853",
+  "taskRunPlanUnchanged": true,
+  "cached": false,
+  "profiles": 8
+}

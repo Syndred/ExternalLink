@@ -120,7 +120,13 @@ export function chooseObservedEntry(current,links){
 
 export class Runtime {
   constructor(store, home) { this.store = store; this.home = home; this.job = null; this.cloudError = ''; this.controllerId = store.get('executorControllerId') || randomUUID(); store.set('executorControllerId',this.controllerId); store.recover(); if(store.get('offlineMode')?.enabled)this.hydrated=true; if (store.get('singleTaskId')) { store.set('paused', true); store.set('singleTaskId', null); } }
-  get cloud() { const pair = this.store.get('pair'); if (!pair) throw new Error('请先在插件中配对'); return new Cloud(pair); }
+  get cloud() { const pair = this.store.get('pair'); if (!pair) throw new Error('请先在插件中配对'); return new Cloud(pair, {
+    onNetworkFailure: error => { this.lastCloudNetworkFailure = error.message; this.cloudError = error.message; },
+    onSuccess: () => {
+      if (this.lastCloudNetworkFailure && this.cloudError === this.lastCloudNetworkFailure) this.cloudError = '';
+      this.lastCloudNetworkFailure = null;
+    },
+  }); }
   async withControl(operation) {
     this.controlBusy = true;
     try { return await operation(); }
@@ -390,7 +396,9 @@ export class Runtime {
       if (!read || read.taskId !== task.id || read.evidence !== record.evidence || !isDeepStrictEqual(read.actualSubmission, record.actualSubmission)) throw new Error('云端回执回读不一致');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
-    await this.cloud.flush(this.store); this.cloudError = '';
+    await this.cloud.flush(this.store);
+    // An empty outbox performs no authenticated request and cannot prove recovery.
+    if (this.cloudError !== this.lastCloudNetworkFailure) this.cloudError = '';
     return this.status();
   }
   async reconcileOfflineRuns(){
@@ -469,7 +477,8 @@ export class Runtime {
     if(this.store.get('paused')===true&&(startupGate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(startupGate?.reason||''))&&!this.store.get('offlineMode')?.enabled){this.cloudError=startupGate.reason;return;}
     if (!this.hydrated) { this.restoreCloud().catch(error => { this.cloudError = error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); }); return; }
     if (this.job || !this.store.get('pair')) return;
-    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict))) return;
+    const needsCloudRecovery = this.lastCloudNetworkFailure && this.cloudError === this.lastCloudNetworkFailure;
+    if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && this.store.get('libraryPlan')?.status!=='active' && !this.store.values('task:').some(t => t.status === 'pending' || (t.screenshot&&!t.artifactRef) || (t.receipt && !t.cloudVerified&&!t.syncConflict)) && !needsCloudRecovery) return;
     if (this.store.get('paused') !== false) {
       const plan=this.store.get('libraryPlan'),gate=plan?.globalPause;
       if(gate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(gate?.reason||''))return;
@@ -480,7 +489,14 @@ export class Runtime {
             resumeEligible:!error.cloudQuota&&(error.cloudNetwork||error.status>=500),attentionType:error.cloudQuota?'cloud_quota':gate.attentionType,nextProbeAt:Date.now()+Math.min(300000,60000*attempts)}});
         }).finally(()=>{this.job=null;});return;
       }
-      if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !this.store.values('task:').some(t => (t.screenshot&&!t.artifactRef)||(t.receipt && !t.cloudVerified&&!t.syncConflict))) return;
+      if (!(this.store.pendingCount?.()??this.store.pending().length) && !pendingWorkbench(this).length && !this.store.values('task:').some(t => (t.screenshot&&!t.artifactRef)||(t.receipt && !t.cloudVerified&&!t.syncConflict))) {
+        if (needsCloudRecovery) {
+          this.job = this.cloud.request('workspace/journal-documents').then(() => { this.syncFailures=0;this.syncRetryAt=0; })
+            .catch(error => { this.cloudError=error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); })
+            .finally(() => { this.job=null; });
+        }
+        return;
+      }
       this.job = this.synchronize().then(result=>{this.syncFailures=0;this.syncRetryAt=0;return result;}).catch(error => { this.cloudError = error.message;
         this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4));
         if(error.cloudQuota&&plan)this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,attentionType:'cloud_quota',resumeEligible:false}});

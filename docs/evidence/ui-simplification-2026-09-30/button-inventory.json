@@ -1,0 +1,1115 @@
+{
+  "environment": "isolated browser with mocked Chrome and cloud APIs; no real submissions",
+  "surfaces": {
+    "sidepanel": [
+      {
+        "id": "btnOpenSettings",
+        "label": "⚙",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "运行工作台",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "当前网页",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "外链库",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-pair",
+        "label": "配对此设备",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-preview",
+        "label": "预览范围",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-start",
+        "label": "开始",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": true
+      },
+      {
+        "id": "executor-pause",
+        "label": "暂停",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "executor-resume",
+        "label": "继续",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-refresh",
+        "label": "刷新状态",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-sync",
+        "label": "补传云端",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": true
+      },
+      {
+        "id": "executor-archive-gates",
+        "label": "登记并关闭登录/验证码页",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnPrevSite",
+        "label": "◀",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnNextSite",
+        "label": "▶",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnRefreshSidepanelTimeline",
+        "label": "刷新",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnAddTimelineEvent",
+        "label": "登记外链动态",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveTimelineEvent",
+        "label": "保存人工动态",
+        "type": "submit",
+        "events": [],
+        "onclick": false,
+        "form": true,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnCancelTimelineEvent",
+        "label": "取消",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": true,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnDetect",
+        "label": "检测",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnFillForm",
+        "label": "确认创建 Product Hunt 草稿",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSubmitPage",
+        "label": "提交本页",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnFillComment",
+        "label": "填入评论",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnLaunchNext",
+        "label": "下一站",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnRegenComment",
+        "label": "生成 3 条",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnRestoreComment",
+        "label": "恢复上一版",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": true
+      },
+      {
+        "id": "btnRefreshMedia",
+        "label": "刷新",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "可提交",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "需人工",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "需登录",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "验证码",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "付费",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "无法提交",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "跳过",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "删除",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnAddToUrlList",
+        "label": "加入外链列表（置顶）",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnOpenLibrarySettings",
+        "label": "完整管理",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnUseLibraryFilter",
+        "label": "将当前筛选送到工作台",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnQuickOpenSelectFiltered",
+        "label": "选择当前筛选",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnQuickOpenBatch",
+        "label": "打开下一批（最多 0 条）",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": true
+      },
+      {
+        "id": "",
+        "label": "☆ 收藏",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "已启用",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "+ 高质量优先",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "+ 免费可提交",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSidepanelLibraryMore",
+        "label": "加载更多（剩余 0 条）",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnBatchToggle",
+        "label": "暂停批量",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnContinue",
+        "label": "继续等待中的任务",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnStop",
+        "label": "停止",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnExportAutomationRun",
+        "label": "导出执行记录",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnExportBatchReport",
+        "label": "导出本轮报告",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnCopyBatchLog",
+        "label": "复制日志",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      }
+    ],
+    "settings": [
+      {
+        "id": "tab-sites",
+        "label": "网站资料",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "tab-library",
+        "label": "外链库",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "tab-config",
+        "label": "全局配置",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "tab-journal",
+        "label": "外链总览",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "journal-refresh",
+        "label": "从云端刷新",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "journal-export",
+        "label": "导出逐站明细",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "journal-recover",
+        "label": "将本机最新资料恢复到 D1",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnAddSite",
+        "label": "+ 添加",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnRemoveSite",
+        "label": "删除",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnExtractSite",
+        "label": "🔍 从网址提取资料",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnGenerateSite",
+        "label": "✨ 完善当前资料",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnClearLogo",
+        "label": "清除图片",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveSite",
+        "label": "💾 保存当前站点资料",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnLibraryLoadMore",
+        "label": "加载更多（剩余 0 条）",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "btnCloudRefresh",
+        "label": "轻量核对版本",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnCloudConnect",
+        "label": "连接云端",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnCloudMigrate",
+        "label": "首次迁移到云端",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnCloudPull",
+        "label": "回读云端更新",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnCloudPush",
+        "label": "确认本机为准并上传",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSyncSubmifyLibrary",
+        "label": "同步 Submify 最新库",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnRunLinkMonitor",
+        "label": "立即复查",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveLinkMonitor",
+        "label": "保存复查频率",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnExportLedger",
+        "label": "导出 JSON",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnImportLedger",
+        "label": "导入 JSON",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveConfig",
+        "label": "💾 保存全局配置",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnClearData",
+        "label": "🗑 清除所有数据",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveTargetGate",
+        "label": "保存闸门设置",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnPrefetchDomainAge",
+        "label": "预取当前队列域名年龄",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnSaveAssistant",
+        "label": "保存助手设置",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "btnRefreshMediaLibrary",
+        "label": "检查云端媒体",
+        "type": "submit",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      }
+    ],
+    "web": [
+      {
+        "id": "",
+        "label": "运行任务",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "外链总览与资料",
+        "type": "button",
+        "events": [
+          "click"
+        ],
+        "onclick": false,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-pair",
+        "label": "配对此设备",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "executor-preview",
+        "label": "预览范围",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-start",
+        "label": "开始",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": true
+      },
+      {
+        "id": "executor-pause",
+        "label": "暂停",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-resume",
+        "label": "继续",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-refresh",
+        "label": "刷新状态",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-sync",
+        "label": "补传云端",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "executor-archive-gates",
+        "label": "登记并关闭登录/验证码页",
+        "type": "button",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": false,
+        "disabled": false
+      },
+      {
+        "id": "journal-refresh",
+        "label": "从云端刷新",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "journal-export",
+        "label": "导出逐站明细",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "",
+        "label": "编辑本站资料",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      },
+      {
+        "id": "journal-recover",
+        "label": "将本机最新资料恢复到 D1",
+        "type": "submit",
+        "events": [],
+        "onclick": true,
+        "form": false,
+        "hidden": true,
+        "disabled": false
+      }
+    ]
+  }
+}

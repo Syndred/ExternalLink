@@ -2,6 +2,10 @@
  const token=new URLSearchParams(location.hash.slice(1)).get('access');history.replaceState(null,'',location.pathname);
  const status=document.getElementById('connection-status');
  window.ExtLinkWorkbench=true;
+ document.querySelectorAll('[data-view]').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));
+  for(const view of ['workbench','journal'])document.getElementById('panel-'+view).hidden=view!==tab.dataset.view;
+ }));
  const request=async(path,body,raw=false)=>{const response=await fetch(path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});if(raw){if(!response.ok)throw Error('图片读取失败');const blob=await response.blob();return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve({ok:true,dataUrl:reader.result});reader.onerror=reject;reader.readAsDataURL(blob);});}const data=await response.json();if(!response.ok||data.ok===false)throw Error(data.error||'请求失败');return data;};
  try{
  const connection=await request('/connection');let snapshot=await request('/workbenchDocuments',{});const pending=await request('/workbenchPending',{});
@@ -9,12 +13,12 @@
  // Adapter uses application memory and authenticated APIs, never extension storage.
  window.chrome={storage:{local:{get:async keys=>Object.fromEntries((Array.isArray(keys)?keys:[keys]).filter(k=>k in state).map(k=>[k,state[k]])),set:async values=>{Object.assign(state,values);for(const fn of listeners)fn(Object.fromEntries(Object.keys(values).map(k=>[k,{}])),'local');}},onChanged:{addListener:fn=>listeners.push(fn)}},runtime:{sendMessage:async msg=>{try{
  if(msg.action==='submissionJournalCloud'){if(!msg.taskId){await request('/journalFlush',{});const pending=await request('/workbenchPending',{});state.d1JournalPending=pending.pending;}return await request('/cloud/workspace/submission-tasks?'+(msg.taskId?'taskId='+encodeURIComponent(msg.taskId):'after='+encodeURIComponent(msg.after||'')));}
- if(msg.action==='submissionJournalDocuments')return await request('/workbenchDocuments',{});
+ if(msg.action==='submissionJournalDocuments'){snapshot=await request('/workbenchDocuments',{});showConnection();return snapshot;}
  if(msg.action==='submissionJournalArtifact'||msg.action==='fetchCloudSubmissionMedia'){const artifact=msg.action==='submissionJournalArtifact',id=String(msg.ref).replace(/^cloud-(artifact|media):\/\//,'');if(!/^[a-zA-Z0-9._-]+$/.test(id))throw Error('无效图片引用');return await request('/cloud/workspace/'+(artifact?'automation/artifacts/':'media/')+id,undefined,true);}
  if(msg.action==='submissionJournalProgress'){const event={...msg,id:crypto.randomUUID(),source:'manual',confirmedBy:'manual'};delete event.action;const result=await request('/journalProgress',{event}),pending=await request('/workbenchPending',{});state.d1JournalPending=pending.pending;return result;}
  throw Error('此操作请使用对应工作台入口');}catch(error){return{ok:false,error:error.message};}}}};
  for(const src of ['/extension/executor-panel.js','/extension/submission-journal.js'])await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});
- document.getElementById('journal-recover').hidden=true;document.getElementById('executor-pair-details').hidden=true;
+ document.getElementById('journal-recover').closest('details').hidden=true;document.getElementById('executor-pair-details').hidden=true;
  window.addEventListener('externallink:tasks',async event=>{if(event.detail.workbenchPendingEvents!==undefined&&event.detail.workbenchPendingEvents!==state.d1JournalPending.length){try{const pending=await request('/workbenchPending',{});await window.chrome.storage.local.set({d1JournalPending:pending.pending});}catch{}}});
  const edit=document.createElement('button'),editor=document.createElement('section');edit.textContent='编辑本站资料';editor.hidden=true;editor.className='journal-detail';editor.id='workbench-profile-editor';document.querySelector('.journal-controls').append(edit);document.getElementById('journal-status').after(editor);
  edit.onclick=async()=>{edit.disabled=true;try{
@@ -30,6 +34,7 @@
    snapshot=proof;await window.chrome.storage.local.set({siteProfiles:proof.documents.siteProfiles});document.getElementById('journal-refresh').click();message.textContent=changed?'资料已保存，并完成云端回读核对。':'资料与云端一致，无需重复写入。';
   }catch(error){message.textContent='保存未确认，编辑内容仍保留：'+error.message;}finally{save.disabled=false;}};
  }catch(error){status.textContent='资料暂不可编辑：'+error.message;}finally{edit.disabled=false;}};
- status.textContent=snapshot.cached?'云端暂不可读，已恢复本机缓存（'+snapshot.cachedAt+'）；新进度会持久保存在本机并重试。':'已连接真实 D1 云端；本机执行器连接状态见下方运行工作台。';document.getElementById('journal-refresh').click();
+ function showConnection(){status.textContent=snapshot.cached?'云端暂不可读，已恢复本机缓存（'+snapshot.cachedAt+'）；新进度会持久保存在本机并重试。':'已连接真实 D1 云端；本机执行器连接状态见下方运行工作台。';}
+ showConnection();document.getElementById('journal-refresh').click();
  }catch(error){status.textContent='连接失败：'+error.message;}
 })();

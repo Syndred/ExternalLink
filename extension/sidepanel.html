@@ -20,6 +20,13 @@
       </button>
     </header>
 
+    <nav class="tabs" role="tablist" aria-label="工作区">
+      <button class="tab active" type="button" data-panel="workbench" role="tab" aria-selected="true">运行工作台</button>
+      <button class="tab" type="button" data-panel="home" role="tab" aria-selected="false">当前网页</button>
+      <button class="tab" type="button" data-panel="library" role="tab" aria-selected="false">外链库</button>
+    </nav>
+    <main class="panel active" id="panel-workbench" role="tabpanel"></main>
+    <main class="panel" id="panel-home" role="tabpanel">
     <section class="context-bar">
       <label class="field-label" for="spSiteSelect">当前 Profile</label>
       <select id="spSiteSelect"></select>
@@ -32,17 +39,6 @@
       <div class="auto-fill-status" id="autoFillStatus" hidden role="status"></div>
     </section>
 
-    <nav class="tabs" role="tablist" aria-label="工作区">
-      <button class="tab active" type="button" data-panel="home" role="tab" aria-selected="true">执行</button>
-      <button class="tab" type="button" data-panel="library" role="tab">外链</button>
-      <button class="tab" type="button" data-panel="batch" role="tab">批量</button>
-      <button class="tab" type="button" data-panel="manual" role="tab">
-        待人工 <span class="tab-badge" id="manualTabCount"></span>
-      </button>
-    </nav>
-
-    <!-- 执行 -->
-    <main class="panel active" id="panel-home" role="tabpanel">
       <section class="insight-card">
         <div class="insight-head">
           <div class="insight-url">
@@ -267,14 +263,11 @@
             <option value="disabled">已停用</option>
           </select>
         </div>
-        <button type="button" class="btn btn-primary btn-block" id="btnStartLibraryCategory" disabled>
-          从此分类开始提交
-        </button>
-        <button type="button" class="btn btn-ghost btn-block" id="btnStartLibraryGroup" disabled>
-          从此分组开始提交
+        <button type="button" class="btn btn-primary btn-block" id="btnUseLibraryFilter" disabled>
+          将当前筛选送到工作台
         </button>
         <p class="library-submit-note">“高质量优先”和“免费可提交”是可调整的候选分组；每次提交前仍须复核站点规则与费用。</p>
-        <p class="library-submit-note">使用当前勾选的 Profile；已成功、付费、跳过、登录和验证码等安全闸门仍然生效。</p>
+        <p class="library-submit-note">使用当前网页选择的产品；送到工作台后先预览范围，再开始提交。</p>
         <div class="library-summary" id="sidepanelLibrarySummary" role="status">打开后加载外链库…</div>
       </section>
       <details class="library-quick-open" id="libraryQuickOpen">
@@ -297,31 +290,13 @@
       <button type="button" class="btn btn-ghost btn-block" id="btnSidepanelLibraryMore" hidden>加载更多</button>
     </main>
 
+    <details class="card legacy-tasks">
+      <summary>旧任务与历史记录 <span id="manualTabCount"></span></summary>
     <!-- 批量 -->
-    <main class="panel" id="panel-batch" role="tabpanel">
+    <section id="panel-batch">
       <div class="card">
-        <h2 class="card-title">本轮提交哪些网站</h2>
-        <div class="batch-site-choices" id="batchSiteChoices"></div>
-        <p class="batch-summary" id="batchSelectionSummary">请至少选择一个自家网站</p>
-        <label class="check-row">
-          <input type="checkbox" id="cfgFillOnly" />
-          仅填表（不自动提交）
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="cfgUnattended" />
-          无人值守
-        </label>
-        <div id="unattendedOptions" hidden>
-          <div class="unattended-limits">
-            <label>最长运行（小时）<input id="cfgUnattendedHours" type="number" min="1" max="12" value="8" /></label>
-            <label>最多项目组合<input id="cfgUnattendedTasks" type="number" min="1" max="500" value="100" /></label>
-            <label>待人工页签容量<input id="cfgUnattendedManualTabs" type="number" min="1" max="100" value="20" /></label>
-          </div>
-          <p class="card-desc">已填写的待人工页面会保留，方便集中处理验证码。达到容量后暂停新开站点，处理并释放页签后继续；新批次也保留未处理页面。</p>
-          <p class="card-desc">保持电脑唤醒、Chrome 开启。</p>
-          <p class="card-desc">本轮最多调用模型 200 次；连续失败 5 次会暂停。</p>
-        </div>
-        <p class="card-desc" id="unattendedRunSummary" hidden role="status"></p>
+        <h2 class="card-title">旧任务运行状态</h2>
+        <p class="card-desc">保留已有任务的继续、停止和导出记录；新批次请在运行工作台创建。</p>
         <div class="stats">
           <div class="stat"><b id="statQueue">0</b><span>排队</span></div>
           <div class="stat ok"><b id="statDone">0</b><span>完成</span></div>
@@ -329,7 +304,6 @@
           <div class="stat err"><b id="statErr">0</b><span>失败</span></div>
         </div>
         <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
-        <button type="button" class="btn btn-primary" id="btnStart">开始提交</button>
         <button type="button" class="btn btn-ghost" id="btnBatchToggle" hidden>暂停批量</button>
         <button type="button" class="btn btn-ghost" id="btnContinue" hidden>继续等待中的任务</button>
         <button type="button" class="btn btn-danger" id="btnStop" hidden>停止</button>
@@ -347,18 +321,20 @@
         </div>
       </div>
       <div id="log" class="log" aria-live="polite"></div>
-    </main>
+    </section>
 
     <!-- 待人工 -->
-    <main class="panel" id="panel-manual" role="tabpanel">
+    <section id="panel-manual">
       <div class="card">
         <h2 class="card-title">停放中的任务</h2>
         <p class="card-desc">登录、验证码和无法重置表单的页签会停放在这里，不占用批量并发位。</p>
       </div>
       <div id="manualTaskList" class="manual-task-list">
-        <div class="empty-state">暂无待人工任务。你可以返回「批量」开始新一轮。</div>
+        <div class="empty-state">暂无旧版待人工任务。新任务请在运行工作台查看。</div>
       </div>
-    </main>
+    </section>
+
+    </details>
 
     <script src="lib/profiles.js"></script>
     <script src="lib/queue.js"></script>

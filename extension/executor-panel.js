@@ -13,13 +13,15 @@
     <details><summary>指定本次外链范围</summary><label>从外链库选定的网址，每行一个；留空使用完整库<textarea id="executor-urls" rows="3"></textarea></label></details>
     <div class="executor-controls"><button id="executor-preview" type="button">预览范围</button><button id="executor-start" type="button" disabled>开始</button>
       <button id="executor-pause" type="button">暂停</button><button id="executor-resume" type="button">继续</button>
-      <button id="executor-refresh" type="button">刷新</button><button id="executor-sync" type="button">补传云端</button><button id="executor-archive-gates" type="button">登记并关闭登录/验证码页</button></div>
+      <button id="executor-refresh" type="button">刷新状态</button></div>
+    <details><summary>维护与待办页整理</summary><button id="executor-sync" type="button">补传云端</button><button id="executor-archive-gates" type="button">登记并关闭登录/验证码页</button></details>
     <p id="executor-status" role="status" aria-live="polite">尚未连接执行器</p>
     <div id="executor-scope"></div><label>查看批次<select id="executor-run"></select></label><div id="executor-results"></div><pre id="executor-details" hidden></pre><img id="executor-evidence" hidden alt="该任务的浏览器证据" style="max-width:100%;height:auto"><details id="executor-diagnostic-section" hidden><summary>诊断详情</summary><pre id="executor-diagnostics"></pre></details>`;
   const anchor = document.querySelector('.page-head') || document.querySelector('.app-header');
-  if (anchor) anchor.after(section); else document.body.prepend(section);
+  const host = document.getElementById('panel-workbench');
+  if (host) host.append(section); else if (anchor) anchor.after(section); else document.body.prepend(section);
   const $ = id => document.getElementById(`executor-${id}`);
-  let connection, preview, selectedRunId, lastStatus, busy = 0, polling = false;
+  let connection, preview, selectedRunId, lastStatus, busy = 0, polling = false, scopeVersion = 0;
   async function refreshProfiles() {
     const data = await request('/catalog');
     const selected = $('profile').value;
@@ -56,15 +58,21 @@
     for (const run of runs) { const option = document.createElement('option'); option.value=run.id; option.textContent=`${run.profileId} · ${run.tasks.length} 站 · 资料版本 ${run.profileRevision}`; $('run').append(option); }
     if (selectedRunId) $('run').value=selectedRunId;
     const tasks = (data.tasks || []).filter(task => !selectedRunId || task.runId===selectedRunId);
+    $('pause').hidden = Boolean(data.paused);
+    $('resume').hidden = !data.paused;
+    $('sync').disabled = !(data.pendingEvents || data.workbenchPendingEvents);
     const priority={final_captcha:0,receipt_verification:1,validated_form:2,form_filled:3,human_verification:4,login_required:5,not_filled:6};
     tasks.sort((a,b)=>(priority[a.recoveryCheckpoint?.stage]??(a.attentionType==='human_verification'?3:a.attentionType==='login'?4:10))-
       (priority[b.recoveryCheckpoint?.stage]??(b.attentionType==='human_verification'?3:b.attentionType==='login'?4:10))||
       String(b.recoveryCheckpoint?.recordedAt||'').localeCompare(String(a.recoveryCheckpoint?.recordedAt||'')));
     status(`${data.paused ? '已暂停' : '运行中'}${data.offlineMode?.enabled ? ' · 离线继续，云端恢复后同步' : ''} · 本机待同步 ${data.pendingEvents} 条${data.workbenchPendingEvents ? ' · 工作台进度待同步 '+data.workbenchPendingEvents+' 条' : ''}${data.cloudError ? ` · ${data.cloudError}` : ''}`);
-    const box = $('results'); box.replaceChildren();
+    const box = $('results'), expanded = box.querySelector('.executor-other-tasks')?.open || false; box.replaceChildren();
     const counts = document.createElement('p');
     counts.textContent = `总目标 ${tasks.length} · 站方接收 ${tasks.filter(t => t.siteStatus === 'accepted').length} · 待核验 ${tasks.filter(t => t.status === 'submitted_unconfirmed').length} · 待人工 ${tasks.filter(t => t.status === 'needs_manual').length} · 待执行 ${tasks.filter(t => t.status === 'pending').length}`;
     box.append(counts);
+    const otherTasks = document.createElement('details'), otherSummary = document.createElement('summary');
+    otherTasks.className = 'executor-other-tasks'; otherTasks.open = expanded; otherTasks.append(otherSummary);
+    let otherCount = 0;
     for (const task of tasks) {
       const row = document.createElement('article'); row.className = 'executor-task';
       const title = document.createElement('strong'); title.textContent = `${task.profileId} · ${task.url}`;
@@ -76,7 +84,15 @@
         checkpoint.textContent=`恢复进度：${labels[recovery.stage]||recovery.stage} · 已知字段 ${recovery.completedFieldCount||0} · ${recovery.formRecoverability==='unknown_requires_reentry'?'需重新填写':'已知资料可恢复但需复核'} · ${recovery.nextStep||''} · 关闭 ${recovery.closedAt||task.tabClosedAt||'时间未知'} · 原页 ${recovery.sourceTargetId||'未知'}`;
         row.append(checkpoint);
       }
-      const actions=[['内容与证据','details',{}],['接管本站','takeover',window.ExtLinkWorkbench?{surface:'workbench'}:{}],['核验回执','verify',{}],['已审阅','review',{reviewStatus:'reviewed'}],['有异议','review',{reviewStatus:'disputed'}]];
+      const actions=[['内容与证据','details',{}]];
+      const canTakeover = window.ExtLinkWorkbench
+        ? !data.offlineMode?.enabled && !task.attemptBoundary && !task.receipt && ['pending','needs_manual'].includes(task.status) && /^https?:\/\//.test(task.url)
+        : Boolean(task.targetId) && !['finished','excluded'].includes(task.status);
+      if (canTakeover && !task.workbenchHandoff) actions.push(['接管本站','takeover',window.ExtLinkWorkbench?{surface:'workbench'}:{}]);
+      if (data.paused && task.attemptBoundary && !(task.receipt && task.cloudVerified)) actions.push(['核验回执','verify',{}]);
+      const review = document.createElement('details'), reviewSummary = document.createElement('summary');
+      reviewSummary.textContent = '登记审阅'; review.append(reviewSummary);
+      actions.push(['已审阅','review',{reviewStatus:'reviewed'}],['有异议','review',{reviewStatus:'disputed'}]);
       if(task.recoveryCheckpoint&&(task.tabClosedAt||task.deferredRecovery?.targetUnavailableAt)&&!task.attemptBoundary&&task.status==='needs_manual')actions.unshift(['打开原任务','openRecoveryTask',{}]);
       for (const [label, action, extras] of actions) {
         const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
@@ -95,11 +111,15 @@
           const result = await request('/' + action, { taskId: task.id, ...extras }); render(result);
           if (result.takeover) { status(result.takeover.surface==='workbench'?'接管已保存并回读；打开本站后在外链总览登记实际结果。':'已打开本站页面，自动执行已暂停。'); $('diagnostic-section').hidden=false; $('diagnostics').textContent=JSON.stringify(result.takeover,null,2); }
         });
-        row.append(button);
+        if (action === 'review') { button.disabled = task.reviewStatus === extras.reviewStatus; review.append(button); }
+        else row.append(button);
       }
+      row.append(review);
       if(window.ExtLinkWorkbench&&task.workbenchHandoff){const open=document.createElement('a');open.textContent='打开本站并接手';open.href=task.workbenchHandoff.url;open.target='_blank';open.rel='noopener noreferrer';row.append(open);}
-      box.append(row);
+      if (['needs_manual','submitted_unconfirmed','opening','filling','submitting'].includes(task.status)) box.append(row);
+      else { otherTasks.append(row); otherCount++; }
     }
+    if (otherCount) { otherSummary.textContent = `其余任务与历史结果（${otherCount} 站）`; box.append(otherTasks); }
   }
   $('pair').onclick = () => act(async () => {
     let result = await request('/pair', { code: $('code').value.trim() });
@@ -114,7 +134,10 @@
     await refreshProfiles(); render(await request('/status')); status('配对成功 · 已连接正式云端设备');
   });
   $('preview').onclick = () => act(async () => {
+    const version = ++scopeVersion;
+    preview = null; $('start').disabled = true;
     const data = await request('/preview', { profileId: $('profile').value, urls: $('urls').value.split(/\n/).map(x => x.trim()).filter(Boolean) });
+    if (version !== scopeVersion) { status('范围已修改，请重新预览。'); return; }
     preview = data.preview;
     $('scope').textContent = `产品 ${preview.profileId} · 资料版本 ${preview.profileRevision} · 完整库 ${preview.total} 站 · 云端表格 ${preview.sources.cloudTableRows} 行 / 内置表格 ${preview.sources.bundledTableRows} 行 / URL 清单 ${preview.sources.cloudUrlListRows} 行 · 可执行 ${preview.tasks.length} · 排除 ${preview.exclusions.length}`;
     $('start').disabled = !preview.tasks.length; status('范围预览完成，开始后固定本次资料版本和免费投稿范围');
@@ -126,10 +149,23 @@
     $('diagnostic-section').hidden=true; $('evidence').hidden=true;
   });
   $('run').onchange = () => { selectedRunId=$('run').value; if(lastStatus)render(lastStatus); };
-  $('start').onclick = () => act(async () => { selectedRunId=null; render(await request('/start', { previewId: preview.id, limit: Number($('limit').value) })); $('start').disabled = true; });
+  $('start').onclick = () => act(async () => { if (!preview) return; $('start').disabled = true; selectedRunId=null; render(await request('/start', { previewId: preview.id, limit: Number($('limit').value) })); });
   for (const action of ['pause','resume','sync','refresh']) $(''+action).onclick = () => act(async () => render(await request(action === 'refresh' ? '/status' : '/' + action, action === 'refresh' ? undefined : {})));
   $('archive-gates').onclick = () => act(async () => {const result=await request('/archiveDeferredTabs',{});render(result);status(`已关闭 ${result.cleanup?.closed?.length||0} 个登录/验证码待办页；恢复阶段与证据已登记。`);});
-  for (const id of ['profile','urls']) $(id).addEventListener('change', () => { preview = null; $('start').disabled = true; });
+  function invalidatePreview() { scopeVersion++; preview = null; $('start').disabled = true; $('scope').textContent = ''; $('details').hidden = true; $('evidence').hidden = true; $('diagnostic-section').hidden = true; }
+  for (const id of ['profile','urls','limit']) $(id).addEventListener('input', invalidatePreview);
+  for (const id of ['profile','urls','limit']) $(id).addEventListener('change', invalidatePreview);
+  window.addEventListener('externallink:select-range', event => {
+    const {profileId, urls, label} = event.detail || {};
+    if (!Array.isArray(urls) || !urls.length) return;
+    const profile = [...$('profile').options].find(option => option.value === profileId);
+    if (!profile) { status('当前产品尚未从执行器加载，请刷新后重试。', true); return; }
+    $('profile').value = profileId;
+    $('urls').value = [...new Set(urls)].join('\n');
+    $('urls').closest('details').open = true;
+    invalidatePreview();
+    status(`已选择${label || '外链范围'} · ${urls.length} 站，请预览后开始。`);
+  });
   setInterval(async () => {
     if (!connection || busy || polling || document.hidden) return;
     polling = true;

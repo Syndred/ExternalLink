@@ -1,1 +1,11 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>外链助手 · 工作台</title><link rel="stylesheet" href="/extension/submission-journal.css"><link rel="stylesheet" href="/extension/executor-panel.css"></head><body style="background:#0f172a;color:#e2e8f0;font-family:system-ui;margin:24px"><header class="page-head"><h1>外链助手 · 工作台</h1><p>与插件共用真实云端台账和本机执行器。</p><p id="connection-status" role="status">正在连接…</p></header><script src="/extension/lib/submission-journal.js"></script><script src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>外链助手 · 工作台</title><link rel="stylesheet" href="/extension/submission-journal.css"><link rel="stylesheet" href="/extension/executor-panel.css"></head>
+<body style="background:#0f172a;color:#e2e8f0;font-family:system-ui;margin:24px">
+<header class="page-head"><h1>外链助手 · 工作台</h1><p id="connection-status" role="status">正在连接…</p></header>
+<nav class="workbench-tabs" role="tablist" aria-label="工作区">
+  <button type="button" role="tab" aria-selected="true" aria-controls="panel-workbench" data-view="workbench">运行任务</button>
+  <button type="button" role="tab" aria-selected="false" aria-controls="panel-journal" data-view="journal">外链总览与资料</button>
+</nav>
+<main id="panel-workbench" role="tabpanel"></main><main id="panel-journal" role="tabpanel" hidden></main>
+<script src="/extension/lib/submission-journal.js"></script><script src="/app.js"></script></body></html>

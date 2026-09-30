@@ -1547,3 +1547,4 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+.legacy-tasks{margin:12px}.legacy-tasks>summary{cursor:pointer;color:#475569;font-size:12px}.legacy-tasks #panel-batch,.legacy-tasks #panel-manual{margin-top:12px}#panel-workbench .executor-workbench{margin:0}#panel-workbench{padding:12px}

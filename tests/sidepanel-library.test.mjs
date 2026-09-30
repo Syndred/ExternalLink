@@ -48,17 +48,18 @@ assert.equal(
 );
 assert.equal(classifier.libraryEligibility({ library: { profileIds: ["AISpeak"] } }, "AISpeak").allowed, true);
 
-assert.match(sidepanelHtml, /data-panel="library"[^>]*>外链</);
+assert.match(sidepanelHtml, /data-panel="library"[^>]*>外链库</);
 assert.match(sidepanelHtml, /id="panel-library"/);
 assert.match(sidepanelHtml, /id="sidepanelLibraryCategory"/);
-assert.match(sidepanelHtml, /id="btnStartLibraryCategory"/);
+assert.match(sidepanelHtml, /id="btnUseLibraryFilter"/);
 assert.match(sidepanelHtml, /id="sidepanelLibraryFavorite"/);
 assert.match(sidepanelHtml, /id="btnQuickOpenBatch"/);
 assert.match(sidepanelHtml, /lib\/library-classifier\.js/);
 assert.match(sidepanelSource, /action: "getLibraryManagerState"/);
 assert.match(sidepanelSource, /action: "updateLibraryPreferences"/);
 assert.match(sidepanelSource, /action: "quickOpenLibraryUrls"/);
-assert.match(sidepanelSource, /category,\s*group,\s*config:/);
+assert.match(sidepanelSource, /externallink:select-range/);
+assert.doesNotMatch(sidepanelSource, /action:\s*"start"/);
 assert.match(sidepanelSource, /loadSidepanelLibrary/);
 assert.match(backgroundSource, /ExtLinkLibraryClassifier\.describe/);
 assert.match(backgroundSource, /hasCanonicalLibrary\s*\? \[\.\.\.tableCandidates/);

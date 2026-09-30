@@ -544,32 +544,8 @@ assert.match(
   "select actions should use the native value setter helper",
 );
 
-assert.match(popup, /云端服务暂不可用/, "popup should explain when the cloud service is unavailable");
-assert.doesNotMatch(popup, /local_agent\.server|127\.0\.0\.1/, "popup must not require a local Agent");
-
-assert.match(
-  popup,
-  /needs_manual|需要人工处理/,
-  "popup should display or explain local-agent needs_manual status",
-);
-
-assert.match(
-  popup,
-  /storedLogLines/,
-  "popup should persist recent log lines so reopening the popup does not lose diagnostics",
-);
-
-assert.doesNotMatch(
-  popup,
-  /needs_manual:\s*请手动处理验证码、登录或页面确认/,
-  "popup should not explain every needs_manual stop as captcha/login/page confirmation",
-);
-
-assert.match(
-  popup,
-  /successEvidence|success evidence|成功证据|\/judge/,
-  "popup should surface success evidence or judge-based success log language",
-);
+assert.match(popup, /location.replace/, "obsolete popup routes to the shared UI");
+assert.doesNotMatch(popup, /action:\s*"start"/, "obsolete popup cannot start a second engine");
 
 assert.match(readme, /Cloudflare Worker/, "README should document the cloud Worker data center");
 assert.match(readme, /R2 私有媒体/, "README should document private cloud media");

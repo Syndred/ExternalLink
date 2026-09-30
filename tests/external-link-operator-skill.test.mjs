@@ -29,11 +29,26 @@ assert.equal(audit.ledgerSuccessPairs, 10);
 assert.deepEqual(audit.missingInLedger, []);
 assert.deepEqual(audit.duplicateTableAliases, []);
 
-const media = await discoverMedia({ profile: "RainbowPetAI" });
-assert.match(media.projectRoot, /rainbowPetAi$/);
-assert.match(media.logo[0]?.path || "", /public\/logo\.png$/);
-assert.match(media.featured[0]?.path || "", /public\/imgs\/generated\/home-hero/);
-assert.ok(media.screenshot.length >= 4);
+// Use the real profile fields with an isolated checkout fixture. A developer's
+// sibling product repository is not a prerequisite for the test suite.
+const mediaDir = await fs.mkdtemp(path.join(os.tmpdir(), "external-link-media-"));
+try {
+  const productRoot = path.join(mediaDir, "rainbowPetAi");
+  const library = JSON.parse(await fs.readFile("extension/table-library.json", "utf8"));
+  const fields = library.projects.RainbowPetAI;
+  for (const url of [fields.LOGO, fields["Featured image"], ...[1,2,3,4].map(index => fields[`Screenshot ${index}`])]) {
+    const file = path.join(productRoot, "public", new URL(url).pathname.replace(/^\/+/, ""));
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l4sAAAAASUVORK5CYII=", "base64"));
+  }
+  const rootsPath = path.join(mediaDir, "roots.json");
+  await fs.writeFile(rootsPath, JSON.stringify({RainbowPetAI:productRoot}));
+  const media = await discoverMedia({ profile: "RainbowPetAI", rootsPath });
+  assert.match(media.projectRoot, /rainbowPetAi$/);
+  assert.match(media.logo[0]?.path.replaceAll("\\", "/") || "", /public\/logo\.png$/);
+  assert.match(media.featured[0]?.path.replaceAll("\\", "/") || "", /public\/imgs\/generated\/home-hero/);
+  assert.ok(media.screenshot.length >= 4);
+} finally { await fs.rm(mediaDir, {recursive:true,force:true}); }
 
 const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "external-link-operator-"));
 const handoffPath = path.join(tempDir, "handoff.json");

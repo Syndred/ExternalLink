@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-05",
+  "reason": "用户要求先写好进度并推送",
+  "completion": "not_complete",
+  "pushScope": "progress documents and verification summary only",
+  "committedSource": "d10d4ec56804cef1aca7d14a759584bb2e635566",
+  "uncommittedFeature": "original domain metrics cache and durable query recovery",
+  "gitPull": {"command": "git pull --ff-only", "result": "Already up to date", "headVsOriginMainBeforePush": [0, 0]},
+  "freshUnitTests": {"command": "node --test tests/*.test.mjs", "scope": "local working tree including uncommitted domain cache changes", "passed": 407, "failed": 0, "skipped": 0, "newDomainCacheTests": 9},
+  "freshUiTests": {"command": "node executor/test/application-ui.mjs", "kind": "synthetic_ui_regression", "pages": 6, "passed": true, "newChecks": ["default query uses cache", "forced refresh selection", "Chinese cache and lookup counts"]},
+  "localDomainCacheVerified": ["seven-day TTL", "fresh unknown cache entries", "checkedAt compatibility", "raw domain normalization and deduplication", "twenty missing domains per provider batch", "newest 5000 cached records without truncating query scope", "lost write response and SQLite restart preserve original IDs without repeat query", "cloud-conflict exclusions", "workspace switch preserves original query results"],
+  "freshReadOnlyState": {
+    "paused": true, "busy": false,
+    "pendingEvents": 0, "pendingEdits": 0, "pendingLearning": 0, "pendingMedia": 0,
+    "assistantEnabled": false, "liveJobs": 0, "runningJobs": 0, "checkingWatches": 0,
+    "productsIncludingArchived": 9, "targets": 2950, "combinations": 897,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30}
+  },
+  "deployment": {"changedThisCheckpoint": false, "priorWorkerVersion": "aef95331-a004-4283-9632-bb546e7d54a4", "servicesReloaded": false},
+  "notPerformedThisCheckpoint": ["domain-cache authenticated device HTTP/D1 integration", "real RDAP success verification", "real domain-cache writes", "real submissions", "latest original browser data import"],
+  "remaining": ["domain cache source commit, authenticated integration and deployment verification", "latest original browser favorites and data", "old device media associations", "remaining original dynamic controls", "real Product Hunt page and remote media upload"],
+  "newRealSubmissions": 0,
+  "realDataOverwritten": false
+}

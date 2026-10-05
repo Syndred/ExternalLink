@@ -473,8 +473,9 @@
     },
     {
       "action": "advanceSubmission",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "单站队列 / 上一站、下一站 → submissionQueue",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "captchaResolved",
@@ -628,8 +629,9 @@
     },
     {
       "action": "manualSkip",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "原任务 / 跳过 → manualSkip",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "manualSubmissionClicked",
@@ -648,8 +650,9 @@
     },
     {
       "action": "manualSubmit",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "原任务 / 人工继续确认 → manualSubmit",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "markSubmissionSite",
@@ -683,8 +686,9 @@
     },
     {
       "action": "removeFromSubmissionQueue",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "单站队列 / 移出队列 → removeFromSubmissionQueue",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "removeSubmissionTimelineEvent",
@@ -718,8 +722,9 @@
     },
     {
       "action": "sidepanelClosed",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "当前网页填写 / 关闭取消原排队填写 → sidepanelClosed",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "sidepanelDetect",
@@ -728,13 +733,15 @@
     },
     {
       "action": "sidepanelFill",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "当前网页填写 / 默认仅填表 → sidepanelFill",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "sidepanelOpened",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "当前网页填写 / 打开及选择 → sidepanelOpened",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "start",
@@ -743,8 +750,9 @@
     },
     {
       "action": "stop",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "停止当前执行 → stopExecution",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
       "action": "submissionJournalArtifact",
@@ -768,8 +776,8 @@
     },
     {
       "action": "submissionJournalRecoverLocal",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "本机恢复草稿留在工作区，未纳入本次提交",
+      "status": "in_progress_not_verified"
     },
     {
       "action": "syncSubmifyLibrary",
@@ -794,5 +802,14 @@
   ],
   "updatedAt": "2026-10-05",
   "completion": "not_complete",
-  "note": "逐项入口映射用于暴露缺口，不能替代真实产品验收；动态入口和内容脚本仍需核对。"
+  "note": "静态入口映射不能替代全量验收；8个原待办已有普通流程及隔离回归，本机恢复未完成；特殊发布、动态控件及历史资料等功能族仍需验收。",
+  "unverifiedFamilies": [
+    "local_document_recovery",
+    "special_launch_flows",
+    "dynamic_controls",
+    "historical_local_favorites",
+    "old_device_media_associations",
+    "large_backups",
+    "desktop_notification_display"
+  ]
 }

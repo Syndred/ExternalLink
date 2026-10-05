@@ -54,6 +54,9 @@ import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
+import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
+import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
+import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -208,7 +211,7 @@ export class Runtime {
     const saved = await this.cloud.request('runs', { run });
     this.store.set(`run:${run.id}`, saved.run);
     for (const task of saved.tasks) this.store.set(`task:${task.id}`, task);
-    this.store.set('paused', false); this.tick();
+    this.store.set('executionStopped',null);this.store.set('manualResumeRunId',null);this.store.set('paused', false); this.tick();
     return this.status();
   }
   async startLibrary(input) {
@@ -224,7 +227,7 @@ export class Runtime {
       candidates:plain(preview.tasks),exclusions:plain(preview.exclusions),cursor:0,batches:[],runtimeExclusions:[],
       batchSize:Math.min(100,Math.max(1,Number(input.batchSize)||100)),authorization:'explicit_user_all_permissions',feeLimit:0,
       retainedTabLimit:5,maxTaskTabCount:6,scopeHash:createHash('sha256').update(JSON.stringify({pending:initialPending,candidates:preview.tasks})).digest('hex')};
-    this.store.set('libraryPlan',plan);this.store.set('singleTaskId',null);this.store.set('paused',false);this.tick();return this.status();
+    this.store.set('executionStopped',null);this.store.set('manualResumeRunId',null);this.store.set('libraryPlan',plan);this.store.set('singleTaskId',null);this.store.set('paused',false);this.tick();return this.status();
   }
   async queueLibraryBatch() {
     let plan=this.store.get('libraryPlan');
@@ -508,7 +511,7 @@ export class Runtime {
     if (this.store.get('paused') !== false) {
       const plan=this.store.get('libraryPlan'),gate=plan?.globalPause;
       if(gate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(gate?.reason||''))return;
-      if(!this.store.get('acceptanceBatch')&&plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
+      if(!this.store.get('executionStopped')&&!this.store.get('acceptanceBatch')&&plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
         this.job=this.recoverContinuousConnection().catch(error=>{
           this.cloudError=error.message;const attempts=(gate.probes||0)+1;
           this.store.set('libraryPlan',{...this.store.get('libraryPlan'),globalPause:{...gate,probes:attempts,reason:error.message,
@@ -554,7 +557,9 @@ export class Runtime {
         await this.finalizePriorContinuousTask(old);
       }
     }
-    const eligiblePending=t=>t.status==='pending'&&(singleTaskId?t.id===singleTaskId:!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId);
+    const manualResumeRunId=this.store.get('manualResumeRunId');
+    const eligiblePending=t=>t.status==='pending'&&(singleTaskId?t.id===singleTaskId:manualResumeRunId?t.runId===manualResumeRunId:!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId);
+    if(!singleTaskId&&manualResumeRunId&&!this.store.values('task:').some(eligiblePending)){this.store.set('paused',true);this.store.set('manualResumeRunId',null);return;}
     if(!singleTaskId&&!this.store.values('task:').some(eligiblePending))await this.queueLibraryBatch();
     const task = this.store.values('task:').find(t => eligiblePending(t) && (!singleTaskId || t.id === singleTaskId));
     if (!task || this.store.get('paused') !== false) return;
@@ -566,7 +571,7 @@ export class Runtime {
     let run=findUnambiguousOfflineRun(this.store,task);
     if(!run)throw new Error('原任务没有唯一匹配的持久批次，停止执行');
     if(!task.runId)this.update(task,{runId:run.id},'offline_run_link_recovered');
-    const continuous=!task.acceptanceId&&continuousPlan?.status==='active'&&continuousPlan.profileId===task.profileId;
+    const continuous=!singleTaskId&&!task.acceptanceId&&continuousPlan?.status==='active'&&continuousPlan.profileId===task.profileId;
     if(continuous){
       const current=offline?(this.store.get('preview')?.profile||task.profileSnapshot):snapshot.documents.siteProfiles?.[task.profileId];
       if(current?.fields?.Url!=='https://jevplay.com')throw new Error('全库产品资料身份发生变化，停止执行');
@@ -576,7 +581,7 @@ export class Runtime {
     const profile = task.profileSnapshot || run.profile;
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
     const config = plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate}));
-    config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan'].includes(c.source)) === true;
+    config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
     config.sidepanelContext = { ...config.sidepanelContext, url: task.url };
@@ -1169,6 +1174,17 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(action==='sidepanelOpened')return sidepanelOpened(this,input);
+    if(action==='sidepanelClosed')return sidepanelClosed(this,input);
+    if(action==='sidepanelDetect')return sidepanelDetect(this,input);
+    if(action==='sidepanelFill')return sidepanelFill(this,input);
+    if(action==='getSubmissionQueue')return submissionQueue(this,input);
+    if(action==='advanceSubmission')return submissionQueue(this,input,true);
+    if(action==='removeFromSubmissionQueue')return removeFromSubmissionQueue(this,input);
+    if(action==='manualSkip')return manualSkip(this,input);
+    if(action==='manualSubmit')return manualSubmit(this,input);
+    if(action==='stop')return stopExecution(this,input);
+    if(['resume','offlineResume'].includes(action)&&this.store.get('executionStopped'))throw Error('本次执行已经停止，请预览或明确重新开始原范围');
     if(action==='clearSiteAnnotation')return clearSiteAnnotation(this,input);
     if(action==='getBatchLog')return{ok:true,...this.store.logs({...input,scope:String(this.store.get('pair')?.endpoint||'')+'|'+String(this.store.get('pair')?.workspaceId||'default')})};
     if(action==='manualWatchMessage')return manualWatchMessage(this,input);
@@ -1214,7 +1230,7 @@ export class Runtime {
       this.update(selected,{status:'pending',controller:'executor',acceptanceId:input.acceptanceId,profileSnapshot:combo.profile,profileRevision:combo.profileRevision,
         consentHistory:[...(selected.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准冻结范围普通免费投稿及基本登录，额外权限和本人验证留待用户'}]},'frozen_task_released');
       if(!frozen.startedAt)this.store.set('acceptance:'+input.acceptanceId,{...frozen,startedAt:new Date().toISOString()});
-      this.store.set('singleTaskId',selected.id);this.store.set('paused',false);this.tick();return this.status();
+      this.store.set('executionStopped',null);this.store.set('manualResumeRunId',null);this.store.set('singleTaskId',selected.id);this.store.set('paused',false);this.tick();return this.status();
     }
     if(action==='workbenchDocuments')return workbenchDocuments(this);
     if(action==='journalProgress')return enqueueWorkbench(this,input);
@@ -1243,7 +1259,7 @@ export class Runtime {
       await this.lease(task);
       const priorPage = { targetId: task.targetId, browserInstance: task.browserInstance, at: new Date().toISOString() };
       this.update(task, { targetId: input.targetId, browserInstance: this.host.startedAt,
-        pageHistory: [...(task.pageHistory || []), priorPage], controller: 'executor' }, 'manual_page_attached');
+        pageHistory: [...(task.pageHistory || []), priorPage], pageOwnership:'manual',controller: 'executor' }, 'manual_page_attached');
       if(!this.store.get('offlineMode')?.enabled)await this.synchronize();
       return this.status();
     }

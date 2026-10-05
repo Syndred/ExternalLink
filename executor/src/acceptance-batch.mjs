@@ -4,7 +4,7 @@ export function startAcceptanceBatch(runtime,id){
  if(!frozen||!execution||execution.scopeSha256!==frozen.sha256)throw Error('固定范围尚未注册或校验不一致');
  const previous=runtime.store.get('acceptanceBatch');if(previous&&previous.id!==id&&previous.status!=='complete')throw Error('已有其他固定批次');
  const batch=previous||{id,scopeSha256:frozen.sha256,count:frozen.count,cursor:0,attempts:{},createdAt:new Date().toISOString()};
- runtime.store.set('acceptanceBatch',{...batch,status:'running',reason:'',resumedAt:new Date().toISOString()});runtime.store.set('singleTaskId',null);runtime.store.set('paused',false);runtime.tick();return{ok:true,batch:runtime.store.get('acceptanceBatch')};
+ runtime.store.set('executionStopped',null);runtime.store.set('manualResumeRunId',null);runtime.store.set('acceptanceBatch',{...batch,status:'running',reason:'',resumedAt:new Date().toISOString()});runtime.store.set('singleTaskId',null);runtime.store.set('paused',false);runtime.tick();return{ok:true,batch:runtime.store.get('acceptanceBatch')};
 }
 export async function nextAcceptanceTask(runtime){
  let batch=runtime.store.get('acceptanceBatch');if(batch?.status!=='running')return null;

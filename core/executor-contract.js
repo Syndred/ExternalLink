@@ -48,5 +48,12 @@
     if (requested.size && tasks.length + exclusions.length < requested.size) throw new Error('部分选定站点不在现有外链库中，请先在原外链库导入');
     return { ...library, candidates: undefined, tasks, exclusions };
   }
-  global.ExtLinkExecutorContract = { inventory, selectScope, priorProductSuccess };
+  function validateSinglePagePreparation(snapshot,run){
+    const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
+    if(run.mode!=='single_page_preparation'||run.authorization!=='fill_only'||run.tasks?.length!==1||run.feeLimit!==0)fail('单页填写范围必须为一个网站且不得授权投稿');
+    const profile=snapshot.documents.siteProfiles?.[run.profileId];if(!profile||profile.archived||run.profileRevision!==snapshot.revisions.siteProfiles)fail('产品资料已变化或已归档',409);
+    let url;try{url=new URL(run.tasks[0].url);}catch{fail('填写目标必须为普通网页');}if(!['http:','https:'].includes(url.protocol)||url.username||url.password)fail('填写目标必须为普通网页');
+    if(priorProductSuccess(snapshot.documents.submissionRecords,run.profileId,url.href))fail('该产品同站已有收件，请先核验原记录',409);
+  }
+  global.ExtLinkExecutorContract = { inventory, selectScope, priorProductSuccess, validateSinglePagePreparation };
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -148,8 +148,8 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       if (!run?.id || !Array.isArray(run.tasks) || !run.tasks.length || run.tasks.length > 500) fail('每批次需包含 1–500 个任务');
       const snapshot = await helpers.listSnapshot(sql, workspaceId);
       if (run.profileRevision !== snapshot.revisions.siteProfiles || !snapshot.documents.siteProfiles?.[run.profileId]) fail('资料已更新，请重新预览', 409);
-      const scope = globalThis.ExtLinkExecutorContract.selectScope(snapshot, null, run.profileId, run.tasks.map(t => t.url));
-      if (scope.exclusions.length || scope.tasks.length !== run.tasks.length) fail('当前云端范围包含重复或人工排除目标，请重新预览', 409);
+      const preparation=run.mode==='single_page_preparation';
+      if(preparation)globalThis.ExtLinkExecutorContract.validateSinglePagePreparation(snapshot,run);else{const scope = globalThis.ExtLinkExecutorContract.selectScope(snapshot, null, run.profileId, run.tasks.map(t => t.url));if (scope.exclusions.length || scope.tasks.length !== run.tasks.length) fail('当前云端范围包含重复或人工排除目标，请重新预览', 409);}
       const tasks = run.tasks.map(t => {
         const url = new URL(t.url);
         if (!['https:', 'http:'].includes(url.protocol) || !t.id || !t.destinationKey) fail('无效站点');
@@ -158,7 +158,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         const recordKey = globalThis.ExtLinkQueue.submissionRecordKey(destinationKey, run.profileId);
         if (snapshot.documents.submissionRecords?.[recordKey]?.status === 'success') fail(`已提交：${recordKey}`, 409);
         return { id: t.id, runId: run.id, url: t.url, destinationKey: t.destinationKey, profileId: run.profileId, identity: recordKey,
-          status: 'pending', siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
+          status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
       });
       const mediaManifest = await sql`select asset_id,media_kind,media_index,sha256,file_name from externallink_media_assets where workspace_id=${workspaceId} and profile_id=${run.profileId}`;
       const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };

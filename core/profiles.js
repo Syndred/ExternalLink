@@ -805,4 +805,4 @@
     getActiveProfile,
     profileConfigured,
   };
-})(typeof self !== "undefined" ? self : window);
+})(typeof self !== "undefined" ? self : globalThis);

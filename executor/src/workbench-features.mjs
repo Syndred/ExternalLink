@@ -25,7 +25,7 @@ export async function previewWorkbenchBatch(runtime,input){
 export async function startWorkbenchBatch(runtime,input){
  if(input.ordinaryPermissionsAuthorized!==true)throw Error('请确认本批次普通免费投稿范围');
  if(runtime.job||runtime.store.get('paused')!==true||runtime.store.get('acceptanceBatch')?.status==='running')throw Error('需要先暂停当前任务');
- const batch=runtime.store.get('workbenchBatch:'+input.batchId);if(!batch||!['preview','paused','registration_unknown'].includes(batch.status))throw Error('批次不存在或不能启动');
+ const batch=runtime.store.get('workbenchBatch:'+input.batchId);if(!batch||!['preview','paused','registration_unknown','stopped'].includes(batch.status))throw Error('批次不存在或不能启动');
  const active=runtime.store.get('activeWorkbenchBatch');if(active&&active!==batch.id&&runtime.store.get('workbenchBatch:'+active)?.status!=='complete')throw Error('请先处理原批次');
  if(batch.scopeSha256!==digest(batch.items.map(i=>({identity:i.identity,url:i.url,profile:i.profile,profileRevision:i.profileRevision,taskId:i.taskId,runId:i.runId}))))throw Error('批次范围校验不一致');
  const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
@@ -47,7 +47,7 @@ export async function startWorkbenchBatch(runtime,input){
   try{const result=await runtime.cloud.request('runs',{run});if(result.run?.id!==item.runId||result.tasks?.[0]?.id!==item.taskId)throw Error('注册身份不一致');runtime.store.set('run:'+item.runId,result.run);runtime.store.set('task:'+item.taskId,{...result.tasks[0],profileSnapshot:item.profile});item.status='registered';delete item.request;save();}
   catch(error){item.status=error.status>=400&&error.status<500?'excluded':'registration_unknown';item.reason=error.message;batch.status=item.status==='registration_unknown'?'registration_unknown':'paused';save();throw error;}
  }
- batch.status='running';batch.startedAt=batch.startedAt||new Date().toISOString();save();runtime.store.set('activeWorkbenchBatch',batch.id);runtime.store.set('singleTaskId',null);runtime.store.set('paused',false);runtime.tick();return{ok:true,batch};
+ batch.status='running';batch.startedAt=batch.startedAt||new Date().toISOString();save();runtime.store.set('executionStopped',null);runtime.store.set('manualResumeRunId',null);runtime.store.set('activeWorkbenchBatch',batch.id);runtime.store.set('singleTaskId',null);runtime.store.set('paused',false);runtime.tick();return{ok:true,batch};
 }
 export async function nextWorkbenchTask(runtime){
  const id=runtime.store.get('activeWorkbenchBatch'),batch=id&&runtime.store.get('workbenchBatch:'+id);if(batch?.status!=='running')return null;

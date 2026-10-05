@@ -10,6 +10,9 @@ const files=new Map([['/','executor/web/application.html'],['/application.js','e
 const controls=new Set(['/appData','/taskDetails','/profile','/registerAcceptance','/prepareTask','/runTask','/status','/catalog','/preview','/start','/pause','/resume','/sync','/takeover','/continueTask','/verify','/review','/openRecoveryTask','/observeTask','/closeObservation','/archiveDeferredTabs','/workbenchDocuments','/journalProgress','/journalFlush','/workbenchPending']);
 controls.add('/saveAssistantSettings');
 controls.add('/clearSiteAnnotation');controls.add('/getBatchLog');
+for(const route of ['/manualSkip','/manualSubmit','/stop'])controls.add(route);
+for(const route of ['/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'])controls.add(route);
+for(const route of ['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'])controls.add(route);
 for(const route of ['/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'])controls.add(route);
 controls.add('/resetWorkspace');controls.add('/resolveConflict');
 controls.add('/mediaUpload');

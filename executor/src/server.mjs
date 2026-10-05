@@ -16,12 +16,14 @@ import {recoverDataJobs,checkMonitorSchedule} from './link-monitor.mjs';
 import {setupInfo,connectWorkbench} from './workbench-connect.mjs';
 import {resetWorkspace} from './workspace-reset.mjs';
 import {checkBrowserAssistant,stopBrowserAssistant} from './browser-assistant.mjs';
+import {singlePagePanel,sidepanelClosed} from './single-page.mjs';
 
 const home = process.env.EXTERNALLINK_HOME || path.join(os.homedir(), '.externallink-executor');
 await mkdir(home, { recursive: true });
 const store = new Store(path.join(home, 'outbox.sqlite'));
 store.acquireOwner();
 const runtime = new Runtime(store, home);
+const priorSinglePanel=singlePagePanel(runtime);if(priorSinglePanel?.open)sidepanelClosed(runtime,{panelId:priorSinglePanel.id});
 recoverDataJobs(runtime);
 const monitorScheduler=setInterval(()=>checkMonitorSchedule(runtime).catch(error=>console.error('外链监测计划：'+error.message)),60000);monitorScheduler.unref();
 const gmail=new GmailSync({store,vault:new CredentialVault(home)});gmail.start();
@@ -79,7 +81,8 @@ const server = http.createServer(async (req, res) => {
     if (route === '/catalog' && req.method === 'GET') { const snapshot = await runtime.cloud.request('snapshot'); send(res, { ok: true, profiles: snapshot.documents.siteProfiles, revision: snapshot.revisions.siteProfiles }); return; }
     if (req.method !== 'POST') { send(res, { ok: false, error: '接口不存在' }, 404); return; }
     const operation = async () => {
-      if(['/clearSiteAnnotation','/getBatchLog'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/clearSiteAnnotation','/getBatchLog','/manualSkip','/manualSubmit','/stop','/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'].includes(route))return runtime.control(route.slice(1),input);
       if(route==='/saveAssistantSettings')return runtime.control('saveAssistantSettings',input);
       if(route==='/resetWorkspace')return resetWorkspace(runtime,input);
       if(route==='/gmailStatus')return{ok:true,gmail:gmail.status()};

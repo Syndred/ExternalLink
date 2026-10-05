@@ -1,0 +1,61 @@
+{
+  "kind": "feature_checkpoint_not_complete_migration",
+  "date": "2026-10-05",
+  "unitRegression": {
+    "passed": 363,
+    "failed": 0,
+    "skipped": 0
+  },
+  "isolatedBrowserChecks": [
+    "six_page_ui",
+    "comment_studio",
+    "single_page_iframe_fill",
+    "panel_close_cancels_real_pending_fill"
+  ],
+  "liveReadback": {
+    "queue": {
+      "selectedProfileIds": [
+        "JevPlay"
+      ],
+      "sites": 2831,
+      "combinations": 2831
+    },
+    "closedPanelFillRejected": true,
+    "manualContinuationWithoutConsentRejected": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingMedia": 0,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "31924cfd-7a60-4ad3-9ea1-5807b158c2f3",
+  "newRealSubmissions": 0,
+  "unverified": [
+    "local_document_recovery",
+    "special_launch_flows",
+    "dynamic_controls",
+    "historical_local_favorites",
+    "old_device_media_associations",
+    "large_backups",
+    "desktop_notification_display"
+  ],
+  "sourcePush": "verified_manual_queue_single_page_source_in_this_checkpoint",
+  "localRecoveryDraft": "excluded_from_commit_and_deployment",
+  "lastCheckpointVerification": {
+    "tests": 363,
+    "failed": 0,
+    "skipped": 0,
+    "sixPageUi": true,
+    "singlePageIframe": true,
+    "cloudPull": "Already up to date",
+    "fixedBatchStatus": "paused",
+    "cursor": 13,
+    "count": 30
+  }
+}

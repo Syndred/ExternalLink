@@ -14,6 +14,11 @@ export function libraryMutation(documents,operation,options={}){
   return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
  }
  if(operation.type==='clear_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
+ if(operation.type==='set_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:[...new Set([...(documents.deletedSubmissionKeys||[]),key])]};}
+ if(operation.type==='remove_queue'){
+  const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[key]||annotations[domain]||{};
+  annotations[key]={...previous,url:operation.url,domain,status:'deleted',statuses:['deleted'],note:String(operation.note||previous.note||'').slice(0,10000),updatedAt:at,auto:false,mutationId:id};annotations[domain]=structuredClone(annotations[key]);return{key:'siteAnnotations',data:annotations};
+ }
  if(operation.type==='clear_annotation'){
   const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),knowledge=(annotations[key]||annotations[domain])?.formKnowledge;
   delete annotations[key];delete annotations[domain];if(knowledge){annotations[key]={url:operation.url,domain,formKnowledge:knowledge};annotations[domain]=structuredClone(annotations[key]);}
@@ -118,6 +123,8 @@ export function libraryMutation(documents,operation,options={}){
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='set_deleted')return(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
+ if(operation.type==='remove_queue'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>documents.siteAnnotations?.[k]?.statuses?.length===1&&documents.siteAnnotations[k].statuses[0]==='deleted'&&(!operation.note||documents.siteAnnotations[k].note===operation.note));}
  if(operation.type==='clear_annotation'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>!documents.siteAnnotations?.[k]||Object.keys(documents.siteAnnotations[k]).every(field=>['url','domain','formKnowledge'].includes(field)));}
  if(operation.type==='pin'){try{return keyOf(String(documents.urlList||'').split('\n')[0].split('|')[0])===keyOf(operation.url);}catch{return false;}}
  if(operation.type==='clear_deleted')return !(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));

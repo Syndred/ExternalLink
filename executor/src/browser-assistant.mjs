@@ -1,6 +1,9 @@
 import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser-target.mjs';
 import {profiles,plain,queue,selectScope,priorProductSuccess} from './shared.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {singlePagePanel} from './single-page.mjs';
+import {captureFillLearning} from './fill-learning.mjs';
+import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
+import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 const effectiveProfile=(runtime,settings)=>singlePagePanel(runtime)?.open&&singlePagePanel(runtime).profileId||settings.profileId;
 export function assistantState(runtime){const saved=runtime.store.get('browserAssistantSettings'),scope=workbenchScope(runtime.store.get('pair'));return{settings:saved?.scope===scope?saved:{enabled:false,autoFillOnVisit:false},connectedFrames:runtime.browserAssistantFrames?.size||0,error:runtime.browserAssistantError||'',fills:runtime.store.values('assistantFill:').filter(j=>j.scope===scope).slice(-20)};}
 export async function saveAssistantSettings(runtime,input){
@@ -18,7 +21,9 @@ export async function fillAssistantTask(runtime,input){
  const task=originalAssistantTask(runtime,effectiveProfile(runtime,settings),input.targetId,input.url);if(!task||task.id!==input.taskId)throw Error('原任务已变化或已有提交边界');
  const page=await runtime.findPage(task);if(page.url()!==input.url)throw Error('原页面已跳转');
  const snapshot=await runtime.cloud.request('snapshot');if(priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url)||!selectScope(snapshot,null,task.profileId,[task.url]).tasks.length)throw Error('原站点当前不允许填写');
- await runtime.lease(task,{online:true});const config={...configFor(runtime,task.profileId),...plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||snapshot.documents.siteProfiles[task.profileId])),fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
+ await runtime.lease(task,{online:true});const run=runtime.store.get('run:'+task.runId);if(!task.profileSnapshot){if(!run?.profile)throw Error('原批次冻结资料暂不可读，请先同步');runtime.update(task,{profileSnapshot:run.profile,profileRevision:run.profileRevision},'assistant_profile_frozen');}
+ const config=applyDestinationFormKnowledge(snapshot.documents,{...configFor(runtime,task.profileId),...plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot)),fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false},page.url());
+ if(isProductHuntLaunch(page.url())){const active=()=>{const current=assistantState(runtime).settings,panel=singlePagePanel(runtime);return current.enabled&&current.autoFillOnVisit&&effectiveProfile(runtime,current)===task.profileId&&runtime.store.get('paused')===true&&!page.isClosed()&&(!input.panelId||panel?.open&&panel.id===input.panelId&&panel.generation===input.panelGeneration);};const fill=await runProductHuntWorkflow(runtime,task,page,config,{active,confirmCreate:false});await runtime.synchronize();return{ok:true,filled:true,submitted:false,platform:'product_hunt',readyToCreate:fill.ready_to_create===true};}
  const engine=await attachEngine(runtime.context,page.mainFrame(),message=>runtime.bridge(task,message));
  try{const detection=await engine.call({action:'detectPage',config});if(!detection.operable)throw Error('未发现可操作表单');const fill=await engine.call({action:'smartFill',config}),actual=await engine.call({action:'getFilledFieldsReport'});runtime.update(task,{actualPreparation:actual,assistantPreparation:{at:new Date().toISOString(),fill,actual},preparedAt:new Date().toISOString()},'assistant_form_prepared');await runtime.synchronize();return{ok:true,filled:true,submitted:false};}finally{await engine.detach();}
 }
@@ -32,9 +37,10 @@ export async function checkBrowserAssistant(runtime){
     if(!/^https?:\/\//.test(frame.url()))continue;const url=frame.url(),key=info.targetId+'::'+url;live.add(key);let item=runtime.browserAssistantFrames.get(key);
     if(item&&item.profileId===profileId&&await item.engine.assistantActive().catch(()=>false))continue;if(item){await item.engine.disableAssistant().catch(()=>{});await item.engine.detach();runtime.browserAssistantFrames.delete(key);}
     const bridge=async message=>{
-     const current=assistantState(runtime).settings;if(!current.enabled||effectiveProfile(runtime,current)!==profileId||(frame.url()!==url&&message.action!=='manualSubmissionClicked'))return{ok:false,error:'助手页面或产品已变化'};const original=originalAssistantTask(runtime,profileId,info.targetId,page.url()),config=configFor(runtime,profileId,original),docs=snapshotFor(runtime).documents;
+     const current=assistantState(runtime).settings;if(!current.enabled||effectiveProfile(runtime,current)!==profileId||(frame.url()!==url&&message.action!=='manualSubmissionClicked'))return{ok:false,error:'助手页面或产品已变化'};const original=originalAssistantTask(runtime,profileId,info.targetId,page.url()),docs=snapshotFor(runtime).documents,config=applyDestinationFormKnowledge(docs,configFor(runtime,profileId,original),url);
      if(message.action==='getActiveFillConfig')return{ok:true,config,filters:{...docs.targetFilters,showManualFillIcons:docs.targetFilters?.showManualFillIcons!==false}};
      if(message.action==='contentReady')return{ok:true};
+     if(message.action==='saveFillLearnings'){if(message.pageUrl!==url)return{ok:false,error:'助手原页面已变化'};return captureFillLearning(runtime,{profileId,profile:original?.profileSnapshot||docs.siteProfiles[profileId],taskId:original?.id,targetId:info.targetId,browserInstance:runtime.host.startedAt,profileRevision:original?.profileRevision},message);}
      if(message.action==='log'){runtime.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:original?.runId,taskId:original?.id,profileId,url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
      if(['manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)){if(!original)return{ok:false};return runtime.dispatchControl('manualWatchMessage',{...message,taskId:original.id,targetId:info.targetId,pageUrl:page.url(),frameUrl:url,documentId:message.executorDocumentId});}
      if(message.action==='generateCommentDrafts')return runtime.cloud.request('ai/comment',{...message,config});

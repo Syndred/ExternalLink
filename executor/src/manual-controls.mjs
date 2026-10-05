@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {priorProductSuccess,plain} from './shared.mjs';
 import {recoveryCheckpoint} from './tab-cleanup.mjs';
+import {workbenchScope} from './workbench-sync.mjs';
 const at=()=>new Date().toISOString();
 function selectedTask(runtime,input){const task=runtime.store.get('task:'+input.taskId);if(!task?.runId||input.expectedRunId!==task.runId)throw Error('原任务或批次已变化，请刷新后重试');if(input.expectedTargetId!==undefined&&input.expectedTargetId!==task.targetId)throw Error('原标签页已变化，请刷新后重试');if(['supervisor','ai'].includes(task.controller))throw Error('请先等待原控制器交回任务');return task;}
 function finishSkippedScope(runtime,task){
@@ -28,13 +29,16 @@ export async function manualSubmit(runtime,input){
  if(runtime.job||runtime.store.get('paused')!==true||runtime.store.get('singleTaskId'))throw Error('请先暂停并等待当前操作结束');
  const task=selectedTask(runtime,input);if(task.attemptBoundary||task.receipt||!['pending','needs_manual'].includes(task.status))throw Error('已有尝试结果或非待处理状态，请先核验原任务');
  if(input.expectedTargetId!==task.targetId||!task.targetId)throw Error('原标签页已变化，请重新准备原任务');
- await runtime.findPage(task);const snapshot=await runtime.cloud.request('snapshot'),current=snapshot.documents.siteProfiles?.[task.profileId];if(!current||current.archived||priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url))throw Error('产品不可用或同站已收件，请刷新核验');
+ const scope=workbenchScope(runtime.store.get('pair')),identity={runId:task.runId,profileId:task.profileId,url:task.url,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision};
+ const assertCurrent=()=>{const current=selectedTask(runtime,input);if(scope!==workbenchScope(runtime.store.get('pair'))||Object.entries(identity).some(([key,value])=>current[key]!==value)||input.confirmProductHuntCreate===true&&current.productHunt?.readyToCreate!==true||current.attemptBoundary||current.receipt||!['pending','needs_manual'].includes(current.status)||runtime.job||runtime.store.get('paused')!==true||runtime.store.get('singleTaskId')||runtime.store.get('executionStopped'))throw Error('原任务、资料、工作区或执行状态已变化，请重新确认');};
+ if(input.confirmProductHuntCreate===true&&(!/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname)||task.productHunt?.readyToCreate!==true))throw Error('请先完成原 Product Hunt 逐步填写，再确认创建草稿');
+ await runtime.findPage(task);assertCurrent();const snapshot=await runtime.cloud.request('snapshot'),current=snapshot.documents.siteProfiles?.[task.profileId];assertCurrent();if(!current||current.archived||priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url))throw Error('产品不可用或同站已收件，请刷新核验');
  const run=runtime.store.get('run:'+task.runId);if(!run)throw Error('原任务批次不可读，请先同步');
- const profile=task.profileSnapshot||run.profile||current;await runtime.lease(task,{online:true});
+ const profile=task.profileSnapshot||run.profile||current;await runtime.lease(task,{online:true});assertCurrent();
  const productHuntCreationConsent=input.confirmProductHuntCreate===true?{at:at(),runId:task.runId,profileId:task.profileId,targetId:task.targetId,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,browserInstance:task.browserInstance}:null;
  if(input.confirmProductHuntCreate===true&&(!/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname)||task.productHunt?.readyToCreate!==true))throw Error('请先完成原 Product Hunt 逐步填写，再确认创建草稿');
  runtime.update(task,{status:'pending',controller:'executor',profileSnapshot:plain(profile),profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,fillOnlyRun:false,submitPreparedRun:false,productHuntCreationConsent,attentionType:'',reason:'用户继续原任务，重新检测和校验后执行',consentHistory:[...(task.consentHistory||[]),{at:at(),scope:'ordinary_submission_permissions',source:'workbench_manual_continue',text:'用户在原任务详情确认普通免费投稿；额外权限及本人验证仍留待人工'},...(productHuntCreationConsent?[{at:at(),scope:'producthunt_create_draft',source:'workbench_manual_continue',text:'用户明确确认创建原 Product Hunt 草稿；未授权排期、推广或购买'}]:[])]},'manual_continue');
- await runtime.synchronize();runtime.store.set('singleTaskId',task.id);runtime.store.set('paused',false);runtime.tick();return{ok:true,taskId:task.id,running:true};
+ identity.profileRevision=task.profileRevision;await runtime.synchronize();assertCurrent();runtime.store.set('singleTaskId',task.id);runtime.store.set('paused',false);runtime.tick();return{ok:true,taskId:task.id,running:true};
 }
 export function stopTabDisposition(task){
  return task.attemptBoundary&&!task.receipt||task.status==='needs_manual'||['ai','supervisor'].includes(task.controller)||task.pageOwnership==='manual'||task.pageHistory?.length||task.authTargetId||task.registration?.boundary||task.loginLinkRequest?.boundary?'preserve_manual':'close_automated';

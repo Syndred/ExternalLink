@@ -9,6 +9,7 @@ import {localRecoveryDocuments,recoveryDocument} from '../../core/local-recovery
 import {workbenchScope,pendingWorkbench} from './workbench-sync.mjs';
 import {applicationData} from './application-data.mjs';
 import {pendingApplication,enqueueApplicationPlan} from './application-mutations.mjs';
+import {pendingFillLearning} from './fill-learning.mjs';
 import {pendingMediaUploads} from './media-uploads.mjs';
 import {backupWorkspace} from './migration-backup.mjs';
 const sourceNames=new Set(['snapshot.json','recovered-documents.json','outbox.sqlite','before.sqlite','before-executor-activation.sqlite']);
@@ -59,6 +60,7 @@ export async function previewLocalRecovery(runtime,input){
  return{ok:true,preview:{id,changes,sourceCounts:counts(value.documents),currentCounts:counts(snapshot.documents),scopeVerified:value.scopeVerified,scopeVerification:value.scopeVerification,sourceSha256:value.sha256}};
 }
 function ensureIdle(runtime){
+ if(runtime.fillLearningFlush||pendingFillLearning(runtime).length)throw Error('请先同步已保存的字段学习记录，再恢复资料');
  if(runtime.job||runtime.store.get('paused')!==true||runtime.singlePageFill||runtime.manualWatchJob||runtime.linkMonitorJob||runtime.publicLibraryJob||runtime.domainAgeJob||runtime.quickOpenJob||runtime.browserAssistantScan||runtime.mediaUploadFlush||runtime.appMutationFlush)throw Error('请先暂停并等待所有后台操作结束');
  if((runtime.store.pendingCount?.()||0)||pendingWorkbench(runtime).length||pendingMediaUploads(runtime).length)throw Error('请先同步已有投稿记录、人工动态和素材');
  if(runtime.store.get('browserAssistantSettings')?.enabled||runtime.sidepanelAutoTimers?.size||runtime.store.values('manualWatch:').some(w=>w.status==='checking'))throw Error('请先关闭自动填写和人工提交监听，再恢复资料');

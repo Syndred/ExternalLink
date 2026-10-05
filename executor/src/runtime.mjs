@@ -59,6 +59,8 @@ import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs'
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
 import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from './local-recovery.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
+import {captureFillLearning,flushFillLearning,pendingFillLearning} from './fill-learning.mjs';
+import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -390,6 +392,7 @@ export class Runtime {
   async synchronize() {
     if(pendingMediaUploads(this).length)await flushMediaUploads(this);
     if(pendingApplication(this).length)await flushApplicationMutations(this);
+    if(pendingFillLearning(this).length)await flushFillLearning(this);
     if(this.store.get('offlineMode')?.enabled)return this.status();
     if(pendingWorkbench(this).length){const result=await journalSync(this).flush();if(result.pending&&result.error)throw Error('工作台进度待同步：'+result.error);}
     const offline=this.store.get('offlineMode');
@@ -502,7 +505,7 @@ export class Runtime {
   tick() {
     // API operations own the single writer until their readbacks finish.
     // A paused timer must not flush their in-flight events concurrently.
-    if (this.controlBusy||this.localRecoveryOperation) return;
+    if (this.controlBusy||this.localRecoveryOperation||this.fillLearningFlush) return;
     if(Date.now()<(this.syncRetryAt||0))return;
     const startupGate=this.store.get('libraryPlan')?.globalPause;
     if(this.store.get('paused')===true&&(startupGate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(startupGate?.reason||''))&&!this.store.get('offlineMode')?.enabled){this.cloudError=startupGate.reason;return;}
@@ -581,8 +584,9 @@ export class Runtime {
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'user_reply',text:'用户授权全库连续免费投稿及普通注册；验证码等标记后继续下一站'}]},'continuous_scope');
     }
     const profile = task.profileSnapshot || run.profile;
+    if(!task.profileSnapshot&&profile)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'task_profile_frozen');
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
-    const config = plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate}));
+    const config = applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url);
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
@@ -688,6 +692,7 @@ export class Runtime {
         }
       }
       const actualSubmission = await engine.call({ action: 'getFilledFieldsReport' });
+      await engine.call({action:'persistFillLearnings',config});
       if (/^https:\/\/toolscout\.ai\/submit\/?$/i.test(task.url)) {
         const first = task.stageHistory?.find(s => s.stage === 1);
         if (first) actualSubmission.fields.push(...first.fields.filter(f=>['name','url','description'].includes(f.name)).map(f => ({ label: f.name === 'name' ? 'Tool Name' : f.name === 'url' ? 'Tool URL' : 'Short description',
@@ -834,6 +839,7 @@ export class Runtime {
       plan:async state=>{await this.cloud.flush(this.store);return this.cloud.request('plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config,...state});},
       act:async action=>{
         const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
+        if(action.type==='click')await candidate.engine.call({action:'persistFillLearnings',config});
         let result;
         if(candidate.frame===page.mainFrame())result=await adapter.act(action);
         // Embedded forms share the same registered task page. The normal
@@ -1323,7 +1329,7 @@ export class Runtime {
       }
       this.update(task,{profileSnapshot:profile,profileRevision,
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
-      const config=plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate}));
+      const config=applyDestinationFormKnowledge(snapshot.documents,plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),task.url);
       let prepared;
       try{prepared=await this.prepareWithAi(page,task,config,()=>!page.isClosed()&&this.store.get('paused')===true);}
       finally{const file=path.join(this.home,`${task.id}-${Date.now()}-ai-preparation.png`);
@@ -1724,6 +1730,10 @@ export class Runtime {
     throw new Error('未知控制操作');
   }
   async bridge(task, message) {
+    if(message.action==='saveFillLearnings'){
+      const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};
+      return captureFillLearning(this,{profileId:task.profileId,profile:task.profileSnapshot,taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision},message);
+    }
     if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
     if(message.action==='generateCommentDrafts')return this.cloud.request('ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });

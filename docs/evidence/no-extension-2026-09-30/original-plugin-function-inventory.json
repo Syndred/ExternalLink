@@ -807,11 +807,20 @@
     "platform": "Product Hunt",
     "sourceImplemented": true,
     "syntheticStagesVerified": 9,
-    "deployed": false,
-    "specificUiVerified": false,
+    "deployed": true,
+    "specificUiVerified": true,
+    "mediaFileInputsVerified": true,
     "mediaUploadVerified": false,
     "realSiteReceipt": false,
-    "evidence": "product-hunt-checkpoint-2026-10-05.json"
+    "evidence": "product-hunt-learning-2026-10-05.json"
+  },
+  "fillLearningCheckpoint": {
+    "originalHelpers": ["persistFillLearnings", "mergeLearnedMappings", "persistDestinationFormKnowledge", "applyDestinationFormKnowledge"],
+    "sourceImplemented": true,
+    "isolatedBrowserVerified": true,
+    "durableRecoveryAndD1Verified": true,
+    "deployed": true,
+    "evidence": "product-hunt-learning-2026-10-05.json"
   },
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [

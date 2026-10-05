@@ -252,8 +252,12 @@
     }
     if (msg.action === "smartFill") {
       smartFillFromConfig(msg.config || {})
-        .then((result) => sendResponse({ ok: true, ...result }))
+        .then(async (result) => { await persistCurrentFillLearnings(msg.config || {}); sendResponse({ ok: true, ...result }); })
         .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+    }
+    if (msg.action === "persistFillLearnings") {
+      persistCurrentFillLearnings(msg.config || {}).then(sendResponse).catch(error => sendResponse({ok:false,error:error.message}));
       return true;
     }
     if (msg.action === "showFillBanner") {
@@ -3630,6 +3634,15 @@
     }
 
     const actualPreparation = collectFilledFieldsReport();
+    actualPreparation.attachments = [];
+    for (const input of scope.querySelectorAll('input[type="file"]')) {
+      for (const file of Array.from(input.files || [])) {
+        const sha256 = globalThis.crypto?.subtle
+          ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map(value => value.toString(16).padStart(2, "0")).join("") : "";
+        actualPreparation.attachments.push({ field: input.name || input.id, name: file.name, type: file.type, bytes: file.size, sha256 });
+      }
+    }
+    await persistCurrentFillLearnings(config);
     const transition = await advanceProductHuntStage(scope, stage, {
       optional: PRODUCT_HUNT_OPTIONAL_STAGES.has(stage),
     });
@@ -8311,6 +8324,23 @@
     }
     return false;
   }
+
+  async function persistCurrentFillLearnings(config) {
+    if (!services.persistLearning) return {ok:true,disabled:true};
+    const pageContext = capturePageContext(), snapshot = getPageSnapshot();
+    const parsed = new URL(snapshot.url);
+    const schema = {
+      url: parsed.origin + parsed.pathname,
+      forms: (snapshot.forms || []).map(({method}) => ({method})),
+      fields: (snapshot.fields || []).map(({selector,name,id,type,label,options,required}) => ({selector,name,id,type,label,required,
+        options: (options || []).map(option => typeof option === "string" ? option :
+          Object.fromEntries(["value","label","text","disabled"].filter(key => option[key] !== undefined).map(key => [key,option[key]])))})),
+    };
+    if (!isCurrentPageContext(pageContext)) return {ok:false,stale:true};
+    try { return await services.request({action:"saveFillLearnings",pageUrl:location.href,profileId:config.projectKey,
+      identity:{name:config.brandName,url:config.targetDomain},mappings:collectFillLearnings(config).mappings,schema}); }
+    catch (error) { logStep("字段学习尚未保存：" + error.message); return {ok:false,error:error.message}; }
+  }
   function hasCompletedAiOfDayCaptcha() {
     return location.hostname === 'aioftheday.com' && location.pathname === '/submit-a-tool' &&
       Array.from(document.querySelectorAll('textarea[name="g-recaptcha-response"]')).some(element => Boolean(element.value?.trim()));
@@ -8793,6 +8823,7 @@
         field.dispatchEvent(new Event("change", { bubbles: true }));
         icon.dataset.state = "done";
         icon.title = `已填：${selectValue}`;
+        await persistCurrentFillLearnings(config);
         return;
       }
     } else if (type === "file") {
@@ -8800,6 +8831,7 @@
       const ok = await tryFillFileFromUrl(field, media?.value, config.targetDomain, config, media);
       icon.dataset.state = ok ? "done" : "empty";
       icon.title = ok ? "已从图库上传" : "图库中没有匹配的图片";
+      if (ok) await persistCurrentFillLearnings(config);
       return;
     } else if (isCommentLikeField(field)) {
       value = await generateComment(config, {
@@ -8823,6 +8855,7 @@
 
     const fitted = fitValueToConstraints(String(value), getFieldConstraints(field));
     await simulateTyping(field, fitted);
+    await persistCurrentFillLearnings(config);
     icon.dataset.state = "done";
     icon.title = `已填：${fitted.slice(0, 60)}`;
   }

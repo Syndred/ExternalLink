@@ -5,6 +5,7 @@ import {mergeSubmify,applySubmifyGates} from './submify-sync.mjs';
 import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
 import {recoveryDocument} from './local-recovery.mjs';
 import {formKnowledgeMutation,formKnowledgeSatisfied} from './form-knowledge.mjs';
+import {applicationSettingKeys} from './application-preferences.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
@@ -70,10 +71,12 @@ export function libraryMutation(documents,operation,options={}){
   return{key:'submissionTimeline',data:T.updateEvent(events,operation.eventId,patch).timeline};
  }
  if(operation.type==='settings'){
-  const allowed=['domainBlacklist','targetFilters','cfgName','cfgEmail','cfgCommentTemplate','linkMonitorSchedule'];
+  const allowed=applicationSettingKeys;
   if(!allowed.includes(operation.key))fail('不支持的设置');
   const value=operation.value;
-  if(operation.key==='linkMonitorSchedule'){
+  if(operation.key.startsWith('autoSubmit')){
+   if(typeof value!=='boolean')fail('自动提交设置必须为开启或关闭');
+  }else if(operation.key==='linkMonitorSchedule'){
    if(!value||typeof value.enabled!=='boolean'||!Number.isFinite(value.minutes)||value.minutes<15||value.minutes>10080||value.desktopNotifications!==undefined&&typeof value.desktopNotifications!=='boolean'||Object.keys(value).some(k=>!['enabled','minutes','desktopNotifications'].includes(k)))fail('监测计划无效');
   }else if(operation.key==='targetFilters'){
    if(!value||typeof value!=='object'||Array.isArray(value))fail('筛选条件无效');

@@ -307,7 +307,7 @@
       return true;
     }
     if (msg.action === "inspectSubmitAction") {
-      const button = findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
+      const button = findFinalSubmitButton(msg.platform || 'directory');
       sendResponse({ finalFound: !!button, label: button ? getElementLabel(button) : '', advanceFound: !!findSafeAdvanceButton(), allowed: shouldAutoSubmitListing(msg.config || {},msg.platform || 'directory') });
       return true;
     }
@@ -711,9 +711,15 @@
 
   function shouldAutoSubmitListing(config, platform) {
     if (config && config.fillOnly === true) return false;
-    if (platform === "wp_comment" || platform === "article") return false;
+    if (platform === "wp_comment") return shouldAutoSubmitStandardWp(config,inspectStandardWpCommentForm());
+    if (platform === "article") return false;
     if (platform === "forum" || platform === "profile") return false;
     return config?.autoSubmitDirectory !== false;
+  }
+
+  function findFinalSubmitButton(platform) {
+    if(platform==='wp_comment') {const button=inspectStandardWpCommentForm().submit;return button&&!button.disabled&&isVisibleHumanGate(button)?button:null;}
+    return findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
   }
 
   function detectPaidSubmit() {
@@ -3760,13 +3766,7 @@
       return { blocked: true, reason: blocker.reason, keepTab: true, platform, ...fillResult };
     }
 
-    const submitBtn = findSubmitButton('button[type="submit"], input[type="submit"]', [
-      "submit",
-      "add",
-      "list",
-      "publish",
-      "send",
-    ]);
+    const submitBtn = findFinalSubmitButton(platform);
     if (!submitBtn) {
       if (!shouldAutoSubmitListing(config, platform)) return returnAfterFill(config, platform);
       const precheck = collectFormValidationState();
@@ -3839,9 +3839,7 @@
 
     // A React form can replace its action while validation runs. Re-read the
     // current action and let the next fill cycle handle a changed stage.
-    const liveSubmitBtn = findSubmitButton('button[type="submit"], input[type="submit"]', [
-      "submit", "add", "list", "publish", "send",
-    ]);
+    const liveSubmitBtn = findFinalSubmitButton(platform);
     if (liveSubmitBtn !== submitBtn || submitBtn.isConnected === false) {
       return { ok: true, platform, stageAdvanced: true, submitted: false, matched: false, ...fillResult };
     }

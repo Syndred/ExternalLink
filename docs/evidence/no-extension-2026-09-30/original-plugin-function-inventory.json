@@ -844,6 +844,18 @@
     "localServicesReloaded": true,
     "evidence": "desktop-notification-2026-10-05.json"
   },
+  "originalSettingsCheckpoint": {
+    "originalAutoSubmitSettings": ["autoSubmitDirectoryListings", "autoSubmitStandardWpComments"],
+    "originalMonitorSettings": ["linkMonitorEnabled", "linkMonitorMinutes"],
+    "chineseControlsAndDurableSyncVerified": true,
+    "productionRuntimeBrowserCases": 15,
+    "sameTaskManualConsentAndReplacementPageRejectionVerified": true,
+    "legacyRecoveryBackupMergeFragmentsAndExportVerified": true,
+    "authenticatedDeviceD1Verified": true,
+    "workerVersion": "aef95331-a004-4283-9632-bb546e7d54a4",
+    "liveBusinessRevisionsUnchanged": true,
+    "evidence": "original-settings-2026-10-05.json"
+  },
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",

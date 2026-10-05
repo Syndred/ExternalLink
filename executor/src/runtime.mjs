@@ -11,6 +11,7 @@ import { Cloud } from './cloud.mjs';
 import { queue, profiles, plain, selectScope, priorProductSuccess, repo } from './shared.mjs';
 import { attachEngine } from './engine.mjs';
 import { assessSubmissionQuality } from './quality.mjs';
+import {applySubmissionPreferences} from './submission-preferences.mjs';
 import { canRetryNoAction } from './recovery.mjs';
 import { closeTaskTab,archiveDeferredTabs,recoveryCheckpoint } from './tab-cleanup.mjs';
 import { observeTask, closeObservation } from './observation.mjs';
@@ -586,7 +587,7 @@ export class Runtime {
     const profile = task.profileSnapshot || run.profile;
     if(!task.profileSnapshot&&profile)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'task_profile_frozen');
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
-    const config = applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url);
+    const config = applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url));
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
@@ -625,6 +626,7 @@ export class Runtime {
       if(!targetInfo)throw new Error('browser page target disappeared before its task identity could be verified');
       const target = targetInfo.targetId;
       this.update(task, { targetId: target, browserInstance: this.host.startedAt }, 'target');
+      Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
       if (!reused) await page.goto(task.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       // Hydrated forms can appear after DOMContentLoaded. Wait on visible
       // controls/frames, rather than treating the initial HTML as a dead end.
@@ -663,17 +665,18 @@ export class Runtime {
       let { engine, detection } = candidate;
       const preparingOnly = task.fillOnlyRun && /^(?:poweredbyai\.app|navtools\.ai|aioftheday\.com)$/.test(new URL(task.url).hostname);
       if (!detection.hasCaptcha && !preparingOnly && (detection.submitBlocker?.blocked || detection.submitBlocker?.needs_manual || detection.submitBlocker?.payment_uncertain)) throw new Error(detection.submitBlocker?.reason || '需要人工处理');
-      if (['wp_comment','article'].includes(detection.platform)) throw new Error('评论需要逐页审核相关性，进入待人工');
+      if (detection.platform==='article') throw new Error('普通文章评论需要逐页审核相关性，进入待人工');
       const forceRefreshExisting = !!task.preparationHistory?.length || !!task.attemptHistory?.length || !!task.stageHistory?.length ||
         /^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(task.url);
-      let fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call({ action: 'smartFill', config: { ...config, fillOnly: true, autoSubmitDirectory: false, forceRefreshExisting } });
+      const preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false,forceRefreshExisting};
+      let fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call(detection.platform==='wp_comment'?{action:'executeSubmit',platformType:'wp_comment',config:preparationConfig}:{action:'smartFill',config:preparationConfig});
       if(!task.submitPreparedRun) {
         await this.reconcileTextInputs(candidate.frame, await engine.call({ action: 'getFilledFieldsReport' }), fill.mappings);
         try{await this.completeKnownForm(candidate.frame, task.url, profile, task);}
         catch(error){this.update(task,{normalPreparationFailure:{at:new Date().toISOString(),reason:error.message}},'normal_preparation_failed');fill={...fill,ok:false,reason:error.message};}
       }
       let validation = await engine.call({ action: 'collectFormValidation' });
-      const initialAction=await engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:detection.platform||'directory'});
+      const initialAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && !task.fillOnlyRun && !detection.hasCaptcha) {
         for(const item of engines)await item.engine.detach();engines=[];
         const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true});
@@ -722,12 +725,15 @@ export class Runtime {
       if (detection.hasCaptcha || task.fillOnlyRun) throw new Error(detection.hasCaptcha ? '资料已准备，验证码待用户完成；未点击提交' : '仅填写资料已完成，未点击提交');
       if (validation.validationFailed || fill.ok === false || fill.needs_manual) throw new Error(fill.reason || '必填项或素材需要补充，请接管核对');
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_submit'); return; }
-      const submitAction = await engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:detection.platform||'directory'});
+      const submitAction = await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       this.update(task,{submitAction},'submit_action_preflight');
-      if(submitAction.allowed===false)throw new Error('当前页面分类仅允许填写，先核对；未建立投稿边界');
+      if(submitAction.allowed===false)throw new Error(detection.platform==='wp_comment'?'评论已填写；标准 WordPress 评论自动提交未开启或表单未通过标准预检，请人工核对':'资料已填写；目录站自动提交未开启或当前页面仅允许填写，请人工核对');
       if(!submitAction.finalFound)throw new Error(submitAction.advanceFound?'当前只有前进动作，后台接管未完成下一步；未建立投稿边界':'未找到可用最终投稿按钮；未建立投稿边界');
       // Revalidate ownership and cloud dedup immediately before the mutation.
       await this.lease(task);
+      Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
+      const currentAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
+      if(currentAction.allowed===false||!currentAction.finalFound)throw new Error('原提交授权或最终按钮已变化，请重新检查原任务；未建立投稿边界');
       const baseline = await engine.call({ action: 'classifySubmitEvidence', destinationUrl: task.url });
       this.update(task, { status: 'submitting', siteStatus: 'sent_unconfirmed', attemptBoundary: new Date().toISOString(), baselineEvidence: baseline.evidence || '' }, 'attempt_boundary');
       if(!offline)await this.cloud.flush(this.store); // Online mode confirms the boundary before click; offline mode records it durably first.
@@ -754,7 +760,7 @@ export class Runtime {
       };
       page.on('response', responseListener);
       let result;
-      try { result = await engine.call({ action: 'submitFilledForm', config: { ...config, autoSubmitDirectory: true, fillOnly: false }, platform: detection.platform || 'directory' }); }
+      try { result = await engine.call({ action: 'submitFilledForm', config, platform: detection.platform || 'directory' }); }
       catch (error) { result = { error: error.message }; }
       page.off('response', responseListener); responseListener = null;
       await Promise.allSettled(responseTasks);
@@ -819,7 +825,7 @@ export class Runtime {
       }
       const snapshot=await candidate.engine.call({action:'getPageSnapshot'});
       snapshot.preparation={validation:await candidate.engine.call({action:'collectFormValidation'}),
-        submitAction:await candidate.engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:candidate.detection.platform||'directory'}),
+        submitAction:await candidate.engine.call({action:'inspectSubmitAction',config,platform:candidate.detection.platform||'directory'}),
         filled:await candidate.engine.call({action:'getFilledFieldsReport'})};
       if(candidate.frame===page.mainFrame())snapshot.agentBrowser=await adapter.snapshot();
       return snapshot;
@@ -829,9 +835,9 @@ export class Runtime {
       try{
         if(readyCheck)return await readyCheck(candidate.engine);
         const validation=await candidate.engine.call({action:'collectFormValidation'});
-        const action=await candidate.engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:candidate.detection.platform||'directory'});
+        const action=await candidate.engine.call({action:'inspectSubmitAction',config,platform:candidate.detection.platform||'directory'});
         const actual=await candidate.engine.call({action:'getFilledFieldsReport'});
-        return !validation.validationFailed&&action.finalFound&&action.allowed!==false&&candidate.detection.operable&&
+        return !validation.validationFailed&&action.finalFound&&candidate.detection.operable&&
           !assessSubmissionQuality(actual,task.profileSnapshot||{}).length;
       }catch{return false;}
     };

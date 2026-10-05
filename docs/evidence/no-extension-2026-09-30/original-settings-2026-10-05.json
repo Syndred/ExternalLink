@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-05",
+  "completion": "not_complete",
+  "priorCommit": "b3c66b38a3ba5311beafd2bffc1f8aa0596f05de",
+  "workerVersion": "aef95331-a004-4283-9632-bb546e7d54a4",
+  "unitTests": {
+    "passed": 398,
+    "failed": 0,
+    "skipped": 0
+  },
+  "isolatedBrowser": {
+    "cases": 15,
+    "productionRuntimeAndFormEngine": true,
+    "externalRequests": 0,
+    "realSubmissions": 0,
+    "originalPreferencesVerified": true,
+    "manualConsentBoundToOriginalTaskAndPage": true,
+    "replacementPageAndRevocationRejectBeforeBoundary": true,
+    "wpDefaultOffAndStandardPreflightVerified": true,
+    "captchaIframeIncompleteAndFillOnlyRemainManual": true
+  },
+  "ui": {
+    "pages": 6,
+    "chinesePreferenceControls": true,
+    "unsavedRefreshPreserved": true,
+    "saveAndReadbackVerified": true
+  },
+  "legacyMonitor": {
+    "disabledAndMinutesPreserved": true,
+    "originalRoundingAndBounds": true,
+    "canonicalWins": true,
+    "rawBackupFragmentAndMergeVerified": true,
+    "sourceWithoutLegacyKeysUnchanged": true,
+    "derivedDisplayDoesNotFalsifyCloudBaseVersion": true
+  },
+  "deviceD1": {
+    "authenticatedSettingsMutationAndReadback": true,
+    "malformedValueRejectedWithoutRevisionChange": true,
+    "originalReceiptAndPausedBatchPreserved": true
+  },
+  "regressions": [
+    "12.35 MB original backup merge",
+    "Product Hunt 9 stages and media inputs",
+    "single-page iframe"
+  ],
+  "live": {
+    "servicesReloaded": true,
+    "workerRejectsBothInvalidFlags": true,
+    "localRejectsBothInvalidFlags": true,
+    "allBusinessRevisionsUnchanged": true,
+    "productionWorkbenchPreferenceReadback": true,
+    "directoryAutoSubmitEnabled": true,
+    "standardWpAutoSubmitEnabled": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "realSettingsChanged": 0,
+  "newRealSubmissions": 0
+}

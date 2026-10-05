@@ -1,24 +1,27 @@
 import './queue.js';
 import './submission-timeline.js';
 import './backup.js';
+import {normalizeLegacyPreferences} from './application-preferences.mjs';
 export const backupKeys=Object.freeze(['submissionRecords','submissionSchemaVersion','siteAnnotations','deletedSubmissionKeys','siteProfiles','activeSiteId','selectedSiteIds','urlList','submissionTimeline','timelineSchemaVersion','sheetTableData','domainBlacklist','targetFilters','domainMetricsCache','linkMonitorResults','linkMonitorSchedule','autoSubmitStandardWpComments','autoSubmitDirectoryListings','cfgEmail','cfgName','cfgCommentTemplate']);
 const dangerous=new Set(['__proto__','prototype','constructor']);
 function validateTree(value){if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(dangerous.has(key))throw Error('备份含有不安全的字段');validateTree(child);}}
 export function validateApplicationBackup(raw){
- validateTree(raw);const value=globalThis.ExtLinkBackup.validateBackup(raw);
+ validateTree(raw);const value=normalizeLegacyPreferences(globalThis.ExtLinkBackup.validateBackup(raw));
+ for(const key of ['autoSubmitStandardWpComments','autoSubmitDirectoryListings'])if(Object.hasOwn(value,key)&&typeof value[key]!=='boolean')throw Error('备份自动提交设置格式无效：'+key);
  for(const key of ['submissionRecords','siteProfiles','siteAnnotations','domainMetricsCache','linkMonitorResults'])if(value[key]!==undefined&&(!value[key]||typeof value[key]!=='object'||Array.isArray(value[key])))throw Error('备份字段格式无效：'+key);
  if(value.sheetTableData!=null&&(!Array.isArray(value.sheetTableData.entries)||value.sheetTableData.entries.some(r=>!r||typeof r!=='object'||Array.isArray(r))))throw Error('备份网站表格格式无效');
  if(value.urlList!==undefined&&typeof value.urlList!=='string')throw Error('备份网址列表格式无效');
  for(const id of Object.keys(value.siteProfiles))if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(id))throw Error('备份产品身份无效');
  return value;
 }
-export function exportApplicationBackup(documents){return{format:globalThis.ExtLinkBackup.FORMAT,version:Number(documents.submissionSchemaVersion||1),exportedAt:new Date().toISOString(),...Object.fromEntries(backupKeys.filter(k=>documents[k]!==undefined).map(k=>[k,structuredClone(documents[k])])),submissionRecords:structuredClone(documents.submissionRecords||{}),siteProfiles:structuredClone(documents.siteProfiles||{}),submissionTimeline:structuredClone(documents.submissionTimeline||{})};}
+export function exportApplicationBackup(documents){documents=normalizeLegacyPreferences(documents);return{format:globalThis.ExtLinkBackup.FORMAT,version:Number(documents.submissionSchemaVersion||1),exportedAt:new Date().toISOString(),...Object.fromEntries(backupKeys.filter(k=>documents[k]!==undefined).map(k=>[k,structuredClone(documents[k])])),submissionRecords:structuredClone(documents.submissionRecords||{}),siteProfiles:structuredClone(documents.siteProfiles||{}),submissionTimeline:structuredClone(documents.submissionTimeline||{})};}
 export function backupKeyDependencies(key){
  if(!backupKeys.includes(key))throw Error('不支持的备份字段');
  return [...new Set([key,'submissionSchemaVersion',...(['activeSiteId','selectedSiteIds'].includes(key)?['siteProfiles']:[]),...(['submissionTimeline','timelineSchemaVersion'].includes(key)?['submissionTimeline','timelineSchemaVersion']:[])])];
 }
 export function applicationBackupFragment(backup,key){
  if(!backupKeys.includes(key))throw Error('不支持的备份字段');
+ backup=normalizeLegacyPreferences(backup);
  const fragment={format:globalThis.ExtLinkBackup.FORMAT,version:backup.version,submissionRecords:{},siteProfiles:{}};
  if(Object.hasOwn(backup,key))fragment[key]=structuredClone(backup[key]);
  if(['activeSiteId','selectedSiteIds'].includes(key))fragment.siteProfiles=Object.fromEntries(Object.keys(backup.siteProfiles||{}).map(id=>[id,{id}]));

@@ -1,4 +1,5 @@
 import {backupKeys,validateApplicationBackup} from './application-backup.mjs';
+import {normalizeLegacyPreferences} from './application-preferences.mjs';
 const objectKeys=new Set(['targetFilters','linkMonitorSchedule']);
 const arrayKeys=new Set(['selectedSiteIds','deletedSubmissionKeys','domainBlacklist']);
 const stringKeys=new Set(['activeSiteId','cfgEmail','cfgName','cfgCommentTemplate']);
@@ -11,7 +12,7 @@ function validateValue(key,value){
 }
 
 export function localRecoveryDocuments(raw){
- const value=raw?.documents||raw?.snapshot?.documents||raw;
+ const value=normalizeLegacyPreferences(raw?.documents||raw?.snapshot?.documents||raw||{});
  if(!value||typeof value!=='object'||!Object.keys(value.siteProfiles||{}).length)throw Error('恢复来源没有产品资料，不能恢复');
  const picked=Object.fromEntries(backupKeys.filter(k=>Object.hasOwn(value,k)).map(k=>[k,value[k]]));
  validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...picked});for(const [key,value]of Object.entries(picked))validateValue(key,value);return structuredClone(picked);

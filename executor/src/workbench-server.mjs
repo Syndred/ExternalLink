@@ -9,6 +9,7 @@ const files=new Map([['/','executor/web/application.html'],['/application.js','e
  ['/legacy','executor/web/index.html'],['/app.js','executor/web/app.js'],...['submission-journal.js','submission-journal.css','executor-panel.js','executor-panel.css','lib/submission-journal.js'].map(p=>['/extension/'+p,'extension/'+p])]);
 const controls=new Set(['/appData','/taskDetails','/profile','/registerAcceptance','/prepareTask','/runTask','/status','/catalog','/preview','/start','/pause','/resume','/sync','/takeover','/continueTask','/verify','/review','/openRecoveryTask','/observeTask','/closeObservation','/archiveDeferredTabs','/workbenchDocuments','/journalProgress','/journalFlush','/workbenchPending']);
 controls.add('/saveAssistantSettings');
+controls.add('/clearSiteAnnotation');controls.add('/getBatchLog');
 for(const route of ['/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'])controls.add(route);
 controls.add('/resetWorkspace');controls.add('/resolveConflict');
 controls.add('/mediaUpload');

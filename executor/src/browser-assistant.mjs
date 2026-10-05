@@ -32,6 +32,7 @@ export async function checkBrowserAssistant(runtime){
      const current=assistantState(runtime).settings;if(!current.enabled||current.profileId!==profileId||(frame.url()!==url&&message.action!=='manualSubmissionClicked'))return{ok:false,error:'助手页面或产品已变化'};const original=originalAssistantTask(runtime,profileId,info.targetId,page.url()),config=configFor(runtime,profileId,original),docs=snapshotFor(runtime).documents;
      if(message.action==='getActiveFillConfig')return{ok:true,config,filters:{...docs.targetFilters,showManualFillIcons:docs.targetFilters?.showManualFillIcons!==false}};
      if(message.action==='contentReady')return{ok:true};
+     if(message.action==='log'){runtime.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:original?.runId,taskId:original?.id,profileId,url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
      if(['manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)){if(!original)return{ok:false};return runtime.dispatchControl('manualWatchMessage',{...message,taskId:original.id,targetId:info.targetId,pageUrl:page.url(),frameUrl:url,documentId:message.executorDocumentId});}
      if(message.action==='generateCommentDrafts')return runtime.cloud.request('ai/comment',{...message,config});
      if(original&&['fetchSubmissionMedia','fetchCloudSubmissionMedia'].includes(message.action))return runtime.bridge(original,message);return{ok:false,error:'上传素材需要已登记的原任务'};

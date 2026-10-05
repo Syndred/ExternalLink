@@ -79,6 +79,7 @@ const server = http.createServer(async (req, res) => {
     if (route === '/catalog' && req.method === 'GET') { const snapshot = await runtime.cloud.request('snapshot'); send(res, { ok: true, profiles: snapshot.documents.siteProfiles, revision: snapshot.revisions.siteProfiles }); return; }
     if (req.method !== 'POST') { send(res, { ok: false, error: '接口不存在' }, 404); return; }
     const operation = async () => {
+      if(['/clearSiteAnnotation','/getBatchLog'].includes(route))return runtime.control(route.slice(1),input);
       if(route==='/saveAssistantSettings')return runtime.control('saveAssistantSettings',input);
       if(route==='/resetWorkspace')return resetWorkspace(runtime,input);
       if(route==='/gmailStatus')return{ok:true,gmail:gmail.status()};

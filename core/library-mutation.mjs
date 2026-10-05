@@ -14,6 +14,11 @@ export function libraryMutation(documents,operation,options={}){
   return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
  }
  if(operation.type==='clear_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
+ if(operation.type==='clear_annotation'){
+  const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),knowledge=(annotations[key]||annotations[domain])?.formKnowledge;
+  delete annotations[key];delete annotations[domain];if(knowledge){annotations[key]={url:operation.url,domain,formKnowledge:knowledge};annotations[domain]=structuredClone(annotations[key]);}
+  return{key:'siteAnnotations',data:annotations};
+ }
  if(operation.type==='submify_refs'){
   if(!Array.isArray(operation.items)||operation.items.length>5000)fail('公共库来源编号无效');const table=copy(documents.sheetTableData||{entries:[]}),rows=new Map();for(const row of table.entries){const key=storedKey(row);if(key&&!rows.has(key))rows.set(key,row);}
   for(const item of operation.items){const key=keyOf(item.link||item.url),row=rows.get(key);if(!row)fail('公共库入口已变化，请先核对原同步');if(item.id)row.sourceRefs=[...new Set([row.sourceId,...(row.sourceRefs||[]),item.id].map(v=>String(v||'').trim()).filter(Boolean))];}
@@ -113,6 +118,7 @@ export function libraryMutation(documents,operation,options={}){
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='clear_annotation'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>!documents.siteAnnotations?.[k]||Object.keys(documents.siteAnnotations[k]).every(field=>['url','domain','formKnowledge'].includes(field)));}
  if(operation.type==='pin'){try{return keyOf(String(documents.urlList||'').split('\n')[0].split('|')[0])===keyOf(operation.url);}catch{return false;}}
  if(operation.type==='clear_deleted')return !(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
  if(operation.type==='submify_refs'){const rows=new Map();for(const row of documents.sheetTableData?.entries||[]){const key=storedKey(row);if(key&&!rows.has(key))rows.set(key,row);}return operation.items.every(item=>!item.id||(rows.get(keyOf(item.link||item.url))?.sourceRefs||[]).map(String).includes(String(item.id)));}

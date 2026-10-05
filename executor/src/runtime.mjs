@@ -53,6 +53,7 @@ import {cloudStatus,pushLocalChanges} from './cloud-status.mjs';
 import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
+import {clearSiteAnnotation} from './library-reset.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -1168,6 +1169,8 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(action==='clearSiteAnnotation')return clearSiteAnnotation(this,input);
+    if(action==='getBatchLog')return{ok:true,...this.store.logs({...input,scope:String(this.store.get('pair')?.endpoint||'')+'|'+String(this.store.get('pair')?.workspaceId||'default')})};
     if(action==='manualWatchMessage')return manualWatchMessage(this,input);
     if(action==='checkManualWatches')return checkManualWatches(this);
     if(action==='saveAssistantSettings')return saveAssistantSettings(this,input);
@@ -1694,6 +1697,7 @@ export class Runtime {
     throw new Error('未知控制操作');
   }
   async bridge(task, message) {
+    if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
     if(message.action==='generateCommentDrafts')return this.cloud.request('ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
     if(message.action==='fetchSubmissionMedia'){

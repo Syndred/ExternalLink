@@ -9,6 +9,7 @@ export class Store {
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
       CREATE TABLE IF NOT EXISTS state (id TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE NOT NULL, value TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS audit_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE NOT NULL, scope TEXT NOT NULL, run_id TEXT, task_id TEXT, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS owner (id INTEGER PRIMARY KEY CHECK(id=1), pid INTEGER NOT NULL);`);
   }
   get(id) { const row = this.db.prepare('SELECT value FROM state WHERE id=?').get(id); return row ? JSON.parse(row.value) : null; }
@@ -32,11 +33,14 @@ export class Store {
     try {
       this.set(`task:${task.id}`, task);
       this.db.prepare('INSERT INTO outbox(id,value) VALUES (?,?)').run(event.id, JSON.stringify(event));
+      this.appendLog({id:event.id,at:event.at,type,runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,status:task.status,reason:task.reason||''});
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
     return event;
   }
   pending() { return this.db.prepare('SELECT id,value FROM outbox ORDER BY seq').all().map(x => JSON.parse(x.value)); }
+  appendLog(entry){const pair=this.get('pair'),scope=String(pair?.endpoint||'')+'|'+String(pair?.workspaceId||'default');this.db.prepare('INSERT OR IGNORE INTO audit_log(event_id,scope,run_id,task_id,value) VALUES (?,?,?,?,?)').run(entry.id||randomUUID(),scope,entry.runId||null,entry.taskId||null,JSON.stringify(entry));}
+  logs({scope,runId,taskId,after=0}={}){if(!Number.isSafeInteger(after)||after<0)throw Error('日志游标无效');const conditions=['scope=?','seq>?'],values=[scope,after];for(const [column,value]of [['run_id',runId],['task_id',taskId]])if(value){conditions.push(column+'=?');values.push(value);}const rows=this.db.prepare('SELECT seq,value FROM audit_log WHERE '+conditions.join(' AND ')+' ORDER BY seq LIMIT 501').all(...values);return{entries:rows.slice(0,500).map(row=>({seq:row.seq,...JSON.parse(row.value)})),next:rows.length>500?rows[499].seq:null};}
   pendingCount() { return this.db.prepare('SELECT count(*) AS total FROM outbox').get().total; }
   pendingBatch(limit=100) { return this.db.prepare('SELECT value FROM outbox ORDER BY seq LIMIT ?').all(limit).map(x=>JSON.parse(x.value)); }
   pendingSummary() { return this.db.prepare("SELECT id,json_extract(value,'$.taskId') AS taskId FROM outbox ORDER BY seq").all(); }

@@ -483,8 +483,8 @@
     },
     {
       "action": "clearSiteAnnotation",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "清除网站标记 / clearSiteAnnotation / 原别名清除与表单知识保留 / 两键持久计划",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "cloudAiExtractSite",
@@ -563,8 +563,8 @@
     },
     {
       "action": "getBatchLog",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "执行日志 / getBatchLog / SQLite持久日志及游标分页",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "getDomainMetrics",
@@ -618,8 +618,8 @@
     },
     {
       "action": "log",
-      "mapping": "待逐项迁移或核对原交互",
-      "status": "pending"
+      "mapping": "共享表单引擎 log RPC / 原任务与当前工作区日志",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "manualContinue",
@@ -792,7 +792,7 @@
       "status": "mapped_requires_full_acceptance"
     }
   ],
-  "updatedAt": "2026-10-01",
+  "updatedAt": "2026-10-05",
   "completion": "not_complete",
   "note": "逐项入口映射用于暴露缺口，不能替代真实产品验收；动态入口和内容脚本仍需核对。"
 }

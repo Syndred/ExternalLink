@@ -776,8 +776,9 @@
     },
     {
       "action": "submissionJournalRecoverLocal",
-      "mapping": "本机恢复草稿留在工作区，未纳入本次提交",
-      "status": "in_progress_not_verified"
+      "mapping": "设置与备份 / 本机缓存和备份选择、比较、逐项恢复及原编号续办 → recoverLocalDocuments",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离真实 HTTP/D1 全部21份资料、响应丢失及SQLite重开通过；真实只列来源和比较，没有覆盖真实资料"
     },
     {
       "action": "syncSubmifyLibrary",
@@ -802,9 +803,8 @@
   ],
   "updatedAt": "2026-10-05",
   "completion": "not_complete",
-  "note": "静态入口映射不能替代全量验收；8个原待办已有普通流程及隔离回归，本机恢复未完成；特殊发布、动态控件及历史资料等功能族仍需验收。",
+  "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
-    "local_document_recovery",
     "special_launch_flows",
     "dynamic_controls",
     "historical_local_favorites",

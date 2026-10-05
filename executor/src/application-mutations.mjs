@@ -6,6 +6,7 @@ export async function resolveApplicationConflict(runtime,input){
  const item=pendingApplication(runtime).find(item=>item.id===input.id);
  if(item?.status!=='conflict'||!['cloud','local'].includes(input.choice))throw Error('无效冲突处理');
  const snapshot=await runtime.cloud.request('snapshot');
+ if(item.scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原冲突保留，请重新选择');
  if(input.revision!==snapshot.revisions[item.key])throw Error('云端版本已变化，请回读后重新比较');
  const resolution={choice:input.choice,at:new Date().toISOString(),remoteData:structuredClone(snapshot.documents[item.key]),remoteRevision:input.revision,originalBaseData:item.baseData};
  runtime.store.set('appMutation:'+item.id,{...item,resolution,baseData:snapshot.documents[item.key],status:input.choice==='cloud'?'discarded':'pending',error:''});
@@ -40,17 +41,20 @@ export async function enqueueApplicationPlan(runtime,{planId,operations},onPersi
  const result=await flushApplicationMutations(runtime),remaining=plan.items.filter(i=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+i.id)?.status)).length;plan.status=remaining?'queued':'completed';runtime.store.set('applicationPlan:'+plan.id,plan);return{ok:true,planId:plan.id,status:plan.status,remaining,...result};
 }
 async function performFlush(runtime){
- const pending=pendingApplication(runtime);if(!pending.length)return{pending:0};let snapshot;
- try{snapshot=await runtime.cloud.request('snapshot');}catch(error){return{pending:pending.length,error:error.message};}
+ const scope=workbenchScope(runtime.store.get('pair')),pending=pendingApplication(runtime);if(!pending.length)return{pending:0};const cloud=runtime.cloud;let snapshot;
+ const checkScope=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原资料计划保留，停止写入');};
+ try{snapshot=await cloud.request('snapshot');checkScope();}catch(error){return{pending:pending.length,error:error.message};}
  for(const item of pending){
+  if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.length,error:'工作区已切换，原资料计划保留，停止写入'};
   if(libraryMutationSatisfied(snapshot.documents,item.operation)){item.status='confirmed';item.confirmedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);continue;}
   if(!isDeepStrictEqual(snapshot.documents[item.key],item.baseData)){item.status='conflict';item.error='云端外链库有并发修改；本机编辑保留，未覆盖云端';runtime.store.set('appMutation:'+item.id,item);break;}
   const change=libraryMutation(snapshot.documents,item.operation);
-   try{await runtime.cloud.request(item.operation.type==='profile'?'profile':'library',item.operation.type==='profile'?{profileId:item.operation.profileId,profile:item.operation.profile,revision:snapshot.revisions[item.key]||0}:{operation:item.operation,revision:snapshot.revisions[item.key]||0});
-   const read=await runtime.cloud.request('snapshot');if(item.operation.type==='profile'?!libraryMutationSatisfied(read.documents,item.operation):!isDeepStrictEqual(read.documents[item.key],change.data))throw Error('资料回读不一致，原编辑仍在本机');
+   try{checkScope();await cloud.request(item.operation.type==='profile'?'profile':'library',item.operation.type==='profile'?{profileId:item.operation.profileId,profile:item.operation.profile,revision:snapshot.revisions[item.key]||0}:{operation:item.operation,revision:snapshot.revisions[item.key]||0});checkScope();
+   const read=await cloud.request('snapshot');checkScope();if(item.operation.type==='profile'?!libraryMutationSatisfied(read.documents,item.operation):!isDeepStrictEqual(read.documents[item.key],change.data))throw Error('资料回读不一致，原编辑仍在本机');
    snapshot=read;item.status='confirmed';item.confirmedAt=new Date().toISOString();delete item.error;runtime.store.set('appMutation:'+item.id,item);
   }catch(error){item.error=error.message;runtime.store.set('appMutation:'+item.id,item);break;}
  }
- const scope=workbenchScope(runtime.store.get('pair'));runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});
+ if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.filter(i=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+i.id)?.status)).length,error:'工作区已切换，原资料计划保留，停止写入'};
+ runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});
  return{pending:pendingApplication(runtime).length,error:pendingApplication(runtime).find(item=>item.error)?.error||''};
 }

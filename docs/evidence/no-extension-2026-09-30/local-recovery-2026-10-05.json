@@ -1,0 +1,22 @@
+{
+  "kind": "local_recovery_checkpoint_not_complete_migration",
+  "date": "2026-10-05",
+  "originalContract": {"source": "extension/background.js recoverJournalLocalDocuments", "documentKeys": 21, "connectionCredentialsCopied": false, "batchStateCopied": false},
+  "regression": {"passed": 373, "failed": 0, "skipped": 0},
+  "isolatedChecks": ["all_21_documents_through_real_http_and_device_authenticated_d1", "archive_source_and_previous_versions_before_cas", "dropped_write_response_sqlite_restart_same_plan_and_operation_ids", "source_change_before_and_during_comparison_rejected", "workspace_switch_stops_following_writes", "remote_conflicts_preserved", "explicit_cloud_choice_reported_as_exclusion", "receipt_timeline_and_media_history_preserved", "six_page_ui_source_selection_subset_and_original_plan_resume"],
+  "liveChecks": {
+    "validSources": 7,
+    "unavailableSources": 2,
+    "cachedPreviewChanges": [],
+    "originalSnapshotCounts": {"profiles": 8, "records": 105, "targets": 2905, "annotations": 150, "favorites": 0},
+    "originalSnapshotChangedKeys": ["siteAnnotations", "siteProfiles", "submissionTimeline", "sheetTableData", "domainMetricsCache", "linkMonitorResults"],
+    "confirmationRejected": true,
+    "privateCloudKeyRejected": true,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30},
+    "restoreWrites": 0,
+    "newRealSubmissions": 0
+  },
+  "workerVersion": "1f1014a6-7ed9-43e4-9410-6b5cb876d93b",
+  "remaining": ["special_launch_flows", "dynamic_controls", "historical_local_favorites", "old_device_media_associations", "large_backups", "desktop_notification_display"],
+  "note": "恢复流程已实现并隔离验证，真实检查只列来源、比较和拒绝无效请求。没有将旧快照整体覆盖新云端，也不据此声称原浏览器全部历史已恢复。"
+}

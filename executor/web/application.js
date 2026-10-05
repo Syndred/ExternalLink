@@ -2,6 +2,31 @@ import {showSetup} from './setup.js';
 import {renderCommentStudio} from './comment-studio.js';
 const consumedQuickOpen=new Set();
 let activeSinglePagePanel=null;
+const recoveryLabels={siteProfiles:'产品资料与素材版本',siteAnnotations:'网站条件、备注、收藏与分组',sheetTableData:'外链网站表格',urlList:'网址列表',submissionRecords:'历史收件记录',submissionTimeline:'记录时间线',deletedSubmissionKeys:'移出队列的网站',activeSiteId:'原当前产品',selectedSiteIds:'原所选产品',domainBlacklist:'域名黑名单',targetFilters:'质量与填写筛选设置',domainMetricsCache:'域名权重与年龄',linkMonitorResults:'外链监测结果',linkMonitorSchedule:'外链监测计划',autoSubmitStandardWpComments:'评论提交设置',autoSubmitDirectoryListings:'目录投稿设置',cfgEmail:'默认联系人邮箱',cfgName:'默认联系人姓名',cfgCommentTemplate:'默认评论文本',submissionSchemaVersion:'账本版本',timelineSchemaVersion:'时间线版本'};
+async function showLocalRecovery(){
+ if(!detail.open)detail.showModal();
+ const panel=$('detail-content'),listing=await request('/localRecoverySources',{}),available=listing.sources.filter(s=>!s.unavailable);
+ const scopeText={full:'已核对完整工作区',workspace_only:'只记录工作区编号',unscoped:'旧备份未记录工作区，请核对来源'};
+ const selection=el('select',{'aria-label':'本机恢复来源'},available.map(s=>el('option',{value:s.id,text:s.label+' · '+s.profiles+' 个产品 · '+s.targets+' 个网站'}))),previewPanel=el('div'),message=el('p',{role:'status'}),sourceInfo=el('p',{class:'muted'});
+ const sourceChanged=()=>{const source=available.find(s=>s.id===selection.value);sourceInfo.textContent=source?scopeText[source.scopeVerification]||'来源工作区未记录':'';previewPanel.replaceChildren();};selection.onchange=sourceChanged;sourceChanged();
+ const recoveryMessage=result=>result.remaining?'恢复前本机备份已保存，还有 '+result.remaining+' 类资料待同步或解决冲突。'+(result.error?' '+result.error:''):result.excludedKeys?.length?'恢复计划已结束；'+result.excludedKeys.length+' 类资料按你的冲突选择保留云端内容，其余已恢复并回读。':'所选资料已恢复并独立回读云端，恢复前备份已保存。';
+ const resume=(id,confirmation)=>async()=>{const result=await request('/submissionJournalRecoverLocal',{id,confirmation:confirmation.value});await load();message.textContent=recoveryMessage(result);};
+ const pending=(listing.plans||[]).filter(p=>p.remaining||p.status==='queued').map(plan=>{
+  const confirmation=el('input',{'aria-label':'继续恢复确认文字'});
+  return el('section',{},[el('h3',{text:'继续未完成的本机恢复'}),el('p',{text:'恢复内容：'+(plan.keys||[]).map(k=>recoveryLabels[k]||'补充资料').join('、')+'；还有 '+plan.remaining+' 类资料待确认。沿用上次所选备份和恢复计划。'}),fieldRow('输入“恢复所选本机资料”确认',confirmation),button('继续原本机恢复计划',resume(plan.id,confirmation),true)]);
+ });
+ const compare=button('比较恢复内容',async()=>{
+  const result=await request('/previewLocalRecovery',{sourceId:selection.value}),preview=result.preview,selected=new Set(preview.changes),confirmation=el('input',{'aria-label':'本机资料恢复确认文字'});
+  previewPanel.replaceChildren(el('p',{text:'来源 '+preview.sourceCounts.profiles+' 个产品、'+preview.sourceCounts.targets+' 个网站、'+preview.sourceCounts.records+' 条历史记录；当前 '+preview.currentCounts.profiles+' 个产品、'+preview.currentCounts.targets+' 个网站。'}),...preview.changes.map(key=>checkControl(recoveryLabels[key]||'补充资料 '+key,true,checked=>{if(checked)selected.add(key);else selected.delete(key);})),fieldRow('输入“恢复所选本机资料”确认',confirmation),button('恢复所选资料',async()=>{
+   const restored=await request('/submissionJournalRecoverLocal',{id:preview.id,keys:[...selected],confirmation:confirmation.value});await load();message.textContent=recoveryMessage(restored);
+   if(restored.remaining)previewPanel.append(button('继续原本机恢复计划',resume(preview.id,confirmation)));
+  },true));
+  if(!preview.changes.length)previewPanel.replaceChildren(el('p',{text:'来源与当前资料一致，无需恢复。'}));
+ });
+ compare.disabled=!available.length;
+ panel.replaceChildren(el('h2',{text:'从本机备份恢复资料'}),el('p',{text:'选择本机保留的原资料，比较后选择恢复哪些内容。选中的资料文档按来源恢复；现有收件证据、时间线及素材历史受保护，执行前先保存完整本机备份。连接凭据和投稿批次不会被旧备份替换。'}),...pending,selection,sourceInfo,compare,previewPanel,message,...listing.sources.filter(s=>s.unavailable).map(s=>el('p',{class:'muted',text:s.label+'：'+s.error})));
+ if(!available.length)message.textContent='未发现可用的本机资料快照，可通过原插件备份导入入口恢复。';
+}
 async function closeSinglePagePanel(){const id=activeSinglePagePanel;activeSinglePagePanel=null;if(id)await request('/sidepanelClosed',{panelId:id});}
 async function showSinglePage(){
  await closeSinglePagePanel();const listing=await request('/browserLibraryPages',{});if(!listing.pages.length)throw Error('执行器浏览器中没有普通网页，请先打开要填写的网站');
@@ -67,6 +92,7 @@ function toolbar(includeProfile=true){const search=el('input',{type:'search',pla
 let renderRows=()=>{};
 function paginated(rows,headers,makeRow,target){const pages=Math.ceil(rows.length/40);page=Math.min(page,Math.max(0,pages-1));target.replaceChildren(table(headers,rows.slice(page*40,page*40+40).map(makeRow)),el('div',{class:'pager'},[el('span',{class:'muted',text:rows.length+' 项 · '+(page+1)+' / '+Math.max(1,pages)}),button('上一页',()=>{page=Math.max(0,page-1);renderRows();}),button('下一页',()=>{page=Math.min(Math.max(0,pages-1),page+1);renderRows();})]));}
 function render(){if(!data)return;content.replaceChildren();$('heading').textContent={products:'我的网站',library:'外链库',overview:'提交总览',tasks:'运行任务',comments:'AI 评论',settings:'设置与备份'}[view];document.querySelectorAll('[data-view]').forEach(b=>{if(b.dataset.view===view)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});({products:renderProducts,library:renderLibrary,overview:renderOverview,tasks:renderTasks,comments:renderComments,settings:renderSettings})[view]();if(['library','settings'].includes(view))renderDataJobs();if(view==='library')renderQuickOpenJobs();if(view==='settings'){renderAssistantSettings();renderMonitorSettings();}renderMonitorAlerts();
+ if(view==='settings')content.append(button('从本机备份恢复资料',showLocalRecovery));
  if(['library','tasks'].includes(view))content.querySelector('.toolbar').append(button('当前网页填写',showSinglePage));
  if(view==='library')content.querySelector('.toolbar').append(button('单站投稿队列',showSubmissionQueue));
  if(view==='tasks'){content.querySelector('.toolbar').append(button('停止本次执行',showStopExecution));if(data.executionStopped)content.prepend(el('p',{class:'notice',text:'本次执行已停止。自动页签已按归属清理，人工页签及任务记录保留。'}));}

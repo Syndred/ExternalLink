@@ -3,12 +3,14 @@ import './submission-timeline.js';
 import {backupKeys,mergeApplicationBackup} from './application-backup.mjs';
 import {mergeSubmify,applySubmifyGates} from './submify-sync.mjs';
 import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
+import {recoveryDocument} from './local-recovery.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
 export function libraryMutation(documents,operation,options={}){
  const copy=value=>options.inPlace?value:structuredClone(value);
  const at=operation.at||'',id=operation.id;if(!id||!at)fail('缺少修改身份');
+ if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
  if(operation.type==='pin'){
   const key=keyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return keyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return keyOf(s.split('|')[0])!==key;}catch{return true;}});
   return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
@@ -123,6 +125,7 @@ export function libraryMutation(documents,operation,options={}){
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='recover_local')return JSON.stringify(documents[operation.key])===JSON.stringify(recoveryDocument(documents,operation.key,operation.data));
  if(operation.type==='set_deleted')return(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
  if(operation.type==='remove_queue'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>documents.siteAnnotations?.[k]?.statuses?.length===1&&documents.siteAnnotations[k].statuses[0]==='deleted'&&(!operation.note||documents.siteAnnotations[k].note===operation.note));}
  if(operation.type==='clear_annotation'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>!documents.siteAnnotations?.[k]||Object.keys(documents.siteAnnotations[k]).every(field=>['url','domain','formKnowledge'].includes(field)));}

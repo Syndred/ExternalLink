@@ -57,6 +57,7 @@ import {clearSiteAnnotation} from './library-reset.mjs';
 import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
+import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from './local-recovery.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -500,7 +501,7 @@ export class Runtime {
   tick() {
     // API operations own the single writer until their readbacks finish.
     // A paused timer must not flush their in-flight events concurrently.
-    if (this.controlBusy) return;
+    if (this.controlBusy||this.localRecoveryOperation) return;
     if(Date.now()<(this.syncRetryAt||0))return;
     const startupGate=this.store.get('libraryPlan')?.globalPause;
     if(this.store.get('paused')===true&&(startupGate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(startupGate?.reason||''))&&!this.store.get('offlineMode')?.enabled){this.cloudError=startupGate.reason;return;}
@@ -1174,6 +1175,9 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(action==='localRecoverySources')return localRecoverySources(this);
+    if(action==='previewLocalRecovery')return previewLocalRecovery(this,input);
+    if(action==='submissionJournalRecoverLocal')return recoverLocalDocuments(this,input);
     if(action==='sidepanelOpened')return sidepanelOpened(this,input);
     if(action==='sidepanelClosed')return sidepanelClosed(this,input);
     if(action==='sidepanelDetect')return sidepanelDetect(this,input);

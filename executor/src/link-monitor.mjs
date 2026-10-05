@@ -25,7 +25,7 @@ async function run(runtime,job){try{
  }
  job.status='completed';job.completedAt=new Date().toISOString();runtime.store.set('linkMonitorJob:'+job.id,job);
  const alerts=runtime.store.values('monitorNotification:').filter(a=>a.scope===job.scope&&a.id.startsWith(job.id+'-')&&!a.desktopDelivery),schedule=runtime.store.get('applicationSnapshot')?.snapshot?.documents?.linkMonitorSchedule;
- if(alerts.length&&schedule?.desktopNotifications!==false){const delivery=await(runtime.notifyDesktop||notifyDesktop)('ExternalLink 外链状态变化',alerts.length+' 个已监测链接无法访问或未发现目标外链，请打开工作台复查。');for(const alert of alerts)runtime.store.set('monitorNotification:'+alert.id,{...alert,desktopDelivery:delivery});}
+ if(job.source==='schedule'&&alerts.length&&schedule?.desktopNotifications!==false){const delivery=await(runtime.notifyDesktop||notifyDesktop)('ExternalLink 外链状态变化',alerts.length+' 个已监测链接无法访问或未发现目标外链，请打开工作台复查。');for(const alert of alerts)runtime.store.set('monitorNotification:'+alert.id,{...alert,desktopDelivery:delivery});}
  }catch(error){job.status='paused';job.error=error.message;}runtime.store.set('linkMonitorJob:'+job.id,job);
 }
 export function dismissMonitorAlert(runtime,input){const key='monitorNotification:'+input.id,alert=runtime.store.get(key);if(!alert||alert.scope!==workbenchScope(runtime.store.get('pair')))throw Error('监测提醒不存在');runtime.store.set(key,{...alert,dismissed:true});return{ok:true};}

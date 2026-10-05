@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-05",
+  "completion": "not_complete",
+  "priorCommit": "0108c3479c3447a16e2cb26e770ca7681c18d495",
+  "unitTests": {"passed": 393, "failed": 0, "skipped": 0},
+  "originalBehavior": {
+    "source": "extension/background.js runLinkMonitor",
+    "manualChecksNotify": false,
+    "scheduledPreviouslyLiveLinkLossNotifies": true,
+    "desktopOptOutHonored": true
+  },
+  "windowsDisplayProof": {
+    "platform": "win32",
+    "nativeEvent": "BalloonTipShown",
+    "displayedAt": "2026-10-05T10:34:26.522Z",
+    "productionNotificationHelper": true,
+    "productionScheduledMonitor": true,
+    "monitoredSource": "isolated loopback HTTP listing",
+    "deliverySurvivesSqliteReopen": true,
+    "receiptUnchanged": true,
+    "workbenchAlertRetained": true,
+    "requestMethods": ["GET"],
+    "zeroProcessExitAloneIsNotDisplayProof": true,
+    "screenshotCaptured": false,
+    "reference": "https://learn.microsoft.com/zh-cn/dotnet/api/system.windows.forms.notifyicon.balloontipshown"
+  },
+  "uiRegression": {"pages": 6, "displayedAndNotConfirmedShownInChinese": true},
+  "localServicesReloaded": true,
+  "liveReadOnlyState": {
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30}
+  },
+  "realUserAlerts": 0,
+  "newRealSubmissions": 0
+}

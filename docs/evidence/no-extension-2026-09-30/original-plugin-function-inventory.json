@@ -833,13 +833,23 @@
     "realOriginalHistoryImported": false,
     "evidence": "large-backup-2026-10-05.json"
   },
+  "desktopNotificationCheckpoint": {
+    "platform": "win32",
+    "sourceImplemented": true,
+    "originalManualAndScheduledBehaviorVerified": true,
+    "actualNativeDisplayEvent": "BalloonTipShown",
+    "displayedAt": "2026-10-05T10:34:26.522Z",
+    "deliverySurvivesSqliteReopen": true,
+    "chineseUiVerified": true,
+    "localServicesReloaded": true,
+    "evidence": "desktop-notification-2026-10-05.json"
+  },
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",
     "dynamic_controls",
     "historical_local_favorites",
     "old_device_media_associations",
-    "original_large_backup_history",
-    "desktop_notification_display"
+    "original_large_backup_history"
   ]
 }

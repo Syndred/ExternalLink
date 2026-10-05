@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {join,resolve,sep} from 'node:path';
+import {tmpdir} from 'node:os';
+import {Store} from '../src/store.mjs';
+import {startLinkMonitor} from '../src/link-monitor.mjs';
+import {notifyDesktop} from '../src/desktop-notification.mjs';
+import {applicationMutation} from '../../core/application-mutation.mjs';
+if(process.platform!=='win32')throw Error('此验收需真实Windows桌面，不以模拟显示替代');
+const home=await mkdtemp(join(tmpdir(),'externallink-notification-')),file=join(home,'outbox.sqlite'),methods=[];
+const server=http.createServer((req,res)=>{methods.push(req.method);res.setHeader('Content-Type','text/html');res.end('<title>Isolated monitored listing</title><p>The previous fixture link has been removed.</p>');});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+let store=new Store(file);try{
+ const url='http://127.0.0.1:'+server.address().port+'/listing',key='publisher.example::fixture',receipt={status:'success',profileId:'fixture',destinationUrl:'https://publisher.example/submit',publicUrl:url,publicationStatus:'published',evidence:'Isolated previous receipt'};
+ const snapshot={documents:{siteProfiles:{fixture:{id:'fixture',url:'https://product.example',fields:{Name:'隔离提醒验收产品'}}},submissionRecords:{[key]:receipt},linkMonitorResults:{[key]:{status:'live',url}},linkMonitorSchedule:{enabled:true,desktopNotifications:true},submissionTimeline:{},siteAnnotations:{},sheetTableData:{entries:[]}},revisions:{siteProfiles:1,submissionRecords:1,linkMonitorResults:1,linkMonitorSchedule:1,submissionTimeline:1}};
+ store.set('pair',{endpoint:'https://isolated-cloud.example',workspaceId:'notification-fixture'});store.set('paused',true);store.set('acceptanceBatch',{id:'original-fixture-batch',cursor:13,count:30,status:'paused'});
+ const runtime={store,status:()=>({tasks:[],paused:true,busy:false,pendingEvents:0}),notifyDesktop:(title,body)=>notifyDesktop(title+'（迁移验收）',body+' 本次为隔离测试，没有真实投稿。'),cloud:{async request(route,input){if(route==='snapshot')return structuredClone(snapshot);if(route==='library'){const change=applicationMutation(snapshot.documents,input.operation);assert.equal(input.revision,snapshot.revisions[change.key]||0);snapshot.documents[change.key]=change.data;snapshot.revisions[change.key]=(snapshot.revisions[change.key]||0)+1;return{ok:true};}if(route==='workspace/timeline'){snapshot.documents.submissionTimeline=globalThis.ExtLinkSubmissionTimeline.append(snapshot.documents.submissionTimeline,input.event);return{ok:true};}if(route==='workspace/journal-documents')return{documents:structuredClone(snapshot.documents)};throw Error(route);}}};
+ const started=await startLinkMonitor(runtime,{scheduled:true});await runtime.linkMonitorJob;assert.equal(store.get('linkMonitorJob:'+started.job.id).status,'completed');const alerts=store.values('monitorNotification:');assert.equal(alerts.length,1);assert.equal(alerts[0].desktopDelivery.status,'displayed');assert.equal(alerts[0].desktopDelivery.evidence,'BalloonTipShown');assert.ok(alerts[0].desktopDelivery.displayedAt);assert.equal(alerts[0].dismissed,false);assert.deepEqual(snapshot.documents.submissionRecords[key],receipt);assert.deepEqual(methods,['GET']);assert.equal(store.get('paused'),true);assert.equal(store.values('task:').length,0);assert.equal(store.pending().length,0);
+ store.close();store=new Store(file);assert.deepEqual(store.values('monitorNotification:')[0].desktopDelivery,alerts[0].desktopDelivery);assert.equal(store.get('acceptanceBatch').cursor,13);
+ console.log(JSON.stringify({kind:'isolated_live_windows_monitor_notification',ok:true,scheduledLossDetected:true,actualNativeDisplayEvent:true,evidence:alerts[0].desktopDelivery.evidence,displayedAt:alerts[0].desktopDelivery.displayedAt,deliverySurvivesSqliteReopen:true,originalReceiptPreserved:true,workbenchAlertRetained:true,requests:methods,realUserAlerts:0,newRealSubmissions:0}));
+}finally{store.close();await new Promise(r=>server.close(r));const target=resolve(home),base=resolve(tmpdir())+sep;if(!target.startsWith(base)||!target.slice(base.length).startsWith('externallink-notification-'))throw Error('unsafe fixture cleanup path');await rm(target,{recursive:true,force:true});}

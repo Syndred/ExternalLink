@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-05",
+  "recordedAtUtc": "2026-10-05T10:02:01Z",
+  "reason": "用户要求先写好进度并推送",
+  "completion": "not_complete",
+  "sourceCommit": "d4825b448e13b6e45128625de38d61b6fc972452",
+  "gitPull": {"command": "git pull --ff-only", "result": "Already up to date"},
+  "freshUnitTests": {"command": "node --test tests/*.test.mjs", "passed": 384, "failed": 0, "skipped": 0, "exitCode": 0},
+  "freshReadOnlyState": {
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "productsIncludingArchived": 9,
+    "targets": 2950,
+    "combinations": 897,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30}
+  },
+  "checkpointRealSubmissions": 0,
+  "largeBackup": {
+    "uiLimitBytes": 8388608,
+    "cloudDocumentLimitBytes": 8388608,
+    "chunkedTransferImplemented": false,
+    "largeFileEndToEndVerified": false
+  },
+  "remaining": ["latest original browser favorites and data", "old device media associations", "remaining dynamic controls", "large backup transfer and recovery", "desktop notification display", "real Product Hunt page and remote media upload"],
+  "priorEvidence": "product-hunt-learning-2026-10-05.json"
+}

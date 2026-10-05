@@ -33,6 +33,37 @@ function fixture(){
   const bucket={async head(k){return objects.has(k)?{}:null;},async put(k,v){objects.set(k,new Uint8Array(v));},async get(k){reads++;return objects.has(k)?{arrayBuffer:async()=>objects.get(k).slice().buffer}:null;}};
   return{db,bucket,objects,sqlite,reads:()=>reads,store:new D1Store(db,bucket,'one')};
 }
+test('documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history',async()=>{
+ const f=fixture();try{
+  const data={text:'资料😀'.repeat(1300000)};
+  assert.ok(new TextEncoder().encode(JSON.stringify(data)).length>8*1024*1024);
+  await f.store.putDocument('siteProfiles',data,0);
+  const row=f.sqlite.prepare('SELECT * FROM documents WHERE key=?').get('siteProfiles');
+  assert.ok(f.objects.size>2,'large content must be stored in separate immutable parts');
+  assert.deepEqual((await f.store.document('siteProfiles')).data,data);
+  const count=f.objects.size;assert.equal((await f.store.putDocument('siteProfiles',data,1)).unchanged,true);assert.equal(f.objects.size,count);
+  const snap=await(await deviceSnapshotResponse(f.store,'large-device')).json();assert.deepEqual(snap.documents.siteProfiles,data);
+  await f.store.putDocument('siteProfiles',{text:'later'},1);
+  assert.deepEqual(await f.store.readObject(row.object_key,row.checksum),data);
+  assert.equal(f.sqlite.prepare('SELECT count(*) n FROM document_history').get().n,2);
+  await assert.rejects(new D1Store(f.db,f.bucket,'other').readObject(row.object_key,row.checksum),/工作区|校验/);
+  const part=[...f.objects.keys()].find(k=>k.includes('/chunks/'));assert.ok(part);f.objects.set(part,new TextEncoder().encode('corrupt'));
+  await assert.rejects(f.store.readObject(row.object_key,row.checksum),/校验/);
+ }finally{f.sqlite.close();}
+});
+test('an interrupted large-object write cannot advance its D1 pointer and resumes the same content without duplicated parts',async()=>{
+ const f=fixture();try{
+  await f.store.putDocument('siteAnnotations',{note:'before'},0);
+  const original=f.bucket.put;let puts=0;f.bucket.put=async(...args)=>{if(++puts===2)throw Error('part transfer interrupted');return original(...args);};
+  const data={note:'大文件'.repeat(1300000)};
+  await assert.rejects(f.store.putDocument('siteAnnotations',data,1),/interrupted/);
+  assert.equal((await f.store.document('siteAnnotations')).revision,1);assert.deepEqual((await f.store.document('siteAnnotations')).data,{note:'before'});
+  f.bucket.put=original;await f.store.putDocument('siteAnnotations',data,1);assert.deepEqual((await f.store.document('siteAnnotations')).data,data);
+  const manifestKey=f.sqlite.prepare('SELECT object_key FROM documents WHERE key=?').get('siteAnnotations').object_key;
+  f.objects.set(manifestKey,new TextEncoder().encode('{"checksum":"altered","parts":[]}'));
+  await assert.rejects(deviceSnapshotResponse(f.store,'device'),/校验/);
+ }finally{f.sqlite.close();}
+});
 test('large documents live outside D1, CAS prevents another browser overwriting changes and retains history',async()=>{
   const f=fixture(),data={text:'x'.repeat(2100000)};
   assert.equal((await f.store.putDocument('siteProfiles',data,0)).revision,1);

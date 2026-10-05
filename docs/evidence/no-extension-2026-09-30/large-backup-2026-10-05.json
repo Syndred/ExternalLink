@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-05",
+  "completion": "not_complete",
+  "priorCommit": "2ef988bb5fa08b48706a948cfa769240adacc346",
+  "unitTests": {"passed": 391, "failed": 0, "skipped": 0},
+  "isolatedBrowserHttpD1": {
+    "fileBytes": 12351290,
+    "originalDocumentCount": 21,
+    "productionUiAndLocalServices": true,
+    "authenticatedDeviceWorkerRoutes": true,
+    "localSourceResumedAfterProcessRestart": true,
+    "previouslyUploadedPartSkipped": true,
+    "lostCommitResponseRecoveredByReadback": true,
+    "sameMutationIds": true,
+    "allDocumentsComparedToOriginalMerge": true,
+    "receiptAndMediaHistoryPreserved": true,
+    "fixedBatchPaused": true,
+    "externalRequests": 0,
+    "submissionTasks": 0
+  },
+  "sourceFeatures": {
+    "localPartBytes": 524288,
+    "deviceTransferPartBytes": 524288,
+    "largeR2DocumentChunkBytes": 4194304,
+    "perPartAndFullSha256": true,
+    "onlyKeyFragmentInEachMutation": true,
+    "immutableHistoryAndCas": true,
+    "corruptPartAndManifestRejected": true,
+    "interruptedObjectDoesNotAdvancePointer": true,
+    "staleUnconfirmedPreviewCanRecompare": true,
+    "cloudChoiceExplicitExclusions": true,
+    "oldQueuedBackupFormatSupported": true
+  },
+  "deployment": {"workerVersion": "faba8993-24ae-4068-9798-4b285a00e33e", "localServicesReloaded": true},
+  "liveSyntheticTransfer": {
+    "fileBytes": 11900308,
+    "actualR2PartsAndFullChecksumVerified": true,
+    "originalProductIdentityValidatorRejected": true,
+    "businessRevisionsUnchanged": true,
+    "localUploadRoutesLoaded": true,
+    "localSchemaLoaded": true,
+    "uiSourceUpdated": true,
+    "pendingUploads": 0,
+    "paused": true,
+    "busy": false,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30},
+    "realUserImports": 0,
+    "newRealSubmissions": 0
+  },
+  "unverified": ["arbitrarily larger backup sizes", "latest original browser data", "old device media associations", "remaining dynamic controls", "desktop notification display", "real special launch pages"]
+}

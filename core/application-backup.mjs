@@ -13,6 +13,19 @@ export function validateApplicationBackup(raw){
  return value;
 }
 export function exportApplicationBackup(documents){return{format:globalThis.ExtLinkBackup.FORMAT,version:Number(documents.submissionSchemaVersion||1),exportedAt:new Date().toISOString(),...Object.fromEntries(backupKeys.filter(k=>documents[k]!==undefined).map(k=>[k,structuredClone(documents[k])])),submissionRecords:structuredClone(documents.submissionRecords||{}),siteProfiles:structuredClone(documents.siteProfiles||{}),submissionTimeline:structuredClone(documents.submissionTimeline||{})};}
+export function backupKeyDependencies(key){
+ if(!backupKeys.includes(key))throw Error('不支持的备份字段');
+ return [...new Set([key,'submissionSchemaVersion',...(['activeSiteId','selectedSiteIds'].includes(key)?['siteProfiles']:[]),...(['submissionTimeline','timelineSchemaVersion'].includes(key)?['submissionTimeline','timelineSchemaVersion']:[])])];
+}
+export function applicationBackupFragment(backup,key){
+ if(!backupKeys.includes(key))throw Error('不支持的备份字段');
+ const fragment={format:globalThis.ExtLinkBackup.FORMAT,version:backup.version,submissionRecords:{},siteProfiles:{}};
+ if(Object.hasOwn(backup,key))fragment[key]=structuredClone(backup[key]);
+ if(['activeSiteId','selectedSiteIds'].includes(key))fragment.siteProfiles=Object.fromEntries(Object.keys(backup.siteProfiles||{}).map(id=>[id,{id}]));
+ if(key==='submissionTimeline')fragment.timelineSchemaVersion=backup.timelineSchemaVersion;
+ if(key==='timelineSchemaVersion'&&Object.hasOwn(backup,'submissionTimeline'))fragment.submissionTimeline={};
+ return fragment;
+}
 export function mergeApplicationBackup(documents,raw){
  const backup=validateApplicationBackup(raw),merged=globalThis.ExtLinkBackup.mergeBackup(documents,backup,Math.max(Number(documents.submissionSchemaVersion||1),Number(backup.version||1)));
  // Version history is additive even when an incoming profile selects an older asset.

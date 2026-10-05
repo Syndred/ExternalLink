@@ -53,8 +53,9 @@ const server = http.createServer(async (req, res) => {
   const route = new URL(req.url, 'http://localhost').pathname;
   if (!['/pair','/setupInfo','/setup'].includes(route) && !match(req.headers.authorization, `Bearer ${pair?.localToken}`)) return send(res, { ok: false, error: '尚未配对或本机凭据失效' }, 401);
   try {
-    let text = '';
-    for await (const chunk of req) { text += chunk; if (text.length > (['/mediaUpload','/previewBackup','/libraryMutation'].includes(route)?9:1)*1024 * 1024) throw new Error('请求过大'); }
+    const bodyParts=[];let bodyBytes=0;
+    for await (const chunk of req) { bodyBytes+=chunk.length;if(bodyBytes>(['/mediaUpload','/previewBackup','/libraryMutation'].includes(route)?9:1)*1024*1024)throw new Error('请求过大');bodyParts.push(chunk); }
+    const text=Buffer.concat(bodyParts).toString('utf8');
     const input = text ? JSON.parse(text) : {};
     if(route==='/setupInfo'&&req.method==='GET'){if(!localSetupOrigin)throw Error('请使用本机连接页面');send(res,await setupInfo(runtime));return;}
     if(route==='/setup'&&req.method==='POST'){if(!localSetupOrigin)throw Error('请使用本机连接页面');send(res,await connectWorkbench(runtime,input));return;}
@@ -100,7 +101,7 @@ const server = http.createServer(async (req, res) => {
       if(route==='/registerAcceptance')return runtime.control('registerAcceptance',input);
       if(route==='/runTask')return runtime.control('runTask',input);
       if(route==='/startAcceptance')return runtime.control('startAcceptance',input);
-      if(['/appData','/taskDetails','/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/appData','/taskDetails','/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/backupUploadStart','/backupUploadPart','/backupUploadComplete','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'].includes(route))return runtime.control(route.slice(1),input);
       if (route === '/preview') return runtime.preview(input);
       if (route === '/annotate') {
         const task = store.get(`task:${input.taskId}`); if (!task) throw new Error('任务不存在');

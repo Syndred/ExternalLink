@@ -4,6 +4,10 @@ import { createHash } from 'node:crypto';
 export class Cloud {
   constructor(config, {onNetworkFailure, onSuccess} = {}) { this.config = config; this.onNetworkFailure = onNetworkFailure; this.onSuccess = onSuccess; }
   async request(route, body, method = body ? 'POST' : 'GET') {
+    if(method==='POST'&&['library','profile'].includes(route)&&body&&this.config.storageBackend==='d1'){
+      const bytes=Buffer.from(JSON.stringify(body));
+      if(bytes.length>1024*1024)return this.transferLibrary(route,bytes);
+    }
     const base = new URL(this.config.endpoint);
     if (base.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(base.hostname)) throw new Error('云端必须使用 HTTPS');
     const url = new URL((this.config.storageBackend==='d1'?'/v2/executor/':'/v1/executor/') + route, base);
@@ -38,6 +42,15 @@ export class Cloud {
     }
     this.onSuccess?.();
     return data;
+  }
+  async transferLibrary(route,bytes){
+    const config=this.config,identity=JSON.stringify([config.endpoint,config.workspaceId,config.deviceToken]),check=()=>{if(identity!==JSON.stringify([this.config.endpoint,this.config.workspaceId,this.config.deviceToken]))throw Error('工作区或设备已切换，原备份传输保留');};
+    const id=createHash('sha256').update(bytes).digest('hex'),parts=[];
+    for(let offset=0;offset<bytes.length;offset+=512*1024){const part=bytes.subarray(offset,Math.min(offset+512*1024,bytes.length));parts.push({sha256:createHash('sha256').update(part).digest('hex'),bytes:part.length});}
+    check();const status=await this.request('library-transfer/start',{id,route,bytes:bytes.length,parts});check();
+    const present=new Set(status.present||[]);
+    for(let index=0;index<parts.length;index++){if(present.has(index))continue;check();const part=bytes.subarray(index*512*1024,index*512*1024+parts[index].bytes);await this.request('library-transfer/part',{id,index,data:part.toString('base64')});check();}
+    check();return this.request('library-transfer/commit',{id});
   }
   async flush(store) {
     for (const event of store.pendingBatch ? store.pendingBatch(100) : store.pending()) {

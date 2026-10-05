@@ -822,13 +822,24 @@
     "deployed": true,
     "evidence": "product-hunt-learning-2026-10-05.json"
   },
+  "largeBackupCheckpoint": {
+    "sourceImplemented": true,
+    "isolatedProductionHttpBrowserVerified": true,
+    "fileBytesVerified": 12351290,
+    "originalDocumentsCompared": 21,
+    "processRestartAndSamePlanVerified": true,
+    "liveR2TransferBytesVerified": 11900308,
+    "deployed": true,
+    "realOriginalHistoryImported": false,
+    "evidence": "large-backup-2026-10-05.json"
+  },
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",
     "dynamic_controls",
     "historical_local_favorites",
     "old_device_media_associations",
-    "large_backups",
+    "original_large_backup_history",
     "desktop_notification_display"
   ]
 }

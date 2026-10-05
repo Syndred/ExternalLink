@@ -10,18 +10,19 @@ import '../../../core/submission-timeline.js';
 import '../../../core/executor-contract.js';
 import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
 import {profileMediaReferences} from '../../../core/media-assets.mjs';
-import {backupKeys} from '../../../core/application-backup.mjs';
+import {backupKeys,backupKeyDependencies} from '../../../core/application-backup.mjs';
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
+import {libraryTransfer} from './library-transfer.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
 export async function d1Executor(request,env,workspace,plan,assistant){
- const db=env.LEDGER_DB,store=new D1Store(db,env.MEDIA_BUCKET,workspace),url=new URL(request.url),path=url.pathname.replace(/^\/v[12]\/executor\//,'');
+ const db=env.LEDGER_DB,store=new D1Store(db,env.MEDIA_BUCKET,workspace),url=new URL(request.url);let path=url.pathname.replace(/^\/v[12]\/executor\//,'');
  try{
   const token=parseBearerToken(request.headers.get('Authorization'))||'',admin=!!env.APP_ACCESS_TOKEN&&await secureEqual(token,env.APP_ACCESS_TOKEN);
   const raw=request.method==='GET'?'{}':await request.text();if(raw.length>9*1024*1024)fail('请求过大',413);
-  const input=JSON.parse(raw);
+  let input=JSON.parse(raw);
   if(path==='devices'&&request.method==='POST'){
    let enrollment;try{enrollment=JSON.parse(env.EXECUTOR_ENROLLMENT||'null');}catch{}
    const enrolled=!admin&&token.startsWith('ele_')&&enrollment?.workspaceId===workspace&&Number(enrollment.expiresAt)>Date.now()&&await secureEqual(await hash(token),enrollment.hash||'');
@@ -34,6 +35,12 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path==='revoke'&&request.method==='POST'){if(!admin)fail('未授权',401);await db.prepare('UPDATE executor_devices SET revoked=1 WHERE workspace=? AND id=?').bind(workspace,input.deviceId).run();return json({ok:true});}
   const device=token.startsWith('eld_')?await db.prepare('SELECT id FROM executor_devices WHERE workspace=? AND token_hash=? AND revoked=0').bind(workspace,await hash(token)).first():null;
   if(!device)fail('设备未授权或已撤销',401);const deviceId=device.id;
+  if(path.startsWith('library-transfer/')){
+   const action=path.slice('library-transfer/'.length);if((action==='status'&&request.method!=='GET')||(action!=='status'&&request.method!=='POST'))fail('备份传输方法无效',405);
+   const transferred=await libraryTransfer(env.MEDIA_BUCKET,workspace,deviceId,action,action==='status'?{id:url.searchParams.get('id')}:input);
+   if(action!=='commit')return json(transferred);
+   path=transferred.route;input=transferred.payload;
+  }
   if(/^ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
    if(!assistant)fail('资料与评论服务暂不可用',503);
    return json(await assistant(path.slice(3),input));
@@ -65,7 +72,7 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path.startsWith('media-assets/')&&request.method==='GET')return json({ok:true,asset:await readDeviceMedia(env.MEDIA_BUCKET,workspace,path.slice(13))});
   if(path==='media-upload'&&request.method==='POST')return json({ok:true,asset:await putDeviceMedia(env.MEDIA_BUCKET,workspace,input,(await store.document('siteProfiles'))?.data)});
   if(path==='library'&&request.method==='POST'){
-   const type=input.operation?.type,dependencies=type==='recover_local'?[input.operation.key]:type==='pin'?['urlList']:['clear_deleted','set_deleted'].includes(type)?['deletedSubmissionKeys']:type==='backup_merge'?backupKeys:type==='domain_metrics'?['domainMetricsCache']:type==='submify_refs'||type==='submify_import'||type==='create'||type==='import'||type==='edit'?['sheetTableData']:type==='monitor_result'?['submissionRecords','linkMonitorResults']:type==='monitor_publication'?['submissionRecords','linkMonitorResults','siteProfiles']:['submify_gates','mark','clear_annotation','remove_queue','form_knowledge'].includes(type)?['siteAnnotations']:type==='preferences'?['siteAnnotations','siteProfiles']:type==='timeline'?['submissionTimeline']:type==='settings'?[input.operation.key]:['siteProfiles'];
+   const type=input.operation?.type,dependencies=type==='recover_local'?[input.operation.key]:type==='pin'?['urlList']:['clear_deleted','set_deleted'].includes(type)?['deletedSubmissionKeys']:type==='backup_merge'?backupKeys:type==='backup_key_merge'?backupKeyDependencies(input.operation.key):type==='domain_metrics'?['domainMetricsCache']:type==='submify_refs'||type==='submify_import'||type==='create'||type==='import'||type==='edit'?['sheetTableData']:type==='monitor_result'?['submissionRecords','linkMonitorResults']:type==='monitor_publication'?['submissionRecords','linkMonitorResults','siteProfiles']:['submify_gates','mark','clear_annotation','remove_queue','form_knowledge'].includes(type)?['siteAnnotations']:type==='preferences'?['siteAnnotations','siteProfiles']:type==='timeline'?['submissionTimeline']:type==='settings'?[input.operation.key]:['siteProfiles'];
    if(dependencies.some(key=>!backupKeys.includes(key)))fail('外链库字段未授权',403);const documents={},revisions={};for(const key of dependencies){const row=await store.document(key);documents[key]=row?.data;revisions[key]=row?.revision||0;}
    const change=libraryMutation(documents,input.operation,{inPlace:true});
    if(revisions[change.key]!==input.revision)fail('外链库已由其他客户端更新，请先回读');

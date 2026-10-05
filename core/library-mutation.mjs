@@ -57,7 +57,7 @@ export function libraryMutation(documents,operation,options={}){
   for(const row of rows){if(!row||!/^([a-z0-9-]+\.)+[a-z0-9-]+$/.test(row.domain||'')||!['ok','unknown'].includes(row.status)||['ageDays','ageMonths'].some(k=>row[k]!=null&&(!Number.isFinite(row[k])||row[k]<0)))fail('域名查询结果无效');cache[row.domain]={...cache[row.domain],...structuredClone(row),checkedAt:at};}
   return{key:'domainMetricsCache',data:cache};
  }
- if(operation.type==='backup_merge'){
+ if(['backup_merge','backup_key_merge'].includes(operation.type)){
   if(!backupKeys.includes(operation.key))fail('不支持的备份字段');
   const merged=mergeApplicationBackup(documents,operation.backup);if(!Object.hasOwn(merged,operation.key))fail('备份未包含该字段');
   return{key:operation.key,data:merged[operation.key]};
@@ -140,7 +140,7 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='monitor_result')return documents.linkMonitorResults?.[operation.recordKey]?.monitorJobId===operation.jobId&&Object.entries(operation.result).every(([k,v])=>JSON.stringify(documents.linkMonitorResults[operation.recordKey][k])===JSON.stringify(v));
  if(operation.type==='monitor_publication')return documents.submissionRecords?.[operation.recordKey]?.status==='success'&&documents.submissionRecords[operation.recordKey].publicationStatus==='published';
  if(operation.type==='domain_metrics')return operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
- if(operation.type==='backup_merge'){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
+ if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
  if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
  if(operation.type==='settings')return JSON.stringify(documents[operation.key])===JSON.stringify(operation.value);
  if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}

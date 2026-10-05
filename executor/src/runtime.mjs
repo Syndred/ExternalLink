@@ -1220,7 +1220,7 @@ export class Runtime {
     if(action==='dismissMonitorAlert')return dismissMonitorAlert(this,input);
     if(action==='startPublicLibrarySync')return startPublicLibrarySync(this,input);
     if(action==='startDomainAge')return startDomainAge(this,input);
-    if(['exportBackup','previewBackup','importBackup'].includes(action))return workbenchBackup(this,action,input);
+    if(['exportBackup','previewBackup','importBackup','backupUploadStart','backupUploadPart','backupUploadComplete'].includes(action))return workbenchBackup(this,action,input);
     if(action==='detectOriginalTask')return detectOriginalTask(this,input);
     if(action==='fillCommentDraft')return fillCommentDraft(this,input);
     if(action==='previewBatch')return previewWorkbenchBatch(this,input);

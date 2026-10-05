@@ -2,6 +2,7 @@ import { automationSummary } from './submission-journal.mjs';
 const encode = value => JSON.stringify(value);
 export const sha256 = async bytes => [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(x => x.toString(16).padStart(2,'0')).join('');
 const fail = (message,status=409) => { throw Object.assign(new Error(message),{status}); };
+const chunkBytes=4*1024*1024;
 
 // R2 objects are immutable, content addressed and committed before D1 pointers.
 // A failed CAS leaves a recoverable object, never a pointer to missing content.
@@ -9,16 +10,42 @@ export class D1Store {
   constructor(db,bucket,workspace){this.db=db;this.bucket=bucket;this.workspace=workspace;}
   async object(value){
     const text=encode(value), bytes=new TextEncoder().encode(text);
-    if(bytes.length>8*1024*1024)fail('单份数据超过 8 MiB，请分批迁移',413);
-    const checksum=await sha256(bytes),key=`${this.workspace}/d1/objects/${checksum}.json`;
+    const checksum=await sha256(bytes);
+    if(bytes.length>8*1024*1024){
+      const parts=[];
+      for(let offset=0;offset<bytes.length;offset+=chunkBytes){
+        const part=bytes.subarray(offset,Math.min(offset+chunkBytes,bytes.length)),digest=await sha256(part),key=`${this.workspace}/d1/chunks/${digest}.bin`;
+        if(!await this.bucket.head(key))await this.bucket.put(key,part,{httpMetadata:{contentType:'application/octet-stream'},customMetadata:{sha256:digest}});
+        parts.push({checksum:digest,bytes:part.length});
+      }
+      const manifest=new TextEncoder().encode(encode({format:'externallink-chunked-json',version:1,checksum,bytes:bytes.length,parts})),digest=await sha256(manifest),key=`${this.workspace}/d1/manifests/${digest}.json`;
+      if(!await this.bucket.head(key))await this.bucket.put(key,manifest,{httpMetadata:{contentType:'application/json'},customMetadata:{sha256:digest}});
+      return{key,checksum,bytes:bytes.length};
+    }
+    const key=`${this.workspace}/d1/objects/${checksum}.json`;
     // Repeated retries do not create more objects or read the full old value.
     if(!await this.bucket.head(key))await this.bucket.put(key,bytes,{httpMetadata:{contentType:'application/json'},customMetadata:{sha256:checksum}});
     return{key,checksum,bytes:bytes.length};
   }
   async readObjectBytes(key,checksum){
+    const prefix=`${this.workspace}/d1/`,manifestPrefix=prefix+'manifests/';
+    if(typeof key!=='string'||!key.startsWith(prefix)||!/^([a-f0-9]{64})\.json$/.test(key.slice(key.startsWith(manifestPrefix)?manifestPrefix.length:(prefix+'objects/').length))||(!key.startsWith(manifestPrefix)&&!key.startsWith(prefix+'objects/')))fail('数据对象工作区或校验地址无效',503);
     const object=await this.bucket.get(key);
     if(!object)fail('迁移数据对象缺失',503);
     const bytes=await object.arrayBuffer();
+    if(key.startsWith(manifestPrefix)){
+      if(await sha256(bytes)!==key.slice(manifestPrefix.length,-5))fail('分段清单校验失败',503);
+      let manifest;try{manifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{fail('分段清单校验失败',503);}
+      if(manifest.format!=='externallink-chunked-json'||manifest.version!==1||manifest.checksum!==checksum||!Number.isSafeInteger(manifest.bytes)||manifest.bytes<=0||!Array.isArray(manifest.parts)||!manifest.parts.length||manifest.parts.length>10000||manifest.parts.some(p=>!p||!/^[a-f0-9]{64}$/.test(p.checksum)||!Number.isInteger(p.bytes)||p.bytes<=0||p.bytes>chunkBytes)||manifest.parts.reduce((n,p)=>n+p.bytes,0)!==manifest.bytes)fail('分段清单校验失败',503);
+      const assembled=new Uint8Array(manifest.bytes);let offset=0;
+      for(const part of manifest.parts){
+        const value=await this.bucket.get(`${this.workspace}/d1/chunks/${part.checksum}.bin`);if(!value)fail('迁移数据分段对象缺失',503);
+        const content=await value.arrayBuffer();if(content.byteLength!==part.bytes||await sha256(content)!==part.checksum)fail('数据分段校验失败',503);
+        assembled.set(new Uint8Array(content),offset);offset+=part.bytes;
+      }
+      if(await sha256(assembled)!==checksum)fail('完整数据校验失败',503);
+      return assembled;
+    }
     if(await sha256(bytes)!==checksum)fail('数据校验失败',503);
     return new Uint8Array(bytes);
   }

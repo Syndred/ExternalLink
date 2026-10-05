@@ -3,6 +3,28 @@ import {DatabaseSync} from 'node:sqlite';import {readFileSync} from 'node:fs';
 import {D1Store} from '../cloud/worker/src/d1-store.mjs';
 import {d1Executor} from '../cloud/worker/src/d1-executor.mjs';
 import {Cloud} from '../executor/src/cloud.mjs';
+import {createHash} from 'node:crypto';
+test('large library transfers resume original verified parts, require the same device and preserve CAS and receipts',async()=>{
+ const f=fixture();const oldFetch=globalThis.fetch;try{
+  await f.store.putDocument('submissionRecords',{original:{status:'success',evidence:'keep receipt'}},0);
+  const enroll=async()=>{const r=await d1Executor(new Request('https://cloud.test/v2/executor/devices',{method:'POST',headers:{Authorization:'Bearer admin-test'},body:'{}'}),f.env,'default');return(await r.json()).deviceToken;};
+  const token=await enroll(),other=await enroll(),calls=[];let lost=true;
+  globalThis.fetch=async(url,options)=>{const route=new URL(url).pathname.replace('/v2/executor/','');calls.push(route);const r=await d1Executor(new Request(url,options),f.env,'default');if(route==='library-transfer/part'&&lost){lost=false;throw Error('part response lost');}return r;};
+  const cloud=new Cloud({endpoint:'https://cloud.test',workspaceId:'default',deviceToken:token,storageBackend:'d1'}),backup={format:'externallink-submission-backup',submissionRecords:{original:{status:'failed'},added:{status:'success',evidence:'imported'}},siteProfiles:{p:{id:'p',fields:{Description:'大文件😀'.repeat(800000)}}}},body={operation:{type:'backup_merge',id:'original-large-plan',at:'now',key:'siteProfiles',backup},revision:0};
+  await assert.rejects(cloud.request('library',body),/连接失败/);
+  assert.equal((await f.store.revisions()).siteProfiles,undefined);
+  const transferId=createHash('sha256').update(JSON.stringify(body)).digest('hex');
+  const forbidden=await d1Executor(new Request('https://cloud.test/v2/executor/library-transfer/status?id='+transferId,{headers:{Authorization:'Bearer '+other}}),f.env,'default');assert.equal(forbidden.status,404);
+  const resumed=await new Cloud(cloud.config).request('library',body);assert.equal(resumed.key,'siteProfiles');
+  assert.equal(calls.filter(x=>x==='library').length,0,'must not send the oversized JSON through the ordinary endpoint');
+  assert.equal((await f.store.document('siteProfiles')).data.p.fields.Description,backup.siteProfiles.p.fields.Description);
+  assert.equal((await f.store.document('submissionRecords')).data.original.evidence,'keep receipt');
+  assert.equal((await f.store.document('siteProfiles')).revision,1);
+  await assert.rejects(cloud.request('library',body),/其他客户端|回读/);
+  assert.equal((await f.store.document('siteProfiles')).revision,1);
+  assert.equal(f.sqlite.prepare('SELECT count(*) n FROM executor_runs').get().n,0);
+ }finally{globalThis.fetch=oldFetch;f.sqlite.close();}
+});
 test('device media catalogue is read-only and scoped to its enrolled workspace',async()=>{
  const f=fixture();let listed=0;f.env.MEDIA_BUCKET.list=async options=>{listed++;assert.equal(options.prefix,'workspaces/default/media/');return{objects:[{key:options.prefix+'asset',size:24,customMetadata:{profileId:'p',kind:'logo',fileName:'标志.png'},httpMetadata:{contentType:'image/png'}}],truncated:false};};
  const call=(route,token,scope='default',method='GET')=>d1Executor(new Request('https://cloud.test/v2/executor/'+route,{method,headers:{Authorization:'Bearer '+token},...(method==='POST'?{body:'{}'}:{})}),f.env,scope,async()=>({}));

@@ -58,6 +58,7 @@ import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
 import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from './local-recovery.mjs';
+import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -629,6 +630,11 @@ export class Runtime {
       await this.prepareKnownPage(page, task.url, task);
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_fill'); return; }
       this.update(task, { status: 'filling' }, 'filling');
+      if(isProductHuntLaunch(task.url)){
+        if(!task.profileSnapshot)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'producthunt_profile_frozen');
+        await runProductHuntWorkflow(this,task,page,config,{active,offline,confirmCreate:task.productHuntCreationConsent?.targetId===task.targetId&&!task.fillOnlyRun});
+        return;
+      }
       for (const frame of page.frames()) {
         if(!/^https?:/.test(frame.url()))continue;
         try {
@@ -783,7 +789,7 @@ export class Runtime {
       }finally{this.activeTaskId=null;}
     }
   }
-  async prepareWithAi(page,task,config,active,{normalFillDone=false}={}) {
+  async prepareWithAi(page,task,config,active,{normalFillDone=false,readyCheck}={}) {
     let candidate;
     let normalDone=normalFillDone;
     const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
@@ -816,6 +822,7 @@ export class Runtime {
     const ready=async()=>{
       if(!candidate)return false;
       try{
+        if(readyCheck)return await readyCheck(candidate.engine);
         const validation=await candidate.engine.call({action:'collectFormValidation'});
         const action=await candidate.engine.call({action:'inspectSubmitAction',config:{...config,fillOnly:false,autoSubmitDirectory:true},platform:candidate.detection.platform||'directory'});
         const actual=await candidate.engine.call({action:'getFilledFieldsReport'});

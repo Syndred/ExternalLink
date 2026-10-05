@@ -283,6 +283,25 @@
       }));
       return true;
     }
+    if (msg.action === "observeProductHuntResult") {
+      if (!isProductHuntPage()) { sendResponse({ matched: false, error: "当前页不是 Product Hunt" }); return true; }
+      waitForProductHuntResult(msg.config || {}, msg.baseline || {}, Math.min(20000, Math.max(0, Number(msg.timeoutMs ?? 15000))))
+        .then(sendResponse).catch((err) => sendResponse({ matched: false, error: err.message }));
+      return true;
+    }
+    if (msg.action === "inspectProductHuntCreation") {
+      sendResponse(inspectProductHuntCreation(msg.config || {}));
+      return true;
+    }
+    if (msg.action === "inspectProductHuntAdvance") {
+      if (!isProductHuntPage()) { sendResponse({ allowed: false }); return true; }
+      const scope = productHuntActiveScope(), stage = detectProductHuntStage(scope), gate = detectProductHuntGate(scope);
+      if (gate || stage === "checklist" || stage !== msg.expectedStage) { sendResponse({ allowed: false, stage }); return true; }
+      const button = (PRODUCT_HUNT_OPTIONAL_STAGES.has(stage) && productHuntFindOptionalSkipButton(scope)) || productHuntFindAdvanceButton(scope);
+      if (!button) { sendResponse({ allowed: false, stage }); return true; }
+      const rect = button.getBoundingClientRect();sendResponse({ allowed: true, stage, label: productHuntControlLabel(button), point: { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) }, viewport: { width: innerWidth, height: innerHeight } });
+      return true;
+    }
     if (msg.action === "inspectSubmitAction") {
       const button = findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
       sendResponse({ finalFound: !!button, label: button ? getElementLabel(button) : '', advanceFound: !!findSafeAdvanceButton(), allowed: shouldAutoSubmitListing(msg.config || {},msg.platform || 'directory') });
@@ -3456,6 +3475,21 @@
     };
   }
 
+  function inspectProductHuntCreation(config = {}) {
+    if (!isProductHuntPage()) return { allowed: false, reason: "当前页不是 Product Hunt" };
+    const scope = productHuntActiveScope(), gate = detectProductHuntGate(scope);
+    if (gate) return { allowed: false, ...gate };
+    const stage = detectProductHuntStage(scope);
+    if (stage !== "checklist") return { allowed: false, stage, reason: "Product Hunt 当前不是最终清单" };
+    const checklist = productHuntChecklistStatus(scope, productHuntConfigValues(config));
+    const button = checklist.createButton || productHuntFindCreateDraftButton(scope), label = productHuntControlLabel(button);
+    if (!checklist.ready || !productHuntShouldClickCreateDraft(true, checklist.ready, label)) return { allowed: false, stage, ready_to_create: false, missing: checklist.missing, reason: "Product Hunt 清单或创建按钮尚未就绪" };
+    const rect = button.getBoundingClientRect();
+    return { allowed: true, stage, ready_to_create: true, createDeferred: true, submittedAttempt: false, finalAction: "create draft", label,
+      baseline: productHuntResultBaseline(config), createPoint: { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) },
+      viewport: { width: innerWidth, height: innerHeight } };
+  }
+
   async function runProductHuntStep(request = {}) {
     const config = request.config && typeof request.config === "object" ? request.config : {};
     if (!isProductHuntPage()) {
@@ -3525,6 +3559,11 @@
 
       const baseline = productHuntResultBaseline(config);
       const createRect = createButton.getBoundingClientRect();
+      if (request.deferCreateClick === true) {
+        return { ok: true, stage, ready_to_create: true, submittedAttempt: false, createDeferred: true,
+          finalAction: "create draft", label, baseline,
+          createPoint: { x: Math.round(createRect.left + createRect.width / 2), y: Math.round(createRect.top + createRect.height / 2) } };
+      }
       createButton.click();
       const result = await waitForProductHuntResult(
         config,
@@ -3590,6 +3629,7 @@
       };
     }
 
+    const actualPreparation = collectFilledFieldsReport();
     const transition = await advanceProductHuntStage(scope, stage, {
       optional: PRODUCT_HUNT_OPTIONAL_STAGES.has(stage),
     });
@@ -3598,6 +3638,7 @@
       stage,
       ...stageResult,
       ...transition,
+      actualPreparation,
     };
   }
 

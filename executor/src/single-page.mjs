@@ -4,6 +4,7 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
 import {attachEngine} from './engine.mjs';
 import {manualSubmit} from './manual-controls.mjs';
+import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function sidepanelOpened(runtime,input={}){
@@ -45,6 +46,15 @@ export async function sidepanelFill(runtime,input){
   const page=await selectedPage(runtime,input),snapshot=await runtime.cloud.request('snapshot'),profile=snapshot.documents.siteProfiles?.[input.profileId];if(!profile||profile.archived||!profiles.profileConfigured(profile))throw Error('请选择已配置资料的在用产品');if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))throw Error('该产品同站已有收件，请先核验');
   if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');
   let config=configFor(snapshot,profile);if(input.mode==='comment')config.commentTemplate=input.commentText;
+  if(input.mode!=='comment'&&isProductHuntLaunch(page.url())){
+   const panel=assertPanel(runtime,input),generation=panel.generation,task=await preparedTask(runtime,input,snapshot);
+   if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原 Product Hunt 任务结果或控制权已变化');
+   await runtime.lease(task,{online:true});runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles},'single_page_producthunt_selected');config=configFor(snapshot,task.profileSnapshot);
+   const active=()=>{const current=singlePagePanel(runtime);return current?.open&&current.id===input.panelId&&current.generation===generation&&current.selectedTargetId===input.targetId&&current.profileId===input.profileId&&!page.isClosed();};
+   const fill=await runProductHuntWorkflow(runtime,task,page,config,{active,confirmCreate:false});let syncError='';try{await runtime.synchronize();}catch(error){syncError=error.message;}
+   if(input.submit===true){if(syncError)throw Error('Product Hunt 准备记录尚未回读，暂不创建草稿');const result=await manualSubmit(runtime,{taskId:task.id,expectedRunId:task.runId,expectedTargetId:task.targetId,ordinaryPermissionsAuthorized:input.ordinaryPermissionsAuthorized,confirmProductHuntCreate:input.confirmProductHuntCreate});return{...result,filled:true,platform:'product_hunt'};}
+   return{ok:true,taskId:task.id,runId:task.runId,platform:'product_hunt',filled:true,submitted:false,fill,readyToCreate:fill.ready_to_create===true,reason:task.reason,actual:task.actualPreparation||{fields:[]},syncError};
+  }
   for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;const engine=await attachEngine(runtime.context,frame);engines.push({engine,frame,detection:await engine.call({action:'detectPage',config})});}
   const candidate=engines.filter(e=>input.mode==='comment'?e.detection.commentFound:e.detection.operable).sort((a,b)=>(b.detection.formFieldCount||0)-(a.detection.formFieldCount||0))[0];if(!candidate)throw Error(input.mode==='comment'?'未发现评论表单':'未发现可填写表单');
   const guard=await candidate.engine.call({action:'inspectAutoFillGuard',targetDomain:config.targetDomain});if(guard?.blocked)throw Error(guard.reason||'网页已有其他产品内容，请检查后继续');

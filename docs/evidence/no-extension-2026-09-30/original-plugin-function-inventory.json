@@ -803,6 +803,16 @@
   ],
   "updatedAt": "2026-10-05",
   "completion": "not_complete",
+  "specialLaunchCheckpoint": {
+    "platform": "Product Hunt",
+    "sourceImplemented": true,
+    "syntheticStagesVerified": 9,
+    "deployed": false,
+    "specificUiVerified": false,
+    "mediaUploadVerified": false,
+    "realSiteReceipt": false,
+    "evidence": "product-hunt-checkpoint-2026-10-05.json"
+  },
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",

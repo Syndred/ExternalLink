@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-05",
+  "kind": "source_and_progress_checkpoint",
+  "completion": "not_complete",
+  "cloudCodePull": "git pull --ff-only: Already up to date",
+  "priorPushedCommit": "076ed74c6925808f73c6d95d04dbe9f1d85a9b99",
+  "tests": {
+    "unit": {"passed": 377, "failed": 0, "skipped": 0},
+    "applicationUi": {"passed": true, "pages": 6, "productHuntSpecificUi": "not_yet_verified"},
+    "singlePage": {"passed": true, "iframeFilled": true, "noSubmission": true},
+    "productHunt": {
+      "fixture": "synthetic page in isolated Chrome; all requests intercepted",
+      "passed": true,
+      "originalStages": 9,
+      "actualFieldsVerified": true,
+      "defaultWaitsForConfirmation": true,
+      "legalGatePreserved": true,
+      "originalConsentBinding": true,
+      "durableBoundaryBeforeTrustedClick": true,
+      "buttonMovedDuringFlush": true,
+      "oneTrustedCreateClick": true,
+      "newDraftEvidence": true,
+      "noRepeat": true,
+      "networkPosts": 0,
+      "actualMediaUpload": "not_verified",
+      "realSiteReceipt": false
+    }
+  },
+  "deployment": {
+    "productHuntCheckpointDeployed": false,
+    "previousVerifiedWorkerVersion": "1f1014a6-7ed9-43e4-9410-6b5cb876d93b",
+    "previousBackendCommit": "076ed74"
+  },
+  "liveReadback": {
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2950,
+    "combinations": 897,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30}
+  },
+  "remaining": [
+    "Product Hunt specific UI interactions and original task binding",
+    "Product Hunt media upload and real page validation",
+    "dynamic controls and learned field mapping persistence",
+    "latest original browser favorites",
+    "old device media associations",
+    "large backup workflow",
+    "desktop notification display"
+  ]
+}

@@ -6,6 +6,7 @@ import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
 import {recoveryDocument} from './local-recovery.mjs';
 import {formKnowledgeMutation,formKnowledgeSatisfied} from './form-knowledge.mjs';
 import {applicationSettingKeys} from './application-preferences.mjs';
+import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
@@ -55,8 +56,8 @@ export function libraryMutation(documents,operation,options={}){
  if(operation.type==='domain_metrics'){
   const rows=operation.results;if(!Array.isArray(rows)||rows.length>20)fail('域名查询结果无效');
   const cache=structuredClone(documents.domainMetricsCache||{});
-  for(const row of rows){if(!row||!/^([a-z0-9-]+\.)+[a-z0-9-]+$/.test(row.domain||'')||!['ok','unknown'].includes(row.status)||['ageDays','ageMonths'].some(k=>row[k]!=null&&(!Number.isFinite(row[k])||row[k]<0)))fail('域名查询结果无效');cache[row.domain]={...cache[row.domain],...structuredClone(row),checkedAt:at};}
-  return{key:'domainMetricsCache',data:cache};
+  for(const row of rows){if(!row||!/^([a-z0-9-]+\.)+[a-z0-9-]+$/.test(row.domain||'')||!['ok','unknown'].includes(row.status)||['ageDays','ageMonths'].some(k=>row[k]!=null&&(!Number.isFinite(row[k])||row[k]<0))||row.fetchedAt!==undefined&&(!Number.isFinite(row.fetchedAt)||row.fetchedAt<0))fail('域名查询结果无效');cache[row.domain]={...cache[row.domain],...structuredClone(row),fetchedAt:row.fetchedAt??(Date.parse(at)||0),checkedAt:at};}
+  return{key:'domainMetricsCache',data:pruneDomainMetrics(cache)};
  }
  if(['backup_merge','backup_key_merge'].includes(operation.type)){
   if(!backupKeys.includes(operation.key))fail('不支持的备份字段');
@@ -142,7 +143,7 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='submify_gates')return operation.gates.every(g=>{const a=documents.siteAnnotations?.[keyOf(g.url)];return a?.library?.enabled===false&&a?.importGate?.importId===operation.id;});
  if(operation.type==='monitor_result')return documents.linkMonitorResults?.[operation.recordKey]?.monitorJobId===operation.jobId&&Object.entries(operation.result).every(([k,v])=>JSON.stringify(documents.linkMonitorResults[operation.recordKey][k])===JSON.stringify(v));
  if(operation.type==='monitor_publication')return documents.submissionRecords?.[operation.recordKey]?.status==='success'&&documents.submissionRecords[operation.recordKey].publicationStatus==='published';
- if(operation.type==='domain_metrics')return operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
+ if(operation.type==='domain_metrics')return Object.keys(documents.domainMetricsCache||{}).length<=domainMetricsLimit&&operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
  if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
  if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
  if(operation.type==='settings')return JSON.stringify(documents[operation.key])===JSON.stringify(operation.value);

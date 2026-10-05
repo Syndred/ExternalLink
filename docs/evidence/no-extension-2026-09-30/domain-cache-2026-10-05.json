@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-05",
+  "completion": "not_complete",
+  "workerVersion": "bfcd55b1-4c93-4f01-8449-fc3fe0f8c04a",
+  "unitTests": {
+    "passed": 408,
+    "failed": 0,
+    "skipped": 0,
+    "newDomainTests": 10
+  },
+  "ui": {
+    "pages": 6,
+    "defaultAndForcedRefresh": true,
+    "chineseCounts": true,
+    "cloudConflictExclusions": true,
+    "originalJobIdResume": true
+  },
+  "isolated": {
+    "deviceAuthenticatedHttpD1R2": true,
+    "originalCachePrunedTo5000": true,
+    "fetchedAtPreserved": true,
+    "unknownAgeRemainsNull": true,
+    "invalidTimestampRejectedWithoutRevisionChange": true,
+    "sevenDayCache": true,
+    "twentyMissingPerBatch": true,
+    "queryScopeNotTruncated": true,
+    "lostWriteReplyAndSqliteRestartSameIds": true,
+    "prunedResultConfirmedWithoutRepeatWrite": true,
+    "workspaceSwitchPreservesResults": true,
+    "largeBackupBytes": 12351290,
+    "originalReceiptAndPausedBatchPreserved": true
+  },
+  "live": {
+    "servicesReloaded": true,
+    "workerRejectsInvalidTimestamp": true,
+    "allBusinessRevisionsUnchanged": true,
+    "realCacheUnchanged": true,
+    "productionUiReadOnlyVerified": true,
+    "legacyJobMetadataReadable": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "real RDAP known-age success not rerun",
+    "latest original browser favorites and data",
+    "old device media associations",
+    "remaining dynamic controls",
+    "real special publishing pages and remote upload"
+  ],
+  "newRealSubmissions": 0,
+  "realDataOverwritten": false
+}

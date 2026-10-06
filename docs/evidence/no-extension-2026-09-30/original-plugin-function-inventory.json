@@ -1055,5 +1055,28 @@
     "workerVersion": "5546b903-810b-4c11-a9dc-ba0674cfdc1a",
     "evidence": "original-current-lifecycle-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalEditorStateCheckpoint": {
+    "originalUnsavedCloseEscapeAndNativeExit": true,
+    "inFlightEditsRemainUnsaved": true,
+    "editorVersionFrozenAcrossPull": true,
+    "staleSaveRejectedBeforeEnqueue": true,
+    "originalSavedProfileAndRevisionReturned": true,
+    "offlineDurableAcknowledgement": true,
+    "workspaceSwitchDoesNotReturnOtherProfile": true,
+    "allSixMediaKindsPreserveOtherDraftEdits": true,
+    "disableRestoreAndPreviewRefresh": true,
+    "concurrentChangesPreventAdoption": true,
+    "immutableMediaHistoryPreserved": true,
+    "isolatedBrowserAndAuthenticatedHttpD1": true,
+    "liveTemporaryDraftRestoredWithoutSave": true,
+    "liveBusinessRevisionsAndDocumentsUnchanged": true,
+    "testsPassed": 469,
+    "newTests": 8,
+    "workerDeploymentChanged": false,
+    "realProductEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-editor-state-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

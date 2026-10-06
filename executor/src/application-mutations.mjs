@@ -27,8 +27,8 @@ export async function enqueueLibraryMutation(runtime,input){
  const result=await flushApplicationMutations(runtime);return{ok:true,id:item.id,persisted:true,...result};
 }
 export function enqueueProfileMutation(runtime,input){
- const saved=runtime.store.get('applicationSnapshot');if(input.revision!==saved?.snapshot?.revisions?.siteProfiles)throw Error('资料版本已变化，请回读后重试');
- return enqueueLibraryMutation(runtime,{operation:{type:'profile',profileId:input.profileId,profile:input.profile}});
+ const saved=runtime.store.get('applicationSnapshot');if(input.revision!==saved?.snapshot?.revisions?.siteProfiles)throw Object.assign(Error('资料版本已变化，请回读后重试'),{status:409});
+ return enqueueLibraryMutation(runtime,{operation:{type:'profile',profileId:input.profileId,profile:input.profile}}).then(result=>{const next=runtime.store.get('applicationSnapshot');if(next?.scope!==saved?.scope||next?.scope!==workbenchScope(runtime.store.get('pair')))return result;const snapshot=overlayApplication(runtime,next.snapshot);return{...result,revision:snapshot.revisions.siteProfiles,profile:snapshot.documents.siteProfiles?.[input.profileId]};});
 }
 export function flushApplicationMutations(runtime){
  if(runtime.appMutationFlush)return runtime.appMutationFlush;

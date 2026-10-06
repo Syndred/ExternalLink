@@ -765,6 +765,29 @@
     return { activeSiteId, selectedSiteIds: selected.length ? selected : activeSiteId ? [activeSiteId] : [] };
   }
 
+  function profileEditorMediaCompatible(before, after, profileId, kind) {
+    if (!Array.isArray(before) || !Array.isArray(after) || !['logo', 'featured', 'screenshot1', 'screenshot2', 'screenshot3', 'screenshot4'].includes(kind)) return false;
+    const previous = before.find(profile => profile.id === profileId), next = after.find(profile => profile.id === profileId);
+    if (!previous || !next) return false;
+    const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
+    const same = (left, right) => JSON.stringify(canonical(left)) === JSON.stringify(canonical(right));
+    const oldVersions = previous.mediaVersions || [], newVersions = next.mediaVersions || [];
+    if (!same(oldVersions, newVersions.slice(0, oldVersions.length)) || newVersions.slice(oldVersions.length).some(asset => asset.kind !== kind)) return false;
+    const field = kind === 'logo' ? 'Cloud LOGO' : kind === 'featured' ? 'Cloud Featured image' : 'Screenshot ' + kind.slice(10);
+    const strip = profile => {
+      const copy = structuredClone(profile); delete copy.updatedAt;
+      if (profile.id !== profileId) return copy;
+      copy.fields = { ...copy.fields }; delete copy.fields[field];
+      copy.media = { ...copy.media }; copy.mediaDisabled = { ...copy.mediaDisabled }; delete copy.mediaDisabled[kind]; delete copy.mediaVersions;
+      if (kind.startsWith('screenshot')) {
+        const screenshots = [0, 1, 2, 3].map(index => copy.media.screenshots?.[index] || ''); screenshots[Number(kind.slice(10)) - 1] = '';
+        if (screenshots.some(Boolean)) copy.media.screenshots = screenshots; else delete copy.media.screenshots;
+      } else delete copy.media[kind];
+      return copy;
+    };
+    return same(before.map(strip).sort((a, b) => String(a.id).localeCompare(String(b.id))), after.map(strip).sort((a, b) => String(a.id).localeCompare(String(b.id))));
+  }
+
   function applyProfileOrder(profiles = {}, orderedIds = []) {
     const next = { ...profiles };
     const remaining = orderedProfileIds(next).filter((id) => !orderedIds.includes(id));
@@ -816,6 +839,7 @@
     learnProfileFieldsFromFill,
     orderedProfileIds,
     profileSelectionFromDocuments,
+    profileEditorMediaCompatible,
     applyProfileOrder,
     nextProfileSortIndex,
     getActiveProfile,

@@ -93,7 +93,17 @@
   }
 
   function buildAgentConfigFromProfile(profile, globalConfig = {}) {
-    const fields = useVerifiedGraffitiContact(profile.id, profile.fields || {});
+    const fields = { ...useVerifiedGraffitiContact(profile.id, profile.fields || {}) };
+    const mediaDisabled = { ...profile.mediaDisabled };
+    const publicLogo = profile.logoUrl === '(uploaded logo)' ? '' : profile.logoUrl;
+    // Execution gets a filtered copy; stored fields and frozen old tasks keep their original assets.
+    for (const key of Object.keys(fields)) {
+      const kind = /logo/i.test(key) ? 'logo' : /featured image/i.test(key) ? 'featured' : /screenshot[ -]?([1-4])/i.test(key) ? 'screenshot' + key.match(/screenshot[ -]?([1-4])/i)[1] : '';
+      if (mediaDisabled[kind] || kind && String(fields[key]).trim() === '(uploaded logo)') fields[key] = '';
+    }
+    const screenshotSlots = (profile.media?.screenshots || [1,2,3,4].map(index => fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || ''))
+      .map((ref,index) => mediaDisabled['screenshot'+(index+1)] ? '' : ref);
+    const keepScreenshotSlots = [1,2,3,4].some(index => mediaDisabled['screenshot'+index]);
     const name = fields.Name || profile.name || "";
     const url = submissionWebsiteUrl(profile);
     const email = fields["Business mail"] || globalConfig.email || "";
@@ -125,20 +135,14 @@
         profile.mediaDisabled?.featured ? '' : fields["Cloud Featured image"] ||
         profile.media?.featured ||
         fields["Featured image"] ||
-        profile.logoUrl ||
+        (!mediaDisabled.logo && publicLogo) ||
         fields.LOGO ||
         "",
       logoUrl:
-        profile.mediaDisabled?.logo ? '' : fields["Cloud LOGO"] || profile.media?.logo || profile.logoUrl || fields.LOGO || fields["Featured image"] || "",
-      logoDataUrl: profile.logoDataUrl || "",
-      screenshots:
-        (profile.media?.screenshots ||
-        [1, 2, 3, 4]
-          .map(
-            (index) =>
-              fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || "",
-          )
-          ).map((ref,index)=>profile.mediaDisabled?.['screenshot'+(index+1)]?'':ref).filter(Boolean),
+        profile.mediaDisabled?.logo ? '' : fields["Cloud LOGO"] || profile.media?.logo || publicLogo || fields.LOGO || fields["Featured image"] || "",
+      logoDataUrl: mediaDisabled.logo || fields['Cloud LOGO'] || profile.media?.logo ? '' : profile.logoDataUrl || "",
+      mediaDisabled,
+      screenshots: keepScreenshotSlots && screenshotSlots.some(Boolean) ? screenshotSlots : screenshotSlots.filter(Boolean),
       learnedFieldMappings: profile.learnedFieldMappings || {},
       anchorRules: profile.anchorRules || {},
       blogRules: profile.blogRules || {},
@@ -176,6 +180,7 @@
     "featuredImage",
     "logoUrl",
     "logoDataUrl",
+    "mediaDisabled",
     "screenshots",
     "learnedFieldMappings",
     "anchorRules",
@@ -266,6 +271,7 @@
       featuredImage: profileConfig.featuredImage || "",
       logoUrl: profileConfig.logoUrl || "",
       logoDataUrl: profileConfig.logoDataUrl || "",
+      mediaDisabled: profileConfig.mediaDisabled || {},
       screenshots: profileConfig.screenshots || [],
       learnedFieldMappings: profileConfig.learnedFieldMappings || {},
       anchorRules: profileConfig.anchorRules || {},
@@ -322,7 +328,8 @@
           (index) =>
             fields[`Screenshot ${index}`] || fields[`Screenshot-${index}`] || "",
         );
-    return values.map((value) => String(value || "").trim()).filter(Boolean);
+    const slots = values.map((value,index) => config?.mediaDisabled?.['screenshot'+(index+1)] ? '' : String(value || "").trim());
+    return [1,2,3,4].some(index => config?.mediaDisabled?.['screenshot'+index]) ? slots : slots.filter(Boolean);
   }
 
   function resolveMediaField(config, hint, fallbackScreenshotIndex = 0) {
@@ -335,15 +342,15 @@
     if (screenshotField) {
       // A profile's legacy Screenshot fields may contain example output art.
       // Upload only private cloud screenshots or URLs clearly naming a UI capture.
-      const screenshots = getScreenshotValuesFromConfig(config).filter((value) =>
+      const screenshots = getScreenshotValuesFromConfig(config).map((value) =>
         /^cloud-media:\/\//i.test(value) ||
-        /(?:^|[\/_-])(?:screenshots?|screen[-_]?shots?|screen|dashboard|editor|homepage|home|ui)(?=[\/_.-]|$)/i.test(value));
+        /(?:^|[\/_-])(?:screenshots?|screen[-_]?shots?|screen|dashboard|editor|homepage|home|ui)(?=[\/_.-]|$)/i.test(value) ? value : '');
       const explicit = normalizedHint.match(
         /\b(?:screenshot|screen shot|gallery|image|photo)[^\d]{0,8}([1-4])\b/,
       );
       const index = explicit ? Number(explicit[1]) - 1 : fallbackScreenshotIndex;
       return {
-        value: screenshots[index] || screenshots[fallbackScreenshotIndex] || "",
+        value: config?.mediaDisabled?.['screenshot'+(index+1)] ? '' : screenshots[index] || screenshots[fallbackScreenshotIndex] || "",
         profileKey: `Screenshot ${index + 1}`,
         useLogoDataUrl: false,
         screenshot: true,
@@ -354,7 +361,7 @@
     if (/\b(logo|icon|avatar)\b/.test(normalizedHint)) {
       return {
         value:
-          fields["Cloud LOGO"] ||
+          config?.mediaDisabled?.logo ? '' : fields["Cloud LOGO"] ||
           config?.logoUrl ||
           config?.cloudLogo ||
           fields["Cloud Featured image"] ||
@@ -363,7 +370,7 @@
           config?.featuredImage ||
           "",
         profileKey: "LOGO",
-        useLogoDataUrl: true,
+        useLogoDataUrl: !config?.mediaDisabled?.logo,
         screenshot: false,
         explicitIndex: false,
       };
@@ -371,8 +378,8 @@
     if (/\b(featured|cover|banner|thumbnail|image|photo)\b/.test(normalizedHint)) {
       return {
         value:
+          config?.mediaDisabled?.featured ? '' : config?.featuredImage ||
           fields["Featured image"] ||
-          config?.featuredImage ||
           config?.logoUrl ||
           fields.LOGO ||
           "",

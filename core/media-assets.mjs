@@ -1,4 +1,6 @@
 export const MAX_IMAGE_BYTES=6*1024*1024;
+export const MAX_LOGO_BYTES=2*1024*1024;
+export function validateMediaSize(bytes,kind){if(kind==='logo'&&bytes.length>MAX_LOGO_BYTES)throw Object.assign(new Error('产品标志图片超过 2 MB'),{status:400});return bytes;}
 export const IMAGE_MIME_TYPES=Object.freeze(['image/png','image/jpeg','image/webp','image/gif','image/svg+xml']);
 const invalidImage=message=>Object.assign(new Error(message),{status:400});
 function svgSignature(bytes){

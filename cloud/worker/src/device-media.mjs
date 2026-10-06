@@ -1,4 +1,4 @@
-import {decodeImageAsset} from '../../../core/media-assets.mjs';
+import {decodeImageAsset,validateMediaSize} from '../../../core/media-assets.mjs';
 import {sha256} from './d1-store.mjs';import {mediaObjectKey} from './worker-core.mjs';
 const fail=(message,status=409)=>{throw Object.assign(Error(message),{status});};
 function key(workspace,id){if(!/^asset-[a-f0-9-]{36}$/.test(id||''))fail('无效媒体身份',400);return mediaObjectKey(workspace,id);}
@@ -10,7 +10,7 @@ export async function readDeviceMedia(bucket,workspace,assetId){
 }
 export async function putDeviceMedia(bucket,workspace,input,profiles){
  if(!profiles?.[input.profileId]||profiles[input.profileId].archived||!['logo','featured','screenshot1','screenshot2','screenshot3','screenshot4'].includes(input.kind))fail('无效产品或媒体范围',403);
- const bytes=decodeImageAsset(input.dataUrl),mime=input.dataUrl.slice(5,input.dataUrl.indexOf(';'));
+ const bytes=validateMediaSize(decodeImageAsset(input.dataUrl),input.kind),mime=input.dataUrl.slice(5,input.dataUrl.indexOf(';'));
  if(mime!==input.mime||await sha256(bytes)!==input.sha256)fail('媒体 SHA 校验或格式不匹配',400);
  const objectKey=key(workspace,input.assetId);
  // R2 conditional write prevents even concurrent requests from overwriting a version.

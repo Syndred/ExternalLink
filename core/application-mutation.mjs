@@ -29,7 +29,10 @@ export function applicationMutation(documents,operation,options){
  }
  if(operation.type==='profile_create'&&original)throw badRequest('资料身份已存在，不能覆盖');
  if(operation.type==='profile'&&!original||patch?.id!==operation.profileId)throw badRequest('资料身份不匹配');
- if(Object.keys(patch).some(key=>!['id','name','url','promoUrl','fields','fieldNotes','media','mediaVersions','mediaDisabled','language','targetAudience','valueProposition','useCases','sellablePoints','avoidContent','anchorRules','blogRules'].includes(key)))throw badRequest('无效资料字段');
+ if(Object.keys(patch).some(key=>!['id','name','url','promoUrl','logoUrl','logoDataUrl','fields','fieldNotes','media','mediaVersions','mediaDisabled','language','targetAudience','valueProposition','useCases','sellablePoints','avoidContent','anchorRules','blogRules'].includes(key)))throw badRequest('无效资料字段');
+ if(patch.logoDataUrl!==undefined&&patch.logoDataUrl!=='')throw badRequest('新图片请通过媒体上传保存，原上传图片可清除');
+ if(patch.logoUrl!==undefined&&patch.logoUrl!==''){let url;try{url=new URL(patch.logoUrl);}catch{throw badRequest('无效标志图片网址');}if(typeof patch.logoUrl!=='string'||!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效标志图片网址');}
+ if(patch.mediaDisabled!==undefined&&(!patch.mediaDisabled||typeof patch.mediaDisabled!=='object'||Array.isArray(patch.mediaDisabled)||Object.entries(patch.mediaDisabled).some(([kind,value])=>!['logo','featured','screenshot1','screenshot2','screenshot3','screenshot4'].includes(kind)||typeof value!=='boolean')))throw badRequest('无效媒体停用设置');
  if(patch.fieldNotes!==undefined&&(!patch.fieldNotes||typeof patch.fieldNotes!=='object'||Array.isArray(patch.fieldNotes)||Object.entries(patch.fieldNotes).some(([key,value])=>['__proto__','constructor','prototype'].includes(key)||typeof value!=='string'||value.length>100000)))throw badRequest('无效字段备注');
  for(const key of ['language','targetAudience','valueProposition'])if(patch[key]!==undefined&&(typeof patch[key]!=='string'||patch[key].length>10000))throw badRequest('无效资料说明');
  for(const key of ['useCases','sellablePoints','avoidContent'])if(patch[key]!==undefined&&(!Array.isArray(patch[key])||patch[key].length>100||patch[key].some(v=>typeof v!=='string'||v.length>10000)))throw badRequest('无效资料列表');

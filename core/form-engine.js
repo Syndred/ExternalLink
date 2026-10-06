@@ -2045,10 +2045,10 @@
       if (/^data:/i.test(raw) || /^cloud-media:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) return [raw];
       return raw.split(/[\n;|]+/).map((item) => item.trim()).filter(Boolean);
     };
-    const logoValue = nested.logo && typeof nested.logo === "object"
+    const logoValue = config.mediaDisabled?.logo ? '' : nested.logo && typeof nested.logo === "object"
       ? nested.logo
       : first(nested.logo, nested.logoUrl, nested.logoDataUrl, config.logoUrl, config.logoDataUrl, pf.LOGO, pf["Featured image"]);
-    const galleryValue = first(
+    const galleryValue = [1,2,3,4].some(index => config.mediaDisabled?.['screenshot'+index]) ? getScreenshotValues(config) : first(
       nested.gallery,
       nested.images,
       nested.screenshots,
@@ -6983,9 +6983,11 @@
 
   function publicMediaUrlForField(config, hint) {
     const pf = getProfileFields(config);
-    const normalizedHint = String(hint || "").replace(/[_-]+/g, " ");
+    const normalizedHint = String(hint || "").toLowerCase().replace(/[_-]+/g, " ");
     if (/\b(?:screenshot|screen shot)\b/.test(normalizedHint)) {
-      const screenshot = String(pf["Screenshot 1"] || config.screenshots?.[0] || "").trim();
+      const explicit = normalizedHint.match(/\b(?:screenshot|screen shot)[^\d]{0,8}([1-4])\b/),index=explicit?Number(explicit[1])-1:0;
+      if(config.mediaDisabled?.['screenshot'+(index+1)])return '';
+      const screenshot = String(config.screenshots?.[index] || pf['Screenshot '+(index+1)] || pf['Screenshot-'+(index+1)] || "").trim();
       const featured = String(pf["Featured image"] || config.featuredImage || "").trim();
       if (!screenshot || screenshot === featured || screenshot === String(pf.LOGO || config.logoUrl || "").trim()) return "";
       try {
@@ -7001,6 +7003,7 @@
       }
     }
     const iconField = /\b(icon|logo|avatar|favicon)\b/.test(normalizedHint);
+    if(config.mediaDisabled?.[iconField?'logo':'featured'])return '';
     const candidates = iconField
       ? [pf.LOGO, config.logoUrl, pf["Featured image"], config.featuredImage]
       : [pf["Featured image"], config.featuredImage, pf.LOGO, config.logoUrl];

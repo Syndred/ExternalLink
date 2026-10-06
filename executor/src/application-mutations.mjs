@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';import { isDeepStrictEqual } from 'node:util';
 import { applicationMutation as libraryMutation,applicationMutationSatisfied as libraryMutationSatisfied } from '../../core/application-mutation.mjs';import {workbenchScope} from './workbench-sync.mjs';
-export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.values('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
+export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
 export async function resolveApplicationConflict(runtime,input){
  if(runtime.appMutationFlush)await runtime.appMutationFlush;
  const item=pendingApplication(runtime).find(item=>item.id===input.id);
@@ -50,7 +50,10 @@ async function performFlush(runtime){
   // Confirm the complete frozen cache result, rather than rewriting after a lost reply.
   const originalDomainResult=item.operation.type==='domain_metrics'&&libraryMutation({[item.key]:item.baseData},item.operation).data;
   if(libraryMutationSatisfied(snapshot.documents,item.operation)||originalDomainResult&&isDeepStrictEqual(snapshot.documents[item.key],originalDomainResult)){item.status='confirmed';item.confirmedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);continue;}
-  if(!isDeepStrictEqual(snapshot.documents[item.key],item.baseData)){item.status='conflict';item.error='云端外链库有并发修改；本机编辑保留，未覆盖云端';runtime.store.set('appMutation:'+item.id,item);break;}
+  // Profile writes stamp updatedAt on the server, while queued edits contain local write times.
+  // Compare all actual content; differing write timestamps alone cannot invalidate the next edit.
+  const comparable=data=>item.key==='siteProfiles'&&data?Object.fromEntries(Object.entries(data).map(([id,profile])=>{const {updatedAt,...content}=profile;return[id,content];})):data;
+  if(!isDeepStrictEqual(comparable(snapshot.documents[item.key]),comparable(item.baseData))){item.status='conflict';item.error='云端外链库有并发修改；本机编辑保留，未覆盖云端';runtime.store.set('appMutation:'+item.id,item);break;}
   const change=libraryMutation(snapshot.documents,item.operation);
    try{checkScope();await cloud.request(item.operation.type==='profile'?'profile':'library',item.operation.type==='profile'?{profileId:item.operation.profileId,profile:item.operation.profile,revision:snapshot.revisions[item.key]||0}:{operation:item.operation,revision:snapshot.revisions[item.key]||0});checkScope();
    const read=await cloud.request('snapshot');checkScope();if(item.operation.type==='profile'?!libraryMutationSatisfied(read.documents,item.operation):!isDeepStrictEqual(read.documents[item.key],change.data))throw Error('资料回读不一致，原编辑仍在本机');

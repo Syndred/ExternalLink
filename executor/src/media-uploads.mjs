@@ -1,5 +1,5 @@
 import {randomUUID,createHash} from 'node:crypto';
-import {decodeImageAsset} from '../../core/media-assets.mjs';
+import {decodeImageAsset,validateMediaSize} from '../../core/media-assets.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {overlayApplication,flushApplicationMutations} from './application-mutations.mjs';
 export function pendingMediaUploads(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('mediaUpload:').filter(item=>item.scope===scope&&!['confirmed','retained'].includes(item.status));}
@@ -8,7 +8,7 @@ export async function enqueueMediaUpload(runtime,input){
  if(saved?.scope!==scope)throw Error('请先读取当前工作区');
  const profile=overlayApplication(runtime,saved.snapshot).documents.siteProfiles?.[input.profileId];
  if(!profile||profile.archived||!['logo','featured','screenshot1','screenshot2','screenshot3','screenshot4'].includes(input.kind))throw Error('无效产品或媒体类型');
- const bytes=decodeImageAsset(input.dataUrl),sha256=createHash('sha256').update(bytes).digest('hex'),assetId='asset-'+randomUUID();
+ const bytes=validateMediaSize(decodeImageAsset(input.dataUrl),input.kind),sha256=createHash('sha256').update(bytes).digest('hex'),assetId='asset-'+randomUUID();
  const item={assetId,scope,profileId:input.profileId,kind:input.kind,mime:input.dataUrl.slice(5,input.dataUrl.indexOf(';')),dataUrl:input.dataUrl,sha256,fileName:String(input.fileName||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100),at:new Date().toISOString(),status:'pending'};
  runtime.store.set('mediaUpload:'+assetId,item);
  return{ok:true,assetId,persisted:true,...await flushMediaUploads(runtime)};

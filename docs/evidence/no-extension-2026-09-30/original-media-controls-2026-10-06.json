@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "f393ba37-4eec-4aca-9258-cac2862ca6c5",
+  "sourceCheckpoint": "a83596fd6f871952c416500c03d4e0522b5c9ba5",
+  "unitTests": {
+    "passed": 447,
+    "failed": 0,
+    "skipped": 0,
+    "newOriginalControlsTests": 7
+  },
+  "originalBehavior": {
+    "originalEmbeddedClearStagedUntilSave": true,
+    "independentPublicLogoUrlPreservedAndEditable": true,
+    "originalLogoLimitBytes": 2097152,
+    "otherMediaLimitBytes": 6291456,
+    "allSixDisabledMediaBlocked": true,
+    "screenshotSlotNumbersPreserved": true,
+    "selectedCloudVersionOverridesOldEmbedded": true,
+    "storedFieldsAndHistoryPreserved": true,
+    "uploadedMarkerNotUsedAsRemoteUrl": true
+  },
+  "isolated": {
+    "sixPageClearSaveDirtyProtectionAndReadback": true,
+    "logoOversizeRejectedBeforeUpload": true,
+    "authenticatedDeviceHttpD1R2ClearDisableAndRestore": true,
+    "exactLogoBoundaryAndLargerOtherKindsVerified": true,
+    "sqliteRestartAndLostRepliesSameEditIds": true,
+    "equalTimestampEditOrderPreserved": true,
+    "serverWriteTimeDoesNotCauseFalseConflict": true,
+    "realContentConflictPreserved": true,
+    "realRuntimeAllDisabledFileAndPublicUrlFieldsEmpty": true,
+    "disabledMediaNotFetched": true,
+    "realRuntimeScreenshotFourKeepsOriginalSlot": true,
+    "oldEmbeddedAndCloudTasksFrozen": true,
+    "clearAppliesToNewTask": true,
+    "productHuntAutoVisitAndFieldLearningRegression": true,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "cloudAndLocalOversizeLogoRejected400": true,
+    "rejectedAssetNotCreated": true,
+    "invalidLogoUrlAndDisableFlagsRejected400": true,
+    "actualChineseControlsReadOnlyVerified": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "remaining original controls and dynamic behavior",
+    "latest original favorites and product history",
+    "old device media associations",
+    "real special publishing pages and remote uploads",
+    "real RDAP known-age and IndexNow acceptance"
+  ],
+  "realProductEdits": 0,
+  "newRealSubmissions": 0
+}

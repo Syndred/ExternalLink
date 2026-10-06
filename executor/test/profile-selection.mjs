@@ -17,8 +17,8 @@ const snapshot=()=>({ok:true,at:new Date().toISOString(),revisions:structuredClo
 const server=http.createServer(async(req,res)=>{
  const path=new URL(req.url,'http://localhost').pathname;let body='';for await(const chunk of req)body+=chunk;const input=body?JSON.parse(body):{};
  try{
-  if(['/', '/application.js','/comment-studio.js','/setup.js','/application.css','/activity-time.js','/timeline-core.js','/profiles-core.js'].includes(path)){
-   const name=path==='/'?'application.html':path.slice(1),file=name==='timeline-core.js'?'../../core/submission-timeline.js':name==='profiles-core.js'?'../../core/profiles.js':'../web/'+name;
+  if(['/', '/application.js','/comment-studio.js','/setup.js','/application.css','/activity-time.js','/timeline-core.js','/profiles-core.js','/target-filters-core.js'].includes(path)){
+   const name=path==='/'?'application.html':path.slice(1),file=name==='timeline-core.js'?'../../core/submission-timeline.js':name==='profiles-core.js'?'../../core/profiles.js':name==='target-filters-core.js'?'../../core/target-filters.js':'../web/'+name;
    res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'text/html');res.end(await readFile(new URL(file,import.meta.url)));return;
   }
   let result;writes.push({route:path,...input});

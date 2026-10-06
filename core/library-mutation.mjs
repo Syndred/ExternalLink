@@ -1,4 +1,5 @@
 import './queue.js';
+import './target-filters.js';
 import './library-classifier.js';
 import './submission-timeline.js';
 import {backupKeys,mergeApplicationBackup} from './application-backup.mjs';
@@ -11,6 +12,19 @@ import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
+function blacklistChange(current,value){
+ const rows=input=>Array.isArray(input)?input:typeof input==='string'?input.split(/[\n,]/):[];
+ let patch;if(Array.isArray(value)||typeof value==='string')patch={replace:true,add:rows(value)};
+ else if(value&&typeof value==='object'&&!Object.keys(value).some(k=>!['add','remove','replace'].includes(k))&&(value.replace===undefined||typeof value.replace==='boolean'))patch=value;
+ else fail('黑名单无效');
+ for(const key of ['add','remove'])if(patch[key]!==undefined&&(!Array.isArray(patch[key])||patch[key].length>10000||patch[key].some(v=>typeof v!=='string'||v.length>10000)))fail('黑名单无效');
+ if(typeof value==='string'&&value.length>100000)fail('黑名单无效');
+ const normalize=globalThis.ExtLinkQueue.normalizeBlacklistEntry,next=new Set(rows(current).map(normalize));
+ if(patch.replace)next.clear();
+ for(const item of patch.add||[]){const entry=item.trim();if(!entry)continue;const normalized=normalize(entry);next.add(/^[*.]/.test(entry)?'.'+normalized:normalized);}
+ for(const item of patch.remove||[]){const normalized=normalize(item);next.delete(normalized);next.delete('.'+normalized);}
+ return [...next].filter(Boolean).sort();
+}
 export function libraryMutation(documents,operation,options={}){
  const copy=value=>options.inPlace?value:structuredClone(value);
  const at=operation.at||'',id=operation.id;if(!id||!at)fail('缺少修改身份');
@@ -88,9 +102,10 @@ export function libraryMutation(documents,operation,options={}){
    if(!value||typeof value!=='object'||Array.isArray(value))fail('筛选条件无效');
    const numeric=['minOpportunityScore','minDr','minDa','minDomainAgeMonths'];
    const booleans=['aiCommentAllowLink','aiComments','blacklistEnabled','requireKnownDomainAge','showManualFillIcons'];
-   if(Object.entries(value).some(([k,v])=>numeric.includes(k)?!Number.isFinite(v)||v<0||v>(k==='minDomainAgeMonths'?10000:100):!booleans.includes(k)||typeof v!=='boolean'))fail('筛选条件无效');
+   if(Object.entries(value).some(([k,v])=>!numeric.includes(k)&&!booleans.includes(k)||v!==null&&!['string','number','boolean'].includes(typeof v)||typeof v==='string'&&v.length>10000))fail('筛选条件无效');
+   return{key:operation.key,data:globalThis.ExtLinkTargetFilters.normalize({...globalThis.ExtLinkTargetFilters.normalize(documents.targetFilters),...value})};
   }else if(operation.key==='domainBlacklist'){
-   if(typeof value!=='string'||value.length>100000)fail('黑名单无效');
+   return{key:operation.key,data:blacklistChange(documents.domainBlacklist,value)};
   }else if(typeof value!=='string'||value.length>10000)fail('设置无效');
   return{key:operation.key,data:structuredClone(value)};
  }
@@ -155,7 +170,10 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='domain_metrics')return Object.keys(documents.domainMetricsCache||{}).length<=domainMetricsLimit&&operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
  if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
  if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
- if(operation.type==='settings')return JSON.stringify(documents[operation.key])===JSON.stringify(operation.value);
+ // Incremental blacklist edits are not idempotent in the original function:
+ // existing wildcard prefixes normalize before new rules are added. The outbox
+ // must confirm their frozen base/result rather than apply them a second time.
+ if(operation.type==='settings'){if(operation.key==='domainBlacklist'&&operation.value&&typeof operation.value==='object'&&!Array.isArray(operation.value)&&operation.value.replace!==true)return false;try{return JSON.stringify(documents[operation.key])===JSON.stringify(libraryMutation(documents,operation).data);}catch{return false;}}
  if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}
  if(operation.type==='import'){const known=new Set((documents.sheetTableData?.entries||[]).map(storedKey));return operation.urls.every(url=>known.has(keyOf(url)));}
  const key=keyOf(operation.url);

@@ -30,7 +30,7 @@
     const library = inventory(snapshot, bundled), docs = snapshot.documents, exclusions = [], tasks = [];
     const requested = new Set((requestedUrls || []).map(url => queue.normalizeDestinationKey(url)));
     const records = queue.migrateSubmissionRecords({ records: docs.submissionRecords || {}, annotations: docs.siteAnnotations || {}, tableData: docs.sheetTableData || bundled || {} }).records;
-    const filters=docs.targetFilters||{};
+    const filters=global.ExtLinkTargetFilters.normalize(docs.targetFilters);
     const blacklist = filters.blacklistEnabled===false?null:queue.buildBlacklistMatcher(Array.isArray(docs.domainBlacklist) ? docs.domainBlacklist : String(docs.domainBlacklist || '').split(/[\n,]/));
     const blockedStatuses = new Set([...queue.DEAD_END_STATUSES, ...queue.GATE_STATUSES, 'paid', 'do_not_submit', 'not_suitable']);
     for (const item of library.candidates) {

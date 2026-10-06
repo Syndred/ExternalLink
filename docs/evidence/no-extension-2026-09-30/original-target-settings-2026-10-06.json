@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "a1132c274031dc2f0a9a7f38be292df18b02d125",
+  "regression": {
+    "passed": 488,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 8
+  },
+  "originalComparison": {
+    "source": "extension/background.js normalizeTargetFilters, saveTargetFilters and updateDomainBlacklist",
+    "originalNumericStringsClampsAndLiteralDefaults": true,
+    "partialFilterMergePreservesAssistantAndDrDa": true,
+    "blacklistReplaceAddRemoveMatchesOriginal": true
+  },
+  "isolated": {
+    "actualSettingsPageProductionOutboxAndReadback": true,
+    "unchangedSaveWritesZero": true,
+    "actualQueueAndVmBatchScope": true,
+    "rawSnapshotRevisionsPreservedOnRead": true,
+    "sqliteRestartLostRepliesSameIds": true,
+    "frozenBlacklistResultAvoidsNonIdempotentReplay": true,
+    "authenticatedHttpD1AndInvalid400": true,
+    "sixPageEditorSelectionAiAndLibraryRegressions": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "actualChineseSettingsMatchNormalizedOriginal": true,
+    "actualMonthMaximum600": true,
+    "actualPartialQualityRequestBlockedBeforeNetwork": true,
+    "blockedMutationRequests": 1,
+    "legacyNumericStringsObserved": false,
+    "localExecutorWorkbenchAndWorkerInvalidRejected400": true,
+    "rawCachedFiltersUnchanged": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "0fe6cc3e-08c5-417b-bc7b-6a0e79fbca9c",
+  "realSettingEdits": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media ownership",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ]
+}

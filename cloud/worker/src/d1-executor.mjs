@@ -4,6 +4,7 @@ import {parseBearerToken,secureEqual,artifactObjectKey,mediaObjectKey} from './w
 import {automationSummary} from './submission-journal.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
 import '../../../core/queue.js';
+import '../../../core/target-filters.js';
 import '../../../core/library-classifier.js';
 import '../../../core/opportunity-score.js';
 import '../../../core/submission-timeline.js';

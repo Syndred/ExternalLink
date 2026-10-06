@@ -5,7 +5,7 @@ import path from 'node:path';
 export const repo = fileURLToPath(new URL('../../', import.meta.url));
 const sandbox = { self: {}, URL, crypto: globalThis.crypto };
 vm.createContext(sandbox);
-for (const name of ['profiles','queue','scheduler','submission-timeline','url-library','library-classifier','opportunity-score','executor-contract']) {
+for (const name of ['profiles','queue','target-filters','scheduler','submission-timeline','url-library','library-classifier','opportunity-score','executor-contract']) {
   vm.runInContext(readFileSync(path.join(repo, `core/${name}.js`), 'utf8'), sandbox);
 }
 export const queue = sandbox.self.ExtLinkQueue;

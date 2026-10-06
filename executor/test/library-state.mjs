@@ -28,7 +28,7 @@ const baseline = process.argv.includes('--baseline') ? execFileSync('git', ['sho
 const server = http.createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://localhost').pathname;
-    const files = { '/': '../web/application.html', '/profiles-core.js': '../../core/profiles.js', '/timeline-core.js': '../../core/submission-timeline.js' };
+    const files = { '/': '../web/application.html', '/profiles-core.js': '../../core/profiles.js', '/target-filters-core.js': '../../core/target-filters.js', '/timeline-core.js': '../../core/submission-timeline.js' };
     if (path in files || ['/application.js', '/comment-studio.js', '/setup.js', '/application.css', '/activity-time.js'].includes(path)) {
       res.setHeader('Content-Type', path.endsWith('.js') ? 'text/javascript' : path.endsWith('.css') ? 'text/css' : 'text/html');
       res.end(path === '/application.js' && baseline ? baseline : await readFile(new URL(files[path] || '../web' + path, import.meta.url))); return;

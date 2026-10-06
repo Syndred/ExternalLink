@@ -1,3 +1,4 @@
+import '../../core/target-filters.js';
 import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser-target.mjs';
 import {profiles,plain,queue,selectScope,priorProductSuccess} from './shared.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {singlePagePanel,preparedTask} from './single-page.mjs';
@@ -76,7 +77,7 @@ export async function checkBrowserAssistant(runtime){
     if(!item){
     const bridge=async message=>{
      const current=assistantState(runtime).settings;if(scope!==workbenchScope(runtime.store.get('pair'))||!current.enabled||effectiveProfile(runtime,current)!==profileId||(frame.url()!==url&&message.action!=='manualSubmissionClicked'))return{ok:false,error:'助手页面或产品已变化'};const original=originalAssistantTask(runtime,profileId,info.targetId,page.url()),docs=snapshotFor(runtime).documents,config=applyDestinationFormKnowledge(docs,configFor(runtime,profileId,original),url);
-     if(message.action==='getActiveFillConfig')return{ok:true,config,filters:{...docs.targetFilters,showManualFillIcons:docs.targetFilters?.showManualFillIcons!==false}};
+     if(message.action==='getActiveFillConfig')return{ok:true,config,filters:globalThis.ExtLinkTargetFilters.normalize(docs.targetFilters)};
      if(message.action==='contentReady')return{ok:true};
      if(message.action==='saveFillLearnings'){if(message.pageUrl!==url)return{ok:false,error:'助手原页面已变化'};return captureFillLearning(runtime,{profileId,profile:original?.profileSnapshot||docs.siteProfiles[profileId],taskId:original?.id,targetId:info.targetId,browserInstance:runtime.host.startedAt,profileRevision:original?.profileRevision},message);}
      if(message.action==='log'){runtime.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:original?.runId,taskId:original?.id,profileId,url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}

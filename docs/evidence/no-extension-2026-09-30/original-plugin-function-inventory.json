@@ -1127,5 +1127,26 @@
     "newRealSubmissions": 0,
     "evidence": "original-library-state-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalTargetSettingsCheckpoint": {
+    "originalNumericStringsClampsLiteralDefaults": true,
+    "partialFilterMergeAndChangedOnlyUi": true,
+    "addedDrDaPreserved": true,
+    "originalBlacklistReplaceAddRemoveNormalization": true,
+    "rawSnapshotAndRevisionPreservedOnRead": true,
+    "actualQueueAndVmBatchScope": true,
+    "sqliteRestartLostRepliesOriginalIds": true,
+    "frozenBlacklistResultPreventsReplay": true,
+    "productionSettingsBrowserAndAuthenticatedHttpD1": true,
+    "testsPassed": 488,
+    "newTests": 8,
+    "actualPartialQualityRequestBlockedBeforeNetwork": true,
+    "liveLegacyNumericStringsObserved": false,
+    "liveBusinessRevisionsAndDocumentsUnchanged": true,
+    "workerVersion": "0fe6cc3e-08c5-417b-bc7b-6a0e79fbca9c",
+    "realSettingEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-target-settings-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

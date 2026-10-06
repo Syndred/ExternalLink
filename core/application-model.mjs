@@ -1,4 +1,5 @@
 import './queue.js';
+import './target-filters.js';
 import './library-classifier.js';
 import './executor-contract.js';
 import './submission-timeline.js';

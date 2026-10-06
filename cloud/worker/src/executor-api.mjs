@@ -3,6 +3,8 @@
 import { parseBearerToken, secureEqual } from './worker-core.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
 import '../../../core/queue.js';
+import '../../../core/target-filters.js';
+import '../../../core/opportunity-score.js';
 import '../../../core/submission-timeline.js';
 import '../../../core/library-classifier.js';
 import '../../../core/executor-contract.js';

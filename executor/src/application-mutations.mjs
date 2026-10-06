@@ -65,7 +65,8 @@ async function performFlush(runtime){
   // A retained original timestamp can make a fetched row disappear during pruning.
   // Confirm the complete frozen cache result, rather than rewriting after a lost reply.
   const originalDomainResult=item.operation.type==='domain_metrics'&&libraryMutation({[item.key]:item.baseData},item.operation).data;
-  if(libraryMutationSatisfied(snapshot.documents,item.operation)||originalDomainResult&&isDeepStrictEqual(snapshot.documents[item.key],originalDomainResult)){item.status='confirmed';item.confirmedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);continue;}
+  const originalSettingsResult=item.operation.type==='settings'&&libraryMutation({[item.key]:item.baseData},item.operation).data;
+  if(item.operation.type==='settings'?isDeepStrictEqual(snapshot.documents[item.key],originalSettingsResult):libraryMutationSatisfied(snapshot.documents,item.operation)||originalDomainResult&&isDeepStrictEqual(snapshot.documents[item.key],originalDomainResult)){item.status='confirmed';item.confirmedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);continue;}
   // Profile writes stamp updatedAt on the server, while queued edits contain local write times.
   // Compare all actual content; differing write timestamps alone cannot invalidate the next edit.
   const comparable=data=>item.key==='siteProfiles'&&data?Object.fromEntries(Object.entries(data).map(([id,profile])=>{const {updatedAt,...content}=profile;return[id,content];})):data;

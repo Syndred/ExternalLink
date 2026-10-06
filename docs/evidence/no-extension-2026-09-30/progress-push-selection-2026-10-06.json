@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-06",
+  "checkedAt": "2026-10-06T11:44:04.1265600Z",
+  "kind": "documentation_checkpoint_before_original_selection_ui",
+  "completion": "not_complete",
+  "sourceCommit": "553a53916e1a43e19094ad785383427e4f1e1a5c",
+  "cloudCodePull": "git pull --ff-only: Already up to date",
+  "freshWorkingTreeRegression": {
+    "command": "node --test tests/*.test.mjs",
+    "tests": 453,
+    "passed": 453,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "includesUnpublishedDraftTests": 6,
+    "publishedFunctionalBaselineTests": 447
+  },
+  "readOnlyCurrentProgress": {
+    "kind": "read_only_current_progress",
+    "runtime": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "cloudError": ""
+    },
+    "guard": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "pendingLearning": 0,
+      "pendingMedia": 0,
+      "assistantEnabled": false,
+      "liveJobs": 0,
+      "runningJobs": 0,
+      "checkingWatches": 0
+    },
+    "products": 9,
+    "library": 2950,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "unpublishedDraft": {
+    "firstRunPassed": 1,
+    "firstRunFailed": 5,
+    "currentPassed": 6,
+    "scope": "model readback, individual selection mutation, SQLite restart, lost response confirmation, backup and conflict",
+    "uiCompleted": false,
+    "authenticatedHttpD1Verified": false,
+    "deployed": false
+  },
+  "remaining": [
+    "current and batch selection UI and default scopes",
+    "queue clearing and asynchronous response order",
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media associations",
+    "real special publishing and uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ],
+  "pushScope": "progress documentation and redacted evidence only",
+  "newImplementationIncluded": false,
+  "servicesReloaded": false,
+  "deployed": false,
+  "realDataChanged": false,
+  "newRealSubmissions": 0
+}

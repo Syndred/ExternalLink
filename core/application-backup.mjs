@@ -2,12 +2,13 @@ import './queue.js';
 import './submission-timeline.js';
 import './backup.js';
 import {normalizeLegacyPreferences} from './application-preferences.mjs';
-export const backupKeys=Object.freeze(['submissionRecords','submissionSchemaVersion','siteAnnotations','deletedSubmissionKeys','siteProfiles','activeSiteId','selectedSiteIds','urlList','submissionTimeline','timelineSchemaVersion','sheetTableData','domainBlacklist','targetFilters','domainMetricsCache','linkMonitorResults','linkMonitorSchedule','autoSubmitStandardWpComments','autoSubmitDirectoryListings','cfgEmail','cfgName','cfgCommentTemplate']);
+export const backupKeys=Object.freeze(['submissionRecords','submissionSchemaVersion','siteAnnotations','deletedSubmissionKeys','siteProfiles','activeSiteId','selectedSiteIds','urlList','submissionTimeline','timelineSchemaVersion','sheetTableData','domainBlacklist','targetFilters','domainMetricsCache','linkMonitorResults','linkMonitorSchedule','autoSubmitStandardWpComments','autoSubmitDirectoryListings','cfgEmail','cfgName','cfgCommentTemplate','cfgPingIndex']);
 const dangerous=new Set(['__proto__','prototype','constructor']);
 function validateTree(value){if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(dangerous.has(key))throw Error('备份含有不安全的字段');validateTree(child);}}
 export function validateApplicationBackup(raw){
  validateTree(raw);const value=normalizeLegacyPreferences(globalThis.ExtLinkBackup.validateBackup(raw));
  for(const key of ['autoSubmitStandardWpComments','autoSubmitDirectoryListings'])if(Object.hasOwn(value,key)&&typeof value[key]!=='boolean')throw Error('备份自动提交设置格式无效：'+key);
+ if(Object.hasOwn(value,'cfgPingIndex')&&typeof value.cfgPingIndex!=='boolean')throw Error('备份搜索引擎通知设置格式无效');
  for(const key of ['submissionRecords','siteProfiles','siteAnnotations','domainMetricsCache','linkMonitorResults'])if(value[key]!==undefined&&(!value[key]||typeof value[key]!=='object'||Array.isArray(value[key])))throw Error('备份字段格式无效：'+key);
  if(value.sheetTableData!=null&&(!Array.isArray(value.sheetTableData.entries)||value.sheetTableData.entries.some(r=>!r||typeof r!=='object'||Array.isArray(r))))throw Error('备份网站表格格式无效');
  if(value.urlList!==undefined&&typeof value.urlList!=='string')throw Error('备份网址列表格式无效');

@@ -870,7 +870,23 @@
     "realRdapKnownAgeSuccessVerifiedThisCheckpoint": false,
     "evidence": "domain-cache-2026-10-05.json"
   },
-  "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原特殊发布、动态控件和完整历史资料等功能族仍需验收。",
+  "indexNotificationCheckpoint": {
+    "originalSetting": "cfgPingIndex",
+    "originalDefaultEndpointAndKeyPreserved": true,
+    "chineseSettingAndTaskStatusVerified": true,
+    "originalBackupRecoveryDocuments": 22,
+    "confirmedReceiptRequired": true,
+    "durableIntentAndNoRepeatAfterUnknownReply": true,
+    "latestCloudDisableSettingVerified": true,
+    "historicalReceiptsNotNotified": true,
+    "isolatedRuntimeBrowserHttpVerified": true,
+    "authenticatedDeviceD1SettingVerified": true,
+    "workerVersion": "b1cfa4fd-5b7c-4a5c-8267-632a6f6b3f86",
+    "liveBusinessRevisionsUnchanged": true,
+    "realIndexNowRequestOrAcceptanceVerified": false,
+    "evidence": "index-notification-2026-10-06.json"
+  },
+  "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原设置与动态操作、特殊发布和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",
     "dynamic_controls",

@@ -21,6 +21,7 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
   "cfgEmail",
   "cfgName",
   "cfgCommentTemplate",
+  "cfgPingIndex",
 ]);
 
 export function classifyAiProviderFailure(message, status = 0) {

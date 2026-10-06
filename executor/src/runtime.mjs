@@ -3,6 +3,7 @@ import {startLinkMonitor,dismissMonitorAlert} from './link-monitor.mjs';
 import {startPublicLibrarySync} from './public-library-sync.mjs';
 import {workbenchBackup} from './workbench-backup.mjs';
 import {startDomainAge} from './domain-age.mjs';
+import {prepareIndexNotification,notifyIndexNow} from './index-notification.mjs';
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -175,7 +176,7 @@ export class Runtime {
       enrolled:planned.length,processed:planned.filter(t=>!['pending','opening','filling','submitting'].includes(t.status)).length,counts,
       exclusions:plan.exclusions.length,runtimeExclusions:plan.runtimeExclusions.length,batches:plan.batches.length,scopeHash:plan.scopeHash,snapshotAt:plan.offlineSnapshotAt||null,
       globalPause:plan.globalPause?{...plan.globalPause,active:globalGateActive,historical:!globalGateActive}:null}:null;
-    return { ok: true, runtimeMode:'standalone-core', paired: !!this.store.get('pair'), paused, busy: !!this.job,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
+    return { ok: true, runtimeMode:'standalone-core', paired: !!this.store.get('pair'), paused, busy: !!this.job||!!this.indexNowJobs?.size,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
     runs: this.store.values('run:'), tasks: tasks.map(task => ({ ...task, pendingEvents:pending.filter(e=>e.taskId===task.id).length, syncStatus:task.syncConflict?'conflict':pending.some(e => e.taskId === task.id) || (task.receipt && !task.cloudVerified) ? 'pending' : 'confirmed' })), pendingEvents: pending.length, workbenchPendingEvents:pendingWorkbench(this).length, cloudError:activeOfflineMode?'':this.cloudError, host: this.host ? { version: this.host.version, instance: this.host.startedAt } : null }; }
   async connect() {
     this.host = JSON.parse(await readFile(path.join(this.home, 'host.json'), 'utf8'));
@@ -431,6 +432,11 @@ export class Runtime {
       if (!read || read.taskId !== task.id || read.evidence !== record.evidence || !isDeepStrictEqual(read.actualSubmission, record.actualSubmission)) throw new Error('云端回执回读不一致');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
+    let notificationDocuments;
+    for(const task of this.store.values('task:'))if(task.cloudVerified&&task.receipt&&['pending','sending'].includes(task.indexNowNotification?.status)){
+      if(task.indexNowNotification.status==='pending'&&!notificationDocuments)notificationDocuments=(await this.cloud.request('snapshot')).documents;
+      await notifyIndexNow(this,task,notificationDocuments);
+    }
     await this.cloud.flush(this.store);
     // An empty outbox performs no authenticated request and cannot prove recovery.
     if (this.cloudError !== this.lastCloudNetworkFailure) this.cloudError = '';
@@ -587,6 +593,7 @@ export class Runtime {
     const profile = task.profileSnapshot || run.profile;
     if(!task.profileSnapshot&&profile)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'task_profile_frozen');
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
+    this.update(task,{indexNotificationPreference:defaults.cfgPingIndex!==false},'index_notification_preference');
     const config = applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url));
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
@@ -1178,6 +1185,7 @@ export class Runtime {
     return issues;
   }
   async accept(task, page, evidence) {
+    if(!task.indexNowNotification)this.update(task,{indexNowNotification:prepareIndexNotification(this,task)},'index_notification_scheduled');
     this.update(task, { status: 'finished', siteStatus: 'accepted', receipt: { evidence: evidence.evidence, url: page.url(), publicationStatus: evidence.publicationStatus,receivedAt:new Date().toISOString(),syncStatus:'pending' }, cloudVerified: false,
       reason: evidence.publicationStatus === 'pending_moderation' ? '站方明确收件，等待审核' : '站方明确收件', completedAt: new Date().toISOString() }, 'receipt');
     const file = path.join(this.home, `${task.id}-${Date.now()}-receipt.png`);

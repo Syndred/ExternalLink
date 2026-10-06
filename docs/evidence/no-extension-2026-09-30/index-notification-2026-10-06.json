@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "b1cfa4fd-5b7c-4a5c-8267-632a6f6b3f86",
+  "unitTests": {
+    "passed": 416,
+    "failed": 0,
+    "skipped": 0,
+    "newNotificationTests": 8
+  },
+  "originalBehavior": {
+    "setting": "cfgPingIndex",
+    "defaultEnabled": true,
+    "originalEndpointAndKeyPreserved": true,
+    "urlIsOriginalTaskUrl": true,
+    "notificationIsNotIndexingOrPublicationProof": true
+  },
+  "isolated": {
+    "originalRuntimeBrowserAndHttp": true,
+    "enabledAndDisabledVerified": true,
+    "confirmedReceiptRequired": true,
+    "durableIntentBeforeRequest": true,
+    "sqliteRestartAndConcurrentDedupVerified": true,
+    "latestCloudDisableOverridesCachedEnabled": true,
+    "validationRejectionAndUncertainStatesVerified": true,
+    "oldHistoricalReceiptsNotNotified": true,
+    "sourceScopeAndUrlIdentityVerified": true,
+    "receiptAndPublicationUnchanged": true,
+    "authenticatedDeviceSettingsAndInvalidTypeRejection": true,
+    "backupDocuments": 22,
+    "backupBytes": 12351311,
+    "originalBackupMergeAndRestartVerified": true,
+    "submitPreferencesCases": 15
+  },
+  "ui": {
+    "pages": 6,
+    "chineseSettingSaveAndReadback": true,
+    "unsavedRefreshPreserved": true,
+    "chineseTaskStatus": true
+  },
+  "live": {
+    "servicesStartedFromOriginalDurableState": true,
+    "workerRejectsInvalidPreference": true,
+    "localRejectsInvalidPreference": true,
+    "allBusinessRevisionsUnchanged": true,
+    "productionSettingsReadOnlyVerified": true,
+    "historyNotificationCount": 0,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "no real IndexNow request or acceptance tested",
+    "original built-in key does not prove ownership of target domains",
+    "latest original browser favorites and data",
+    "old device media associations",
+    "remaining original dynamic settings and controls",
+    "real special publishing page and remote uploads"
+  ],
+  "protocolReference": "https://www.indexnow.org/documentation",
+  "realSettingsChanged": 0,
+  "newRealSubmissions": 0
+}

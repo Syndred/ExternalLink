@@ -1,4 +1,4 @@
-export const applicationSettingKeys=Object.freeze(['domainBlacklist','targetFilters','cfgName','cfgEmail','cfgCommentTemplate','linkMonitorSchedule','autoSubmitDirectoryListings','autoSubmitStandardWpComments']);
+export const applicationSettingKeys=Object.freeze(['domainBlacklist','targetFilters','cfgName','cfgEmail','cfgCommentTemplate','cfgPingIndex','linkMonitorSchedule','autoSubmitDirectoryListings','autoSubmitStandardWpComments']);
 // The original monitor rounded and clamped the interval, and only literal
 // false disabled it. Do not add a default plan to a source with no old keys.
 export function normalizeLegacyPreferences(documents){

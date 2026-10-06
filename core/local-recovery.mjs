@@ -8,6 +8,7 @@ function validateValue(key,value){
  if(arrayKeys.has(key)&&(!Array.isArray(value)||value.some(item=>typeof item!=='string')))throw Error('恢复资料格式无效：'+key);
  if(stringKeys.has(key)&&typeof value!=='string')throw Error('恢复资料格式无效：'+key);
  if(key.startsWith('autoSubmit')&&typeof value!=='boolean')throw Error('恢复资料格式无效：'+key);
+ if(key==='cfgPingIndex'&&typeof value!=='boolean')throw Error('恢复设置格式无效：'+key);
  if(key.endsWith('SchemaVersion')&&(!Number.isSafeInteger(Number(value))||Number(value)<1))throw Error('恢复资料版本无效：'+key);
 }
 

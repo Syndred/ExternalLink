@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "d9d8c20243227b7651475d66b281f9e0cdda7887",
+  "unitTests": {
+    "passed": 447,
+    "failed": 0,
+    "skipped": 0
+  },
+  "originalBehavior": {
+    "originalFourScreenshotLinesAndBothFieldAliases": true,
+    "missingFixedFieldsEditableWithoutExistingValues": true,
+    "originalNotesIncludedInGeneration": true,
+    "originalSharedMergeUsedForExtractAndGenerate": true,
+    "originalEmptyListsPreserveExistingValues": true,
+    "generationStagesDraftUntilSave": true,
+    "screenshotsPreserveOtherMediaAndHistory": true
+  },
+  "isolated": {
+    "sixPageChromeRealEditorVerified": true,
+    "actualGenerationRequestBodyVerified": true,
+    "realApplicationMutationSaveAndReadback": true,
+    "originalReceiptPreserved": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "actualChineseFieldsReadOnlyVerified": true,
+    "originalSharedProfileModuleServed": true,
+    "noEditorMutations": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerDeploymentChanged": false,
+  "workerVersionFromPreviousDeployment": "f393ba37-4eec-4aca-9258-cac2862ca6c5",
+  "realAiExtractionOrGeneration": 0,
+  "realProductEdits": 0,
+  "newRealSubmissions": 0,
+  "limitations": [
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media associations",
+    "real special publishing pages and remote uploads"
+  ]
+}

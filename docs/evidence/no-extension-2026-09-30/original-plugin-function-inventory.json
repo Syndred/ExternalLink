@@ -1005,5 +1005,19 @@
     "workerVersion": "f393ba37-4eec-4aca-9258-cac2862ca6c5",
     "liveBusinessRevisionsUnchanged": true,
     "evidence": "original-media-controls-2026-10-06.json"
+  },
+  "originalProfileDraftCheckpoint": {
+    "originalFourScreenshotLinesAndBothFieldAliases": true,
+    "missingFixedFieldsEditableWithoutExistingValues": true,
+    "originalNotesIncludedInGeneration": true,
+    "originalSharedMergeUsedForExtractAndGenerate": true,
+    "originalEmptyListsPreserveExistingValues": true,
+    "generationStagesDraftUntilSave": true,
+    "screenshotsPreserveOtherMediaAndHistory": true,
+    "sixPageEditorAndActualGenerationRequestVerified": true,
+    "originalReceiptAndMediaHistoryPreserved": true,
+    "liveBusinessRevisionsUnchanged": true,
+    "realAiGeneration": 0,
+    "evidence": "original-profile-draft-2026-10-06.json"
   }
 }

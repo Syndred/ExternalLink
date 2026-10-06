@@ -23,8 +23,8 @@ async function selectedPage(runtime,input){
  throw Error('所选网页已关闭，请刷新页面列表');
 }
 function configFor(snapshot,profile,url){return applyDestinationFormKnowledge(snapshot.documents,{...plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false},url);}
-async function preparedTask(runtime,input,snapshot){
- const scope=workbenchScope(runtime.store.get('pair')),host=queue.extractDomain(input.expectedUrl),key=queue.normalizeDestinationKey(input.expectedUrl),inventory=await runtime.cloud.request('runs?view=inventory');
+export async function preparedTask(runtime,input,snapshot){
+ const scope=workbenchScope(runtime.store.get('pair')),host=queue.extractDomain(input.expectedUrl),inventory=await runtime.cloud.request('runs?view=inventory');let key=queue.normalizeDestinationKey(input.expectedUrl);
  const assertScope=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，停止原单页登记');};assertScope();
  const identity=createHash('sha256').update(scope+'|'+input.profileId+'|'+key).digest('hex'),index='singlePagePlanIndex:'+identity;
  let planId=runtime.store.get(index),plan=planId&&runtime.store.get('singlePagePlan:'+planId);
@@ -32,6 +32,7 @@ async function preparedTask(runtime,input,snapshot){
  const candidates=[...runtime.store.values('task:'),...inventory.tasks].filter(t=>t.profileId===input.profileId&&queue.extractDomain(t.url)===host);
  if(candidates.some(t=>t.attemptBoundary||t.receipt))throw Error('同站已有提交结果或未知尝试，请先核验原任务');
  let task=candidates.find(t=>t.destinationKey===key&&['pending','needs_manual'].includes(t.status));
+ if(input.autoVisit){const pending=[...new Map(candidates.filter(t=>['pending','needs_manual'].includes(t.status)).map(t=>[t.id,t])).values()];if(pending.some(t=>['supervisor','ai'].includes(t.controller)||['login','human_verification','unknown_receipt','payment','paid'].includes(t.attentionType)))throw Error('同站原任务停在人工闸门或其他控制者，不能自动填写');if(pending.length>1)throw Error('同站有多个原任务，请在原任务中选择，未重复登记');task=task||pending[0];if(task)key=queue.normalizeDestinationKey(task.url);}
  if(task){if(!runtime.store.get('task:'+task.id))task=(await runtime.cloud.request('tasks/'+task.id)).task;assertScope();if(!task)throw Error('原任务暂不可读');let run=runtime.store.get('run:'+task.runId);if(!run){const existing=await runtime.cloud.request('runs?runId='+encodeURIComponent(task.runId));assertScope();run=existing.runs.find(r=>r.id===task.runId);if(!run)throw Error('原批次暂不可读');}return saveRecovered(task,run);}
  if(plan){const read=await runtime.cloud.request('runs?runId='+encodeURIComponent(plan.run.id));assertScope();task=read.tasks.find(t=>t.id===plan.run.tasks[0].id);const run=read.runs.find(r=>r.id===plan.run.id);if(task&&run)return saveRecovered(task,run);if(['registering','registration_unknown'].includes(plan.status))throw Error('原单页登记结果未知，请继续核对原编号，不能重复登记');if(plan.status==='rejected'&&plan.run.profileRevision!==snapshot.revisions.siteProfiles){plan={...plan,history:[...(plan.history||[]),{at:at(),error:plan.error,run:plan.run}],run:{...plan.run,profileRevision:snapshot.revisions.siteProfiles},status:'planned'};runtime.store.set('singlePagePlan:'+plan.id,plan);}}
  if(!plan){const run={id:randomUUID(),profileId:input.profileId,profileRevision:snapshot.revisions.siteProfiles,createdAt:at(),mode:'single_page_preparation',authorization:'fill_only',feeLimit:0,tasks:[{id:randomUUID(),url:input.expectedUrl,destinationKey:key}]};plan={id:randomUUID(),scope,run,status:'planned',at:at()};runtime.store.set('singlePagePlan:'+plan.id,plan);runtime.store.set(index,plan.id);}

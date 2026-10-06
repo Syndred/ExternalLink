@@ -79,6 +79,8 @@ export function libraryMutation(documents,operation,options={}){
    if(typeof value!=='boolean')fail('自动提交设置必须为开启或关闭');
   }else if(operation.key==='cfgPingIndex'){
    if(typeof value!=='boolean')fail('搜索引擎通知设置必须为开启或关闭');
+  }else if(operation.key==='autoFillOnVisit'){
+   if(typeof value!=='boolean')fail('访问自动填写设置必须为开启或关闭');
   }else if(operation.key==='linkMonitorSchedule'){
    if(!value||typeof value.enabled!=='boolean'||!Number.isFinite(value.minutes)||value.minutes<15||value.minutes>10080||value.desktopNotifications!==undefined&&typeof value.desktopNotifications!=='boolean'||Object.keys(value).some(k=>!['enabled','minutes','desktopNotifications'].includes(k)))fail('监测计划无效');
   }else if(operation.key==='targetFilters'){

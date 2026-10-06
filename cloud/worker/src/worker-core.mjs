@@ -22,6 +22,7 @@ export const STATE_DOCUMENT_KEYS = Object.freeze([
   "cfgName",
   "cfgCommentTemplate",
   "cfgPingIndex",
+  "autoFillOnVisit",
 ]);
 
 export function classifyAiProviderFailure(message, status = 0) {

@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "23b0e483-3a9a-4897-b701-10d076a18ea0",
+  "unitTests": {
+    "passed": 423,
+    "failed": 0,
+    "skipped": 0,
+    "newAutoVisitTests": 7
+  },
+  "originalBehavior": {
+    "preference": "autoFillOnVisit",
+    "legacyPanelOptInPreserved": true,
+    "cloudDisableOverridesLocalFlag": true,
+    "rawBackupAndRecoveryPreserveExplicitBoolean": true,
+    "pendingLibraryMatch": true,
+    "originalDestinationAndQueuePositionPreserved": true,
+    "allowedPlatforms": [
+      "directory",
+      "submission",
+      "profile",
+      "forum"
+    ],
+    "onlyFill": true
+  },
+  "isolated": {
+    "productionRuntimeAndChrome": true,
+    "alreadyConnectedPreferenceChange": true,
+    "liveLibraryAddition": true,
+    "dynamicFormMount": true,
+    "iframePrepared": true,
+    "differentProductGuard": true,
+    "articleExcluded": true,
+    "markedCurrentPathExcluded": true,
+    "qualityAndReceiptExclusions": true,
+    "originalHostTaskReuse": true,
+    "remoteLoginGatePreserved": true,
+    "ambiguousHostDoesNotRegister": true,
+    "boundTaskSameHostUnknownPreserved": true,
+    "disabledDuringLeaseStopsFill": true,
+    "scopeChangeAndClosedPanelStopFill": true,
+    "unknownRegistrationAndSqliteRestartRecovered": true,
+    "originalTaskAndFrozenProfileRetained": true,
+    "turningOffCancelsPendingTimers": true,
+    "reenablingResumesSameCancelledPage": true,
+    "offlineSettingsAndLostReplyRecovered": true,
+    "authenticatedHttpD1SettingValidated": true,
+    "backupDocuments": 23,
+    "backupBytes": 12351334,
+    "receiptAndMediaHistoryPreserved": true,
+    "externalRequests": 0,
+    "realSubmissions": 0
+  },
+  "ui": {
+    "pages": 6,
+    "chineseOriginalFlagSaveAndReadback": true,
+    "unsavedRefreshPreserved": true,
+    "originalPageRetry": true
+  },
+  "live": {
+    "servicesReloadedAfterValidatedIdleGuard": true,
+    "workerRejectsInvalidPreference": true,
+    "localRejectsInvalidPreference": true,
+    "allBusinessRevisionsUnchanged": true,
+    "productionSettingsReadOnlyVerified": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "historyNotificationCount": 0,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "original latest browser favorites and product history not fully recovered",
+    "old device media associations",
+    "remaining original dynamic controls and settings",
+    "real special publishing pages and remote uploads",
+    "real target automatic visiting deliberately not enabled while submissions are paused"
+  ],
+  "realSettingsChanged": 0,
+  "newRealSubmissions": 0
+}

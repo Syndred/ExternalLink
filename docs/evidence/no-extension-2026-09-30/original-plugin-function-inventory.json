@@ -801,7 +801,7 @@
       "status": "mapped_requires_full_acceptance"
     }
   ],
-  "updatedAt": "2026-10-05",
+  "updatedAt": "2026-10-06",
   "completion": "not_complete",
   "specialLaunchCheckpoint": {
     "platform": "Product Hunt",
@@ -815,7 +815,12 @@
     "evidence": "product-hunt-learning-2026-10-05.json"
   },
   "fillLearningCheckpoint": {
-    "originalHelpers": ["persistFillLearnings", "mergeLearnedMappings", "persistDestinationFormKnowledge", "applyDestinationFormKnowledge"],
+    "originalHelpers": [
+      "persistFillLearnings",
+      "mergeLearnedMappings",
+      "persistDestinationFormKnowledge",
+      "applyDestinationFormKnowledge"
+    ],
     "sourceImplemented": true,
     "isolatedBrowserVerified": true,
     "durableRecoveryAndD1Verified": true,
@@ -845,8 +850,14 @@
     "evidence": "desktop-notification-2026-10-05.json"
   },
   "originalSettingsCheckpoint": {
-    "originalAutoSubmitSettings": ["autoSubmitDirectoryListings", "autoSubmitStandardWpComments"],
-    "originalMonitorSettings": ["linkMonitorEnabled", "linkMonitorMinutes"],
+    "originalAutoSubmitSettings": [
+      "autoSubmitDirectoryListings",
+      "autoSubmitStandardWpComments"
+    ],
+    "originalMonitorSettings": [
+      "linkMonitorEnabled",
+      "linkMonitorMinutes"
+    ],
     "chineseControlsAndDurableSyncVerified": true,
     "productionRuntimeBrowserCases": 15,
     "sameTaskManualConsentAndReplacementPageRejectionVerified": true,
@@ -893,5 +904,24 @@
     "historical_local_favorites",
     "old_device_media_associations",
     "original_large_backup_history"
-  ]
+  ],
+  "autoVisitCheckpoint": {
+    "originalPreference": "autoFillOnVisit",
+    "rawBackupRecoveryDocuments": 23,
+    "legacyPanelAndModernDisableVerified": true,
+    "offlineAndLostReplySettingsVerified": true,
+    "pendingLibraryMatchAndOriginalQueuePosition": true,
+    "originalTaskHostReuseAndFrozenProfile": true,
+    "unknownRegistrationAndSqliteRestartVerified": true,
+    "originalPlatformAndContentGuardsVerified": true,
+    "samePagePreferenceAndLibraryChanges": true,
+    "dynamicFormAndIframeVerified": true,
+    "originalCancellationAndReenableVerified": true,
+    "scopePanelAndDisableRacesVerified": true,
+    "authenticatedDeviceD1Verified": true,
+    "workerVersion": "23b0e483-3a9a-4897-b701-10d076a18ea0",
+    "liveBusinessRevisionsUnchanged": true,
+    "realAutoVisitEnabled": false,
+    "evidence": "auto-visit-2026-10-06.json"
+  }
 }

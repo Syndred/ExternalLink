@@ -2,6 +2,11 @@ import {libraryMutation,libraryMutationSatisfied} from './library-mutation.mjs';
 import './profiles.js';
 const badRequest=message=>Object.assign(new Error(message),{status:400});
 export function applicationMutation(documents,operation,options){
+ if(operation.type==='profile_selection'){
+  const available=id=>typeof id==='string'&&Object.hasOwn(documents.siteProfiles||{},id)&&!documents.siteProfiles[id].archived&&!['__proto__','constructor','prototype'].includes(id);
+  if(operation.key==='activeSiteId'?!available(operation.value):operation.key==='selectedSiteIds'?(!Array.isArray(operation.value)||new Set(operation.value).size!==operation.value.length||operation.value.some(id=>!available(id))):true)throw badRequest('请选择现有的在用网站，选择不能重复');
+  return{key:operation.key,data:structuredClone(operation.value)};
+ }
  if(operation.type==='profile_order'){
   const profiles=documents.siteProfiles||{},ids=operation.profileIds;
   if(!Array.isArray(ids)||!ids.length||ids.length!==Object.keys(profiles).length||new Set(ids).size!==ids.length||ids.some(id=>typeof id!=='string'||!Object.hasOwn(profiles,id)||['__proto__','constructor','prototype'].includes(id)))throw badRequest('网站排序必须包含全部现有产品且不能重复');
@@ -48,6 +53,7 @@ export function applicationMutation(documents,operation,options){
  return{key:'siteProfiles',data:{...documents.siteProfiles,[operation.profileId]:profile}};
 }
 export function applicationMutationSatisfied(documents,operation){
+ if(operation.type==='profile_selection')return ['activeSiteId','selectedSiteIds'].includes(operation.key)&&JSON.stringify(documents[operation.key])===JSON.stringify(operation.value);
  if(operation.type==='profile_order')return Array.isArray(operation.profileIds)&&operation.profileIds.length>0&&operation.profileIds.length===Object.keys(documents.siteProfiles||{}).length&&new Set(operation.profileIds).size===operation.profileIds.length&&operation.profileIds.every((id,index)=>documents.siteProfiles?.[id]?.sortIndex===index);
  if(!['profile','profile_create','profile_delete','profile_archive','profile_media'].includes(operation.type))return libraryMutationSatisfied(documents,operation);
  if(operation.type==='profile_delete')return !Object.hasOwn(documents.siteProfiles||{},operation.profileId);

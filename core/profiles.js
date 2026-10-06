@@ -757,6 +757,14 @@
     });
   }
 
+  function profileSelectionFromDocuments(documents = {}) {
+    const profiles = documents.siteProfiles || {};
+    const ids = orderedProfileIds(profiles).filter(id => !profiles[id].archived);
+    const activeSiteId = ids.includes(documents.activeSiteId) ? documents.activeSiteId : ids[0] || '';
+    const selected = [...new Set(Array.isArray(documents.selectedSiteIds) ? documents.selectedSiteIds : [])].filter(id => ids.includes(id));
+    return { activeSiteId, selectedSiteIds: selected.length ? selected : activeSiteId ? [activeSiteId] : [] };
+  }
+
   function applyProfileOrder(profiles = {}, orderedIds = []) {
     const next = { ...profiles };
     const remaining = orderedProfileIds(next).filter((id) => !orderedIds.includes(id));
@@ -807,6 +815,7 @@
     isSiteSpecificField,
     learnProfileFieldsFromFill,
     orderedProfileIds,
+    profileSelectionFromDocuments,
     applyProfileOrder,
     nextProfileSortIndex,
     getActiveProfile,

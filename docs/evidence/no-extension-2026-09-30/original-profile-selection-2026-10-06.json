@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "ff2b6de3-8b82-4b02-8895-bd5979f97bea",
+  "sourceCheckpoint": "8190e3ba0bfe0f9cc53f0d735f5d42e13fb4e9eb",
+  "regression": {
+    "passed": 453,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 6
+  },
+  "isolated": {
+    "originalCurrentAndBatchReadback": true,
+    "independentSelectionDocuments": true,
+    "sqliteRestartAndLostRepliesOriginalIds": true,
+    "concurrentSelectionConflictPreserved": true,
+    "originalBackupRoundTrip": true,
+    "authenticatedHttpD1WritesAndCAS": true,
+    "currentSelectorSaveAndReload": true,
+    "batchSaveReopenAndReload": true,
+    "singlePageCommentAndAssistantDefaults": true,
+    "emptySelectionDoesNotUseOldQueue": true,
+    "oldQueueControlsRemovedDuringChange": true,
+    "delayedOldResponseCannotRestoreOldSelection": true,
+    "originalEmptyReloadFallbackWithoutRawRewrite": true,
+    "sixPageRegression": true,
+    "singlePageFrozenPromotionAndIframeRegression": true,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "cloudAndLocalInvalidSelectionRejected400": true,
+    "actualCurrentAndBatchDefaultsReadOnlyVerified": true,
+    "archivedProductsExcludedFromCurrentSelector": true,
+    "commentAndAssistantDefaultsReadOnlyVerified": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "remaining": [
+    "new and deleted product current-site behavior",
+    "remaining original controls and dynamic calls",
+    "latest original favorites and product history",
+    "old device media ownership",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ],
+  "realProductEdits": 0,
+  "newRealSubmissions": 0
+}

@@ -10,6 +10,7 @@ const stamp=value=>{const time=globalThis.ExtLinkSubmissionTimeline.parseTime(va
 const taskActive=task=>!!(task.attemptBoundary||task.receipt||Object.keys(task.actualPreparation||{}).length||Object.keys(task.actualSubmission||{}).length||task.targetId||task.preparedAt||task.hasActivity||['opening','filling','submitting','finished','submitted_unconfirmed'].includes(task.status)||task.status==='needs_manual'&&task.reason);
 export function applicationModel(snapshot,tasks=[]){
  const documents=snapshot.documents||{},products=globalThis.ExtLinkProfiles.orderedProfileIds(documents.siteProfiles||{}).map(id=>({...documents.siteProfiles[id],id}));
+ const profileSelection=globalThis.ExtLinkProfiles.profileSelectionFromDocuments(documents);
  const inventory=globalThis.ExtLinkExecutorContract.inventory({documents},null);
  const timeline=globalThis.ExtLinkSubmissionTimeline;
  const migrated=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:documents.submissionRecords||{},tableData:documents.sheetTableData||{}}).timeline;
@@ -49,6 +50,6 @@ export function applicationModel(snapshot,tasks=[]){
   item.groups=globalThis.ExtLinkLibraryGroups.GROUPS.filter(([id])=>globalThis.ExtLinkLibraryGroups.matches(item,id)).map(([id])=>id);
   item.progress=timeline.deriveLibraryProgress(item);return item;
  });
- return{products,library,total:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
+ return{products,profileSelection,library,total:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
 }
 export const taskSummary=task=>({...Object.fromEntries(['id','url','profileId','runId','status','siteStatus','reason','attentionType','attemptBoundary','receipt','indexNowNotification','cloudVerified','syncStatus','pendingEvents','acceptanceId','reviewStatus','controller','artifactRef','screenshot','updatedAt','createdAt','preparedAt'].filter(key=>task[key]!==undefined).map(key=>[key,task[key]])),...(taskActive(task)?{hasActivity:true}:{})});

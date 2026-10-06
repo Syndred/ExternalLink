@@ -1019,5 +1019,22 @@
     "liveBusinessRevisionsUnchanged": true,
     "realAiGeneration": 0,
     "evidence": "original-profile-draft-2026-10-06.json"
+  },
+  "originalProfileSelectionCheckpoint": {
+    "originalActiveAndBatchDocuments": true,
+    "independentPersistentSelection": true,
+    "currentSelectorAndBatchReopenAndReload": true,
+    "singlePageCommentAndAssistantDefaults": true,
+    "emptyQueueAndDelayedResponseProtection": true,
+    "originalEmptyReloadFallback": true,
+    "sqliteRestartAndLostResponses": true,
+    "concurrentSelectionConflictPreserved": true,
+    "authenticatedHttpD1CAS": true,
+    "liveBusinessRevisionsAndDocumentsUnchanged": true,
+    "newAndDeletedProductCurrentSelection": "not_yet_migrated",
+    "testsPassed": 453,
+    "workerVersion": "ff2b6de3-8b82-4b02-8895-bd5979f97bea",
+    "evidence": "original-profile-selection-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

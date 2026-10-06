@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {chromium} from 'playwright';
+import {applicationModel} from '../../core/application-model.mjs';
+import {applicationMutation} from '../../core/application-mutation.mjs';
+import {pendingSubmissionQueue} from '../../core/submission-queue.mjs';
+
+const docs={siteProfiles:Object.fromEntries(['p','q'].map((id,index)=>[id,{id,sortIndex:index,name:id==='p'?'First Product':'Current Product',url:'https://'+id+'.example',fields:{Name:id==='p'?'First Product':'Current Product',Url:'https://'+id+'.example','Business mail':'owner@example.com','Long description':'Original product description'}}])),activeSiteId:'q',selectedSiteIds:['q'],urlList:['https://target.example/submit'],submissionRecords:{keep:{profileId:'p',destinationUrl:'https://received.example',status:'success',evidence:'Original receipt'}}};
+const original=structuredClone(docs),writes=[],errors=[];let holdQueue=false,releaseQueue,queueHeld;
+const snapshot=()=>({ok:true,at:new Date().toISOString(),model:applicationModel({documents:docs}),runtime:{paused:true,busy:false,pendingEvents:0},tasks:[],acceptances:[],pendingEdits:[],workbenchBatches:[],settings:{},assistant:{settings:{enabled:false,autoFillOnVisit:false},fills:[]}});
+const server=http.createServer(async(req,res)=>{
+ const path=new URL(req.url,'http://localhost').pathname;let body='';for await(const chunk of req)body+=chunk;const input=body?JSON.parse(body):{};
+ try{
+  if(['/', '/application.js','/comment-studio.js','/setup.js','/application.css','/activity-time.js','/timeline-core.js','/profiles-core.js'].includes(path)){
+   const name=path==='/'?'application.html':path.slice(1),file=name==='timeline-core.js'?'../../core/submission-timeline.js':name==='profiles-core.js'?'../../core/profiles.js':'../web/'+name;
+   res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'text/html');res.end(await readFile(new URL(file,import.meta.url)));return;
+  }
+  let result;writes.push({route:path,...input});
+  if(path==='/connection')result={ok:true};
+  else if(path==='/appData')result=snapshot();
+  else if(path==='/libraryMutation'){const change=applicationMutation(docs,{...input.operation,id:'selection-'+writes.length,at:new Date().toISOString()});docs[change.key]=change.data;result={ok:true};}
+  else if(path==='/previewBatch')result={ok:true,batch:{id:'frozen-selection',status:'preview',count:input.profileIds.length,items:input.profileIds.map(profileId=>({profileId,url:input.urls[0],status:'ready'}))}};
+  else if(['/getSubmissionQueue','/advanceSubmission'].includes(path)){const queue=pendingSubmissionQueue({documents:docs},input);result={ok:true,...queue,total:queue.groups.length,index:0,task:queue.groups[0]};if(holdQueue){holdQueue=false;queueHeld?.();await new Promise(resolve=>releaseQueue=resolve);}}
+  else if(path==='/browserLibraryPages')result={ok:true,pages:[{targetId:'original-page',url:'https://target.example/form',title:'Original page'}]};
+  else if(path==='/sidepanelOpened')result={ok:true,panel:{id:'original-panel'}};
+  else if(path==='/sidepanelClosed')result={ok:true};
+  else if(path==='/commentHistory')result={ok:true,versions:[]};
+  else throw Error('Unexpected route '+path);
+  res.setHeader('Content-Type','application/json');res.end(JSON.stringify(result));
+ }catch(error){res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}
+});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});
+try{
+ const page=await browser.newPage();page.on('pageerror',error=>errors.push(error.message));await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+ await page.goto('http://127.0.0.1:'+server.address().port+'/#access=fixture');await page.getByRole('heading',{name:'Current Product',exact:true}).waitFor();
+ assert.equal(await page.getByLabel('当前网站',{exact:true}).count(),1,'Original current-site selection needs a visible persistent control');
+ assert.equal(await page.getByLabel('当前网站',{exact:true}).inputValue(),'q');
+ await page.getByRole('button',{name:'AI 评论',exact:true}).click();assert.equal(await page.getByLabel('评论推广产品').inputValue(),'q');
+ await page.getByRole('button',{name:'设置与备份',exact:true}).click();assert.equal(await page.getByLabel('浏览器助手使用的产品').inputValue(),'q');
+ await page.getByRole('button',{name:'我的网站',exact:true}).click();await page.getByLabel('当前网站',{exact:true}).selectOption('p');await page.getByText('当前网站已保存。',{exact:true}).waitFor();assert.equal(docs.activeSiteId,'p');assert.deepEqual(docs.selectedSiteIds,['q']);
+ await page.reload();await page.getByLabel('当前网站',{exact:true}).waitFor();assert.equal(await page.getByLabel('当前网站',{exact:true}).inputValue(),'p');
+ await page.getByRole('button',{name:'编辑当前网站',exact:true}).click();await page.getByLabel('产品名称',{exact:true}).waitFor();assert.equal(await page.getByLabel('产品名称',{exact:true}).inputValue(),'First Product');await page.getByRole('button',{name:'关闭详情'}).click();
+ await page.getByRole('button',{name:'外链库',exact:true}).click();await page.getByRole('button',{name:'当前网页填写',exact:true}).click();await page.getByLabel('单页填写使用的产品').waitFor();assert.equal(await page.getByLabel('单页填写使用的产品').inputValue(),'p');await page.getByRole('button',{name:'关闭详情'}).click();
+ await page.getByRole('button',{name:'选择当前筛选',exact:true}).click();await page.getByRole('button',{name:'批量提交',exact:true}).click();assert.equal(await page.getByLabel('提交 Current Product',{exact:true}).isChecked(),true);assert.equal(await page.getByLabel('提交 First Product',{exact:true}).isChecked(),false);
+ await page.getByLabel('提交 First Product',{exact:true}).check();await page.getByLabel('提交 Current Product',{exact:true}).uncheck();await page.getByText('批量选择已保存。',{exact:true}).waitFor();await page.getByRole('button',{name:'预览批量提交',exact:true}).click();await page.getByRole('heading',{name:'批量提交范围确认'}).waitFor();assert.deepEqual(writes.findLast(item=>item.route==='/previewBatch').profileIds,['p']);assert.deepEqual(docs.selectedSiteIds,['p']);
+ await page.getByRole('button',{name:'关闭详情'}).click();await page.getByRole('button',{name:'批量提交',exact:true}).click();assert.equal(await page.getByLabel('提交 First Product',{exact:true}).isChecked(),true);assert.equal(await page.getByLabel('提交 Current Product',{exact:true}).isChecked(),false);
+ await page.getByRole('button',{name:'关闭详情'}).click();await page.reload();await page.getByLabel('当前网站',{exact:true}).waitFor();await page.getByRole('button',{name:'外链库',exact:true}).click();await page.getByRole('button',{name:'选择当前筛选',exact:true}).click();await page.getByRole('button',{name:'批量提交',exact:true}).click();assert.equal(await page.getByLabel('提交 First Product',{exact:true}).isChecked(),true);assert.equal(await page.getByLabel('提交 Current Product',{exact:true}).isChecked(),false);
+ await page.getByRole('button',{name:'关闭详情'}).click();await page.getByRole('button',{name:'单站投稿队列',exact:true}).click();await page.getByRole('button',{name:'打开当前网站',exact:true}).waitFor();
+ const held=new Promise(resolve=>queueHeld=resolve);holdQueue=true;await page.getByLabel('队列产品：Current Product',{exact:true}).check();await held;
+ assert.equal(await page.getByRole('button',{name:'打开当前网站',exact:true}).count(),0,'Old queue controls must disappear while scope changes');
+ await page.getByLabel('队列产品：First Product',{exact:true}).uncheck();await page.getByText('本站待处理产品：Current Product',{exact:true}).waitFor();const lateResponse=page.waitForResponse(response=>response.url().endsWith('/getSubmissionQueue')&&response.request().postDataJSON().selectedSiteIds.length===2);releaseQueue();releaseQueue=null;await (await lateResponse).finished();await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.getByLabel('队列产品：First Product',{exact:true}).isChecked(),false);assert.equal(await page.getByText('本站待处理产品：First Product、Current Product',{exact:true}).count(),0);
+ await page.getByLabel('队列产品：Current Product',{exact:true}).uncheck();await page.getByText('请先选择队列产品。',{exact:true}).waitFor();assert.deepEqual(docs.selectedSiteIds,[]);assert.equal(await page.getByRole('button',{name:'打开当前网站',exact:true}).count(),0);assert.deepEqual(writes.findLast(item=>item.route==='/getSubmissionQueue').selectedSiteIds,[]);
+ await page.getByRole('button',{name:'关闭详情'}).click();await page.getByRole('button',{name:'单站投稿队列',exact:true}).click();await page.getByText('本站待处理产品：First Product',{exact:true}).waitFor();assert.equal(await page.getByLabel('队列产品：First Product',{exact:true}).isChecked(),true);assert.deepEqual(docs.selectedSiteIds,[],'Original reload fallback should not rewrite raw empty preferences');
+ assert.deepEqual(docs.siteProfiles,original.siteProfiles);assert.deepEqual(docs.submissionRecords,original.submissionRecords);assert.equal(writes.filter(item=>/startBatch|sidepanelFill|manualSubmit/.test(item.route)).length,0);assert.deepEqual(errors,[]);
+ console.log('Original current-site selection, batch persistence, defaults, empty queue and delayed responses passed; real submissions 0');
+}finally{releaseQueue?.();await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "e8be5db1e0d01f3b4f65ed409b517fe7e6bf5438",
+  "regression": {
+    "passed": 480,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 7
+  },
+  "originalComparison": {
+    "source": "extension/background.js writeSubmissionSiteAnnotation and updateLibraryPreferences; settings and sidepanel group controls",
+    "manualPrimaryStatusAndHostAlias": true,
+    "originalBlankNotePreserved": true,
+    "routeExplicitGroupsDoNotTagHomepage": true,
+    "archiveAndRestoreOriginalDeletedKeys": true
+  },
+  "isolated": {
+    "favoriteOnlyDoesNotFreezeAutomaticGroups": true,
+    "disabledExplicitGroupsRetained": true,
+    "explicitGroupRemovalSavedAndReopened": true,
+    "hostAliasAndPriorityAndKnowledgePreserved": true,
+    "originalProductListAndGroupsDeduplicated": true,
+    "archiveRestoreQueueKeysAndOfflinePlan": true,
+    "sqliteRestartLostResponsesSameIds": true,
+    "conflictDiscardCancelsDependentQueueChange": true,
+    "localTransactionFailureRollsBack": true,
+    "authenticatedHttpD1AndReadback": true,
+    "originalReceiptsAndMediaHistoryPreserved": true,
+    "sixPageEditorSelectionAndAiRegressions": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "actualChineseGroupEditorMatchesOriginalSnapshot": true,
+    "checkedExplicitGroupsObserved": false,
+    "disabledExplicitGroupsObserved": false,
+    "actualFavoriteOnlyRequestBlockedBeforeNetwork": true,
+    "blockedMutationRequests": 1,
+    "localExecutorWorkbenchAndWorkerInvalidValuesRejected400": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "90bf4eb8-39a1-416c-b9b8-6728050135a8",
+  "realAnnotationEdits": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media ownership",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ]
+}

@@ -1102,5 +1102,30 @@
     "newRealSubmissions": 0,
     "evidence": "original-ai-draft-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalLibraryStateCheckpoint": {
+    "originalPrimaryStatusAndHostAlias": true,
+    "originalBlankNoteAndKnowledgeRetained": true,
+    "routeExplicitGroupsDoNotTagHomepage": true,
+    "favoriteOnlyDoesNotFreezeAutomaticGroups": true,
+    "disabledExplicitGroupsRetained": true,
+    "explicitGroupRemovalReopened": true,
+    "originalListsDeduplicated": true,
+    "archiveRestoreOriginalQueueKeys": true,
+    "fullLocalTransactionAndRestart": true,
+    "unknownRepliesOriginalIds": true,
+    "conflictDiscardCancelsDependentQueueChange": true,
+    "transactionFailureRollsBack": true,
+    "authenticatedHttpD1": true,
+    "originalReceiptAndMediaHistoryPreserved": true,
+    "testsPassed": 480,
+    "newTests": 7,
+    "actualFavoriteOnlyRequestBlockedBeforeNetwork": true,
+    "liveBusinessRevisionsAndDocumentsUnchanged": true,
+    "workerVersion": "90bf4eb8-39a1-416c-b9b8-6728050135a8",
+    "realAnnotationEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-library-state-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "7d96887f-a6e4-470c-bdb5-5a0ae5619433",
+  "sourceCheckpoint": "e243704e37265643aa61b934826d5f483954a2f3",
+  "unitTests": {
+    "passed": 427,
+    "failed": 0,
+    "skipped": 0,
+    "newOriginalProfileTests": 4
+  },
+  "originalBehavior": {
+    "originalChineseLanguageValue": "zh",
+    "productLanguageAndCommentHistoryPreserved": true,
+    "manualLinkLimitNotCappedAtFive": true,
+    "aiGeneratedProfileLimitUnchanged": true,
+    "originalFieldNotesEditable": true,
+    "partialAndBlankNotesPreserved": true,
+    "numericOriginalFieldsEditable": true,
+    "samePatchConfirmedAfterLostReply": true
+  },
+  "isolated": {
+    "sixPageChineseUi": true,
+    "actualSharedProfileMutationInUiFixture": true,
+    "authenticatedDeviceHttpD1Cas": true,
+    "originalLanguageLinkLimitNotesAndLearnedMappingRetained": true,
+    "invalidNotesAndLinkLimitsRejected": true,
+    "oldReceiptAndMediaUnchanged": true,
+    "realSubmissions": 0
+  },
+  "live": {
+    "cloudInvalidNotesAndLimitsRejected": true,
+    "localInvalidNotesRejected": true,
+    "allBusinessRevisionsUnchanged": true,
+    "actualChineseProductControlsReadOnlyVerified": true,
+    "originalServiceIdleGuard": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "latest original local favorites and product history",
+    "old device media associations",
+    "remaining dynamic control audit",
+    "real special publishing pages and remote uploads"
+  ],
+  "realProductEdits": 0,
+  "newRealSubmissions": 0
+}

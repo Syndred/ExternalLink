@@ -923,5 +923,21 @@
     "liveBusinessRevisionsUnchanged": true,
     "realAutoVisitEnabled": false,
     "evidence": "auto-visit-2026-10-06.json"
+  },
+  "originalProfileControlsCheckpoint": {
+    "originalChineseLanguage": "zh",
+    "productAndCommentHistoryLanguagePreserved": true,
+    "originalManualLinkLimitPreserved": true,
+    "aiGeneratedRuleLimitUnchanged": true,
+    "originalFieldNotesPartiallyEditable": true,
+    "blankAndUneditedNotesPreserved": true,
+    "numericOriginalFieldsEditable": true,
+    "partialNotesLostReplyConfirmedWithoutRepeat": true,
+    "invalidInputStatus400": true,
+    "authenticatedDeviceHttpD1Verified": true,
+    "realProductEdits": 0,
+    "workerVersion": "7d96887f-a6e4-470c-bdb5-5a0ae5619433",
+    "liveBusinessRevisionsUnchanged": true,
+    "evidence": "original-profile-controls-2026-10-06.json"
   }
 }

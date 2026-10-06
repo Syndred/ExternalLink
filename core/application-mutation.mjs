@@ -1,12 +1,18 @@
 import {libraryMutation,libraryMutationSatisfied} from './library-mutation.mjs';
+import './profiles.js';
 const badRequest=message=>Object.assign(new Error(message),{status:400});
 export function applicationMutation(documents,operation,options){
+ if(operation.type==='profile_order'){
+  const profiles=documents.siteProfiles||{},ids=operation.profileIds;
+  if(!Array.isArray(ids)||!ids.length||ids.length!==Object.keys(profiles).length||new Set(ids).size!==ids.length||ids.some(id=>typeof id!=='string'||!Object.hasOwn(profiles,id)||['__proto__','constructor','prototype'].includes(id)))throw badRequest('网站排序必须包含全部现有产品且不能重复');
+  return{key:'siteProfiles',data:globalThis.ExtLinkProfiles.applyProfileOrder(profiles,ids)};
+ }
  if(!['profile','profile_create','profile_delete','profile_archive','profile_media'].includes(operation.type))return libraryMutation(documents,operation,options);
  if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(operation.profileId||'')||['constructor','prototype','__proto__'].includes(operation.profileId))throw badRequest('无效资料身份');
  const original=documents.siteProfiles?.[operation.profileId],patch=operation.profile;
  if(operation.type==='profile_delete'){
   if(!original)throw badRequest('产品资料已不存在');
-  const data={...documents.siteProfiles};delete data[operation.profileId];return{key:'siteProfiles',data};
+  const data={...documents.siteProfiles};delete data[operation.profileId];return{key:'siteProfiles',data:globalThis.ExtLinkProfiles.applyProfileOrder(data,globalThis.ExtLinkProfiles.orderedProfileIds(data))};
  }
  if(operation.type==='profile_media'){
   if(!original||!['logo','featured','screenshot1','screenshot2','screenshot3','screenshot4'].includes(operation.kind)||!['disable','restore'].includes(operation.action))throw badRequest('无效媒体操作');
@@ -23,7 +29,7 @@ export function applicationMutation(documents,operation,options){
  }
  if(operation.type==='profile_create'&&original)throw badRequest('资料身份已存在，不能覆盖');
  if(operation.type==='profile'&&!original||patch?.id!==operation.profileId)throw badRequest('资料身份不匹配');
- if(Object.keys(patch).some(key=>!['id','name','url','fields','fieldNotes','media','mediaVersions','mediaDisabled','language','targetAudience','valueProposition','useCases','sellablePoints','avoidContent','anchorRules','blogRules'].includes(key)))throw badRequest('无效资料字段');
+ if(Object.keys(patch).some(key=>!['id','name','url','promoUrl','fields','fieldNotes','media','mediaVersions','mediaDisabled','language','targetAudience','valueProposition','useCases','sellablePoints','avoidContent','anchorRules','blogRules'].includes(key)))throw badRequest('无效资料字段');
  if(patch.fieldNotes!==undefined&&(!patch.fieldNotes||typeof patch.fieldNotes!=='object'||Array.isArray(patch.fieldNotes)||Object.entries(patch.fieldNotes).some(([key,value])=>['__proto__','constructor','prototype'].includes(key)||typeof value!=='string'||value.length>100000)))throw badRequest('无效字段备注');
  for(const key of ['language','targetAudience','valueProposition'])if(patch[key]!==undefined&&(typeof patch[key]!=='string'||patch[key].length>10000))throw badRequest('无效资料说明');
  for(const key of ['useCases','sellablePoints','avoidContent'])if(patch[key]!==undefined&&(!Array.isArray(patch[key])||patch[key].length>100||patch[key].some(v=>typeof v!=='string'||v.length>10000)))throw badRequest('无效资料列表');
@@ -33,11 +39,13 @@ export function applicationMutation(documents,operation,options){
  for(const [key,value]of Object.entries(patch.fields||{}))if(typeof value!=='string'||value.length>100000||/password|secret|token|api.?key/i.test(key))throw badRequest('无效或敏感资料字段');
  if(patch.name!==undefined&&(typeof patch.name!=='string'||!patch.name.trim()||patch.name.length>200))throw badRequest('无效产品名称');
  if(patch.url!==undefined){let url;try{url=new URL(patch.url);}catch{throw badRequest('无效产品网址');}if(!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效产品网址');}
+ if(patch.promoUrl!==undefined&&patch.promoUrl!==''){let url;try{url=new URL(patch.promoUrl);}catch{throw badRequest('无效推广网址');}if(typeof patch.promoUrl!=='string'||!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效推广网址');}
  if(operation.type==='profile_create'&&(!patch.name||!patch.url))throw badRequest('新增产品需要名称和网址');
- const profile={...original,...patch,fields:{...original?.fields,...patch.fields},...(patch.fieldNotes!==undefined?{fieldNotes:{...original?.fieldNotes,...Object.fromEntries(Object.entries(patch.fieldNotes).map(([key,value])=>[key,value.trim()]).filter(([,value])=>value))}}:{}),media:{...original?.media,...patch.media},...(operation.type==='profile_create'?{createdAt:operation.at,archived:false}:{}),updatedAt:operation.at};
+ const profile={...original,...patch,fields:{...original?.fields,...patch.fields},...(patch.fieldNotes!==undefined?{fieldNotes:{...original?.fieldNotes,...Object.fromEntries(Object.entries(patch.fieldNotes).map(([key,value])=>[key,value.trim()]).filter(([,value])=>value))}}:{}),media:{...original?.media,...patch.media},...(operation.type==='profile_create'?{sortIndex:globalThis.ExtLinkProfiles.nextProfileSortIndex(documents.siteProfiles),createdAt:operation.at,archived:false}:{}),updatedAt:operation.at};
  return{key:'siteProfiles',data:{...documents.siteProfiles,[operation.profileId]:profile}};
 }
 export function applicationMutationSatisfied(documents,operation){
+ if(operation.type==='profile_order')return Array.isArray(operation.profileIds)&&operation.profileIds.length>0&&operation.profileIds.length===Object.keys(documents.siteProfiles||{}).length&&new Set(operation.profileIds).size===operation.profileIds.length&&operation.profileIds.every((id,index)=>documents.siteProfiles?.[id]?.sortIndex===index);
  if(!['profile','profile_create','profile_delete','profile_archive','profile_media'].includes(operation.type))return libraryMutationSatisfied(documents,operation);
  if(operation.type==='profile_delete')return !Object.hasOwn(documents.siteProfiles||{},operation.profileId);
  const actual=documents.siteProfiles?.[operation.profileId];if(!actual)return false;

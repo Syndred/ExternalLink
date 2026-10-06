@@ -924,6 +924,24 @@
     "realAutoVisitEnabled": false,
     "evidence": "auto-visit-2026-10-06.json"
   },
+  "originalNavigationCheckpoint": {
+    "independentPromoUrlEditable": true,
+    "homepageAndJevPlayRulePreserved": true,
+    "originalSavedOrderUsed": true,
+    "actualDragAndMoveButtonVerified": true,
+    "atomicWholeProfileOrder": true,
+    "newProductOriginalIndex": true,
+    "unindexedLegacyProfilesUnchanged": true,
+    "deletionOrderCompacted": true,
+    "sqliteRestartAndCommittedLostReplyVerified": true,
+    "concurrentRemoteNewProductRetained": true,
+    "productionRuntimeNewAndFrozenPromotionVerified": true,
+    "authenticatedDeviceHttpD1Verified": true,
+    "realProductEdits": 0,
+    "workerVersion": "f8f88fbf-a726-4dd1-a70b-1bd2234b2fb6",
+    "liveBusinessRevisionsUnchanged": true,
+    "evidence": "original-product-navigation-2026-10-06.json"
+  },
   "originalProfileControlsCheckpoint": {
     "originalChineseLanguage": "zh",
     "productAndCommentHistoryLanguagePreserved": true,

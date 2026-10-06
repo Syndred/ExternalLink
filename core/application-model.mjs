@@ -4,11 +4,12 @@ import './executor-contract.js';
 import './submission-timeline.js';
 import './opportunity-score.js';
 import './library-groups.js';
+import './profiles.js';
 const host=value=>globalThis.ExtLinkQueue.extractDomain(value||'').toLowerCase();
 const stamp=value=>{const time=globalThis.ExtLinkSubmissionTimeline.parseTime(value);return Number.isFinite(time)?time:0;};
 const taskActive=task=>!!(task.attemptBoundary||task.receipt||Object.keys(task.actualPreparation||{}).length||Object.keys(task.actualSubmission||{}).length||task.targetId||task.preparedAt||task.hasActivity||['opening','filling','submitting','finished','submitted_unconfirmed'].includes(task.status)||task.status==='needs_manual'&&task.reason);
 export function applicationModel(snapshot,tasks=[]){
- const documents=snapshot.documents||{},products=Object.entries(documents.siteProfiles||{}).map(([id,profile])=>({...profile,id}));
+ const documents=snapshot.documents||{},products=globalThis.ExtLinkProfiles.orderedProfileIds(documents.siteProfiles||{}).map(id=>({...documents.siteProfiles[id],id}));
  const inventory=globalThis.ExtLinkExecutorContract.inventory({documents},null);
  const timeline=globalThis.ExtLinkSubmissionTimeline;
  const migrated=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:documents.submissionRecords||{},tableData:documents.sheetTableData||{}}).timeline;

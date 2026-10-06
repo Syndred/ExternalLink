@@ -7695,6 +7695,8 @@
       acceptedTypes.add("image/jpeg");
       acceptedTypes.add("image/png");
       acceptedTypes.add("image/webp");
+      acceptedTypes.add("image/gif");
+      acceptedTypes.add("image/svg+xml");
     }
     if (/image\/jpeg|\.jpe?g|\bjpeg?\b/.test(accept + " " + context)) {
       acceptedTypes.add("image/jpeg");
@@ -7705,6 +7707,8 @@
     if (/image\/webp|\.webp|\bwebp\b/.test(accept + " " + context)) {
       acceptedTypes.add("image/webp");
     }
+    if (/image\/gif|\.gif|\bgif\b/.test(accept + " " + context)) acceptedTypes.add("image/gif");
+    if (/image\/svg\+xml|\.svg|\bsvg\b/.test(accept + " " + context)) acceptedTypes.add("image/svg+xml");
     return {
       maxWidth: maxMatch ? Number(maxMatch[1]) : null,
       maxHeight: maxMatch ? Number(maxMatch[2]) : null,
@@ -7718,7 +7722,15 @@
 
   async function normalizeImageForFileInput(blob, input) {
     const constraints = parseImageUploadConstraints(input);
-    const bitmap = await createImageBitmap(blob);
+    const formatAccepted = constraints.acceptedTypes.size === 0 || constraints.acceptedTypes.has(blob.type);
+    let bitmap;
+    try { bitmap = await createImageBitmap(blob); }
+    catch (error) {
+      if (blob.type !== "image/svg+xml") throw error;
+      const image = document.createElement("img"), url = URL.createObjectURL(blob);
+      try { image.src = url; await image.decode(); if (!image.naturalWidth || !image.naturalHeight) throw error; image.close = () => URL.revokeObjectURL(url); bitmap = image; }
+      catch (decodeError) { URL.revokeObjectURL(url); throw decodeError; }
+    }
     let sourceX = 0;
     let sourceY = 0;
     let sourceWidth = bitmap.width;
@@ -7744,8 +7756,6 @@
     );
     const targetWidth = Math.max(1, Math.floor(sourceWidth * scale));
     const targetHeight = Math.max(1, Math.floor(sourceHeight * scale));
-    const formatAccepted =
-      constraints.acceptedTypes.size === 0 || constraints.acceptedTypes.has(blob.type);
     const needsTransform =
       !formatAccepted ||
       sourceX !== 0 ||

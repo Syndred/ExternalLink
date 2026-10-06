@@ -2,7 +2,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {decodeImageAsset} from '../../core/media-assets.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {overlayApplication,flushApplicationMutations} from './application-mutations.mjs';
-export function pendingMediaUploads(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.values('mediaUpload:').filter(item=>item.scope===scope&&!['confirmed','retained'].includes(item.status));}
+export function pendingMediaUploads(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('mediaUpload:').filter(item=>item.scope===scope&&!['confirmed','retained'].includes(item.status));}
 export async function enqueueMediaUpload(runtime,input){
  const saved=runtime.store.get('applicationSnapshot'),scope=workbenchScope(runtime.store.get('pair'));
  if(saved?.scope!==scope)throw Error('请先读取当前工作区');

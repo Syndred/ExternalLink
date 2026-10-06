@@ -924,6 +924,24 @@
     "realAutoVisitEnabled": false,
     "evidence": "auto-visit-2026-10-06.json"
   },
+  "originalImageFormatsCheckpoint": {
+    "originalFiveFormatsAccepted": true,
+    "originalGifSvgBytesMimeShaPreserved": true,
+    "actualUploadAndPreviewVerified": true,
+    "authenticatedDeviceHttpD1R2BinaryReadVerified": true,
+    "immutableVersionsAndSqliteRestartVerified": true,
+    "lostUploadAndProfileReplyNoReplacement": true,
+    "originalInsertionQueueAndLatestImagePreserved": true,
+    "actualFileInputsAndSvgPngConversionVerified": true,
+    "oldFrozenAndNewImageVerified": true,
+    "productHuntImageRegressionVerified": true,
+    "realProductEdits": 0,
+    "workerVersion": "d5fc20ff-71ce-40c3-b91a-192bce8a57d1",
+    "liveBusinessRevisionsUnchanged": true,
+    "evidence": "original-image-formats-2026-10-06.json",
+    "remainingOriginalLogoLimitAndClearBehavior": true,
+    "disabledEmbeddedAndLegacyFallbackGap": "original-media-clear-audit-2026-10-06.json"
+  },
   "originalNavigationCheckpoint": {
     "independentPromoUrlEditable": true,
     "homepageAndJevPlayRulePreserved": true,

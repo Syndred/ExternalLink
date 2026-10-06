@@ -30,6 +30,7 @@ export async function d1Api(request,env,authorised,auxiliary){
       const object=await env.MEDIA_BUCKET.get(media[1]==='media'?mediaObjectKey(workspace,media[2]):artifactObjectKey(workspace,media[2]));
       if(!object)return json({ok:false,error:'图片对象不存在'},404);
       const headers=new Headers();object.writeHttpMetadata(headers);headers.set('Cache-Control','private, max-age=3600');headers.set('X-Content-Type-Options','nosniff');
+      if(/^image\/svg\+xml(?:;|$)/i.test(headers.get('Content-Type')||''))headers.set('Content-Security-Policy',"sandbox; script-src 'none'");
       return new Response(object.body,{headers});
     }
     if(media&&request.method==='PUT')return auxiliary?await auxiliary(path,request):json({ok:false,error:'图片上传未配置'},503);

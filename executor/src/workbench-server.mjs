@@ -35,6 +35,6 @@ const server=http.createServer(async(req,res)=>{try{
  if(!['GET','POST'].includes(req.method)){res.writeHead(405);res.end();return;}
  const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>(['/mediaUpload','/previewBackup','/libraryMutation'].includes(url.pathname)?9:2)*1024*1024)throw Error('请求过大');chunks.push(chunk);}
  const response=await fetch(target,{method:req.method,headers,signal:AbortSignal.timeout(['/prepareTask','/registerAcceptance'].includes(url.pathname)?600000:90000),...(req.method==='POST'?{body:Buffer.concat(chunks)}:{})});
- res.writeHead(response.status,{'Content-Type':response.headers.get('content-type')||'application/json'});res.end(Buffer.from(await response.arrayBuffer()));
+ const responseType=response.headers.get('content-type')||'application/json';if(/^image\/svg\+xml(?:;|$)/i.test(responseType))res.setHeader('Content-Security-Policy',"sandbox; script-src 'none'");res.writeHead(response.status,{'Content-Type':responseType});res.end(Buffer.from(await response.arrayBuffer()));
  }catch(error){if(!res.headersSent)res.writeHead(502,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}});
 server.listen(Number(process.env.EXTERNALLINK_WEB_PORT||19389),'127.0.0.1',async()=>{await writeFile(join(home,'workbench.json'),JSON.stringify({pid:process.pid,endpoint:`http://127.0.0.1:${server.address().port}`}));console.log('外链助手工作台已启动');});

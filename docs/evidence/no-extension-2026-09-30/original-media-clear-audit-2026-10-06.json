@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "kind": "synthetic_original_media_clear_gap",
+  "originalClearButton": {
+    "source": "extension/settings.js:759",
+    "clearsEmbeddedLogo": true,
+    "keepsIndependentPublicLogoUrl": true
+  },
+  "migrationGap": {
+    "independentEmbeddedLogoClearControlMissing": true,
+    "disableFlagEmptiesLogoUrl": true,
+    "embeddedLogoStillInExecutionConfig": true,
+    "retiredCloudLogoStillInFieldMap": true,
+    "fileDescriptorCanResolveRetiredLogo": true
+  },
+  "historyPreserved": true,
+  "realProductEdits": 0,
+  "newRealSubmissions": 0,
+  "next": "restore original independent embedded-logo clearing and verify disabled media cannot return through old field or embedded fallbacks; retain frozen historical tasks"
+}

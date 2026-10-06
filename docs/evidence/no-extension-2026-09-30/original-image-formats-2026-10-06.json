@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "workerVersion": "d5fc20ff-71ce-40c3-b91a-192bce8a57d1",
+  "sourceCheckpoint": "05e6b0cbf36ea08e438cef063b0e51d2fa920fde",
+  "unitTests": {
+    "passed": 440,
+    "failed": 0,
+    "skipped": 0,
+    "newOriginalFormatTests": 4
+  },
+  "originalBehavior": {
+    "originalFiveUploadFormats": true,
+    "gifSvgBytesAndMimePreserved": true,
+    "svgXmlPrefixDoctypeAndUtf16Supported": true,
+    "sameAssetAndShaAfterLostReplies": true,
+    "originalUploadQueueAndLatestImagePreserved": true,
+    "oldMediaHistoryPreserved": true
+  },
+  "isolated": {
+    "sixPageGifSvgUploadAndPreview": true,
+    "authenticatedDeviceHttpD1R2UploadAndBinaryReadback": true,
+    "originalMimeAndShaVerified": true,
+    "svgReadScriptSandbox": true,
+    "sqliteRestartAndLostUploadAndProfileReplies": true,
+    "realRuntimeGifSvgFileInputs": true,
+    "svgConvertedForPngOnlyInput": true,
+    "oldTaskOriginalImageFrozen": true,
+    "newTaskUsesNewImage": true,
+    "productHuntOriginalNineStagesAndImagesRegression": true,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "invalidGifAndSvgRejectedByCloudAndLocal": true,
+    "rejectedAssetNotCreated": true,
+    "actualFiveFormatControlReadOnlyVerified": true,
+    "allBusinessRevisionsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "limitations": [
+    "original embedded logo clearing and disabled media fallbacks require further audit",
+    "latest original local favorites and product history",
+    "old device media associations",
+    "remaining dynamic control audit",
+    "real special publishing pages and remote uploads"
+  ],
+  "realProductEdits": 0,
+  "newRealSubmissions": 0
+}

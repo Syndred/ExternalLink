@@ -39,18 +39,22 @@ export function applicationModel(snapshot,tasks=[]){
   if(target.progress==='pending_moderation')target.review='pending';
   if(target.progress==='rejected')target.review='rejected';
  }
- const library=inventory.candidates.map(row=>{
+ const library=inventory.candidates.map((row,position)=>{
   const site=host(row.url),annotation=globalThis.ExtLinkQueue.findDestinationAnnotation(documents.siteAnnotations||{},row.destinationKey,site)||{};
   const related=[...combinations.values()].filter(c=>c.site===site),monitorValues=records.filter(r=>r.host===site).map(r=>documents.linkMonitorResults?.[r.key]?.status).filter(Boolean);
   const monitorStatus=['missing','unreachable','live'].find(s=>monitorValues.includes(s))||'';
   const quality=globalThis.ExtLinkOpportunityScore.scoreOpportunity({metrics:{...row.row,...row.row?.metrics,...documents.domainMetricsCache?.[site]},annotation,monitorStatus});
-  const classification=globalThis.ExtLinkLibraryClassifier.describe({entry:row.row||{},url:row.url,domain:site,metrics:quality.metrics});
+  const note=row.row?.note||annotation.note||'',record=row.row?.record||'',detail=row.row?.detail||'';
+  const classification=globalThis.ExtLinkLibraryClassifier.describe({entry:row.row||{},url:row.url,domain:site,note,detail,metrics:quality.metrics});
   const events=related.flatMap(c=>c.events).sort((a,b)=>stamp(b.occurredAt)-stamp(a.occurredAt));
-  const profileStatuses=related.map(c=>({profileId:c.profileId,success:c.submission==='received',latestEvent:c.latestEvent,publicationStatus:c.progress||c.publication,submittedAt:c.records.find(r=>r.status==='success')?.submittedAt}));
-  const item={...row,site,...classification,annotation,quality,metrics:quality.metrics,monitorStatus,events,profileStatuses,preferences:globalThis.ExtLinkLibraryClassifier.libraryPreferences(annotation),pinned:annotation.library?.pinned===true,time:row.row?.time||row.row?.addedAt||'',lastActivityAt:related.reduce((time,c)=>stamp(c.lastActivityAt)>stamp(time)?c.lastActivityAt:time,'')};
+  const profileStatuses=[...new Set([...products.map(p=>p.id),...related.map(c=>c.profileId)])].map(profileId=>{
+   const c=related.find(c=>c.profileId===profileId),profile=documents.siteProfiles?.[profileId];
+   return{profileId,profileName:profile?.name||profileId,success:c?.submission==='received',latestEvent:c?.latestEvent||null,publicationStatus:c?.progress||c?.publication||'',submittedAt:c?.records.find(r=>r.status==='success')?.submittedAt||''};
+  });
+  const item={...row,site,domain:site,position,...classification,note,record,detail,annotation,quality,metrics:quality.metrics,monitorStatus,events,profileStatuses,preferences:globalThis.ExtLinkLibraryClassifier.libraryPreferences(annotation),pinned:annotation.library?.pinned===true,time:row.row?.time||row.row?.addedAt||'',lastActivityAt:related.reduce((time,c)=>stamp(c.lastActivityAt)>stamp(time)?c.lastActivityAt:time,'')};
   item.groups=globalThis.ExtLinkLibraryGroups.GROUPS.filter(([id])=>globalThis.ExtLinkLibraryGroups.matches(item,id)).map(([id])=>id);
   item.progress=timeline.deriveLibraryProgress(item);return item;
  });
- return{products,profileSelection,library,total:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
+ return{products,profileSelection,library,libraryCategories:[...globalThis.ExtLinkLibraryClassifier.CATEGORY_ORDER],total:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
 }
 export const taskSummary=task=>({...Object.fromEntries(['id','url','profileId','runId','status','siteStatus','reason','attentionType','attemptBoundary','receipt','indexNowNotification','cloudVerified','syncStatus','pendingEvents','acceptanceId','reviewStatus','controller','artifactRef','screenshot','updatedAt','createdAt','preparedAt'].filter(key=>task[key]!==undefined).map(key=>[key,task[key]])),...(taskActive(task)?{hasActivity:true}:{})});

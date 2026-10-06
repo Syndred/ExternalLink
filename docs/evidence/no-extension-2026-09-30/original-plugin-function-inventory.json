@@ -1171,5 +1171,25 @@
     "newRealSubmissions": 0,
     "evidence": "original-comment-drafts-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalLibraryViewCheckpoint": {
+    "originalStationStatusFilter": true,
+    "originalMultiProductProgressPredicates": true,
+    "allOriginalCategoriesAndOptions": true,
+    "originalQualityPositionDomainSort": true,
+    "explicitPinnedAndActualNameSort": true,
+    "completeOriginalSearchFields": true,
+    "readOnlyPositionAndUntouchedProfileNames": true,
+    "productionUiSourceComparisonAndPagination": true,
+    "actualSelectedScopeAndBatchPreview": true,
+    "testsPassed": 503,
+    "newTests": 6,
+    "liveOriginalComparisons": 15,
+    "liveBusinessDocumentsAndRevisionsUnchanged": true,
+    "workerDeploymentChanged": false,
+    "realBusinessEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-library-view-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

@@ -1,0 +1,147 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "a4c2234",
+  "regression": {
+    "passed": 503,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 6
+  },
+  "originalComparison": {
+    "stationStatuses": true,
+    "multiProductProgressPredicates": true,
+    "qualityPositionDomainSorting": true,
+    "completeSearchFields": true,
+    "allOriginalCategories": true,
+    "profileNamesWithoutActivity": true
+  },
+  "isolated": {
+    "originalFiveFailuresReproduced": true,
+    "productionUiAndOriginalSourceComparator": true,
+    "allOriginalOptions": true,
+    "composedAdditionalFilters": true,
+    "paginationReset": true,
+    "selectedScopeAndActualBatchPreview": true,
+    "rawSnapshotAndReceiptPreserved": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "scenarios": [
+      {
+        "kind": {
+          "sort": "quality"
+        },
+        "count": 2950
+      },
+      {
+        "kind": {
+          "sort": "position"
+        },
+        "count": 2950
+      },
+      {
+        "kind": {
+          "sort": "domain"
+        },
+        "count": 2950
+      },
+      {
+        "kind": {
+          "progress": "submitted"
+        },
+        "count": 69
+      },
+      {
+        "kind": {
+          "progress": "published"
+        },
+        "count": 1
+      },
+      {
+        "kind": {
+          "progress": "awaiting_index"
+        },
+        "count": 52
+      },
+      {
+        "kind": {
+          "progress": "needs_follow_up"
+        },
+        "count": 56
+      },
+      {
+        "kind": {
+          "progress": "action_recorded"
+        },
+        "count": 16
+      },
+      {
+        "kind": {
+          "progress": "unsubmitted"
+        },
+        "count": 2861
+      },
+      {
+        "kind": {
+          "status": "can_submit"
+        },
+        "count": 33
+      },
+      {
+        "kind": {
+          "status": "needs_login"
+        },
+        "count": 11
+      },
+      {
+        "kind": {
+          "status": "paid"
+        },
+        "count": 3
+      },
+      {
+        "kind": {
+          "status": "needs_manual"
+        },
+        "count": 3
+      },
+      {
+        "kind": {
+          "status": "deleted"
+        },
+        "count": 16
+      },
+      {
+        "kind": {
+          "query": "  AISpeakLearn  "
+        },
+        "count": 2950
+      }
+    ],
+    "allBusinessDocumentsAndRevisionsUnchanged": true,
+    "blockedMutationRequests": 0,
+    "selectedCurrentFilterOnlyInBrowser": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerDeploymentChanged": false,
+  "previousReleaseWorkerVersion": "0fe6cc3e-08c5-417b-bc7b-6a0e79fbca9c",
+  "workerVersionQueriedThisTurn": false,
+  "realBusinessEdits": 0,
+  "newRealSubmissions": 0,
+  "verificationNotes": {
+    "initialLiveFixtureReadBeforeAppDataReady": true,
+    "explicitControlWaitThenFullLiveVerificationPassed": true
+  }
+}

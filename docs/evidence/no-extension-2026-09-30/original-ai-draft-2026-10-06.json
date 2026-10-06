@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "02a53ed39aab8817288c907cccd0ff61ef04167b",
+  "regression": {
+    "passed": 473,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 4
+  },
+  "originalComparison": {
+    "source": "extension/settings.js profileToForm and btnExtractSite/btnGenerateSite",
+    "featuredImageLogoFallback": true,
+    "emptyExtractUsesCurrentHomepage": true,
+    "completeDraftControlsAndExplicitSave": true
+  },
+  "isolated": {
+    "actualEditorSaveAndReopen": true,
+    "completeDraftFieldsLanguagePromoLogoScreenshotsAndRules": true,
+    "pendingTypingPreserved": true,
+    "pendingSaveMediaAndSwitchGuard": true,
+    "aiFailureRetainsDraftAndAllowsRetry": true,
+    "emptyUrlRejectedBeforeRequest": true,
+    "cloudMediaAndUploadedMarkerNotPublicLogoUrl": true,
+    "originalReceiptAndOtherProductAndMediaHistoryPreserved": true,
+    "sixPageAndEditorAndSelectionRegressions": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "actualWorkbenchWithControlledAiResponses": true,
+    "actualCloudAiCalls": 0,
+    "originalHomepageFallbackInRequest": true,
+    "pendingTypedNamePreserved": true,
+    "competingActionsBlocked": true,
+    "closeDiscardAndReopenOriginal": true,
+    "unexpectedMutationRequests": 0,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingMedia": 0,
+    "pendingLearning": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerDeploymentChanged": false,
+  "previousWorkerDeploymentRecord": "5546b903-810b-4c11-a9dc-ba0674cfdc1a",
+  "realProductEdits": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media ownership",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ]
+}

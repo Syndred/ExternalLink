@@ -743,6 +743,28 @@
     return merged;
   }
 
+  function mergeProfileEditorDraft(submitted, current, extracted) {
+    const merged = mergeExtractedProfile(submitted, extracted);
+    merged.fieldNotes = { ...submitted.fieldNotes, ...extracted.fieldNotes };
+    merged.media = { ...submitted.media, ...extracted.media };
+    const object = value => value && typeof value === 'object' && !Array.isArray(value);
+    const preserveTyping = (before, live, generated) => {
+      if (JSON.stringify(before) === JSON.stringify(live)) return generated;
+      if (object(live) && (before === undefined || object(before))) {
+        const result = { ...generated };
+        for (const key of Object.keys(live)) {
+          if (['__proto__', 'constructor', 'prototype'].includes(key)) continue;
+          result[key] = preserveTyping(before?.[key], live[key], generated?.[key]);
+        }
+        return result;
+      }
+      return structuredClone(live);
+    };
+    const result = preserveTyping(submitted, current, merged);
+    result.id = submitted.id;
+    return result;
+  }
+
   function orderedProfileIds(profiles = {}) {
     return Object.keys(profiles || {}).sort((leftId, rightId) => {
       const left = Number(profiles[leftId]?.sortIndex);
@@ -834,6 +856,7 @@
     stabilizeTableProfiles,
     applySavedProfilesToTasks,
     mergeExtractedProfile,
+    mergeProfileEditorDraft,
     inferReusableProfileKey,
     isSiteSpecificField,
     learnProfileFieldsFromFill,

@@ -17,6 +17,11 @@ export function overlayApplication(runtime,snapshot){const result=structuredClon
 export async function enqueueLibraryMutation(runtime,input){
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope)throw Error('请先读取本工作区资料');
  const snapshot=overlayApplication(runtime,saved.snapshot),operation={...input.operation,id:randomUUID(),at:new Date().toISOString()},change=libraryMutation(snapshot.documents,operation);
+ if(['profile_create','profile_delete'].includes(operation.type)){
+  const nextDocuments={...snapshot.documents,[change.key]:change.data},activeSiteId=operation.type==='profile_create'?operation.profileId:globalThis.ExtLinkProfiles.profileSelectionFromDocuments(nextDocuments).activeSiteId;
+  const result=await enqueueApplicationPlan(runtime,{operations:[input.operation,{type:'profile_selection',key:'activeSiteId',value:activeSiteId}],allowPending:true});
+  return{...result,id:runtime.store.get('applicationPlan:'+result.planId).items[0].id,persisted:true};
+ }
  const item={id:operation.id,scope,at:operation.at,operation,key:change.key,baseData:snapshot.documents[change.key],status:'pending'};
  runtime.store.set('appMutation:'+item.id,item); // Durable before the first cloud request.
  const result=await flushApplicationMutations(runtime);return{ok:true,id:item.id,persisted:true,...result};
@@ -29,12 +34,15 @@ export function flushApplicationMutations(runtime){
  if(runtime.appMutationFlush)return runtime.appMutationFlush;
  runtime.appMutationFlush=performFlush(runtime).finally(()=>{runtime.appMutationFlush=null;});return runtime.appMutationFlush;
 }
-export async function enqueueApplicationPlan(runtime,{planId,operations},onPersist){
+export async function enqueueApplicationPlan(runtime,{planId,operations,allowPending=false},onPersist){
  const scope=workbenchScope(runtime.store.get('pair'));let plan=planId&&runtime.store.get('applicationPlan:'+planId);
  if(planId&&(!plan||plan.scope!==scope))throw Error('原资料变更计划不存在');
- if(!plan){const saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope||pendingApplication(runtime).length)throw Error('请先回读并同步现有资料');const working=structuredClone(saved.snapshot),id=randomUUID(),started=Date.now(),items=[];
+ if(!plan){const saved=runtime.store.get('applicationSnapshot'),prior=pendingApplication(runtime);if(saved?.scope!==scope||!allowPending&&prior.length)throw Error('请先回读并同步现有资料');const working=allowPending?overlayApplication(runtime,saved.snapshot):structuredClone(saved.snapshot),id=randomUUID(),started=Math.max(Date.now(),allowPending&&prior.length?Date.parse(prior.at(-1).at)+1:0),items=[];
   for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,operation,baseData:working.documents[change.key],status:'pending',applicationPlanId:id});working.documents[change.key]=change.data;}
-  plan={id,scope,at:new Date(started).toISOString(),items,status:'queued'};runtime.store.set('applicationPlan:'+id,plan);onPersist?.(id);
+  if(allowPending&&['profile_create','profile_delete'].includes(items[0]?.operation.type)&&items[1])items[1].dependsOn=items[0].id;
+  plan={id,scope,at:new Date(started).toISOString(),items,status:'queued',...(allowPending&&items[1]?.dependsOn?{kind:'profile_lifecycle'}:{})};
+  if(allowPending){runtime.store.db.exec('BEGIN IMMEDIATE');try{runtime.store.set('applicationPlan:'+id,plan);for(const item of items)runtime.store.set('appMutation:'+item.id,item);runtime.store.db.exec('COMMIT');}catch(error){runtime.store.db.exec('ROLLBACK');throw error;}}
+  else runtime.store.set('applicationPlan:'+id,plan);onPersist?.(id);
  }
  // Recover all original entries before flushing. Saving the plan precedes every network write.
  for(const item of plan.items)if(!runtime.store.get('appMutation:'+item.id))runtime.store.set('appMutation:'+item.id,item);
@@ -46,6 +54,7 @@ async function performFlush(runtime){
  try{snapshot=await cloud.request('snapshot');checkScope();}catch(error){return{pending:pending.length,error:error.message};}
  for(const item of pending){
   if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.length,error:'工作区已切换，原资料计划保留，停止写入'};
+  if(item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status==='discarded'){item.status='discarded';item.discardedAt=new Date().toISOString();item.error='产品变更已选择保留云端，关联的当前网站变更一并取消';runtime.store.set('appMutation:'+item.id,item);continue;}
   // A retained original timestamp can make a fetched row disappear during pruning.
   // Confirm the complete frozen cache result, rather than rewriting after a lost reply.
   const originalDomainResult=item.operation.type==='domain_metrics'&&libraryMutation({[item.key]:item.baseData},item.operation).data;
@@ -62,5 +71,6 @@ async function performFlush(runtime){
  }
  if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.filter(i=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+i.id)?.status)).length,error:'工作区已切换，原资料计划保留，停止写入'};
  runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});
+ for(const planId of new Set(pending.map(item=>item.applicationPlanId).filter(Boolean))){const plan=runtime.store.get('applicationPlan:'+planId);if(plan?.kind!=='profile_lifecycle')continue;const entries=plan.items.map(item=>runtime.store.get('appMutation:'+item.id));plan.status=entries.every(item=>['confirmed','discarded'].includes(item?.status))?'completed':'queued';plan.excludedIds=entries.filter(item=>item?.status==='discarded').map(item=>item.id);runtime.store.set('applicationPlan:'+planId,plan);}
  return{pending:pendingApplication(runtime).length,error:pendingApplication(runtime).find(item=>item.error)?.error||''};
 }

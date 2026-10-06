@@ -4,7 +4,8 @@ const badRequest=message=>Object.assign(new Error(message),{status:400});
 export function applicationMutation(documents,operation,options){
  if(operation.type==='profile_selection'){
   const available=id=>typeof id==='string'&&Object.hasOwn(documents.siteProfiles||{},id)&&!documents.siteProfiles[id].archived&&!['__proto__','constructor','prototype'].includes(id);
-  if(operation.key==='activeSiteId'?!available(operation.value):operation.key==='selectedSiteIds'?(!Array.isArray(operation.value)||new Set(operation.value).size!==operation.value.length||operation.value.some(id=>!available(id))):true)throw badRequest('请选择现有的在用网站，选择不能重复');
+  const emptyCurrent=operation.value===''&&!Object.values(documents.siteProfiles||{}).some(profile=>!profile.archived);
+  if(operation.key==='activeSiteId'?!available(operation.value)&&!emptyCurrent:operation.key==='selectedSiteIds'?(!Array.isArray(operation.value)||new Set(operation.value).size!==operation.value.length||operation.value.some(id=>!available(id))):true)throw badRequest('请选择现有的在用网站，选择不能重复');
   return{key:operation.key,data:structuredClone(operation.value)};
  }
  if(operation.type==='profile_order'){
@@ -45,10 +46,10 @@ export function applicationMutation(documents,operation,options){
  if(patch.blogRules!==undefined){const rules=patch.blogRules;if(!rules||typeof rules!=='object'||Array.isArray(rules)||Object.entries(rules).some(([k,v])=>k==='tone'?!['helpful','professional','casual','enthusiastic'].includes(v):k==='maxLinksPerDraft'?(!Number.isSafeInteger(v)||v<0):k==='preferredAnchor'?!['natural','brand','keyword','url'].includes(v):true))throw badRequest('无效评论规则');}
  if(patch.mediaVersions!==undefined&&(!Array.isArray(patch.mediaVersions)||(original?.mediaVersions||[]).some((asset,index)=>JSON.stringify(asset)!==JSON.stringify(patch.mediaVersions[index]))))throw badRequest('历史媒体版本只能保留并追加，不能改写或删除');
  for(const [key,value]of Object.entries(patch.fields||{}))if(typeof value!=='string'||value.length>100000||/password|secret|token|api.?key/i.test(key))throw badRequest('无效或敏感资料字段');
- if(patch.name!==undefined&&(typeof patch.name!=='string'||!patch.name.trim()||patch.name.length>200))throw badRequest('无效产品名称');
- if(patch.url!==undefined){let url;try{url=new URL(patch.url);}catch{throw badRequest('无效产品网址');}if(!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效产品网址');}
+ if(patch.name!==undefined&&(typeof patch.name!=='string'||patch.name.length>200))throw badRequest('无效产品名称');
+ if(patch.url!==undefined){if(typeof patch.url!=='string')throw badRequest('无效产品网址');if(patch.url!==''){let url;try{url=new URL(patch.url);}catch{throw badRequest('无效产品网址');}if(!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效产品网址');}}
  if(patch.promoUrl!==undefined&&patch.promoUrl!==''){let url;try{url=new URL(patch.promoUrl);}catch{throw badRequest('无效推广网址');}if(typeof patch.promoUrl!=='string'||!/^https?:$/.test(url.protocol)||url.username||url.password)throw badRequest('无效推广网址');}
- if(operation.type==='profile_create'&&(!patch.name||!patch.url))throw badRequest('新增产品需要名称和网址');
+ if(operation.type==='profile_create'&&!patch.name?.trim()&&!patch.url?.trim())throw badRequest('请至少填写站点名称或首页地址');
  const profile={...original,...patch,fields:{...original?.fields,...patch.fields},...(patch.fieldNotes!==undefined?{fieldNotes:{...original?.fieldNotes,...Object.fromEntries(Object.entries(patch.fieldNotes).map(([key,value])=>[key,value.trim()]).filter(([,value])=>value))}}:{}),media:{...original?.media,...patch.media},...(operation.type==='profile_create'?{sortIndex:globalThis.ExtLinkProfiles.nextProfileSortIndex(documents.siteProfiles),createdAt:operation.at,archived:false}:{}),updatedAt:operation.at};
  return{key:'siteProfiles',data:{...documents.siteProfiles,[operation.profileId]:profile}};
 }

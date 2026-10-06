@@ -1036,5 +1036,24 @@
     "workerVersion": "ff2b6de3-8b82-4b02-8895-bd5979f97bea",
     "evidence": "original-profile-selection-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalCurrentLifecycleCheckpoint": {
+    "originalNewSiteBecomesCurrent": true,
+    "deletionChoosesFirstRemainingOrEmpty": true,
+    "otherDeletionPreservesCurrent": true,
+    "fullLocalPlanTransaction": true,
+    "offlineRestartAndLostResponseOriginalIds": true,
+    "consecutiveOfflinePlansOrdered": true,
+    "conflictDiscardCancelsDependentSelection": true,
+    "transactionFailureRollsBackBothEdits": true,
+    "nameOnlyAndUrlOnlyOriginalSaveRules": true,
+    "originalHomepageClearAndAiDraft": true,
+    "productionDurableUiAndAuthenticatedHttpD1": true,
+    "liveChineseDraftFormReadOnly": true,
+    "liveBusinessRevisionsAndDocumentsUnchanged": true,
+    "testsPassed": 461,
+    "workerVersion": "5546b903-810b-4c11-a9dc-ba0674cfdc1a",
+    "evidence": "original-current-lifecycle-2026-10-06.json",
+    "completion": "not_complete"
   }
 }

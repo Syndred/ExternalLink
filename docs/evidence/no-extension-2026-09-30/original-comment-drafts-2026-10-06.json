@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-06",
+  "completion": "not_complete",
+  "sourceCheckpoint": "3d57eb788d01c4a28f4e1c02710b5ade2e1ecd8c",
+  "regression": {
+    "passed": 497,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 9
+  },
+  "originalComparison": {
+    "source": "extension/background.js generateCommentDrafts; extension/sidepanel.js copyCommentDraft, captureCommentState and current-context guard",
+    "originalAiDisableAndPromotionLinkPreference": true,
+    "originalCandidateMetadata": true,
+    "partialOneToFiveCandidateSets": true,
+    "originalToneInBlogRules": true
+  },
+  "isolated": {
+    "originalSixFailingTestsReproduced": true,
+    "sqliteCloseReopenAndVersions": true,
+    "productionAiAndHistoryRoutes": true,
+    "pendingEditsRetainedInHistory": true,
+    "productArticleAndNavigationRejectStaleResults": true,
+    "rejectedGenerationPreservesDraftAndRetry": true,
+    "workspaceSwitchRejectsOldResult": true,
+    "productionRuntimeCommentAndIframeActualReadback": true,
+    "articleChangeDuringSnapshotRefusedBeforeLease": true,
+    "submitPreferencesFifteenCases": true,
+    "sixPageEditorSelectionAiLibraryAndSettings": true,
+    "externalAiCalls": 0,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "actualWorkbenchControlledCommentResponse": true,
+    "oneCandidateAndMetadataVisible": true,
+    "effectiveLinkSwitchDisplayed": true,
+    "metadataSaveRequestBlockedBeforeNetwork": true,
+    "blockedMutationRequests": 1,
+    "productSwitchDiscardsDelayedResult": true,
+    "missingProductRejectedByExecutorAndWorkbench": true,
+    "actualCloudAiCalls": 0,
+    "originalLocalCommentRowsUnchanged": true,
+    "allBusinessRevisionsAndDocumentsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerDeploymentChanged": false,
+  "previousReleaseWorkerVersion": "0fe6cc3e-08c5-417b-bc7b-6a0e79fbca9c",
+  "workerVersionQueriedThisTurn": false,
+  "realCommentHistoryWrites": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "remaining original dynamic controls",
+    "latest original favorites and product history",
+    "old device media ownership",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP and IndexNow acceptance"
+  ],
+  "verificationNotes": {
+    "liveFixtureInitialSameFragmentNavigationTimeout": true,
+    "explicitReloadThenFullLiveVerificationPassed": true,
+    "servicesConfirmedStoppedBeforeStart": true,
+    "originalSqlitePausedAndIdleVerified": true
+  }
+}

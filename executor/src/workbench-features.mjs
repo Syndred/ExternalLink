@@ -1,7 +1,9 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {queue,plain,selectScope,priorProductSuccess,profiles} from './shared.mjs';
 import {attachEngine} from './engine.mjs';
-import {saveCommentVersion} from './comment-history.mjs';
+import {saveCommentVersion,copyCommentDraft} from './comment-history.mjs';
+import {workbenchScope} from './workbench-sync.mjs';
+import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const site=url=>queue.extractDomain(url).toLowerCase();
 export async function previewWorkbenchBatch(runtime,input){
@@ -70,26 +72,32 @@ export function pauseWorkbenchBatch(runtime,reason='用户暂停'){const id=runt
 export async function applicationAi(runtime,action,input){
  if(action==='extractProfile'){let url;try{url=new URL(input.url);}catch{throw Error('请输入有效官网网址');}if(!/^https?:$/.test(url.protocol))throw Error('仅支持普通网站');const result=await runtime.cloud.request('ai/extract-site',{url:url.href,language:input.language||'auto'});runtime.store.set('profileDraft:'+input.profileId,{at:new Date().toISOString(),...result});return result;}
  if(action==='generateProfile')return runtime.cloud.request('ai/generate-site',{profile:input.profile,language:input.language||'auto'});
- const snapshot=await runtime.cloud.request('snapshot'),profile=snapshot.documents.siteProfiles?.[input.profileId];if(!profile||profile.archived)throw Error('请选择在用产品');
+ const scope=workbenchScope(runtime.store.get('pair')),assertScope=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，旧评论结果已放弃');};
+ const snapshot=await runtime.cloud.request('snapshot');assertScope();const profile=snapshot.documents.siteProfiles?.[input.profileId];if(!profile||profile.archived)throw Error('请选择在用产品');
+ const filters=globalThis.ExtLinkTargetFilters.normalize(snapshot.documents.targetFilters);if(!filters.aiComments)throw Error('AI 评论生成已在设置中关闭');
  const url=new URL(input.pageUrl);if(!/^https?:$/.test(url.protocol))throw Error('仅支持普通评论页面');
- const result=await runtime.cloud.request('ai/comment',{pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),config:plain(profiles.buildAgentConfigFromProfile(profile,snapshot.documents)),language:input.language||profile.language||'auto',count:3,maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink:input.allowLink===true,tone:input.tone||profile.blogRules?.tone||'helpful'});
- runtime.store.set('commentDraft:'+input.profileId+'::'+queue.normalizeDestinationKey(url.href),{...result,profileId:input.profileId,pageUrl:url.href,at:new Date().toISOString()});saveCommentVersion(runtime,{...input,drafts:result.drafts});return result;
+ const tone=input.tone||profile.blogRules?.tone||'helpful',allowLink=input.allowLink!==false&&filters.aiCommentAllowLink,config=plain(profiles.buildAgentConfigFromProfile(profile,snapshot.documents));config.blogRules={...config.blogRules,tone};
+ const result=await runtime.cloud.request('ai/comment',{pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),config,language:input.language||profile.language||'auto',count:Math.max(1,Math.min(Number(input.count)||3,5)),maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink,tone});assertScope();
+ const drafts=(Array.isArray(result?.drafts)?result.drafts:[]).map(copyCommentDraft).filter(d=>d?.text.trim()).slice(0,5);if(result?.ok===false||result?.status&&result.status!=='ok'||!drafts.length)throw Error(result?.error||result?.reason||'AI 评论生成失败，请确认文章正文足够长');
+ const normalized={...result,drafts,allowLink,tone};saveCommentVersion(runtime,{...input,tone,allowLink,drafts});runtime.store.set('commentDraft:'+input.profileId+'::'+queue.normalizeDestinationKey(url.href),{...normalized,scope,profileId:input.profileId,pageUrl:url.href,at:new Date().toISOString()});return normalized;
 }
 
 export async function fillCommentDraft(runtime,input){
  const task=runtime.store.get('task:'+input.taskId);
  if(!task||task.attemptBoundary||task.receipt||!['pending','needs_manual'].includes(task.status))throw Error('只能填写尚未投稿的原任务评论');
+ if(input.profileId!==undefined&&input.profileId!==task.profileId)throw Error('评论产品与原任务不一致');
  if(runtime.job||runtime.store.get('paused')!==true)throw Error('请先暂停并等待当前动作结束');
  if(typeof input.text!=='string'||!input.text.trim()||input.text.length>2000)throw Error('请输入不超过 2000 字的评论草稿');
  if(!runtime.context)await runtime.connect();const page=await runtime.findPage(task);
  if(site(page.url())!==site(task.url))throw Error('原任务页面与目标网站不一致');
- const snapshot=await runtime.cloud.request('snapshot');if(priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url))throw Error('此产品同站已有收件');
+ const articleUrl=new URL(input.pageUrl??page.url()).href,scope=workbenchScope(runtime.store.get('pair')),assertArticle=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，停止旧评论填写');if(new URL(page.url()).href!==articleUrl)throw Error('文章页面已切换，旧评论不能填入其他文章');};assertArticle();
+ const snapshot=await runtime.cloud.request('snapshot');assertArticle();if(priorProductSuccess(snapshot.documents.submissionRecords,task.profileId,task.url))throw Error('此产品同站已有收件');
  const profile=task.profileSnapshot||snapshot.documents.siteProfiles?.[task.profileId];if(!profile)throw Error('产品资料缺失');
  const config={...plain(profiles.buildAgentConfigFromProfile(profile)),commentTemplate:input.text,applyCommentTemplate:true,aiComments:false,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
- await runtime.lease(task,{online:true});
+ await runtime.lease(task,{online:true});assertArticle();
  for(const frame of page.frames()){
   let engine;try{engine=await attachEngine(runtime.context,frame,msg=>runtime.bridge(task,msg));const detection=await engine.call({action:'detectPage',config});if(!detection.commentFound)continue;
-   const fill=await engine.call({action:'smartFill',config}),actual=await engine.call({action:'getFilledFieldsReport'});
+   assertArticle();const fill=await engine.call({action:'smartFill',config}),actual=await engine.call({action:'getFilledFieldsReport'});assertArticle();
    if(!JSON.stringify(actual).includes(JSON.stringify(input.text).slice(1,-1)))throw Error('评论填写未通过回读核验');
    runtime.update(task,{selectedComment:input.text,actualPreparation:actual,commentPreparation:{at:new Date().toISOString(),fill,actual},preparedAt:new Date().toISOString()},'comment_draft_filled');await runtime.synchronize();return{ok:true,filled:true,submitted:false};
   }finally{await engine?.detach();}

@@ -1,0 +1,55 @@
+{
+  "capturedAtUtc": "2026-10-06T13:10:42.6865190Z",
+  "completion": "not_complete",
+  "sourceCheckpoint": "c4e9771ab460a1727a2e4e04b12b77693da1d8c4",
+  "remoteChecked": "git pull --ff-only: Already up to date; HEAD...origin/main 0/0",
+  "lastReleaseRegression": {
+    "passed": 480,
+    "failed": 0,
+    "skipped": 0,
+    "rerunThisProgressTurn": false,
+    "evidence": "original-library-state-2026-10-06.json"
+  },
+  "currentReadOnlyState": {
+    "kind": "read_only_current_progress",
+    "runtime": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "cloudError": ""
+    },
+    "guard": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "pendingLearning": 0,
+      "pendingMedia": 0,
+      "assistantEnabled": false,
+      "liveJobs": 0,
+      "runningJobs": 0,
+      "checkingWatches": 0
+    },
+    "products": 9,
+    "library": 2950,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "newlyIdentifiedUnfixedDifferences": [
+    "target filters original numeric conversion defaults and clamps",
+    "target filter partial patch merge",
+    "domain blacklist normalized list persistence"
+  ],
+  "previousReleaseWorkerVersion": "90bf4eb8-39a1-416c-b9b8-6728050135a8",
+  "workerVersionQueriedThisTurn": false,
+  "sourceChangesThisTurn": 0,
+  "deploymentThisTurn": false,
+  "serviceReloadThisTurn": false,
+  "realBusinessEditsThisTurn": 0,
+  "newRealSubmissionsThisTurn": 0
+}

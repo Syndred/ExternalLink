@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-06",
+  "kind": "documentation_checkpoint_before_original_media_clear_fixes",
+  "completion": "not_complete",
+  "sourceCommit": "2486275fc9ceb5c8236a20787f0599d7dda63ca2",
+  "cloudCodePull": "git pull --ff-only: Already up to date",
+  "freshRegression": {
+    "command": "node --test tests/*.test.mjs",
+    "exitCode": 0,
+    "tests": 440,
+    "passed": 440,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "readOnlyCurrentProgress": {
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2950,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "remaining": [
+    "original independent embedded-logo clearing",
+    "original 2 MiB logo size limit",
+    "disabled media must not return through embedded or old field fallbacks",
+    "latest original favorites and product history",
+    "old device media associations",
+    "remaining dynamic control behavior",
+    "real special publishing pages and remote uploads",
+    "real known-age RDAP response and IndexNow acceptance"
+  ],
+  "pushScope": "progress documentation and redacted checkpoint only",
+  "newImplementationIncluded": false,
+  "deployed": false,
+  "servicesReloaded": false,
+  "realDataChanged": false,
+  "newRealSubmissions": 0
+}

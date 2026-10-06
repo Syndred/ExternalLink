@@ -1,0 +1,75 @@
+{
+  "kind": "migration_progress_document_checkpoint",
+  "observedAt": "2026-10-06T23:55:25Z",
+  "localDate": "2026-10-07",
+  "completion": "not_complete",
+  "publishedSourceBeforeDocumentCommit": "a25c83ebb408c515853e65889daf6d0b2df26f9f",
+  "repositoryBeforeDocumentCommit": {
+    "pull": "Already up to date",
+    "ahead": 0,
+    "behind": 0,
+    "localFeatureChangesIncludedInThisCommit": false
+  },
+  "currentVerification": {
+    "command": "node --test tests/executor-original-library-records.test.mjs tests/executor-local-recovery-http.test.mjs",
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "browserRetestedInThisCheckpoint": false,
+    "latestFullSuiteRequiredBeforeFeaturePublication": true,
+    "priorSavedFullSuite": {
+      "passed": 513,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "before the final two alias-preference regressions and associated changes"
+    }
+  },
+  "cloudSnapshotOriginalCatalogComparison": {
+    "readOnly": true,
+    "originalCatalogCount": 2948,
+    "currentLocalModelCount": 2948,
+    "matchingOriginalFacts": 2948,
+    "mismatchingFacts": 0,
+    "compared": ["submission progress", "event IDs", "monitor status", "quality score"],
+    "limitation": "uses prepared existing product mappings; does not verify historical profile seeding or the user's latest original-browser local data"
+  },
+  "localServices": {
+    "executorApplicationRead": "ECONNREFUSED 127.0.0.1:19388",
+    "listenerPortsChecked": [19388, 19389],
+    "listenersObserved": 0,
+    "productionUiVerifiedCurrent": false,
+    "restartedInThisCheckpoint": false
+  },
+  "durableLocalState": {
+    "readOnly": true,
+    "paused": true,
+    "pendingEvents": 0,
+    "executingTasks": 0,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "runtimeAssistantAndOtherPendingCategoriesVerified": false
+  },
+  "actionsInThisCheckpoint": {
+    "realBusinessWrites": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "workerDeployed": false,
+    "currentWorkerVersionQueried": false
+  },
+  "remaining": [
+    "final full suite and associated browser regressions for local changes",
+    "alias consumers including quick-open and other original operations",
+    "feature commit, cloud deployment, guarded service startup and actual UI readback",
+    "receipt semantics in remaining overview and queue consumers",
+    "remaining original controls and dynamic background actions",
+    "latest original-browser favorites and profile history",
+    "original-device media ownership",
+    "real special publishing pages and remote uploads",
+    "external domain-age and IndexNow results"
+  ]
+}

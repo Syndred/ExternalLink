@@ -1,0 +1,42 @@
+{
+  "kind": "progress_only_visual_submission_draft_not_completion_proof",
+  "date": "2026-10-08",
+  "repository": {
+    "branch": "main",
+    "pull": "git pull --ff-only",
+    "pullResult": "Already up to date.",
+    "headBeforeProgressCommit": "30977b0a30278a088a43ffb1b02eedb1b98ff310",
+    "originMainBeforeProgressCommit": "30977b0a30278a088a43ffb1b02eedb1b98ff310",
+    "ahead": 0,
+    "behind": 0
+  },
+  "published": {
+    "featureCommit": "516919c07c1608fd999d2a224019b5dc3a1d7b08",
+    "evidence": "original-receipt-order-2026-10-08.json",
+    "existingFinalOutputReadThisTurn": true,
+    "output": "executor/test-output/original-receipt-order-all-browser-final-2026-10-08.txt",
+    "passed": 871,
+    "failed": 0,
+    "skipped": 0,
+    "testsRerunThisProgressPush": false,
+    "resultCoversCurrentDraft": false
+  },
+  "draft": {
+    "path": "executor/src/original-submission-flow.mjs",
+    "connectedToRuntime": false,
+    "syntaxChecked": false,
+    "tested": false,
+    "committed": false,
+    "pushed": false,
+    "nativeServicesReloaded": false,
+    "deployed": false,
+    "publishedAiPreparationStillFillOnly": true
+  },
+  "productionStateRecheckedThisProgressPush": false,
+  "originalChromeLaunchedThisProgressPush": false,
+  "realModelCallsThisProgressPush": 0,
+  "productionBusinessWritesThisProgressPush": 0,
+  "realSubmissionsThisProgressPush": 0,
+  "allUserRequirementsRetained": true,
+  "migrationComplete": false
+}

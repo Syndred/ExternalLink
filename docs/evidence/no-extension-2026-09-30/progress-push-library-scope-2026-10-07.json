@@ -1,0 +1,106 @@
+{
+  "kind": "progress_only_original_library_scope_checkpoint",
+  "date": "2026-10-07",
+  "migrationComplete": false,
+  "publishedFeatureCommit": "5ee8745",
+  "publishedWorkerVersion": "0cd0b1ed-24b5-46a6-af48-4139bc0838c0",
+  "gitPull": "Already up to date",
+  "headVsOriginMainBeforeProgressCommit": { "ahead": 0, "behind": 0 },
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalInventoryCountsNotCompletionCounts": {
+    "buttonsWithIds": 55,
+    "inputsWithIds": 84,
+    "buttonsWithoutIds": 12,
+    "backgroundCases": 62
+  },
+  "publishedTests": { "passed": 620, "failed": 0, "skipped": 0 },
+  "uncommittedDevelopment": {
+    "family": "original independent category and group batch start",
+    "sourceCommitted": false,
+    "deployed": false,
+    "originalServiceUpdated": false,
+    "confirmedSourceGaps": [
+      "Missing independent original category and group batch start controls",
+      "Display filters could narrow the original batch scope",
+      "Five hundred combinations could prevent complete category previews"
+    ],
+    "implementedLocally": [
+      "Independent category and group controls using the original queue semantics",
+      "Original assignments, ordering, quality rules, receipts and exclusions",
+      "Complete scoped ranges with compact profile snapshots above five hundred",
+      "Fifty-row preview pagination retaining all combinations"
+    ],
+    "explicitMaximumScopedCombinations": 50000,
+    "overMaximumBehavior": "reject without silently truncating",
+    "tests": {
+      "fullSuite": {
+        "command": "node --test tests/*.test.mjs",
+        "passed": 628,
+        "failed": 0,
+        "skipped": 0,
+        "output": "executor/test-output/library-scope-all-2026-10-07.txt"
+      },
+      "targeted": {
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "output": "executor/test-output/library-scope-auth-final-2026-10-07.txt"
+      },
+      "exactOriginalFunctions": 3,
+      "localScopeCombinations": 601,
+      "authenticatedFixtureD1RegistrationAndEmptyLocalRecoveryCombinations": 501,
+      "syntheticBrowserUi": {
+        "pages": 6,
+        "passed": true,
+        "independentCategoryAndGroupControls": true,
+        "displayFiltersDoNotShrinkOriginalBatch": true,
+        "completeLargeScopePagination": true,
+        "output": "executor/test-output/library-scope-ui-final-2026-10-07.txt"
+      },
+      "workerDryRun": {
+        "passed": true,
+        "isDeployment": false,
+        "output": "executor/test-output/library-scope-worker-dry-run-2026-10-07.txt"
+      },
+      "originalServiceAndProductionUiAcceptance": false,
+      "realSubmissionAcceptance": false
+    },
+    "remainingAcceptance": [
+      "Original backend and web proxy service routes with isolated data",
+      "Original service and actual user interface after guarded publication",
+      "Other original dynamic controls and cloud or device lifecycle",
+      "Latest original browser products, favorites and complete historical data",
+      "Legacy media ownership and special publication pages or external services"
+    ]
+  },
+  "readOnlyAuthenticatedReadback": {
+    "source": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "exitCode": 0,
+    "runtime": { "paused": true, "busy": false, "pendingEvents": 0, "cloudError": "" },
+    "guard": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "pendingLearning": 0,
+      "pendingMedia": 0,
+      "assistantEnabled": false,
+      "liveJobs": 0,
+      "runningJobs": 0,
+      "checkingWatches": 0
+    },
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": { "id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30 },
+    "cursorIsNotReceiptCount": true
+  },
+  "thisProgressPush": {
+    "developmentCodeIncluded": false,
+    "businessImports": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "deployments": 0,
+    "serviceReloads": 0
+  }
+}

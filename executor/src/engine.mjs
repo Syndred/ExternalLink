@@ -44,18 +44,21 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
     const { id, message } = JSON.parse(event.payload);
     let response;
     try { response = await bridge({...message,executorDocumentId:executionContextId,executorFrameUrl:frame.url()}); } catch (error) { response = { ok: false, error: error.message }; }
+    const afterReply=response?.afterReply;if(response&&typeof afterReply==='function'){response={...response};delete response.afterReply;}
     await evaluate(`globalThis.__executorReplies.get(${id})?.(${JSON.stringify(response)});globalThis.__executorReplies.delete(${id})`, false).catch(() => {});
+    if(typeof afterReply==='function')await Promise.resolve(afterReply()).catch(()=>{});
   });
   await evaluate(`globalThis.__extLinkDisableManualIcons?.();globalThis.__executorReplies=new Map(); globalThis.__executorSeq=globalThis.__executorSeq||0;
     globalThis.__externalLinkServices={authorized:true,persistLearning:true,interactive:${options.interactive===true},
       register(fn){globalThis.__executorHandler=fn},unregister(){globalThis.__executorHandler=null},
-      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','mediaUploadStatus','generateCommentDrafts','saveFillLearnings','captchaResolved'${options.interactive===true?",'getActiveFillConfig','contentReady','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":''}].includes(message.action))return Promise.resolve({ok:false});
+      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','mediaUploadStatus','generateCommentDrafts','saveFillLearnings','captchaResolved'${options.interactive===true?",'getActiveFillConfig','contentReady','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":''}${options.interactive===true||options.parkedControls===true?",'manualContinue','manualSubmit','manualSkip'":''}].includes(message.action))return Promise.resolve({ok:false});
         return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}
     };`);
   for (const source of sources) await evaluate(source, false);
   if(options.interactive===true)await evaluate('globalThis.__extLinkOnPageNavigation?.()',false);
   return {
     documentId:executionContextId,
+    isCurrentDocument:()=>evaluate('true').catch(()=>false),
     assistantActive:()=>evaluate('globalThis.__externalLinkServices?.interactive===true'),
     disableAssistant:()=>evaluate('globalThis.__extLinkDisableManualIcons?.()'),
     call: message => evaluate(`new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('共享表单引擎操作超时')),45000);try{const handled=__executorHandler(${JSON.stringify(message)},null,value=>{clearTimeout(timeout);resolve(value)});if(!handled){clearTimeout(timeout);reject(new Error('未知表单操作'))}}catch(e){clearTimeout(timeout);reject(e)}})`),

@@ -18,6 +18,7 @@ import {resetWorkspace} from './workspace-reset.mjs';
 import {connectionIdentity,connectionProfiles,connectionHistory,previewConnection,commitConnection} from './workbench-connections.mjs';
 import {checkBrowserAssistant,stopBrowserAssistant} from './browser-assistant.mjs';
 import {singlePagePanel,sidepanelClosed} from './single-page.mjs';
+import {checkTaskPageControls,stopTaskPageControls} from './task-page-controls.mjs';
 
 const home = process.env.EXTERNALLINK_HOME || path.join(os.homedir(), '.externallink-executor');
 await mkdir(home, { recursive: true });
@@ -29,10 +30,10 @@ recoverDataJobs(runtime);
 const monitorScheduler=setInterval(()=>checkMonitorSchedule(runtime).catch(error=>console.error('外链监测计划：'+error.message)),60000);monitorScheduler.unref();
 let gmailVaultScope=store.get('gmailCredentialScope')||home,gmail=new GmailSync({store,vault:new CredentialVault(gmailVaultScope)});gmail.start();
 runtime.connectionExternalBusy=()=>gmail.syncing||gmail.refreshing||gmail.accountRefresh||store.get('gmail')?.status==='authorizing';
-runtime.onConnectionChanging=async()=>{gmail.stop();await stopBrowserAssistant(runtime);const panel=singlePagePanel(runtime);if(panel?.open)sidepanelClosed(runtime,{panelId:panel.id});};
+runtime.onConnectionChanging=async()=>{gmail.stop();await stopTaskPageControls(runtime);await stopBrowserAssistant(runtime);const panel=singlePagePanel(runtime);if(panel?.open)sidepanelClosed(runtime,{panelId:panel.id});};
 runtime.onConnectionChanged=async()=>{const scope=store.get('gmailCredentialScope')||home;if(scope!==gmailVaultScope){gmail.stop();gmailVaultScope=scope;gmail=new GmailSync({store,vault:new CredentialVault(scope)});}gmail.start();};
 runtime.onConnectionChangeAborted=async()=>gmail.start();
-runtime.onWorkspaceReset=async()=>{gmail.stop();await stopBrowserAssistant(runtime);};
+runtime.onWorkspaceReset=async()=>{gmail.stop();await stopTaskPageControls(runtime);await stopBrowserAssistant(runtime);};
 const code = randomBytes(18).toString('base64url');
 const codeExpires = Date.now() + 10 * 60 * 1000;
 const match = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || '')); return x.length === y.length && timingSafeEqual(x, y); };
@@ -41,6 +42,7 @@ runtime.dispatchControl=(action,input)=>{const expected=connectionIdentity(store
 const assistantScheduler=setInterval(()=>checkBrowserAssistant(runtime).catch(error=>console.error('浏览器助手：'+error.message)),5000);assistantScheduler.unref();
 const manualWatchScheduler=setInterval(()=>{if(!runtime.controlBusy&&!runtime.connectionBusy&&!store.get('connectionExecutionHold'))runtime.dispatchControl('checkManualWatches',{}).catch(error=>console.error('人工提交核验：'+error.message));},2000);manualWatchScheduler.unref();
 const captchaResumeScheduler=setInterval(()=>{if(!runtime.controlBusy&&!runtime.connectionBusy&&!store.get('connectionExecutionHold'))runtime.dispatchControl('checkCaptchaResumes',{}).catch(error=>console.error('原任务验证码恢复：'+error.message));},3000);captchaResumeScheduler.unref();
+const taskPageControlsScheduler=setInterval(()=>checkTaskPageControls(runtime).catch(error=>console.error('原任务页面按钮：'+error.message)),2000);taskPageControlsScheduler.unref();
 function send(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); }
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';

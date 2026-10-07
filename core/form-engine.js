@@ -486,6 +486,19 @@
       sendResponse({ ok: true });
       return true;
     }
+    if (msg.action === "showWaitingBanner") {
+      removeManualWaitBanner();
+      removeWaitingBanner();
+      showWaitingBanner(msg.config, msg.platformType, msg.taskIndex);
+      sendResponse({ ok: true });
+      return true;
+    }
+    if (msg.action === "removeTaskWaitBanners") {
+      removeWaitingBanner();
+      removeManualWaitBanner();
+      sendResponse({ ok: true });
+      return true;
+    }
     if (msg.action === "removeManualWaitBanner") {
       removeManualWaitBanner();
       sendResponse({ ok: true });
@@ -1615,11 +1628,26 @@
   }
 
   // ─── Waiting banner overlay (injected into page DOM) ───
+  async function requestBannerAction(banner,config,message,callbackSource) {
+    if(banner.dataset.pending==='true')return;
+    banner.dataset.pending='true';
+    for(const button of banner.querySelectorAll('button'))button.disabled=true;
+    let status=banner.querySelector('[data-extlink-control-status]');
+    if(!status){status=document.createElement('span');status.dataset.extlinkControlStatus='true';banner.querySelector('.__extlink_msg')?.appendChild(status);}
+    status.textContent=' 正在确认原任务…';
+    try{
+      const control=config?.nativeTaskControl;
+      const response=await services.request({...message,callbackSource,...(control?{taskId:control.taskId,runId:control.runId,taskControlId:control.id}:{})});
+      if(control&&(!response?.ok||response.syncError))throw new Error(response?.error||response?.syncError||'原任务操作未确认，请重试');
+      removeWaitingBanner();removeManualWaitBanner();
+    }catch(error){status.textContent=` 操作未完成：${error.message}`;banner.dataset.pending='false';for(const button of banner.querySelectorAll('button'))button.disabled=button.dataset.extlinkLocked==='true';}
+  }
   function showWaitingBanner(config, platformType, taskIndex) {
     if (document.getElementById("__extlink_wait_banner")) return;
 
     const banner = document.createElement("div");
     banner.id = "__extlink_wait_banner";
+    banner.dataset.extlinkRoot = 'true';
     banner.innerHTML = `
       <style>
         #__extlink_wait_banner {
@@ -1659,19 +1687,18 @@
     document.body.appendChild(banner);
 
     document.getElementById("__extlink_go_btn")?.addEventListener("click", () => {
-      services.request({
+      requestBannerAction(banner,config,{
         action: "manualSubmit",
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      }).catch(() => {});
+      },'manual_button').catch(() => {});
     });
     document.getElementById("__extlink_skip_btn")?.addEventListener("click", () => {
-      services.request({
+      requestBannerAction(banner,config,{
         action: "manualSkip",
         taskIndex: taskIndex,
-      }).catch(() => {});
-      removeWaitingBanner();
+      },'manual_button').catch(() => {});
     });
 
     // Auto-detect: poll every 2s — if a form appears on current page, auto-trigger
@@ -1679,14 +1706,13 @@
       const p = identifyPlatform();
       if (p) {
         clearInterval(window.__extlink_waitPoll);
-        removeWaitingBanner();
         // Re-scan and submit
-        services.request({
+        requestBannerAction(banner,config,{
           action: "manualSubmit",
           taskIndex: taskIndex,
           config: config,
           platformType: platformType,
-        }).catch(() => {});
+        },'form_detected').catch(() => {});
       }
     }, 2000);
   }
@@ -1709,6 +1735,7 @@
 
     const banner = document.createElement("div");
     banner.id = "__extlink_manual_banner";
+    banner.dataset.extlinkRoot = 'true';
     banner.innerHTML = `
       <style>
         #__extlink_manual_banner {
@@ -1733,7 +1760,7 @@
       </style>
       <div class="__extlink_msg">
         ⏸ <strong>需要人工处理</strong>：<span id="__extlink_manual_reason"></span><br>
-        完成登录/验证码后点击 <strong>继续下一步</strong>，AI 会自动继续填表并提交。
+        完成页面上的人工步骤后点击 <strong>继续下一步</strong>，继续原任务的填写与普通免费投稿。
       </div>
       <div class="__extlink_countdown" id="__extlink_manual_countdown"></div>
       <button class="__extlink_skip" id="__extlink_manual_skip_btn">跳过</button>
@@ -1741,6 +1768,7 @@
     `;
     document.body.appendChild(banner);
     const brand = config && config.brandName ? `【${config.brandName}】` : "";
+    if(config?.nativeTaskControl?.skipPending){const go=document.getElementById('__extlink_manual_go_btn');go.disabled=true;go.dataset.extlinkLocked='true';}
     document.getElementById("__extlink_manual_reason").textContent =
       `${brand}${reason || "登录或验证码"}`;
 
@@ -1764,17 +1792,15 @@
     }
 
     document.getElementById("__extlink_manual_go_btn")?.addEventListener("click", () => {
-      services.request({
+      requestBannerAction(banner,config,{
         action: "manualContinue",
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      }).catch(() => {});
-      removeManualWaitBanner();
+      },'manual_button').catch(() => {});
     });
     document.getElementById("__extlink_manual_skip_btn")?.addEventListener("click", () => {
-      services.request({ action: "manualSkip", taskIndex: taskIndex }).catch(() => {});
-      removeManualWaitBanner();
+      requestBannerAction(banner,config,{ action: "manualSkip", taskIndex: taskIndex },'manual_button').catch(() => {});
     });
   }
 

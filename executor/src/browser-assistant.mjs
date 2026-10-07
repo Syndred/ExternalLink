@@ -11,6 +11,7 @@ import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {pendingSubmissionQueue} from '../../core/submission-queue.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
+import {handleTaskPageMessage,releaseTaskPageControl} from './task-page-controls.mjs';
 const effectiveProfile=(runtime,settings)=>singlePagePanel(runtime)?.open&&singlePagePanel(runtime).profileId||settings.profileId;
 export function assistantState(runtime){
  const saved=runtime.store.get('browserAssistantSettings'),scope=workbenchScope(runtime.store.get('pair')),cached=runtime.store.get('applicationSnapshot'),panel=singlePagePanel(runtime),modern=saved?.scope===scope;
@@ -79,9 +80,11 @@ export async function checkBrowserAssistant(runtime){
     if(!/^https?:\/\//.test(frame.url()))continue;const url=frame.url(),key=info.targetId+'::'+url;live.add(key);let item=runtime.browserAssistantFrames.get(key);
     const reuse=item&&item.scope===scope&&item.profileId===profileId&&await item.engine.assistantActive().catch(()=>false);if(item&&!reuse){await item.engine.disableAssistant().catch(()=>{});await item.engine.detach();runtime.browserAssistantFrames.delete(key);item=null;}
     if(!item){
+    const ownedControl=[...(runtime.taskPageControls?.values()||[])].find(binding=>binding.ownsEngine&&binding.frame===frame);if(ownedControl){if(ownedControl.busy)continue;await releaseTaskPageControl(runtime,ownedControl.taskId);}
     const bridge=async message=>{
      const current=assistantState(runtime).settings;if(scope!==workbenchScope(runtime.store.get('pair'))||!current.enabled||effectiveProfile(runtime,current)!==profileId||(frame.url()!==url&&message.action!=='manualSubmissionClicked'))return{ok:false,error:'助手页面或产品已变化'};
      if(message.action==='captchaResolved'){const waiting=runtime.store.values('task:').find(task=>task.profileId===profileId&&task.targetId===info.targetId&&task.browserInstance===runtime.host?.startedAt&&task.status==='needs_manual'&&task.attentionType==='human_verification'&&task.captchaResume?.documentId===message.executorDocumentId&&task.captchaResume.frameUrl===url);return waiting?runtime.bridge(waiting,message):{ok:false,error:'没有对应的原页验证码等待任务'};}
+     if(['manualContinue','manualSubmit','manualSkip'].includes(message.action))return runtime.dispatchControl?runtime.dispatchControl('taskPageControl',message):handleTaskPageMessage(runtime,message);
      const original=originalAssistantTask(runtime,profileId,info.targetId,page.url()),docs=snapshotFor(runtime).documents,config=applyDestinationFormKnowledge(docs,configFor(runtime,profileId,original),url);
      if(message.action==='getActiveFillConfig')return{ok:true,config,filters:globalThis.ExtLinkTargetFilters.normalize(docs.targetFilters)};
      if(message.action==='contentReady')return{ok:true};

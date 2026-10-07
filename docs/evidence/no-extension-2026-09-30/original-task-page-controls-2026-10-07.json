@@ -1,0 +1,57 @@
+{
+  "kind":"scoped_original_task_page_controls_evidence_not_full_completion",
+  "date":"2026-10-07",
+  "originalBaseline":"bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "previousAuditCommit":"9965a3d",
+  "migrationComplete":false,
+  "implemented":{
+    "originalManualAndNoFormWaitingBanners":true,
+    "originalManualContinueManualSubmitManualSkipCallbacks":true,
+    "originalTaskRunProductMediaPageFrameDocumentAndScopeBinding":true,
+    "retainedOrReattachedParkedPageConnection":true,
+    "existingAssistantConnectionReused":true,
+    "ownedConnectionReleasedBeforeAssistantAttaches":true,
+    "replyDeliveredBeforeOriginalTaskExecutionWakes":true,
+    "automaticFormDetectedContinuationKeepsOriginalPermissions":true,
+    "sameUrlReloadDuringConfirmationRevokesOldPermission":true,
+    "failedCallbackKeepsBannerThroughPeriodicScan":true,
+    "skipRetryUsesOneOriginalDurableRequest":true,
+    "unknownAttemptsReceiptsOtherControllersAndConflictingTargetsProtected":true
+  },
+  "verification":{
+    "fullSuite":{"passed":759,"failed":0,"skipped":0,"newSince755":4,"output":"executor/test-output/original-page-controls-all-final-2026-10-07.txt"},
+    "actualRenderedPageControls":{"cases":11,"includedAsActualBrowserChildInFullSuite":true,"driver":"executor/test/original-task-page-controls.mjs","actualNativeWorkUsed":true,"manualContinueUsesFixtureWithoutFinalSubmitButton":true,"automaticContinuationStopsAtOriginalFillOnlyOrDisabledAutoSubmitPreference":true,"posts":0,"externalRequests":0,"realModelCalls":0,"productionWrites":0},
+    "parallelResumeBrowser":{"cases":13,"output":"executor/test-output/original-page-controls-parallel-browser-final-2026-10-07.txt","includesActualRenderedPageButtonWhileOtherWorkerActive":true,"otherWorkerReceiptsAreLocalFixtures":true,"posts":0,"externalRequests":0,"realModelCalls":0,"productionWrites":0},
+    "idleCaptchaBrowserRegression":{"cases":12,"output":"executor/test-output/original-page-controls-idle-captcha-2026-10-07.txt","posts":0,"externalRequests":0,"realModelCalls":0},
+    "autoVisitBrowserRegression":{"passed":true,"output":"executor/test-output/original-page-controls-auto-visit-2026-10-07.txt","posts":0,"externalRequests":0},
+    "visualQa":{"isolatedFailureBannerScreenshotViewed":true,"file":"executor/test-output/original-page-controls-error-2026-10-07.png","clearChineseReasonParkedStatusAndRetryButtons":true,"isProductionUiScreenshot":false}
+  },
+  "nativeServices":{
+    "updated":true,
+    "completedReadonlyBeforeStopping":true,
+    "processIdentityAndPauseIdleGuardsPassed":true,
+    "stoppedDurableStateGuardPassed":true,
+    "hiddenServicesOnlyLaunch":true,
+    "bothServicesReadonlyBeforeAfterPassed":true,
+    "beforeOutput":"executor/test-output/original-page-controls-native-before-2026-10-07.txt",
+    "afterOutput":"executor/test-output/original-page-controls-native-after-2026-10-07.txt",
+    "originalBusinessMatchesHistoricBaseline":true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged":true,
+    "paused":true,"busy":false,"pendingQueues":0,"assistantEnabled":false,"activeJobs":0,
+    "productsIncludingArchived":9,"libraryDisplayItems":2948,"existingCombinations":897,
+    "fixedBatch":{"status":"paused","cursor":13,"count":30,"cursorIsReceiptCount":false}
+  },
+  "workerDeployed":false,
+  "allCloudDocumentHashesRechecked":false,
+  "fullProductionUiRechecked":false,
+  "latestOriginalChromeDataRead":false,
+  "businessRestores":0,"realModelCalls":0,"newRealSubmissions":0,
+  "provesRealLoginCaptchaOrSiteReceipt":false,
+  "remaining":[
+    "Original requestAutoFill message routing and real sidepanel trigger correspondence",
+    "Special launch page manual button workflows",
+    "Dedicated full original fixed batch continuous library and original run recovery evidence",
+    "Latest original products favorites groups full history old media and other devices",
+    "Remaining dynamic controls and external service results"
+  ]
+}

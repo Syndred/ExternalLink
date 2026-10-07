@@ -1,5 +1,26 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalTaskPageControlsCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-task-page-controls-2026-10-07.json",
+    "fullSuitePassed": 759,
+    "newTestsSince755": 4,
+    "actualRenderedPageControlCases": 11,
+    "actualParallelResumeCasesIncludingRenderedButton": 13,
+    "originalIdleCaptchaRegressionCases": 12,
+    "originalParkedAndNoFormBannersConnected": true,
+    "originalManualContinueSubmitAndSkipCallbacksConnected": true,
+    "automaticFormDetectionKeepsOriginalPermission": true,
+    "failureBannerKeptAfterPeriodicScan": true,
+    "sameUrlReloadDuringConfirmationRevokesConsent": true,
+    "existingInteractiveAssistantReused": true,
+    "originalServicesUpdatedWithIdentityAndPauseGuards": true,
+    "originalAutoFillMessageRouteFullyVerified": false,
+    "specialLaunchPageButtonWorkflowFullyVerified": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalPageControlsCallgraphAudit": {
     "date": "2026-10-07",
     "evidence": "original-page-control-callgraph-2026-10-07.json",
@@ -970,15 +991,15 @@
     },
     {
       "action": "manualContinue",
-      "mapping": "原任务 / 人工继续确认 → manualSubmit；原manualContinue与manualSubmit同一处理流程",
-      "verification": "固定原代码对照任务时限、待人工容量、模型预算，原未知任务、SQLite回滚／重开及取消恢复验证；完整特殊页面仍待验收",
+      "mapping": "原任务／原待人工横幅 → taskPageControl → manualSubmit；原任务、文档和范围绑定",
+      "verification": "759项回归及11种实际原页面情形通过，确认中重载撤销授权、失败保留横幅、已有助手复用；13种并行恢复包含实际页面按钮接回原调度。真实人工投稿及特殊发布页按钮仍待验收",
       "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "manualSkip",
-      "mapping": "原任务 / 跳过 → manualSkip",
+      "mapping": "原任务／原页面跳过按钮 → taskPageControl → manualSkip",
       "status": "implemented_requires_full_acceptance",
-      "verification": "并发所选任务单独跳过、原请求失败重试、末项保留、未知回执／人工页保护经回归及认证D1验证；真实业务跳过未执行",
+      "verification": "并发所选任务单独跳过、原请求失败重试、末项保留、未知回执／人工页保护经回归及认证D1验证；实际原页面跳过回读失败后禁用继续，原请求重试只写一次。真实业务跳过未执行",
       "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json"
     },
     {
@@ -998,9 +1019,9 @@
     },
     {
       "action": "manualSubmit",
-      "mapping": "原任务 / 人工继续确认 → manualSubmit",
+      "mapping": "原任务／原无表单横幅按钮及轮询 → taskPageControl → manualSubmit",
       "status": "implemented_requires_full_acceptance",
-      "verification": "固定原代码对照任务时限、待人工容量、原模型预算；取消、SQLite事务回滚及重开保留原范围与未知任务，真实人工投稿及特殊页面仍待验收"
+      "verification": "原任务、范围和未知尝试保留；实际无表单检测及继续按钮保留原仅填写、关闭自动提交和已有权限，不新增授权。759项回归通过，真实人工投稿、完整特殊页面及固定／连续目录／原run须独立验收"
     },
     {
       "action": "markSubmissionSite",

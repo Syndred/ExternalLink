@@ -70,6 +70,7 @@ import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captc
 import {assertParkedResumePage} from './parked-task-resume.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
 import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
+import {handleTaskPageMessage} from './task-page-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
 import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from './local-recovery.mjs';
@@ -1273,6 +1274,7 @@ export class Runtime {
     if(action==='removeFromSubmissionQueue')return removeFromSubmissionQueue(this,input);
     if(action==='manualSkip')return manualSkip(this,input);
     if(action==='manualSubmit')return manualSubmit(this,input);
+    if(action==='taskPageControl')return handleTaskPageMessage(this,input);
     if(action==='stop')return stopExecution(this,input);
     if(['resume','offlineResume'].includes(action)&&this.store.get('executionStopped'))throw Error('本次执行已经停止，请预览或明确重新开始原范围');
     if(action==='clearSiteAnnotation')return clearSiteAnnotation(this,input);

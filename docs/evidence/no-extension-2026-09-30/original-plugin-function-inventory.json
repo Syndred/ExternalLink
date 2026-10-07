@@ -1,5 +1,24 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalReceiptProofCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "43ee54a",
+    "evidence": "original-submission-proof-2026-10-08.json",
+    "originalJudgeAndDeterministicProofCompared": true,
+    "proofPublicUrlAndPublishedMetadataPreserved": true,
+    "lateReceiptAndArtifactReadbacksGuarded": true,
+    "sqliteCloseReopenAndAuthenticatedCloudRestoreVerified": true,
+    "actualIsolatedBrowserInterceptedPosts": 6,
+    "fullSuitePassed": 865,
+    "newSince854": 11,
+    "nativeServicesGuardedReloadAndReadbacksPassed": true,
+    "sameDestinationAdvanceWaitsForCloudReceiptVerified": false,
+    "laterAcknowledgedReceiptAutomaticPageCleanupVerified": false,
+    "allOriginalVisualFinalSubmissionAndReceiptsVerified": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "receiptDraftProgressPushCheckpoint": {
     "date": "2026-10-08",
     "evidence": "progress-push-receipt-draft-2026-10-08.json",

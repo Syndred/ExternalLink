@@ -1,0 +1,50 @@
+{
+  "kind": "documentation_only_migration_checkpoint",
+  "date": "2026-10-07",
+  "goalStatus": "not_complete",
+  "gitPull": "Already up to date.",
+  "publishedFeatureCommit": "aa3aae6",
+  "publishedWorkerVersion": "5449ca4c-5d3b-428c-beed-31b0b9ccb381",
+  "publishedRegression": { "passed": 542, "failed": 0, "skipped": 0, "scope": "previously published original profile source recovery" },
+  "localBackupImportWork": {
+    "committedInThisCheckpoint": false,
+    "deployed": false,
+    "targetedRegression": { "passed": 20, "failed": 0, "skipped": 0, "source": "executor/test-output/original-backup-profiles-dependencies.txt" },
+    "earlierFullRegression": { "passed": 552, "failed": 0, "skipped": 0, "source": "executor/test-output/original-backup-profiles-first-all.txt", "isFinalCurrentValidation": false },
+    "latestAuthenticatedHttpRegression": {
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "source": "executor/test-output/original-backup-profiles-http.txt",
+      "failure": "Original protected receipt unexpectedly gains destinationKey and publicationStatus during the separate prepared backup import. Original taskId and evidence remain, but strict object preservation fails."
+    },
+    "expandedUiAndLargeBackup": "complete passing output not reverified in this checkpoint"
+  },
+  "liveReadOnlyState": {
+    "source": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "exitCode": 0,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": { "id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30 },
+    "cursorIsReceiptCount": false
+  },
+  "checkpointActions": { "realBusinessEdits": 0, "realAiCalls": 0, "newRealSubmissions": 0, "serviceReload": false, "deployment": false },
+  "remaining": [
+    "Fix the separate backup import receipt preservation failure and verify the complete current path.",
+    "Finish original dynamic operation and historical association parity.",
+    "Verify latest original browser profiles and favorites recovery.",
+    "Verify original external and device media ownership and availability.",
+    "Verify remaining real special pages and external service results."
+  ]
+}

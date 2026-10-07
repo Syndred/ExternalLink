@@ -1,0 +1,138 @@
+{
+  "kind": "migration_progress_only_unpublished_cloud_media_draft",
+  "date": "2026-10-08",
+  "repositoryPull": {
+    "command": "git pull --ff-only",
+    "result": "Already up to date",
+    "head": "88cf29a529dcbc7941cf1a04525dcaa8b9482a65",
+    "ahead": 0,
+    "behind": 0
+  },
+  "originalSourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "publishedUiFeatureCommit": "e95b48d7399ed70eb9aa57c8e8f1e51731fab38b",
+  "publishedHumanGateFeatureCommit": "d9e40a57cd908f9e5e537d6f0a42624c01eec6a3",
+  "draftSourcePublished": false,
+  "draftWorkerDeployed": false,
+  "draftNativeServicesReloaded": false,
+  "focusedTests": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "latestDraftCovered": true
+  },
+  "earlierRepositoryTests": {
+    "passed": 908,
+    "failed": 0,
+    "skipped": 0,
+    "latestDraftCovered": false,
+    "reason": "Before final legacy recovery changes and additional tests"
+  },
+  "latestDraftFinalRepositoryVerified": false,
+  "actualIsolatedBrowser": {
+    "automaticAndManual": true,
+    "uploadedFilesRead": 4,
+    "sha256MatchedOriginalImage": true,
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0
+  },
+  "authenticatedFixtureD1AndNeon": {
+    "registrationAndEmptyRestorePassed": true,
+    "lostRegistrationReplyRecovered": true,
+    "laterImagesCannotReplaceFrozenTaskMedia": true,
+    "originalDocumentsPreserved": true
+  },
+  "productionReadbackRepeatedThisProgressPush": false,
+  "nativeServiceReloadsThisProgressPush": 0,
+  "workerDeploysThisProgressPush": 0,
+  "realSubmissionsThisProgressPush": 0,
+  "remaining": [
+    "Original media timeout and failure fallback",
+    "All original execution entries and callbacks",
+    "Latest original product, grouping, favorites, quality metrics and settings",
+    "Complete old history and other devices",
+    "Final repository regression and deployment verification"
+  ],
+  "migrationComplete": false,
+  "outputs": [
+    {
+      "path": "progress-cloud-media-draft-2026-10-08/original-cloud-media-focused-final-2026-10-08.txt",
+      "sha256": "45c0cccaf9f8f586963ffc725e3aeb57284a757e1cb0b8639143ec2fe01f62c2"
+    },
+    {
+      "path": "progress-cloud-media-draft-2026-10-08/original-cloud-media-browser-second-2026-10-08.txt",
+      "sha256": "fd343fec02d9e7d9bf0804da72b2a21ca398cedb694c8dab1fdffe2078c08c4a"
+    },
+    {
+      "path": "progress-cloud-media-draft-2026-10-08/original-cloud-media-repository-first-2026-10-08.txt",
+      "sha256": "6d69aea34d9c14dd8f94787296439533a9b4633fdd300c7af5550918f7087306"
+    }
+  ],
+  "unpublishedDraftFiles": [
+    {
+      "path": "core/original-cloud-media.mjs",
+      "sha256": "7fe9064d01a5da308855733c7353d61b1ab2afedec9ac0870c36462b8a6b14ae"
+    },
+    {
+      "path": "core/task-media-selection.mjs",
+      "sha256": "e4dde3bcd3531fa56af3d97d0e1bd191f0c3e59904ddcf72ede825a9c968dc35"
+    },
+    {
+      "path": "cloud/worker/src/task-media-manifest.mjs",
+      "sha256": "9e4740da5233a6ccbef055bc70a0eb8b955ceeffae48e69d6a050aeb19195805"
+    },
+    {
+      "path": "cloud/worker/src/d1-executor.mjs",
+      "sha256": "6749cb5d56dae12c2088c697787ea9621564f25a1ce3fb0ceb22a24a3ebb3e1e"
+    },
+    {
+      "path": "cloud/worker/src/executor-api.mjs",
+      "sha256": "e8eb960d8dd7b4bc40605e53a2f1ef742c0e4aaf3a8fc7ae227dfdcb3ef4194b"
+    },
+    {
+      "path": "executor/src/original-task-media-config.mjs",
+      "sha256": "3468daf3c3130d7afe1799b063f520f77911c53692ae7dc643027cf028c4ba09"
+    },
+    {
+      "path": "executor/src/task-media-evidence.mjs",
+      "sha256": "01d59eed43f4896350e15abc29f5c8f7e17ca72895eb6ce240a40efeb0c788d7"
+    },
+    {
+      "path": "executor/src/runtime.mjs",
+      "sha256": "240d203963a34e3c075dbb1fb41ec919a25ac2c5b80bba71ad6ab6ed28ed5c1b"
+    },
+    {
+      "path": "executor/src/single-page.mjs",
+      "sha256": "d524c5c94b4394a497467515665f409fa45dd1f77ded3620cc45ff3aa474870a"
+    },
+    {
+      "path": "executor/src/browser-assistant.mjs",
+      "sha256": "e30fd1e41801b68cf5f872fbb420dc09f0c00b045f67c63384d1465cd6699633"
+    },
+    {
+      "path": "executor/src/workbench-features.mjs",
+      "sha256": "020a5233bcc0eecaf1f982e7e7a1901c9c65ed591afa4863b0067d140cd7edcc"
+    },
+    {
+      "path": "executor/src/original-visit-fill-adapter.mjs",
+      "sha256": "d9088488033f07de11e748c85548ae23fc20e8a2563a02673573c10f87eb78b2"
+    },
+    {
+      "path": "tests/executor-original-task-classification.test.mjs",
+      "sha256": "81d1365d13730c04efaeecb6a7ef7275f03579ba7de60912326bff16f18a7d27"
+    },
+    {
+      "path": "tests/executor-original-cloud-media.test.mjs",
+      "sha256": "2a66552a3690563942eb1c2c20d9c7903ae9ef4d2bd3a83d9ab2535ed41ce13b"
+    },
+    {
+      "path": "tests/executor-original-cloud-media-cloud.test.mjs",
+      "sha256": "243ace006dabedf500e29fcda0bf9ed3791890d8ffce0b40f64fd820aa6a2203"
+    },
+    {
+      "path": "executor/test/original-cloud-media-fill.mjs",
+      "sha256": "474c621ed3bfd1c4ebc7bee75ff06ac24de4b8a39c354f1d9cc97dd4ceee6f5a"
+    }
+  ]
+}

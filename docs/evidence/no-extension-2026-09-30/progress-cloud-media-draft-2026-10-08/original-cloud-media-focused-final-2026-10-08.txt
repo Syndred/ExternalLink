@@ -1,0 +1,31 @@
+✔ authenticated d1 registration freezes original cloud media fallback, ignores caller substitutions and restores identical image bytes from an empty native store (53.8451ms)
+✔ authenticated neon registration freezes original cloud media fallback, ignores caller substitutions and restores identical image bytes from an empty native store (1529.1304ms)
+✔ cloud fallback logo and screenshots match the first pre-refactor fill helper without modifying original profile or public image fields (34.6971ms)
+✔ explicit selected cloud versions and disabled slots retain their selection while cloud defaults cannot use other products or non-images (0.5985ms)
+✔ D1 catalogue pagination keeps the original list order and refuses repeated cursors (0.5924ms)
+✔ original native work consumes frozen cloud defaults even when current cloud catalogue and public-only original fields differ (8.5072ms)
+✔ old native catalogues recover only their own proved image versions and are never rewritten or replaced by the current catalogue (0.4679ms)
+✔ actual isolated automatic and manual single-page fields upload original frozen cloud defaults with exact file SHA and no model or submission (1488.6263ms)
+✔ original native bridge reads verified pre-run backup without cloud calls or rewriting missing historical SHA (15.7012ms)
+✔ offline task attachment uses original proven bytes and records their source while preserving old run and attempt state (5.6162ms)
+✔ changed backup bytes, scope or original product cannot silently fall back to current cloud media (4.1137ms)
+✔ later backups, wrong task or workspace and disabled or unselected images cannot authorize original attachments (2.8146ms)
+✔ already frozen SHA keeps its original meaning and unknown task identifiers cannot be sent by the engine (3.1655ms)
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (28.5941ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (3.4786ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (3.6045ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (3.3463ms)
+✔ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (51.7685ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (28.1959ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (24.0876ms)
+✔ task media follows original effective field precedence and screenshot slots, never the version history (2.1524ms)
+✔ directory PNG upload uses the actual selected logo even in an old broad manifest (0.3121ms)
+✔ actual native work keeps frozen product selection and disabled slots despite a legacy catalogue manifest (7.7737ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2067.8643

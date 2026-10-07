@@ -2845,5 +2845,18 @@
     "allOriginalBranchesVerified": false,
     "latestOriginalDataAndCompleteHistoryVerified": false,
     "migrationComplete": false
+  },
+  "originalCloudMediaDraftProgressCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "progress-push-cloud-media-draft-2026-10-08.json",
+    "draftPublished": false,
+    "focusedTestsPassed": 23,
+    "earlierRepositoryTestsPassed": 908,
+    "latestDraftFinalRepositoryVerified": false,
+    "actualIsolatedAutoAndManualUploadVerified": true,
+    "authenticatedD1AndNeonRegistrationRestoreVerified": true,
+    "allOriginalMediaBranchesVerified": false,
+    "latestOriginalDataAndCompleteHistoryVerified": false,
+    "migrationComplete": false
   }
 }

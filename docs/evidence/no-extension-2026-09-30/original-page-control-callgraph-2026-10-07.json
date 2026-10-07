@@ -22,7 +22,10 @@
     "nativeRuntimeSendsShowManualWaitBanner": false,
     "nativeEngineAllowsOriginalPageManualActions": false,
     "nativeWorkDetachesAllOwnedFormEnginesAtFinish": true,
-    "originalSidepanelRequestsAutoFillOnOpenTabUrlChangeAndProductSelection": true,
+    "originalSidepanelRequestsAutoFillOnOpenTabUrlChangeAndProductSelection": false,
+    "originalSidepanelDirectRequestsOnInitializationTabActivationAndCompletedUrlChange": true,
+    "originalProductSelectionUpdatesContextWithoutDirectAutoFillRequest": true,
+    "correction": "2026-10-07 subsequent baseline reread corrected the earlier product-selection direct-call assertion; inspected spSiteSelect and chrome.storage.onChanged handlers",
     "originalContentMaybeRequestAutoFillInvocationFound": false
   },
   "requiredNextWork": [

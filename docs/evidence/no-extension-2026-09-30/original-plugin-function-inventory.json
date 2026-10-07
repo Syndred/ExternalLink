@@ -1,5 +1,24 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalAutoFillMessageControlsCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-auto-fill-message-controls-2026-10-07.json",
+    "fullSuitePassed": 763,
+    "newTestsSince759": 4,
+    "actualRenderedNativePanelAndSharedEngineCases": 7,
+    "nativeRequestAutoFillAndWorkbenchRouteConnected": true,
+    "originalSharedEngineMessageConnectedWithinOriginalBinding": true,
+    "cancelledOriginalPageCanBeSelectedAgain": true,
+    "sameUrlReloadBeforeFillAndDuringSnapshotRejected": true,
+    "oldRequestResultCannotReplaceNewRequestRecord": true,
+    "originalDirectTriggerAuditCorrected": "sidepanel initialization, tab activation and completed URL update; profile selection changes context but has no direct call",
+    "originalServicesUpdatedAndNewRoutesChecked": true,
+    "originalAutomaticGateAdvanceFullyVerified": false,
+    "specialLaunchWorkflowFullyVerified": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalTaskPageControlsCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-task-page-controls-2026-10-07.json",
@@ -28,7 +47,7 @@
     "originalParkedBannerDisplaySentByNativeRuntime": false,
     "nativeTaskWorkDetachesEngineAtFinish": true,
     "originalPageManualCallbacksFullyMigrated": false,
-    "originalAutoFillActualEntrypoint": "sidepanel open, tab URL change and product selection",
+    "originalAutoFillActualEntrypoint": "corrected: sidepanel initialization, tab activation and completed URL update; profile selection updates context without direct request",
     "originalContentMaybeRequestAutoFillHasInvocation": false,
     "sourceAuditIsRuntimeAcceptance": false,
     "migrationComplete": false
@@ -1067,8 +1086,9 @@
     },
     {
       "action": "requestAutoFill",
-      "mapping": "浏览器助手原任务 fillAssistantTask，通用新页面一致性待验收",
-      "status": "implemented_requires_full_acceptance"
+      "mapping": "requestAutoFill 原生接口／工作台转发／共享引擎交互消息 → 原访问扫描、队列匹配及 fillAssistantTask",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "实际工作台选择与共享引擎回调、取消后原页再选、同网址重载前及回读中保护共7种隔离情形通过；原两服务新接口拒绝未绑定输入，原队列保持；遇闸推进及完整原浏览器资料仍未证明"
     },
     {
       "action": "resume",

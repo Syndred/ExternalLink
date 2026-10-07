@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+test('rendered native panel and original shared engine messages prepare only the selected frozen product and reject same-URL replaced documents',()=>{
+ const result=spawnSync(process.execPath,['executor/test/original-auto-fill-messages.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:45000,maxBuffer:1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const evidence=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(evidence.ok,true);assert.equal(evidence.results.length,7);for(const mode of ['actual-native-panel-open-and-page-switch','actual-native-product-switch','reselect-original-cancelled-page','legacy-panel-closed','actual-shared-engine-page-message','same-url-reload-before-delayed-fill','same-url-reload-during-cloud-confirmation'])assert.ok(evidence.results.find(row=>row.mode===mode));assert.equal(evidence.results.find(row=>row.mode==='actual-shared-engine-page-message').sourceOverridesSpoofedTargetProfileAndDocument,true);assert.equal(evidence.results.find(row=>row.mode==='same-url-reload-during-cloud-confirmation').oldRequestStoppedBeforeRegistration,true);for(const key of ['posts','externalRequests','realModelCalls','productionWrites'])assert.equal(evidence[key],0);assert.equal(evidence.fixedBatchPaused,true);
+});

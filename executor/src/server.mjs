@@ -103,6 +103,7 @@ const server = http.createServer(async (req, res) => {
       if(['/runExportSources','/exportBatchReport','/exportAutomationRun'].includes(route))return runtime.control(route.slice(1),input);
       if(['/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'].includes(route))return runtime.control(route.slice(1),input);
       if(route==='/saveAssistantSettings')return runtime.control('saveAssistantSettings',input);
+      if(route==='/requestAutoFill')return runtime.control('requestAutoFill',input);
       if(route==='/resetWorkspace')return resetWorkspace(runtime,input);
       if(route==='/gmailStatus')return{ok:true,gmail:gmail.status()};
       if(route==='/gmailMessage')return{ok:true,message:gmail.message(input.messageId)};

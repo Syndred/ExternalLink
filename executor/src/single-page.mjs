@@ -8,13 +8,19 @@ import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
+export function cancelVisitWork(runtime,reason){
+ for(const [key,timer]of runtime.sidepanelAutoTimers||[]){clearTimeout(timer);const fill=runtime.store.get(key);if(fill)runtime.store.set(key,{...fill,status:'cancelled',reason,cancelledAt:at()});}runtime.sidepanelAutoTimers?.clear();
+ for(const binding of runtime.autoVisitBindings?.values()||[])binding.cancelled=true;
+ runtime.autoVisitBindings?.clear();
+}
 export function sidepanelOpened(runtime,input={}){
  const old=singlePagePanel(runtime);if(input.panelId&&(!old||old.id!==input.panelId))throw Error('网页操作面板已变化，请重新打开');
+ if(old?.open)cancelVisitWork(runtime,'网页面板、所选网页或产品已变化');
  const panel={id:input.panelId||randomUUID(),scope:workbenchScope(runtime.store.get('pair')),open:true,at:at(),generation:(old?.generation||0)+1,selectedTargetId:input.targetId||old?.selectedTargetId,profileId:input.profileId||old?.profileId};runtime.store.set('singlePagePanel',panel);return{ok:true,panel};
 }
 export function sidepanelClosed(runtime,input={}){
  const panel=singlePagePanel(runtime);if(!panel||input.panelId!==panel.id)return{ok:true,ignored:true};
- for(const [key,timer]of runtime.sidepanelAutoTimers||[]){clearTimeout(timer);const fill=runtime.store.get(key);if(fill)runtime.store.set(key,{...fill,status:'cancelled',reason:'网页面板已关闭',cancelledAt:at()});}runtime.sidepanelAutoTimers?.clear();runtime.store.set('singlePagePanel',{...panel,open:false,generation:panel.generation+1,closedAt:at()});return{ok:true,closed:true};
+ cancelVisitWork(runtime,'网页面板已关闭');runtime.store.set('singlePagePanel',{...panel,open:false,generation:panel.generation+1,closedAt:at()});return{ok:true,closed:true};
 }
 function assertPanel(runtime,input){const panel=singlePagePanel(runtime);if(!panel?.open||input.panelId!==panel.id)throw Error('网页操作面板已关闭或变化，请重新打开');return panel;}
 export function captureSinglePageContext(runtime,input){

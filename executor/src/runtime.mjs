@@ -64,7 +64,7 @@ import {mediaLibrary} from './media-library.mjs';
 import {cloudStatus,pushLocalChanges} from './cloud-status.mjs';
 import {pullCloudState,previewCloudPull,commitCloudPull} from './cloud-pull.mjs';
 import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
-import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
+import {saveAssistantSettings,fillAssistantTask,requestAutoFill} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
 import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captcha-resume.mjs';
 import {assertParkedResumePage} from './parked-task-resume.mjs';
@@ -1283,6 +1283,7 @@ export class Runtime {
     if(action==='checkManualWatches')return checkManualWatches(this);
     if(action==='checkCaptchaResumes')return checkCaptchaResumes(this,input);
     if(action==='saveAssistantSettings')return saveAssistantSettings(this,input);
+    if(action==='requestAutoFill')return requestAutoFill(this,input);
     if(action==='fillAssistantTask')return fillAssistantTask(this,input);
     if(action==='browserLibraryPages')return browserLibraryPages(this);
     if(action==='addBrowserPage')return addBrowserPage(this,input);

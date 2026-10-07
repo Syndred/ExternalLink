@@ -27,6 +27,10 @@ import {applyOriginalDestinationDisposition} from '../executor/src/original-dest
 import {attachOriginalGroupPage} from '../executor/src/original-agent-unavailable.mjs';
 import {navigationScope,pendingNavigationMarker,waitForOriginalNavigation} from '../executor/src/original-navigation-rejudge.mjs';
 import {getTargetInfo} from '../executor/src/browser-target.mjs';
+import {attachEngine} from '../executor/src/engine.mjs';
+import {nativeSuccessRecord,originalSubmitSuccessDecision} from '../executor/src/original-submission-proof.mjs';
+import {closeAcceptanceTask} from '../executor/src/acceptance-cleanup.mjs';
+import {queue} from '../executor/src/shared.mjs';
 import {resumeExecution} from '../executor/src/execution-lifecycle.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
 
@@ -253,14 +257,13 @@ test('authenticated selected skip retry retains exact request and original cloud
  }finally{f.close();}
 });
 
-async function fixture({taskLimit=3}={}) {
+async function fixture({taskLimit=3,urls=Array.from({length:3},(_,n)=>'https://target'+n+'.example/form')}={}) {
   const sqlite=new DatabaseSync(':memory:');
   for(const file of ['0001_d1_storage.sql','0002_d1_executor.sql'])sqlite.exec(readFileSync(new URL('../cloud/worker/migrations/'+file,import.meta.url),'utf8'));
   const db={prepare(sql){let args=[];return{bind(...values){args=values;return this;},first:async()=>sqlite.prepare(sql).get(...args)||null,all:async()=>({results:sqlite.prepare(sql).all(...args)}),run:async()=>{const q=sqlite.prepare(sql);return q.columns().length?{results:q.all(...args),meta:{changes:0}}:{results:[],meta:{changes:q.run(...args).changes}};}};},async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
   const objects=new Map(),bucket={head:async key=>objects.has(key)?{}:null,put:async(key,value,meta)=>objects.set(key,{bytes:new Uint8Array(value),meta}),get:async key=>{const value=objects.get(key);return value?{arrayBuffer:async()=>value.bytes.slice().buffer,httpMetadata:value.meta?.httpMetadata}:null;}};
   const env={LEDGER_DB:db,MEDIA_BUCKET:bucket,APP_ACCESS_TOKEN:'isolated-admin'},backend=new D1Store(db,bucket,'default');
   const profiles=Object.fromEntries(['p','q'].map(id=>[id,{id,name:'Original '+id,fields:{Name:'Original '+id,Url:'https://product-'+id+'.example'}}]));
-  const urls=Array.from({length:3},(_,n)=>'https://target'+n+'.example/form');
   for(const [key,data]of Object.entries({siteProfiles:profiles,sheetTableData:{entries:urls.map(link=>({link}))},submissionRecords:{},cfgConcurrency:'4',unattendedPreferences:{enabled:true,hours:8,tasks:taskLimit,manualTabs:20}}))await backend.putDocument(key,data,0);
   let models=0;const fetchBefore=globalThis.fetch;
   globalThis.fetch=(url,options)=>d1Executor(new Request(url,options),env,'default',async()=>{models++;return{fixtureOnly:true};});
@@ -272,6 +275,58 @@ async function fixture({taskLimit=3}={}) {
   await startWorkbenchBatch(original,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});
   return {sqlite,backend,cloud,pair,original,runtime,batchId:preview.batch.id,models:()=>models,close(){globalThis.fetch=fetchBefore;for(const store of locals)store.close();sqlite.close();}};
 }
+
+test('actual intercepted browser receipts preserve submitted moderation and published proof through authenticated D1 and empty restore',async()=>{
+ const urls=['https://bai.tools/submit','https://alieradox.com/submit','https://aisotools.com/submit'],f=await fixture({taskLimit:6,urls}),home=await mkdtemp(join(tmpdir(),'el-receipt-browser-'));let browser;
+ try{
+  const runtime=f.original;runtime.home=home;browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext();runtime.context=context;runtime.host={startedAt:'isolated-receipt-browser'};
+  let posts=0,external=0;await context.route('**/*',async route=>{const req=route.request(),host=new URL(req.url()).hostname;if(!['bai.tools','alieradox.com','aisotools.com'].includes(host)){external++;await route.abort();return;}if(req.method()==='POST'){
+   posts++;const values=new URLSearchParams(req.postData());assert.match(values.get('name'),/^Original [pq]$/);assert.equal(values.get('url'),'https://product-'+values.get('name').slice(-1)+'.example');
+   const text=host==='bai.tools'?"Submission Successful. Thank you for submitting your AI tool to BAI.tools! All submissions are reviewed by our team.":host==='alieradox.com'?'Tool submitted successfully! Our team will review it shortly.':'Original product is live it cleared our checks and published straight away';await route.fulfill({contentType:'text/html',body:'<title>Result</title><h1>'+text+'</h1>'});return;
+  }await route.fulfill({contentType:'text/html',body:'<title>Submit product</title><form method="post" action="'+(host==='aisotools.com'?'/tools/original': '/finish')+'"><label>Name<input name="name" required></label><label>Website<input name="url" type="url" required></label><button type="submit">Submit product</button></form>'});});
+  const untouched={siteProfiles:await f.backend.document('siteProfiles'),sheetTableData:await f.backend.document('sheetTableData')},request=f.cloud.request.bind(f.cloud);let lost=false,first=true;
+  f.cloud.request=async(route,input,...rest)=>{const result=await request(route,input,...rest);if(first&&route==='receipt'){first=false;lost=true;throw Object.assign(Error('Lost receipt response after authenticated commit'),{cloudNetwork:true});}return result;};
+  for(let n=0;n<6;n++){
+   const task=await nextWorkbenchTask(runtime);assert.ok(task);task.indexNotificationPreference=false;const page=await context.newPage();await page.goto(task.url);const info=await getTargetInfo(context,page);runtime.update(task,{targetId:info.targetId,browserInstance:runtime.host.startedAt,status:'filling'},'fixture_browser_original');
+   const engine=await attachEngine(context,page.mainFrame(),message=>runtime.bridge(task,message));try{
+    const before=await engine.call({action:'classifySubmitEvidence',destinationUrl:task.url});assert.equal(before.matched,false);await page.locator('[name=name]').fill(task.profileSnapshot.fields.Name);await page.locator('[name=url]').fill(task.profileSnapshot.fields.Url);
+    runtime.update(task,{status:'submitting',attemptBoundary:new Date().toISOString(),baselineEvidence:before.evidence,submissionUrlBaseline:page.url(),actualSubmission:{fields:[{label:'Name',value:await page.locator('[name=name]').inputValue()},{label:'Website',value:await page.locator('[name=url]').inputValue()}]}},'fixture_intercepted_submit_boundary');await f.cloud.flush(runtime.store);
+    await Promise.all([page.waitForURL(url=>url.pathname!=='/submit'),page.getByRole('button',{name:'Submit product'}).click()]);await engine.detach();
+    const resultEngine=await attachEngine(context,page.mainFrame(),message=>runtime.bridge(task,message));let result;try{result=await resultEngine.call({action:'classifySubmitEvidence',destinationUrl:task.url});}finally{await resultEngine.detach();}
+    assert.equal(result.matched,true);result.evidenceUrl=page.url();if(result.publicationStatus==='published')result.publicUrl=page.url();await runtime.accept(task,page,result);
+    const accepted=structuredClone(task.receipt);assert.ok(accepted.successProof);assert.equal(task.cloudVerified,false);await closeAcceptanceTask(runtime,task);assert.equal(page.isClosed(),false);
+    if(n===0){await assert.rejects(runtime.synchronize(),/Lost receipt response/);assert.equal(lost,true);assert.equal(runtime.store.get('task:'+task.id).cloudVerified,false);assert.deepEqual(runtime.store.get('task:'+task.id).receipt,accepted);}
+    await runtime.synchronize();Object.assign(task,runtime.store.get('task:'+task.id));await finishWorkbenchTask(runtime,task);assert.equal(task.cloudVerified,true);assert.ok(task.artifactRef);const snapshot=await request('snapshot'),record=snapshot.documents.submissionRecords[queue.submissionRecordKey(task.destinationKey,task.profileId)];assert.deepEqual(record,nativeSuccessRecord(task));assert.deepEqual(record.successProof,accepted.successProof);
+    const timeline=snapshot.documents.submissionTimeline[queue.submissionRecordKey(task.destinationKey,task.profileId)];assert.equal(timeline.filter(row=>row.id==='executor-'+task.id).length,1);assert.equal(timeline.find(row=>row.id==='executor-'+task.id).status,accepted.publicationStatus);
+    await closeAcceptanceTask(runtime,task);assert.equal(page.isClosed(),true);await runtime.synchronize();
+   }finally{await engine.detach().catch(()=>{});if(!page.isClosed())await page.close();}
+  }
+  const restored=f.runtime();await restored.restoreCloud();for(const original of runtime.store.values('task:')){const saved=restored.store.get('task:'+original.id);assert.deepEqual(saved.receipt,original.receipt);assert.equal(saved.cloudVerified,true);assert.equal(saved.attemptBoundary,original.attemptBoundary);assert.deepEqual(saved.actualSubmission,original.actualSubmission);assert.equal(saved.artifactSha256,original.artifactSha256);}
+  assert.equal(restored.store.get('workbenchBatch:'+f.batchId).count,6);assert.equal(restored.store.get('paused'),true);assert.equal(posts,6);assert.equal(external,0);assert.equal(f.models(),0);assert.deepEqual(await f.backend.document('siteProfiles'),untouched.siteProfiles);assert.deepEqual(await f.backend.document('sheetTableData'),untouched.sheetTableData);
+ }finally{if(browser)await browser.close();f.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-receipt-browser-'));await rm(home,{recursive:true,force:true});}
+});
+
+test('authenticated PostgreSQL receipt proof survives lost acknowledgement independent readback and empty local restore',async()=>{
+ const db=new PGlite(),stores=[],fetchBefore=globalThis.fetch;
+ try{
+  await db.exec(readFileSync(new URL('../cloud/worker/schema.sql',import.meta.url),'utf8'));const sql=(strings,...params)=>{const query=strings.reduce((text,part,index)=>text+part+(index<params.length?'$'+(index+1):''),'');return{query,params,then:(done,reject)=>db.query(query,params).then(result=>result.rows).then(done,reject)};};sql.transaction=queries=>db.transaction(async tx=>{const results=[];for(const query of queries)results.push((await tx.query(query.query,query.params)).rows);return results;});await sql`insert into externallink_workspaces(workspace_id) values('default')`;
+  const prior={'old.example/submit::old':{evidence:'Keep prior record',publicationStatus:'published'}},documents={siteProfiles:{p:{id:'p',name:'Original P',fields:{Name:'Original P',Url:'https://product.example'}}},sheetTableData:{entries:[{link:'https://target.example/submit'}]},submissionRecords:prior,submissionTimeline:{},unattendedPreferences:{enabled:true,hours:8,tasks:1,manualTabs:20}};for(const [key,data]of Object.entries(documents))await sql`insert into externallink_workspace_documents(workspace_id,document_key,data) values('default',${key},${JSON.stringify(data)}::jsonb)`;
+  const env={APP_ACCESS_TOKEN:'isolated-admin'},helpers={recordEvent:async()=>{},listSnapshot:async()=>{const rows=await sql`select document_key,data,revision from externallink_workspace_documents where workspace_id='default'`;return{documents:Object.fromEntries(rows.map(row=>[row.document_key,row.data])),revisions:Object.fromEntries(rows.map(row=>[row.document_key,Number(row.revision)]))};}};globalThis.fetch=(url,options)=>executorApi(new Request(url,options),env,sql,'default',helpers);
+  const enrollment=await (await globalThis.fetch('https://fixture.example/v1/executor/devices',{method:'POST',headers:{Authorization:'Bearer isolated-admin'},body:'{}'})).json(),pair={endpoint:'https://fixture.example',workspaceId:'default',deviceToken:enrollment.deviceToken},cloud=new Cloud(pair),makeRuntime=()=>{const store=new Store(':memory:');stores.push(store);store.set('pair',pair);store.set('paused',true);const runtime=new Runtime(store,'isolated-unused');Object.defineProperty(runtime,'cloud',{value:cloud});runtime.tick=()=>{};return runtime;};
+  const runtime=makeRuntime(),preview=await previewWorkbenchBatch(runtime,{profileIds:['p'],urls:['https://target.example/submit'],config:{fillOnly:true}});await startWorkbenchBatch(runtime,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});const task=await nextWorkbenchTask(runtime);runtime.update(task,{attemptBoundary:new Date().toISOString(),actualSubmission:{fields:[{label:'Name',value:'Original P'}]}},'fixture_attempt');
+  const evidence={evidence:'Original P publicly listed',evidenceUrl:'https://target.example/listing/original',publicUrl:'https://target.example/listing/original',publicationStatus:'published'},receipt=originalSubmitSuccessDecision(task,evidence).receipt;runtime.update(task,{status:'finished',siteStatus:'accepted',receipt,indexNowNotification:{status:'disabled'},cloudVerified:false},'fixture_proven_receipt');
+  const request=cloud.request.bind(cloud);let lost=true;cloud.request=async(route,input,...rest)=>{const result=await request(route,input,...rest);if(lost&&route==='receipt'){lost=false;throw Object.assign(Error('Lost PostgreSQL receipt acknowledgement'),{status:409});}return result;};await runtime.synchronize();assert.equal(lost,false);assert.equal(task.cloudVerified,false);const confirmed=runtime.store.get('task:'+task.id);assert.equal(confirmed.cloudVerified,true);const snapshot=await request('snapshot'),record=snapshot.documents.submissionRecords[queue.submissionRecordKey(task.destinationKey,task.profileId)];assert.deepEqual(record,nativeSuccessRecord(confirmed));assert.deepEqual(snapshot.documents.submissionRecords['old.example/submit::old'],prior['old.example/submit::old']);assert.equal(snapshot.documents.submissionTimeline[queue.submissionRecordKey(task.destinationKey,task.profileId)].length,1);
+  const restored=makeRuntime();await restored.restoreCloud();assert.deepEqual(restored.store.get('task:'+task.id).receipt,receipt);assert.equal(restored.store.get('task:'+task.id).cloudVerified,true);assert.equal(restored.store.get('paused'),true);assert.equal(restored.store.get('workbenchBatch:'+preview.batch.id).count,1);
+ }finally{globalThis.fetch=fetchBefore;for(const store of stores)store.close();await db.close();}
+});
+
+test('authenticated D1 cannot acknowledge an old truncated cloud record with the same visible receipt',async()=>{
+ const f=await fixture();try{
+  const runtime=f.original,task=await nextWorkbenchTask(runtime);runtime.update(task,{attemptBoundary:new Date().toISOString(),actualSubmission:{fields:[{label:'Name',value:task.profileSnapshot.fields.Name}]}},'fixture_attempt');const receipt=originalSubmitSuccessDecision(task,{evidence:'Original publicly listed',publicationStatus:'published',publicUrl:'https://target0.example/listing/original',evidenceUrl:'https://target0.example/listing/original'}).receipt;runtime.update(task,{status:'finished',siteStatus:'accepted',receipt,indexNowNotification:{status:'disabled'},cloudVerified:false},'fixture_receipt');await f.cloud.flush(runtime.store);
+  const record=nativeSuccessRecord(task),truncated={...record};delete truncated.publicUrl;delete truncated.evidenceType;delete truncated.successProof;const key=queue.submissionRecordKey(task.destinationKey,task.profileId);await f.backend.putDocument('submissionRecords',{[key]:truncated},(await f.backend.document('submissionRecords')).revision);
+  await assert.rejects(runtime.synchronize(),/原证据或公开结果字段未完整保存/);assert.equal(runtime.store.get('task:'+task.id).cloudVerified,false);assert.deepEqual(runtime.store.get('task:'+task.id).receipt,receipt);assert.deepEqual((await f.cloud.request('snapshot')).documents.submissionRecords[key],truncated);const restored=f.runtime();await restored.restoreCloud();assert.equal(restored.store.get('task:'+task.id).cloudVerified,false);assert.deepEqual(restored.store.get('task:'+task.id).receipt,receipt);
+ }finally{f.close();}
+});
 
 test('authenticated D1 restores the full original range, fill-only mode and consumed budgets into an empty local database',async()=>{
   const f=await fixture();try{

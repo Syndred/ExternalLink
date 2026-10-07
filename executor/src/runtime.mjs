@@ -44,6 +44,7 @@ import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenc
 import {runOriginalAgentPreparation,originalPlanDecision} from './original-agent-flow.mjs';
 import {navigationScope,assertNavigationScope,hasPendingNavigation,pendingNavigationMarker,nativeNavigationSnapshotError,waitForOriginalNavigation} from './original-navigation-rejudge.mjs';
 import {captureOriginalTaskVisual} from './task-visual-context.mjs';
+import {originalSubmitSuccessDecision,nativeSuccessRecord,nativeReceiptReadbackMatches} from './original-submission-proof.mjs';
 import {originalVisualFillActions} from './original-visit-fill.mjs';
 import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
@@ -436,33 +437,37 @@ export class Runtime {
     let imagesSynced=0,receiptsSynced=0;
     for (const task of this.store.values('task:')) {
       if(this.activeTaskIds?.has(task.id))continue;
+      const syncScope=workbenchScope(this.store.get('pair')),checkSyncTask=()=>{if(syncScope!==workbenchScope(this.store.get('pair'))||this.activeTaskIds?.has(task.id)||!isDeepStrictEqual(plain(this.store.get('task:'+task.id)),plain(task)))throw Object.assign(Error('同步期间原任务、控制权或工作区已变化，保留新状态'),{staleTask:true});};checkSyncTask();
       if (task.screenshot && !task.artifactRef && imagesSynced<4) {
         const bytes = await readFile(task.screenshot);
+        checkSyncTask();
         const artifact = await this.cloud.request('artifact', { taskId: task.id, dataUrl: `data:image/png;base64,${bytes.toString('base64')}` });
+        checkSyncTask();
         if (artifact.sha256 !== createHash('sha256').update(bytes).digest('hex')) throw new Error('证据 SHA-256 回读不一致');
         const readback = await this.cloud.request('artifact-read', { taskId: task.id, ref: artifact.ref });
+        checkSyncTask();
         if (createHash('sha256').update(Buffer.from(readback.dataUrl.split(',')[1],'base64')).digest('hex') !== artifact.sha256) throw new Error('独立证据下载校验失败');
         this.update(task, { artifactRef: artifact.ref, artifactSha256: artifact.sha256 }, 'artifact_readback');
         imagesSynced++;
       }
       if (!task.receipt || task.cloudVerified || task.syncConflict || receiptsSynced>=4) continue;
       receiptsSynced++;
-      const record = plain(queue.buildSuccessRecord({ destinationUrl: task.url, destinationKey: task.destinationKey, profileId: task.profileId, submittedAt: task.attemptBoundary,
-        evidence: task.receipt.evidence, evidenceUrl: task.receipt.url, publicationStatus: task.receipt.publicationStatus === 'pending_moderation' ? 'pending_moderation' : 'submitted' }));
-      Object.assign(record, { taskId: task.id, runId: task.runId, actualSubmission: task.actualSubmission, reviewStatus: task.reviewStatus, artifactRef: task.artifactRef || '', executor: 'windows-playwright' });
-      try{await this.cloud.request('receipt', { taskId: task.id, version: task.version, record });}
+      const record = nativeSuccessRecord(task);
+      try{await this.cloud.request('receipt', { taskId: task.id, version: task.version, record });checkSyncTask();}
       catch(error){
         if(error.status!==409)throw error;
         const conflictSnapshot=await this.cloud.request('snapshot');
+        checkSyncTask();
         const conflictRead=conflictSnapshot.documents.submissionRecords?.[queue.submissionRecordKey(task.destinationKey,task.profileId)];
-        if(conflictRead?.taskId===task.id&&conflictRead.evidence===record.evidence&&isDeepStrictEqual(conflictRead.actualSubmission,record.actualSubmission)){
+        if(nativeReceiptReadbackMatches(conflictRead,record)){
           this.update(task,{cloudVerified:true,cloudRevision:conflictSnapshot.revisions.submissionRecords},'cloud_readback');continue;
         }
         this.update(task,{syncConflict:true,syncConflictAt:new Date().toISOString(),syncConflictReason:'云端回执键已被其他记录占用；保留本地收件待人工核验'},'receipt_sync_conflict');continue;
       }
       const after = await this.cloud.request('snapshot');
+      checkSyncTask();
       const read = after.documents.submissionRecords?.[queue.submissionRecordKey(task.destinationKey, task.profileId)];
-      if (!read || read.taskId !== task.id || read.evidence !== record.evidence || !isDeepStrictEqual(read.actualSubmission, record.actualSubmission)) throw new Error('云端回执回读不一致');
+      if (!nativeReceiptReadbackMatches(read,record)) throw new Error('云端回执回读不一致；原证据或公开结果字段未完整保存');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
     let notificationDocuments;
@@ -1323,11 +1328,16 @@ export class Runtime {
     return issues;
   }
   async accept(task, page, evidence) {
+    const scope=workbenchScope(this.store.get('pair')),check=()=>{const current=this.store.get('task:'+task.id);if(scope!==workbenchScope(this.store.get('pair'))||!isDeepStrictEqual(plain(current),plain(task))||page.isClosed?.())throw Object.assign(Error('原回执任务、资料或页面已变化，结果已放弃'),{staleTask:true});};check();
+    if(task.receipt)throw Object.assign(Error('原回执已经存在，禁止覆盖'),{staleTask:true});
+    if(evidence.matched!==true||!evidence.evidence)throw Object.assign(Error('原页面尚无匹配的收件证据'),{originalReceiptRejected:true});
+    const decision=originalSubmitSuccessDecision(task,evidence);if(!decision.proof.ok)throw Object.assign(Error(decision.proof.reason),{originalReceiptRejected:true});
     if(!task.indexNowNotification)this.update(task,{indexNowNotification:prepareIndexNotification(this,task)},'index_notification_scheduled');
-    this.update(task, { status: 'finished', siteStatus: 'accepted', receipt: { evidence: evidence.evidence, url: page.url(), publicationStatus: evidence.publicationStatus,receivedAt:new Date().toISOString(),syncStatus:'pending' }, cloudVerified: false,
-      reason: evidence.publicationStatus === 'pending_moderation' ? '站方明确收件，等待审核' : '站方明确收件', completedAt: new Date().toISOString() }, 'receipt');
+    this.update(task, { status: 'finished', siteStatus: 'accepted', receipt: { ...decision.receipt, url: page.url(),receivedAt:new Date().toISOString(),syncStatus:'pending' }, cloudVerified: false,
+      reason: decision.receipt.publicationStatus === 'pending_moderation' ? '站方明确收件，等待审核' : '站方明确收件', completedAt: new Date().toISOString() }, 'receipt');
     const file = path.join(this.home, `${task.id}-${Date.now()}-receipt.png`);
     await capturePageEvidence(this.context,page,{path:file});
+    check();
     this.update(task, { screenshot: file, artifactRef: '' }, 'receipt_screenshot');
   }
   async findPage(task) {

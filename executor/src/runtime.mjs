@@ -45,6 +45,8 @@ import { runPreparationTakeover } from './auto-takeover.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia } from './task-media.mjs';
 import {selectedFrozenPngLogo} from '../../core/task-media-selection.mjs';
+import {originalTaskMediaEvidence} from './task-media-evidence.mjs';
+import {recordTaskMediaUpload} from './task-media-feedback.mjs';
 import { readAfterNavigation, settleObservedClick } from './navigation-read.mjs';
 import { registerAcceptance } from './acceptance-register.mjs';
 import { applicationData } from './application-data.mjs';
@@ -1110,8 +1112,8 @@ export class Runtime {
         if(!await logoInput.evaluate(e=>Boolean(e.files?.length))){
           const logo=selectedFrozenPngLogo(profile,this.store.get('run:'+task.runId)?.mediaManifest);
           if(!logo)throw new Error('冻结资料缺少PNG Logo');
-          const media=await this.cloud.request('media',{taskId:task.id,ref:'cloud-media://'+logo.asset_id}),bytes=Buffer.from(media.dataUrl.split(',')[1],'base64');
-          const verifiedLogo=validateSquarePng(bytes,logo.sha256);
+          const media=await this.bridge(task,{action:'fetchCloudSubmissionMedia',ref:'cloud-media://'+logo.asset_id}),bytes=Buffer.from(media.dataUrl.split(',')[1],'base64');
+          const verifiedLogo=validateSquarePng(bytes,logo.sha256||media.sha256);
           await logoInput.setInputFiles({name:media.name,mimeType:'image/png',buffer:bytes});
           this.update(task,{verifiedLogo},'verified_square_logo');
         }
@@ -1191,7 +1193,7 @@ export class Runtime {
         const run = this.store.get('run:' + task.runId);
         const logo = selectedFrozenPngLogo(profile,run.mediaManifest);
         if (!logo) throw new Error('本站要求 PNG logo，冻结素材中没有对应文件');
-        const media = await this.cloud.request('media', { taskId: task.id, ref: 'cloud-media://' + logo.asset_id });
+        const media = await this.bridge(task, { action:'fetchCloudSubmissionMedia', ref: 'cloud-media://' + logo.asset_id });
         const chooserPromise = frame.page().waitForEvent('filechooser', { timeout: 5000 });
         await browse.click({ timeout: 5000 });
         const chooser = await chooserPromise;
@@ -1804,13 +1806,14 @@ export class Runtime {
   }
   async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body);}
   async bridge(task, message) {
+    if(message.action==='mediaUploadStatus')return recordTaskMediaUpload(this,task,message);
     if(message.action==='saveFillLearnings'){
       const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};
       return captureFillLearning(this,{profileId:task.profileId,profile:task.profileSnapshot,taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision},message);
     }
     if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
     if(message.action==='generateCommentDrafts')return originalCommentRequest(this,{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,language:message.language,tone:message.config?.blogRules?.tone,refresh:message.refresh},payload=>this.batchModelRequest(task,'ai/comment',payload));
-    if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
+    if (message.action === 'fetchCloudSubmissionMedia') return await originalTaskMediaEvidence(this,task,message.ref)||this.cloud.request('media', { taskId: task.id, action:message.action,ref:message.ref });
     if(message.action==='fetchSubmissionMedia'){
       const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));
       const entries=[['logo',config.logoUrl],['featured',config.featuredImage],...(config.screenshots||[]).map((ref,index)=>['screenshot'+(index+1),ref])];

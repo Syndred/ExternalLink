@@ -7581,6 +7581,8 @@
     return {
       blob: await (await fetch(response.dataUrl)).blob(),
       name: response.name || "image",
+      source: response.source || "cloud",
+      sourceSha256: response.sha256 || "",
     };
   }
 
@@ -7634,7 +7636,7 @@
           if (await attachBlobToFileInput(input, cloud.blob, cloud.name)) {
             if (!isCurrentPageContext(pageContext)) return false;
             logStep(`☁️ 已用云端媒体上传 ${cloud.name}`);
-            reportMediaUpload("success", { name: cloud.name, source: "cloud", bytes: cloud.blob.size, mime: cloud.blob.type });
+            reportMediaUpload("success", { name: cloud.name, source: cloud.source, sourceSha256: cloud.sourceSha256, bytes: input.files?.[0]?.size || cloud.blob.size, mime: input.files?.[0]?.type || cloud.blob.type });
             return true;
           }
         }

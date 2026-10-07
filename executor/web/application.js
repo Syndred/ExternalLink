@@ -3,6 +3,11 @@ import './profiles-core.js';
 import './target-filters-core.js';
 const profileHelpers=globalThis.ExtLinkProfiles;
 import {renderCommentStudio} from './comment-studio.js';
+function appendMediaUploadStatus(panel,task){
+ const state=task.mediaUploadState;if(!state)return;const uploaded=state.uploaded||[],skipped=state.skipped||[],sources={cloud:'云端媒体',remote:'远程图片',embedded:'产品资料内置图片',original_frozen_backup:'原任务冻结备份'};
+ panel.append(el('h3',{text:'图片上传状态'}),el('p',{class:'notice',text:uploaded.length+' 个字段已上传 · '+skipped.length+' 个字段未上传'}));
+ for(const [items,label]of [[uploaded,'已上传'],[skipped,'未上传']])for(const item of items){const source=sources[item.source]||(['云端媒体','远程图片','产品资料内置图片','原任务冻结备份','页面'].includes(item.source)?item.source:'来源待核对');panel.append(el('p',{class:label==='未上传'?'notice':'muted',text:(item.label||item.name||'文件字段')+'：'+label+' · 来源：'+source+(item.reason?' · 原因：'+item.reason:'')+(item.sourceSha256?' · 原件校验已通过':'' )}));}
+}
 const consumedQuickOpen=new Set();
 let activeSinglePagePanel=null;
 let draggingProductId=null,productOrderSaving=false;
@@ -423,6 +428,7 @@ async function showTask(id){const {task}=await request('/taskDetails',{taskId:id
  if(!task.attemptBoundary&&!task.receipt&&['pending','needs_manual'].includes(task.status)){panel.append(el('div',{class:'controls'},[button('检测原页',async()=>{const result=await request('/detectOriginalTask',{taskId:id});const report=el('div');report.append(el('h3',{text:'原页面检测结果'}),...result.frames.map(f=>el('p',{text:(f.platform||'普通表单')+' · 可填写字段 '+f.formFieldCount+' 个 · '+(f.operable?'存在可操作表单':'未找到可操作表单')+' · '+(f.commentFound?'有评论区':'未发现评论区')+' · '+(f.hasCaptcha?'需要验证码':'未发现验证码')})));panel.append(report);}),button('准备原任务',async()=>{const result=await request('/prepareTask',{taskId:id,...(frozen?{acceptanceId:frozen.id}:{})});status.textContent=result.prepared?'原任务资料已准备，尚未提交':'准备待处理：'+result.reason;await load();await showTask(id);}),...(frozen?[button('运行原任务',async()=>{await request('/runTask',{taskId:id,acceptanceId:frozen.id});detail.close();await load();},true)]:[])]));}
  if(task.attemptBoundary&&!task.receipt)panel.append(el('p',{class:'notice',text:'存在提交尝试边界，必须先核验原页面；不会创建重复投稿。'}),button('核验原任务',async()=>{await request('/verify',{taskId:id});await load(true);await showTask(id);}));
  appendManualControls(panel,task);
+ appendMediaUploadStatus(panel,task);
  if(task.indexNowNotification){const notice=task.indexNowNotification,labels={pending:'等待收件同步后通知',sending:'通知正在发送',disabled:'通知已关闭',received:'搜索引擎已收到通知',validation_pending:'网址已收到，密钥待验证',rejected:'搜索引擎未接受通知',uncertain:'通知发送未确认'};panel.append(el('h3',{text:'搜索引擎通知'}),el('p',{class:'notice',text:(labels[notice.status]||'通知状态待核对')+(notice.reason?' · '+notice.reason:'')}));}
  for(const [label,value]of [['实际提交内容',task.actualSubmission],['实际准备内容',task.actualPreparation],['站方回执',task.receipt],['AI 接管',task.aiTakeover],['已用媒体',task.usedMedia],['登录记录',task.authAttempts]])if(value)panel.append(el('h3',{text:label}),el('pre',{text:JSON.stringify(value,null,2)}));
  if(task.screenshot)try{const result=await request('/evidence/'+id);panel.append(el('h3',{text:'原任务页面证据'}),el('img',{src:result.dataUrl,class:'evidence',alt:'原任务页面截图'}));}catch{panel.append(el('p',{class:'muted',text:'截图暂不可读，原记录保留。'}));}

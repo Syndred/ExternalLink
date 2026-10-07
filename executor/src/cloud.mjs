@@ -65,7 +65,10 @@ export class Cloud {
       try { written = await this.request('event', event); } catch (error) { if(error.cloudQuota)throw error;writeError=error; }
       // A gateway can lose the reply after the immutable event was stored.
       // Only an exact independent readback permits acknowledgement.
-      const compact = written?.eventId === event.id && !!written?.checksum;
+      // D1 returns SHA-256 over the original JSON bytes. Original Neon returns
+      // MD5 over PostgreSQL's reordered jsonb text, so read its full event and
+      // verify every original value rather than compare unlike hashes.
+      const compact = written?.eventId === event.id && /^[a-f0-9]{64}$/.test(written?.checksum||'');
       const read = await this.request(`events/${event.id}${compact?'?proof=1':''}`).catch(error=>{throw writeError||error;});
       if (compact ? read.eventId !== event.id || read.checksum !== written.checksum || read.checksum !== createHash('sha256').update(JSON.stringify(event)).digest('hex') : !isDeepStrictEqual(read.event, event)) throw new Error(`云端事件回读不一致：${event.id}`);
       store.ack(event.id);

@@ -16,6 +16,15 @@ test('matching independent compact proof acknowledges only the exact event id',a
  const event={id:'e',taskId:'t'},calls=[],acked=[],cloud=new Cloud({});cloud.request=async route=>{calls.push(route);return {ok:true,eventId:'e',checksum:createHash('sha256').update(JSON.stringify(event)).digest('hex')};};
  await cloud.flush({pending:()=>[event],ack:id=>acked.push(id)});assert.deepEqual(calls,['event','events/e?proof=1']);assert.deepEqual(acked,['e']);
 });
+test('original Neon jsonb MD5 proof uses full independent event values before acknowledging',async()=>{
+ const event={id:'original-event',taskId:'original-task',type:'media_upload_success',state:{profileId:'p',runId:'original-run',attemptBoundary:'retained',mediaUploadState:{uploaded:[{source:'原任务冻结备份',name:'original.png'}]}}},calls=[],acked=[],cloud=new Cloud({});
+ cloud.request=async route=>{calls.push(route);if(route==='event')return{ok:true,eventId:event.id,checksum:'a'.repeat(32)};return{ok:true,event:{state:{mediaUploadState:{uploaded:[{name:'original.png',source:'原任务冻结备份'}]},attemptBoundary:'retained',runId:'original-run',profileId:'p'},type:event.type,taskId:event.taskId,id:event.id}};};
+ await cloud.flush({pending:()=>[event],ack:id=>acked.push(id)});assert.deepEqual(calls,['event','events/original-event']);assert.deepEqual(acked,[event.id]);
+});
+test('original Neon MD5 acknowledgement cannot hide missing or changed receipt attempt or image evidence',async()=>{
+ const event={id:'original-event',taskId:'original-task',state:{attemptBoundary:'original',receipt:{evidence:'original-receipt'},mediaUploadState:{uploaded:[{sourceSha256:'a'.repeat(64)}]}}};
+ for(const change of [null,{...event,id:'other'},{...event,state:{...event.state,attemptBoundary:'changed'}},{...event,state:{...event.state,receipt:{evidence:'changed'}}},{...event,state:{...event.state,mediaUploadState:{uploaded:[]}}}]){const cloud=new Cloud({}),acked=[];cloud.request=async route=>route==='event'?{ok:true,eventId:event.id,checksum:'a'.repeat(32)}:{ok:true,event:change};await assert.rejects(cloud.flush({pending:()=>[event],ack:id=>acked.push(id)}),/回读不一致/);assert.deepEqual(acked,[]);}
+});
 test('matching server proofs of changed content never acknowledge the local event',async()=>{
  const cloud=new Cloud({}),acked=[];cloud.request=async()=>({ok:true,eventId:'e',checksum:'incorrect'});
  await assert.rejects(cloud.flush({pending:()=>[{id:'e',taskId:'t'}],ack:id=>acked.push(id)}),/不一致/);assert.deepEqual(acked,[]);

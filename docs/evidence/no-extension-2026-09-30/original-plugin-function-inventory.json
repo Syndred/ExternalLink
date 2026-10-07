@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalMediaRegistrationRecoveryCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-media-registration-recovery-2026-10-07.json",
+    "fullSuitePassed": 726,
+    "newTestsSince708": 18,
+    "originalFixedSinglePageAndBatchFullRecovery": true,
+    "originalImageFeedbackAndFullChineseTaskDetailUi": true,
+    "neonIndependentFullEventVerification": true,
+    "latestNativeServicesReloaded": true,
+    "currentProductionReadonlyPassed": true,
+    "olderCloudBaselineMatchesCurrent": false,
+    "originalNativeBusinessMatchesOlderBaseline": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalMediaEvidenceCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-media-evidence-2026-10-07.json",

@@ -10,6 +10,7 @@ import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScope
 import {originalLibraryBatchScope} from '../../core/library-batch-scope.mjs';
 import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {resumeExecution} from './execution-lifecycle.mjs';
+import {jsonValueEqual} from '../../core/json-value.mjs';
 import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const frozenDigest=(batch,value)=>batch.cloudRecoveryVersion===batchRecoveryVersion?createHash('sha256').update(batchJson(value)).digest('hex'):digest(value);
@@ -57,16 +58,22 @@ export async function startWorkbenchBatch(runtime,input){
  assertBatchPolicy(runtime,batch);
  // Refresh exclusions before choosing the sole manifest anchor. A newly
  // received first target must not strand all the other original combinations.
- for(const item of batch.items){if(['excluded','complete'].includes(item.status))continue;if(priorProductSuccess(snapshot.documents.submissionRecords,item.profileId,item.url)){item.status='excluded';item.reason='该产品同站已有收件';save();continue;}if(snapshot.revisions.siteProfiles!==item.profileRevision||JSON.stringify(snapshot.documents.siteProfiles[item.profileId])!==JSON.stringify(item.profile))throw Error('产品资料已变化，原预览保留，请重新预览');const allowed=selectScope(snapshot,null,item.profileId,[item.url]);if(!allowed.tasks.length){item.status='excluded';item.reason=allowed.exclusions[0]?.reason||'当前站点不允许提交';save();}}
+ for(const item of batch.items){if(['excluded','complete'].includes(item.status))continue;if(priorProductSuccess(snapshot.documents.submissionRecords,item.profileId,item.url)){item.status='excluded';item.reason='该产品同站已有收件';save();continue;}if(snapshot.revisions.siteProfiles!==item.profileRevision||!jsonValueEqual(snapshot.documents.siteProfiles[item.profileId],item.profile))throw Error('产品资料已变化，原预览保留，请重新预览');const allowed=selectScope(snapshot,null,item.profileId,[item.url]);if(!allowed.tasks.length){item.status='excluded';item.reason=allowed.exclusions[0]?.reason||'当前站点不允许提交';save();}}
  if(batch.cloudRecoveryVersion===batchRecoveryVersion&&!batch.cloudManifest){const anchor=batch.items.find(i=>i.status!=='excluded'&&!i.existingTask)||batch.items.find(i=>i.status!=='excluded');if(anchor){batch.cloudManifestTaskId=anchor.taskId;batch.cloudManifestInTask=!!anchor.existingTask;batch.cloudManifest=batchManifest(batch);save();}}
  for(const item of batch.items){
   if(['excluded','complete'].includes(item.status))continue;
   if(priorProductSuccess(snapshot.documents.submissionRecords,item.profileId,item.url)){item.status='excluded';item.reason='该产品同站已有收件';save();continue;}
-  if(snapshot.revisions.siteProfiles!==item.profileRevision||JSON.stringify(snapshot.documents.siteProfiles[item.profileId])!==JSON.stringify(item.profile))throw Error('产品资料已变化，原预览保留，请重新预览');
+  if(snapshot.revisions.siteProfiles!==item.profileRevision||!jsonValueEqual(snapshot.documents.siteProfiles[item.profileId],item.profile))throw Error('产品资料已变化，原预览保留，请重新预览');
   const allowed=selectScope(snapshot,null,item.profileId,[item.url]);if(!allowed.tasks.length){item.status='excluded';item.reason=allowed.exclusions[0]?.reason||'当前站点不允许提交';save();continue;}
   let task=runtime.store.get('task:'+item.taskId);
   const known=inventory.tasks.find(t=>t.id===item.taskId);
-  if(!task&&known){task=(await runtime.cloud.request('tasks/'+item.taskId)).task;assertBatchPolicy(runtime,batch);}
+  if(known&&(!task||!runtime.store.get('run:'+item.runId)?.profile)){
+   const original=await runtime.cloud.request('runs?runId='+encodeURIComponent(item.runId));assertBatchPolicy(runtime,batch);const remote=original.tasks.find(t=>t.id===item.taskId),run=original.runs.find(r=>r.id===item.runId);
+   if(!remote||remote.runId!==item.runId||remote.profileId!==item.profileId||remote.url!==item.url||remote.destinationKey!==item.destinationKey||!run?.profile||run.profileId!==item.profileId||!run.tasks?.includes(item.taskId)||!Array.isArray(run.mediaManifest))throw Error('原任务、完整批次或素材回读不一致，禁止重复注册');
+   if(task&&(remote.attemptBoundary&&!task.attemptBoundary||remote.receipt&&!task.receipt))throw Error('云端原任务已有提交边界或收件，请先核验');
+   const localRun=runtime.store.get('run:'+run.id);for(const key of ['id','profileId','profileRevision','profile','mediaManifest','tasks','createdAt'])if(localRun?.[key]!==undefined&&!jsonValueEqual(localRun[key],run[key]))throw Error('原批次与本机档案冲突，保留原件');
+   task=task||remote;runtime.store.set('run:'+run.id,{...run,...localRun});
+  }
   if(task){runtime.store.set('task:'+task.id,task);item.status='registered';save();continue;}
   if(item.existingTask)throw Error('原任务暂不可读，不创建替代任务');
   // A lost response is recovered only by these exact IDs; never replace them.

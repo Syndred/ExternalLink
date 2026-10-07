@@ -43,13 +43,13 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
     if (event.name !== '__executorRpc' || event.executionContextId !== executionContextId) return;
     const { id, message } = JSON.parse(event.payload);
     let response;
-    try { response = await bridge({...message,executorDocumentId:executionContextId}); } catch (error) { response = { ok: false, error: error.message }; }
+    try { response = await bridge({...message,executorDocumentId:executionContextId,executorFrameUrl:frame.url()}); } catch (error) { response = { ok: false, error: error.message }; }
     await evaluate(`globalThis.__executorReplies.get(${id})?.(${JSON.stringify(response)});globalThis.__executorReplies.delete(${id})`, false).catch(() => {});
   });
   await evaluate(`globalThis.__extLinkDisableManualIcons?.();globalThis.__executorReplies=new Map(); globalThis.__executorSeq=globalThis.__executorSeq||0;
     globalThis.__externalLinkServices={authorized:true,persistLearning:true,interactive:${options.interactive===true},
       register(fn){globalThis.__executorHandler=fn},unregister(){globalThis.__executorHandler=null},
-      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','generateCommentDrafts','saveFillLearnings'${options.interactive===true?",'getActiveFillConfig','contentReady','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":''}].includes(message.action))return Promise.resolve({ok:false});
+      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','mediaUploadStatus','generateCommentDrafts','saveFillLearnings'${options.interactive===true?",'getActiveFillConfig','contentReady','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":''}].includes(message.action))return Promise.resolve({ok:false});
         return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}
     };`);
   for (const source of sources) await evaluate(source, false);

@@ -19,7 +19,19 @@ import {batchJson} from '../core/workbench-batch-recovery.mjs';
 import {finalizeUserPause} from '../executor/src/execution-lifecycle.mjs';
 import {PGlite} from '../executor/node_modules/@electric-sql/pglite/dist/index.js';
 import {executorApi} from '../cloud/worker/src/executor-api.mjs';
+import {freezeAcceptance} from '../executor/src/acceptance-freeze.mjs';
+import {registerAcceptance} from '../executor/src/acceptance-register.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+
+test('authenticated D1 fixed registration recovers a lost reply through full original IDs without replacing the frozen run',async()=>{
+ const f=await fixture();try{
+  const snapshot=await f.cloud.request('snapshot'),url='https://registration-recovery.example/form';await f.backend.putDocument('sheetTableData',{entries:[...snapshot.documents.sheetTableData.entries,{link:url}]},snapshot.revisions.sheetTableData);
+  const runtime=f.runtime(),frozen=freezeAcceptance(runtime.store,{id:'fixed-recovery',products:{p:snapshot.documents.siteProfiles.p},profileRevision:snapshot.revisions.siteProfiles,sites:[url],count:1}),original=f.cloud.request.bind(f.cloud);let lost=true,posts=0;
+  f.cloud.request=async(route,body)=>{const response=await original(route,body);if(route==='runs'&&body){posts++;if(lost){lost=false;throw Object.assign(Error('Lost original registration reply after commit'),{cloudNetwork:true});}}return response;};
+  const uncertain=await registerAcceptance(runtime,frozen.id),intent=structuredClone(uncertain.items[frozen.combinations[0].identity]);assert.equal(intent.status,'registration_unknown');const full=(await original('runs?runId='+intent.runId)).runs[0];assert.ok(full.profile);assert.deepEqual(full.mediaManifest,[]);
+  const before=await original('runs'),recovered=await registerAcceptance(runtime,frozen.id);assert.equal(recovered.items[frozen.combinations[0].identity].status,'registered');assert.deepEqual(runtime.store.get('run:'+intent.runId),full);assert.equal(runtime.store.get('task:'+intent.taskId).runId,intent.runId);assert.equal(posts,1);assert.deepEqual(await original('runs'),before);assert.equal(runtime.store.get('paused'),true);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
 
 test('authenticated D1 registers and restores an original category with over five hundred combinations and compact profiles',async()=>{
  const f=await fixture();try{

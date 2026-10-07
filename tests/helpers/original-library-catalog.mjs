@@ -19,6 +19,15 @@ const destinationHelpers=source.slice(source.indexOf('const DISPLAY_HOST_DESTINA
 const catalog=source.slice(source.indexOf('async function getLibraryManagerStateUnlocked('),source.indexOf('function applyTimelinePublicationUpgrade('));
 const schema=source.slice(source.indexOf('async function ensureSubmissionSchema('),source.indexOf('function scopeDestinationGroupsByLibraryCategory('));
 const seedProfiles=source.slice(source.indexOf('async function ensureProfilesFromTable('),source.indexOf('async function ensureSubmissionSchema('));
+const batchLibraryReference=vm.createContext({self:{}});
+vm.runInContext(execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/lib/url-library.js'],{encoding:'utf8',maxBuffer:4*1024*1024}),batchLibraryReference);
+function originalFunction(name){const found=source.match(new RegExp('^(?:async )?function '+name+'\\([^]*?^\\}','m'));if(!found)throw Error('Original library function missing '+name);return found[0];}
+export async function originalLibraryBatchQueue(snapshot,input={}){
+ const documents=structuredClone(snapshot.documents),table=documents.sheetTableData||{entries:[]},self={...originalLibraryGlobals,ExtLinkUrlLibrary:batchLibraryReference.self.ExtLinkUrlLibrary};
+ const context=vm.createContext({self,URL,Date:referenceDate,SUBMISSION_SCHEMA_VERSION:self.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION,chrome:{storage:{local:{async get(keys){return Object.fromEntries(keys.filter(key=>Object.hasOwn(documents,key)).map(key=>[key,structuredClone(documents[key])]));},async set(values){Object.assign(documents,structuredClone(values));}}}},loadTableLibrary:async()=>structuredClone(table),applySubmissionLedgerCloudPull:async()=>({}),options:{selectedProfileIds:input.profileIds,category:input.category,group:input.group}});
+ const functions=['expandSubmissionRecordsForQueue','scopeDestinationGroupsByLibraryCategory','scopeDestinationGroupsByLibraryGroup','normalizeTargetFilters','loadPendingSubmissionTasks'].map(originalFunction).join('\n');
+ return structuredClone(await vm.runInContext(destinationHelpers+'\n'+seedProfiles+'\n'+schema+'\n'+functions+'\nloadPendingSubmissionTasks(options)',context));
+}
 export async function originalProfileSource(initial){
  const documents=structuredClone(initial),context=vm.createContext({URL,self:{ExtLinkProfiles:originalLibraryGlobals.ExtLinkProfiles},chrome:{storage:{local:{async set(values){Object.assign(documents,structuredClone(values));}}}},initial:documents});
  const result=await vm.runInContext(seedProfiles+'\nensureProfilesFromTable(initial.sheetTableData,initial.siteProfiles,initial.activeSiteId,initial.selectedSiteIds)',context);return{result:structuredClone(result),documents};

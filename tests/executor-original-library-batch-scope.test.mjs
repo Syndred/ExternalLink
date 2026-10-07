@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {originalLibraryBatchScope} from '../core/library-batch-scope.mjs';
-import {libraryRecords} from '../core/library-records.mjs';
+import {originalLibraryBatchQueue as original} from './helpers/original-library-catalog.mjs';
+import {compareOriginalQueueScope} from './helpers/original-library-queue-projection.mjs';
 import {batchManifest,batchScopeRows,batchJson,batchRunMetadata,validateBatchRunMetadata} from '../core/workbench-batch-recovery.mjs';
 import {Store} from '../executor/src/store.mjs';
 import {Runtime} from '../executor/src/runtime.mjs';
@@ -15,12 +15,7 @@ import {recoverCloudBatchRecords} from '../executor/src/workbench-batch-recovery
 const sha='bd916b2944a577b160a6afcb8a7d73d263044c0c',source=execFileSync('git',['show',sha+':extension/background.js'],{encoding:'utf8',maxBuffer:5*1024*1024}),migrated=readFileSync(new URL('../core/library-batch-scope.mjs',import.meta.url),'utf8');
 function fn(text,name){const found=text.match(new RegExp('^(?:async )?function '+name+'\\([^]*?^\\}','m'));if(!found)throw Error('original function missing '+name);return found[0];}
 const names=['scopeDestinationGroupsByLibraryCategory','scopeDestinationGroupsByLibraryGroup','expandSubmissionRecordsForQueue'];
-async function original(snapshot,input){
- const docs=snapshot.documents,self=Object.fromEntries(['Queue','Profiles','LibraryClassifier','LibraryGroups','OpportunityScore','UrlLibrary'].map(key=>['ExtLink'+key,globalThis['ExtLink'+key]]));
- const context=vm.createContext({self,chrome:{storage:{local:{get:async()=>structuredClone(docs)}}},loadTableLibrary:async()=>structuredClone(docs.sheetTableData),ensureProfilesFromTable:async()=>({profiles:docs.siteProfiles,activeSiteId:docs.activeSiteId||'p',idRemap:{}}),ensureSubmissionSchema:async()=>libraryRecords(docs),canonicalDestinationKey:globalThis.ExtLinkQueue.normalizeLibraryDestinationKey,recordsForDestination:(records,key)=>Object.entries(records).filter(([,r])=>globalThis.ExtLinkQueue.normalizeLibraryDestinationKey(r.destinationKey||r.destinationUrl||'')===globalThis.ExtLinkQueue.normalizeLibraryDestinationKey(key)),options:{selectedProfileIds:input.profileIds,category:input.category,group:input.group}});
- return JSON.parse(JSON.stringify(await vm.runInContext(names.map(name=>fn(source,name)).join('\n')+'\n'+fn(source,'normalizeTargetFilters')+'\n'+fn(source,'loadPendingSubmissionTasks')+'\nloadPendingSubmissionTasks(options)',context)));
-}
-function snapshot(){return{revisions:{siteProfiles:2},documents:{siteProfiles:{p:{id:'p',name:'Original P',fields:{Name:'Original P',Url:'https://product-p.example'}},q:{id:'q',name:'Original Q',fields:{Name:'Original Q',Url:'https://product-q.example'}}},selectedSiteIds:['q','p'],activeSiteId:'p',sheetTableData:{entries:[{link:'https://first.example/form',category:'AI 工具目录',metrics:{dr:80,da:70},projects:['p']},{link:'https://second.example/form',category:'启动发布',metrics:{dr:90,da:80}},{link:'https://third.example/form',category:'AI 工具目录',metrics:{dr:50,da:40}}]},urlList:'https://saved.example/form\tSaved\tdirectory',siteAnnotations:{'third.example/form':{library:{groups:['free_submit'],profileIds:['q']}}},submissionRecords:{},domainMetricsCache:{},targetFilters:{},linkMonitorResults:{}}};}
+function snapshot(){return{revisions:{siteProfiles:2},documents:{siteProfiles:{p:{id:'p',name:'Original P',fields:{Name:'Original P',Url:'https://product-p.example'}},q:{id:'q',name:'Original Q',fields:{Name:'Original Q',Url:'https://product-q.example'}}},selectedSiteIds:['q','p'],activeSiteId:'p',sheetTableData:{entries:[{link:'https://first.example/form',note:'AI tool directory',category:'AI 工具目录',metrics:{dr:80,da:70},projects:['p']},{link:'https://second.example/form',note:'Startup launch',category:'启动发布',metrics:{dr:90,da:80}},{link:'https://third.example/form',note:'AI tool directory',category:'AI 工具目录',metrics:{dr:50,da:40}}]},urlList:'https://saved.example/form\tSaved\tdirectory',siteAnnotations:{'third.example/form':{library:{groups:['free_submit'],profileIds:['q']}}},submissionRecords:{},domainMetricsCache:{},targetFilters:{},linkMonitorResults:{}}};}
 const taskShape=task=>({url:task.url,profileId:task.profileId,source:task.source,category:task.category,quality:task.quality,destinationGroupKey:task.destinationGroupKey,groupJobIndex:task.groupJobIndex});
 
 test('the original category and group scope functions are copied exactly from the pre-refactor baseline',()=>{for(const name of names)assert.equal(fn(migrated,name).replaceAll('\r\n','\n'),fn(source,name).replaceAll('\r\n','\n'));});
@@ -32,8 +27,16 @@ test('category and group queues match original functions including assignment, p
  }
 });
 
+test('explicit category editing keeps its documented addition while the unmodified original classifier reference remains independent',async()=>{
+ const data=snapshot();data.documents.sheetTableData.entries=[{link:'https://ordinary.example/form',category:'AI 工具目录',metrics:{dr:80}}];const before=structuredClone(data),input={profileIds:['p'],category:'AI 工具目录'},reference=await original(data,input),actual=originalLibraryBatchScope(data,input);assert.equal(reference.tasks.length,0);assert.equal(actual.tasks.length,1);assert.deepEqual(data,before);
+});
+
+test('all original categories and groups compare ordered task identities, quality and range counts without altering source documents',async()=>{
+ const data=snapshot(),before=structuredClone(data),report=await compareOriginalQueueScope(data);assert.equal(report.scopeCases,26);assert.equal(report.mismatchCount,0);assert.equal(report.fieldsCompared.length,12);assert.equal(report.sourceUnchanged,true);assert.deepEqual(data,before);assert.ok(report.comparisons>0);assert.ok(report.reports.every(row=>row.originalProjectionSha256===row.nativeProjectionSha256));
+});
+
 test('original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection',async()=>{
- const data=snapshot();data.documents.sheetTableData.entries.push({link:'https://tipseason.com/old',category:'AI 工具目录',metrics:{dr:90,da:90}});
+ const data=snapshot();data.documents.sheetTableData.entries.push({link:'https://tipseason.com/old',note:'AI tool directory',category:'AI 工具目录',metrics:{dr:90,da:90}});
  data.documents.submissionRecords={'tipseason.com::p':{profileId:'p',destinationKey:'tipseason.com',destinationUrl:'https://tipseason.com/another',status:'success',confirmedBy:'manual',evidence:'Original historical receipt'}};
  data.documents.siteAnnotations['second.example/form']={library:{groups:[]}};data.documents.targetFilters={blacklistEnabled:true,minDomainAgeMonths:12,requireKnownDomainAge:true,minOpportunityScore:40};data.documents.domainBlacklist=['first.example'];data.documents.domainMetricsCache={'third.example':{ageMonths:5},'tipseason.com':{ageMonths:30}};
  for(const options of [{category:'AI 工具目录'},{group:'high_quality'},{group:'free_submit'}]){const input={profileIds:['p','q'],...options},reference=await original(data,input),actual=originalLibraryBatchScope(data,input);assert.deepEqual(actual.tasks.map(taskShape),reference.tasks.map(taskShape));assert.equal(actual.meta.excluded,reference.meta.excluded);}

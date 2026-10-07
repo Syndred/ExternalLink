@@ -27,7 +27,7 @@ export async function previewWorkbenchBatch(runtime,input){
  const expectedScope=workbenchScope(runtime.store.get('pair'));
  const optionKeys=['concurrency','pingIndex','fillOnly','unattended','unattendedMaxHours','unattendedMaxTasks','unattendedMaxManualTabs'];
  if(input.config!==undefined&&(!input.config||typeof input.config!=='object'||Array.isArray(input.config)||Object.entries(input.config).some(([key,value])=>!optionKeys.includes(key)||!['string','number','boolean'].includes(typeof value))))throw Error('批量参数格式无效');
- const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
+ const snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),inventory=await runtime.cloud.request('runs?view=inventory');
  if(expectedScope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新预览');
  const originalScope=scoped?originalLibraryBatchScope(snapshot,{profileIds,[input.libraryScope.kind]:input.libraryScope.value}):null;
  if(scoped&&!originalScope.tasks.length)throw Error('该分类或分组没有新的待提交组合，原批次和待办保留');
@@ -58,7 +58,7 @@ export async function startWorkbenchBatch(runtime,input){
  const active=runtime.store.get('activeWorkbenchBatch');if(active&&active!==batch.id&&!['complete','waiting_manual','stopped'].includes(runtime.store.get('workbenchBatch:'+active)?.status))throw Error('请先处理原批次');
  if(batch.status==='paused'&&active===batch.id&&!runtime.store.get('executionStopped')){await resumeExecution(runtime,{expectedBatchId:batch.id});return{ok:true,batch:runtime.store.get('workbenchBatch:'+batch.id)};}
  if(batch.scopeSha256!==frozenDigest(batch,batchScopeRows(batch)))throw Error('批次范围校验不一致');
- const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
+ const snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),inventory=await runtime.cloud.request('runs?view=inventory');
  const save=()=>runtime.store.set('workbenchBatch:'+batch.id,batch);
  assertBatchPolicy(runtime,batch);
  // Refresh exclusions before choosing the sole manifest anchor. A newly

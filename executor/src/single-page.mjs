@@ -9,6 +9,7 @@ import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {prepareOriginalVisitFields} from './original-visit-fill-adapter.mjs';
 import {originalHumanGateAttention} from './original-site-classification.mjs';
 import {originalTaskMediaConfig} from './original-task-media-config.mjs';
+import {overlayApplicationSettings} from './application-mutations.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function cancelVisitWork(runtime,reason){
@@ -54,14 +55,14 @@ export async function preparedTask(runtime,input,snapshot){
  try{const saved=await runtime.cloud.request('runs',{run:plan.run});assertScope();if(saved.run?.id!==plan.run.id||saved.tasks?.[0]?.id!==plan.run.tasks[0].id)throw Error('单页登记编号不一致');return saveRecovered(saved.tasks[0],saved.run);}catch(error){runtime.store.set('singlePagePlan:'+plan.id,{...plan,status:error.status>=400&&error.status<500?'rejected':'registration_unknown',error:error.message});throw error;}
 }
 export async function sidepanelDetect(runtime,input){
- const assertCurrent=captureSinglePageContext(runtime,input);const page=await selectedPage(runtime,input),snapshot=await runtime.cloud.request('snapshot'),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived)throw Error('请选择在用产品');
+ const assertCurrent=captureSinglePageContext(runtime,input);const page=await selectedPage(runtime,input),snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived)throw Error('请选择在用产品');
  const frames=[];for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;let engine;try{engine=await attachEngine(runtime.context,frame);assertCurrent();frames.push({url:frame.url(),...await engine.call({action:'detectPage',config:configFor(snapshot,profile,frame.url())})});assertCurrent();}finally{await engine?.detach();}}
  return{ok:true,frames,url:page.url(),profileId:profile.id};
 }
 export async function sidepanelFill(runtime,input){
  const assertCurrent=captureSinglePageContext(runtime,input),submitRequested=input.mode!=='comment'&&input.submit===true;if(runtime.singlePageFill)throw Error('请暂停并等待当前网页操作完成');runtime.singlePageFill=true;
  const engines=[];try{
-  const page=await selectedPage(runtime,input),snapshot=await runtime.cloud.request('snapshot'),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived||!profiles.profileConfigured(profile))throw Error('请选择已配置资料的在用产品');if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))throw Error('该产品同站已有收件，请先核验');
+  const page=await selectedPage(runtime,input),snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived||!profiles.profileConfigured(profile))throw Error('请选择已配置资料的在用产品');if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))throw Error('该产品同站已有收件，请先核验');
   if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');
   let config=configFor(snapshot,profile,page.url());if(input.mode==='comment')config.commentTemplate=input.commentText;
   if(input.mode!=='comment'&&isProductHuntLaunch(page.url())){

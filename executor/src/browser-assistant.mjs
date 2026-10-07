@@ -5,7 +5,7 @@ import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser
 import {profiles,plain,queue,selectScope,priorProductSuccess} from './shared.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {singlePagePanel,preparedTask,cancelVisitWork} from './single-page.mjs';
 import {createHash,randomUUID} from 'node:crypto';
-import {enqueueLibraryMutation,overlayApplication,pendingApplication} from './application-mutations.mjs';
+import {enqueueLibraryMutation,overlayApplication,overlayApplicationSettings,pendingApplication} from './application-mutations.mjs';
 import {captureFillLearning} from './fill-learning.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
@@ -34,7 +34,7 @@ export async function saveAssistantSettings(runtime,input){
 }
 function cancelAutoTimers(runtime,reason){cancelVisitWork(runtime,reason);}
 export async function stopBrowserAssistant(runtime){cancelAutoTimers(runtime,'浏览器助手已关闭');for(const item of runtime.browserAssistantFrames?.values()||[]){await item.engine.disableAssistant().catch(()=>{});await item.engine.detach();}runtime.browserAssistantFrames?.clear();}
-function snapshotFor(runtime){const snapshot=runtime.store.get('applicationSnapshot');if(snapshot?.scope!==workbenchScope(runtime.store.get('pair')))throw Error('请先回读当前云端资料');return snapshot.snapshot;}
+function snapshotFor(runtime){const snapshot=runtime.store.get('applicationSnapshot');if(snapshot?.scope!==workbenchScope(runtime.store.get('pair')))throw Error('请先回读当前云端资料');return overlayApplicationSettings(runtime,snapshot.snapshot);}
 function configFor(runtime,profileId,task){const snapshot=snapshotFor(runtime),profile=task?.profileSnapshot||snapshot.documents.siteProfiles?.[profileId];if(!profile||profile.archived)throw Error('助手产品资料已变化');return{...plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),aiComments:snapshot.documents.targetFilters?.aiComments!==false,aiCommentAllowLink:snapshot.documents.targetFilters?.aiCommentAllowLink!==false,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};}
 const parked=task=>['supervisor','ai'].includes(task.controller)||['login','human_verification','unknown_receipt','payment','paid'].includes(task.attentionType);
 export function originalAssistantTask(runtime,profileId,targetId,url){return runtime.store.values('task:').find(t=>t.profileId===profileId&&t.targetId===targetId&&t.browserInstance===runtime.host?.startedAt&&!t.attemptBoundary&&!t.receipt&&['pending','needs_manual'].includes(t.status)&&!parked(t)&&queue.extractDomain(t.url)===queue.extractDomain(url));}
@@ -55,7 +55,7 @@ export async function fillAssistantTask(runtime,input){
  try{
   assertCurrent();await assertDocument();let task=originalAssistantTask(runtime,profileId,input.targetId,input.url);if(input.taskId&&task?.id!==input.taskId)throw Error('原任务已变化或已有提交边界');
   if(!runtime.context)await runtime.connect();let page;for(const candidate of runtime.context.pages()){if(!/^https?:\/\//.test(candidate.url()))continue;const info=await getTargetInfo(runtime.context,candidate);if(info?.targetId===input.targetId){page=candidate;break;}}if(!page||page.url()!==input.url)throw Error('原网页已关闭或跳转');
-  const snapshot=await runtime.cloud.request('snapshot');assertCurrent();await assertDocument();cacheCloudSnapshot(runtime,snapshot);assertCurrent();const match=autoVisitTarget(snapshot,profileId,page.url());if(!match)throw Error('原站点当前不允许自动填写');saveRecord(recordVisitQueue(runtime,snapshot,profileId,match));
+  const remote=await runtime.cloud.request('snapshot');assertCurrent();await assertDocument();cacheCloudSnapshot(runtime,remote);const snapshot=overlayApplicationSettings(runtime,remote);assertCurrent();const match=autoVisitTarget(snapshot,profileId,page.url());if(!match)throw Error('原站点当前不允许自动填写');saveRecord(recordVisitQueue(runtime,snapshot,profileId,match));
   let profile=task?.profileSnapshot||runtime.store.get('run:'+task?.runId)?.profile||snapshot.documents.siteProfiles[profileId],config=frozenConfig(snapshot,profile,page.url());if(task)config=originalTaskMediaConfig(runtime,task,config);
   const assertPage=()=>{assertCurrent();if(page.isClosed()||page.url()!==input.url)throw Error('原网页已关闭或跳转');};assertPage();await assertDocument();
   if(task&&isProductHuntLaunch(page.url())){await runtime.lease(task,{online:true});assertPage();await assertDocument();const active=()=>{try{assertPage();return true;}catch{return false;}};const fill=await runProductHuntWorkflow(runtime,task,page,config,{active,confirmCreate:false});await runtime.synchronize();const result={ok:true,taskId:task.id,runId:task.runId,filled:true,submitted:false,platform:'product_hunt',readyToCreate:fill.ready_to_create===true};saveRecord({status:'prepared',result});return result;}

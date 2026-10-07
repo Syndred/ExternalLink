@@ -59,7 +59,7 @@ import {recordTaskMediaUpload} from './task-media-feedback.mjs';
 import { readAfterNavigation, settleObservedClick } from './navigation-read.mjs';
 import { registerAcceptance } from './acceptance-register.mjs';
 import { applicationData } from './application-data.mjs';
-import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication} from './application-mutations.mjs';
+import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication,overlayApplicationSettings} from './application-mutations.mjs';
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
@@ -666,7 +666,7 @@ export class Runtime {
     }
     const profile = task.profileSnapshot || run.profile;
     if(!task.profileSnapshot&&profile)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'task_profile_frozen');
-    const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
+    const defaults=overlayApplicationSettings(this,{documents:snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{},revisions:{}}).documents;
     const frozenBatch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);
     this.update(task,{indexNotificationPreference:frozenBatch?.config?frozenBatch.config.pingIndex!==false:defaults.cfgPingIndex!==false},'index_notification_preference');
     const config = originalTaskMediaConfig(this,task,applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url)));
@@ -1528,7 +1528,8 @@ export class Runtime {
       }
       this.update(task,{profileSnapshot:profile,profileRevision,
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
-      const config=originalTaskMediaConfig(this,task,applyDestinationFormKnowledge(snapshot.documents,plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),task.url));
+      const preferences=overlayApplicationSettings(this,snapshot).documents;
+      const config=originalTaskMediaConfig(this,task,applyDestinationFormKnowledge(preferences,plain(profiles.buildAgentConfigFromProfile(profile,{email:preferences.cfgEmail,username:preferences.cfgName,commentTemplate:preferences.cfgCommentTemplate})),task.url));
       let prepared,preparationStale=false;
       const preparationScope=workbenchScope(this.store.get('pair'));
       const preparationCurrent=()=>{const current=this.store.get('task:'+task.id);return !preparationStale&&current&&preparationScope===workbenchScope(this.store.get('pair'))&&['runId','profileId','profileRevision','version','controller','controllerId','targetId','browserInstance'].every(key=>current[key]===task[key])&&isDeepStrictEqual(current.profileSnapshot,profile)&&!current.attemptBoundary&&!current.receipt&&!page.isClosed();};

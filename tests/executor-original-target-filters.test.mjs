@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
@@ -13,7 +13,7 @@ import {Store} from '../executor/src/store.mjs';
 import {workbenchScope} from '../executor/src/workbench-sync.mjs';
 import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication,overlayApplication} from '../executor/src/application-mutations.mjs';
 import {applicationData} from '../executor/src/application-data.mjs';
-const source=readFileSync(new URL('../extension/background.js',import.meta.url),'utf8');
+const source=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/background.js'],{encoding:'utf8',maxBuffer:4*1024*1024});
 const oldNormalize=vm.runInNewContext('('+source.slice(source.indexOf('function normalizeTargetFilters('),source.indexOf('async function getTargetFilters('))+')');
 const plain=value=>JSON.parse(JSON.stringify(value));
 const op=(key,value)=>({type:'settings',key,value,id:'original-settings',at:'2026-10-06T00:00:00Z'});

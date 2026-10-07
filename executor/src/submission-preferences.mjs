@@ -1,6 +1,7 @@
 import {workbenchScope} from './workbench-sync.mjs';
 import {createHash} from 'node:crypto';
 import {batchScopeRows,batchJson} from '../../core/workbench-batch-recovery.mjs';
+import {overlayApplicationSettings} from './application-mutations.mjs';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function hasManualSubmissionConsent(runtime,task){
  const current=runtime.store.get('task:'+task.id),consent=current?.manualSubmissionConsent,identity=['runId','profileId','targetId','browserInstance','profileRevision'];
@@ -8,6 +9,7 @@ export function hasManualSubmissionConsent(runtime,task){
  return (runtime.store.get('singleTaskId')===task.id||parallel)&&consent?.scope===scope&&identity.every(key=>task[key]!==undefined&&current[key]===task[key]&&consent[key]===task[key])&&!task.attemptBoundary&&!task.receipt&&!current.attemptBoundary&&!current.receipt;
 }
 export function applySubmissionPreferences(runtime,task,documents,config){
+ documents=overlayApplicationSettings(runtime,{documents,revisions:{}}).documents;
  const manual=hasManualSubmissionConsent(runtime,task);
  const fillOnly=task.fillOnlyRun===true;
  return{...config,fillOnly,autoSubmitDirectory:!fillOnly&&(manual||documents.autoSubmitDirectoryListings!==false),autoSubmitStandardWpComments:!fillOnly&&(manual||documents.autoSubmitStandardWpComments===true),aiComments:documents.targetFilters?.aiComments!==false,aiCommentAllowLink:documents.targetFilters?.aiCommentAllowLink!==false};

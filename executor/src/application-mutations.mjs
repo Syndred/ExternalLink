@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';import { isDeepStrictEqual } from 'node:util';
 import { applicationMutation as libraryMutation,applicationMutationSatisfied as libraryMutationSatisfied } from '../../core/application-mutation.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
+import {applicationSettingKeys} from '../../core/application-preferences.mjs';
 export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
 export const applicationMutationKeys=item=>item.writeKeys||[item.key];
 export async function confirmUncertainTimelineEdits(runtime){
@@ -34,6 +35,15 @@ export async function resolveApplicationConflict(runtime,input){
  return{ok:true,...await flushApplicationMutations(runtime)};
 }
 export function overlayApplication(runtime,snapshot){const result=structuredClone(snapshot);for(const item of pendingApplication(runtime)){try{const change=libraryMutation(result.documents,item.operation);Object.assign(result.documents,change.updates||{[change.key]:change.data});}catch{}}return result;}
+// Original settings are local immediately, even when their cloud write is
+// pending. Execution must not borrow unconfirmed product edits or revisions.
+export function overlayApplicationSettings(runtime,snapshot){
+ const result=structuredClone(snapshot);
+ for(const item of pendingApplication(runtime))if(applicationSettingKeys.includes(item.key)){
+  try{const change=libraryMutation(result.documents,item.operation);for(const [key,data]of Object.entries(change.updates||{[change.key]:change.data}))if(applicationSettingKeys.includes(key))result.documents[key]=data;}catch{}
+ }
+ return result;
+}
 export async function enqueueLibraryMutation(runtime,input){
  if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope)throw Error('请先读取本工作区资料');

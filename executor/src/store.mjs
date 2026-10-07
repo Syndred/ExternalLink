@@ -46,6 +46,15 @@ export class Store {
     return event;
   }
   pending() { return this.db.prepare('SELECT id,value FROM outbox ORDER BY seq').all().map(x => JSON.parse(x.value)); }
+  transitionMany(changes,stateChanges={}) {
+    const events=changes.map(({task,type})=>({id:randomUUID(),taskId:task.id,version:task.version,at:new Date().toISOString(),type,state:structuredClone(task)}));
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      for(const [key,value]of Object.entries(stateChanges))this.set(key,value);
+      for(const event of events){this.set('task:'+event.taskId,event.state);this.db.prepare('INSERT INTO outbox(id,value) VALUES (?,?)').run(event.id,JSON.stringify(event));this.appendLog({id:event.id,at:event.at,type:event.type,runId:event.state.runId,taskId:event.taskId,profileId:event.state.profileId,url:event.state.url,status:event.state.status,reason:event.state.reason||''});}
+      this.db.exec('COMMIT');return events;
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
+  }
   appendLog(entry){const pair=this.get('pair'),scope=String(pair?.endpoint||'')+'|'+String(pair?.workspaceId||'default');this.db.prepare('INSERT OR IGNORE INTO audit_log(event_id,scope,run_id,task_id,value) VALUES (?,?,?,?,?)').run(entry.id||randomUUID(),scope,entry.runId||null,entry.taskId||null,JSON.stringify(entry));}
   logs({scope,runId,taskId,after=0}={}){if(!Number.isSafeInteger(after)||after<0)throw Error('日志游标无效');const conditions=['scope=?','seq>?'],values=[scope,after];for(const [column,value]of [['run_id',runId],['task_id',taskId]])if(value){conditions.push(column+'=?');values.push(value);}const rows=this.db.prepare('SELECT seq,value FROM audit_log WHERE '+conditions.join(' AND ')+' ORDER BY seq LIMIT 501').all(...values);return{entries:rows.slice(0,500).map(row=>({seq:row.seq,...JSON.parse(row.value)})),next:rows.length>500?rows[499].seq:null};}
   pendingCount() { return this.db.prepare('SELECT count(*) AS total FROM outbox').get().total; }

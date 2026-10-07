@@ -92,13 +92,13 @@ export function retainBatchManualPage(runtime,task){
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId),config=batch&&batchConfig(batch);
  return !!(config&&(config.fillOnly||config.unattended)&&!task.receipt&&!task.tabClosedAt&&['needs_manual','submitted_unconfirmed'].includes(task.status));
 }
-export function noteBatchTaskResult(runtime,batch,task){
+export function noteBatchTaskResult(runtime,batch,task,{persistPause=true}={}){
  if(!batchConfig(batch).unattended)return batch;
  let state=batch.unattendedState;
- if(task.targetId&&!task.tabClosedAt&&!task.receipt&&!['skip','excluded','failed'].includes(task.status))state=U.addManualTodo(state,task.id);else state=U.removeManualTodo(state,task.id);
+ if(task.targetId&&!task.tabClosedAt&&!task.receipt&&!['skip','excluded','failed','err'].includes(task.status))state=U.addManualTodo(state,task.id);else state=U.removeManualTodo(state,task.id);
  if(task.receipt)state=U.noteSuccess(state);
  else if(batch.taskInterruptionReasons?.[task.id]==='task_deadline'||task.status==='failed'||task.status==='err'||['site_unavailable','site_form_unavailable','missing_fields','missing_real_identity','unattended_timeout'].includes(task.attentionType)){
-  const failure=U.noteFailure(state,task.reason||'原任务失败',Date.now());state=failure.next;if(failure.pause){state.stopReason=reasons.consecutive_failures;batch.status='paused';batch.reason=reasons.consecutive_failures;runtime.store.set('paused',true);}
+  const failure=U.noteFailure(state,task.reason||'原任务失败',Date.now());state=failure.next;if(failure.pause){state.stopReason=reasons.consecutive_failures;batch.status='paused';batch.reason=reasons.consecutive_failures;if(persistPause)runtime.store.set('paused',true);}
  }
  return{...batch,unattendedState:state};
 }

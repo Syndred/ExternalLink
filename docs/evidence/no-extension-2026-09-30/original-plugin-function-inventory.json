@@ -1,5 +1,21 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalDestinationDispositionCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "original-destination-disposition-2026-10-08.json",
+    "originalTerminalAndPendingSiblingFunctionsCompared": true,
+    "originalGroupIdentityCountBudgetAndAtomicCheckpointsPreserved": true,
+    "earlyExplicitPublicGatesConnected": true,
+    "actualIsolatedBrowserCases": 6,
+    "authenticatedD1AndPostgreSqlCancellationRestoreVerified": true,
+    "originalOwnedPageCloseAndLateStateGuards": true,
+    "fullSuitePassed": 806,
+    "newSince789": 17,
+    "allEntryPointsAndOriginalUnavailableSkipFullyMigrated": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalAgentPreparationCheckpoint": {
     "date": "2026-10-08",
     "evidence": "original-agent-preparation-2026-10-07.json",

@@ -9,3 +9,14 @@ test('fixed blocker cleanup persists recovery evidence before closing only regis
 test('unknown submission retains its original page even when cleanup is requested',async()=>{
  await closeAcceptanceTask({findPage(){throw Error('must not close');}},{acceptanceId:'fixed',targetId:'t',attemptBoundary:'sent',status:'submitted_unconfirmed'});
 });
+
+test('dead-end cleanup closes original standalone run pages after a durable checkpoint and protects late evidence and shared pages',async()=>{
+ for(const mode of ['normal','late-unknown','foreign-controller','shared-manual','browser-restarted','user-pause']){
+  const home=await mkdtemp(join(tmpdir(),'el-deadend-cleanup-')),screenshot=join(home,'page.png');await writeFile(screenshot,'original dead-end evidence');const store=new Store(':memory:');
+  const task={id:'original',runId:'original-run',profileId:'p',profileSnapshot:{id:'p'},url:'https://site.example/submit',targetId:'owned',browserInstance:'browser',version:1,controller:'executor',status:'err',attentionType:'destination_dead_end',reason:'Cannot submit',screenshot,originalDestinationDisposition:{kind:'dead_end'}};store.set('task:original',task);store.set('run:original-run',{id:'original-run',profileId:'p',tasks:['original']});store.set('paused',false);
+  if(mode==='shared-manual')store.set('task:other',{id:'other',status:'needs_manual',targetId:'owned',browserInstance:'browser'});
+  let closed=0;const owned={url:()=>task.url,isClosed:()=>false,close:async()=>{assert.equal(store.get('task:original').recoveryCheckpoint.stage,'destination_dead_end');closed++;}};
+  const runtime={store,host:{startedAt:mode==='browser-restarted'?'new-browser':'browser'},findPage:async()=>owned,update(t,p,type){Object.assign(t,p);store.transition(t,type);},context:{pages:()=>[owned],newCDPSession:async()=>({detach:async()=>{},send:async()=>{if(mode==='late-unknown')store.set('task:original',{...store.get('task:original'),attemptBoundary:'late-boundary',status:'submitted_unconfirmed'});if(mode==='foreign-controller')store.set('task:original',{...store.get('task:original'),controller:'supervisor'});if(mode==='user-pause')store.set('paused',true);return{targetInfo:{targetId:'owned'}};}})}};
+  try{if(mode==='normal'){await closeAcceptanceTask(runtime,task);assert.equal(closed,1);assert.equal(store.get('task:original').closeReason,'原任务未投稿阻塞，恢复点已持久保存');assert.ok(task.tabClosedAt);}else{await assert.rejects(()=>closeAcceptanceTask(runtime,task));assert.equal(closed,0);assert.equal(store.get('task:original').tabClosedAt,undefined);if(mode==='late-unknown')assert.equal(store.get('task:original').attemptBoundary,'late-boundary');}}finally{store.close();const {resolve,sep}=await import('node:path');const absolute=resolve(home);assert.ok(absolute.startsWith(resolve(tmpdir())+sep));await rm(absolute,{recursive:true,force:true});}
+ }
+});

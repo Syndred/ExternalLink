@@ -56,7 +56,7 @@ export function recoverCloudBatchRecords(runtime,runs,tasks) {
       const task=tasks.find(t=>t.id===item.taskId)||runtime.store.get('task:'+item.taskId);
       if(task&&(task.runId!==item.runId||task.profileId!==item.profileId||task.url!==item.url||task.destinationKey!==item.destinationKey))throw Error('恢复任务与原批次身份不一致');
       if(!task&&!['excluded','complete'].includes(item.status)) {item.status='registration_unknown';item.reason='云端原任务暂不可读，保留原编号，禁止替代注册';}
-      if(task?.receipt||task?.attemptBoundary||task&&['needs_manual','submitted_unconfirmed','finished','failed','excluded','skip'].includes(task.status)){item.status='complete';item.result=task.receipt?'received':task.attemptBoundary?'sent_unconfirmed':task.status;item.reason=task.reason||'';}
+      if(task?.receipt||task?.attemptBoundary||task&&['needs_manual','submitted_unconfirmed','finished','failed','err','excluded','skip'].includes(task.status)){item.status='complete';item.result=task.receipt?'received':task.attemptBoundary?'sent_unconfirmed':task.status;item.reason=task.reason||'';}
     }
     // There may be more than one paused historical batch. Restore all of them,
     // then choose the latest only for the UI; no timer receives authorization.

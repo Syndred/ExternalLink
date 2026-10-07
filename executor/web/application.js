@@ -167,7 +167,7 @@ content.addEventListener('input',()=>{if(view==='settings')settingsDirty=true;})
 let data,view='products',query='',profileFilter='',page=0,taskScope='fixed',showArchived=false,libraryCategory='',libraryStatus='',libraryGroup='',libraryFavorite='',libraryEnabled='',libraryAccess='',libraryProgress='',libraryMinQuality=0,libraryMinDr=0,librarySort='quality',overviewState='',selectedUrls=new Set();
 const labels={reply_received:'收到关联邮件',not_started:'未开始',pending:'待执行',opening:'正在打开',filling:'正在填写',submitting:'正在提交',finished:'已完成',needs_manual:'待处理',submitted_unconfirmed:'结果待核验',excluded:'已排除',received:'已收件',not_submitted:'未投稿',sent_unconfirmed:'已发送待确认',unknown:'未知',published:'已上线',approved:'已审核',confirmed:'已同步',conflict:'同步冲突',submitted:'已记录提交',pending_moderation:'待审核',rejected:'被拒绝',needs_follow_up:'需要跟进',link_missing:'链接失效',link_submit:'有历史提交动作',note:'跟进笔记',legacy_import:'历史导入',awaiting_index:'等待收录',action_recorded:'有提交动作',unsubmitted:'未提交',status:'状态更新'};
 const text=value=>labels[value]||value||'未知';
-Object.assign(labels,{preview:'待确认',paused:'已暂停',running:'运行中',complete:'已处理完毕',stopped:'已停止',waiting_manual:'等待人工处理',registration_unknown:'注册结果待核验'});
+Object.assign(labels,{preview:'待确认',paused:'已暂停',running:'运行中',complete:'已处理完毕',stopped:'已停止',waiting_manual:'等待人工处理',registration_unknown:'注册结果待核验',err:'执行失败'});
 Object.assign(labels,{can_submit:'可以提交',paid:'需要付费',broken:'网址失效',skip:'暂不提交',needs_otp:'需要邮箱或手机验证码',needs_captcha:'需要完成验证码',needs_login:'需要登录',needs_manual:'需要人工处理',deleted:'已归档'});
 const monitorLabels={live:'目标外链可见',missing:'页面未发现目标外链',unreachable:'暂时无法访问',uncheckable:'需人工核验'};
 const sourceLabels={'cloud.sheetTableData':'表格导入','cloud.urlList':'网址列表导入','application_manual':'手工添加','submify-public':'公共外链库（Submify）'};

@@ -354,7 +354,7 @@ export class Runtime {
   }
   async preparePublicPage(page,task){
     for(let step=0;step<3;step++){
-      const inspected=await readAfterNavigation(page,()=>page.evaluate(()=>({url:location.origin+location.pathname,title:document.title,text:document.body?.innerText?.slice(0,16000)||'',
+      const inspected=await readAfterNavigation(page,()=>page.evaluate(()=>({url:location.origin+location.pathname,documentTimeOrigin:performance.timeOrigin,title:document.title,text:document.body?.innerText?.slice(0,16000)||'',
         hasPassword:[...document.querySelectorAll('input[type=password]')].some(e=>e.getBoundingClientRect().width>0),
         fieldLabels:[...document.querySelectorAll('input:not([type=hidden]):not([type=password]),textarea,select')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({type:e.type,label:e.labels?.[0]?.textContent?.trim()||e.placeholder||e.name||e.id})),
         iframeSources:[...document.querySelectorAll('iframe[src]')].filter(e=>e.getBoundingClientRect().width>0).map(e=>e.src),
@@ -377,7 +377,12 @@ export class Runtime {
         }
         this.update(task,{attentionType:/验证码|真人|OTP/.test(login.reason)?'human_verification':'login'},'basic_google_deferred');throw new Error(login.reason);
       }
-      if(gate&&!(gate.attentionType==='payment'&&free)){this.update(task,{attentionType:gate.attentionType},'public_gate');throw new Error(gate.reason);}
+      if(gate&&!(gate.attentionType==='payment'&&free)){
+        this.update(task,{attentionType:gate.attentionType},'public_gate');
+        const result=['payment','site_form_unavailable','site_unavailable'].includes(gate.attentionType)?{blocked:true,reason:gate.reason}:gate.attentionType==='human_verification'?{captcha:true,reason:gate.reason}:gate.attentionType==='login'?{gate:'login',reason:gate.reason}:null;
+        if(result)await classifyOriginalTaskGate(this,{task,page,result,active:()=>this.store.get('paused')===false&&batchActionAllowed(this,task),assertPageDocument:async()=>{if(await page.evaluate(()=>performance.timeOrigin)!==inspected.documentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，自动观察停止'),{staleTask:true});}});
+        throw new Error(gate.reason);
+      }
       const hasForm=hasSubmissionFields(inspected);
       const entry=!hasForm&&(chooseObservedEntry(page.url(),inspected.links)||free);
       if(!entry||step===2)return;
@@ -853,6 +858,7 @@ export class Runtime {
       if(error.staleTask){staleWork=true;return;}
       if(error.preparationInterrupted)return;
       if(error.cloudNetwork||[401,403,409].includes(error.status)||error.status>=500)throw error;
+      if(task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end'&&!task.attemptBoundary&&!task.receipt)return;
       this.update(task, { status: task.attemptBoundary ? 'submitted_unconfirmed' : 'needs_manual', siteStatus:task.attemptBoundary?'sent_unconfirmed':'not_submitted', reason: error.message,
         attentionType:task.attemptBoundary?'unknown_receipt':task.attentionType||classifyBlocker(error.message) }, 'attention');
       if(page&&task.attentionType==='human_verification'&&!task.attemptBoundary&&!task.receipt)await armPageCaptchaResume(this,task,page,{active}).catch(observationError=>this.update(task,{captchaResumeObservationFailure:{at:new Date().toISOString(),reason:observationError.message}},'captcha_resume_observation_failed'));
@@ -869,9 +875,9 @@ export class Runtime {
           catch(error){this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'evidence_capture_deferred');}
         }
         await this.synchronize();
-        if(task.acceptanceId||task.workbenchBatchId){
+        if(task.acceptanceId||task.workbenchBatchId||task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)){
           try{await closeAcceptanceTask(this,task);}
-          catch(error){this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
+          catch(error){if(!error.staleTask)this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
         }
         if(continuous){
           try{await withinDeadline(this.finalizeContinuousTask(task),15000,'单站页签收尾');}

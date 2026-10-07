@@ -31,6 +31,12 @@ test('formal device API executes PostgreSQL constraints, scope, idempotent event
   assert.equal((await call('devices','not-authorized',{name:'x'})).status,401);
   const device=await call('devices',env.APP_ACCESS_TOKEN,{name:'Windows'});assert.equal(device.status,200,JSON.stringify(device));
   const token=device.deviceToken;
+  const originalAiCalls=[];helpers.assistant=async(action,input)=>{originalAiCalls.push({action,input});return{ok:true,action,input};};
+  for(const action of ['plan','vision-plan','judge','validate-fill']){
+    const body={snapshot:{url:'https://new.example/submit'},config:{projectKey:'JevPlay'},fillOnly:true};
+    const before=originalAiCalls.length;assert.equal((await call('ai/'+action,'wrong',body)).status,401);assert.equal((await call('ai/'+action,env.APP_ACCESS_TOKEN,body)).status,401);assert.equal((await call('ai/'+action,token,body,'other')).status,401);assert.equal(originalAiCalls.length,before);
+    const result=await call('ai/'+action,token,body);assert.equal(result.status,200);assert.equal(result.action,action);assert.deepEqual(result.input,body);
+  }
   assert.equal((await call('devices',token,{name:'forbidden'})).status,401);
   assert.equal((await call('snapshot',token,undefined,'other')).status,401);
   const run={id:'run1',profileId:'JevPlay',profileRevision:1,tasks:[{id:'task1',url:'https://new.example/submit',destinationKey:'new.example/submit'}]};
@@ -95,5 +101,6 @@ test('formal device API executes PostgreSQL constraints, scope, idempotent event
   assert.deepEqual((await call('runs',isolated.deviceToken)).runs,[]);
   assert.deepEqual((await call('runs',token)).runs[0].profile,profile,'existing runs keep their original profile snapshot');
   await call('revoke',env.APP_ACCESS_TOKEN,{deviceId:device.deviceId});assert.equal((await call('snapshot',token)).status,401);
+  const originalAiCount=originalAiCalls.length;for(const action of ['plan','vision-plan','judge','validate-fill'])assert.equal((await call('ai/'+action,token,{snapshot:{}})).status,401);assert.equal(originalAiCalls.length,originalAiCount);
   await db.close();
 });

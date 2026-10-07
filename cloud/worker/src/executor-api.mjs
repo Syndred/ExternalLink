@@ -94,8 +94,8 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       if(action!=='commit')return reply(transferred);
       path='/v1/executor/'+transferred.route;input=transferred.payload;
     }
-    if(/^\/v1\/executor\/ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
-      if(!helpers.assistant)fail('资料与评论服务暂不可用',503);
+    if(/^\/v1\/executor\/ai\/(extract-site|generate-site|comment|domain-metrics|plan|vision-plan|judge|validate-fill)$/.test(path)&&request.method==='POST'){
+      if(!helpers.assistant)fail('AI 服务暂不可用',503);
       return reply(await helpers.assistant(path.split('/').at(-1),input));
     }
     if (path === '/v1/executor/diagnostics' && request.method === 'POST') {

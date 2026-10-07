@@ -603,13 +603,14 @@ async function handleDomainMetrics(request) {
 export function executorAssistant(request,env){
   return async(action,input)=>{
     try{
+      if(action==='plan'&&input.mode==='prepare_takeover')throw Object.assign(Error('代理接管须使用原任务规划接口并核对领取权限'),{status:403});
       if(action==='comment'&&!input.pageText){
         const target=new URL(input.pageUrl);if(!/^https?:$/.test(target.protocol))throw Error('仅支持普通网页');
         const response=await fetch(target.href,{headers:{Accept:'text/html'},redirect:'follow'});if(!response.ok)throw Error('评论页面读取失败：HTTP '+response.status);
         const html=(await response.text()).slice(0,500000);input={...input,pageTitle:(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||'').slice(0,600),pageText:textFromHtml(html)};
       }
-      const handler={'extract-site':handleExtractSite,'generate-site':handleGenerateSite,comment:handleComment,'domain-metrics':handleDomainMetrics}[action];
-      if(!handler)throw Object.assign(Error('资料与评论接口不存在'),{status:404});
+      const handler={'extract-site':handleExtractSite,'generate-site':handleGenerateSite,comment:handleComment,'domain-metrics':handleDomainMetrics,plan:handlePlan,'vision-plan':handleVisionPlan,judge:handleJudge,'validate-fill':handleValidateFill}[action];
+      if(!handler)throw Object.assign(Error('AI 接口不存在'),{status:404});
       return await handler(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env);
     }catch(error){
       if(error instanceof AiProviderRequestError)Object.assign(error,classifyAiProviderFailure(error.message,error.upstreamStatus),{status:503});

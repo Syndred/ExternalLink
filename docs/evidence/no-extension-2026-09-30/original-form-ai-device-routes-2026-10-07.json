@@ -1,0 +1,48 @@
+{
+  "kind": "original_form_ai_authenticated_device_routes_foundation_not_complete_migration",
+  "date": "2026-10-07",
+  "cloudLatestPulled": true,
+  "priorValidationFixPublishedHead": "639af80",
+  "routes": ["ai/plan", "ai/vision-plan", "ai/judge", "ai/validate-fill"],
+  "backends": ["D1", "Neon"],
+  "originalHandlersReused": true,
+  "isolatedWorkerHandlersActuallyExecuted": true,
+  "providerResponsesAreFixtures": true,
+  "neonPostgresqlRouteAndAuthenticationChecksExecuted": true,
+  "unauthorizedWrongScopeAdminAndRevokedDeviceBlockedBeforeModel": true,
+  "generalPlanCannotBypassPrepareTakeoverTaskLeaseRoute": true,
+  "providerBalanceAndTransientErrorsKeep503Classification": true,
+  "localFixtureProductsManualMarksFavoritesGroupsAndReceiptsPreserved": true,
+  "fixtureRunsControlsAndEventsRemainEmpty": true,
+  "tests": {
+    "targetedPassed": 18,
+    "fullSuitePassed": 766,
+    "newSince764": 2,
+    "failed": 0,
+    "skipped": 0,
+    "targetedOutput": "executor/test-output/original-form-ai-routes-targeted-2026-10-07.txt",
+    "fullOutput": "executor/test-output/original-form-ai-routes-all-2026-10-07.txt",
+    "workerDryRunOutput": "executor/test-output/original-form-ai-routes-worker-dryrun-2026-10-07.txt"
+  },
+  "publicationBoundary": {
+    "workerDryRunPassed": true,
+    "workerDeployed": false,
+    "nativeServicesReloadedThisCheckpoint": false,
+    "fullNativeOriginalFillPipelineConnected": false,
+    "productionRoutesLiveAccepted": false,
+    "originalChromeLatestDataRead": false,
+    "allCloudHashesRechecked": false
+  },
+  "remaining": [
+    "original remaining-field understanding and at most two visual completion loops",
+    "original final validation and field corrections",
+    "native original document, product, authorization and model budget protections for the full workflow",
+    "automatic destination observations preserving manual marks and semantic uncertainty",
+    "Worker deployment and live device route verification without real model invocation",
+    "all remaining original functions, dynamic controls, special launch workflows, latest data, history and media ownership"
+  ],
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "migrationComplete": false
+}

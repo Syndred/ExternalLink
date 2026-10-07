@@ -1,5 +1,21 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalFormAiDeviceRoutesCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-form-ai-device-routes-2026-10-07.json",
+    "priorValidationFixPublishedHead": "639af80",
+    "fullSuitePassed": 766,
+    "newTestsSince764": 2,
+    "targetedTestsPassed": 18,
+    "d1AndNeonDeviceRoutesImplemented": ["plan", "vision-plan", "judge", "validate-fill"],
+    "isolatedOriginalWorkerHandlersExecuted": true,
+    "workerDeploymentDryRunPassed": true,
+    "workerDeployedThisCheckpoint": false,
+    "originalNativeFullFillPipelineConnected": false,
+    "realModelsCalled": 0,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalAutoFillValidationFidelityCheckpoint": {
     "date": "2026-10-07",
     "documentationOnlyPublication": true,

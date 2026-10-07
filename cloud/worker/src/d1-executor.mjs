@@ -45,8 +45,8 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    if(action!=='commit')return json(transferred);
    path=transferred.route;input=transferred.payload;
   }
-  if(/^ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
-   if(!assistant)fail('资料与评论服务暂不可用',503);
+  if(/^ai\/(extract-site|generate-site|comment|domain-metrics|plan|vision-plan|judge|validate-fill)$/.test(path)&&request.method==='POST'){
+   if(!assistant)fail('AI 服务暂不可用',503);
    return json(await assistant(path.slice(3),input));
   }
   if(path.startsWith('workspace/')){

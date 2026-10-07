@@ -1,0 +1,65 @@
+{
+  "kind": "documentation_checkpoint_not_completion_proof",
+  "date": "2026-10-08",
+  "request": "写好进度推送先",
+  "gitBeforeDocumentationCommit": {
+    "branch": "main",
+    "headAndOriginMain": "61c5d6fe3d53bfaf7718119e6d9d34655d4ef572",
+    "pullCommand": "git pull --ff-only",
+    "pullResult": "Already up to date.",
+    "ahead": 0,
+    "behind": 0
+  },
+  "publishedFeature": {
+    "commit": "f7308c1",
+    "existingFinalOutput": "executor/test-output/original-navigation-all-final-2026-10-08.txt",
+    "passed": 854,
+    "failed": 0,
+    "skipped": 0,
+    "rerunDuringThisDocumentationPush": false,
+    "coversCurrentReceiptDraft": false
+  },
+  "receiptDraft": {
+    "files": [
+      "executor/src/original-submission-proof.mjs",
+      "executor/src/runtime.mjs",
+      "executor/src/acceptance-cleanup.mjs",
+      "tests/executor-original-submission-proof.test.mjs"
+    ],
+    "dedicatedOutput": "executor/test-output/original-submission-proof-first-2026-10-08.txt",
+    "dedicatedPassed": 6,
+    "dedicatedFailed": 0,
+    "firstFullSuiteOutput": "executor/test-output/original-submission-proof-all-first-2026-10-08.txt",
+    "firstFullSuiteTotal": 860,
+    "firstFullSuitePassed": 859,
+    "firstFullSuiteFailed": 1,
+    "firstFullSuiteSkipped": 0,
+    "unresolvedFailure": {
+      "test": "tests/executor-task-page-controls.test.mjs:26",
+      "fixtureLocation": "executor/test/original-task-page-controls.mjs:38:659",
+      "error": "locator.click: Timeout 30000ms exceeded; waiting for locator('#__extlink_manual_go_btn')",
+      "causeConfirmed": false,
+      "fixed": false
+    },
+    "testsRerunDuringThisDocumentationPush": false,
+    "actualDatabaseAndBrowserReceiptPathVerified": false,
+    "authenticatedCloudRoundTripAndRestoreVerified": false,
+    "lateCloudSyncResultGuardComplete": false,
+    "originalVisualAiFinalSubmissionEntryComplete": false,
+    "committed": false,
+    "pushed": false,
+    "nativeServicesReloaded": false
+  },
+  "actionsDuringThisDocumentationPush": {
+    "productionBusinessReadback": false,
+    "productionBusinessWrite": false,
+    "workerDeployment": false,
+    "nativeServiceReload": false,
+    "originalChromeLaunch": false,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "allUserFeatureRequirementsRetained": true,
+  "latestOriginalDataAndFullHistoryVerified": false,
+  "migrationComplete": false
+}

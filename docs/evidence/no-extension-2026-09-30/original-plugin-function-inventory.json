@@ -1,5 +1,19 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "receiptDraftProgressPushCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "progress-push-receipt-draft-2026-10-08.json",
+    "lastPublishedFeatureCommit": "f7308c1",
+    "publishedFullSuitePassed": 854,
+    "draftDedicatedPassed": 6,
+    "draftFirstFullSuitePassed": 859,
+    "draftFirstFullSuiteFailed": 1,
+    "draftPublished": false,
+    "allOriginalVisualFinalSubmissionAndReceiptsVerified": false,
+    "productionStateRecheckedThisProgressPush": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalNavigationRejudgeCheckpoint": {
     "date": "2026-10-08",
     "featureCommit": "f7308c1",

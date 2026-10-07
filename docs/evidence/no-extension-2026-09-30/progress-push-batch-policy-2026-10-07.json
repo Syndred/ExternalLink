@@ -1,0 +1,41 @@
+{
+  "kind": "progress_only_original_batch_policy_checkpoint",
+  "date": "2026-10-07",
+  "publishedFeatureCommit": "4d0ecfd",
+  "gitPull": "Already up to date",
+  "headVsOriginMainBeforeProgressCommit": {"ahead": 0, "behind": 0},
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalInventoryCountsNotCompletionCounts": {"buttonsWithIds": 55, "inputsWithIds": 84, "buttonsWithoutIds": 12, "backgroundCases": 62},
+  "publishedTests": {"passed": 570, "failed": 0, "skipped": 0, "appliesTo": "published report exports and historical recovery family", "evidence": "original-report-exports-2026-10-07.json"},
+  "uncommittedDevelopment": {
+    "family": "original batch parameters and policy",
+    "sourceCommitted": false,
+    "deployed": false,
+    "remainingOriginalControls": ["cfgConcurrency", "cfgFillOnly", "cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs"],
+    "concurrencySchedulerComplete": false,
+    "userInterfaceComplete": false,
+    "testsRepeatedThisCheckpoint": {
+      "command": "node --test tests/executor-original-batch-policy.test.mjs",
+      "passed": 12,
+      "failed": 1,
+      "skipped": 0,
+      "exitCode": 1,
+      "failure": "saved concurrency and unattended preferences mutation test: missing mutation identity",
+      "fullSuiteOnNewChanges": false,
+      "actualServiceAndBrowserBatchAcceptance": false
+    }
+  },
+  "readOnlyAuthenticatedReadback": {
+    "source": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "exitCode": 0,
+    "runtime": {"paused": true, "busy": false, "pendingEvents": 0, "cloudError": ""},
+    "guard": {"paused": true, "busy": false, "pendingEvents": 0, "pendingEdits": 0, "pendingLearning": 0, "pendingMedia": 0, "assistantEnabled": false, "liveJobs": 0, "runningJobs": 0, "checkingWatches": 0},
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30},
+    "cursorIsNotReceiptCount": true
+  },
+  "thisProgressPush": {"businessImports": 0, "newRealSubmissions": 0, "realAiCalls": 0, "serviceReloads": 0, "deployments": 0, "developmentCodeIncluded": false},
+  "goalStatus": "not_complete"
+}

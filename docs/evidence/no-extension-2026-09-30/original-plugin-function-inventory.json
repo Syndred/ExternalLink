@@ -1,5 +1,26 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalReceiptOrderCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "516919c",
+    "evidence": "original-receipt-order-2026-10-08.json",
+    "completeOriginalSuccessAsyncOrderCompared": true,
+    "sameDestinationAdvanceWaitsForCloudReceiptVerified": true,
+    "unconfirmedLastReceiptDoesNotCompleteBatch": true,
+    "consecutiveFailureBudgetResetsOnlyAfterCloudConfirmation": true,
+    "fixedSelectionAndCompletionKeepUnconfirmedCursor": true,
+    "fixedAcceptanceEntryUsesIsolatedMethodFixture": true,
+    "laterAcknowledgedReceiptUsesLatestTaskForPageCleanup": true,
+    "actualIsolatedNativeWorkProductsAtSameDestination": 2,
+    "authenticatedD1ProofAndEmptyRestoreVerified": true,
+    "fullSuitePassed": 871,
+    "newSince865": 6,
+    "nativeServicesGuardedReloadAndReadbacksPassed": true,
+    "allOriginalVisualFinalSubmissionAndReceiptsVerified": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalReceiptProofCheckpoint": {
     "date": "2026-10-08",
     "featureCommit": "43ee54a",

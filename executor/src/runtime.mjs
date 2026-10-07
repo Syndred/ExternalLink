@@ -1810,7 +1810,7 @@ export class Runtime {
     }
     throw new Error('未知控制操作');
   }
-  async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body);}
+  async batchModelRequest(task,route,body,options){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body,undefined,options);}
   async bridge(task, message) {
     if(message.action==='captchaResolved')return this.dispatchControl?this.dispatchControl('checkCaptchaResumes',{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl}):checkCaptchaResumes(this,{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl});
     if(message.action==='mediaUploadStatus')return recordTaskMediaUpload(this,task,message);

@@ -4,7 +4,7 @@ const flushOperations=new WeakMap();
 
 export class Cloud {
   constructor(config, {onNetworkFailure, onSuccess} = {}) { this.config = config; this.onNetworkFailure = onNetworkFailure; this.onSuccess = onSuccess; }
-  async request(route, body, method = body ? 'POST' : 'GET') {
+  async request(route, body, method = body ? 'POST' : 'GET', options = {}) {
     if(method==='POST'&&['library','profile'].includes(route)&&body){
       const bytes=Buffer.from(JSON.stringify(body));
       if(bytes.length>1024*1024)return this.transferLibrary(route,bytes);
@@ -15,7 +15,7 @@ export class Cloud {
     url.searchParams.set('workspace', this.config.workspaceId);
     let response;
     for(let attempt=0;attempt<3;attempt++){
-      try{response = await fetch(url, { method, signal: AbortSignal.timeout(route.startsWith('ai/')?90000:route==='plan'&&body?.mode==='prepare_takeover'?60000:20000), headers: { Authorization: `Bearer ${this.config.deviceToken}`, 'Content-Type': 'application/json','X-Executor-Protocol':'2' }, body: body ? JSON.stringify(body) : undefined });}
+      try{response = await fetch(url, { method, signal: AbortSignal.timeout(options.timeoutMs??(route.startsWith('ai/')?90000:route==='plan'&&body?.mode==='prepare_takeover'?60000:20000)), headers: { Authorization: `Bearer ${this.config.deviceToken}`, 'Content-Type': 'application/json','X-Executor-Protocol':'2' }, body: body ? JSON.stringify(body) : undefined });}
       catch(error){const code=error.name==='TimeoutError'?'TIMEOUT':error.cause?.code||error.code||error.name;
         if(method==='GET'&&['ECONNRESET','ETIMEDOUT','EAI_AGAIN','UND_ERR_CONNECT_TIMEOUT'].includes(code)&&attempt<2){await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));continue;}
         const failure=Object.assign(new Error(`云端连接失败 (${code})`),{cloudNetwork:true,cloudFailure:true,status:502,code});

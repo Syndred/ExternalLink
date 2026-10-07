@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {fillOriginalVisitForm} from '../executor/src/original-visit-fill.mjs';
+test('original native visit fills remaining fields, runs two visual rounds and final corrections while cancelling stale plans',()=>{
+ const result=spawnSync(process.execPath,['executor/test/original-full-visit-fill.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const evidence=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(evidence.ok,true);assert.equal(evidence.results.length,10);for(const key of ['posts','externalRequests','realModelCalls','productionWrites'])assert.equal(evidence[key],0);assert.equal(evidence.originalFrozenProfileManualMarksFavoritesGroupsReceiptsAndFixedBatchKept,true);assert.equal(evidence.artifactIndependentReadbacks,5);
+});
+
+test('original final local length repair avoids an unnecessary model validation and remaining-field planner keeps only current product context',async()=>{
+ let value='TOO-LONG-VALUE';const calls=[],config={projectKey:'p',targetDomain:'https://product.example',projectFields:{Name:'Original Product','Cloud LOGO':'cloud-media://original'},logoDataUrl:'data:image/png;base64,binary',screenshots:['data:image/png;base64,large'],destinationFormStages:[{fields:[]}],learnedFieldMappings:{'directory.example':{own:{profileKey:'Name'}},'other.example':{foreign:{value:'Other product'}}}};
+ const snapshot=()=>({url:'https://directory.example/form',viewport:{height:800},fields:[{selector:'#section',id:'section',label:'Custom section',type:'text',required:true,value}],forms:[]});
+ const result=await fillOriginalVisitForm({config,platformType:'directory',cacheKey:'original',io:{assertCurrent:async()=>{},notice(){},settle:async()=>{},across:async message=>message.action==='smartFill'?{filledCount:0}:message.action==='countEmptyFields'?{emptyCount:0,invalidCount:value.length>8?1:0,totalCount:1}:{validationFailed:value.length>8,issues:[]},call:async message=>{
+  if(message.action==='getPageSnapshot')return snapshot();if(message.action==='getFilledFieldsReport')return{fields:[{selector:'#section',value,length:value.length,invalid:value.length>8,constraints:{maxLength:8}}],invalidCount:value.length>8?1:0,allValid:value.length<=8,issues:[]};if(message.action==='executeActionPlan')return{ok:true,results:[]};if(message.action==='applyFieldCorrections'){value=message.corrections[0].value;return{applied:1};}throw Error('Unexpected operation '+message.action);
+ },model:async(route,body)=>{calls.push(route);if(route==='ai/plan'){assert.equal(body.config.logoDataUrl,'');assert.deepEqual(body.config.screenshots,['']);assert.deepEqual(Object.keys(body.config.learnedFieldMappings),['directory.example']);assert.equal(body.config.destinationFormStages,undefined);assert.equal(body.config.projectFields.Name,'Original Product');return{status:'act',actions:[]};}assert.equal(route,'ai/vision-plan');return{status:'act',actions:[{type:'scroll',delta_y:200}]};},captureVisual:async()=>({screenshot:'data:image/png;base64,fixture',elements:[],viewport:{height:800}})}});
+ assert.equal(value,'TOO-LONG');assert.equal(result.validation.submitReady,true);assert.equal(result.formState.validationFailed,false);assert.deepEqual(calls,['ai/plan','ai/vision-plan','ai/vision-plan']);
+});

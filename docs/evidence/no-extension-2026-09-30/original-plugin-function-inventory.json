@@ -1,5 +1,22 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalAgentUnavailableCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "df82ae72a07439f11640fa58fd5d17a23f6ccf39",
+    "evidence": "original-agent-unavailable-2026-10-08.json",
+    "originalCurrentProductSkipAndBudgetedSameTargetContinuationConnected": true,
+    "nativeSyncFailureAndTransferredPageOwnershipProtected": true,
+    "authenticatedD1AndPostgreSqlReadbackRestoreVerified": true,
+    "actualIsolatedNativeWorkScenarios": 4,
+    "previousActualPreparationScenariosRerun": 12,
+    "fullSuitePassed": 825,
+    "newSince808": 17,
+    "allExplicitRetryAndManualEntriesVerified": false,
+    "fullOriginalVisualSubmissionReceiptAndNavigationRecoveryProven": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalPausedPublicPreparationCheckpoint": {
     "date": "2026-10-08",
     "evidence": "original-paused-public-preparation-2026-10-08.json",

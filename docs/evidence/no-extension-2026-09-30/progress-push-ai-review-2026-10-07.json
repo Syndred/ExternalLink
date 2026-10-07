@@ -1,0 +1,59 @@
+{
+  "kind": "progress_only_original_ai_review_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "latestFeatureCommit": "e1c9da9",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "gitPull": "Already up to date",
+  "functionalChangesThisCheckpoint": false,
+  "previousTestOutputRead": {
+    "path": "executor/test-output/original-timeline-all-2026-10-07.txt",
+    "passed": 679,
+    "failed": 0,
+    "skipped": 0,
+    "rerunThisCheckpoint": false,
+    "provesFullMigration": false
+  },
+  "currentReadOnlyState": {
+    "script": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "passed": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allProductionCloudDocumentHashesRechecked": false
+  },
+  "reviewInProgress": [
+    "original website extraction and profile generation request, merge and save behavior",
+    "original AI comment candidates, cache, refresh and history behavior",
+    "manual continuation preserving original task and attempt boundaries"
+  ],
+  "remainingAcceptance": [
+    "original browser latest products, favorites, categories and groups",
+    "complete historical records and old media ownership",
+    "actual Neon full workflows and special page behavior",
+    "all original user requirements with individual behavior and data evidence"
+  ],
+  "workerDeploymentThisCheckpoint": false,
+  "nativeServicesReloadedThisCheckpoint": false,
+  "productionDocumentAdoptions": 0,
+  "aiRequestsThisCheckpoint": 0,
+  "newRealSubmissions": 0,
+  "unrelatedLocalChangesPreserved": true
+}

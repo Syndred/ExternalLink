@@ -1246,8 +1246,8 @@
       "action": "confirmSubmissionSuccess",
       "mapping": "工作台人工确认成功 → previewManualConfirmation / confirmSubmissionSuccess；原批次、凭证及人工证明，独立账本回读后计成功",
       "status": "implemented_requires_full_acceptance",
-      "verification": "889项全量通过，原成功函数4种分支及21种迟到保护；实际两本机服务、工作台和认证D1覆盖账本已写但回复丢失后的原确认重试。认证PostgreSQL与云端恢复、SQLite重启保留原资料和尝试。生产人工确认未执行",
-      "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-2026-10-08.json"
+      "verification": "889项全量通过，原成功函数4种分支及21种迟到保护；实际两本机服务、工作台和认证D1覆盖账本已写但回复丢失后的原确认重试。认证PostgreSQL与云端恢复、SQLite重启保留原资料和尝试。生产人工确认未执行；空库恢复覆盖写账本前失败及写入后丢回复，恢复原确认凭证及说明；旧版确认仅沿认证完整云端任务恢复。898项全量通过，生产人工确认未执行",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-recovery-2026-10-08.json"
     },
     {
       "action": "contentReady",
@@ -2784,6 +2784,17 @@
     "evidence": "original-manual-confirmation-2026-10-08.json",
     "allOriginalEntriesVerified": false,
     "latestOriginalDataAndFullHistoryVerified": false,
+    "migrationComplete": false
+  },
+  "originalManualConfirmationRecoveryCheckpoint": {
+    "featureCommit": "b3776ca0e91f23f92dbd5aeb5e7bcc9dec74cd0a",
+    "evidence": "original-manual-confirmation-recovery-2026-10-08.json",
+    "passed": 898,
+    "failed": 0,
+    "skipped": 0,
+    "actualD1AndPostgresEmptyRecoveryVerified": true,
+    "allOriginalEntriesVerified": false,
+    "completeHistoryAndOtherDevicesVerified": false,
     "migrationComplete": false
   }
 }

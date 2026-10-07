@@ -1,0 +1,76 @@
+{
+  "kind": "original_manual_confirmation_empty_recovery_and_retry_validation_not_full_migration",
+  "date": "2026-10-08",
+  "featureCommit": "b3776ca0e91f23f92dbd5aeb5e7bcc9dec74cd0a",
+  "behavior": {
+    "existingHumanConfirmationResumesFromEmptyDatabase": true,
+    "originalNonceAndHumanEvidencePreserved": true,
+    "onlyExistingReceiptMayBeRecovered": true,
+    "confirmationScopeFrozenFieldsAndProofHashesPersisted": true,
+    "authenticatedCloudRestoreAcceptsLegacyMarkers": true,
+    "arbitraryLocalLegacyReceiptsNotAdopted": true,
+    "changedScopeFieldsAndProofRollBackRestore": true,
+    "cloudRestoreChecksWorkspaceDeviceAndBackend": true,
+    "leaseRefusesAlreadyStaleTaskBeforeOnlineOrOfflineAuthority": true,
+    "unsubmittedRetryRechecksTaskScopeAndPauseAfterSnapshotAndLease": true
+  },
+  "verification": {
+    "fullOutput": "executor/test-output/manual-confirmation-recovery-all-final-2026-10-08.txt",
+    "passed": 898,
+    "failed": 0,
+    "skipped": 0,
+    "newSince889": 9,
+    "focusedManualConfirmationTests": 14,
+    "retryTests": 5,
+    "lateRetryVariations": 18,
+    "actualD1WorkbenchCases": [
+      "same_local_database_after_lost_reply",
+      "empty_database_before_receipt_write",
+      "empty_database_after_receipt_write"
+    ],
+    "authenticatedPostgreSqlCases": [
+      "completed_confirmation_restore",
+      "empty_database_before_receipt_write",
+      "empty_database_after_receipt_write"
+    ],
+    "originalAttemptFieldsFixedBatchAndPauseRetained": true,
+    "newTaskRegistrationDuringResume": false,
+    "newReceiptOrHumanProofDuringResume": false,
+    "modelsAndRealSubmissions": 0
+  },
+  "publication": {
+    "nativeServicesUpdated": true,
+    "workerCodeChanged": false,
+    "workerDeployed": false,
+    "originalLocalBusinessMatchesHistoricBaseline": true,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "pendingQueues": 0,
+    "assistantEnabled": false,
+    "currentDeviceCloudDocumentsRead": 19,
+    "currentDeviceCloudTaskInventoryRead": 778,
+    "currentCloudHashesAndRevisionsMatchPreviousReadonlyBaseline": true,
+    "productionManualConfirmation": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "earlyFailuresPreserved": {
+    "actualEmptyRecoveryCouldNotOpenConfirmation": "manual-confirmation-empty-repro-2026-10-08.txt",
+    "firstFullSuite896PassTwoFixtureFailures": "manual-confirmation-recovery-all-2026-10-08.txt",
+    "fixes": "Updated exact scope error expectation and supplied a complete connection in the lightweight-index fixture; original no-write and request-count checks retained"
+  },
+  "limits": {
+    "allOriginalExplicitRetryAndVisitBranchesVerified": false,
+    "latestOriginalDataAndCompleteHistoryVerified": false,
+    "otherDevicesFullyVerified": false,
+    "migrationComplete": false
+  }
+}

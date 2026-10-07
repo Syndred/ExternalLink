@@ -33,11 +33,12 @@ export function createOriginalSubmissionAdapter(runtime,{task,page,config,active
   if(candidate()?.detection.platform==='wp_comment'&&preferences.autoSubmitStandardWpComments!==true)throw Error('标准WordPress评论自动提交未开启，保留填写结果');
   Object.assign(config,preferences,{autoSubmitDirectory:preferences.autoSubmitDirectory||manualAuthorized});
  };
- const beforeClick=async()=>{
+ const beforeClick=async({verifyIdentity=false}={})=>{
   await assertAuthorized();
   const current=candidate(),report=await current.engine.call({action:'getFilledFieldsReport'});await assertDocument();
   await runtime.reconcileTextInputs(current.frame,report);await assertDocument();
   const actual=await current.engine.call({action:'getFilledFieldsReport'}),baseline=await current.engine.call({action:'classifySubmitEvidence',destinationUrl:task.url});await assertDocument();
+  if(verifyIdentity){const issues=assessSubmissionQuality(actual,task.profileSnapshot||{});if(actual.allValid===false||issues.length)throw Error(issues.join('；')||'原投稿表单必填项已变化，未点击提交');}
   actual.attachments=await current.frame.locator('input[type=file]').evaluateAll(async inputs=>{
    const attachments=[];for(const input of inputs)for(const file of input.files||[])attachments.push({field:input.name||input.id,name:file.name,type:file.type,bytes:file.size,sha256:globalThis.crypto?.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join(''):''});return attachments;
   });await assertDocument();
@@ -64,7 +65,7 @@ export function createOriginalSubmissionAdapter(runtime,{task,page,config,active
   }
   const final=originalVisualSubmissionAction(action,visual()?.elements||[]);
   if(final){const validation=await candidate().engine.call({action:'collectFormValidation'}),report=await candidate().engine.call({action:'getFilledFieldsReport'});await assertDocument();const issues=assessSubmissionQuality(report,task.profileSnapshot||{});if(validation.validationFailed||issues.length)return{ok:false,needs_manual:true,reason:issues.join('；')||'原表单必填项未通过，未点击投稿'};}
-  let prior;if(action.type==='click')prior=await beforeClick();
+  let prior;if(action.type==='click')prior=await beforeClick({verifyIdentity:final});
   const outcome=await candidate().engine.call({action:'executeActionPlan',actions:[executed]});
   if(prior)await restoreNoClick(prior,outcome);return outcome;
  };
@@ -80,7 +81,7 @@ export function createOriginalSubmissionAdapter(runtime,{task,page,config,active
   if(validation.validationFailed!==false||Number(empty?.emptyCount||0)||Number(empty?.invalidCount||0))return false;
   const action=await engine.call({action:'inspectSubmitAction',config,platform:candidate().detection.platform||'directory'});await assertDocument();if(!action.finalFound)return false;
   if(action.allowed===false)return{ok:false,needs_manual:true,reason:'AI已完成填写，原自动投稿授权未开启'};
-  const prior=await beforeClick();let result;try{result=await engine.call({action:'submitFilledForm',config,platform:candidate().detection.platform||'directory'});}catch(error){throw error;}
+  const prior=await beforeClick({verifyIdentity:true});const result=await engine.call({action:'submitFilledForm',config,platform:candidate().detection.platform||'directory'});
   await restoreNoClick(prior,result);await assertDocument();
   if(result?.captcha||result?.needs_manual||result?.blocked)return{ok:false,...result};
   if(result?.validationFailed)return false;

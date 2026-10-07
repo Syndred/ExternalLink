@@ -10,6 +10,7 @@ import {join,resolve,sep} from 'node:path';
 import {Store} from '../executor/src/store.mjs';
 import {runOriginalAgentSubmission,originalVisualActions,originalVisualSubmissionAction} from '../executor/src/original-submission-flow.mjs';
 import {waitForOriginalSubmissionContent} from '../executor/src/original-navigation-rejudge.mjs';
+import {createOriginalSubmissionAdapter} from '../executor/src/original-submission-adapter.mjs';
 const source=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/background.js'],{encoding:'utf8',maxBuffer:4*1024*1024});
 const extract=(start,end)=>{const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a);return source.slice(a,b);};
 
@@ -71,4 +72,13 @@ test('original full post-action readiness waits for two stable snapshots without
 
 test('actual isolated original submission keeps full preparation fallback navigation evidence and unknown guards',()=>{
  const result=spawnSync(process.execPath,['executor/test/original-agent-submission.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:180000,maxBuffer:1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const proof=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(proof.ok,true);assert.equal(proof.results.length,9);assert.equal(proof.posts,5);for(const key of ['externalRequests','realModelCalls','productionWrites'])assert.equal(proof[key],0);for(const mode of ['visual','iframe','dom','navigation'])assert.equal(proof.results.find(row=>row.mode===mode).receiptRecorded,true);assert.equal(proof.results.find(row=>row.mode==='unconfirmed').unconfirmed,true);assert.equal(proof.results.find(row=>row.mode==='late-unknown').staleRejected,true);assert.equal(proof.fullMigrationComplete,false);
+});
+
+test('original full DOM submit rechecks the frozen product and changed required fields after authorization before any boundary',async()=>{
+ for(const mode of ['wrong-product','changed-required']){const f=fixture(),page={on(){},off(){},url:()=>f.task.url},report={allValid:mode!=='changed-required',fields:[{label:'Product name',name:'productName',type:'text',value:mode==='wrong-product'?'Other product':'Original'},{label:'Website URL',name:'url',type:'url',value:'https://product.example'}]};let clicks=0;
+  const engine={async call(input){if(input.action==='collectFormValidation')return{validationFailed:false};if(input.action==='countEmptyFields')return{emptyCount:0,invalidCount:0};if(input.action==='inspectSubmitAction')return{finalFound:true,allowed:true};if(input.action==='getFilledFieldsReport')return structuredClone(report);if(input.action==='classifySubmitEvidence')return{matched:false};if(input.action==='submitFilledForm'){clicks++;throw Error('Must not click');}throw Error('unexpected '+input.action);}};
+  f.runtime.cloud={request:async()=>({documents:{autoSubmitDirectoryListings:true,submissionRecords:{}}})};f.runtime.reconcileTextInputs=async()=>{};
+  const adapter=createOriginalSubmissionAdapter(f.runtime,{task:f.task,page,config:{autoSubmitDirectory:true},active:()=>true,assertDocument:async()=>{},candidate:()=>({engine,detection:{platform:'directory'}}),visual:()=>({}),ownership:{}});
+  try{await assert.rejects(adapter.deterministicSubmit({},{}),mode==='wrong-product'?/产品名称与资料品牌不一致/:/必填项已变化/);assert.equal(clicks,0);assert.equal(f.task.attemptBoundary,undefined);assert.equal(f.task.actualSubmission,undefined);}finally{adapter.dispose();f.store.close();}
+ }
 });

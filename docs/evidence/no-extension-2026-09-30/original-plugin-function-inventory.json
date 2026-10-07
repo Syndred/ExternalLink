@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalProductHuntMediaCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-product-hunt-media-2026-10-07.json",
+    "fullSuitePassed": 740,
+    "newTestsSince739": 1,
+    "actualIsolatedChromeImageCases": 4,
+    "verifiedUploadedFiles": 12,
+    "actualNativeWorkflowAndBridgeUsed": true,
+    "missingPreviewReportedFailedAndDidNotAdvance": true,
+    "originalManifestAndFrozenProfileUnchanged": true,
+    "actualUploadedFileShaRecorded": true,
+    "chineseEmbeddedAndMixedSourcesVerified": true,
+    "actualProductHuntServerUploadOrReceiptVerified": false,
+    "originalPricingHelpersSourcePreserved": true,
+    "originalNativeServicesUpdated": true,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalNewProductKnownFormsCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-new-product-known-forms-2026-10-07.json",

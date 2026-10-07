@@ -1,0 +1,78 @@
+{
+  "kind": "original_product_hunt_media_runtime_checkpoint_not_full_acceptance",
+  "date": "2026-10-07",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "changes": [
+    "Product Hunt upload callbacks distinguish embedded, cloud, remote and mixed image sources",
+    "callbacks include the original field label and a Chinese failure reason when no preview appears",
+    "native task feedback preserves mixed sources as an explicit Chinese label"
+  ],
+  "fullSuite": {
+    "output": "executor/test-output/original-product-hunt-media-all-final-2026-10-07.txt",
+    "passed": 740,
+    "failed": 0,
+    "skipped": 0,
+    "newTestsSince739": 1,
+    "provesFullMigration": false
+  },
+  "actualIsolatedChrome": {
+    "script": "executor/test/original-product-hunt-media.mjs",
+    "output": "executor/test-output/original-product-hunt-media-browser-with-failure-2026-10-07.txt",
+    "passed": true,
+    "actualNativeProductHuntWorkflowAndBridgeUsed": true,
+    "hiddenFileInputsUsed": true,
+    "successfulImageCases": 4,
+    "verifiedUploadedFiles": 12,
+    "cases": ["cloud GIF logo and gallery", "embedded SVG logo and cloud gallery", "PNG conversion for restricted inputs", "mixed embedded and cloud gallery"],
+    "missingPreviewCasePassed": true,
+    "missingPreviewReportedFailedAndDidNotAdvance": true,
+    "failedSourceAndReasonKept": true,
+    "disabledScreenshotSlotKept": true,
+    "actualUploadedFileShaInAttachments": true,
+    "originalManifestAndFrozenProfileUnchanged": true,
+    "uploadShaIsNotClaimedAsOriginalAssetSha": true,
+    "stoppedAtLogin": true,
+    "createdDraft": false,
+    "posts": 0,
+    "externalRequests": 0,
+    "modelCalls": 0,
+    "productionWrites": 0,
+    "originalUnknownTaskAndPausedBudgetPreserved": true,
+    "provesActualProductHuntServerUploadOrReceipt": false,
+    "firstFailedOutputsKept": ["executor/test-output/original-product-hunt-media-browser-first-2026-10-07.txt", "executor/test-output/original-product-hunt-media-browser-second-2026-10-07.txt"],
+    "firstFailureReason": "The simulated post-image login button did not match the original gate; the original 60-wait bound was retained. Fixture corrected to the recognized Sign in button."
+  },
+  "originalPricingSourceComparison": {
+    "output": "executor/test-output/original-product-hunt-pricing-source-2026-10-07.txt",
+    "helpers": ["productHuntPricingValue", "fillProductHuntPricing"],
+    "exactOriginalSourcePreserved": true,
+    "actualAllPricingBehaviorVerified": false
+  },
+  "originalNativeServices": {
+    "updated": true,
+    "processIdentityIdleAndDurableStateGuarded": true,
+    "beforeOutput": "executor/test-output/original-product-hunt-media-native-before-2026-10-07.txt",
+    "afterOutput": "executor/test-output/original-product-hunt-media-native-after-2026-10-07.txt",
+    "bothServicesReadonlyPassed": true,
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchangedDuringChecks": true,
+    "paused": true,
+    "busy": false,
+    "pendingQueues": 0,
+    "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false},
+    "allCloudDocumentHashesRechecked": false,
+    "completeProductionUiRechecked": false,
+    "actualOriginalChromeStateRead": false
+  },
+  "workerDeploymentThisCheckpoint": false,
+  "realModelCalls": 0,
+  "newRealSubmissions": 0,
+  "productionDocumentAdoptions": 0,
+  "remaining": [
+    "original browser latest products, favorites, categories and groups",
+    "complete history, other devices, aliases and original media associations",
+    "all remaining manual, dynamic, special launch and callback behavior",
+    "actual external service results and complete individual requirement evidence"
+  ]
+}

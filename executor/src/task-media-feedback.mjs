@@ -1,4 +1,4 @@
-const sources={cloud:'云端媒体',remote:'远程图片',embedded:'产品资料内置图片',original_frozen_backup:'原任务冻结备份'};
+const sources={cloud:'云端媒体',remote:'远程图片',embedded:'产品资料内置图片',mixed:'混合图片来源',original_frozen_backup:'原任务冻结备份'};
 const text=value=>typeof value==='string'?value.trim().slice(0,500):'';
 export function recordTaskMediaUpload(runtime,task,message){
  const current=runtime.store.get('task:'+task.id);

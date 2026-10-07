@@ -2943,6 +2943,9 @@
   async function attachProductHuntMediaFiles(input, sources, config, namePrefix, mediaKind = "") {
     const usableSources = (sources || []).map(productHuntMediaSource).filter(Boolean);
     if (!usableSources.length) return { ok: false, reason: "media_source_missing", files: 0, previewVerified: false };
+    const sourceKinds = [...new Set(usableSources.map(source => /^data:/i.test(source) ? "embedded" : isCloudMediaRef(source) ? "cloud" : "remote"))];
+    const source = sourceKinds.length === 1 ? sourceKinds[0] : "mixed";
+    const fieldLabel = getSnapshotLabel(input) || namePrefix || "文件字段";
     try {
       const files = [];
       for (let index = 0; index < usableSources.length; index += 1) {
@@ -2967,7 +2970,9 @@
       );
       reportMediaUpload(preview.verified ? "success" : "failed", {
         name: namePrefix || "producthunt",
-        source: usableSources.some((source) => isCloudMediaRef(source)) ? "cloud" : "remote",
+        source,
+        fieldLabel,
+        ...(preview.verified ? {} : { reason: "未检测到本站图片上传预览" }),
         files: files.length,
         previewVerified: preview.verified,
       });
@@ -2978,7 +2983,7 @@
         previewCount: preview.count,
       };
     } catch (error) {
-      reportMediaUpload("failed", { name: namePrefix || "producthunt", reason: error.message });
+      reportMediaUpload("failed", { name: namePrefix || "producthunt", source, fieldLabel, reason: error.message });
       return { ok: false, reason: error.message, files: 0, previewVerified: false };
     }
   }

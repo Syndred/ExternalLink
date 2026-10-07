@@ -19,3 +19,7 @@ test('original waiting and step budgets remain fixed and non-final trusted advan
  calls=0;const steps=await runProductHuntLoop({...harness(),step:async()=>{calls++;return{stage:'main_info',advanced:true};}});assert.equal(calls,12);assert.equal(steps.completedSteps,12);
  let advances=0;calls=0;const result=await runProductHuntLoop({...harness(),step:async()=>++calls===1?{stage:'main_info',waiting:true,stageCompleted:true,stageAdvanced:false,advancePoint:{x:10,y:10}}:{stage:'checklist',ready_to_create:true},advance:async()=>{advances++;return true;}});assert.equal(advances,1);assert.equal(result.ready_to_create,true);
 });
+
+test('Product Hunt visual handoff preserves original unavailable or interrupted outcomes without another visual attempt or creation',async()=>{
+ for(const outcome of [{ok:false,originalAgentUnavailable:true,serviceUnavailable:true,reason:'cloud worker unavailable'},{ok:false,interrupted:true,reason:'Original model budget exhausted'}]){let visuals=0,created=0;const result=await runProductHuntLoop({...harness(),step:async()=>({stage:'images',waiting:true,missing:['Screenshot upload'],reason:'Custom control'}),visual:async()=>{visuals++;return outcome;},create:async()=>{created++;}});assert.deepEqual(result,outcome);assert.equal(result.needs_manual,undefined);assert.equal(visuals,1);assert.equal(created,0);}
+});

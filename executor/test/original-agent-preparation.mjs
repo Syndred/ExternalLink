@@ -22,7 +22,7 @@ let scenario,currentPage,currentTask,routes,visionSteps,judgments,checks;
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 store.set('pair',pair);store.set('paused',false);store.set('acceptanceBatch',{status:'paused',cursor:13,count:30});runtime.context=context;runtime.host={endpoint:'http://127.0.0.1:'+port,startedAt:'isolated-original-agent-'+Date.now()};runtime.preparePublicPage=async()=>{};runtime.lease=async()=>{};
 await context.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():(externalRequests++,route.abort()));
-Object.defineProperty(runtime,'cloud',{value:{flush:async()=>{},async request(route,input){
+Object.defineProperty(runtime,'cloud',{value:{flush:async store=>{for(const event of store.pending())store.ack(event.id);},async request(route,input){
  if(route==='artifact'){const ref='isolated-artifact-'+artifacts.size;artifacts.set(ref,input.dataUrl);return{ref};}if(route==='artifact-read'){assert.ok(artifacts.has(input.ref));return{dataUrl:artifacts.get(input.ref)};}
  if(route==='snapshot')return structuredClone(snapshot);
  if(route==='library'){const change=applicationMutation(snapshot.documents,input.operation);Object.assign(snapshot.documents,change.updates);for(const key of Object.keys(change.updates))snapshot.revisions[key]++;return{ok:true};}

@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import '../../core/queue.js';
+import {originalAgentUnavailableError} from './original-agent-unavailable.mjs';
 
 export const originalAgentLimits=Object.freeze({loops:8,settleMs:600});
 export function originalExplicitHumanGate(reply,snapshot){
@@ -53,7 +54,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
    state.originalVisual.loops++;persist('original_agent_loop_boundary');const step=state.originalVisual.loops-1;
    let plan;
    try{plan=await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:state.originalVisual.noProgressCount?'Previous action produced no visible page change. Reassess the screenshot and choose a different action.':''});plan={...plan,visualAgent:true};}
-   catch(error){if(error.staleTask||error.unattendedBudget||error.batchPaused)throw error;await io.assertCurrent();state.visualFallbackReason=String(error.message||error).slice(0,2000);persist('original_agent_visual_unavailable');plan=await model('plan',{snapshot,step,history:state.originalVisual.history.slice(-8),visualError:state.visualFallbackReason});plan={...plan,visualAgent:false};}
+   catch(error){if(error.staleTask||error.unattendedBudget||error.batchPaused||error.originalTaskSyncFailure||[401,403,409].includes(error.status))throw error;await io.assertCurrent();state.visualFallbackReason=String(error.message||error).slice(0,2000);persist('original_agent_visual_unavailable');plan=await model('plan',{snapshot,step,history:state.originalVisual.history.slice(-8),visualError:state.visualFallbackReason});plan={...plan,visualAgent:false};}
    if(plan.status==='legacy_budget')return result=terminal({interrupted:true,reason:plan.reason});
    const decision=originalPlanDecision(plan,snapshot);if(decision.terminal)return result=terminal(decision.terminal);plan=decision.plan;
    await guarded(()=>io.recordPlan?.(plan));const beforeHash=snapshot.domHash,actionResults=[];
@@ -61,7 +62,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
     if(state.legacyCeilings&&state.actions>=state.legacyCeilings.actions)return result=terminal({interrupted:true,reason:'原接管动作预算已用完，保留原任务'});
     await io.assertCurrent();state.actions++;const event={at:new Date().toISOString(),type:action.type,selector:action.selector};state.history.push(event);state.history=state.history.slice(-100);persist('original_agent_action_boundary');
     let outcome;try{outcome=await io.act(action,{visual:plan.visualAgent===true,snapshot});event.ok=outcome?.ok!==false;}
-    catch(error){if(error.staleTask)throw error;event.ok=false;event.error=String(error.message||error).slice(0,2000);if(plan.visualAgent)throw error;outcome=await guarded(()=>io.visualFallback(snapshot,error.message,model,async action=>{if(state.legacyCeilings&&state.actions>=state.legacyCeilings.actions)throw Error('原接管动作预算已用完');state.actions++;state.history.push({at:new Date().toISOString(),type:action.type,selector:action.selector,visualFallback:true});persist('original_agent_fallback_action_boundary');return guarded(()=>io.act(action,{visual:true,snapshot}));}));}
+    catch(error){if(error.staleTask||error.originalTaskSyncFailure||error.unattendedBudget||error.batchPaused||[401,403,409].includes(error.status))throw error;event.ok=false;event.error=String(error.message||error).slice(0,2000);if(plan.visualAgent)throw error;outcome=await guarded(()=>io.visualFallback(snapshot,error.message,model,async action=>{if(state.legacyCeilings&&state.actions>=state.legacyCeilings.actions)throw Error('原接管动作预算已用完');state.actions++;state.history.push({at:new Date().toISOString(),type:action.type,selector:action.selector,visualFallback:true});persist('original_agent_fallback_action_boundary');return guarded(()=>io.act(action,{visual:true,snapshot}));}));}
     await io.assertCurrent();persist('original_agent_action_observed');actionResults.push(outcome||{ok:true,type:action.type});
     const gate=outcome?.results?.find(item=>item.needs_manual)||(outcome?.needs_manual?outcome:null);if(gate)return result=terminal({needs_manual:true,reason:gate.error||gate.reason||'当前动作需要人工处理',humanGate:gate.humanGate,semanticReview:gate.semanticReview===true||gate.uncertain===true||gate.humanGate==='payment_uncertain'});
     if(outcome?.blocked)return result=terminal({blocked:true,reason:outcome.reason||'云端 AI 暂时无法处理该页面'});
@@ -79,7 +80,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
    if(await guarded(()=>io.ready(snapshot)))return result={ok:true,reason:'prepared'};
   }
   return result;
- }catch(error){if(error.originalPublicGateResult){result=terminal({...error.originalPublicGateResult,reason:String(error.message||error),originalPublicGateClassified:error.originalPublicGateClassified===true,originalPublicGateDocumentTimeOrigin:error.originalPublicGateDocumentTimeOrigin});return result;}result=terminal({reason:String(error.message||error),status:error.status,cloudNetwork:error.cloudNetwork,...(error.staleTask?{staleTask:true,interrupted:true}:error.unattendedBudget||error.batchPaused?{interrupted:true}:{needs_manual:true,serviceUnavailable:!!(error.cloudNetwork||error.status>=500||/云端|cloud|worker|fetch/i.test(error.message||''))})});return result;}
+ }catch(error){if(error.originalPublicGateResult){result=terminal({...error.originalPublicGateResult,reason:String(error.message||error),originalPublicGateClassified:error.originalPublicGateClassified===true,originalPublicGateDocumentTimeOrigin:error.originalPublicGateDocumentTimeOrigin});return result;}result=terminal({reason:String(error.message||error),status:error.status,cloudNetwork:error.cloudNetwork,...(error.staleTask?{staleTask:true,interrupted:true}:error.originalTaskSyncFailure?{originalTaskSyncFailure:true,interrupted:true}:error.unattendedBudget||error.batchPaused?{interrupted:true}:originalAgentUnavailableError(error)?{originalAgentUnavailable:true,serviceUnavailable:true}:{needs_manual:true,serviceUnavailable:[401,403,409].includes(error.status)})});return result;}
  finally{
   const current=runtime.store.get('task:'+task.id);if(current?.aiTakeover?.id===state.id&&current.controller==='ai'&&io.canRelease(current)){
    state.finishedAt=new Date().toISOString();state.reason=result.reason;state.ok=result.ok;runtime.update(current,{controller:'executor',aiTakeover:structuredClone(state)},'original_agent_returned');Object.assign(task,current);

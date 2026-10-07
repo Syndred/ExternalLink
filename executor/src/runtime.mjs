@@ -57,6 +57,7 @@ import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication} fro
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
+import {skipOriginalUnavailableTask,attachOriginalGroupPage,navigateOriginalGroupPage,originalTaskSync} from './original-agent-unavailable.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
 import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
 import {checkpointTaskUpdate,recoverCloudBatchRecords,parkRestoredBatchTask,flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
@@ -399,6 +400,7 @@ export class Runtime {
   }
   update(task, patch, type, stateChanges) { const checkpoint=checkpointTaskUpdate(this,task,patch,stateChanges);const next={...task,...checkpoint.patch};const event=this.store.transition(next,type,checkpoint.stateChanges);Object.assign(task,next);return event; }
   async lease(task,{online=false}={}) {
+    const leaseScope=workbenchScope(this.store.get('pair')),leaseTask=structuredClone(this.store.get('task:'+task.id));
     if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;
     try { lease = await this.cloud.request('lease', { taskId: task.id, version: task.version, controllerId: this.controllerId }); }
@@ -411,6 +413,7 @@ export class Runtime {
       // was saved. The cloud still enforces the active lease on this request.
       lease=await this.cloud.request('lease',{taskId:task.id,version:remote.version,controllerId:this.controllerId});
     }
+    if(leaseScope!==workbenchScope(this.store.get('pair'))||!isDeepStrictEqual(this.store.get('task:'+task.id),leaseTask))throw Object.assign(Error('领取期间原任务或工作区已变化，保留新状态'),{staleTask:true});
     task.version = lease.version; task.controllerId = this.controllerId;
     this.store.set(`task:${task.id}`, task);
   }
@@ -605,6 +608,7 @@ export class Runtime {
   async work({taskId:assignedTaskId}={}) {
     await this.synchronize();
     if (!this.context) await this.connect();
+    if(this.store.get('paused')===false)for(const prior of this.store.values('task:').filter(task=>task.status==='skip'&&task.originalAgentSkip&&task.originalGroupAdvance?.status==='awaiting_next'&&!task.tabClosedAt&&!this.activeTaskIds?.has(task.id)&&this.activeTaskId!==task.id)){const scope=workbenchScope(this.store.get('pair'));try{await closeAcceptanceTask(this,prior);}catch(error){if(!error.staleTask&&scope===workbenchScope(this.store.get('pair'))&&isDeepStrictEqual(this.store.get('task:'+prior.id),prior))this.update(prior,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:prior.targetId}},'original_group_cleanup_deferred');}}
     const workbenchId=this.store.get('activeWorkbenchBatch');
     if(!assignedTaskId&&workbenchId&&!this.store.get('singleTaskId')){const selected=await nextWorkbenchTask(this);if(!selected)return;}
     const fixedBatch=this.store.get('acceptanceBatch');
@@ -658,12 +662,13 @@ export class Runtime {
     const requirePrepared=result=>{if(result.ok)return;throw Object.assign(Error(result.reason||'原AI接管未完成，请检查原任务'),{staleTask:result.staleTask===true,preparationInterrupted:result.interrupted===true,cloudNetwork:result.cloudNetwork,status:result.status,preparationResult:result});};
     const responseTasks = [], submissionResponses = [];
     try {
+      await attachOriginalGroupPage(this,task);if(task.status==='needs_manual')return;
       await assertParkedResumePage(this,task);
       this.update(task, { status: 'opening', controller: 'executor' }, 'opening');
       let reused = false;
       if (task.targetId) {
         try { page = await this.findPage(task); reused = true; } catch (error) {
-          if (task.attemptBoundary) throw error;
+          if (task.attemptBoundary||task.originalGroupPage) throw Object.assign(error,{staleTask:true});
         }
       }
       if (!page) {
@@ -687,6 +692,7 @@ export class Runtime {
       if(!active())return;
       Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
       if (!reused) await page.goto(task.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      else if(task.originalGroupPage&&await navigateOriginalGroupPage(this,task,page,{active})===false)return;
       // Hydrated forms can appear after DOMContentLoaded. Wait on visible
       // controls/frames, rather than treating the initial HTML as a dead end.
       await page.locator('input:visible, textarea:visible, select:visible, iframe:visible, [contenteditable=true]:visible, a[href]:visible, button:visible').first().waitFor({ timeout: 15000 }).catch(() => {});
@@ -856,8 +862,10 @@ export class Runtime {
       else this.update(task, { status: 'submitted_unconfirmed', attentionType:'unknown_receipt',reason: result.reason || result.error || '未取得明确新回执，先核验；不会自动重投', submitResult: result }, 'unknown');
     } catch (error) {
       if(error.staleTask){staleWork=true;return;}
+      if(error.originalTaskSyncFailure)throw error;
       if(error.preparationInterrupted)return;
-      if(error.cloudNetwork||[401,403,409].includes(error.status)||error.status>=500)throw error;
+      if(error.preparationResult?.originalAgentUnavailable&&task.status==='skip'&&task.attentionType==='agent_unavailable'&&!task.attemptBoundary&&!task.receipt)return;
+      if([401,403,409].includes(error.status)||!error.preparationResult&&(error.cloudNetwork||error.status>=500))throw error;
       if(task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end'&&!task.attemptBoundary&&!task.receipt)return;
       this.update(task, { status: task.attemptBoundary ? 'submitted_unconfirmed' : 'needs_manual', siteStatus:task.attemptBoundary?'sent_unconfirmed':'not_submitted', reason: error.message,
         attentionType:task.attemptBoundary?'unknown_receipt':task.attentionType||classifyBlocker(error.message) }, 'attention');
@@ -875,7 +883,7 @@ export class Runtime {
           catch(error){this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'evidence_capture_deferred');}
         }
         await this.synchronize();
-        if(task.acceptanceId||task.workbenchBatchId||task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)){
+        if(task.acceptanceId||task.workbenchBatchId||task.originalAgentSkip&&task.status==='skip'||task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)){
           try{await closeAcceptanceTask(this,task);}
           catch(error){if(!error.staleTask)this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
         }
@@ -941,7 +949,7 @@ export class Runtime {
     let lastVisual;
     const taskPayload=()=>({index:0,domain:queue.extractDomain(task.url),url:task.url,platformType:candidate?.detection.platform||'auto',projectKey:config.projectKey||task.profileId});
     const model=async(kind,input)=>{
-      await assertDocument();await this.cloud.flush(this.store);await assertDocument();
+      await assertDocument();await originalTaskSync(()=>flushBatchTaskEvents(this,task));await assertDocument();
       if(kind==='vision-plan'){
         const visual=await captureOriginalTaskVisual(this,{task,page,candidate,assertCurrent:assertDocument});await assertDocument();
         lastVisual=visual;const plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,fillOnly:true});await assertDocument();
@@ -951,7 +959,7 @@ export class Runtime {
       const plan=await this.batchModelRequest(task,'plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config:preparationConfig,...input,fillOnly:true});await assertDocument();return{...plan,actions:restrictPreparationActions(plan.actions,input.snapshot)};
     };
     const act=async(action,{visual=false}={})=>{
-        await assertDocument();await this.lease(task,{online:true});await assertDocument();
+        await assertDocument();await originalTaskSync(()=>this.lease(task,{online:true}));await assertDocument();
         const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
         if(action.type==='click')await candidate.engine.call({action:'persistFillLearnings',config});
         let result;
@@ -969,7 +977,9 @@ export class Runtime {
       visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
     }});
     if(result.staleTask){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{staleTask:true});}
+    if(result.originalTaskSyncFailure){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{originalTaskSyncFailure:true,status:result.status,cloudNetwork:result.cloudNetwork});}
     const assertResultDocument=result.originalPublicGateDocumentTimeOrigin===undefined?assertDocument:async()=>{await assertCurrent();if(await page.evaluate(()=>performance.timeOrigin)!==result.originalPublicGateDocumentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，接管关口已放弃'),{staleTask:true});await assertCurrent();};
+    if(result.originalAgentUnavailable)await skipOriginalUnavailableTask(this,{task,page,result,assertCurrent:async()=>{await assertCurrent();await assertResultDocument();}});
     if(!result.serviceUnavailable&&!result.interrupted&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
     return {...result,candidate};
   }
@@ -1300,6 +1310,7 @@ export class Runtime {
   }
   async findPage(task) {
     if (!this.context) await this.connect();
+    if(task.originalGroupAdvance?.status==='transferred'&&task.targetId===task.originalGroupAdvance.targetId)throw new Error('原页已交给同站下一产品，不能由旧产品重新使用');
     if (task.browserInstance !== this.host.startedAt) throw new Error('原浏览器宿主已变化；保留未知结果，不能重投');
     for (const page of this.context.pages()) {
       const info=await getTargetInfo(this.context,page);
@@ -1864,7 +1875,7 @@ export class Runtime {
     }
     throw new Error('未知控制操作');
   }
-  async batchModelRequest(task,route,body,options){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body,undefined,options);}
+  async batchModelRequest(task,route,body,options){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await originalTaskSync(()=>flushBatchTaskEvents(this,task,event.id));if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Object.assign(Error('原批次已暂停，预算保留且未调用模型'),{batchPaused:true});}return this.cloud.request(route,body,undefined,options);}
   async bridge(task, message) {
     if(message.action==='captchaResolved')return this.dispatchControl?this.dispatchControl('checkCaptchaResumes',{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl}):checkCaptchaResumes(this,{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl});
     if(message.action==='mediaUploadStatus')return recordTaskMediaUpload(this,task,message);

@@ -23,7 +23,7 @@ export async function runProductHuntLoop({step,checkpoint,active=()=>true,delay,
    if(result.stageCompleted&&result.stageAdvanced===false&&result.advancePoint&&advance){if(await advance(result)){waits++;await delay(900);continue;}}
    const next=[result.stage||'unknown',JSON.stringify(result.missing||result.requiredUnchecked||[]),result.reason||''].join('|');stable=next===signature?stable+1:0;signature=next;
    if(productHuntVisualHandoff(result,stable)){
-    if(visual&&visuals<productHuntLimits.visualFallbacks){visuals++;const outcome=await visual(result);if(!active())return{ok:false,interrupted:true};if(outcome?.needs_manual||outcome?.blocked||outcome?.error)return{...outcome,keepTab:true};if(outcome?.ok){stable=0;signature='';waits++;continue;}}
+    if(visual&&visuals<productHuntLimits.visualFallbacks){visuals++;const outcome=await visual(result);if(!active())return{ok:false,interrupted:true};if(outcome?.originalAgentUnavailable||outcome?.interrupted)return outcome;if(outcome?.needs_manual||outcome?.blocked||outcome?.error)return{...outcome,keepTab:true};if(outcome?.ok){stable=0;signature='';waits++;continue;}}
     return{...result,visualEscalation:true,needs_manual:true,keepTab:true};
    }
    if(result.stage&&result.stage!=='unknown'&&result.missing?.length&&stable>=5)return{...result,needs_manual:true,keepTab:true,reason:'Product Hunt '+result.stage+' 仍缺少：'+result.missing.join('、')};

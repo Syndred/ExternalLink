@@ -1,0 +1,54 @@
+{
+  "kind": "progress_only_original_backup_source_review",
+  "date": "2026-10-07",
+  "latestFunctionCommit": "2005b7f",
+  "migrationComplete": false,
+  "gitPull": "Already up to date",
+  "tests": {
+    "pass": 726,
+    "fail": 0,
+    "skip": 0,
+    "rerunThisCheckpoint": false,
+    "existingOutput": "executor/test-output/original-media-registration-recovery-all-final-second-2026-10-07.txt"
+  },
+  "backupReview": {
+    "readonly": true,
+    "privateLocalOutput": "executor/test-output/original-backup-source-audit-2026-10-07.json",
+    "olderSnapshots": [
+      { "date": "2026-09-29", "profiles": 7, "records": 41, "missingProfileIds": 0, "missingRecordIds": 0 },
+      { "date": "2026-09-30", "profiles": 8, "records": 105, "missingProfileIds": 0, "missingRecordIds": 0 }
+    ],
+    "localCaches": [
+      { "profiles": 9, "records": 112 },
+      { "profiles": 9, "records": 112 }
+    ],
+    "fullDocumentDifferencesExist": true,
+    "favoritesExplicitGroupsAndFullOriginalRunHistoryAbsentInThoseSources": true,
+    "absenceDoesNotProveOriginalUserDataAbsent": true,
+    "unscopedCloudPullJsonCount": 18,
+    "companionSqliteIdentityVerificationOutstanding": true,
+    "latestOriginalChromeDataRead": false
+  },
+  "confirmedCodeGap": {
+    "cloudPullJsonMissingScopeAndWorkspaceId": true,
+    "jsonRecoveryDoesNotCrossCheckCompanionSqliteIdentity": true,
+    "fixedThisCheckpoint": false,
+    "newTestsThisCheckpoint": 0
+  },
+  "checkpointActions": {
+    "sourceChanges": 0,
+    "deployments": 0,
+    "serviceReloads": 0,
+    "businessDataRecovery": 0,
+    "realAiCalls": 0,
+    "realSubmissions": 0,
+    "newProductionRuntimeVerification": false
+  },
+  "remaining": [
+    "Original browser latest products categories groups and favorites",
+    "Backup scope identity protection with genuine legacy format compatibility",
+    "Other original devices aliases and full history association",
+    "Remaining original callbacks manual dynamic and special pages",
+    "Real external service results and all original function correspondence"
+  ]
+}

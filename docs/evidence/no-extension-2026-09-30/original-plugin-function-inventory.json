@@ -772,7 +772,7 @@
       "action": "captchaResolved",
       "mapping": "原本机验证码等待检查点 / captchaResolved / checkCaptchaResumes / 普通任务与Product Hunt原页恢复",
       "status": "implemented_requires_full_acceptance",
-      "verification": "746项回归及12种隔离浏览器情形通过；保留原资料、范围、预算、截止时间与未知尝试，旧任务没有原文档检查点时不自动恢复；不代表真实验证码或站方收件验收"
+      "verification": "746项回归及12种隔离浏览器情形通过；当前恢复等待本机执行器空闲，原插件支持其他任务运行时恢复待人工项，并行调度迁移仍有缺口。固定批次／连续目录／原run恢复另须专门验证；旧任务无原文档检查点时不自动恢复，不代表真实验证码或收件验收"
     },
     {
       "action": "clearSiteAnnotation",

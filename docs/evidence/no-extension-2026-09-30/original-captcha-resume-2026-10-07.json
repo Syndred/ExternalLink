@@ -80,6 +80,8 @@
     "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false}
   },
   "remainingAcceptance": [
+    "Confirmed parallel continuation gap: current scan waits while runtime.job exists; original resumeAfterCaptcha and handleManualSubmit can resume a parked task while other tasks run. Original parked-task scheduler integration remains incomplete.",
+    "Fixed batch, continuous library and original-run recovery paths require dedicated runtime verification beyond workbench and single-task fixtures",
     "Legacy waiting tasks without an observed original document recovery checkpoint require explicit original-task handling",
     "Remaining original manualContinue, manualSubmit, manualSkip and requestAutoFill page callbacks",
     "Original latest products, favorites, category groups and other devices or legacy aliases",

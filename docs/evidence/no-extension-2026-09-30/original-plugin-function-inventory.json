@@ -1,5 +1,21 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalCaptchaResumeCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-captcha-resume-2026-10-07.json",
+    "fullSuitePassed": 746,
+    "newTestsSince740": 6,
+    "actualIsolatedBrowserCases": 12,
+    "ordinaryNativeWorkAndContinuationVerified": true,
+    "originalProductHuntCaptchaHandoffVerified": true,
+    "originalFrozenProductScopeBudgetAndUnknownAttemptKept": true,
+    "originalServicesReadOnlyBeforeAfterPassed": true,
+    "legacyTasksWithoutOriginalDocumentCheckpointAutoResumed": false,
+    "remainingPageCallbacksFullyVerified": false,
+    "realCaptchaCompleted": false,
+    "realSiteAcceptance": false,
+    "migrationComplete": false
+  },
   "originalProductHuntMediaCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-product-hunt-media-2026-10-07.json",
@@ -754,8 +770,9 @@
     },
     {
       "action": "captchaResolved",
-      "mapping": "continueTask 原页人工验证恢复",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "原本机验证码等待检查点 / captchaResolved / checkCaptchaResumes / 普通任务与Product Hunt原页恢复",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "746项回归及12种隔离浏览器情形通过；保留原资料、范围、预算、截止时间与未知尝试，旧任务没有原文档检查点时不自动恢复；不代表真实验证码或站方收件验收"
     },
     {
       "action": "clearSiteAnnotation",

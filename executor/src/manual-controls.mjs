@@ -7,7 +7,7 @@ import {assertOriginalBatch,persistBatchLifecycle} from './execution-lifecycle.m
 import {batchConfig} from './workbench-batch-policy.mjs';
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 const at=()=>new Date().toISOString();
-function manualTargetIds(runtime,scope,excluded){return new Set(runtime.store.values('task:').filter(other=>{const source=other.workbenchBatchId&&runtime.store.get('workbenchBatch:'+other.workbenchBatchId);return other.id!==excluded&&source&&(!source.scope||source.scope===scope)&&other.targetId&&!other.tabClosedAt&&!other.receipt&&['needs_manual','submitted_unconfirmed'].includes(other.status);}).map(other=>other.targetId));}
+export function manualTargetIds(runtime,scope,excluded){return new Set(runtime.store.values('task:').filter(other=>{const source=other.workbenchBatchId&&runtime.store.get('workbenchBatch:'+other.workbenchBatchId);return other.id!==excluded&&source&&(!source.scope||source.scope===scope)&&other.targetId&&!other.tabClosedAt&&!other.receipt&&['needs_manual','submitted_unconfirmed'].includes(other.status);}).map(other=>other.targetId));}
 function selectedTask(runtime,input){const task=runtime.store.get('task:'+input.taskId);if(!task?.runId||input.expectedRunId!==task.runId)throw Error('原任务或批次已变化，请刷新后重试');if(input.expectedTargetId!==undefined&&input.expectedTargetId!==task.targetId)throw Error('原标签页已变化，请刷新后重试');if(['supervisor','ai'].includes(task.controller))throw Error('请先等待原控制器交回任务');return task;}
 function finishSkippedScope(runtime,task){
  const time=at(),fixed=runtime.store.get('acceptanceBatch'),execution=fixed&&runtime.store.get('acceptanceExecution:'+fixed.id),frozen=fixed&&runtime.store.get('acceptance:'+fixed.id);

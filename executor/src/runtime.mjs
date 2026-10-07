@@ -66,6 +66,7 @@ import {pullCloudState,previewCloudPull,commitCloudPull} from './cloud-pull.mjs'
 import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
+import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captcha-resume.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
 import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
@@ -780,6 +781,7 @@ export class Runtime {
         this.update(task,{fillOnlyPrepared:complete,attentionType:complete?'fill_only':'missing_fields'},'batch_fill_only_prepared');
         if(!complete)throw Error(fill.reason||'仅填写已停止，必填资料或素材仍需核对，未点击提交');
       }
+      if(detection.hasCaptcha)armCaptchaResume(this,task,{pageUrl:page.url(),frameUrl:candidate.frame.url(),documentId:candidate.engine.documentId});
       if (detection.hasCaptcha || task.fillOnlyRun) throw new Error(detection.hasCaptcha ? '资料已准备，验证码待用户完成；未点击提交' : '仅填写资料已完成，未点击提交');
       if (validation.validationFailed || fill.ok === false || fill.needs_manual) throw new Error(fill.reason || '必填项或素材需要补充，请接管核对');
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_submit'); return; }
@@ -837,6 +839,7 @@ export class Runtime {
       if(error.cloudNetwork||[401,403,409].includes(error.status)||error.status>=500)throw error;
       this.update(task, { status: task.attemptBoundary ? 'submitted_unconfirmed' : 'needs_manual', siteStatus:task.attemptBoundary?'sent_unconfirmed':'not_submitted', reason: error.message,
         attentionType:task.attemptBoundary?'unknown_receipt':task.attentionType||classifyBlocker(error.message) }, 'attention');
+      if(page&&task.attentionType==='human_verification'&&!task.attemptBoundary&&!task.receipt)await armPageCaptchaResume(this,task,page,{active}).catch(observationError=>this.update(task,{captchaResumeObservationFailure:{at:new Date().toISOString(),reason:observationError.message}},'captcha_resume_observation_failed'));
     } finally {
       try{
         if (page && responseListener) page.off('response', responseListener);
@@ -1274,6 +1277,7 @@ export class Runtime {
     if(action==='getBatchLog')return{ok:true,...this.store.logs({...input,scope:String(this.store.get('pair')?.endpoint||'')+'|'+String(this.store.get('pair')?.workspaceId||'default')})};
     if(action==='manualWatchMessage')return manualWatchMessage(this,input);
     if(action==='checkManualWatches')return checkManualWatches(this);
+    if(action==='checkCaptchaResumes')return checkCaptchaResumes(this,input);
     if(action==='saveAssistantSettings')return saveAssistantSettings(this,input);
     if(action==='fillAssistantTask')return fillAssistantTask(this,input);
     if(action==='browserLibraryPages')return browserLibraryPages(this);
@@ -1803,6 +1807,7 @@ export class Runtime {
   }
   async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body);}
   async bridge(task, message) {
+    if(message.action==='captchaResolved')return this.dispatchControl?this.dispatchControl('checkCaptchaResumes',{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl}):checkCaptchaResumes(this,{taskId:task.id,expectedDocumentId:message.executorDocumentId,frameUrl:message.executorFrameUrl});
     if(message.action==='mediaUploadStatus')return recordTaskMediaUpload(this,task,message);
     if(message.action==='saveFillLearnings'){
       const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};

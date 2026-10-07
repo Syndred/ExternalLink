@@ -1,0 +1,105 @@
+{
+  "kind": "original_captcha_resume_migration_checkpoint_not_full_completion",
+  "date": "2026-10-07",
+  "previousPublishedCommit": "6c5c839",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "gitPull": "Already up to date",
+  "originalSourceReviewed": {
+    "function": "resumeAfterCaptcha",
+    "path": "extension/background.js",
+    "restoredBehavior": [
+      "Continue the same original task after the original page no longer has a human verification gate",
+      "Refresh only the task deadline using the original unattended helper",
+      "Remove only this task from the original manual todo and interrupted entries",
+      "Recalculate capacity including original manual tabs from earlier batches in the same workspace",
+      "Preserve global deadline, task and model budgets, frozen products, scope and progress"
+    ]
+  },
+  "implemented": [
+    "Receive captchaResolved through the native isolated-engine bridge",
+    "Inspect original waiting tasks every three seconds without opening replacement pages",
+    "Arm recovery in ordinary execution and Product Hunt human verification handoff",
+    "Revalidate original browser target, document, frame, task, scope, configuration and pause identity",
+    "Preserve a durable synchronization intent when the reply is lost",
+    "Reuse an existing interactive assistant engine instead of disabling or replacing it",
+    "Forward captchaResolved from the actual production browser assistant to its original waiting task",
+    "Preserve original fill-only behavior and unknown attempts"
+  ],
+  "tests": {
+    "fullSuite": {
+      "path": "executor/test-output/original-captcha-resume-all-final-2026-10-07.txt",
+      "passed": 746,
+      "failed": 0,
+      "skipped": 0,
+      "newTestsSince740": 6
+    },
+    "actualIsolatedBrowser": {
+      "script": "executor/test/original-captcha-resume.mjs",
+      "output": "executor/test-output/original-captcha-resume-assistant-first-2026-10-07.txt",
+      "passed": true,
+      "cases": 12,
+      "covers": [
+        "Original workbench task resumes once with original budgets and deadline",
+        "Original single task resumes once",
+        "Lost synchronization reply leaves durable intent, then resumes once",
+        "Original embedded submission frame resumes",
+        "Actual native work arms the checkpoint, keeps it through cleanup, and continues using frozen product fields",
+        "Actual native fill-only continuation stops without clicking submit",
+        "Existing interactive assistant remains active and attached",
+        "Actual shared-engine polling reaches the native RPC bridge through the production browser assistant",
+        "Actual original Product Hunt workflow arms and resumes the captcha gate without creating a draft",
+        "Same URL reload prevents continuation",
+        "Navigation prevents continuation",
+        "User pause during snapshot prevents continuation",
+        "Global deadline reached during snapshot prevents continuation",
+        "Captcha reappears before continuation prevents continuation"
+      ],
+      "posts": 0,
+      "externalRequests": 0,
+      "realModelCalls": 0,
+      "productionWrites": 0,
+      "provesRealCaptchaCompletion": false,
+      "provesRealSiteReceipt": false
+    }
+  },
+  "originalServices": {
+    "reloadedAfterIdleProcessIdentityAndDurableStateGuards": true,
+    "ports": [19388, 19389],
+    "before": "executor/test-output/original-captcha-resume-native-before-2026-10-07.txt",
+    "after": "executor/test-output/original-captcha-resume-native-after-2026-10-07.txt",
+    "bothReadOnlyChecksPassed": true,
+    "businessMatchesHistoricalBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchangedAcrossChecks": true,
+    "paused": true,
+    "busy": false,
+    "pendingQueues": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false}
+  },
+  "remainingAcceptance": [
+    "Legacy waiting tasks without an observed original document recovery checkpoint require explicit original-task handling",
+    "Remaining original manualContinue, manualSubmit, manualSkip and requestAutoFill page callbacks",
+    "Original latest products, favorites, category groups and other devices or legacy aliases",
+    "Complete original history and legacy media associations",
+    "Remaining dynamic controls, special launch flows and real external results"
+  ],
+  "fullCloudDocumentHashesRechecked": false,
+  "originalBrowserConnectionRechecked": {
+    "available": false,
+    "browserClientError": "Browser is not available: chrome",
+    "officialInstalledBrowserDiagnostic": "Chrome installed",
+    "officialRunningDiagnostic": "not running",
+    "officialNativeHostDiagnostic": "correct",
+    "launchPermissionRequested": true,
+    "launched": false,
+    "browserProfileOrSessionStorageRead": false
+  },
+  "originalChromeDataRechecked": false,
+  "fullProductionUIRechecked": false,
+  "workerChangedOrDeployed": false,
+  "dataRestored": false,
+  "newRealSubmissions": 0
+}

@@ -40,6 +40,7 @@ let serial = Promise.resolve(), pairUsed = false;
 runtime.dispatchControl=(action,input)=>{const expected=connectionIdentity(store.get('pair')),result=serial.then(()=>runtime.withControl(()=>{if(expected!==connectionIdentity(store.get('pair')))throw Error('云端连接已切换，旧网页操作已停止');return runtime.control(action,input);}));serial=result.catch(()=>{});return result;};
 const assistantScheduler=setInterval(()=>checkBrowserAssistant(runtime).catch(error=>console.error('浏览器助手：'+error.message)),5000);assistantScheduler.unref();
 const manualWatchScheduler=setInterval(()=>{if(!runtime.controlBusy&&!runtime.connectionBusy&&!store.get('connectionExecutionHold'))runtime.dispatchControl('checkManualWatches',{}).catch(error=>console.error('人工提交核验：'+error.message));},2000);manualWatchScheduler.unref();
+const captchaResumeScheduler=setInterval(()=>{if(!runtime.controlBusy&&!runtime.connectionBusy&&!store.get('connectionExecutionHold'))runtime.dispatchControl('checkCaptchaResumes',{}).catch(error=>console.error('原任务验证码恢复：'+error.message));},3000);captchaResumeScheduler.unref();
 function send(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); }
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';

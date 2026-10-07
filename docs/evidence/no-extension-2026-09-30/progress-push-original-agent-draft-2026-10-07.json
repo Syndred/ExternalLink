@@ -1,0 +1,46 @@
+{
+  "kind": "documentation_only_progress_checkpoint",
+  "date": "2026-10-07",
+  "timezone": "Asia/Shanghai",
+  "requestedAction": "写好进度推送先",
+  "migrationComplete": false,
+  "remotePull": {"command": "git pull --ff-only", "result": "Already up to date", "headAheadBehindOriginMain": [0, 0]},
+  "latestPublishedFeatureCommit": "ddc5d5e454594e96857f170c882bfa3036552b3a",
+  "currentDraft": {
+    "feature": "original AI preparation judge and visual action loop in the same native task",
+    "files": ["executor/src/original-agent-flow.mjs", "executor/src/task-visual-context.mjs", "executor/src/runtime.mjs"],
+    "originalBaselineCommit": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "intendedLoops": 8,
+    "intendedSettleMs": 600,
+    "committed": false,
+    "deployed": false,
+    "nativeServicesReloaded": false,
+    "syntaxChecksPassed": true,
+    "functionalValidationCompleted": false,
+    "unfinished": ["propagate terminal preparation results through original native work", "preserve task state on late or stale results", "original source parity and restart budget regression", "actual isolated main-frame and iframe workflows", "updated media workflow fixtures", "full regression"]
+  },
+  "existingValidationOutputReviewed": {
+    "tests": 779,
+    "pass": 779,
+    "fail": 0,
+    "skipped": 0,
+    "source": "executor/test-output/original-task-classification-all-final-2026-10-07.txt",
+    "belongsToPublishedFeature": true,
+    "coversCurrentDraft": false,
+    "rerunForThisDocumentationPush": false
+  },
+  "thisDocumentationPush": {
+    "functionalFilesStaged": false,
+    "serviceReloads": 0,
+    "workerDeployments": 0,
+    "productionBusinessWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0,
+    "originalChromeLaunched": false,
+    "liveServicesReadBackAgain": false,
+    "cloudDocumentsReadBackAgain": false
+  },
+  "retainedUserRequirements": ["active-only submission overview", "hide archived acceptance fixture product", "dynamic addition of own products and submission target sites", "categories and groups", "favorites", "high-quality priority", "DR and quality scores", "batch submission", "extract product data from website", "timeline and progress", "AI comments", "vertical field alignment", "clear Chinese source and marking labels"],
+  "remaining": ["complete and validate current AI preparation draft", "original AI final submission and receipt parity", "same-destination dead-end sibling disposition and gate order", "cloud media preference across entry points", "latest original products favorites groups and settings", "complete history and old media ownership", "other devices and legacy aliases", "remaining dynamic controls and execution-mode recovery", "actual UI acceptance for requested overview Chinese labels and field alignment"],
+  "limitations": ["syntax checks do not establish functional correctness", "published regression results do not cover the current draft", "fixtures are not original-plugin or real-site acceptance", "cached data counts do not prove complete original-data restoration", "previous service and cloud readbacks are historical evidence only"]
+}

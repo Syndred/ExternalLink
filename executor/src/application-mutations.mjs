@@ -2,9 +2,21 @@ import { randomUUID } from 'node:crypto';import { isDeepStrictEqual } from 'node
 import { applicationMutation as libraryMutation,applicationMutationSatisfied as libraryMutationSatisfied } from '../../core/application-mutation.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
 export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
+export const applicationMutationKeys=item=>item.writeKeys||[item.key];
+export async function confirmUncertainTimelineEdits(runtime){
+ const scope=workbenchScope(runtime.store.get('pair')),pending=pendingApplication(runtime);
+ if(!pending.some(item=>item.operation.type==='timeline'&&item.status==='pending'&&item.writeAttemptedAt&&item.error))return null;
+ const snapshot=await runtime.cloud.request('snapshot');if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原动态保留');
+ for(const item of pending)if(item.operation.type==='timeline'&&item.status==='pending'&&item.writeAttemptedAt&&item.error&&libraryMutationSatisfied(snapshot.documents,item.operation)){
+  item.status='confirmed';item.confirmedAt=new Date().toISOString();delete item.error;runtime.store.set('appMutation:'+item.id,item);
+  const next=pending.slice(pending.indexOf(item)+1).find(other=>other.key===item.key&&!['confirmed','discarded','conflict'].includes(other.status));
+  if(next&&isDeepStrictEqual(next.baseData,snapshot.documents[item.key])){next.baseRevision=snapshot.revisions[item.key]||0;for(const key of Object.keys(next.relatedBaseRevisions||{}))if(isDeepStrictEqual(next.relatedBaseData?.[key],snapshot.documents[key]))next.relatedBaseRevisions[key]=snapshot.revisions[key]||0;runtime.store.set('appMutation:'+next.id,next);}
+ }
+ cacheCloudSnapshot(runtime,snapshot);return snapshot;
+}
 function mutationIntent(snapshot,operation,change,hasPrior,knownRemote){
- const localOnly=operation.type!=='recover_local'&&!hasPrior&&!snapshot.revisions[change.key]&&Object.hasOwn(snapshot.documents,change.key)&&knownRemote&&!Object.hasOwn(knownRemote.documents,change.key);
- return localOnly?{operation:{type:'recover_local',key:change.key,data:change.data,id:operation.id,at:operation.at},originalOperation:operation,localOnlyBaseData:snapshot.documents[change.key],baseData:undefined,baseRevision:0}:{operation,baseData:snapshot.documents[change.key],baseRevision:snapshot.revisions[change.key]||0};
+ const localOnly=!change.updates&&operation.type!=='recover_local'&&!hasPrior&&!snapshot.revisions[change.key]&&Object.hasOwn(snapshot.documents,change.key)&&knownRemote&&!Object.hasOwn(knownRemote.documents,change.key);
+ return localOnly?{operation:{type:'recover_local',key:change.key,data:change.data,id:operation.id,at:operation.at},originalOperation:operation,localOnlyBaseData:snapshot.documents[change.key],baseData:undefined,baseRevision:0}:{operation,baseData:snapshot.documents[change.key],baseRevision:snapshot.revisions[change.key]||0,...(change.revisionKeys?{writeKeys:Object.keys(change.updates),relatedBaseData:Object.fromEntries(change.revisionKeys.filter(key=>key!==change.key).map(key=>[key,snapshot.documents[key]])),relatedBaseRevisions:Object.fromEntries(change.revisionKeys.filter(key=>key!==change.key).map(key=>[key,snapshot.revisions[key]||0]))}:{})};
 }
 export async function resolveApplicationConflict(runtime,input){
  if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
@@ -14,12 +26,14 @@ export async function resolveApplicationConflict(runtime,input){
  const snapshot=await runtime.cloud.request('snapshot');
  if(item.scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原冲突保留，请重新选择');
  if(input.revision!==snapshot.revisions[item.key])throw Error('云端版本已变化，请回读后重新比较');
+ if(item.relatedBaseRevisions&&Object.keys(item.relatedBaseRevisions).some(key=>input.revisions?.[key]!== (snapshot.revisions[key]||0)))throw Error('关联台账版本已变化或尚未比较，请回读后重新比较');
  const resolution={choice:input.choice,at:new Date().toISOString(),remoteData:structuredClone(snapshot.documents[item.key]),remoteRevision:input.revision,originalBaseData:item.baseData};
- runtime.store.set('appMutation:'+item.id,{...item,resolution,baseData:snapshot.documents[item.key],baseRevision:snapshot.revisions[item.key]||0,status:input.choice==='cloud'?'discarded':'pending',error:''});
+ if(item.relatedBaseRevisions){resolution.originalRelatedBaseData=item.relatedBaseData;resolution.relatedRemoteData=Object.fromEntries(Object.keys(item.relatedBaseRevisions).map(key=>[key,snapshot.documents[key]]));}
+ runtime.store.set('appMutation:'+item.id,{...item,resolution,baseData:snapshot.documents[item.key],baseRevision:snapshot.revisions[item.key]||0,...(item.relatedBaseRevisions?{relatedBaseData:resolution.relatedRemoteData,relatedBaseRevisions:Object.fromEntries(Object.keys(item.relatedBaseRevisions).map(key=>[key,snapshot.revisions[key]||0]))}:{}),status:input.choice==='cloud'?'discarded':'pending',error:''});
  cacheCloudSnapshot(runtime,snapshot);
  return{ok:true,...await flushApplicationMutations(runtime)};
 }
-export function overlayApplication(runtime,snapshot){const result=structuredClone(snapshot);for(const item of pendingApplication(runtime)){try{const change=libraryMutation(result.documents,item.operation);result.documents[change.key]=change.data;}catch{}}return result;}
+export function overlayApplication(runtime,snapshot){const result=structuredClone(snapshot);for(const item of pendingApplication(runtime)){try{const change=libraryMutation(result.documents,item.operation);Object.assign(result.documents,change.updates||{[change.key]:change.data});}catch{}}return result;}
 export async function enqueueLibraryMutation(runtime,input){
  if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope)throw Error('请先读取本工作区资料');
@@ -55,7 +69,7 @@ export async function enqueueApplicationPlan(runtime,{planId,operations,allowPen
  const scope=workbenchScope(runtime.store.get('pair'));let plan=planId&&runtime.store.get('applicationPlan:'+planId);
  if(planId&&(!plan||plan.scope!==scope))throw Error('原资料变更计划不存在');
  if(!plan){const saved=runtime.store.get('applicationSnapshot'),prior=pendingApplication(runtime);if(saved?.scope!==scope||!allowPending&&prior.length)throw Error('请先回读并同步现有资料');const baseline=baseSnapshot||saved.snapshot,working=allowPending?overlayApplication(runtime,baseline):structuredClone(baseline),id=randomUUID(),started=Math.max(Date.now(),allowPending&&prior.length?Date.parse(prior.at(-1).at)+1:0),items=[];
-  for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,...mutationIntent({documents:working.documents,revisions:baseline.revisions},operation,change,prior.some(item=>item.key===change.key)||items.some(item=>item.key===change.key),baseSnapshot||saved.remoteSnapshot),status:'pending',applicationPlanId:id});working.documents[change.key]=change.data;}
+  for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,...mutationIntent({documents:working.documents,revisions:baseline.revisions},operation,change,prior.some(item=>item.key===change.key)||items.some(item=>item.key===change.key),baseSnapshot||saved.remoteSnapshot),status:'pending',applicationPlanId:id});Object.assign(working.documents,change.updates||{[change.key]:change.data});}
   const firstType=items[0]?.originalOperation?.type||items[0]?.operation.type,catalogPlan=['clear_annotation','remove_queue','pin'].includes(firstType);
   const profileRecovery=dependencyKind==='profile_recovery';
   if(catalogPlan||profileRecovery){for(let i=1;i<items.length;i++)items[i].dependsOn=items[i-1].id;}
@@ -74,14 +88,14 @@ async function performFlush(runtime){
  try{snapshot=await cloud.request('snapshot');checkScope();}catch(error){return{pending:pending.length,error:error.message};}
  const blocked=new Set(pending.filter(item=>item.status==='conflict').map(item=>item.key));
  const comparable=(key,data)=>key==='siteProfiles'&&data?Object.fromEntries(Object.entries(data).map(([id,profile])=>{const {updatedAt,...content}=profile;return[id,content];})):data;
- const advanceNext=(item,read)=>{const next=pending.slice(pending.indexOf(item)+1).find(other=>other.key===item.key&&!['confirmed','discarded','conflict'].includes(other.status));if(next&&isDeepStrictEqual(comparable(item.key,next.baseData),comparable(item.key,read.documents[item.key]))){next.baseRevision=read.revisions[item.key]||0;runtime.store.set('appMutation:'+next.id,next);}};
+ const advanceNext=(item,read)=>{const next=pending.slice(pending.indexOf(item)+1).find(other=>other.key===item.key&&!['confirmed','discarded','conflict'].includes(other.status));if(next&&isDeepStrictEqual(comparable(item.key,next.baseData),comparable(item.key,read.documents[item.key]))){next.baseRevision=read.revisions[item.key]||0;for(const key of Object.keys(next.relatedBaseRevisions||{}))if(isDeepStrictEqual(next.relatedBaseData?.[key],read.documents[key]))next.relatedBaseRevisions[key]=read.revisions[key]||0;runtime.store.set('appMutation:'+next.id,next);}};
  for(const item of pending){
   if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.length,error:'工作区已切换，原资料计划保留，停止写入'};
   if(item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status==='discarded'){item.status='discarded';item.discardedAt=new Date().toISOString();item.error=item.backupImportId?'原产品导入已选择保留云端，关联历史导入一并取消':runtime.store.get('applicationPlan:'+item.applicationPlanId)?.kind==='profile_recovery'?'原产品恢复已选择保留云端，关联资料恢复一并取消':item.operation.type==='profile_selection'?'产品变更已选择保留云端，关联的当前网站变更一并取消':'原网站操作已选择保留云端，后续关联变更一并取消';runtime.store.set('appMutation:'+item.id,item);continue;}
   if(blocked.has(item.key)&&!(item.status==='pending'&&item.resolution?.choice==='local')||item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status!=='confirmed')continue;
   // Revision zero alone cannot establish absence. Read the cloud first; only
   // a genuinely absent document can be created from the complete retained key.
-  if(item.baseRevision===0&&item.baseData!==undefined&&!Object.hasOwn(snapshot.documents,item.key)&&!snapshot.revisions[item.key]&&item.operation.type!=='recover_local'){
+  if(item.baseRevision===0&&item.baseData!==undefined&&!Object.hasOwn(snapshot.documents,item.key)&&!snapshot.revisions[item.key]&&item.operation.type!=='recover_local'&&item.operation.type!=='timeline'){
    const original=item.operation,change=libraryMutation({...snapshot.documents,[item.key]:item.baseData},original);item.originalOperation=original;item.localOnlyBaseData=item.baseData;item.baseData=undefined;item.operation={type:'recover_local',key:item.key,data:change.data,id:original.id,at:original.at};runtime.store.set('appMutation:'+item.id,item);
   }
   // A retained original timestamp can make a fetched row disappear during pruning.
@@ -91,10 +105,11 @@ async function performFlush(runtime){
   if(item.operation.type==='settings'?isDeepStrictEqual(snapshot.documents[item.key],originalSettingsResult):libraryMutationSatisfied(snapshot.documents,item.operation)||originalDomainResult&&isDeepStrictEqual(snapshot.documents[item.key],originalDomainResult)){item.status='confirmed';item.confirmedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);advanceNext(item,snapshot);continue;}
   // Profile writes stamp updatedAt on the server, while queued edits contain local write times.
   // Compare all actual content; differing write timestamps alone cannot invalidate the next edit.
-  if(!isDeepStrictEqual(comparable(item.key,snapshot.documents[item.key]),comparable(item.key,item.baseData))){item.status='conflict';item.error='云端外链库有并发修改；本机编辑保留，未覆盖云端';runtime.store.set('appMutation:'+item.id,item);blocked.add(item.key);continue;}
+  if(!isDeepStrictEqual(comparable(item.key,snapshot.documents[item.key]),comparable(item.key,item.baseData))||Object.keys(item.relatedBaseRevisions||{}).some(key=>!isDeepStrictEqual(item.relatedBaseData?.[key],snapshot.documents[key]))){item.status='conflict';item.error='云端外链库或关联台账有并发修改；本机编辑保留，未覆盖云端';runtime.store.set('appMutation:'+item.id,item);blocked.add(item.key);continue;}
   const change=libraryMutation(snapshot.documents,item.operation);
-   try{checkScope();await cloud.request(item.operation.type==='profile'?'profile':'library',item.operation.type==='profile'?{profileId:item.operation.profileId,profile:item.operation.profile,revision:snapshot.revisions[item.key]||0}:{operation:item.operation,revision:snapshot.revisions[item.key]||0});checkScope();
-   const read=await cloud.request('snapshot');checkScope();if(item.operation.type==='profile'?!libraryMutationSatisfied(read.documents,item.operation):!isDeepStrictEqual(read.documents[item.key],change.data))throw Error('资料回读不一致，原编辑仍在本机');
+  item.writeAttemptedAt=new Date().toISOString();runtime.store.set('appMutation:'+item.id,item);
+   try{checkScope();await cloud.request(item.operation.type==='profile'?'profile':'library',item.operation.type==='profile'?{profileId:item.operation.profileId,profile:item.operation.profile,revision:snapshot.revisions[item.key]||0}:{operation:item.operation,revision:snapshot.revisions[item.key]||0,...(change.revisionKeys?{revisions:Object.fromEntries(change.revisionKeys.map(key=>[key,snapshot.revisions[key]||0]))}:{})});checkScope();
+   const read=await cloud.request('snapshot');checkScope();if(item.operation.type==='profile'?!libraryMutationSatisfied(read.documents,item.operation):Object.entries(change.updates||{[item.key]:change.data}).some(([key,data])=>!isDeepStrictEqual(read.documents[key],data)))throw Error('资料或关联台账回读不一致，原编辑仍在本机');
    snapshot=read;item.status='confirmed';item.confirmedAt=new Date().toISOString();delete item.error;runtime.store.set('appMutation:'+item.id,item);
    advanceNext(item,read);
   }catch(error){item.error=error.message;runtime.store.set('appMutation:'+item.id,item);break;}

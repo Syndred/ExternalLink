@@ -1,6 +1,7 @@
 import { D1Store } from './d1-store.mjs';
 import { STATE_DOCUMENT_KEYS, applyPatchOperations, normalizeDocuments, parseBearerToken, secureEqual, mediaObjectKey, artifactObjectKey } from './worker-core.mjs';
 import '../../../core/submission-timeline.js';
+import {originalTimelineMutation,timelineDocumentKeys} from '../../../core/original-timeline-mutation.mjs';
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
 export async function d1Api(request,env,authorised,auxiliary){
   const url=new URL(request.url),path=url.pathname.replace(/^\/v2/,'');
@@ -37,7 +38,7 @@ export async function d1Api(request,env,authorised,auxiliary){
     if(request.method==='GET'&&path==='/submission-tasks')return json(await store.journal(url.searchParams));
     if(request.method==='GET'&&path==='/journal-documents'){
       const documents={},revisions={};
-      for(const key of ['siteProfiles','submissionRecords','submissionTimeline']){const row=await store.document(key);if(row){documents[key]=row.data;revisions[key]=row.revision;}}
+      for(const key of ['siteProfiles',...timelineDocumentKeys]){const row=await store.document(key);if(row){documents[key]=row.data;revisions[key]=row.revision;}}
       // Archived-only records remain visible without becoming current successes.
       const archived=await env.LEDGER_DB.prepare("SELECT object_key,checksum FROM recovery_objects WHERE workspace=? AND id=? AND kind='source_backup'").bind(workspace,'plugin-backup-2026-09-25').first();
       if(archived){const backup=await store.readObject(archived.object_key,archived.checksum);documents.historicalRecords=Object.fromEntries(Object.entries(backup.submissionRecords||{}).filter(([key])=>!Object.hasOwn(documents.submissionRecords||{},key)).map(([key,record])=>[key,{...record,archiveSource:'2026-09-25',requiresVerification:true}]));}
@@ -93,15 +94,11 @@ export async function d1Api(request,env,authorised,auxiliary){
         return json({ok:true,documentKey:input.key,data,...await store.putDocument(input.key,data,input.revision)});
       }
       if(path==='/timeline'&&request.method==='POST'){
-        const event=globalThis.ExtLinkSubmissionTimeline.normalizeEvent({...input.event,source:'manual',confirmedBy:'manual'});
-        const profiles=await store.document('siteProfiles');
-        if(!profiles?.data?.[event.profileId])return json({ok:false,error:'站点资料不存在'},400);
+        const event=globalThis.ExtLinkSubmissionTimeline.normalizeEvent({...input.event,source:input.event?.source||'manual',confirmedBy:input.event?.source==='agent'?input.event.confirmedBy||'agent':'manual'});
         for(let attempt=0;attempt<3;attempt++){
-          const current=await store.document('submissionTimeline');
-          const previous=Object.values(current?.data||{}).flat().find(e=>e?.id===event.id);
-          if(previous&&JSON.stringify(previous)!==JSON.stringify(event))return json({ok:false,error:'进度事件编号已存在但内容不同'},409);
-          const data=globalThis.ExtLinkSubmissionTimeline.append(current?.data||{},event);
-          try{const saved=await store.putDocument('submissionTimeline',data,current?.revision||0);return json({ok:true,event,...saved});}
+          const documents={},revisions={};for(const key of timelineDocumentKeys){const row=await store.document(key);documents[key]=row?.data;revisions[key]=row?.revision||0;}
+          const change=originalTimelineMutation(documents,{action:'add',event});
+          try{const saved=await store.putDocuments(change.updates,revisions);return json({ok:true,event,record:change.record,revision:saved.revisions.submissionTimeline,...saved});}
           catch(error){if(error.status!==409||attempt===2)throw error;}
         }
       }

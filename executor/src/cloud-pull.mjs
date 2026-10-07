@@ -6,7 +6,7 @@ import {homedir} from 'node:os';
 import {exportApplicationBackup} from '../../core/application-backup.mjs';
 import {backupWorkspace} from './migration-backup.mjs';
 import {workbenchScope,pendingWorkbench} from './workbench-sync.mjs';
-import {pendingApplication,overlayApplication} from './application-mutations.mjs';
+import {pendingApplication,overlayApplication,applicationMutationKeys} from './application-mutations.mjs';
 import {pendingMediaUploads} from './media-uploads.mjs';
 import {pendingFillLearning} from './fill-learning.mjs';
 import {localCloudQueue} from './cloud-status.mjs';
@@ -39,7 +39,7 @@ export function pullCloudState(runtime,input={}){
  });
 }
 function affected(runtime,keys){
- const edits=pendingApplication(runtime),ids=new Set(edits.filter(item=>keys.includes(item.key)).map(item=>item.id));let added;
+ const edits=pendingApplication(runtime),ids=new Set(edits.filter(item=>applicationMutationKeys(item).some(key=>keys.includes(key))).map(item=>item.id));let added;
  do{added=false;for(const item of edits)if(item.dependsOn&&ids.has(item.dependsOn)&&!ids.has(item.id)){ids.add(item.id);added=true;}}while(added);
  return{ids:[...ids],linkedIds:edits.filter(item=>ids.has(item.id)&&!keys.includes(item.key)).map(item=>item.id)};
 }

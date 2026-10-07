@@ -11,6 +11,7 @@ import '../../../core/opportunity-score.js';
 import '../../../core/submission-timeline.js';
 import '../../../core/library-classifier.js';
 import '../../../core/executor-contract.js';
+import {neonTimelineMutation} from './neon-timeline.mjs';
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 // PostgreSQL builds these authenticated read envelopes as JSON text. Returning
@@ -103,6 +104,11 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         from externallink_workspace_documents where workspace_id=${workspaceId}`;
       return replyJsonText(rows[0].payload);
     }
+    if(path==='/v1/executor/workspace/journal-documents'&&request.method==='GET')return reply({ok:true,...await helpers.listSnapshot(sql,workspaceId)});
+    if(path==='/v1/executor/workspace/timeline'&&request.method==='POST'){
+      for(let attempt=0;attempt<3;attempt++)try{return reply(await neonTimelineMutation(sql,workspaceId,{action:'add',event:input.event}));}catch(error){if(error.status!==409||attempt===2||/编号已存在/.test(error.message))throw error;}
+    }
+    if(path==='/v1/executor/library'&&request.method==='POST'&&input.operation?.type==='timeline')return reply(await neonTimelineMutation(sql,workspaceId,input.operation,input));
     if (path === '/v1/executor/profile' && request.method === 'POST') {
       const snapshot = await helpers.listSnapshot(sql, workspaceId);
       const original = snapshot.documents.siteProfiles?.[input.profileId];

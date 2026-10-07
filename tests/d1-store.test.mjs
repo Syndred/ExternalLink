@@ -33,6 +33,20 @@ function fixture(){
   const bucket={async head(k){return objects.has(k)?{}:null;},async put(k,v){objects.set(k,new Uint8Array(v));},async get(k){reads++;return objects.has(k)?{arrayBuffer:async()=>objects.get(k).slice().buffer}:null;}};
   return{db,bucket,objects,sqlite,reads:()=>reads,store:new D1Store(db,bucket,'one')};
 }
+test('linked timeline documents roll back together on a concurrent receipt change after immutable objects are prepared',async()=>{
+ const f=fixture();try{
+  await f.store.putDocument('submissionTimeline',{old:['preserve']},0);await f.store.putDocument('submissionRecords',{original:{evidence:'original'}},0);
+  const object=f.store.object.bind(f.store);let injected=false;f.store.object=async value=>{const result=await object(value);if(!injected){injected=true;await new D1Store(f.db,f.bucket,'one').putDocument('submissionRecords',{original:{evidence:'original'},new:{evidence:'concurrent'}},1);}return result;};
+  await assert.rejects(f.store.putDocuments({submissionTimeline:{new:['edit']},timelineSchemaVersion:1,submissionRecords:{changed:true},submissionSchemaVersion:2},{submissionTimeline:1,timelineSchemaVersion:0,submissionRecords:1,submissionSchemaVersion:0}),/关联资料.*并发/);
+  assert.deepEqual((await f.store.document('submissionTimeline')).data,{old:['preserve']});assert.equal(await f.store.document('timelineSchemaVersion'),null);assert.equal(await f.store.document('submissionSchemaVersion'),null);assert.equal((await f.store.document('submissionRecords')).data.new.evidence,'concurrent');assert.equal(f.sqlite.prepare("SELECT count(*) n FROM document_history WHERE key='submissionTimeline'").get().n,1);
+ }finally{f.sqlite.close();}
+});
+test('a later SQL failure rolls back all linked document pointers and history while preserving old immutable objects',async()=>{
+ const f=fixture();try{
+  await f.store.putDocument('submissionTimeline',{old:true},0);await f.store.putDocument('submissionRecords',{old:true},0);const prepare=f.db.prepare.bind(f.db);f.db.prepare=sql=>{const statement=prepare(sql),bind=statement.bind.bind(statement),run=statement.run.bind(statement);let values=[];statement.bind=(...args)=>{values=args;bind(...args);return statement;};statement.run=async()=>{if(sql.startsWith('INSERT INTO documents')&&values[1]==='submissionRecords')throw Error('fixture late SQL failure');return run();};return statement;};
+  await assert.rejects(f.store.putDocuments({submissionTimeline:{new:true},timelineSchemaVersion:1,submissionRecords:{new:true}},{submissionTimeline:1,timelineSchemaVersion:0,submissionRecords:1}),/late SQL/);assert.deepEqual((await f.store.document('submissionTimeline')).data,{old:true});assert.deepEqual((await f.store.document('submissionRecords')).data,{old:true});assert.equal(await f.store.document('timelineSchemaVersion'),null);assert.equal(f.sqlite.prepare('SELECT count(*) n FROM document_history').get().n,2);
+ }finally{f.sqlite.close();}
+});
 test('documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history',async()=>{
  const f=fixture();try{
   const data={text:'资料😀'.repeat(1300000)};

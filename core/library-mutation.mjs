@@ -12,6 +12,7 @@ import {formKnowledgeMutation,formKnowledgeSatisfied} from './form-knowledge.mjs
 import {applicationSettingKeys} from './application-preferences.mjs';
 import {validateBatchPreferenceValue,batchPreferencePatch} from './original-batch-config.mjs';
 import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
+import {originalTimelineMutation,originalTimelineSatisfied} from './original-timeline-mutation.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const catalogKeyOf=url=>{keyOf(url);return canonicalLibraryDestination(url);};
@@ -85,11 +86,7 @@ export function libraryMutation(documents,operation,options={}){
   return{key:operation.key,data:merged[operation.key]};
  }
  if(operation.type==='timeline'){
-  const T=globalThis.ExtLinkSubmissionTimeline,events=documents.submissionTimeline||{},previous=Object.values(T.normalizeTimeline(events)).flat().find(e=>e.id===operation.eventId);
-  if(!['update','remove'].includes(operation.action)||!previous)fail('时间线动态不存在');
-  if(operation.action==='remove')return{key:'submissionTimeline',data:T.removeEvent(events,operation.eventId).timeline};
-  const patch=operation.patch||{};if(Object.keys(patch).some(k=>!['type','status','publicationStatus','occurredAt','note','evidenceUrl','publicUrl'].includes(k))||Object.values(patch).some(v=>typeof v!=='string'||v.length>10000))fail('时间线修改无效');
-  return{key:'submissionTimeline',data:T.updateEvent(events,operation.eventId,patch).timeline};
+  return originalTimelineMutation(documents,operation);
  }
  if(operation.type==='settings'){
   const allowed=applicationSettingKeys;
@@ -177,7 +174,7 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='domain_metrics')return Object.keys(documents.domainMetricsCache||{}).length<=domainMetricsLimit&&operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
  if(operation.type==='backup_prepared_key'){try{return JSON.stringify(documents[operation.key])===JSON.stringify(applyPreparedBackupKey(documents,operation));}catch{return false;}}
  if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup,{prepareProfiles:false})[operation.key]);}catch{return false;}}
- if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
+ if(operation.type==='timeline')return originalTimelineSatisfied(documents,operation);
  // Incremental blacklist edits are not idempotent in the original function:
  // existing wildcard prefixes normalize before new rules are added. The outbox
  // must confirm their frozen base/result rather than apply them a second time.

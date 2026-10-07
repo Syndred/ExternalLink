@@ -1,5 +1,20 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalTimelineCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-timeline-2026-10-07.json",
+    "fullSuitePassed": 679,
+    "frozenSourceStateComparisons": 30,
+    "productAndDestinationEditable": true,
+    "commonDestinationEvents": true,
+    "compoundLedgerAndSchemas": true,
+    "actualServicesAndChromeLostReplyVerified": true,
+    "isolatedPostgresqlNeonApiVerified": true,
+    "productionNeonWrites": 0,
+    "productionTimelineWrites": 0,
+    "workerVersion": "b9e4156b-63ae-486b-9357-0f4af5df733f",
+    "migrationComplete": false
+  },
   "originalSinglePageContextCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-single-page-context-2026-10-07.json",
@@ -549,7 +564,8 @@
     {
       "action": "addSubmissionTimelineEvent",
       "mapping": "时间线 / 新增动态 → journalProgress",
-      "status": "mapped_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原证据规则、通用动态及联动台账／版本已恢复；认证处理器、SQLite／PostgreSQL隔离事务与实际服务／Chrome回读通过，生产时间线写入0"
     },
     {
       "action": "addToUrlList",
@@ -781,7 +797,8 @@
     {
       "action": "removeSubmissionTimelineEvent",
       "mapping": "时间线 / 删除动态 → libraryMutation timeline",
-      "status": "mapped_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原导入动态可删除，原收件与历史版本保留；隔离实际服务／Chrome及原Neon处理器审计通过，生产删除0"
     },
     {
       "action": "requestAutoFill",
@@ -860,7 +877,8 @@
     {
       "action": "updateSubmissionTimelineEvent",
       "mapping": "时间线 / 编辑动态 → libraryMutation timeline",
-      "status": "mapped_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原产品／目标信息与台账／版本联动、离线依据、关联冲突及真实丢失回复已核验；原最新历史与生产编辑仍不冒充完整验收"
     }
   ],
   "updatedAt": "2026-10-07",

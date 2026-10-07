@@ -1,10 +1,10 @@
-import {pendingApplication,flushApplicationMutations} from './application-mutations.mjs';
+import {pendingApplication,flushApplicationMutations,applicationMutationKeys,confirmUncertainTimelineEdits} from './application-mutations.mjs';
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {pendingWorkbench,journalSync,workbenchScope} from './workbench-sync.mjs';
 import {pendingFillLearning,flushFillLearning} from './fill-learning.mjs';
 import {cloudDocumentKeys,normalizeCloudRevisions,cloudDigest} from './cloud-sync-state.mjs';
 export function localCloudQueue(runtime){
- const edits=pendingApplication(runtime),pending=new Set(edits.map(item=>item.key)),conflicts=new Set(edits.filter(item=>item.status==='conflict').map(item=>item.key));
+ const edits=pendingApplication(runtime),pending=new Set(edits.flatMap(applicationMutationKeys)),conflicts=new Set(edits.filter(item=>item.status==='conflict').flatMap(applicationMutationKeys));
  if(pendingMediaUploads(runtime).length)pending.add('siteProfiles');
  if(pendingWorkbench(runtime).length)pending.add('submissionTimeline');
  for(const item of pendingFillLearning(runtime))if(!item.applicationPlanId){if(Object.keys(item.mappings||{}).length&&!item.cloudExcludedKeys?.includes('siteProfiles'))pending.add('siteProfiles');if(!item.cloudExcludedKeys?.includes('siteAnnotations'))pending.add('siteAnnotations');}
@@ -28,15 +28,16 @@ export function pushLocalChanges(runtime){
   if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
   const status=await cloudStatus(runtime);if(!status.connected)throw Error(status.error||'云端当前不可用，未上传本机修改');
   const scope=workbenchScope(runtime.store.get('pair')),confirmedBefore=new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed').map(item=>item.id)),timelineBefore=pendingWorkbench(runtime).length;
+  const acknowledged=await confirmUncertainTimelineEdits(runtime);if(acknowledged)status.revisions=normalizeCloudRevisions(acknowledged.revisions);
   // A refreshed display cache must not authorize replacing a newer cloud value.
   const pending=pendingApplication(runtime),first=new Map();for(const item of pending)if(!first.has(item.key))first.set(item.key,item);
-  const changed=[...first].filter(([key,item])=>item.status!=='conflict'&&(!Number.isInteger(item.baseRevision)||(status.revisions[key]||0)!==item.baseRevision)).map(([key])=>key);
+  const changed=[...first].filter(([key,item])=>item.status!=='conflict'&&(!Number.isInteger(item.baseRevision)||(status.revisions[key]||0)!==item.baseRevision||Object.entries(item.relatedBaseRevisions||{}).some(([related,revision])=>(status.revisions[related]||0)!==revision))).map(([key])=>key);
   if(changed.length){for(const item of pending)if(changed.includes(item.key))runtime.store.set('appMutation:'+item.id,{...item,status:'conflict',error:Number.isInteger(item.baseRevision)?'云端版本已变化，已暂停上传；本机修改保留':'原修改的版本依据缺失，请比较本机与云端后确认'});throw Error('云端版本已变化或原版本依据缺失，已暂停上传，请先比较冲突资料');}
   const blocked=new Set(localCloudQueue(runtime).conflictKeys);
   if(pendingMediaUploads(runtime).length&&!blocked.has('siteProfiles'))await flushMediaUploads(runtime);
   if(pendingApplication(runtime).length)await flushApplicationMutations(runtime);
   if(pendingFillLearning(runtime).length)await flushFillLearning(runtime);
   if(pendingWorkbench(runtime).length&&!blocked.has('submissionTimeline'))await journalSync(runtime).flush();
-  await runtime.cloud.flush(runtime.store);const result=await cloudStatus(runtime),saved=[...new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed'&&!confirmedBefore.has(item.id)).map(item=>item.key))];if(pendingWorkbench(runtime).length<timelineBefore&&!saved.includes('submissionTimeline'))saved.push('submissionTimeline');return{...result,saved};
+  await runtime.cloud.flush(runtime.store);const result=await cloudStatus(runtime),saved=[...new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed'&&!confirmedBefore.has(item.id)).flatMap(applicationMutationKeys))];if(pendingWorkbench(runtime).length<timelineBefore&&!saved.includes('submissionTimeline'))saved.push('submissionTimeline');return{...result,saved};
  });runtime.cloudPushOperation=operation.finally(()=>{runtime.cloudPushOperation=null;});return runtime.cloudPushOperation;
 }

@@ -1,13 +1,14 @@
 import{randomUUID}from'node:crypto';
 import'../../core/submission-timeline.js';
 import'../../core/journal-sync.js';
+import{originalTimelineSatisfied}from'../../core/original-timeline-mutation.mjs';
 export const workbenchScope=pair=>String(pair?.endpoint||'')+'|'+String(pair?.workspaceId||'default');
 export const pendingWorkbench=runtime=>(runtime.store.get('workbenchJournalPending')||[]).filter(item=>item.scope===workbenchScope(runtime.store.get('pair')));
 export function journalSync(runtime){
- if(!runtime.workbenchJournalSync){const original=globalThis.ExtLinkJournalSync.create({
+ if(!runtime.workbenchJournalSync){let expectedEvent;const original=globalThis.ExtLinkJournalSync.create({
   storage:{get:async()=>({d1JournalPending:runtime.store.get('workbenchJournalPending')||[]}),set:async data=>runtime.store.set('workbenchJournalPending',data.d1JournalPending)},
   config:async()=>runtime.store.get('pair'),
-  request:async(path,options)=>{if(options.method==='POST')return runtime.cloud.request('workspace/timeline',options.body);const proof=await runtime.cloud.request('workspace/journal-documents');return{ok:true,data:proof.documents.submissionTimeline||{}};}
+  request:async(path,options,connection)=>{const current=()=>{const pair=runtime.store.get('pair');if(workbenchScope(pair)!==workbenchScope(connection)||pair?.deviceId!==connection?.deviceId)throw Error('工作区或设备已切换，原动态保留');};current();if(options.method==='POST'){expectedEvent=options.body.event;return runtime.cloud.request('workspace/timeline',options.body);}const proof=await runtime.cloud.request('workspace/journal-documents');current();if(expectedEvent&&!originalTimelineSatisfied(proof.documents,{action:'add',event:expectedEvent}))throw Error('动态或关联台账回读不一致，原动态保留');return{ok:true,data:proof.documents.submissionTimeline||{}};}
  });const run=async work=>{if(runtime.cloudPullOperation)await runtime.cloudPullOperation.catch(()=>{});runtime.workbenchTimelineBusy=(runtime.workbenchTimelineBusy||0)+1;try{return await work();}finally{runtime.workbenchTimelineBusy--;}};runtime.workbenchJournalSync={enqueue:event=>run(()=>original.enqueue(event)),flush:()=>run(()=>original.flush())};}return runtime.workbenchJournalSync;
 }
 export async function workbenchDocuments(runtime){

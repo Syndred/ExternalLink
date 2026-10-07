@@ -78,6 +78,28 @@ export class D1Store {
     if(result[0].meta.changes!==1)fail('资料发生并发变更，请先回读');
     return{revision,updatedAt:at};
   }
+  async putDocuments(updates,expectedRevisions){
+    const keys=Object.keys(updates);
+    if(!keys.length||keys.some(key=>!Object.hasOwn(expectedRevisions||{},key))||Object.values(expectedRevisions||{}).some(value=>!Number.isInteger(value)||value<0))fail('缺少有效关联版本号',400);
+    const statements=[this.db.prepare(`SELECT CASE WHEN EXISTS (
+      SELECT 1 FROM json_each(?) expected LEFT JOIN documents d ON d.workspace=? AND d.key=expected.key
+      WHERE coalesce(d.revision,0)!=expected.value
+    ) THEN json('document_revision_conflict') ELSE 1 END AS ok`).bind(encode(expectedRevisions),this.workspace)];
+    const revisions={},at=new Date().toISOString();
+    for(const key of keys){
+      const previous=await this.db.prepare('SELECT revision,checksum FROM documents WHERE workspace=? AND key=?').bind(this.workspace,key).first(),object=await this.object(updates[key]);
+      if(previous?.checksum===object.checksum){revisions[key]=previous.revision;continue;}
+      const revision=expectedRevisions[key]+1;revisions[key]=revision;
+      statements.push(this.db.prepare(`INSERT INTO documents(workspace,key,revision,object_key,checksum,bytes,updated_at) VALUES(?,?,?,?,?,?,?)
+        ON CONFLICT(workspace,key) DO UPDATE SET revision=excluded.revision,object_key=excluded.object_key,checksum=excluded.checksum,bytes=excluded.bytes,updated_at=excluded.updated_at`).bind(this.workspace,key,revision,object.key,object.checksum,object.bytes,at));
+      statements.push(this.db.prepare(`INSERT OR IGNORE INTO document_history SELECT workspace,key,revision,object_key,checksum,updated_at
+        FROM documents WHERE workspace=? AND key=?`).bind(this.workspace,key));
+    }
+    // D1 batch is one transaction. The first statement fails inside that
+    // transaction on any stale dependency, before any document pointer moves.
+    try{await this.db.batch(statements);}catch(error){if(/malformed JSON|document_revision_conflict/i.test(error.message))fail('关联资料发生并发变更，请先回读');throw error;}
+    return{revisions,updatedAt:at};
+  }
   async importTask(task){
     if(!task?.id||!task.profileId||!task.url)fail('任务身份不完整',400);
     const object=await this.object(task);

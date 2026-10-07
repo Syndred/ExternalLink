@@ -1,0 +1,102 @@
+{
+  "kind": "progress_only_original_dynamic_controls_checkpoint",
+  "date": "2026-10-07",
+  "publishedFeatureCommit": "5c82b0a",
+  "gitPull": "Already up to date",
+  "headVsOriginMainBeforeProgressCommit": {
+    "ahead": 0,
+    "behind": 0
+  },
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "publishedTests": {
+    "passed": 608,
+    "failed": 0,
+    "skipped": 0,
+    "appliesTo": "published original batch cloud recovery version only",
+    "evidence": "original-batch-cloud-recovery-2026-10-07.json"
+  },
+  "originalInventoryCountsNotCompletionCounts": {
+    "buttonsWithIds": 55,
+    "inputsWithIds": 84,
+    "buttonsWithoutIds": 12,
+    "backgroundCases": 62
+  },
+  "uncommittedDevelopment": {
+    "family": "original pause resume concurrent manual skip and stop",
+    "sourceCommitted": false,
+    "deployed": false,
+    "userInterfaceComplete": false,
+    "confirmedSourceGaps": [
+      "Generic resume does not restore paused workbench batch to running",
+      "Manual skip accepts only the first active worker and pauses the whole batch"
+    ],
+    "implementationInProgress": [
+      "Frozen original scope verification and paused page/budget continuation",
+      "Selected concurrent worker skip with durable scoped request and event proof",
+      "Unattended active task stop interruptions and lifecycle checkpoint fields",
+      "Delay automatic page cleanup during a user pause"
+    ],
+    "remainingAcceptance": [
+      "Actual pause response while multiple workers drain",
+      "Same original page and deadline/budget continuation at task limit",
+      "Second concurrent worker skip without pausing other destinations",
+      "Last skip request versus batch completion race",
+      "Persisted skip failure retry and truthful UI response",
+      "Stopped cloud checkpoint recovery stays stopped",
+      "Original target ownership cleanup and scope changes"
+    ],
+    "testsRepeatedThisCheckpoint": {
+      "command": "node --test tests/executor-manual-controls.test.mjs tests/executor-batch-concurrency.test.mjs tests/executor-original-batch-policy.test.mjs",
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "coverage": "existing targeted regression only",
+      "newCompleteLifecycleTests": false,
+      "fullSuiteOnCurrentChanges": false,
+      "actualServiceAndBrowserAcceptance": false
+    }
+  },
+  "readOnlyAuthenticatedReadback": {
+    "source": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "exitCode": 0,
+    "kind": "read_only_current_progress",
+    "runtime": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "cloudError": ""
+    },
+    "guard": {
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "pendingLearning": 0,
+      "pendingMedia": 0,
+      "assistantEnabled": false,
+      "liveJobs": 0,
+      "runningJobs": 0,
+      "checkingWatches": 0
+    },
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    },
+    "cursorIsNotReceiptCount": true
+  },
+  "thisProgressPush": {
+    "developmentCodeIncluded": false,
+    "businessImports": 0,
+    "newRealSubmissions": 0,
+    "realAiCalls": 0,
+    "serviceReloads": 0,
+    "deployments": 0
+  },
+  "goalStatus": "not_complete"
+}

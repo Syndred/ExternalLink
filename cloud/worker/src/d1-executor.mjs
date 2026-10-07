@@ -11,7 +11,7 @@ import '../../../core/opportunity-score.js';
 import '../../../core/submission-timeline.js';
 import '../../../core/executor-contract.js';
 import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
-import {profileMediaReferences} from '../../../core/media-assets.mjs';
+import {freezeD1TaskMedia} from './task-media-manifest.mjs';
 import {backupKeys} from '../../../core/application-backup.mjs';
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
@@ -108,8 +108,7 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    const preparation=run.mode==='single_page_preparation';
    if(preparation)globalThis.ExtLinkExecutorContract.validateSinglePagePreparation(snap,run);else{const scope=globalThis.ExtLinkExecutorContract.selectScope(snap,null,run.profileId,run.tasks.map(t=>t.url));if(scope.exclusions.length||scope.tasks.length!==run.tasks.length)fail('当前范围含已提交、重复或排除目标');}
    const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),...batchRegisteredTask(run),status:preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
-   const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=[];
-   for(const {ref,kind}of profileMediaReferences(profile)){const assetId=ref.slice(14),object=await env.MEDIA_BUCKET.head(mediaObjectKey(workspace,assetId));if(object)mediaManifest.push({asset_id:assetId,media_kind:kind,sha256:object.customMetadata?.sha256||'',file_name:object.customMetadata?.fileName||assetId});}
+   const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=await freezeD1TaskMedia(env.MEDIA_BUCKET,workspace,profile,run.profileId);
    const savedRun={...run,profile,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
    const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt,workbenchBatchId:run.workbenchBatchId,workbenchBatchManifestId:run.workbenchBatchManifest?.id}),runObject.key,runObject.checksum)];
    // Multi-row inserts keep each statement under D1's 100 bind-parameter limit.

@@ -1,5 +1,24 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalTaskMediaCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-task-media-2026-10-07.json",
+    "fullSuitePassed": 708,
+    "newTests": 6,
+    "originalSelectedMediaAndDisabledSlotsPreserved": true,
+    "bothBackendSelectedManifestAndDownloadIntegrity": true,
+    "legacyD1ImagesWithoutCustomMetadataReadable": true,
+    "productionReadOnlyDistinctImages": 5,
+    "productionReadOnlyReferences": 6,
+    "localHistoricalManifestEntriesWithoutSha": 56,
+    "missingHistoricalShaRepaired": false,
+    "productionWrites": 0,
+    "newRealSubmissions": 0,
+    "migrationComplete": false,
+    "finalVersionProductNodeConnectionAcceptance": false,
+    "finalVersionProductNodeConnectionError": "ECONNRESET",
+    "sameConnectionIndependentCurlDocumentCount": 19
+  },
   "originalNeonLibraryCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-neon-library-2026-10-07.json",

@@ -44,6 +44,7 @@ import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenc
 import { runPreparationTakeover } from './auto-takeover.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia } from './task-media.mjs';
+import {selectedFrozenPngLogo} from '../../core/task-media-selection.mjs';
 import { readAfterNavigation, settleObservedClick } from './navigation-read.mjs';
 import { registerAcceptance } from './acceptance-register.mjs';
 import { applicationData } from './application-data.mjs';
@@ -636,10 +637,6 @@ export class Runtime {
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
     config.sidepanelContext = { ...config.sidepanelContext, url: task.url };
-    const logo = run.mediaManifest?.find(x => x.media_kind === 'logo');
-    if (logo) { config.logoUrl = `cloud-media://${logo.asset_id}`; config.projectFields = { ...config.projectFields, 'Cloud LOGO': config.logoUrl }; }
-    const screenshots = run.mediaManifest?.filter(x => x.media_kind === 'screenshot').sort((a,b) => Number(a.media_index)-Number(b.media_index));
-    if (screenshots?.length) config.screenshots = screenshots.map(x => `cloud-media://${x.asset_id}`);
     const active = () => this.store.get('paused') === false && this.store.get(`task:${task.id}`).controller !== 'supervisor' && batchActionAllowed(this,task);
     if(!active()){finalizeBatchDeadline(this,task);return;}
     if(!assignedTaskId)this.activeTaskId=task.id;
@@ -1111,7 +1108,7 @@ export class Runtime {
         const logoInput=frame.locator('input[type=file]');
         if(await logoInput.count()!==1)throw new Error('Logo上传控件未唯一核实');
         if(!await logoInput.evaluate(e=>Boolean(e.files?.length))){
-          const logo=this.store.get('run:'+task.runId)?.mediaManifest?.find(a=>a.media_kind==='logo'&&/\.png$/i.test(a.file_name));
+          const logo=selectedFrozenPngLogo(profile,this.store.get('run:'+task.runId)?.mediaManifest);
           if(!logo)throw new Error('冻结资料缺少PNG Logo');
           const media=await this.cloud.request('media',{taskId:task.id,ref:'cloud-media://'+logo.asset_id}),bytes=Buffer.from(media.dataUrl.split(',')[1],'base64');
           const verifiedLogo=validateSquarePng(bytes,logo.sha256);
@@ -1192,7 +1189,7 @@ export class Runtime {
           await browse.waitFor({ timeout: 5000 });
         }
         const run = this.store.get('run:' + task.runId);
-        const logo = run.mediaManifest?.find(a => a.media_kind === 'logo' && /\.png$/i.test(a.file_name));
+        const logo = selectedFrozenPngLogo(profile,run.mediaManifest);
         if (!logo) throw new Error('本站要求 PNG logo，冻结素材中没有对应文件');
         const media = await this.cloud.request('media', { taskId: task.id, ref: 'cloud-media://' + logo.asset_id });
         const chooserPromise = frame.page().waitForEvent('filechooser', { timeout: 5000 });

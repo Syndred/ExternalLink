@@ -1,7 +1,7 @@
 import '../../../core/url-library.js';
 // Formal, workspace-scoped executor API. Device credentials never inherit the
 // administrator's state replacement, migration or credential-issuing powers.
-import { parseBearerToken, secureEqual } from './worker-core.mjs';
+import { parseBearerToken, secureEqual,mediaObjectKey } from './worker-core.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
 import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
 import {backupKeys} from '../../../core/application-backup.mjs';
@@ -16,6 +16,8 @@ import {neonLibraryMutation} from './neon-library.mjs';
 import {libraryTransfer} from './library-transfer.mjs';
 import {neonWorkspaceRead,readNeonDeviceMedia,putNeonDeviceMedia} from './neon-workspace.mjs';
 import {applicationMutation} from '../../../core/application-mutation.mjs';
+import {taskMediaReferences} from '../../../core/task-media-selection.mjs';
+import {verifiedNeonMediaBytes} from './neon-workspace.mjs';
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 // PostgreSQL builds these authenticated read envelopes as JSON text. Returning
@@ -200,7 +202,21 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         return { id: t.id, runId: run.id, url: t.url, destinationKey: t.destinationKey, profileId: run.profileId, identity: recordKey,
           ...batchRegisteredTask(run),status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
       });
-      const mediaManifest = await sql`select asset_id,media_kind,media_index,sha256,file_name from externallink_media_assets where workspace_id=${workspaceId} and profile_id=${run.profileId}`;
+      const profile=snapshot.documents.siteProfiles[run.profileId],selected=taskMediaReferences(profile),mediaManifest=[];
+      if(selected.length){
+        const ids=[...new Set(selected.map(({ref})=>ref.slice(14)))];
+        const assets=await sql`select asset_id,profile_id,object_key,sha256,file_name from externallink_media_assets where workspace_id=${workspaceId} and asset_id=any(${ids}::text[])`;
+        for(const {ref,kind}of selected){
+          const asset=assets.find(row=>row.asset_id===ref.slice(14));
+          if(!asset)fail('选定素材不存在，请恢复原素材后重新预览',409);
+          if(asset.profile_id!==run.profileId)fail('选定素材不属于当前任务产品',403);
+          if(!/^[a-f0-9]{64}$/.test(asset.sha256))fail('选定素材缺少原版本校验',409);
+          if(asset.object_key!==mediaObjectKey(workspaceId,asset.asset_id))fail('选定素材对象范围不匹配',403);
+          if(!await env.MEDIA_BUCKET.head(asset.object_key))fail('选定素材文件不存在，请恢复原素材后重新预览',409);
+          mediaManifest.push({asset_id:asset.asset_id,media_kind:kind.startsWith('screenshot')?'screenshot':kind,
+            media_index:kind.startsWith('screenshot')?Number(kind.slice(10)):null,sha256:asset.sha256,file_name:asset.file_name});
+        }
+      }
       const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };
       const queries = [sql`insert into externallink_executor_runs(workspace_id, run_id, device_id, data)
         values(${workspaceId},${run.id},${deviceId},${JSON.stringify(savedRun)}::jsonb) on conflict do nothing`];
@@ -327,14 +343,12 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
     if (path === '/v1/executor/media' && request.method === 'POST') {
       const task = await readTask(input.taskId);
       const assetId = String(input.ref || '').replace(/^cloud-media:\/\//, '');
-      const assets = await sql`select object_key,file_name,content_type,sha256 from externallink_media_assets where workspace_id=${workspaceId} and asset_id=${assetId} and profile_id=${task.data.profileId}`;
+      const assets = await sql`select * from externallink_media_assets where workspace_id=${workspaceId} and asset_id=${assetId} and profile_id=${task.data.profileId}`;
       if (!assets[0]) fail('素材不属于当前任务产品', 403);
       const runs = await sql`select data from externallink_executor_runs where workspace_id=${workspaceId} and run_id=${task.run_id} and device_id=${deviceId}`;
       const frozen = runs[0]?.data?.mediaManifest?.find(asset => asset.asset_id === assetId);
       if (!frozen || frozen.sha256 !== assets[0].sha256) fail('素材版本已变化，请审阅后重新安排任务', 409);
-      const object = await env.MEDIA_BUCKET.get(assets[0].object_key);
-      if (!object) fail('素材不存在', 404);
-      const bytes = new Uint8Array(await object.arrayBuffer());
+      const bytes = await verifiedNeonMediaBytes(env.MEDIA_BUCKET,workspaceId,assets[0]);
       return reply({ ok: true, name: assets[0].file_name, dataUrl: `data:${assets[0].content_type};base64,${encodeBase64(bytes)}` });
     }
     if (path === '/v1/executor/artifact' && request.method === 'POST') {

@@ -11,7 +11,7 @@ async function assetRow(sql,workspace,assetId){
  const rows=await sql`select * from externallink_media_assets where workspace_id=${workspace} and asset_id=${assetId}`;
  if(!rows[0])fail('媒体尚不存在',404);return rows[0];
 }
-async function assetBytes(bucket,workspace,row){
+export async function verifiedNeonMediaBytes(bucket,workspace,row){
  if(row.object_key!==mediaObjectKey(workspace,row.asset_id))fail('媒体对象范围不匹配',403);
  const object=await bucket.get(row.object_key);if(!object)fail('媒体对象不存在',404);
  const bytes=new Uint8Array(await object.arrayBuffer());
@@ -19,7 +19,7 @@ async function assetBytes(bucket,workspace,row){
  return bytes;
 }
 export async function readNeonDeviceMedia(sql,bucket,workspace,assetId){
- const row=await assetRow(sql,workspace,assetId);await assetBytes(bucket,workspace,row);
+ const row=await assetRow(sql,workspace,assetId);await verifiedNeonMediaBytes(bucket,workspace,row);
  return{assetId:row.asset_id,profileId:row.profile_id,kind:assetKind(row),sha256:row.sha256,mime:row.content_type,fileName:row.file_name};
 }
 export async function putNeonDeviceMedia(sql,bucket,workspace,input){
@@ -50,7 +50,7 @@ export async function neonWorkspaceRead(sql,bucket,workspace,target,query){
  }
  const media=target.match(/^media\/([a-zA-Z0-9._-]+)$/);
  if(media){
-  const row=await assetRow(sql,workspace,media[1]),bytes=await assetBytes(bucket,workspace,row);
+  const row=await assetRow(sql,workspace,media[1]),bytes=await verifiedNeonMediaBytes(bucket,workspace,row);
   return new Response(bytes,{headers:{'Content-Type':row.content_type,'Content-Length':String(bytes.length),
    'Content-Disposition':'inline; filename="'+row.file_name.replace(/[^a-zA-Z0-9._-]/g,'_')+'"; filename*=UTF-8\'\''+encodeURIComponent(row.file_name).replace(/['()*]/g,char=>'%'+char.charCodeAt(0).toString(16).toUpperCase()),'Cache-Control':'private, max-age=3600','X-Content-Type-Options':'nosniff'}});
  }

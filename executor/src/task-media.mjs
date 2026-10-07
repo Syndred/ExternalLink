@@ -19,9 +19,12 @@ export async function materializeTaskMedia(runtime,task,config,kind) {
   }
   let bytes,mime;
   if(ref.startsWith('cloud-media://')){
+    const original=runtime.store.get('run:'+task.runId)?.mediaManifest?.find(asset=>asset.asset_id===ref.slice(14));
+    if(!original?.sha256)throw Error('素材不在原任务的冻结清单中');
     const media=await runtime.bridge(task,{action:'fetchCloudSubmissionMedia',ref});
     const match=/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/.exec(media.dataUrl||'');
     if(!match)throw Error('冻结媒体返回无效');mime=match[1];bytes=Buffer.from(match[2],'base64');
+    if(createHash('sha256').update(bytes).digest('hex')!==original.sha256)throw Error('冻结媒体校验失败，禁止替换版本');
   }else{
     const url=new URL(ref);
     if(url.protocol!=='https:'||url.username||url.password||/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[)/i.test(url.hostname))throw Error('素材地址不是公开 HTTPS 图片');

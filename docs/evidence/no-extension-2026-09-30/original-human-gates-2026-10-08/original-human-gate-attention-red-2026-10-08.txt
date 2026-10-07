@@ -1,0 +1,36 @@
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (23.6506ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (2.8334ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (2.9112ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (3.0418ms)
+✖ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (21.3497ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (25.1472ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (18.9379ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 423.2655
+
+✖ failing tests:
+
+test at tests\executor-original-task-classification.test.mjs:42:1
+✖ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (21.3497ms)
+  AssertionError [ERR_ASSERTION]: manual-fill-gate: original human gate must replace a generic missing-fields marker
+  + actual - expected
+  
+  + 'missing_fields'
+  - 'login'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-task-classification.test.mjs:55:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'missing_fields',
+    expected: 'login',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

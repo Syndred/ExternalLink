@@ -1,0 +1,20 @@
+✔ original native visit fills remaining fields, runs two visual rounds and final corrections while cancelling stale plans (7390.469ms)
+✔ original final local length repair avoids an unnecessary model validation and remaining-field planner keeps only current product context (1.9208ms)
+✔ manual single-page entry runs the original full field workflow, respects no-agent and prevents incomplete submission (7214.9783ms)
+✔ native manual fallback and human attention follow the first pre-refactor source including precedence and explicit preferred status (58.9611ms)
+✔ original CAPTCHA auto-skip stays disabled by the original public batch controls, including unattended and supplied true (26.8689ms)
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (28.1559ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (3.2778ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (3.3347ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (3.4731ms)
+✔ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (38.8816ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (27.3542ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (22.7956ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14679.9569

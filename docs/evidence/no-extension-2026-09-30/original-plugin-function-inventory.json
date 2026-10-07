@@ -2828,5 +2828,22 @@
     "allOriginalBranchesVerified": false,
     "latestOriginalDataAndFullHistoryVerified": false,
     "migrationComplete": false
+  },
+  "originalHumanGateCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "d9e40a57cd908f9e5e537d6f0a42624c01eec6a3",
+    "evidence": "original-human-gates-2026-10-08.json",
+    "originalReasonPreferredPairs": 96,
+    "repositoryTestsPassed": 902,
+    "failed": 0,
+    "skipped": 0,
+    "actualIsolatedAutoVisitScenarios": 13,
+    "actualIsolatedManualSinglePageScenarios": 14,
+    "authenticatedD1AndPostgresEmptyRestoreVerified": true,
+    "nativeServicesGuardedReloadPassed": true,
+    "currentDeviceCloudHashReadbackPassed": true,
+    "allOriginalBranchesVerified": false,
+    "latestOriginalDataAndCompleteHistoryVerified": false,
+    "migrationComplete": false
   }
 }

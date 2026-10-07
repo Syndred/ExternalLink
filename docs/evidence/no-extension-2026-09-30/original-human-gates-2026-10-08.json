@@ -1,0 +1,121 @@
+{
+  "kind": "original_human_gate_fidelity_and_authenticated_restore_not_full_migration",
+  "date": "2026-10-08",
+  "featureCommit": "d9e40a57cd908f9e5e537d6f0a42624c01eec6a3",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "behavior": {
+    "preSubmissionHumanAttentionOverridesMissingFields": true,
+    "originalManualFallbackRegexAndPrecedencePreserved": true,
+    "taskAndSidepanelFallbackDifferencesPreserved": true,
+    "unknownAttemptAttentionAndBoundaryPreserved": true,
+    "explicitProductHuntCreateConfirmationPreserved": true,
+    "originalPublicBatchCaptchaAutoSkipFalse": true
+  },
+  "verification": {
+    "outputs": {
+      "red": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-attention-red-2026-10-08.txt",
+        "sha256": "dd8c7c3d5766052224fea476eab93ab4c99b310c14ea92e62ed308af04b448dc",
+        "bytes": 1923
+      },
+      "source": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-source-final-2026-10-08.txt",
+        "sha256": "75d5bcefe71d9832d5b68f00295009feef0993edb112de710da43860df518f26",
+        "bytes": 406
+      },
+      "focused": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-focused-2026-10-08.txt",
+        "sha256": "d7e796019482a935ba1d7be8bdc69fd52c40c538999362c1eed364ae2ec3ba6d",
+        "bytes": 1750
+      },
+      "cloud": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-cloud-first-2026-10-08.txt",
+        "sha256": "7212b403fbc17975f46b246fccf29f7778fef2965e7c362d18bbba134046ca26",
+        "bytes": 442
+      },
+      "repository": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-repository-first-2026-10-08.txt",
+        "sha256": "005375a163206fba632d8fc0faedea7767b3666084fb1382bc709b86e225e6fc",
+        "bytes": 105096
+      },
+      "nativeBefore": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-native-before-2026-10-08.txt",
+        "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+        "bytes": 616
+      },
+      "services": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-services-2026-10-08.txt",
+        "sha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+        "bytes": 453
+      },
+      "nativeAfter": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-native-after-2026-10-08.txt",
+        "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+        "bytes": 616
+      },
+      "cloudReadonly": {
+        "path": "original-human-gates-2026-10-08/original-human-gate-cloud-readonly-2026-10-08.txt",
+        "sha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+        "bytes": 309
+      }
+    },
+    "originalReasonPreferredPairs": 96,
+    "sourceTestsPassed": 2,
+    "focusedTestsPassed": 12,
+    "actualIsolatedAutoVisitScenarios": 13,
+    "actualIsolatedManualSinglePageScenarios": 14,
+    "authenticatedCloudBackends": [
+      "D1 API with isolated SQLite and object bucket",
+      "original Neon API with isolated PostgreSQL"
+    ],
+    "casesEachBackend": [
+      "login",
+      "authentication",
+      "oauth",
+      "email-code",
+      "otp",
+      "captcha",
+      "unknown"
+    ],
+    "lostDurableEventReplyIndependentlyReadBeforeAck": true,
+    "emptyRestoreOriginalTaskFieldsAndPausePreserved": true,
+    "originalProfilesManualMarksFavoritesGroupsReceiptsTimelineAndDeletedKeysPreserved": true,
+    "repositoryCommand": "node --test tests/*.test.mjs",
+    "repositoryTestsPassed": 902,
+    "repositoryFailed": 0,
+    "repositorySkipped": 0,
+    "newSince898": 4,
+    "previousExecutorPattern781WasNotEntireRepository": true
+  },
+  "publication": {
+    "nativeServicesGuardedReloadPassed": true,
+    "nativeBeforeAfterBusinessBaselineMatched": true,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "pendingQueues": 0,
+    "assistantEnabled": false,
+    "currentDeviceCloudDocuments": 19,
+    "currentDeviceCloudTaskInventory": 778,
+    "currentDeviceCloudHashesAndRevisionsMatchPreviousReadonlyBaseline": true,
+    "workerChanged": false,
+    "workerDeployed": false,
+    "originalChromeLaunched": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "limits": {
+    "allOriginalCaptchaOrderingAndCallbackBranchesVerified": false,
+    "allOriginalExecutionAndVisitBranchesVerified": false,
+    "latestOriginalDataAndCompleteHistoryVerified": false,
+    "otherDevicesFullyVerified": false,
+    "migrationComplete": false
+  }
+}

@@ -1,0 +1,45 @@
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (6.6563ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (2.997ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (9.1036ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (2.1505ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (2.7738ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (2.5554ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (54.5704ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (3.114ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (44.0428ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (4.1183ms)
+✔ comment TTL, refresh, capacity, exact URL, product and count match the frozen original background (11.3865ms)
+✔ failed refresh leaves the successful cache intact, rejected generations are not cached and caller edits do not alter it (0.8864ms)
+✔ a disabled preference prevents cached replies and effective link and language preferences reach the model (0.6106ms)
+✔ different devices, backends and workspaces cannot reuse or save an old in-flight response (2.1285ms)
+✔ the original task bridge reserves model budget only on a miss and carries refresh and language to the provider (0.9136ms)
+✔ original disabled AI comment preference prevents model calls and leaves all draft history intact (2.465ms)
+✔ original promotion-link switch overrides request defaults and generated history records the effective preference (5.0673ms)
+✔ comment versions preserve the original copyCommentDraft metadata and accept partial candidate sets (2.8049ms)
+✔ one-candidate original fallback and original one-to-five request counts save valid candidates (1.6908ms)
+✔ empty or rejected model results do not replace the previous valid draft or history (2.1033ms)
+✔ workspace switches during model generation abandon old results instead of attributing them to the new workspace (1.0541ms)
+✔ same-host article navigation or a different product refuses old comment filling before any lease or field action (0.9921ms)
+✔ article navigation while cloud snapshot is pending refuses the old draft before leasing or filling (0.7455ms)
+✔ single-candidate metadata and distinct edited history survive a real SQLite close and reopen (54.1147ms)
+✔ pending original settings take effect without borrowing unconfirmed profiles, ledger edits or cloud revisions (10.1508ms)
+✔ locally recovered original setting documents also govern execution before their first cloud revision (0.9457ms)
+✔ original task comment bridge checks pending disabled AI before cache or model and pending link preference before a fresh request (1.9081ms)
+✔ pending original submission switches govern the actual execution preferences while fill-only stays enforced (0.9158ms)
+✔ actual native page and comment studio use pending local preferences through SQLite restart, matching the frozen original configuration (2954.3295ms)
+✔ saved filter values match the original normalization for legacy strings, clamps and literal booleans (2.407ms)
+✔ partial filter edits retain original assistant preferences and added DR/DA gates without mutating the raw snapshot (1.5186ms)
+✔ blacklist incremental operations reproduce the original update, including normalized removal and wildcard additions (3.0729ms)
+✔ blacklist replacement accepts original arrays and migrated text, preserving rules and unrelated evidence (0.4244ms)
+✔ settings presentation normalizes legacy filters while raw cloud documents and revisions remain unchanged (6.8244ms)
+✔ original month clamping and literal unknown-age switch govern both actual queue and VM batch preview (5.6945ms)
+✔ normalized blacklist and added DR/DA constraints affect execution rather than only the settings display (0.5475ms)
+✔ offline partial settings and blacklist survive SQLite reopen and lost replies without replacement IDs or repeated writes (84.3624ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3365.6474

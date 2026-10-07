@@ -1,0 +1,1 @@
+{"ok":true,"kind":"actual_isolated_frozen_original_comment","result":{"standardWp":true},"values":{"username":"New owner","email":"new@example.com","comment":"An explicitly selected original comment, filled without a model or submission."},"posts":0,"externalRequests":0,"productionWrites":0,"realModelCalls":0}

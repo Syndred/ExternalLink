@@ -1,0 +1,127 @@
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (4.9829ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (2.115ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (7.7479ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (1.4322ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (1.9466ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (1.5958ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (53.1177ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (1.9179ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (45.2899ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (4.9034ms)
+✔ comment TTL, refresh, capacity, exact URL, product and count match the frozen original background (8.2005ms)
+✔ failed refresh leaves the successful cache intact, rejected generations are not cached and caller edits do not alter it (0.8253ms)
+✔ a disabled preference prevents cached replies and effective link and language preferences reach the model (0.5706ms)
+✔ different devices, backends and workspaces cannot reuse or save an old in-flight response (1.8571ms)
+✔ the original task bridge reserves model budget only on a miss and carries refresh and language to the provider (0.8902ms)
+✔ original disabled AI comment preference prevents model calls and leaves all draft history intact (3.4022ms)
+✔ original promotion-link switch overrides request defaults and generated history records the effective preference (6.537ms)
+✔ comment versions preserve the original copyCommentDraft metadata and accept partial candidate sets (3.779ms)
+✔ one-candidate original fallback and original one-to-five request counts save valid candidates (2.3991ms)
+✔ empty or rejected model results do not replace the previous valid draft or history (2.8518ms)
+✔ workspace switches during model generation abandon old results instead of attributing them to the new workspace (1.426ms)
+✔ same-host article navigation or a different product refuses old comment filling before any lease or field action (1.4111ms)
+✔ article navigation while cloud snapshot is pending refuses the old draft before leasing or filling (1.1126ms)
+✔ single-candidate metadata and distinct edited history survive a real SQLite close and reopen (59.7501ms)
+✖ pending original settings take effect without borrowing unconfirmed profiles, ledger edits or cloud revisions (10.0194ms)
+✖ locally recovered original setting documents also govern execution before their first cloud revision (0.6584ms)
+✖ original task comment bridge checks pending disabled AI before cache or model and pending link preference before a fresh request (1.4899ms)
+✖ pending original submission switches govern the actual execution preferences while fill-only stays enforced (0.796ms)
+✔ actual native page and comment studio use pending local preferences through SQLite restart, matching the frozen original configuration (2957.0007ms)
+✔ saved filter values match the original normalization for legacy strings, clamps and literal booleans (3.5913ms)
+✔ partial filter edits retain original assistant preferences and added DR/DA gates without mutating the raw snapshot (1.3573ms)
+✔ blacklist incremental operations reproduce the original update, including normalized removal and wildcard additions (3.6666ms)
+✔ blacklist replacement accepts original arrays and migrated text, preserving rules and unrelated evidence (0.5919ms)
+✔ settings presentation normalizes legacy filters while raw cloud documents and revisions remain unchanged (6.7894ms)
+✔ original month clamping and literal unknown-age switch govern both actual queue and VM batch preview (5.7185ms)
+✔ normalized blacklist and added DR/DA constraints affect execution rather than only the settings display (0.5976ms)
+✔ offline partial settings and blacklist survive SQLite reopen and lost replies without replacement IDs or repeated writes (91.2723ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 33
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3356.5386
+
+✖ failing tests:
+
+test at tests\executor-original-pending-settings.test.mjs:14:1
+✖ pending original settings take effect without borrowing unconfirmed profiles, ledger edits or cloud revisions (10.0194ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'old@example.com'
+  - 'new@example.com'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-settings.test.mjs:15:314)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'old@example.com',
+    expected: 'new@example.com',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-pending-settings.test.mjs:18:1
+✖ locally recovered original setting documents also govern execution before their first cloud revision (0.6584ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-settings.test.mjs:19:118)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-pending-settings.test.mjs:22:1
+✖ original task comment bridge checks pending disabled AI before cache or model and pending link preference before a fresh request (1.4899ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'ok' !== 'disabled'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-settings.test.mjs:24:141)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'ok',
+    expected: 'disabled',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-pending-settings.test.mjs:27:1
+✖ pending original submission switches govern the actual execution preferences while fill-only stays enforced (0.796ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-settings.test.mjs:28:302)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

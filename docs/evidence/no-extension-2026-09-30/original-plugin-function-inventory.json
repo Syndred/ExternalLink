@@ -2891,5 +2891,27 @@
     "nativeServicesUpdatedAndModelsReadBack": true,
     "latestOriginalBrowserFavoritesAndCompleteHistoryVerified": false,
     "migrationComplete": false
+  },
+  "originalPendingSettingsCheckpoint": {
+    "featureCommit": "3441c61588d14c0dc61cbc546bd6f08a2129ebbf",
+    "durablePendingSettingsActualExecution": true,
+    "nativeContactConfigurationAndActualEmailIcon": true,
+    "originalSelectedCommentAuthorAndEmailActualFill": true,
+    "pendingDisabledAiCheckedBeforeCacheAndModel": true,
+    "pendingLinkPreferenceOnFreshRequests": true,
+    "sqliteRestartSamePendingIds": true,
+    "pendingProfilesAndLedgerNotBorrowed": true,
+    "actualFrozenOriginalCommentBrowserCompared": true,
+    "repositoryTestsPassed": 924,
+    "newTests": 6,
+    "originalBothNativeServicesUpdatedAndReadOnlyChecked": true,
+    "cloudDocuments": 19,
+    "currentDeviceTaskInventory": 778,
+    "cloudBusinessUnchanged": true,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0,
+    "migrationComplete": false,
+    "evidence": "original-pending-settings-2026-10-08.json"
   }
 }

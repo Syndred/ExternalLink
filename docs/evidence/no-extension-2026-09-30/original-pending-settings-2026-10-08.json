@@ -1,0 +1,281 @@
+{
+  "kind": "original_pending_settings_and_comment_contact_parity_not_full_migration",
+  "date": "2026-10-08",
+  "featureCommit": "3441c61588d14c0dc61cbc546bd6f08a2129ebbf",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourcePull": "Already up to date before work and feature commit",
+  "changes": [
+    "Read durable pending original settings in native page configuration, automatic/manual preparation and execution preferences",
+    "Check pending disabled AI before cached drafts and fresh model requests; honor pending promotion-link preference on fresh requests",
+    "Use original comment engine rather than generic field fill for selected comment text and author/email",
+    "Keep pending profile edits and business ledger edits outside execution setting overlays; retain frozen task profiles and cloud revisions",
+    "Freeze original target-filter test source before the first refactor"
+  ],
+  "initialActualGap": {
+    "ok": false,
+    "kind": "actual_isolated_original_pending_settings",
+    "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "proof": {
+      "contactsMatchOriginalLocalSettings": false,
+      "nativeCommentDisabledBeforeCachedReply": false,
+      "studioCommentDisabledBeforeModel": false,
+      "reopenedConfigMatchesOriginalLocalSettings": false,
+      "newPageIconsDisabled": false,
+      "onlyInitialFixtureModelCall": false
+    },
+    "fixtureModelCalls": 2,
+    "pendingSettings": 3,
+    "samePendingIdsAfterSQLiteRestart": true,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "libraryAttempts": 3,
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "fixedBatchPaused": true
+  },
+  "actualBrowserAndRestart": {
+    "ok": true,
+    "kind": "actual_isolated_original_pending_settings",
+    "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "proof": {
+      "contactConfigMatchesOriginalLocalSettings": true,
+      "emailIconUsesOriginalLocalSetting": true,
+      "selectedCommentFillsLocalContacts": true,
+      "nativeCommentDisabledBeforeCachedReply": true,
+      "studioCommentDisabledBeforeModel": true,
+      "reopenedConfigMatchesOriginalLocalSettings": true,
+      "newPageIconsDisabled": true,
+      "onlyInitialFixtureModelCall": true
+    },
+    "fixtureModelCalls": 1,
+    "pendingSettings": 3,
+    "samePendingIdsAfterSQLiteRestart": true,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "libraryAttempts": 3,
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "fixedBatchPaused": true
+  },
+  "actualFrozenOriginalComment": {
+    "ok": true,
+    "kind": "actual_isolated_frozen_original_comment",
+    "result": {
+      "standardWp": true
+    },
+    "values": {
+      "username": "New owner",
+      "email": "new@example.com",
+      "comment": "An explicitly selected original comment, filled without a model or submission."
+    },
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0
+  },
+  "focusedTests": {
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "beforeAddingFrozenOriginalBrowserTest": true
+  },
+  "repositoryTests": {
+    "passed": 924,
+    "failed": 0,
+    "skipped": 0,
+    "newTestsSince918": 6,
+    "latestPublishedSourceCovered": true
+  },
+  "failedIterationsRetained": [
+    "Initial actual pending settings failure",
+    "Author icon fixture expected a value which the original generic mapper intentionally leaves empty",
+    "Unit fixtures omitted operation timestamps and VM fixtures omitted the new imported setting helper; corrected without relaxing source assertions",
+    "Selected comment generic fill omitted author; actual frozen original browser engine confirms the original comment routine fills it"
+  ],
+  "nativeBefore": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "guardedReloadPassed": true,
+  "nativeAfter": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "cloudAfter": {
+    "ok": true,
+    "kind": "manual_confirmation_deployment_after_readonly",
+    "currentDeviceAllCloudDocumentsAndInventoryUnchanged": true,
+    "documents": 19,
+    "taskCount": 778,
+    "authenticatedReceiptRouteMissingTaskRejected": 403,
+    "liveManualConfirmationPerformed": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "workerChangedOrDeployed": false,
+  "originalChromeStarted": false,
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "migrationComplete": false,
+  "remaining": [
+    "Latest original browser data and previous favorites",
+    "Complete old history and other devices",
+    "All original execution and special publishing branches",
+    "Remaining settings, dynamic controls and media branches"
+  ],
+  "logs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-before-2026-10-08.txt",
+      "capturedOutputSha256": "fc9294e0c48763c78f353329dff9926162e40c81a826521e7e6e6c841960bc41",
+      "gitBlobContentSha256": "3f2a191da8024e41e98c8eb86fad18f7a97f32f17f1a997fbb2a9d626fcc3148"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-after-2026-10-08.txt",
+      "capturedOutputSha256": "721c8353aaa1725de991c83ac3bf8b1218a6e3d02a1dd738de245062f16ed780",
+      "gitBlobContentSha256": "859a52ad95eec11969f30de13c63f2f315c906f9016ae60f5413d203adbe6048"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-diagnosis-2026-10-08.txt",
+      "capturedOutputSha256": "bb8c698e30305f4706ed624edf32acba43b6463db65d6f90aa1fb8683b3c0eb0",
+      "gitBlobContentSha256": "dad69d406e2d0e5679c74220142ae90703a28e15d2b231754f0c7662e36179e6"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-diagnosis-second-2026-10-08.txt",
+      "capturedOutputSha256": "24c15d873cb84b33b367e914b50c9e8996e8542f9f46530791993ae72c6958a2",
+      "gitBlobContentSha256": "3e62a854b7d9dab08fbb8853d7f914da2d0b0ed3ead9ec0c596914d8ca87b176"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-focused-2026-10-08.txt",
+      "capturedOutputSha256": "73e7b2cece82f49bed851a09bdd9525165f248fb4ff8fcf17f24cacbe430aeaa",
+      "gitBlobContentSha256": "d0303c468a5c9e10a2d8726ea895ac517fed64950bccbda0191d66206ede412d"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-focused-second-2026-10-08.txt",
+      "capturedOutputSha256": "3b674fbf57e30211beaa5a0d5e489bbd3162b6815d8fdddd0bd0ae2d8d3f1ff0",
+      "gitBlobContentSha256": "ddbb01a40ddeb52641cc81c6b7966c9d02e4598d5c1b0961c542df4ab4fc9e4a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-focused-final-2026-10-08.txt",
+      "capturedOutputSha256": "3008375a253a4661d2eff6cf31d24cfcbad3e9db83bd9ddf2a904922fa6ce88d",
+      "gitBlobContentSha256": "260b60205bc5aa7019ac777ae624ed0efd36a82b3a4c1396bba3dcf804d26817"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-focused-fourth-2026-10-08.txt",
+      "capturedOutputSha256": "006fa13d63d11887a2fd60372a81fb94e40a334e3dad74aab86acdf9621c95c5",
+      "gitBlobContentSha256": "a2f331e10c45fd40b9d57619aaca832a2232edc4631541f7ffe94fc1c63be900"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-repository-first-2026-10-08.txt",
+      "capturedOutputSha256": "eed5a7f4a1c5233bc74b02ed8b3440544e170a4f01adcfca1ba95b31fc7193da",
+      "gitBlobContentSha256": "6761ad6d5f29cd0869880b1164190571afa5b46737b92a1e7030b71729d98844"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-repository-final-2026-10-08.txt",
+      "capturedOutputSha256": "a52ced989f69da895fa4a50b9bc18b076a9d0d9e49b90b7fa84d5ec8f4f06481",
+      "gitBlobContentSha256": "fd04562c57abaae1d36e12411de9ac0d905fc0dbc0a6c4b97778323974e7ae99"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-actual-final-2026-10-08.txt",
+      "capturedOutputSha256": "a0ca5f2276cf968e0727577ff29b3a003215522f46ae74885dff8ddfe447d3b2",
+      "gitBlobContentSha256": "3bb51167d7058571c0898246231a4c7a7a387aa226c0792ccb2cb6a8de3a1206"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-reference-final-2026-10-08.txt",
+      "capturedOutputSha256": "1a0157dea98eb6e54f0c1243634e0d322a394494f7164ca94c7ad3def74acd92",
+      "gitBlobContentSha256": "a2f4d139127f20ca1585673425fb1cedb51c912e5ef1992f8e26d9e8109fe46e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-original-comment-probe-2026-10-08.txt",
+      "capturedOutputSha256": "1a0157dea98eb6e54f0c1243634e0d322a394494f7164ca94c7ad3def74acd92",
+      "gitBlobContentSha256": "a2f4d139127f20ca1585673425fb1cedb51c912e5ef1992f8e26d9e8109fe46e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-native-before-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitBlobContentSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-native-reload-2026-10-08.txt",
+      "capturedOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobContentSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-native-after-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitBlobContentSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-pending-settings-2026-10-08/original-pending-settings-cloud-after-2026-10-08.txt",
+      "capturedOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitBlobContentSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486"
+    }
+  ]
+}

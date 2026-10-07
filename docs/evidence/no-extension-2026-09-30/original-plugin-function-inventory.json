@@ -826,7 +826,7 @@
       "status": "mapped_requires_full_acceptance"
     }
   ],
-  "updatedAt": "2026-10-07T01:42:36.176Z",
+  "updatedAt": "2026-10-07",
   "completion": "not_complete",
   "specialLaunchCheckpoint": {
     "platform": "Product Hunt",
@@ -1957,38 +1957,50 @@
     {
       "id": "cfgConcurrency",
       "scope": "全局并发设置",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "设置与备份 / 同时处理的外链目标数",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     },
     {
       "id": "cfgFillOnly",
       "scope": "批量仅填写选项",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "外链库 / 批量提交 / 参数及固定范围预览",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     },
     {
       "id": "cfgUnattended",
       "scope": "无人值守开关",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "外链库 / 批量提交 / 参数及固定范围预览",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     },
     {
       "id": "cfgUnattendedHours",
       "scope": "无人值守最长运行时间",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "外链库 / 批量提交 / 参数及固定范围预览",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     },
     {
       "id": "cfgUnattendedTasks",
       "scope": "无人值守项目组合上限",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "外链库 / 批量提交 / 参数及固定范围预览",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     },
     {
       "id": "cfgUnattendedManualTabs",
       "scope": "无人值守待人工页签容量",
-      "status": "requires_original_behavior_migration",
-      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "mapping": "外链库 / 批量提交 / 参数及固定范围预览",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
     }
   ],
   "originalReportExportsCheckpoint": {
@@ -2008,5 +2020,22 @@
       "cfgUnattendedManualTabs"
     ],
     "complete": false
+  },
+  "originalBatchControlsCheckpoint": {
+    "date": "2026-10-07",
+    "originalControls": [
+      "cfgConcurrency",
+      "cfgFillOnly",
+      "cfgUnattended",
+      "cfgUnattendedHours",
+      "cfgUnattendedTasks",
+      "cfgUnattendedManualTabs"
+    ],
+    "tests": 592,
+    "newTests": 22,
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json",
+    "workerVersion": "c0d5ebd7-b505-4e7c-ac83-be84276f49b5",
+    "nativeServicesUpdated": true,
+    "goalComplete": false
   }
 }

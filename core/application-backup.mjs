@@ -2,12 +2,14 @@ import './queue.js';
 import './submission-timeline.js';
 import './backup.js';
 import {normalizeLegacyPreferences} from './application-preferences.mjs';
+import {validateBatchPreferenceValue} from './original-batch-config.mjs';
 import {prepareProfileRecoverySource,profileRecoveryDependencyKeys,remapProfileRecoveryKey,mergeProtectedBackupRecords} from './profile-recovery-source.mjs';
-export const backupKeys=Object.freeze(['submissionRecords','submissionSchemaVersion','siteAnnotations','deletedSubmissionKeys','siteProfiles','activeSiteId','selectedSiteIds','urlList','submissionTimeline','timelineSchemaVersion','sheetTableData','domainBlacklist','targetFilters','domainMetricsCache','linkMonitorResults','linkMonitorSchedule','autoSubmitStandardWpComments','autoSubmitDirectoryListings','cfgEmail','cfgName','cfgCommentTemplate','cfgPingIndex','autoFillOnVisit']);
+export const backupKeys=Object.freeze(['submissionRecords','submissionSchemaVersion','siteAnnotations','deletedSubmissionKeys','siteProfiles','activeSiteId','selectedSiteIds','urlList','submissionTimeline','timelineSchemaVersion','sheetTableData','domainBlacklist','targetFilters','domainMetricsCache','linkMonitorResults','linkMonitorSchedule','autoSubmitStandardWpComments','autoSubmitDirectoryListings','cfgEmail','cfgName','cfgCommentTemplate','cfgPingIndex','autoFillOnVisit','cfgConcurrency','unattendedPreferences']);
 const dangerous=new Set(['__proto__','prototype','constructor']);
 function validateTree(value){if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(dangerous.has(key))throw Error('备份含有不安全的字段');validateTree(child);}}
 export function validateApplicationBackup(raw){
  validateTree(raw);const value=normalizeLegacyPreferences(globalThis.ExtLinkBackup.validateBackup(raw));
+ for(const key of ['cfgConcurrency','unattendedPreferences'])if(Object.hasOwn(value,key))validateBatchPreferenceValue(key,value[key]);
  for(const key of ['autoSubmitStandardWpComments','autoSubmitDirectoryListings'])if(Object.hasOwn(value,key)&&typeof value[key]!=='boolean')throw Error('备份自动提交设置格式无效：'+key);
  if(Object.hasOwn(value,'cfgPingIndex')&&typeof value.cfgPingIndex!=='boolean')throw Error('备份搜索引擎通知设置格式无效');
  if(Object.hasOwn(value,'autoFillOnVisit')&&typeof value.autoFillOnVisit!=='boolean')throw Error('备份访问自动填写设置格式无效');

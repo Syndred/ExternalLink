@@ -1,6 +1,8 @@
 import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';import {recoveryCheckpoint} from './tab-cleanup.mjs';import {getTargetInfo} from './browser-target.mjs';
+import {retainBatchManualPage} from './workbench-batch-policy.mjs';
 export async function closeAcceptanceTask(runtime,task){
  if(!(task.acceptanceId||task.workbenchBatchId)||!task.targetId||task.tabClosedAt)return;
+ if(retainBatchManualPage(runtime,task))return;
  if(task.attemptBoundary&&!task.receipt)return; // Preserve original verification page.
  if(!task.screenshot||!['needs_manual','finished','excluded'].includes(task.status))return;
  const frozen=runtime.store.get('acceptance:'+task.acceptanceId),execution=runtime.store.get('acceptanceExecution:'+task.acceptanceId);

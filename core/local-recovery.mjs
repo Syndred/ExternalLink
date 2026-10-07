@@ -1,10 +1,12 @@
 import {backupKeys,validateApplicationBackup} from './application-backup.mjs';
 import {normalizeLegacyPreferences} from './application-preferences.mjs';
+import {validateBatchPreferenceValue} from './original-batch-config.mjs';
 import {prepareProfileRecoverySource} from './profile-recovery-source.mjs';
 const objectKeys=new Set(['targetFilters','linkMonitorSchedule']);
 const arrayKeys=new Set(['selectedSiteIds','deletedSubmissionKeys','domainBlacklist']);
 const stringKeys=new Set(['activeSiteId','cfgEmail','cfgName','cfgCommentTemplate']);
 export function validateRecoveryValue(key,value){
+ if(['cfgConcurrency','unattendedPreferences'].includes(key))validateBatchPreferenceValue(key,value);
  if(objectKeys.has(key)&&(!value||typeof value!=='object'||Array.isArray(value)))throw Error('恢复资料格式无效：'+key);
  if(arrayKeys.has(key)&&(!Array.isArray(value)||value.some(item=>typeof item!=='string')))throw Error('恢复资料格式无效：'+key);
  if(stringKeys.has(key)&&typeof value!=='string')throw Error('恢复资料格式无效：'+key);

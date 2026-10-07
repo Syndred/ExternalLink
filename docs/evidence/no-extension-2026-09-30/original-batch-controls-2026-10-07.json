@@ -1,0 +1,97 @@
+{
+  "kind": "original_batch_controls_and_grouped_scheduler_checkpoint",
+  "date": "2026-10-07",
+  "previousProgressCommit": "cb9b342",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalControls": ["cfgConcurrency", "cfgFillOnly", "cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs"],
+  "originalModulesSha256": {
+    "sidepanel-model": "3bef9545ce27176dc9a767243c3e66b947672ce5300085470fe6505a27f257f3",
+    "unattended": "f605333d0270254463c60a0e686fb386c409e865d203ad8f131a0973053066cb"
+  },
+  "tests": {"passed": 592, "failed": 0, "skipped": 0, "newTests": 22, "source": "executor/test-output/original-batch-all-final-2026-10-07.txt"},
+  "implementedScope": {
+    "originalRawConcurrencySettingAndNormalization": true,
+    "originalPerBatchFillOnly": true,
+    "originalUnattendedPreferenceSaveAndBackupRecovery": true,
+    "scopeAndConfigFrozenWithOriginalTaskIds": true,
+    "differentDestinationConcurrency": true,
+    "sameDestinationOrderedProducts": true,
+    "unattendedOriginalSingleSlot": true,
+    "outOfOrderCompletionPreservesCursorAndDenominator": true,
+    "unknownAttemptImmediatelyParksDestinationGroup": true,
+    "pauseDrainsOriginalWorkerPromises": true,
+    "durableTaskClaimsAndBudgetAtomicTransaction": true,
+    "runDeadlineAndConsumedBudgetNotResetOnReopen": true,
+    "restartParksOriginalInFlightTasksUsingOriginalHelper": true,
+    "taskDeadlineParksOneTaskAndContinuesOtherDestinations": true,
+    "failureThresholdAndModelBudgetPreserved": true,
+    "manualPagesRetainedAndCapacityWaitsForHumanClose": true,
+    "previousBatchOwnedManualPagesCountTowardCapacity": true,
+    "manualConsentStillBoundToOneOriginalTask": true,
+    "eventFlushAndEvidenceSynchronizationSerialized": true,
+    "indexNotificationUsesFrozenBatchPreference": true
+  },
+  "actualServicesUiFixture": {
+    "source": "executor/test/batch-controls.mjs",
+    "concurrencySaveAndIndependentReadback": true,
+    "unattendedSaveAndIndependentReadback": true,
+    "perBatchFillOnlyResetAndSavedUnattendedReopen": true,
+    "previewConfigAndScopeFrozen": true,
+    "invalidPreferenceBothServices400": true,
+    "startedFixtureBatches": 0
+  },
+  "actualMapperBrowserFixture": {
+    "source": "executor/test/batch-execution.mjs",
+    "ordinaryConcurrencyPeak": 2,
+    "fixtureFormPosts": 6,
+    "fixtureFrozenCombinations": 6,
+    "fillOnlyPosts": 0,
+    "fillOnlyManualPages": 3,
+    "sameDestinationRemainingProducts": 3,
+    "unattendedPeak": 1,
+    "humanPageCloseFreesCapacity": true,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "otherVerification": {
+    "sixPageUiWithNewParameterAssertions": "executor/test/application-ui.mjs",
+    "originalSubmitPreferencesCases": 15,
+    "authenticatedHttpAndD1SettingSaveBackupRecoveryInvalidRejection": "tests/executor-local-recovery-http.test.mjs",
+    "workerDryRunPassed": true
+  },
+  "release": {
+    "workerVersion": "c0d5ebd7-b505-4e7c-ac83-be84276f49b5",
+    "originalServicesUpdatedAfterIdentityIdleAndDiskGuards": true,
+    "finalNativePatchReloaded": true
+  },
+  "productionReadOnlyReadback": {
+    "source": "executor/test-output/original-batch-live-2026-10-07.mjs",
+    "sixControlsVisibleWithSavedValues": true,
+    "invalidPreferenceBothServices400": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "localTasksRangesHistoryOutboxAndLogsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "fixedBatch": "paused 13/30",
+    "businessEdits": 0,
+    "realBatchPreviews": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0
+  },
+  "earlierFailuresNotCountedAsPass": [
+    "Initial policy setting mutation fixture omitted identity; corrected fixture without weakening validation.",
+    "Out-of-order draining race left parked group status running; scheduler finalization fixed and retested.",
+    "First full suite had three failures: old 23-key recovery fixture, backoff state read and borrowed synchronize method; source or fixture corrected.",
+    "Invalid unattended format initially surfaced as HTTP 500; status 400 was restored and authenticated HTTP retested."
+  ],
+  "goalStatus": "not_complete",
+  "limits": [
+    "This checkpoint restores these six visible settings and tested native batch behavior; it is not proof of complete original-plugin migration.",
+    "Existing fixed real batch has no newly frozen configuration and remains paused; no original real batch was started or resubmitted.",
+    "Complete original dynamic controls, historical sources, media ownership, cloud recovery chains and real special-page or external-service behavior still require requirement-by-requirement verification."
+  ]
+}

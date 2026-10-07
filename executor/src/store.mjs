@@ -28,10 +28,11 @@ export class Store {
   set(id, value) { this.db.prepare('INSERT INTO state VALUES (?,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value').run(id, JSON.stringify(value)); return value; }
   values(prefix) { return this.db.prepare('SELECT value FROM state WHERE id LIKE ? ORDER BY id').all(prefix + '%').map(x => JSON.parse(x.value)); }
   valuesByInsertion(prefix) { return this.db.prepare('SELECT value FROM state WHERE id LIKE ? ORDER BY rowid').all(prefix + '%').map(x => JSON.parse(x.value)); }
-  transition(task, type) {
+  transition(task, type, stateChanges={}) {
     const event = { id: randomUUID(), taskId: task.id, version: task.version, at: new Date().toISOString(), type, state: structuredClone(task) };
     this.db.exec('BEGIN IMMEDIATE');
     try {
+      for(const [key,value]of Object.entries(stateChanges))this.set(key,value);
       this.set(`task:${task.id}`, task);
       this.db.prepare('INSERT INTO outbox(id,value) VALUES (?,?)').run(event.id, JSON.stringify(event));
       this.appendLog({id:event.id,at:event.at,type,runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,status:task.status,reason:task.reason||''});

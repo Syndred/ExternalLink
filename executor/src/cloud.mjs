@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
+const flushOperations=new WeakMap();
 
 export class Cloud {
   constructor(config, {onNetworkFailure, onSuccess} = {}) { this.config = config; this.onNetworkFailure = onNetworkFailure; this.onSuccess = onSuccess; }
@@ -52,7 +53,11 @@ export class Cloud {
     for(let index=0;index<parts.length;index++){if(present.has(index))continue;check();const part=bytes.subarray(index*512*1024,index*512*1024+parts[index].bytes);await this.request('library-transfer/part',{id,index,data:part.toString('base64')});check();}
     check();return this.request('library-transfer/commit',{id});
   }
-  async flush(store) {
+  flush(store) {
+    const previous=flushOperations.get(store)||Promise.resolve(),operation=previous.catch(()=>{}).then(()=>this.flushNow(store));flushOperations.set(store,operation);
+    return operation.finally(()=>{if(flushOperations.get(store)===operation)flushOperations.delete(store);});
+  }
+  async flushNow(store) {
     for (const event of store.pendingBatch ? store.pendingBatch(100) : store.pending()) {
       if(store.get?.(`task:${event.taskId}`)?.syncConflict)continue;
       let writeError, written;

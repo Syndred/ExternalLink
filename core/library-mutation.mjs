@@ -10,6 +10,7 @@ import {recoveryDocument,validateRecoveryValue} from './local-recovery.mjs';
 import {applyPreparedBackupKey} from './prepared-backup-key.mjs';
 import {formKnowledgeMutation,formKnowledgeSatisfied} from './form-knowledge.mjs';
 import {applicationSettingKeys} from './application-preferences.mjs';
+import {validateBatchPreferenceValue,batchPreferencePatch} from './original-batch-config.mjs';
 import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
@@ -94,6 +95,8 @@ export function libraryMutation(documents,operation,options={}){
   const allowed=applicationSettingKeys;
   if(!allowed.includes(operation.key))fail('不支持的设置');
   const value=operation.value;
+  if(operation.key==='unattendedPreferences')return{key:operation.key,data:{...(documents.unattendedPreferences||{}),...batchPreferencePatch(value)}};
+  if(operation.key==='cfgConcurrency'){validateBatchPreferenceValue(operation.key,value);return{key:operation.key,data:structuredClone(value)};}
   if(operation.key.startsWith('autoSubmit')){
    if(typeof value!=='boolean')fail('自动提交设置必须为开启或关闭');
   }else if(operation.key==='cfgPingIndex'){

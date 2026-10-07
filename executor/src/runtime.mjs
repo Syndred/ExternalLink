@@ -4,6 +4,7 @@ import {startPublicLibrarySync} from './public-library-sync.mjs';
 import {workbenchBackup} from './workbench-backup.mjs';
 import {runExports} from './run-exports.mjs';
 import {runHistory} from './run-history.mjs';
+import {watchBatchDeadline,batchActionAllowed,finalizeBatchDeadline,reserveBatchModelCall,recoverBatchTasks} from './workbench-batch-policy.mjs';
 import {startDomainAge} from './domain-age.mjs';
 import {prepareIndexNotification,notifyIndexNow} from './index-notification.mjs';
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -50,6 +51,7 @@ import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
+import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
 import {commentHistory,saveCommentVersion} from './comment-history.mjs';
 import {quickOpenLibrary} from './quick-open.mjs';
 import {mediaLibrary} from './media-library.mjs';
@@ -153,7 +155,7 @@ export function chooseObservedEntry(current,links){
 }
 
 export class Runtime {
-  constructor(store, home) { this.store = store; this.home = home; this.job = null; this.cloudError = ''; this.controllerId = store.get('executorControllerId') || randomUUID(); store.set('executorControllerId',this.controllerId); store.recover(); if(store.get('offlineMode')?.enabled)this.hydrated=true; if (store.get('singleTaskId')) { store.set('paused', true); store.set('singleTaskId', null); } }
+  constructor(store, home) { this.store = store; this.home = home; this.job = null; this.cloudError = ''; this.controllerId = store.get('executorControllerId') || randomUUID(); store.set('executorControllerId',this.controllerId); recoverBatchTasks(this);store.recover(); if(store.get('offlineMode')?.enabled)this.hydrated=true; if (store.get('singleTaskId')) { store.set('paused', true); store.set('singleTaskId', null); } }
   get cloud() { const pair = this.store.get('pair'); if (!pair) throw new Error('请先在插件中配对'); return new Cloud(pair, {
     onNetworkFailure: error => { this.lastCloudNetworkFailure = error.message; this.cloudError = error.message; },
     onSuccess: () => {
@@ -376,7 +378,7 @@ export class Runtime {
       await page.goto(entry.href,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(1500);
     }
   }
-  update(task, patch, type) { Object.assign(task, patch); this.store.transition(task, type); }
+  update(task, patch, type, stateChanges) { Object.assign(task, patch); this.store.transition(task, type,stateChanges); }
   async lease(task,{online=false}={}) {
     if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;
@@ -393,7 +395,11 @@ export class Runtime {
     task.version = lease.version; task.controllerId = this.controllerId;
     this.store.set(`task:${task.id}`, task);
   }
-  async synchronize() {
+  synchronize() {
+    const previous=this.synchronizationOperation||Promise.resolve(),operation=previous.catch(()=>{}).then(()=>Runtime.prototype.synchronizeNow.call(this));this.synchronizationOperation=operation;
+    return operation.finally(()=>{if(this.synchronizationOperation===operation)this.synchronizationOperation=null;});
+  }
+  async synchronizeNow() {
     if(pendingMediaUploads(this).length)await flushMediaUploads(this);
     if(pendingApplication(this).length)await flushApplicationMutations(this);
     if(pendingFillLearning(this).length)await flushFillLearning(this);
@@ -405,6 +411,7 @@ export class Runtime {
     if((this.store.pendingSummary?.()||this.store.pending()).some(e=>!this.store.get(`task:${e.taskId}`)?.syncConflict))return this.status();
     let imagesSynced=0,receiptsSynced=0;
     for (const task of this.store.values('task:')) {
+      if(this.activeTaskIds?.has(task.id))continue;
       if (task.screenshot && !task.artifactRef && imagesSynced<4) {
         const bytes = await readFile(task.screenshot);
         const artifact = await this.cloud.request('artifact', { taskId: task.id, dataUrl: `data:image/png;base64,${bytes.toString('base64')}` });
@@ -435,7 +442,7 @@ export class Runtime {
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
     let notificationDocuments;
-    for(const task of this.store.values('task:'))if(task.cloudVerified&&task.receipt&&['pending','sending'].includes(task.indexNowNotification?.status)){
+    for(const task of this.store.values('task:'))if(!this.activeTaskIds?.has(task.id)&&task.cloudVerified&&task.receipt&&['pending','sending'].includes(task.indexNowNotification?.status)){
       if(task.indexNowNotification.status==='pending'&&!notificationDocuments)notificationDocuments=(await this.cloud.request('snapshot')).documents;
       await notifyIndexNow(this,task,notificationDocuments);
     }
@@ -515,7 +522,8 @@ export class Runtime {
     // API operations own the single writer until their readbacks finish.
     // A paused timer must not flush their in-flight events concurrently.
     if (this.controlBusy||this.localRecoveryOperation||this.fillLearningFlush) return;
-    if(Date.now()<(this.syncRetryAt||0))return;
+    if(Date.now()<(this.syncRetryAt||0)){if(this.job)watchBatchDeadline(this);return;}
+    watchBatchDeadline(this);
     const startupGate=this.store.get('libraryPlan')?.globalPause;
     if(this.store.get('paused')===true&&(startupGate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(startupGate?.reason||''))&&!this.store.get('offlineMode')?.enabled){this.cloudError=startupGate.reason;return;}
     if (!this.hydrated) { this.restoreCloud().catch(error => { this.cloudError = error.message;this.syncFailures=(this.syncFailures||0)+1;this.syncRetryAt=Date.now()+Math.min(300000,30000*2**Math.min(this.syncFailures-1,4)); }); return; }
@@ -545,7 +553,8 @@ export class Runtime {
         if(error.cloudQuota&&plan)this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,attentionType:'cloud_quota',resumeEligible:false}});
       }).finally(() => { this.job = null; }); return;
     }
-    this.job = this.work().catch(error => { this.cloudError = error.message;this.store.set('paused',true);
+    const batchId=this.store.get('activeWorkbenchBatch'),parallelBatch=batchId&&!this.store.get('singleTaskId')&&this.store.get('workbenchBatch:'+batchId)?.config;
+    this.job = (parallelBatch?runWorkbenchBatch(this):this.work()).catch(error => { this.cloudError = error.message;this.store.set('paused',true);
       pauseWorkbenchBatch(this,error.message);const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:error.message});
       const plan=this.store.get('libraryPlan'),classification=classifyPauseFailure(error);if(!batch&&plan?.status==='active')this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,
         ...classification,nextProbeAt:classification.resumeEligible?Date.now()+60000:null}});
@@ -554,15 +563,15 @@ export class Runtime {
       this.job = null;
     });
   }
-  async work() {
+  async work({taskId:assignedTaskId}={}) {
     await this.synchronize();
     if (!this.context) await this.connect();
     const workbenchId=this.store.get('activeWorkbenchBatch');
-    if(workbenchId&&!this.store.get('singleTaskId')){const selected=await nextWorkbenchTask(this);if(!selected)return;}
+    if(!assignedTaskId&&workbenchId&&!this.store.get('singleTaskId')){const selected=await nextWorkbenchTask(this);if(!selected)return;}
     const fixedBatch=this.store.get('acceptanceBatch');
-    if(fixedBatch?.status==='running'&&!this.store.get('singleTaskId')){const selected=await nextAcceptanceTask(this);if(!selected)return;}
+    if(!assignedTaskId&&fixedBatch?.status==='running'&&!this.store.get('singleTaskId')){const selected=await nextAcceptanceTask(this);if(!selected)return;}
     const currentPlan=this.store.get('libraryPlan');
-    const singleTaskId = this.store.get('singleTaskId');
+    const singleTaskId = assignedTaskId||this.store.get('singleTaskId');
     if(!singleTaskId&&currentPlan?.status==='active'){
       for(const old of this.store.values('task:').filter(t=>t.libraryPlanId===currentPlan.id&&!t.tabClosedAt&&
         (t.artifactRef||this.store.get('offlineMode')?.enabled&&(t.screenshot||t.status==='needs_manual'&&t.attentionType==='site_unavailable'&&!t.attemptBoundary&&
@@ -595,7 +604,8 @@ export class Runtime {
     const profile = task.profileSnapshot || run.profile;
     if(!task.profileSnapshot&&profile)this.update(task,{profileSnapshot:plain(profile),profileRevision:task.profileRevision??run.profileRevision},'task_profile_frozen');
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
-    this.update(task,{indexNotificationPreference:defaults.cfgPingIndex!==false},'index_notification_preference');
+    const frozenBatch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);
+    this.update(task,{indexNotificationPreference:frozenBatch?.config?frozenBatch.config.pingIndex!==false:defaults.cfgPingIndex!==false},'index_notification_preference');
     const config = applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url));
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
@@ -605,8 +615,9 @@ export class Runtime {
     if (logo) { config.logoUrl = `cloud-media://${logo.asset_id}`; config.projectFields = { ...config.projectFields, 'Cloud LOGO': config.logoUrl }; }
     const screenshots = run.mediaManifest?.filter(x => x.media_kind === 'screenshot').sort((a,b) => Number(a.media_index)-Number(b.media_index));
     if (screenshots?.length) config.screenshots = screenshots.map(x => `cloud-media://${x.asset_id}`);
-    const active = () => this.store.get('paused') === false && this.store.get(`task:${task.id}`).controller !== 'supervisor';
-    this.activeTaskId=task.id;
+    const active = () => this.store.get('paused') === false && this.store.get(`task:${task.id}`).controller !== 'supervisor' && batchActionAllowed(this,task);
+    if(!active()){finalizeBatchDeadline(this,task);return;}
+    if(!assignedTaskId)this.activeTaskId=task.id;
     let page, engines = [], responseListener;
     const responseTasks = [], submissionResponses = [];
     try {
@@ -665,7 +676,7 @@ export class Runtime {
         candidate = engines.find(e => e.frame === page.mainFrame());
         if (candidate) candidate.detection = { ...candidate.detection, platform: 'submission', operable: true };
       }
-      if (!candidate && !task.attemptBoundary && !task.fillOnlyRun) {
+      if (!candidate && !task.attemptBoundary && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly)) {
         for(const item of engines)await item.engine.detach();engines=[];
         const takeover=await this.prepareWithAi(page,task,config,active);
         candidate=takeover.candidate;if(candidate)engines.push(candidate);
@@ -686,14 +697,14 @@ export class Runtime {
       }
       let validation = await engine.call({ action: 'collectFormValidation' });
       const initialAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
-      if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && !task.fillOnlyRun && !detection.hasCaptcha) {
+      if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly) && !detection.hasCaptcha) {
         for(const item of engines)await item.engine.detach();engines=[];
         const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true});
         if(takeover.candidate){candidate=takeover.candidate;engine=candidate.engine;detection=candidate.detection;engines.push(candidate);validation=await engine.call({action:'collectFormValidation'});if(takeover.ok)fill={...fill,ok:true,needs_manual:false,aiPrepared:true};}
       }
       if (validation.validationFailed && active() && !task.submitPreparedRun && !task.aiTakeover) {
         const snapshot = await engine.call({ action: 'getPageSnapshot' });
-        const plan = offline?null:await this.cloud.request('plan', { taskId: task.id, task: { url: task.url, profileId: task.profileId }, snapshot, config, fillOnly: true }).catch(() => null);
+        const plan = offline?null:await this.batchModelRequest(task,'plan', { taskId: task.id, task: { url: task.url, profileId: task.profileId }, snapshot, config, fillOnly: true }).catch(() => null);
         if (plan?.status === 'act' && plan.actions?.length && active()) {
           // The existing Worker only emits fill/select/check/wait; never a submit.
           const actions = plan.actions.filter(a => ['fill','select','check','wait'].includes(a.type));
@@ -731,6 +742,11 @@ export class Runtime {
         throw new Error('FutureTools 明确真人拒绝的原任务已恢复，最新资料与免费分类填写完成；尚无完成的真人验证响应，保留当前原页，不点击投稿');
       }
       if(navToolsAdapter.matches(task.url)){const gate=await navToolsAdapter.gate(page,this.context);if(gate){this.update(task,{attentionType:gate.attentionType,adapterKey:navToolsAdapter.key},'adapter_human_gate');throw new Error(gate.reason);}}
+      if(task.fillOnlyRun&&!detection.hasCaptcha){
+        const complete=!validation.validationFailed&&fill.ok!==false&&!fill.needs_manual;
+        this.update(task,{fillOnlyPrepared:complete,attentionType:complete?'fill_only':'missing_fields'},'batch_fill_only_prepared');
+        if(!complete)throw Error(fill.reason||'仅填写已停止，必填资料或素材仍需核对，未点击提交');
+      }
       if (detection.hasCaptcha || task.fillOnlyRun) throw new Error(detection.hasCaptcha ? '资料已准备，验证码待用户完成；未点击提交' : '仅填写资料已完成，未点击提交');
       if (validation.validationFailed || fill.ok === false || fill.needs_manual) throw new Error(fill.reason || '必填项或素材需要补充，请接管核对');
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_submit'); return; }
@@ -789,6 +805,7 @@ export class Runtime {
     } finally {
       try{
         if (page && responseListener) page.off('response', responseListener);
+        finalizeBatchDeadline(this,task);
         for (const { engine } of engines) await withinDeadline(engine.detach(),3000,'表单引擎断开').catch(()=>{});
         if (page && !page.isClosed()) {
           const file = path.join(this.home, `${task.id}-${Date.now()}.png`);
@@ -806,7 +823,7 @@ export class Runtime {
           try{await withinDeadline(this.trimDeferredTabs(),15000,'待处理页签整理');}
           catch(error){this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'deferred_tabs_cleanup_deferred');}
         }
-      }finally{this.activeTaskId=null;}
+      }finally{if(!assignedTaskId)this.activeTaskId=null;}
     }
   }
   async prepareWithAi(page,task,config,active,{normalFillDone=false,readyCheck}={}) {
@@ -851,7 +868,7 @@ export class Runtime {
       }catch{return false;}
     };
     const result=await runPreparationTakeover(this,{task,active,observe,ready,
-      plan:async state=>{await this.cloud.flush(this.store);return this.cloud.request('plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config,...state});},
+      plan:async state=>{await this.cloud.flush(this.store);return this.batchModelRequest(task,'plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config,...state});},
       act:async action=>{
         const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
         if(action.type==='click')await candidate.engine.call({action:'persistFillLearnings',config});
@@ -1747,13 +1764,14 @@ export class Runtime {
     }
     throw new Error('未知控制操作');
   }
+  async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);return this.cloud.request(route,body);}
   async bridge(task, message) {
     if(message.action==='saveFillLearnings'){
       const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};
       return captureFillLearning(this,{profileId:task.profileId,profile:task.profileSnapshot,taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision},message);
     }
     if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
-    if(message.action==='generateCommentDrafts')return this.cloud.request('ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
+    if(message.action==='generateCommentDrafts')return this.batchModelRequest(task,'ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
     if(message.action==='fetchSubmissionMedia'){
       const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));

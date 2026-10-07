@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-07",
+  "observedAt": "2026-10-07T00:20:49.639Z",
+  "completion": "not_complete",
+  "sourceCheckpoint": "2f8ec3d",
+  "regression": {
+    "passed": 532,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 13
+  },
+  "originalComparison": {
+    "sourceFunctions": [
+      "removeSiteAnnotation",
+      "writeSubmissionSiteAnnotation",
+      "pinLibraryUrl"
+    ],
+    "allNineDisplayAliasesAndOrdinaryPath": true,
+    "catalogRows": 2948,
+    "preparedExistingProfilesOnly": true
+  },
+  "isolated": {
+    "fourActionFailuresReproduced": true,
+    "canonicalScopeRestoreConflictPinAndPreviewFailuresReproduced": true,
+    "canonicalKnowledgeAndUnrelatedRouteRetained": true,
+    "originalUrlListMetadataAndDuplicateRemoval": true,
+    "markRestoreAndQueueExclusionSamePlan": true,
+    "catalogExclusionsApplyAcrossAliases": true,
+    "actualBatchPreviewPreservesInputUrl": true,
+    "addBrowserPageUsesOriginalCanonicalMark": true,
+    "sqliteReopenLostRepliesOriginalIds": true,
+    "oldIndependentPlansRecoverDependencies": true,
+    "concurrentCloudChoiceDiscardsDependentSteps": true,
+    "localPersistenceFailureAtomicRollback": true,
+    "authenticatedHttpD1ClearRemoveRestoreAndReadback": true,
+    "productionUiClearRemoveRestoreAndPreview": true,
+    "queueRemovalReloadsMainLibrary": true,
+    "originalReceiptsAndSourceRowsPreserved": true,
+    "actualAutoVisitAndCommentIframeRegressions": true,
+    "newRealSubmissions": 0
+  },
+  "live": {
+    "catalogRows": 2948,
+    "malformedMarksRejected": 3,
+    "clearConfirmationRequestBlockedBeforeNetwork": true,
+    "blockedMutationRequests": 1,
+    "externalBrowserRequests": 0,
+    "allBusinessDocumentsAndRevisionsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "3f640b8b-d5e7-4b16-8952-de5cda26304d",
+  "servicesReloadedAfterIdentityAndIdleChecks": true,
+  "servicesMissingOnContinuationRevalidatedBeforeStartup": true,
+  "realBusinessEdits": 0,
+  "realAiCalls": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "other original dynamic controls and operations",
+    "historical profile seeding and latest original-browser favorites and profiles",
+    "original-device media ownership",
+    "real special publishing pages and external service results"
+  ]
+}

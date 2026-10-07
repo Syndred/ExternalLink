@@ -26,6 +26,10 @@
     "table.xlsx submitted seed",
     "legacy siteannotations.submittedprojects",
   ]);
+  const DISPLAY_HOST_DESTINATIONS = new Set([
+    "startupstash.com", "startupcollections.com", "aisuperhub.io",
+    "launchpedia.co", "tipseason.com", "library.phygital.plus", "aisotools.com",
+  ]);
 
   function normalizeUrlKey(url) {
     try {
@@ -63,6 +67,10 @@
     const normalized = normalizeUrlKey(url);
     const domain = extractDomain(url).toLowerCase();
     return HOST_SCOPED_DESTINATIONS.has(domain) ? domain : normalized;
+  }
+  function normalizeLibraryDestinationKey(url) {
+    const domain = extractDomain(url).toLowerCase();
+    return DISPLAY_HOST_DESTINATIONS.has(domain) ? domain : normalizeDestinationKey(url);
   }
 
   function hasStoredDestinationKey(keys, destinationKey) {
@@ -1009,6 +1017,7 @@
     PUBLICATION_LABELS,
     normalizeUrlKey,
     normalizeDestinationKey,
+    normalizeLibraryDestinationKey,
     hasStoredDestinationKey,
     findDestinationAnnotation,
     normalizeAnnotationStatuses,

@@ -12,6 +12,7 @@ import {applicationSettingKeys} from './application-preferences.mjs';
 import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
+const catalogKeyOf=url=>{keyOf(url);return canonicalLibraryDestination(url);};
 const storedKey=row=>{try{return keyOf(row.indexPage||row.link);}catch{return null;}};
 function blacklistChange(current,value){
  const rows=input=>Array.isArray(input)?input:typeof input==='string'?input.split(/[\n,]/):[];
@@ -32,17 +33,17 @@ export function libraryMutation(documents,operation,options={}){
  if(['form_learning','form_knowledge'].includes(operation.type)){keyOf(operation.url);return formKnowledgeMutation(documents,operation);}
  if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
  if(operation.type==='pin'){
-  const key=keyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return keyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return keyOf(s.split('|')[0])!==key;}catch{return true;}});
+  const key=catalogKeyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return catalogKeyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return catalogKeyOf(s.split('|')[0])!==key;}catch{return true;}});
   return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
  }
- if(operation.type==='clear_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
- if(operation.type==='set_deleted'){const key=keyOf(operation.url);return{key:'deletedSubmissionKeys',data:[...new Set([...(documents.deletedSubmissionKeys||[]),key])]};}
+ if(operation.type==='clear_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
+ if(operation.type==='set_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:[...new Set([...(documents.deletedSubmissionKeys||[]),key])]};}
  if(operation.type==='remove_queue'){
-  const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[key]||annotations[domain]||{};
+  const key=catalogKeyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[key]||annotations[domain]||{};
   annotations[key]={...previous,url:operation.url,domain,status:'deleted',statuses:['deleted'],note:String(operation.note||previous.note||'').slice(0,10000),updatedAt:at,auto:false,mutationId:id};annotations[domain]=structuredClone(annotations[key]);return{key:'siteAnnotations',data:annotations};
  }
  if(operation.type==='clear_annotation'){
-  const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),knowledge=(annotations[key]||annotations[domain])?.formKnowledge;
+  const key=catalogKeyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url),annotations=structuredClone(documents.siteAnnotations||{}),knowledge=(annotations[key]||annotations[domain])?.formKnowledge;
   delete annotations[key];delete annotations[domain];if(knowledge){annotations[key]={url:operation.url,domain,formKnowledge:knowledge};annotations[domain]=structuredClone(annotations[key]);}
   return{key:'siteAnnotations',data:annotations};
  }
@@ -125,7 +126,7 @@ export function libraryMutation(documents,operation,options={}){
   for(const url of urls){const key=keyOf(url);if(known.has(key))continue;known.add(key);table.entries.push({link:new URL(url).href,indexPage:new URL(url).href,source:'application_import',addedAt:at,mutationId:id});}
   return{key:'sheetTableData',data:table};
  }
- const validatedKey=keyOf(operation.url),destinationKey=operation.type==='preferences'?canonicalLibraryDestination(operation.url):validatedKey;
+ const destinationKey=['preferences','mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
  if(operation.type==='preferences'){
   const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
   const patch=operation.preferences;
@@ -158,11 +159,11 @@ export function libraryMutation(documents,operation,options={}){
 export function libraryMutationSatisfied(documents,operation){
  if(['form_learning','form_knowledge'].includes(operation.type))return formKnowledgeSatisfied(documents,operation);
  if(operation.type==='recover_local')return JSON.stringify(documents[operation.key])===JSON.stringify(recoveryDocument(documents,operation.key,operation.data));
- if(operation.type==='set_deleted')return(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
- if(operation.type==='remove_queue'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>documents.siteAnnotations?.[k]?.statuses?.length===1&&documents.siteAnnotations[k].statuses[0]==='deleted'&&(!operation.note||documents.siteAnnotations[k].note===operation.note));}
- if(operation.type==='clear_annotation'){const key=keyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>!documents.siteAnnotations?.[k]||Object.keys(documents.siteAnnotations[k]).every(field=>['url','domain','formKnowledge'].includes(field)));}
- if(operation.type==='pin'){try{return keyOf(String(documents.urlList||'').split('\n')[0].split('|')[0])===keyOf(operation.url);}catch{return false;}}
- if(operation.type==='clear_deleted')return !(documents.deletedSubmissionKeys||[]).includes(keyOf(operation.url));
+ if(operation.type==='set_deleted')return(documents.deletedSubmissionKeys||[]).includes(catalogKeyOf(operation.url));
+ if(operation.type==='remove_queue'){const key=catalogKeyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>documents.siteAnnotations?.[k]?.statuses?.length===1&&documents.siteAnnotations[k].statuses[0]==='deleted'&&(!operation.note||documents.siteAnnotations[k].note===operation.note));}
+ if(operation.type==='clear_annotation'){const key=catalogKeyOf(operation.url),domain=globalThis.ExtLinkQueue.extractDomain(operation.url);return[key,domain].every(k=>!documents.siteAnnotations?.[k]||Object.keys(documents.siteAnnotations[k]).every(field=>['url','domain','formKnowledge'].includes(field)));}
+ if(operation.type==='pin'){try{return documents.urlList===libraryMutation(documents,operation).data;}catch{return false;}}
+ if(operation.type==='clear_deleted')return !(documents.deletedSubmissionKeys||[]).includes(catalogKeyOf(operation.url));
  if(operation.type==='submify_refs'){const rows=new Map();for(const row of documents.sheetTableData?.entries||[]){const key=storedKey(row);if(key&&!rows.has(key))rows.set(key,row);}return operation.items.every(item=>!item.id||(rows.get(keyOf(item.link||item.url))?.sourceRefs||[]).map(String).includes(String(item.id)));}
  if(operation.type==='submify_import'){const table=documents.sheetTableData;if(table?.snapshotMeta?.lastExternalImport?.importedAt!==operation.at||table.snapshotMeta.lastExternalImport.sourceTotal!==operation.items.length)return false;return operation.items.every(item=>(table.entries||[]).some(row=>storedKey(row)===keyOf(item.link||item.url)&&(!item.id||String(row.sourceId||'')===String(item.id)||(row.sourceRefs||[]).map(String).includes(String(item.id)))));}
  if(operation.type==='submify_gates')return operation.gates.every(g=>{const a=documents.siteAnnotations?.[keyOf(g.url)];return a?.library?.enabled===false&&a?.importGate?.importId===operation.id;});
@@ -177,7 +178,7 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='settings'){if(operation.key==='domainBlacklist'&&operation.value&&typeof operation.value==='object'&&!Array.isArray(operation.value)&&operation.value.replace!==true)return false;try{return JSON.stringify(documents[operation.key])===JSON.stringify(libraryMutation(documents,operation).data);}catch{return false;}}
  if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}
  if(operation.type==='import'){const known=new Set((documents.sheetTableData?.entries||[]).map(storedKey));return operation.urls.every(url=>known.has(keyOf(url)));}
- const validatedKey=keyOf(operation.url),key=operation.type==='preferences'?canonicalLibraryDestination(operation.url):validatedKey;
+ const key=['preferences','mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
  if(operation.type==='preferences'){const annotation=documents.siteAnnotations?.[key],library=annotation?.library,domain=globalThis.ExtLinkQueue.extractDomain(operation.url),classifier=globalThis.ExtLinkLibraryClassifier;return !!library&&annotation.url===operation.url&&annotation.domain===domain&&(Object.hasOwn(library,'groups')||JSON.stringify(documents.siteAnnotations?.[domain])===JSON.stringify(annotation))&&Object.entries(operation.preferences).every(([k,v])=>JSON.stringify(library[k])===JSON.stringify(k==='groups'?classifier.normalizeLibraryGroups(v):k==='profileIds'?classifier.normalizeProfileIds(v):v));}
  if(operation.type==='mark'){const annotation=documents.siteAnnotations?.[key],queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),statuses=queue.normalizeAnnotationStatuses(operation.statuses??[operation.status]);return annotation?.auto===false&&annotation.url===operation.url&&annotation.domain===domain&&annotation.status===queue.primaryAnnotationStatus(statuses)&&JSON.stringify(annotation.statuses)===JSON.stringify(statuses)&&JSON.stringify(documents.siteAnnotations?.[domain])===JSON.stringify(annotation)&&(!operation.note||annotation.note===String(operation.note).slice(0,10000));}
  if(operation.type==='edit'){const row=documents.sheetTableData?.entries.find(r=>storedKey(r)===key);return !!row&&Object.entries(operation.fields||{}).every(([key,value])=>row[key]===value);}

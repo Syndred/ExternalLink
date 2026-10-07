@@ -30,17 +30,19 @@
   function selectScope(snapshot, bundled, profileId, requestedUrls) {
     if(snapshot.documents?.siteProfiles?.[profileId]?.archived)throw new Error('产品已归档，请恢复后安排新任务');
     const library = inventory(snapshot, bundled), docs = snapshot.documents, exclusions = [], tasks = [];
-    const requested = new Set((requestedUrls || []).map(url => queue.normalizeDestinationKey(url)));
+    const requested = new Set((requestedUrls || []).map(url => queue.normalizeLibraryDestinationKey(url))), seen = new Set();
     const records = queue.migrateSubmissionRecords({ records: docs.submissionRecords || {}, annotations: docs.siteAnnotations || {}, tableData: docs.sheetTableData || bundled || {} }).records;
     const filters=global.ExtLinkTargetFilters.normalize(docs.targetFilters);
     const blacklist = filters.blacklistEnabled===false?null:queue.buildBlacklistMatcher(Array.isArray(docs.domainBlacklist) ? docs.domainBlacklist : String(docs.domainBlacklist || '').split(/[\n,]/));
     const blockedStatuses = new Set([...queue.DEAD_END_STATUSES, ...queue.GATE_STATUSES, 'paid', 'do_not_submit', 'not_suitable']);
     for (const item of library.candidates) {
-      if (requested.size && !requested.has(item.destinationKey)) continue;
+      const catalogKey = queue.normalizeLibraryDestinationKey(item.url);
+      if (requested.size && !requested.has(catalogKey) || seen.has(catalogKey)) continue;
+      seen.add(catalogKey);
       const domain = queue.extractDomain(item.url);
-      const annotation = queue.findDestinationAnnotation(docs.siteAnnotations || {}, item.destinationKey, domain) || {};
+      const annotation = queue.findDestinationAnnotation(docs.siteAnnotations || {}, catalogKey, domain) || {};
       const mark = classifier.libraryEligibility(annotation, profileId);
-      const deleted = queue.hasStoredDestinationKey(docs.deletedSubmissionKeys || [], item.destinationKey);
+      const deleted = (docs.deletedSubmissionKeys || []).some(key => queue.normalizeLibraryDestinationKey(key) === catalogKey);
       const metrics={...item.row,...item.row?.metrics,...docs.domainMetricsCache?.[domain]},quality=global.ExtLinkOpportunityScore?.scoreOpportunity({metrics,annotation});
       const ageReason=queue.domainAgeGate(domain,{...filters,domainMetrics:docs.domainMetricsCache||{}});
       const qualityReason=filters.minOpportunityScore>0&&quality&&quality.score<filters.minOpportunityScore?'低于最低质量分':filters.minDr>0&&!(Number(metrics.dr)>=filters.minDr)?'低于最低 DR':filters.minDa>0&&!(Number(metrics.da)>=filters.minDa)?'低于最低 DA':ageReason==='domain_age_unknown'?'域名年龄未知':ageReason==='domain_too_young'?'低于最低域名年龄':'';

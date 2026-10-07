@@ -1233,5 +1233,28 @@
     "newRealSubmissions": 0,
     "evidence": "original-receipt-consumers-2026-10-07.json",
     "completion": "not_complete"
+  },
+  "originalLibraryActionsCheckpoint": {
+    "date": "2026-10-07",
+    "originalClearMarkRemoveAndPinFunctionsCompared": true,
+    "allNineDisplayAliasesAndOrdinaryPaths": true,
+    "canonicalKnowledgeAndUnrelatedRouteRetained": true,
+    "originalUrlListMetadataAndDuplicateRemoval": true,
+    "queueAndPreviewCanonicalExclusions": true,
+    "markRestoreSameDurableQueuePlan": true,
+    "browserAddRestoresCanonicalMark": true,
+    "dependentStepsCancelledWithRetainedCloudConflict": true,
+    "oldPlanOriginalIdsAndSqliteLostReplyRecovery": true,
+    "atomicLocalPersistenceRollback": true,
+    "productionUiClearRemoveRestoreAndPreview": true,
+    "queueRemovalReloadsMainLibrary": true,
+    "authenticatedHttpD1Readback": true,
+    "testsPassed": 532,
+    "newTests": 13,
+    "workerVersion": "3f640b8b-d5e7-4b16-8952-de5cda26304d",
+    "realBusinessEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-library-actions-2026-10-07.json",
+    "completion": "not_complete"
   }
 }

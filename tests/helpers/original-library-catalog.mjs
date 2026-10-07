@@ -7,6 +7,10 @@ const catalog=source.slice(source.indexOf('async function getLibraryManagerState
 const schema=source.slice(source.indexOf('async function ensureSubmissionSchema('),source.indexOf('function scopeDestinationGroupsByLibraryCategory('));
 const preferences=source.slice(source.indexOf('async function updateLibraryPreferences('),source.indexOf('async function quickOpenLibraryUrls('));
 const quickOpen=source.slice(source.indexOf('async function quickOpenLibraryUrls('),source.indexOf('async function getLibraryManagerState('));
+export async function originalLibraryAction(initial,type,input){
+ const specs={mark:['async function writeSubmissionSiteAnnotation(','async function listSiteAnnotations(','writeSubmissionSiteAnnotation'],clear:['async function removeSiteAnnotation(','async function advanceSubmissionQueue(','removeSiteAnnotation'],pin:['async function pinLibraryUrl(','async function exportSubmissionData(','pinLibraryUrl']},[start,end,name]=specs[type],body=source.slice(source.indexOf(start),source.indexOf(end)),documents=structuredClone(initial),context=vm.createContext({URL,input,self:{ExtLinkQueue:globalThis.ExtLinkQueue},chrome:{storage:{local:{async get(){return structuredClone(documents);},async set(values){Object.assign(documents,structuredClone(values));}}}}});
+ const result=await vm.runInContext(destinationHelpers+'\n'+body+'\n'+name+'(input)',context);return{result:structuredClone(result),documents};
+}
 export async function originalLibraryQuickOpen(snapshot,input){
  const library=await originalLibraryCatalog(snapshot),opened=[],context=vm.createContext({URL,input,setTimeout,self:{ExtLinkQueue:globalThis.ExtLinkQueue},getLibraryManagerState:async()=>library,chrome:{tabs:{async create(options){opened.push(options.url);return{id:opened.length};}}}});
  await vm.runInContext(destinationHelpers+'\n'+quickOpen+'\nquickOpenLibraryUrls(input)',context);

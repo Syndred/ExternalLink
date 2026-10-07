@@ -13,9 +13,9 @@ export async function previewWorkbenchBatch(runtime,input){
  const items=[];
  for(const profileId of profileIds){
   const profile=snapshot.documents.siteProfiles?.[profileId];if(!profile||profile.archived)throw Error('所选产品不存在或已归档');
-  const scope=selectScope(snapshot,null,profileId,urls),exclusions=new Map(scope.exclusions.map(e=>[queue.normalizeDestinationKey(e.url),e.reason])),seen=new Set();
+  const scope=selectScope(snapshot,null,profileId,urls),exclusions=new Map(scope.exclusions.map(e=>[queue.normalizeLibraryDestinationKey(e.url),e.reason])),seen=new Set();
   for(const url of urls){const destinationKey=queue.normalizeDestinationKey(url),previous=runtime.store.values('task:').find(t=>t.profileId===profileId&&site(t.url)===site(url))||inventory.tasks.find(t=>t.profileId===profileId&&site(t.url)===site(url));
-   let reason=exclusions.get(destinationKey)||'';
+   let reason=exclusions.get(queue.normalizeLibraryDestinationKey(url))||'';
    if(seen.has(site(url)))reason='同站其他入口，保留一个投稿目标';seen.add(site(url));
    if(!reason&&previous&&(previous.receipt||previous.attemptBoundary||!['pending','needs_manual'].includes(previous.status)))reason='同站有原任务结果或提交边界，请先查看或核验原任务';
    items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:previous?.id||randomUUID(),runId:previous?.runId||randomUUID(),existingTask:!!previous,status:reason?'excluded':'ready',reason});

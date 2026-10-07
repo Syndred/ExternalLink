@@ -1,11 +1,7 @@
 import './queue.js';
 import './submission-timeline.js';
 const queue=globalThis.ExtLinkQueue;
-const displayHostDestinations=new Set(['startupstash.com','startupcollections.com','aisuperhub.io','launchpedia.co','tipseason.com','library.phygital.plus','aisotools.com']);
-export function canonicalLibraryDestination(value){
- const normalized=queue.normalizeDestinationKey(value),domain=String(queue.extractDomain(value)||'').toLowerCase();
- return displayHostDestinations.has(domain)?domain:normalized;
-}
+export const canonicalLibraryDestination=value=>queue.normalizeLibraryDestinationKey(value);
 // The original catalog normalizes a display copy before migrating legacy events.
 // These derived rows never replace the original receipt document or its revision.
 export function libraryRecords(documents){

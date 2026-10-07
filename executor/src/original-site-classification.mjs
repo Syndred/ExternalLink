@@ -5,6 +5,15 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {applyOriginalDestinationDisposition} from './original-destination-disposition.mjs';
 import {cacheCloudSnapshot,cloudDigest} from './cloud-sync-state.mjs';
 
+// bd916b2 markTaskNeedsManual: derive the fallback before autoClassifySite.
+export function originalManualFallback(reason='',preferredStatus=''){
+ return preferredStatus||(/captcha|验证码/i.test(String(reason||''))?'needs_captcha':/\botp\b|verification code|短信码|邮箱验证码/i.test(String(reason||''))?'needs_otp':/\b(log[ -]?in|sign[ -]?in|oauth)\b|登录|登入|第三方授权/i.test(String(reason||''))?'needs_login':'needs_manual');
+}
+export function originalHumanGateAttention(reason='',fallbackStatus=''){
+ const status=globalThis.ExtLinkQueue.classifyStatusFromReason(reason,fallbackStatus);
+ return status==='needs_login'?'login':['needs_captcha','needs_otp'].includes(status)?'human_verification':null;
+}
+
 export async function classifyOriginalSite(runtime,{url,reason='',fallbackStatus='broken',assertCurrent=async()=>{}}){
  if(!url)return null;await assertCurrent();const scope=workbenchScope(runtime.store.get('pair')),status=globalThis.ExtLinkQueue.classifyStatusFromReason(reason,fallbackStatus);
  if(runtime.store.get('applicationSnapshot')?.scope!==scope&&!runtime.store.get('offlineMode')?.enabled){const identity=cloudDigest(runtime.store.get('pair')),snapshot=await runtime.cloud.request('snapshot');await assertCurrent();if(identity!==cloudDigest(runtime.store.get('pair'))||scope!==workbenchScope(runtime.store.get('pair')))throw Object.assign(Error('原连接已变化，自动观察停止'),{staleTask:true});cacheCloudSnapshot(runtime,snapshot);}
@@ -26,7 +35,7 @@ export function originalTaskGate(result={}){
  if(result.captcha||result.gate==='captcha'||result.humanGate==='captcha'||result.status==='needs_captcha')return{reason:'验证码已出现 — 页签留下，请完成后继续',fallbackStatus:'needs_captcha'};
  if(result.gate==='otp'||result.status==='needs_otp')return{reason:result.reason||'需要一次性验证码',fallbackStatus:'needs_otp'};
  if(result.gate==='login'||result.status==='needs_login')return{reason:result.reason||'需要登录',fallbackStatus:'needs_login'};
- if(result.needs_manual||result.status==='needs_manual')return{reason:result.reason||'需要人工处理',fallbackStatus:'needs_manual'};
+ if(result.needs_manual||result.status==='needs_manual')return{reason:result.reason||'需要人工处理',fallbackStatus:originalManualFallback(result.reason)};
  if(result.blocked||result.status==='blocked')return{reason:result.reason||'无法提交',fallbackStatus:'broken'};
  return null;
 }
@@ -39,7 +48,8 @@ export async function classifyOriginalTaskGate(runtime,{task,page,result,active=
  const check=()=>{const current=runtime.store.get('task:'+task.id);if(!active()||!current||['ai','supervisor'].includes(current.controller)||scope!==workbenchScope(runtime.store.get('pair'))||Object.entries(original).some(([key,value])=>current[key]!==value)||JSON.stringify(current.profileSnapshot)!==profile||current.receipt||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold')||page.isClosed()||page.url()!==pageUrl)throw Object.assign(Error('原任务、资料或网页已变化，自动观察停止'),{staleTask:true});};
  const assertCurrent=async()=>{check();await assertPageDocument();check();};
  const classification=await classifyOriginalSite(runtime,{url:task.url,...gate,assertCurrent});await assertCurrent();
- runtime.update(task,{siteAutomaticObservation:{...gate,status:classification.status,mutationId:classification.mutationId,pending:classification.pending,at:new Date().toISOString()}},'site_automatic_observation');
+ const attentionType=originalHumanGateAttention('',classification.status);
+ runtime.update(task,{...(!task.attemptBoundary&&attentionType?{attentionType}:{}),siteAutomaticObservation:{...gate,status:classification.status,mutationId:classification.mutationId,pending:classification.pending,at:new Date().toISOString()}},'site_automatic_observation');
  classification.disposition=await applyOriginalDestinationDisposition(runtime,{task,page,result,classification,assertCurrent});
  return classification;
 }

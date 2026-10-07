@@ -7,6 +7,7 @@ import {manualSubmit} from './manual-controls.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {prepareOriginalVisitFields} from './original-visit-fill-adapter.mjs';
+import {originalHumanGateAttention} from './original-site-classification.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function cancelVisitWork(runtime,reason){
@@ -84,7 +85,7 @@ export async function sidepanelFill(runtime,input){
   const assertPage=async()=>{assertCurrent();if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');};await assertPage();let fill,actual,validation,counts,submitReady=true;
   if(input.mode==='comment'){fill=await candidate.engine.call({action:'executeSubmit',config,platformType:'wp_comment'});if(fill?.error||fill?.ok===false)throw Error(fill.error||'填写未完成');actual=await candidate.engine.call({action:'getFilledFieldsReport'});validation=await candidate.engine.call({action:'collectFormValidation'});await assertPage();}
   else{const prepared=await prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase:assertPage,allowAgent:input.useAgent!==false});({fill,actual}=prepared);await prepared.assertCurrent();validation=fill.formState;counts=fill.lastEmpty;submitReady=fill.validation.submitReady!==false&&!validation.validationFailed&&!counts.emptyCount&&!counts.invalidCount&&!fill.agentResult.needs_manual&&!fill.agentResult.captcha&&!fill.agentResult.blocked;}
-  const reason=submitReady?'单页资料已填写，尚未投稿':fill.agentResult?.reason||fill.validation?.issues?.join('；')||validation.issues?.join('；')||'仍有必填字段或素材未完成，请检查原网页';runtime.update(task,{actualPreparation:actual,preparedAt:at(),singlePagePreparation:{at:at(),mode:input.mode||'form',fill,actual,validation,counts,submitReady,panelId:input.panelId},...(!submitReady?{status:'needs_manual'}:{}),reason},submitReady?'single_page_prepared':'single_page_incomplete');
+  const reason=submitReady?'单页资料已填写，尚未投稿':fill.agentResult?.reason||fill.validation?.issues?.join('；')||validation.issues?.join('；')||'仍有必填字段或素材未完成，请检查原网页';runtime.update(task,{actualPreparation:actual,preparedAt:at(),singlePagePreparation:{at:at(),mode:input.mode||'form',fill,actual,validation,counts,submitReady,panelId:input.panelId},...(!submitReady?{status:'needs_manual',...(originalHumanGateAttention('',fill.classification?.status)?{attentionType:originalHumanGateAttention('',fill.classification.status)}:{})}:{}),reason},submitReady?'single_page_prepared':'single_page_incomplete');
   let syncError='';try{await runtime.synchronize();}catch(error){syncError=error.message;}
   assertCurrent();if(submitRequested&&submitReady){if(syncError)throw Error('填写已保存但记录尚未回读，暂不投稿');const result=await manualSubmit(runtime,{taskId:task.id,expectedRunId:task.runId,expectedTargetId:task.targetId,ordinaryPermissionsAuthorized:input.ordinaryPermissionsAuthorized},{assertContext:assertCurrent});return{...result,filled:true};}
   return{ok:true,taskId:task.id,runId:task.runId,filled:true,submitted:false,fill,actual,validation,counts,submitReady,reason,syncError};

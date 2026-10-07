@@ -87,7 +87,7 @@ import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from '.
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {captureFillLearning,flushFillLearning,pendingFillLearning} from './fill-learning.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
-import {classifyOriginalTaskGate,originalLinkrenaPostSubmitLogin} from './original-site-classification.mjs';
+import {classifyOriginalTaskGate,originalLinkrenaPostSubmitLogin,originalManualFallback,originalHumanGateAttention} from './original-site-classification.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -118,6 +118,7 @@ export async function liveOwnedTaskTargetIds(runtime,planId,browserInstance){
 }
 
 export function classifyBlocker(reason){
+ const human=originalHumanGateAttention(reason,originalManualFallback(reason));if(human)return human;
  if(/验证码|真人|captcha|turnstile|verify.*human/i.test(reason))return 'human_verification';
  if(/登录|login|sign[ -]?in|账号|邮件.*验证|magic.?link/i.test(reason))return 'login';
  if(/付费|收费|付款|payment|paywall|checkout|subscription|priced?/i.test(reason))return 'payment';
@@ -382,7 +383,7 @@ export class Runtime {
           if(await entry.count()===1&&new URL(await entry.getAttribute('href'),page.url()).href===task.url){await page.goto(task.url,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(1500);}
           continue;
         }
-        this.update(task,{attentionType:/验证码|真人|OTP/.test(login.reason)?'human_verification':'login'},'basic_google_deferred');throw new Error(login.reason);
+        this.update(task,{attentionType:originalHumanGateAttention(login.reason,'needs_login')||'login'},'basic_google_deferred');throw new Error(login.reason);
       }
       if(gate&&!(gate.attentionType==='payment'&&free)){
         this.update(task,{attentionType:gate.attentionType},'public_gate');

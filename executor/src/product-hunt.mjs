@@ -4,7 +4,7 @@ import {getTargetInfo} from './browser-target.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {profiles,priorProductSuccess} from './shared.mjs';
 import {armPageCaptchaResume} from './captcha-resume.mjs';
-import {classifyOriginalTaskGate} from './original-site-classification.mjs';
+import {classifyOriginalTaskGate,originalHumanGateAttention} from './original-site-classification.mjs';
 const at=()=>new Date().toISOString();
 export function isProductHuntLaunch(url){try{const value=new URL(url);return/^https?:$/.test(value.protocol)&&/(^|\.)producthunt\.com$/i.test(value.hostname)&&!value.username&&!value.password;}catch{return false;}}
 export async function runProductHuntWorkflow(runtime,task,page,config,{active=()=>runtime.store.get('paused')===false,confirmCreate=false,offline=false,callEngine}={}){
@@ -52,7 +52,7 @@ export async function runProductHuntWorkflow(runtime,task,page,config,{active=()
  if(result.originalAgentUnavailable)return result;
  const classification=!result.ready_to_create&&!result.interrupted?await classifyOriginalTaskGate(runtime,{task,page,result,active,assertPageDocument:async()=>ensure(result.submittedAttempt===true)}):null;
  if(result.submittedAttempt){if(result.matched&&result.evidence)await runtime.accept(task,page,result);else runtime.update(task,{status:'submitted_unconfirmed',siteStatus:'sent_unconfirmed',attentionType:'unknown_receipt',reason:result.reason||result.error||'Product Hunt 创建结果未知，核验原页面后处理；不重复点击',submitResult:result},'producthunt_create_unknown');}
- else if(!classification?.disposition)runtime.update(task,{status:'needs_manual',siteStatus:'not_submitted',attentionType:result.ready_to_create?'producthunt_create_confirmation':result.gate==='captcha'||result.captcha?'human_verification':result.gate==='login'||result.status==='needs_login'?'login':'manual',reason:result.ready_to_create?'Product Hunt 必填项已完成，等待确认创建草稿；不会排期或购买推广':result.reason||'Product Hunt 原步骤待处理',productHunt:{...task.productHunt,readyToCreate:result.ready_to_create===true}},'producthunt_handoff');
+ else if(!classification?.disposition)runtime.update(task,{status:'needs_manual',siteStatus:'not_submitted',attentionType:result.ready_to_create?'producthunt_create_confirmation':originalHumanGateAttention('',classification?.status)|| (result.gate==='captcha'||result.captcha?'human_verification':result.gate==='login'||result.status==='needs_login'?'login':'manual'),reason:result.ready_to_create?'Product Hunt 必填项已完成，等待确认创建草稿；不会排期或购买推广':result.reason||'Product Hunt 原步骤待处理',productHunt:{...task.productHunt,readyToCreate:result.ready_to_create===true}},'producthunt_handoff');
  if(!callEngine&&task.attentionType==='human_verification'&&!task.attemptBoundary&&!task.receipt&&active())await armPageCaptchaResume(runtime,task,page,{active});
  return result;
 }

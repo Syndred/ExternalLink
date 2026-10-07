@@ -78,6 +78,10 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
     if (!deviceId) return reply({ ok: false, error: '设备未授权或已撤销' }, 401);
     if (!schemaUpgrades.has(env)) schemaUpgrades.set(env, Promise.resolve(sql`alter table externallink_executor_tasks add column if not exists controller_id text`).catch(error => { schemaUpgrades.delete(env); throw error; }));
     await schemaUpgrades.get(env);
+    if(/^\/v1\/executor\/ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
+      if(!helpers.assistant)fail('资料与评论服务暂不可用',503);
+      return reply(await helpers.assistant(path.split('/').at(-1),input));
+    }
     if (path === '/v1/executor/diagnostics' && request.method === 'POST') {
       const id = crypto.randomUUID();
       const before = await sql`select document_key,revision,md5(data::text) as hash from externallink_workspace_documents where workspace_id=${workspaceId} order by document_key`;
@@ -344,5 +348,5 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       return reply({ ok: true, task: (await readTask(input.taskId)).data });
     }
     return reply({ ok: false, error: '执行器接口不存在' }, 404);
-  } catch (error) { return reply({ ok: false, error: error.message }, error.status || (error.code === '23505' ? 409 : 500)); }
+  } catch (error) { return reply({ ok: false, error: error.message,...(String(error.code||'').startsWith('AI_PROVIDER_')?{code:error.code,message:error.message,retryable:error.retryable}:{}) }, error.status || (error.code === '23505' ? 409 : 500)); }
 }

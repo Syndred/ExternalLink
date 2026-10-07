@@ -1,5 +1,21 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalAiWorkflowCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-ai-workflow-2026-10-07.json",
+    "fullSuitePassed": 687,
+    "frozenOriginalCacheRequestComparisons": 70,
+    "originalCacheTtlMinutes": 30,
+    "originalCacheCapacity": 60,
+    "studioTaskAndAssistantUseSharedCache": true,
+    "explicitGenerationRefreshes": true,
+    "cachedCallsDoNotReserveModelBudget": true,
+    "actualWorkerNeonHttpDriverWithIsolatedPostgresql": true,
+    "actualServicesAndChromeAiDraftHistoryVerified": true,
+    "realProviderRequests": 0,
+    "productionNeonRequests": 0,
+    "migrationComplete": false
+  },
   "originalTimelineCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-timeline-2026-10-07.json",
@@ -652,8 +668,9 @@
     },
     {
       "action": "generateCommentDrafts",
-      "mapping": "commentDrafts / 原任务 bridge",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "commentDrafts / 原任务 bridge / 浏览器助手；原30分钟60项缓存及显式刷新",
+      "verification": "固定原代码70组请求对照，实际后台／Chrome候选刷新、失败保留和编辑历史恢复；D1与Neon隔离鉴权接口通过，真实Neon及全部旧历史待验收",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "generateCommentPreview",

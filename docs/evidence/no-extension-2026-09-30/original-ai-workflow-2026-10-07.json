@@ -1,0 +1,109 @@
+{
+  "kind": "original_ai_workflow_checkpoint_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "previousProgressCommit": "1ff23fb",
+  "migrationComplete": false,
+  "originalBehavior": {
+    "commentCacheTtlMinutes": 30,
+    "commentCacheCapacity": 60,
+    "frozenSourceRequestComparisons": 70,
+    "keys": ["projectKey", "exactPageUrl", "requestedCount"],
+    "explicitRefreshBypassesCache": true,
+    "failedRefreshPreservesSuccessfulCache": true,
+    "studioTaskAndBrowserAssistantShareCache": true,
+    "disabledAiRejectsEvenCachedReply": true,
+    "cachedCallsDoNotReserveModelBudget": true,
+    "connectionDeviceAndBackendChangesRejectOldResults": true,
+    "cacheIsInMemoryEditedHistoryRemainsDurable": true
+  },
+  "fullSuite": {
+    "passed": 687,
+    "failed": 0,
+    "skipped": 0,
+    "addedTests": 8,
+    "output": "executor/test-output/original-ai-all-2026-10-07.txt",
+    "provesFullMigration": false
+  },
+  "authenticatedD1Worker": {
+    "test": "tests/executor-ai-routes.test.mjs",
+    "extractGenerateCommentAndDomainRoutes": true,
+    "articleFallbackAndExplicitText": true,
+    "wrongWorkspaceAndRevokedDeviceRejected": true,
+    "providerBalanceAndTransientErrors503Classified": true,
+    "businessDocumentsUnchanged": true,
+    "productionCloudflareD1Writes": 0
+  },
+  "actualWorkerAndNeonHttpDriver": {
+    "script": "executor/test/ai-neon.mjs",
+    "output": "executor/test-output/original-ai-neon-2026-10-07.txt",
+    "passed": true,
+    "engine": "isolated PGlite PostgreSQL 0.5.8",
+    "sqlQueries": 19,
+    "fixtureModelCalls": 6,
+    "fixturePageReads": 2,
+    "allFourAiRoutes": true,
+    "articleFallbackAndExplicitText": true,
+    "providerErrors503Classified": true,
+    "wrongWorkspaceAndRevokedDeviceRejected": true,
+    "originalDocumentsAndRevisionsUnchanged": true,
+    "productionNeonRequests": 0,
+    "realProviderRequests": 0
+  },
+  "actualServicesAndChrome": {
+    "script": "executor/test/ai-browser.mjs",
+    "output": "executor/test-output/original-ai-browser-final-2026-10-07.txt",
+    "passed": true,
+    "exitCode": 0,
+    "fixtureCleanupCompleted": true,
+    "cacheHitSkipsProvider": true,
+    "explicitGenerationRefreshes": true,
+    "failedGenerationRetainsHistory": true,
+    "editedPreviousVersionRestored": true,
+    "lateTypedExtractionPreserved": true,
+    "profileGenerationDraftOnly": true,
+    "originalDocumentsTasksAndFrozenBudgetUnchanged": true,
+    "fixtureModelCalls": 7,
+    "fixturePageReads": 1,
+    "newRuntimeRuns": 0,
+    "cloudEvents": 0,
+    "browserExternalRequests": 0,
+    "realProviderRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "initialFailuresRetained": [
+    "Neon fixture initially assumed database host instead of driver's API host",
+    "browser fixture initially used an incorrect D1 document table name",
+    "browser fixture initially expected 400 instead of the preserved provider 503",
+    "successful browser checks were followed by cleanup waiting twice for a signaled service; two diagnostic runs terminated, not counted as passing; idempotent exit and signal guard fixed",
+    "production UI first checked visibility before asynchronous view change; explicit visible-heading wait added"
+  ],
+  "deployment": {
+    "workerVersion": "55a47d46-974a-411f-a9f2-8067108a0478",
+    "dryRunPassed": true,
+    "published": true,
+    "nativeServicesReloaded": true,
+    "processIdentityPausedIdleAndDurableStateGuardsPassed": true
+  },
+  "productionReadOnlyVerification": {
+    "output": "executor/test-output/original-ai-production-final-2026-10-07.txt",
+    "passed": true,
+    "bothServicesMissingProfile400AndOldConnection409": true,
+    "emptyDomainRequestUsesDeployedAssistant": true,
+    "originalChineseControlsVisible": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "originalTasksQueuesLogsCredentialsAndAiHistoryUnchanged": true,
+    "fixedBatch": "paused 13/30",
+    "cursorIsReceiptCount": false,
+    "realProviderRequests": 0,
+    "newRealSubmissions": 0,
+    "productionNeonRequests": 0
+  },
+  "remainingAcceptance": [
+    "manual continuation and all original dynamic controls",
+    "original browser latest profiles, favorites, categories and groups",
+    "complete historical records and old media ownership",
+    "special page flows and actual external service results",
+    "individual evidence for every original user requirement"
+  ]
+}

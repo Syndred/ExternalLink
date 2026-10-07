@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import {originalCommentRequest} from './comment-cache.mjs';
 import {startLinkMonitor,dismissMonitorAlert} from './link-monitor.mjs';
 import {startPublicLibrarySync} from './public-library-sync.mjs';
 import {workbenchBackup} from './workbench-backup.mjs';
@@ -1811,7 +1812,7 @@ export class Runtime {
       return captureFillLearning(this,{profileId:task.profileId,profile:task.profileSnapshot,taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision},message);
     }
     if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
-    if(message.action==='generateCommentDrafts')return this.batchModelRequest(task,'ai/comment',{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,tone:message.config?.blogRules?.tone});
+    if(message.action==='generateCommentDrafts')return originalCommentRequest(this,{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,language:message.language,tone:message.config?.blogRules?.tone,refresh:message.refresh},payload=>this.batchModelRequest(task,'ai/comment',payload));
     if (message.action === 'fetchCloudSubmissionMedia') return this.cloud.request('media', { taskId: task.id, ...message });
     if(message.action==='fetchSubmissionMedia'){
       const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));

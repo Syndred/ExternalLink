@@ -1,4 +1,5 @@
 import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
+import {originalCommentRequest} from './comment-cache.mjs';
 import '../../core/target-filters.js';
 import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser-target.mjs';
 import {profiles,plain,queue,selectScope,priorProductSuccess} from './shared.mjs';import {workbenchScope} from './workbench-sync.mjs';
@@ -85,7 +86,7 @@ export async function checkBrowserAssistant(runtime){
      if(message.action==='saveFillLearnings'){if(message.pageUrl!==url)return{ok:false,error:'助手原页面已变化'};return captureFillLearning(runtime,{profileId,profile:original?.profileSnapshot||docs.siteProfiles[profileId],taskId:original?.id,targetId:info.targetId,browserInstance:runtime.host.startedAt,profileRevision:original?.profileRevision},message);}
      if(message.action==='log'){runtime.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:original?.runId,taskId:original?.id,profileId,url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
      if(['manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)){if(!original)return{ok:false};return runtime.dispatchControl('manualWatchMessage',{...message,taskId:original.id,targetId:info.targetId,pageUrl:page.url(),frameUrl:url,documentId:message.executorDocumentId});}
-     if(message.action==='generateCommentDrafts')return runtime.cloud.request('ai/comment',{...message,config});
+     if(message.action==='generateCommentDrafts')return originalCommentRequest(runtime,{...message,config},payload=>runtime.cloud.request('ai/comment',payload));
      if(original&&['fetchSubmissionMedia','fetchCloudSubmissionMedia'].includes(message.action))return runtime.bridge(original,message);return{ok:false,error:'上传素材需要已登记的原任务'};
     };
     const engine=await attachEngine(runtime.context,frame,bridge,{interactive:true});item={engine,scope,profileId,url};runtime.browserAssistantFrames.set(key,item);

@@ -2,6 +2,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {queue,plain,selectScope,priorProductSuccess,profiles,scheduler} from './shared.mjs';
 import {attachEngine} from './engine.mjs';
 import {saveCommentVersion,copyCommentDraft} from './comment-history.mjs';
+import {originalCommentRequest} from './comment-cache.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {freezeBatchConfig,assertBatchPolicy,initializeBatchPolicy,refreshBatchManualCapacity,releaseBatchTask,noteBatchTaskResult,batchConfig,pauseBatchPolicy} from './workbench-batch-policy.mjs';
 import {originalUnattended} from '../../core/original-batch-config.mjs';
@@ -122,7 +123,7 @@ export async function applicationAi(runtime,action,input){
  const filters=globalThis.ExtLinkTargetFilters.normalize(snapshot.documents.targetFilters);if(!filters.aiComments)throw Error('AI 评论生成已在设置中关闭');
  const url=new URL(input.pageUrl);if(!/^https?:$/.test(url.protocol))throw Error('仅支持普通评论页面');
  const tone=input.tone||profile.blogRules?.tone||'helpful',allowLink=input.allowLink!==false&&filters.aiCommentAllowLink,config=plain(profiles.buildAgentConfigFromProfile(profile,snapshot.documents));config.blogRules={...config.blogRules,tone};
- const result=await runtime.cloud.request('ai/comment',{pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),config,language:input.language||profile.language||'auto',count:Math.max(1,Math.min(Number(input.count)||3,5)),maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink,tone});assertScope();
+ const result=await originalCommentRequest(runtime,{pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),config,language:input.language||profile.language||'auto',count:Math.max(1,Math.min(Number(input.count)||3,5)),maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink,tone,refresh:input.refresh},payload=>runtime.cloud.request('ai/comment',payload));assertScope();
  const drafts=(Array.isArray(result?.drafts)?result.drafts:[]).map(copyCommentDraft).filter(d=>d?.text.trim()).slice(0,5);if(result?.ok===false||result?.status&&result.status!=='ok'||!drafts.length)throw Error(result?.error||result?.reason||'AI 评论生成失败，请确认文章正文足够长');
  const normalized={...result,drafts,allowLink,tone};saveCommentVersion(runtime,{...input,tone,allowLink,drafts});runtime.store.set('commentDraft:'+input.profileId+'::'+queue.normalizeDestinationKey(url.href),{...normalized,scope,profileId:input.profileId,pageUrl:url.href,at:new Date().toISOString()});return normalized;
 }

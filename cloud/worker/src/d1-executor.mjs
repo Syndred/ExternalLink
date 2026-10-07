@@ -231,5 +231,5 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    return json({ok:true,...await plan(input)});
   }
   return json({ok:false,error:'执行器接口不存在'},404);
- }catch(error){return json({ok:false,error:error.message},error.status||(/UNIQUE constraint/.test(error.message)?409:500));}
+ }catch(error){return json({ok:false,error:error.message,...(String(error.code||'').startsWith('AI_PROVIDER_')?{code:error.code,message:error.message,retryable:error.retryable}:{})},error.status||(/UNIQUE constraint/.test(error.message)?409:500));}
 }

@@ -600,21 +600,31 @@ async function handleDomainMetrics(request) {
   return { ok: true, results };
 }
 
-async function router(request, env) {
-  if (request.method === "OPTIONS") return new Response(null, { status: 204 });
-  const requestPath=new URL(request.url).pathname;
-  if(requestPath.startsWith('/v2/executor/')||(env.EXECUTOR_BACKEND==='d1'&&requestPath.startsWith('/v1/executor/'))){
-    const scope=authorisedWorkspaceId(new URL(request.url).searchParams.get('workspace'),env);
-    if(!scope)return json({ok:false,error:'工作区未授权'},{status:403});
-    return d1Executor(request,env,scope,input=>handlePlan(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env),async(action,input)=>{
+export function executorAssistant(request,env){
+  return async(action,input)=>{
+    try{
       if(action==='comment'&&!input.pageText){
         const target=new URL(input.pageUrl);if(!/^https?:$/.test(target.protocol))throw Error('仅支持普通网页');
         const response=await fetch(target.href,{headers:{Accept:'text/html'},redirect:'follow'});if(!response.ok)throw Error('评论页面读取失败：HTTP '+response.status);
         const html=(await response.text()).slice(0,500000);input={...input,pageTitle:(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||'').slice(0,600),pageText:textFromHtml(html)};
       }
       const handler={'extract-site':handleExtractSite,'generate-site':handleGenerateSite,comment:handleComment,'domain-metrics':handleDomainMetrics}[action];
-      return handler(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env);
-    });
+      if(!handler)throw Object.assign(Error('资料与评论接口不存在'),{status:404});
+      return await handler(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env);
+    }catch(error){
+      if(error instanceof AiProviderRequestError)Object.assign(error,classifyAiProviderFailure(error.message,error.upstreamStatus),{status:503});
+      throw error;
+    }
+  };
+}
+
+async function router(request, env) {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+  const requestPath=new URL(request.url).pathname;
+  if(requestPath.startsWith('/v2/executor/')||(env.EXECUTOR_BACKEND==='d1'&&requestPath.startsWith('/v1/executor/'))){
+    const scope=authorisedWorkspaceId(new URL(request.url).searchParams.get('workspace'),env);
+    if(!scope)return json({ok:false,error:'工作区未授权'},{status:403});
+    return d1Executor(request,env,scope,input=>handlePlan(new Request(request.url,{method:'POST',body:JSON.stringify(input)}),env),executorAssistant(request,env));
   }
   if(env.STATE_BACKEND==='d1'&&requestPath.startsWith('/v1/')){
     if(/^\/v1\/(ai\/|media(?:\/|$)|domain\/)/.test(requestPath)){const next=new URL(request.url);next.pathname=next.pathname.replace('/v1/','/v2/');return router(new Request(next,request),env);}
@@ -643,7 +653,7 @@ async function router(request, env) {
     if (!scope) return json({ ok: false, error: '工作区未授权' }, { status: 403 });
     const sql = sqlFor(env);
     return executorApi(request, env, sql, scope, {
-      listSnapshot, artifactObjectKey,
+      listSnapshot, artifactObjectKey,assistant:executorAssistant(request,env),
       plan: input => handlePlan(new Request(request.url, { method: 'POST', body: JSON.stringify(input) }), env),
       recordEvent: async ({ runId, task, input, deviceId }) => {
         const runs = await sql`select data->>'createdAt' as created_at,jsonb_array_length(data->'tasks') as total from externallink_executor_runs where workspace_id=${scope} and run_id=${runId}`;

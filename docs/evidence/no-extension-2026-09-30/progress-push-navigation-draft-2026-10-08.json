@@ -1,0 +1,53 @@
+{
+  "kind": "documentation_checkpoint_not_completion_proof",
+  "date": "2026-10-08",
+  "request": "写好进度推送先",
+  "gitBeforeDocumentationCommit": {
+    "branch": "main",
+    "headAndOriginMain": "378359b",
+    "pullCommand": "git pull --ff-only",
+    "pullResult": "Already up to date.",
+    "ahead": 0,
+    "behind": 0
+  },
+  "publishedFeature": {
+    "commit": "a6edb1298b4095c1bb440b1106cc592c3be552e5",
+    "existingFinalOutput": "executor/test-output/original-fresh-round-all-final-2026-10-08.txt",
+    "passed": 839,
+    "failed": 0,
+    "skipped": 0,
+    "rerunDuringThisDocumentationPush": false,
+    "coversCurrentNavigationDraft": false
+  },
+  "navigationDraft": {
+    "files": [
+      "executor/src/original-navigation-rejudge.mjs",
+      "executor/src/original-agent-flow.mjs",
+      "executor/src/runtime.mjs",
+      "executor/src/acceptance-cleanup.mjs"
+    ],
+    "existingAgentFlowRegressionOutput": "executor/test-output/original-navigation-flow-first-2026-10-08.txt",
+    "existingAgentFlowRegressionPassed": 11,
+    "existingAgentFlowRegressionFailed": 0,
+    "existingAgentFlowRegressionSkipped": 0,
+    "navigationDedicatedTestsCompleted": false,
+    "budgetSchedulingAndRestartRecoveryCompleted": false,
+    "actualIsolatedBrowserVerificationCompleted": false,
+    "fullSuiteCompleted": false,
+    "committed": false,
+    "pushed": false,
+    "nativeServicesReloaded": false
+  },
+  "actionsDuringThisDocumentationPush": {
+    "productionBusinessReadback": false,
+    "productionBusinessWrite": false,
+    "workerDeployment": false,
+    "nativeServiceReload": false,
+    "originalChromeLaunch": false,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "allUserFeatureRequirementsRetained": true,
+  "latestOriginalDataAndFullHistoryVerified": false,
+  "migrationComplete": false
+}

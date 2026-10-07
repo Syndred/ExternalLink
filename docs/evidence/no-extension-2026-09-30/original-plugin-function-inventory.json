@@ -1,5 +1,20 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "navigationDraftProgressPushCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "progress-push-navigation-draft-2026-10-08.json",
+    "lastPublishedFeatureCommit": "a6edb1298b4095c1bb440b1106cc592c3be552e5",
+    "publishedFullSuitePassed": 839,
+    "existingAgentFlowDraftRegressionPassed": 11,
+    "draftNavigationDedicatedTestsCompleted": false,
+    "draftBudgetSchedulingAndRestartRecoveryCompleted": false,
+    "draftActualBrowserVerificationCompleted": false,
+    "draftFullSuiteCompleted": false,
+    "navigationDraftPublished": false,
+    "productionStateRecheckedThisProgressPush": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalFreshRoundCheckpoint": {
     "date": "2026-10-08",
     "featureCommit": "a6edb1298b4095c1bb440b1106cc592c3be552e5",

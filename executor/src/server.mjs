@@ -115,7 +115,7 @@ const server = http.createServer(async (req, res) => {
       if(route==='/registerAcceptance')return runtime.control('registerAcceptance',input);
       if(route==='/runTask')return runtime.control('runTask',input);
       if(route==='/startAcceptance')return runtime.control('startAcceptance',input);
-      if(['/appData','/taskDetails','/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/backupUploadStart','/backupUploadPart','/backupUploadComplete','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/appData','/taskDetails','/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/cloudSyncPull','/previewCloudPull','/commitCloudPull','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/backupUploadStart','/backupUploadPart','/backupUploadComplete','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'].includes(route))return runtime.control(route.slice(1),input);
       if (route === '/preview') return runtime.preview(input);
       if (route === '/annotate') {
         const task = store.get(`task:${input.taskId}`); if (!task) throw new Error('任务不存在');

@@ -596,18 +596,18 @@
     },
     {
       "action": "cloudSyncPull",
-      "mapping": "appData refresh",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "cloudSyncPull / previewCloudPull / commitCloudPull：原备份、确认及仅冲突采用",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "cloudSyncPush",
-      "mapping": "cloudSyncPush / 原待同步变更及版本冲突保护",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "cloudSyncPush：原待同步编辑修订号检查及冲突跳过；本轮主要单元证据",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "cloudSyncStatus",
-      "mapping": "appData 缓存/版本/待同步状态",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "cloudSyncStatus：轻量修订号、冲突／待上传／仅本机资料的中文状态",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "confirmSubmissionSuccess",
@@ -2108,6 +2108,17 @@
     "nativeOriginalServicesUpdated": true,
     "productionConnectionPreviews": 0,
     "productionConnectionSwitches": 0,
+    "goalComplete": false
+  },
+  "originalCloudSyncCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-cloud-sync-2026-10-07.json",
+    "tests": 668,
+    "newTests": 20,
+    "authenticatedD1ServicesAndChrome": true,
+    "productionReadOnlyControls": true,
+    "productionAdoptions": 0,
+    "manualUploadPreflightUnitEvidence": true,
     "goalComplete": false
   }
 }

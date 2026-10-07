@@ -1,3 +1,4 @@
+import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
 import '../../core/target-filters.js';
 import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser-target.mjs';
 import {profiles,plain,queue,selectScope,priorProductSuccess} from './shared.mjs';import {workbenchScope} from './workbench-sync.mjs';
@@ -22,7 +23,7 @@ export async function saveAssistantSettings(runtime,input){
  const checkScope=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，助手设置保留在原工作区');};let snapshot;
  try{snapshot=await runtime.cloud.request('snapshot');}catch(error){checkScope();const cached=runtime.store.get('applicationSnapshot');if(cached?.scope!==scope)throw error;snapshot=cached.snapshot;}checkScope();snapshot={...snapshot,revisions:snapshot.revisions||{}};
  const docs=overlayApplication(runtime,snapshot).documents;if(input.enabled&&(!docs.siteProfiles?.[input.profileId]||docs.siteProfiles[input.profileId].archived))throw Error('请选择在用产品');
- runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});const settings={scope,enabled:input.enabled,autoFillOnVisit:input.autoFillOnVisit,profileId:input.profileId,at:new Date().toISOString()};runtime.store.set('browserAssistantSettings',settings);
+ cacheCloudSnapshot(runtime,snapshot);const settings={scope,enabled:input.enabled,autoFillOnVisit:input.autoFillOnVisit,profileId:input.profileId,at:new Date().toISOString()};runtime.store.set('browserAssistantSettings',settings);
  if(docs.autoFillOnVisit!==input.autoFillOnVisit)await enqueueLibraryMutation(runtime,{operation:{type:'settings',key:'autoFillOnVisit',value:input.autoFillOnVisit}});
  checkScope();if(!input.autoFillOnVisit||!input.enabled)cancelAutoTimers(runtime,'访问自动填写已关闭');await checkBrowserAssistant(runtime);return{ok:true,pendingEdits:pendingApplication(runtime).length,...assistantState(runtime)};
 }
@@ -47,7 +48,7 @@ export async function fillAssistantTask(runtime,input){
  try{
   assertCurrent();let task=originalAssistantTask(runtime,profileId,input.targetId,input.url);if(input.taskId&&task?.id!==input.taskId)throw Error('原任务已变化或已有提交边界');
   if(!runtime.context)await runtime.connect();let page;for(const candidate of runtime.context.pages()){if(!/^https?:\/\//.test(candidate.url()))continue;const info=await getTargetInfo(runtime.context,candidate);if(info?.targetId===input.targetId){page=candidate;break;}}if(!page||page.url()!==input.url)throw Error('原网页已关闭或跳转');
-  const snapshot=await runtime.cloud.request('snapshot');assertCurrent();runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});assertCurrent();const match=autoVisitTarget(snapshot,profileId,page.url());if(!match)throw Error('原站点当前不允许自动填写');saveRecord(recordVisitQueue(runtime,snapshot,profileId,match));
+  const snapshot=await runtime.cloud.request('snapshot');assertCurrent();cacheCloudSnapshot(runtime,snapshot);assertCurrent();const match=autoVisitTarget(snapshot,profileId,page.url());if(!match)throw Error('原站点当前不允许自动填写');saveRecord(recordVisitQueue(runtime,snapshot,profileId,match));
   let profile=task?.profileSnapshot||runtime.store.get('run:'+task?.runId)?.profile||snapshot.documents.siteProfiles[profileId],config=frozenConfig(snapshot,profile,page.url());
   const assertPage=()=>{assertCurrent();if(page.isClosed()||page.url()!==input.url)throw Error('原网页已关闭或跳转');};assertPage();
   if(task&&isProductHuntLaunch(page.url())){await runtime.lease(task,{online:true});assertPage();const active=()=>{try{assertPage();return true;}catch{return false;}};const fill=await runProductHuntWorkflow(runtime,task,page,config,{active,confirmCreate:false});await runtime.synchronize();const result={ok:true,taskId:task.id,runId:task.runId,filled:true,submitted:false,platform:'product_hunt',readyToCreate:fill.ready_to_create===true};saveRecord({status:'prepared',result});return result;}
@@ -67,7 +68,7 @@ export async function fillAssistantTask(runtime,input){
 }
 async function formShape(page){const shapes=[];for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;try{shapes.push([frame.url(),await frame.evaluate(()=>[...document.querySelectorAll('input,textarea,select')].filter(e=>!e.closest('[data-extlink-root],#extlink-manual-icons')).map(e=>[e.tagName,e.id,e.name,e.type,e.disabled,e.required,e.options?.length||0]))]);}catch{}}return createHash('sha256').update(JSON.stringify(shapes)).digest('hex').slice(0,16);}
 export async function checkBrowserAssistant(runtime){
- if(runtime.connectionBusy||runtime.store.get('connectionExecutionHold'))return;
+ if(runtime.connectionBusy||runtime.cloudPullOperation||runtime.store.get('connectionExecutionHold'))return;
  if(runtime.browserAssistantScan||runtime.job||runtime.controlBusy)return;const settings=assistantState(runtime).settings;if(!settings.enabled){await stopBrowserAssistant(runtime);return;}if(!settings.autoFillOnVisit)cancelAutoTimers(runtime,'访问自动填写已关闭');
  runtime.browserAssistantScan=true;try{
   if(!runtime.context)await runtime.connect();runtime.browserAssistantFrames||=new Map();const live=new Set(),snapshot=snapshotFor(runtime),profileId=effectiveProfile(runtime,settings),panel=singlePagePanel(runtime),scope=workbenchScope(runtime.store.get('pair'));

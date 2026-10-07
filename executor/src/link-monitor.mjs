@@ -32,7 +32,7 @@ async function run(runtime,job){try{
 export function dismissMonitorAlert(runtime,input){const key='monitorNotification:'+input.id,alert=runtime.store.get(key);if(!alert||alert.scope!==workbenchScope(runtime.store.get('pair')))throw Error('监测提醒不存在');runtime.store.set(key,{...alert,dismissed:true});return{ok:true};}
 export function recoverDataJobs(runtime){for(const prefix of ['domainAgeJob:','publicLibraryJob:','linkMonitorJob:','quickOpenJob:'])for(const job of runtime.store.values(prefix))if(job.status==='running')runtime.store.set(prefix+job.id,{...job,status:'paused',error:prefix==='quickOpenJob:'?'后台已重启，保留原打开记录；请核对已打开页签后重新选择未打开项':'后台已重启，请继续原任务'});}
 export async function checkMonitorSchedule(runtime,now=Date.now()){
- if(runtime.connectionBusy||runtime.store.get('connectionExecutionHold'))return;
+ if(runtime.connectionBusy||runtime.cloudPullOperation||runtime.store.get('connectionExecutionHold'))return;
  if(runtime.linkMonitorJob||runtime.linkMonitorStarting)return;const scope=workbenchScope(runtime.store.get('pair')),snapshot=runtime.store.get('applicationSnapshot');if(snapshot?.scope!==scope)return;const schedule=monitorSchedule(snapshot.snapshot.documents);if(schedule.enabled===false)return;const signature=JSON.stringify(schedule),key='linkMonitorScheduler:'+hash(scope);let state=runtime.store.get(key);if(!state||state.signature!==signature){runtime.store.set(key,{signature,nextDue:now+300000});return;}if(now<state.nextDue)return;
  try{const result=await startLinkMonitor(runtime,{scheduled:true});runtime.store.set(key,{signature,nextDue:now+Math.max(15,Number(schedule.minutes)||1440)*60000,lastJobId:result.job.id});}catch(error){runtime.store.set(key,{...state,nextDue:now+60000,error:error.message});}
 }

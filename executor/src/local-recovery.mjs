@@ -56,7 +56,7 @@ export async function localRecoverySources(runtime){
 export async function previewLocalRecovery(runtime,input){
  const source=runtime.store.get('localRecoverySource:'+input.sourceId),scope=workbenchScope(runtime.store.get('pair'));if(!source||source.scope!==scope)throw Error('请刷新并选择本工作区的本机备份');
  const value=await readSource(runtime,source.path);sameScope(runtime,scope);const fresh=await applicationData(runtime,{refresh:true});sameScope(runtime,scope);if(fresh.error)throw Error(fresh.error);if(pendingApplication(runtime).length)throw Error('请先同步或解决已有本机资料冲突');
- const snapshot=runtime.store.get('applicationSnapshot').snapshot,changes=Object.keys(value.documents).filter(key=>!isDeepStrictEqual(recoveryDocument(snapshot.documents,key,value.documents[key]),snapshot.documents[key])),id=randomUUID();
+ const cached=runtime.store.get('applicationSnapshot'),snapshot=cached.remoteSnapshot||cached.snapshot,changes=Object.keys(value.documents).filter(key=>!isDeepStrictEqual(recoveryDocument(snapshot.documents,key,value.documents[key]),snapshot.documents[key])),id=randomUUID();
  const dependencyKeys=value.profileDependencies.filter(key=>changes.includes(key));
  runtime.store.set('localRecoveryPlan:'+id,{id,scope,sourceId:input.sourceId,sourceSha256:value.sha256,documents:value.documents,baseDocuments:snapshot.documents,revisions:snapshot.revisions,changes,dependencyKeys,status:'preview',at:new Date().toISOString()});
  return{ok:true,preview:{id,changes,dependencyKeys,sourceCounts:counts(value.documents),currentCounts:counts(snapshot.documents),scopeVerified:value.scopeVerified,scopeVerification:value.scopeVerification,sourceSha256:value.sha256}};
@@ -85,7 +85,7 @@ async function performRecovery(runtime,input){
   if(!plan.backupDirectory){const output=join(rootFor(runtime),'before-local-recovery-'+new Date().toISOString().replace(/[:.]/g,'-')+'-'+plan.id),backup=await backupWorkspace({home:runtime.home,output});plan.backupDirectory=output;plan.backupSha256=backup.sha256;runtime.store.set('localRecoveryPlan:'+plan.id,plan);}
   sameScope(runtime,scope);ensureIdle(runtime);const beforeWrite=await readSource(runtime,source.path);sameScope(runtime,scope);if(beforeWrite.sha256!==plan.sourceSha256)throw Error('本机来源在备份期间变化，请重新预览');
   const ordered=restoringProducts?[...selected.filter(key=>key==='siteProfiles'),...selected.filter(key=>key!=='siteProfiles')]:selected;
-  const result=await enqueueApplicationPlan(runtime,{operations:ordered.map(key=>({type:'recover_local',key,data:plan.documents[key]})),dependencyKind:restoringProducts?'profile_recovery':undefined},child=>{plan.applicationPlanId=child;plan.selectedKeys=selected;plan.status='queued';runtime.store.set('localRecoveryPlan:'+plan.id,plan);});
+  const result=await enqueueApplicationPlan(runtime,{baseSnapshot:remote,operations:ordered.map(key=>({type:'recover_local',key,data:plan.documents[key]})),dependencyKind:restoringProducts?'profile_recovery':undefined},child=>{plan.applicationPlanId=child;plan.selectedKeys=selected;plan.status='queued';runtime.store.set('localRecoveryPlan:'+plan.id,plan);});
   sameScope(runtime,scope);return finishRecovery(runtime,plan,result);
  }
  if(!plan.applicationPlanId)throw Error('原恢复计划没有持久变更编号，请重新预览');

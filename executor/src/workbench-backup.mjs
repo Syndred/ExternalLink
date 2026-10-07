@@ -23,7 +23,7 @@ async function performWorkbenchBackup(runtime,action,input){
   const expectedScope=workbenchScope(runtime.store.get('pair'));
   await applicationData(runtime,{refresh:true});if(pendingApplication(runtime).length)throw Error('请先同步或解决待处理的本机编辑，再导入备份');
   if(expectedScope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，请重新预览原备份');
-  const snapshot=runtime.store.get('applicationSnapshot').snapshot,prepared=prepareApplicationBackup(snapshot.documents,input.backup),merged=prepared.documents,id=randomUUID(),scope=workbenchScope(runtime.store.get('pair'));
+  const cached=runtime.store.get('applicationSnapshot'),snapshot=cached.remoteSnapshot||cached.snapshot,prepared=prepareApplicationBackup(snapshot.documents,input.backup),merged=prepared.documents,id=randomUUID(),scope=workbenchScope(runtime.store.get('pair'));
   const previous=input.source?.previousPreviewId&&runtime.store.get('backupImport:'+input.source.previousPreviewId);
   if(previous?.scope===scope&&previous.source?.id===input.source.id&&previous.status==='preview'){
    if(previous.changes.every(key=>(snapshot.revisions[key]||0)===(previous.revisions[key]||0)))return{ok:true,preview:previous.preview};
@@ -46,12 +46,12 @@ async function performWorkbenchBackup(runtime,action,input){
  if(plan.status==='preview'){
   const current=await runtime.cloud.request('snapshot');for(const key of plan.readKeys||plan.changes)if((current.revisions[key]||0)!==(plan.revisions[key]||0))throw Error('云端资料已变化，请重新预览备份');
   if(plan.scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原备份保留');
-  let previous;const items=plan.changes.map(key=>{const id=randomUUID(),related=plan.dependencyKeys?.includes(key),item={id,scope:plan.scope,at:plan.at,key,baseData:plan.baseDocuments[key],status:'pending',operation:operation(id,key),backupImportId:plan.id,...(related&&previous?{dependsOn:previous}:{})};if(related)previous=id;return item;});
+  let previous;const items=plan.changes.map(key=>{const id=randomUUID(),related=plan.dependencyKeys?.includes(key),item={id,scope:plan.scope,at:plan.at,key,baseData:plan.baseDocuments[key],baseRevision:plan.revisions[key]||0,status:'pending',operation:operation(id,key),backupImportId:plan.id,...(related&&previous?{dependsOn:previous}:{})};if(related)previous=id;return item;});
   // Persist the original import and IDs before sending any cloud write.
   plan.status='queued';plan.items=items.map(i=>i.id);plan.itemDependencies=Object.fromEntries(items.filter(item=>item.dependsOn).map(item=>[item.id,item.dependsOn]));
   runtime.store.db.exec('BEGIN IMMEDIATE');try{runtime.store.set('backupImport:'+plan.id,plan);for(const item of items)runtime.store.set('appMutation:'+item.id,item);runtime.store.db.exec('COMMIT');}catch(error){runtime.store.db.exec('ROLLBACK');throw error;}
  }else if(plan.status==='queued'){
-  for(let i=0;i<plan.items.length;i++){const id=plan.items[i],key=plan.changes[i];if(!runtime.store.get('appMutation:'+id))runtime.store.set('appMutation:'+id,{id,scope:plan.scope,at:plan.at,key,baseData:plan.baseDocuments[key],status:'pending',operation:operation(id,key),backupImportId:plan.id,...(plan.itemDependencies?.[id]?{dependsOn:plan.itemDependencies[id]}:{})});}
+  for(let i=0;i<plan.items.length;i++){const id=plan.items[i],key=plan.changes[i];if(!runtime.store.get('appMutation:'+id))runtime.store.set('appMutation:'+id,{id,scope:plan.scope,at:plan.at,key,baseData:plan.baseDocuments[key],baseRevision:plan.revisions[key]||0,status:'pending',operation:operation(id,key),backupImportId:plan.id,...(plan.itemDependencies?.[id]?{dependsOn:plan.itemDependencies[id]}:{})});}
  }
  const result=await flushApplicationMutations(runtime),remaining=(plan.items||[]).filter(id=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+id)?.status));
  const excludedKeys=(plan.items||[]).map(id=>runtime.store.get('appMutation:'+id)).filter(item=>item?.status==='discarded').map(item=>item.key);

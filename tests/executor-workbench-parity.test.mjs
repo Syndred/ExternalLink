@@ -4,7 +4,7 @@ import {Store} from '../executor/src/store.mjs';import {previewWorkbenchBatch,st
 import {originalAssistantTask,saveAssistantSettings,assistantState,fillAssistantTask} from '../executor/src/browser-assistant.mjs';
 const profile=id=>({id,name:id,url:'https://'+id+'.example',fields:{Name:id,Url:'https://'+id+'.example'}});
 test('assistant is opt-in and binds only an unattempted original task in the original browser target',async()=>{
- const store=new Store(':memory:'),runtime={store,host:{startedAt:'original-host'},cloud:{request:async()=>({documents:{siteProfiles:{p:profile('p')}}})}};
+ const store=new Store(':memory:'),runtime={store,host:{startedAt:'original-host'},cloud:{request:async()=>({documents:{siteProfiles:{p:profile('p')}},revisions:{siteProfiles:1}})}};
  try{store.set('pair',{endpoint:'https://cloud.example',workspaceId:'workspace',deviceId:'device'});assert.equal(assistantState(runtime).settings.enabled,false);await saveAssistantSettings(runtime,{enabled:true,autoFillOnVisit:true,profileId:'p'});
   const task={id:'one',profileId:'p',targetId:'original-target',browserInstance:'original-host',url:'https://target.example/submit',status:'pending'};store.set('task:one',task);
   assert.equal(originalAssistantTask(runtime,'p','original-target',task.url).id,'one');assert.equal(originalAssistantTask(runtime,'p','other-target',task.url),undefined);assert.equal(originalAssistantTask(runtime,'p','original-target','https://other.example/submit'),undefined);

@@ -58,6 +58,7 @@ import {commentHistory,saveCommentVersion} from './comment-history.mjs';
 import {quickOpenLibrary} from './quick-open.mjs';
 import {mediaLibrary} from './media-library.mjs';
 import {cloudStatus,pushLocalChanges} from './cloud-status.mjs';
+import {pullCloudState,previewCloudPull,commitCloudPull} from './cloud-pull.mjs';
 import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
@@ -542,7 +543,7 @@ export class Runtime {
   tick() {
     // API operations own the single writer until their readbacks finish.
     // A paused timer must not flush their in-flight events concurrently.
-    if (this.controlBusy||this.connectionBusy||this.localRecoveryOperation||this.fillLearningFlush) return;
+    if (this.controlBusy||this.connectionBusy||this.cloudPullOperation||this.cloudPushOperation||this.localRecoveryOperation||this.fillLearningFlush) return;
     if(Date.now()<(this.syncRetryAt||0)){if(this.job)watchBatchDeadline(this);return;}
     if(this.store.get('connectionExecutionHold')&&this.store.get('paused')===false)this.store.set('connectionExecutionHold',null);
     watchBatchDeadline(this);
@@ -1282,6 +1283,9 @@ export class Runtime {
     if(action==='addBrowserPage')return addBrowserPage(this,input);
     if(action==='cloudSyncStatus')return cloudStatus(this);
     if(action==='cloudSyncPush')return pushLocalChanges(this);
+    if(action==='cloudSyncPull')return pullCloudState(this,input);
+    if(action==='previewCloudPull')return previewCloudPull(this,input);
+    if(action==='commitCloudPull')return commitCloudPull(this,input);
     if(action==='mediaLibrary')return mediaLibrary(this);
     if(action==='commentHistory')return commentHistory(this,input);
     if(action==='saveCommentVersion')return saveCommentVersion(this,input);

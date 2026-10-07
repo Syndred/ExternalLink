@@ -1,0 +1,70 @@
+{
+  "kind": "original_backup_scope_and_legacy_recovery_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "previousProgressCommit": "8fb3149",
+  "previousFunctionCommit": "2005b7f",
+  "migrationComplete": false,
+  "changes": {
+    "newCloudPullJsonIncludesScopeAndWorkspaceIdWithoutCredentials": true,
+    "legacyJsonCrossChecksAllRecognizedCompanionSqliteIdentities": true,
+    "contradictoryJsonDatabaseAndForeignWorkspaceRejected": true,
+    "databaseSnapshotAndConnectionIdentityMustAgree": true,
+    "nonemptyWalAndReadTimeChangesRejected": true,
+    "reviewedIdentityCannotChangeOrDisappearBeforeRestore": true,
+    "genuineStandaloneUnscopedLegacyJsonStillSupported": true,
+    "oldBackupFilesNeverRewritten": true
+  },
+  "tests": {
+    "new": 5,
+    "pass": 731,
+    "fail": 0,
+    "skip": 0,
+    "fullSuiteOutput": "executor/test-output/original-backup-scope-all-final-2026-10-07.txt",
+    "targetedPass": 34,
+    "targetedOutput": "executor/test-output/original-backup-scope-targeted-first-2026-10-07.txt",
+    "authenticatedHttpD1RecoveryPassed": true,
+    "originalReceiptsUnknownAttemptsFavoritesGroupsAndPausedBatchKept": true,
+    "lostReplyAndRestartRecoveryPassed": true
+  },
+  "actualOriginalReadonly": {
+    "script": "executor/test/original-backup-scope-readonly.mjs --original-readonly",
+    "output": "executor/test-output/original-backup-scope-readonly-first-2026-10-07.txt",
+    "files": 46,
+    "acceptedJson": 4,
+    "acceptedSqlite": 4,
+    "foreignCloudPullJson": 18,
+    "foreignSqlite": 18,
+    "sqliteWithoutProductSnapshot": 2,
+    "originalBackupFileBytesUnchanged": true,
+    "originalNativeStateOutboxAndAuditUnchanged": true,
+    "cloudRequests": 0,
+    "recoveryWrites": 0
+  },
+  "services": {
+    "updatedAfterIdentityIdleAndDiskGuards": true,
+    "guardOutput": "executor/test-output/original-backup-scope-native-guard-final-2026-10-07.txt",
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatchCursor": 13,
+    "fixedBatchDenominator": 30,
+    "cursorIsNotSuccessCount": true,
+    "workerSourceChanged": false,
+    "workerDeployed": false,
+    "fullProductionUiOrCloudHashRerun": false
+  },
+  "realAiCalls": 0,
+  "realSubmissions": 0,
+  "remaining": [
+    "Original embedded images in all native execution paths",
+    "Latest original browser products categories groups and favorites",
+    "Other devices aliases and complete original history association",
+    "Remaining manual dynamic special pages and real external services"
+  ]
+}

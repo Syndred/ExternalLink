@@ -1,5 +1,19 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalBackupScopeCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-backup-scope-2026-10-07.json",
+    "fullSuitePassed": 731,
+    "newTests": 5,
+    "originalBackupFilesReadonly": 46,
+    "foreignCloudPullJsonRejected": 18,
+    "companionDatabaseIdentityChecked": true,
+    "standaloneOriginalLegacyJsonKept": true,
+    "originalBackupFilesAndNativeStateUnchanged": true,
+    "nativeServicesUpdatedWithIdleProtection": true,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalMediaRegistrationRecoveryCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-media-registration-recovery-2026-10-07.json",

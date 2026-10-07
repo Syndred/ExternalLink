@@ -2,7 +2,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {randomUUID,createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
 import {readFile,writeFile,readdir,realpath,stat,mkdir} from 'node:fs/promises';
-import {join,sep,resolve,basename} from 'node:path';
+import {join,sep,resolve,basename,dirname} from 'node:path';
 import {homedir} from 'node:os';
 import {isDeepStrictEqual} from 'node:util';
 import {localRecoveryDocuments,localRecoveryOriginalDocuments,recoveryDocument} from '../../core/local-recovery.mjs';
@@ -20,20 +20,41 @@ async function hashFile(file){const hash=createHash('sha256');for await(const by
 const sameScope=(runtime,scope)=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，恢复停止，原计划保留');};
 async function sourcePath(runtime,file){const root=await realpath(rootFor(runtime)),path=await realpath(file);if(!path.startsWith(root+sep)||!sourceNames.has(basename(path)))throw Error('恢复来源不在本机备份目录内');return path;}
 async function rejectWal(path){const wal=await stat(path+'-wal').catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(wal?.size)throw Error('来源数据库有未合入日志，请使用完整的在线备份');}
-async function readSource(runtime,file){
+function sourceIdentity(scope,workspaceId){
+ if(scope!==undefined&&scope!==null&&(typeof scope!=='string'||!scope)||workspaceId!==undefined&&workspaceId!==null&&(typeof workspaceId!=='string'||!workspaceId))throw Error('备份工作区标识格式无效');
+ return{scope:scope||undefined,workspaceId:workspaceId||undefined};
+}
+function mergeSourceIdentity(first,second){
+ if(first.scope&&second.scope&&first.scope!==second.scope||first.workspaceId&&second.workspaceId&&first.workspaceId!==second.workspaceId)throw Error('备份JSON与原数据库的工作区标识不一致');
+ return{scope:first.scope||second.scope,workspaceId:first.workspaceId||second.workspaceId};
+}
+async function readSourceDatabase(path){
+ const before=await stat(path);if(!before.isFile())throw Error('来源数据库不是文件');await rejectWal(path);const db=new DatabaseSync(path,{readOnly:true});let result;
+ try{
+  const get=id=>{const row=db.prepare('SELECT value FROM state WHERE id=?').get(id);if(!row)return null;try{return JSON.parse(row.value);}catch{throw Error('来源数据库身份资料无法读取');}},pair=get('pair'),app=get('applicationSnapshot'),journal=get('workbenchDocuments'),selected=app?.snapshot?app:journal?.snapshot?journal:null;
+  const paired=sourceIdentity(typeof pair?.endpoint==='string'&&pair.endpoint?workbenchScope(pair):undefined,pair?(pair.workspaceId||'default'):undefined),snapshotIdentity=sourceIdentity(selected?.scope,undefined);
+  if(paired.scope&&snapshotIdentity.scope&&paired.scope!==snapshotIdentity.scope)throw Error('原数据库产品快照与连接的工作区标识不一致');
+  result={raw:selected?.snapshot,...mergeSourceIdentity(paired,snapshotIdentity)};
+ }finally{db.close();}
+ await rejectWal(path);const after=await stat(path);if(before.size!==after.size||before.mtimeMs!==after.mtimeMs)throw Error('来源数据库在读取期间变化，请重试');return result;
+}
+export async function readLocalRecoverySource(runtime,file){
  const path=await sourcePath(runtime,file),info=await stat(path);if(!info.isFile())throw Error('恢复来源不是文件');let raw,workspaceId,scope,sha256;
+ const companions=[];
  if(path.endsWith('.sqlite')){
-  await rejectWal(path);const db=new DatabaseSync(path,{readOnly:true});
-  try{const get=id=>{const row=db.prepare('SELECT value FROM state WHERE id=?').get(id);return row?JSON.parse(row.value):null;},pair=get('pair'),app=get('applicationSnapshot'),journal=get('workbenchDocuments');raw=app?.snapshot||journal?.snapshot;scope=app?.scope||journal?.scope||(pair?workbenchScope(pair):undefined);workspaceId=pair?.workspaceId;if(!raw)throw Error('此数据库没有产品资料快照，请选择JSON资料快照');}
-  finally{db.close();}
+  ({raw,scope,workspaceId}=await readSourceDatabase(path));if(!raw)throw Error('此数据库没有产品资料快照，请选择JSON资料快照');
   sha256=await hashFile(path);await rejectWal(path);
  }else{
-  if(info.size>256*1024*1024)throw Error('恢复来源超过256MB');const bytes=await readFile(path);if(bytes.length>256*1024*1024)throw Error('恢复来源超过256MB');raw=JSON.parse(bytes.toString('utf8'));sha256=digest(bytes);workspaceId=raw.workspaceId;scope=raw.scope;
+  if(info.size>256*1024*1024)throw Error('恢复来源超过256MB');const bytes=await readFile(path);if(bytes.length>256*1024*1024)throw Error('恢复来源超过256MB');raw=JSON.parse(bytes.toString('utf8'));sha256=digest(bytes);({scope,workspaceId}=sourceIdentity(raw.scope,raw.workspaceId));
+  for(const name of [...sourceNames].filter(name=>name.endsWith('.sqlite'))){
+   const candidate=join(dirname(path),name),exists=await stat(candidate).catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(!exists)continue;
+   const companion=await sourcePath(runtime,candidate),identity=await readSourceDatabase(companion);({scope,workspaceId}=mergeSourceIdentity({scope,workspaceId},identity));companions.push({name,scope:identity.scope||null,workspaceId:identity.workspaceId||null});
+  }
  }
  const after=await stat(path);if(after.size!==info.size||after.mtimeMs!==info.mtimeMs)throw Error('本机来源在读取期间变化，请重试');
  const originalDocuments=localRecoveryOriginalDocuments(raw),documents=localRecoveryDocuments(raw),profileDependencies=profileRecoveryDependencyKeys(originalDocuments,documents);
  if(scope&&scope!==workbenchScope(runtime.store.get('pair'))||workspaceId&&workspaceId!==(runtime.store.get('pair')?.workspaceId||'default'))throw Error('恢复来源属于其他工作区');
- return{path,documents,profileDependencies,sha256,modifiedAt:info.mtime.toISOString(),bytes:info.size,scopeVerified:!!scope,scopeVerification:scope?'full':workspaceId?'workspace_only':'unscoped'};
+ return{path,documents,profileDependencies,sha256,identitySha256:digest(JSON.stringify({scope:scope||null,workspaceId:workspaceId||null,companions})),modifiedAt:info.mtime.toISOString(),bytes:info.size,scopeVerified:!!scope,scopeVerification:scope?'full':workspaceId?'workspace_only':'unscoped'};
 }
 const counts=docs=>({profiles:Object.keys(docs.siteProfiles||{}).length,records:Object.keys(docs.submissionRecords||{}).length,targets:docs.sheetTableData?.entries?.length||0,annotations:Object.keys(docs.siteAnnotations||{}).length,favorites:Object.values(docs.siteAnnotations||{}).filter(a=>a.library?.favorite).length});
 export function localRecoveryPlans(runtime){
@@ -48,17 +69,17 @@ export async function localRecoverySources(runtime){
  await captureLocalCache(runtime);const scope=workbenchScope(runtime.store.get('pair')),root=rootFor(runtime),sources=[];let directories;
  try{directories=await readdir(root,{withFileTypes:true});}catch(error){if(error.code==='ENOENT')return{ok:true,sources:[],plans:localRecoveryPlans(runtime)};throw error;}
  for(const dir of directories.filter(d=>d.isDirectory()))for(const name of sourceNames){const file=join(root,dir.name,name);if(!await stat(file).then(s=>s.isFile(),()=>false))continue;
-  try{const value=await readSource(runtime,file),id=digest(resolve(value.path));sameScope(runtime,scope);runtime.store.set('localRecoverySource:'+id,{id,path:value.path,scope});sources.push({id,label:dir.name.startsWith('local-cache-')?'本机缓存资料 / '+value.modifiedAt:dir.name+' / '+name,modifiedAt:value.modifiedAt,bytes:value.bytes,scopeVerified:value.scopeVerified,scopeVerification:value.scopeVerification,keys:Object.keys(value.documents),...counts(value.documents)});}
+  try{const value=await readLocalRecoverySource(runtime,file),id=digest(resolve(value.path));sameScope(runtime,scope);runtime.store.set('localRecoverySource:'+id,{id,path:value.path,scope});sources.push({id,label:dir.name.startsWith('local-cache-')?'本机缓存资料 / '+value.modifiedAt:dir.name+' / '+name,modifiedAt:value.modifiedAt,bytes:value.bytes,scopeVerified:value.scopeVerified,scopeVerification:value.scopeVerification,keys:Object.keys(value.documents),...counts(value.documents)});}
   catch(error){sameScope(runtime,scope);sources.push({label:dir.name+' / '+name,unavailable:true,error:error.message});}
  }
  return{ok:true,sources,plans:localRecoveryPlans(runtime)};
 }
 export async function previewLocalRecovery(runtime,input){
  const source=runtime.store.get('localRecoverySource:'+input.sourceId),scope=workbenchScope(runtime.store.get('pair'));if(!source||source.scope!==scope)throw Error('请刷新并选择本工作区的本机备份');
- const value=await readSource(runtime,source.path);sameScope(runtime,scope);const fresh=await applicationData(runtime,{refresh:true});sameScope(runtime,scope);if(fresh.error)throw Error(fresh.error);if(pendingApplication(runtime).length)throw Error('请先同步或解决已有本机资料冲突');
+ const value=await readLocalRecoverySource(runtime,source.path);sameScope(runtime,scope);const fresh=await applicationData(runtime,{refresh:true});sameScope(runtime,scope);if(fresh.error)throw Error(fresh.error);if(pendingApplication(runtime).length)throw Error('请先同步或解决已有本机资料冲突');
  const cached=runtime.store.get('applicationSnapshot'),snapshot=cached.remoteSnapshot||cached.snapshot,changes=Object.keys(value.documents).filter(key=>!isDeepStrictEqual(recoveryDocument(snapshot.documents,key,value.documents[key]),snapshot.documents[key])),id=randomUUID();
  const dependencyKeys=value.profileDependencies.filter(key=>changes.includes(key));
- runtime.store.set('localRecoveryPlan:'+id,{id,scope,sourceId:input.sourceId,sourceSha256:value.sha256,documents:value.documents,baseDocuments:snapshot.documents,revisions:snapshot.revisions,changes,dependencyKeys,status:'preview',at:new Date().toISOString()});
+ runtime.store.set('localRecoveryPlan:'+id,{id,scope,sourceId:input.sourceId,sourceSha256:value.sha256,sourceIdentitySha256:value.identitySha256,documents:value.documents,baseDocuments:snapshot.documents,revisions:snapshot.revisions,changes,dependencyKeys,status:'preview',at:new Date().toISOString()});
  return{ok:true,preview:{id,changes,dependencyKeys,sourceCounts:counts(value.documents),currentCounts:counts(snapshot.documents),scopeVerified:value.scopeVerified,scopeVerification:value.scopeVerification,sourceSha256:value.sha256}};
 }
 function ensureIdle(runtime){
@@ -75,7 +96,7 @@ async function performRecovery(runtime,input){
  if(input.confirmation!=='恢复所选本机资料')throw Error('请输入恢复所选本机资料确认文字');ensureIdle(runtime);
  const scope=workbenchScope(runtime.store.get('pair')),plan=runtime.store.get('localRecoveryPlan:'+input.id);if(!plan||plan.scope!==scope)throw Error('本机恢复预览不存在或工作区已变化');
  if(plan.status==='preview'){
-  const source=runtime.store.get('localRecoverySource:'+plan.sourceId);if(!source||source.scope!==scope)throw Error('本机来源不存在，请重新预览');const latest=await readSource(runtime,source.path);sameScope(runtime,scope);if(latest.sha256!==plan.sourceSha256)throw Error('本机来源已经变化，请重新预览');
+  const source=runtime.store.get('localRecoverySource:'+plan.sourceId);if(!source||source.scope!==scope)throw Error('本机来源不存在，请重新预览');const latest=await readLocalRecoverySource(runtime,source.path);sameScope(runtime,scope);if(latest.sha256!==plan.sourceSha256||plan.sourceIdentitySha256&&latest.identitySha256!==plan.sourceIdentitySha256)throw Error('本机来源已经变化，请重新预览');
   if(pendingApplication(runtime).length)throw Error('请先同步或解决已有本机资料冲突');
   if(input.keys!==undefined&&!Array.isArray(input.keys))throw Error('请选择预览中的恢复资料');
   const selected=[...new Set(input.keys||plan.changes)];if(!selected.length||selected.some(k=>!plan.changes.includes(k)))throw Error('请选择预览中的恢复资料');
@@ -83,7 +104,7 @@ async function performRecovery(runtime,input){
   if(restoringProducts&&related.some(key=>!selected.includes(key)))throw Error('旧产品编号及对应的历史资料需要一起恢复，请勾选关联资料');
   const remote=await runtime.cloud.request('snapshot');sameScope(runtime,scope);for(const key of selected)if((remote.revisions[key]||0)!==(plan.revisions[key]||0)||!isDeepStrictEqual(remote.documents[key],plan.baseDocuments[key]))throw Error('云端已变化，请重新比较恢复预览');
   if(!plan.backupDirectory){const output=join(rootFor(runtime),'before-local-recovery-'+new Date().toISOString().replace(/[:.]/g,'-')+'-'+plan.id),backup=await backupWorkspace({home:runtime.home,output});plan.backupDirectory=output;plan.backupSha256=backup.sha256;runtime.store.set('localRecoveryPlan:'+plan.id,plan);}
-  sameScope(runtime,scope);ensureIdle(runtime);const beforeWrite=await readSource(runtime,source.path);sameScope(runtime,scope);if(beforeWrite.sha256!==plan.sourceSha256)throw Error('本机来源在备份期间变化，请重新预览');
+  sameScope(runtime,scope);ensureIdle(runtime);const beforeWrite=await readLocalRecoverySource(runtime,source.path);sameScope(runtime,scope);if(beforeWrite.sha256!==plan.sourceSha256||plan.sourceIdentitySha256&&beforeWrite.identitySha256!==plan.sourceIdentitySha256)throw Error('本机来源在备份期间变化，请重新预览');
   const ordered=restoringProducts?[...selected.filter(key=>key==='siteProfiles'),...selected.filter(key=>key!=='siteProfiles')]:selected;
   const result=await enqueueApplicationPlan(runtime,{baseSnapshot:remote,operations:ordered.map(key=>({type:'recover_local',key,data:plan.documents[key]})),dependencyKind:restoringProducts?'profile_recovery':undefined},child=>{plan.applicationPlanId=child;plan.selectedKeys=selected;plan.status='queued';runtime.store.set('localRecoveryPlan:'+plan.id,plan);});
   sameScope(runtime,scope);return finishRecovery(runtime,plan,result);

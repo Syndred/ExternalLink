@@ -53,7 +53,7 @@ export function previewCloudPull(runtime,input={}){
   const saved=runtime.store.get('applicationSnapshot'),local=saved?.scope===scope?overlayApplication(runtime,saved.snapshot):{documents:{},revisions:{}};
   for(const item of pendingWorkbench(runtime))local.documents.submissionTimeline=globalThis.ExtLinkSubmissionTimeline.append(local.documents.submissionTimeline,item.event);
   const backupDirectory=join(runtime.backupRoot||join(homedir(),'.externallink-backups'),'cloud-pull-'+id),manifest=await backupWorkspace({home:runtime.home,output:backupDirectory});assertCurrent(runtime,expected);
-  await writeFile(join(backupDirectory,'snapshot.json'),JSON.stringify(exportApplicationBackup(local.documents),null,2),{flag:'wx'});assertCurrent(runtime,expected);
+  await writeFile(join(backupDirectory,'snapshot.json'),JSON.stringify({...exportApplicationBackup(local.documents),scope,workspaceId:pair.workspaceId||'default'},null,2),{flag:'wx'});assertCurrent(runtime,expected);
   const plan={id,scope,pairSha256:cloudDigest(pair),fence:expected,mode,keys,adoptedKeys,missingKeys,affected:affectedEdits,retainedPendingKeys:queue.pendingKeys.filter(key=>!adoptedKeys.includes(key)),remote,remoteFence:cloudDigest(keys.map(key=>[key,Object.hasOwn(remote.documents,key),remote.documents[key],remote.revisions[key]])),backupDirectory,backupSha256:manifest.sha256,expiresAt:Date.now()+600000,at:at(),status:'preview'};
   runtime.store.set('cloudPullPreview:'+id,plan);return{ok:true,preview:previewDto(plan)};
  });

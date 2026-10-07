@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join,resolve,sep} from 'node:path';
+import {join,resolve,sep,dirname} from 'node:path';
+import {createHash} from 'node:crypto';
 import {Store} from '../executor/src/store.mjs';
 import {workbenchScope} from '../executor/src/workbench-sync.mjs';
 import {localRecoveryDocuments,recoveryDocument} from '../core/local-recovery.mjs';
 import {libraryMutation} from '../core/library-mutation.mjs';
-import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments,localRecoveryPlans} from '../executor/src/local-recovery.mjs';
+import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments,localRecoveryPlans,readLocalRecoverySource} from '../executor/src/local-recovery.mjs';
 import {resolveApplicationConflict} from '../executor/src/application-mutations.mjs';
 const confirmation='恢复所选本机资料';
 const base=()=>({siteProfiles:{p:{id:'p',name:'Current',fields:{Name:'Current',Url:'https://product.example'},mediaVersions:[{assetId:'new',sha256:'new-hash'}]}},siteAnnotations:{'target.example':{note:'Cloud note'}},urlList:'https://cloud.example',sheetTableData:{entries:[]},submissionRecords:{'target.example::p':{taskId:'original',profileId:'p',status:'success',evidence:'Original receipt',submittedAt:'2026-10-01T00:00:00Z'}},submissionTimeline:{},timelineSchemaVersion:3});
@@ -20,6 +21,46 @@ async function fixture(){
  return{runtime,file,get saved(){return saved;},set saved(value){saved=value;},writes,async reopen(){store.close();store=new Store(join(home,'outbox.sqlite'));runtime.store=store;},async close(){store.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-local-recovery-'));await rm(home,{recursive:true,force:true});}};
 }
 async function prepare(f){const sources=await localRecoverySources(f.runtime),source=sources.sources.find(s=>s.label.startsWith('original-plugin'));assert.ok(source?.id);const result=await previewLocalRecovery(f.runtime,{sourceId:source.id});return result.preview;}
+async function companion(f,pair=f.runtime.store.get('pair'),{file='outbox.sqlite',scope=workbenchScope(pair)}={}){
+ const path=join(dirname(f.file),file),store=new Store(path);try{store.set('pair',pair);store.set('applicationSnapshot',{scope,snapshot:{documents:legacy(),revisions:{}}});store.set('task:original-unknown',{id:'original-unknown',status:'submitted_unconfirmed',attemptBoundary:'keep-original'});}finally{store.close();}return path;
+}
+const fileDigest=async file=>createHash('sha256').update(await readFile(file)).digest('hex');
+
+test('unscoped JSON uses its original SQLite identity and rejects foreign endpoints or workspaces without exposing credentials',async()=>{
+ const f=await fixture();try{
+  await writeFile(f.file,JSON.stringify({documents:legacy()}));
+  for(const pair of [{...f.runtime.store.get('pair'),workspaceId:'other'},{...f.runtime.store.get('pair'),endpoint:'https://other-cloud.example'}]){
+   const file=await companion(f,pair),before=await fileDigest(file);await assert.rejects(readLocalRecoverySource(f.runtime,f.file),/其他工作区/);const listing=await localRecoverySources(f.runtime),source=listing.sources.find(s=>s.label==='original-plugin / snapshot.json');assert.equal(source.unavailable,true);assert.equal(source.id,undefined);assert.equal(JSON.stringify(listing).includes('PRIVATE_FIXTURE_TOKEN'),false);assert.equal(await fileDigest(file),before);
+  }
+  assert.equal(f.writes.length,0);assert.equal(f.runtime.store.get('task:unknown').attemptBoundary,'original-boundary');assert.equal(f.runtime.store.get('acceptanceBatch').cursor,13);
+ }finally{await f.close();}
+});
+
+test('same-workspace original companion restores unscoped legacy favorites and history while keeping both backup files unchanged',async()=>{
+ const f=await fixture();try{
+  await writeFile(f.file,JSON.stringify({documents:legacy()}));const database=await companion(f),before=[await fileDigest(f.file),await fileDigest(database)],value=await readLocalRecoverySource(f.runtime,f.file);assert.equal(value.scopeVerified,true);assert.equal(value.scopeVerification,'full');const preview=await prepare(f);assert.equal(preview.scopeVerification,'full');await recoverLocalDocuments(f.runtime,{id:preview.id,confirmation});assert.equal(f.saved.documents.siteAnnotations['target.example'].library.favorite,true);assert.deepEqual(f.saved.documents.siteAnnotations['target.example'].library.groups,['high_quality']);assert.equal(f.saved.documents.submissionRecords['target.example::p'].evidence,'Original receipt');assert.equal(f.saved.documents.submissionRecords['older.example::p'].evidence,'Older receipt');assert.deepEqual([await fileDigest(f.file),await fileDigest(database)],before);assert.equal(f.runtime.store.get('task:unknown').attemptBoundary,'original-boundary');assert.equal(f.runtime.store.get('paused'),true);
+ }finally{await f.close();}
+});
+
+test('genuine standalone legacy JSON remains explicitly unscoped and restores without inventing a workspace',async()=>{
+ const f=await fixture();try{
+  await writeFile(f.file,JSON.stringify({...legacy(),pair:{deviceToken:'DO_NOT_IMPORT'}}));const value=await readLocalRecoverySource(f.runtime,f.file);assert.equal(value.scopeVerified,false);assert.equal(value.scopeVerification,'unscoped');const preview=await prepare(f);assert.equal(preview.scopeVerification,'unscoped');await recoverLocalDocuments(f.runtime,{id:preview.id,confirmation});assert.equal(f.saved.documents.siteAnnotations['target.example'].library.favorite,true);assert.equal(f.runtime.store.get('pair').deviceToken,'PRIVATE_FIXTURE_TOKEN');assert.equal(f.saved.documents.pair,undefined);
+ }finally{await f.close();}
+});
+
+test('JSON cannot contradict companion identity or bypass a conflicting second SQLite, stale database scope or nonempty WAL',async()=>{
+ const f=await fixture();try{
+  const current=f.runtime.store.get('pair'),database=await companion(f,{...current,workspaceId:'other'});await assert.rejects(readLocalRecoverySource(f.runtime,f.file),/标识不一致/);
+  await companion(f);await companion(f,{...current,workspaceId:'other'},{file:'before.sqlite'});await assert.rejects(readLocalRecoverySource(f.runtime,f.file),/标识不一致/);await rm(join(dirname(f.file),'before.sqlite'));
+  await companion(f,current,{scope:workbenchScope({...current,workspaceId:'other'})});await assert.rejects(readLocalRecoverySource(f.runtime,f.file),/快照与连接/);await companion(f);await writeFile(database+'-wal','unmerged-original');await assert.rejects(readLocalRecoverySource(f.runtime,f.file),/未合入日志/);assert.equal(f.writes.length,0);
+ }finally{await f.close();}
+});
+
+test('companion deletion or identity changes after preview stop recovery before writing and retain the original plan',async()=>{
+ const f=await fixture();try{
+  await writeFile(f.file,JSON.stringify({documents:legacy()}));const database=await companion(f);let preview=await prepare(f);await rm(database);await assert.rejects(recoverLocalDocuments(f.runtime,{id:preview.id,confirmation}),/来源已经变化/);assert.equal(f.runtime.store.get('localRecoveryPlan:'+preview.id).status,'preview');await companion(f);preview=await prepare(f);await companion(f,{...f.runtime.store.get('pair'),workspaceId:'other'});await assert.rejects(recoverLocalDocuments(f.runtime,{id:preview.id,confirmation}),/其他工作区/);assert.equal(f.writes.length,0);assert.equal(f.runtime.store.get('task:unknown').attemptBoundary,'original-boundary');
+ }finally{await f.close();}
+});
 
 test('source changes during cloud comparison stop before the first restore write while retaining the verified local backup',async()=>{
  const f=await fixture();try{const preview=await prepare(f),original=f.runtime.cloud.request;f.runtime.cloud.request=async(...args)=>{const result=await original(...args);if(args[0]==='snapshot')await writeFile(f.file,JSON.stringify({documents:{...legacy(),cfgName:'Changed during backup'}}));return result;};

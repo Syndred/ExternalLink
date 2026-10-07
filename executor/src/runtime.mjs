@@ -77,6 +77,7 @@ import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from '.
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {captureFillLearning,flushFillLearning,pendingFillLearning} from './fill-learning.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
+import {classifyOriginalTaskGate,originalLinkrenaPostSubmitLogin} from './original-site-classification.mjs';
 
 const hasJevPlayIdentity=profile=>profile?.id==='JevPlay'&&profile?.name==='JevPlay'&&profile?.url==='https://jevplay.com'&&
   profile?.fields?.Name==='JevPlay'&&profile?.fields?.Url==='https://jevplay.com';
@@ -717,7 +718,8 @@ export class Runtime {
       if (!candidate) throw new Error('没有可识别表单，后台 AI 已尝试原页并记录结果');
       let { engine, detection } = candidate;
       const preparingOnly = task.fillOnlyRun && /^(?:poweredbyai\.app|navtools\.ai|aioftheday\.com)$/.test(new URL(task.url).hostname);
-      if (!detection.hasCaptcha && !preparingOnly && (detection.submitBlocker?.blocked || detection.submitBlocker?.needs_manual || detection.submitBlocker?.payment_uncertain)) throw new Error(detection.submitBlocker?.reason || '需要人工处理');
+      const observeSiteGate=result=>classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:async()=>{if(!await candidate.engine.isCurrentDocument())throw Error('原表单文档已变化，自动观察停止');}});
+      if (!detection.hasCaptcha && !preparingOnly && (detection.submitBlocker?.blocked || detection.submitBlocker?.needs_manual || detection.submitBlocker?.payment_uncertain)) {await observeSiteGate(detection.submitBlocker);throw new Error(detection.submitBlocker?.reason || '需要人工处理');}
       if (detection.platform==='article') throw new Error('普通文章评论需要逐页审核相关性，进入待人工');
       const forceRefreshExisting = !!task.preparationHistory?.length || !!task.attemptHistory?.length || !!task.stageHistory?.length ||
         /^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(task.url);
@@ -782,11 +784,11 @@ export class Runtime {
       if(task.fillOnlyRun&&!detection.hasCaptcha){
         const complete=!validation.validationFailed&&fill.ok!==false&&!fill.needs_manual;
         this.update(task,{fillOnlyPrepared:complete,attentionType:complete?'fill_only':'missing_fields'},'batch_fill_only_prepared');
-        if(!complete)throw Error(fill.reason||'仅填写已停止，必填资料或素材仍需核对，未点击提交');
+        if(!complete){await observeSiteGate(fill.agentResult||fill);throw Error(fill.reason||'仅填写已停止，必填资料或素材仍需核对，未点击提交');}
       }
-      if(detection.hasCaptcha)armCaptchaResume(this,task,{pageUrl:page.url(),frameUrl:candidate.frame.url(),documentId:candidate.engine.documentId});
+      if(detection.hasCaptcha){await observeSiteGate({captcha:true});armCaptchaResume(this,task,{pageUrl:page.url(),frameUrl:candidate.frame.url(),documentId:candidate.engine.documentId});}
       if (detection.hasCaptcha || task.fillOnlyRun) throw new Error(detection.hasCaptcha ? '资料已准备，验证码待用户完成；未点击提交' : '仅填写资料已完成，未点击提交');
-      if (validation.validationFailed || fill.ok === false || fill.needs_manual) throw new Error(fill.reason || '必填项或素材需要补充，请接管核对');
+      if (validation.validationFailed || fill.ok === false || fill.needs_manual) {await observeSiteGate(fill.agentResult||fill);throw new Error(fill.reason || '必填项或素材需要补充，请接管核对');}
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_submit'); return; }
       const submitAction = await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       this.update(task,{submitAction},'submit_action_preflight');
@@ -836,6 +838,8 @@ export class Runtime {
         const observed = await this.reobserveNavigatedReceipt(page, task);
         if (observed.matched) result = { ...result, ...observed, recoveredAfterNavigation: true };
       }
+      if(!result.matched&&originalLinkrenaPostSubmitLogin(task.url,page.url()))result={...result,needs_manual:true,reason:'站方在最终提交后跳转邮箱登录，未产生投稿回执；登录页要求同意条款'};
+      await classifyOriginalTaskGate(this,{task,page,result,active});
       if (result?.matched && result.evidence && result.evidence !== task.baselineEvidence) await this.accept(task, page, result);
       else this.update(task, { status: 'submitted_unconfirmed', attentionType:'unknown_receipt',reason: result.reason || result.error || '未取得明确新回执，先核验；不会自动重投', submitResult: result }, 'unknown');
     } catch (error) {

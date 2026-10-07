@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalTaskClassificationCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-task-classification-2026-10-07.json",
+    "nativeExplicitDetectionFillAndPostSubmitGatesConnected": true,
+    "productHuntLoginAndLegalGatesConnected": true,
+    "nativeWorkMethodDependencyFixtureCases": 11,
+    "nativeWorkBrowserAndEngineAreFixtures": true,
+    "originalLinkrenaLoginParityCases": 7,
+    "actualIsolatedProductHuntStages": 9,
+    "actualIsolatedProductHuntMediaCases": 4,
+    "fullSuitePassed": 779,
+    "newSince774": 5,
+    "originalUnknownSubmissionBoundaryPreserved": true,
+    "allAiTerminalClassificationAndSameDestinationDispositionProven": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalAutomaticObservationCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-site-observation-2026-10-07.json",

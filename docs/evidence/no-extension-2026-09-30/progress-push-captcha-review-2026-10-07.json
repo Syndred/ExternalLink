@@ -1,0 +1,79 @@
+{
+  "kind": "progress_only_unpublished_original_captcha_resume_review",
+  "date": "2026-10-07",
+  "latestFeatureCommit": "8f9e20c",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "gitPull": "Already up to date",
+  "functionalChangesPublishedThisCheckpoint": false,
+  "unpublishedFiles": [
+    "executor/src/captcha-resume.mjs",
+    "executor/src/engine.mjs",
+    "executor/src/manual-controls.mjs",
+    "executor/src/runtime.mjs",
+    "executor/src/server.mjs",
+    "tests/executor-captcha-resume.test.mjs"
+  ],
+  "unpublishedBehavior": "Receive the original captchaResolved callback and inspect the original page before resuming the same frozen task; preserve product, scope, budgets and unknown submission boundaries.",
+  "previousTestOutputsRead": {
+    "targeted": {
+      "path": "executor/test-output/original-captcha-resume-targeted-first-2026-10-07.txt",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "lastPublishedFullSuite": {
+      "path": "executor/test-output/original-product-hunt-media-all-final-2026-10-07.txt",
+      "featureCommit": "8f9e20c",
+      "passed": 740,
+      "failed": 0,
+      "skipped": 0,
+      "provesUnpublishedChanges": false
+    },
+    "rerunThisCheckpoint": false,
+    "isolatedBrowserRecoveryVerified": false,
+    "fullSuiteAfterUnpublishedChangesRun": false,
+    "originalServiceAcceptanceAfterChanges": false,
+    "provesFullMigration": false
+  },
+  "currentReadOnlyState": {
+    "script": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "passed": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    }
+  },
+  "remainingAcceptance": [
+    "Original latest products, favorites and category groups",
+    "Other devices and legacy aliases",
+    "Complete original history and legacy media associations",
+    "Unpublished captcha resume integration and full regression",
+    "Remaining original manual callbacks, dynamic controls and special launch flows",
+    "Real external results"
+  ],
+  "fullCloudHashRechecked": false,
+  "originalChromeDataRechecked": false,
+  "fullProductionUIRechecked": false,
+  "serviceReloaded": false,
+  "workerDeployed": false,
+  "dataRestored": false,
+  "realModelCalls": 0,
+  "newRealSubmissions": 0
+}

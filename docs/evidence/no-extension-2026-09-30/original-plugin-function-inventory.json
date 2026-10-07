@@ -12,6 +12,7 @@
     "fullSuitePassed": 825,
     "newSince808": 17,
     "allExplicitRetryAndManualEntriesVerified": false,
+    "freshRoundAfterHistoricalSkipAdmissionGapConfirmed": true,
     "fullOriginalVisualSubmissionReceiptAndNavigationRecoveryProven": false,
     "latestOriginalBrowserDataRead": false,
     "newRealSubmissions": 0,

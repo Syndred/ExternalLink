@@ -52,6 +52,14 @@
     "workerChangedOrDeployed": false,
     "allCloudDocumentHashesRechecked": false
   },
+  "nextConfirmedGap": {
+    "kind": "fresh_original_round_after_unavailable_skip",
+    "originalQueueBuildsFromReceiptsAndSiteAnnotations": true,
+    "nativePreviewCurrentlyExcludesHistoricalSkipEvenWithoutReceiptOrAttemptBoundary": true,
+    "source": "executor/src/workbench-features.mjs:previewWorkbenchBatch",
+    "readOnlySourceAudit": true,
+    "fixedOrVerified": false
+  },
   "notYetProven": ["every_explicit_retry_and_manual_entry", "original_visual_final_submission_receipt_and_navigation_rejudge", "auto_skip_captcha_order_and_all_visit_entries", "all_media_priorities_and_latest_original_products_groups_favorites_settings", "complete_old_history_old_media_other_devices_aliases", "every_user_requested_ui_function_and_chinese_explanation"],
   "originalChromeLaunched": false,
   "realModelCalls": 0,

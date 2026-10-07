@@ -421,17 +421,17 @@
       "source": "extension/sidepanel.html",
       "id": "btnExportAutomationRun",
       "label": "导出执行记录",
-      "mapping": "尚无对应可用入口",
-      "verification": "旧页面实际存在；当前工作台未找到同等入口",
-      "status": "missing_original_function"
+      "mapping": "运行任务 / 导出执行记录",
+      "verification": "原模块与重构前基线一致；原格式及实际服务／浏览器下载验证，真实30个固定组合下载通过；真实旧插件历史来源仍为0",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "btnExportBatchReport",
       "label": "导出本轮报告",
-      "mapping": "尚无对应可用入口",
-      "verification": "旧页面实际存在；当前工作台未找到同等入口",
-      "status": "missing_original_function"
+      "mapping": "运行任务 / 导出本轮报告",
+      "verification": "原模块与重构前基线一致；原格式及实际服务／浏览器下载验证，真实30个固定组合下载通过；真实旧插件历史来源仍为0",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "source": "extension/sidepanel.html",
@@ -1990,5 +1990,23 @@
       "status": "requires_original_behavior_migration",
       "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
     }
-  ]
+  ],
+  "originalReportExportsCheckpoint": {
+    "date": "2026-10-07",
+    "tests": 570,
+    "newTests": 14,
+    "originalModulesMatchPreRefactor": true,
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-report-exports-2026-10-07.json",
+    "originalHistoryRecovery": true,
+    "productionOriginalHistorySources": 0,
+    "remainingOriginalSettings": [
+      "cfgConcurrency",
+      "cfgFillOnly",
+      "cfgUnattended",
+      "cfgUnattendedHours",
+      "cfgUnattendedTasks",
+      "cfgUnattendedManualTabs"
+    ],
+    "complete": false
+  }
 }

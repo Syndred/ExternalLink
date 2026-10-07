@@ -2,6 +2,8 @@ import { chromium } from 'playwright';
 import {startLinkMonitor,dismissMonitorAlert} from './link-monitor.mjs';
 import {startPublicLibrarySync} from './public-library-sync.mjs';
 import {workbenchBackup} from './workbench-backup.mjs';
+import {runExports} from './run-exports.mjs';
+import {runHistory} from './run-history.mjs';
 import {startDomainAge} from './domain-age.mjs';
 import {prepareIndexNotification,notifyIndexNow} from './index-notification.mjs';
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -1202,6 +1204,8 @@ export class Runtime {
     throw new Error('原目标页已关闭；需要独立站方核验，不能新开表单重投');
   }
   async control(action, input) {
+    if(['previewRunHistory','importRunHistory','runHistoryUploadStart','runHistoryUploadPart','runHistoryUploadComplete'].includes(action))return runHistory(this,action,input);
+    if(['runExportSources','exportBatchReport','exportAutomationRun'].includes(action))return runExports(this,action,input);
     if(action==='localRecoverySources')return localRecoverySources(this);
     if(action==='previewLocalRecovery')return previewLocalRecovery(this,input);
     if(action==='submissionJournalRecoverLocal')return recoverLocalDocuments(this,input);

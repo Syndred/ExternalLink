@@ -1,0 +1,79 @@
+{
+  "kind": "original_report_exports_and_readonly_history_checkpoint",
+  "date": "2026-10-07",
+  "previousProgressCommit": "a72a176",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalControls": ["btnExportBatchReport", "btnExportAutomationRun"],
+  "originalModulesMatchHistoricalBaseline": {
+    "batch-report": "2a63c8eeb08c83fe80ca0396a1ef3352454f55ca9f2b01aa536ce0d0e4ab6e1d",
+    "automation-ledger": "17987102df70f8635c002b13863fb63811568755ab07ec9edc95e25c56c57ce2"
+  },
+  "tests": {"passed": 570, "failed": 0, "skipped": 0, "newTests": 14, "source": "executor/test-output/original-report-exports-all-final.txt"},
+  "exportBehavior": {
+    "originalPackedReportGroupsAndEvidenceMatch": true,
+    "originalLedgerFirstIdAndExactPayloadRetained": true,
+    "originalBatchReportDoesNotSubstituteForAutomationLedger": true,
+    "frozenDenominatorIncludesMissingUnregisteredFailedSkippedManualAndRemaining": true,
+    "receiptlessFinishedAndUnknownAttemptNotUpgradedToSuccess": true,
+    "selectedTasksOnlyAndScopedRunLevelLogs": true,
+    "fullPersistedEventsBeyondViewerPageAndLegacyLedgerLimit": 1205,
+    "originalEventIdsAndFullMessagesRetained": true,
+    "readOnlySqliteReopenKeepsOutbox": true,
+    "lateSelectionDoesNotDownloadWrongRecord": true,
+    "downloadAndEmptySourceFailuresVisible": true
+  },
+  "historyRecovery": {
+    "filePreviewAndExplicitLocalRestore": true,
+    "originalIdsPayloadsAndVersionsRetained": true,
+    "idempotentSameHistoryAcrossReopen": true,
+    "persistenceFailureRollsBack": true,
+    "scopeAndOriginalPayloadChecked": true,
+    "unrelatedCredentialsNotImported": true,
+    "restoredBatchNeverActivatedForExecution": true,
+    "chunkUploadResumesOriginalHashAndSavedParts": true,
+    "fileLimitBytes": 268435456,
+    "chunkBytes": 524288
+  },
+  "actualServiceUiFixture": {
+    "source": "executor/test-output/original-report-exports-ui-final.txt",
+    "executorAndWorkbenchAuthenticatedRoutes": true,
+    "originalReportAndExactLedgerFilesDownloaded": true,
+    "filePreviewRestoreAndExactDownload": true,
+    "largeHistoryBytes": 12810008,
+    "largeHistoryRuns": 20,
+    "largeHistoryEvents": 12000,
+    "serviceRestartAndLostPartReplyResume": true,
+    "alreadySavedPartNotResent": true,
+    "allOriginalHistoryCompared": true,
+    "newRealSubmissions": 0
+  },
+  "sixPageRegression": {"passed": true, "source": "executor/test-output/original-report-exports-six-pages.txt", "scope": "six-page regression after initial export/history UI; subsequent chunk UI covered by actual service fixture"},
+  "productionReadback": {
+    "source": "executor/test-output/original-report-exports-live-result-final.txt",
+    "availableSources": 43,
+    "originalHistorySources": 0,
+    "fixedCombinations": 30,
+    "summary": {"success": 7, "manual": 9, "failed": 0, "skipped": 0, "remaining": 14},
+    "summaryUsesExistingReceiptsNotNewSubmissions": true,
+    "recordEvents": 0,
+    "actualMarkdownAndJsonDownloads": true,
+    "originalTaskIdsReceiptsAndAttemptBoundariesRetained": true,
+    "localTasksHistoryOutboxAndLogsUnchanged": true,
+    "cloudBusinessDocumentsAndRevisionsUnchanged": true,
+    "invalidSourcesAndMissingPreviewRejected": true,
+    "realHistoryImports": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "externalBrowserRequests": 0,
+    "fixedBatch": "paused 13/30"
+  },
+  "originalServicesReloadedAfterIdentityIdleAndDurableGuards": true,
+  "workerDeploymentChanged": false,
+  "goalStatus": "not_complete",
+  "remainingOriginalControls": ["cfgConcurrency", "cfgFillOnly", "cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs"],
+  "limits": [
+    "Actual production has no restored original-plugin execution history and no persisted selected-run events; historical restoration proof is isolated.",
+    "Existing receipt counts are not new submission achievements, and the cursor is not a success count.",
+    "Original batch controls, remaining settings and execution behavior, full original dynamic surfaces and actual historical media/source availability still require verification."
+  ]
+}

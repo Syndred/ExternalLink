@@ -43,6 +43,14 @@ export class Store {
   appendLog(entry){const pair=this.get('pair'),scope=String(pair?.endpoint||'')+'|'+String(pair?.workspaceId||'default');this.db.prepare('INSERT OR IGNORE INTO audit_log(event_id,scope,run_id,task_id,value) VALUES (?,?,?,?,?)').run(entry.id||randomUUID(),scope,entry.runId||null,entry.taskId||null,JSON.stringify(entry));}
   logs({scope,runId,taskId,after=0}={}){if(!Number.isSafeInteger(after)||after<0)throw Error('日志游标无效');const conditions=['scope=?','seq>?'],values=[scope,after];for(const [column,value]of [['run_id',runId],['task_id',taskId]])if(value){conditions.push(column+'=?');values.push(value);}const rows=this.db.prepare('SELECT seq,value FROM audit_log WHERE '+conditions.join(' AND ')+' ORDER BY seq LIMIT 501').all(...values);return{entries:rows.slice(0,500).map(row=>({seq:row.seq,...JSON.parse(row.value)})),next:rows.length>500?rows[499].seq:null};}
   pendingCount() { return this.db.prepare('SELECT count(*) AS total FROM outbox').get().total; }
+  exportLogs({scope,taskIds=[],runIds=[]}) {
+    const highWater=this.db.prepare('SELECT max(seq) AS n FROM audit_log WHERE scope=?').get(scope).n||0;
+    const rows=this.db.prepare(`SELECT seq,value FROM audit_log WHERE scope=? AND seq<=?
+      AND (task_id IN (SELECT value FROM json_each(?)) OR
+        (task_id IS NULL AND run_id IN (SELECT value FROM json_each(?)))) ORDER BY seq`)
+      .all(scope,highWater,JSON.stringify(taskIds),JSON.stringify(runIds));
+    return {highWater,entries:rows.map(row=>({...JSON.parse(row.value),seq:row.seq}))};
+  }
   pendingBatch(limit=100) { return this.db.prepare('SELECT value FROM outbox ORDER BY seq LIMIT ?').all(limit).map(x=>JSON.parse(x.value)); }
   pendingSummary() { return this.db.prepare("SELECT id,json_extract(value,'$.taskId') AS taskId FROM outbox ORDER BY seq").all(); }
   ack(id) { this.db.prepare('DELETE FROM outbox WHERE id=?').run(id); }

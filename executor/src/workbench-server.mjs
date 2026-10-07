@@ -10,6 +10,8 @@ const files=new Map([['/','executor/web/application.html'],['/application.js','e
 const controls=new Set(['/appData','/taskDetails','/profile','/registerAcceptance','/prepareTask','/runTask','/status','/catalog','/preview','/start','/pause','/resume','/sync','/takeover','/continueTask','/verify','/review','/openRecoveryTask','/observeTask','/closeObservation','/archiveDeferredTabs','/workbenchDocuments','/journalProgress','/journalFlush','/workbenchPending']);
 controls.add('/saveAssistantSettings');
 controls.add('/clearSiteAnnotation');controls.add('/getBatchLog');
+for(const route of ['/runExportSources','/exportBatchReport','/exportAutomationRun'])controls.add(route);
+for(const route of ['/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'])controls.add(route);
 for(const route of ['/manualSkip','/manualSubmit','/stop'])controls.add(route);
 for(const route of ['/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'])controls.add(route);
 for(const route of ['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'])controls.add(route);
@@ -33,7 +35,7 @@ const server=http.createServer(async(req,res)=>{try{
  else if(url.pathname.startsWith('/cloud/')){const route=url.pathname.slice(7);if(!/^(workspace\/(journal-documents|submission-tasks|timeline|media\/[a-zA-Z0-9._-]+|automation\/artifacts\/[a-zA-Z0-9._-]+)|profile)$/.test(route))throw Error('接口未授权');target=new URL('/v2/executor/'+route,config.endpoint);target.search=url.search;target.searchParams.set('workspace',config.workspaceId);headers.Authorization='Bearer '+config.deviceToken;}
  else{res.writeHead(404);res.end();return;}
  if(!['GET','POST'].includes(req.method)){res.writeHead(405);res.end();return;}
- const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>(['/mediaUpload','/previewBackup','/libraryMutation'].includes(url.pathname)?9:2)*1024*1024)throw Error('请求过大');chunks.push(chunk);}
+ const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>(['/mediaUpload','/previewBackup','/previewRunHistory','/libraryMutation'].includes(url.pathname)?9:2)*1024*1024)throw Error('请求过大');chunks.push(chunk);}
  const response=await fetch(target,{method:req.method,headers,signal:AbortSignal.timeout(['/prepareTask','/registerAcceptance'].includes(url.pathname)?600000:90000),...(req.method==='POST'?{body:Buffer.concat(chunks)}:{})});
  const responseType=response.headers.get('content-type')||'application/json';if(/^image\/svg\+xml(?:;|$)/i.test(responseType))res.setHeader('Content-Security-Policy',"sandbox; script-src 'none'");res.writeHead(response.status,{'Content-Type':responseType});res.end(Buffer.from(await response.arrayBuffer()));
  }catch(error){if(!res.headersSent)res.writeHead(502,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}});

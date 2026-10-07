@@ -6,6 +6,7 @@ import './submission-timeline.js';
 import './opportunity-score.js';
 import './library-groups.js';
 import './profiles.js';
+import {canonicalLibraryDestination,libraryRecords,libraryDestinationFacts} from './library-records.mjs';
 const host=value=>globalThis.ExtLinkQueue.extractDomain(value||'').toLowerCase();
 const stamp=value=>{const time=globalThis.ExtLinkSubmissionTimeline.parseTime(value);return Number.isFinite(time)?time:0;};
 const taskActive=task=>!!(task.attemptBoundary||task.receipt||Object.keys(task.actualPreparation||{}).length||Object.keys(task.actualSubmission||{}).length||task.targetId||task.preparedAt||task.hasActivity||['opening','filling','submitting','finished','submitted_unconfirmed'].includes(task.status)||task.status==='needs_manual'&&task.reason);
@@ -14,8 +15,11 @@ export function applicationModel(snapshot,tasks=[]){
  const profileSelection=globalThis.ExtLinkProfiles.profileSelectionFromDocuments(documents);
  const inventory=globalThis.ExtLinkExecutorContract.inventory({documents},null);
  const timeline=globalThis.ExtLinkSubmissionTimeline;
- const migrated=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:documents.submissionRecords||{},tableData:documents.sheetTableData||{}}).timeline;
- const allEvents=Object.values(timeline.normalizeTimeline(migrated)).flat();
+ const displayRecords=libraryRecords(documents);
+ const migrated=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:displayRecords,tableData:documents.sheetTableData||{}}).timeline;
+ const groupedTimeline=timeline.groupByDestination(migrated);
+ const matrixTimeline=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:documents.submissionRecords||{},tableData:documents.sheetTableData||{}}).timeline;
+ const allEvents=Object.values(timeline.normalizeTimeline(matrixTimeline)).flat();
  const records=Object.entries(documents.submissionRecords||{}).map(([key,record])=>({...record,key,profileId:record.profileId||key.slice(key.lastIndexOf('::')+2),host:host(record.destinationUrl||record.destinationKey||key.split('::')[0])}));
  const combinations=new Map();
  const cell=(site,profileId)=>{const identity=site+'::'+profileId;if(!combinations.has(identity))combinations.set(identity,{identity,site,profileId,execution:'not_started',submission:'not_submitted',review:'unknown',reply:'unknown',publication:'unknown',sync:'unknown',taskIds:[],records:[],events:[],hasActivity:false,lastActivityAt:''});return combinations.get(identity);};
@@ -39,22 +43,18 @@ export function applicationModel(snapshot,tasks=[]){
   if(target.progress==='pending_moderation')target.review='pending';
   if(target.progress==='rejected')target.review='rejected';
  }
- const library=inventory.candidates.map((row,position)=>{
-  const site=host(row.url),annotation=globalThis.ExtLinkQueue.findDestinationAnnotation(documents.siteAnnotations||{},row.destinationKey,site)||{};
-  const related=[...combinations.values()].filter(c=>c.site===site),monitorValues=records.filter(r=>r.host===site).map(r=>documents.linkMonitorResults?.[r.key]?.status).filter(Boolean);
-  const monitorStatus=['missing','unreachable','live'].find(s=>monitorValues.includes(s))||'';
+ const displayCandidates=new Map();
+ for(const row of inventory.candidates){const key=canonicalLibraryDestination(row.url),existing=displayCandidates.get(key);if(existing)existing.aliases.push({url:row.url,destinationKey:row.destinationKey});else displayCandidates.set(key,{row,key,aliases:[{url:row.url,destinationKey:row.destinationKey}]});}
+ const library=[...displayCandidates.values()].map(({row,key,aliases},position)=>{
+  const site=host(row.url),annotation=documents.siteAnnotations?.[key]||documents.siteAnnotations?.[site]||{};
+  const {events,latestEvent,profileStatuses,monitorStatus,localTasks}=libraryDestinationFacts({records:displayRecords,groupedTimeline,products,destination:row.url,monitorResults:documents.linkMonitorResults||{},tasks});
   const quality=globalThis.ExtLinkOpportunityScore.scoreOpportunity({metrics:{...row.row,...row.row?.metrics,...documents.domainMetricsCache?.[site]},annotation,monitorStatus});
   const note=row.row?.note||annotation.note||'',record=row.row?.record||'',detail=row.row?.detail||'';
   const classification=globalThis.ExtLinkLibraryClassifier.describe({entry:row.row||{},url:row.url,domain:site,note,detail,metrics:quality.metrics});
-  const events=related.flatMap(c=>c.events).sort((a,b)=>stamp(b.occurredAt)-stamp(a.occurredAt));
-  const profileStatuses=[...new Set([...products.map(p=>p.id),...related.map(c=>c.profileId)])].map(profileId=>{
-   const c=related.find(c=>c.profileId===profileId),profile=documents.siteProfiles?.[profileId];
-   return{profileId,profileName:profile?.name||profileId,success:c?.submission==='received',latestEvent:c?.latestEvent||null,publicationStatus:c?.progress||c?.publication||'',submittedAt:c?.records.find(r=>r.status==='success')?.submittedAt||''};
-  });
-  const item={...row,site,domain:site,position,...classification,note,record,detail,annotation,quality,metrics:quality.metrics,monitorStatus,events,profileStatuses,preferences:globalThis.ExtLinkLibraryClassifier.libraryPreferences(annotation),pinned:annotation.library?.pinned===true,time:row.row?.time||row.row?.addedAt||'',lastActivityAt:related.reduce((time,c)=>stamp(c.lastActivityAt)>stamp(time)?c.lastActivityAt:time,'')};
+  const item={...row,key,aliases,site,domain:site,position,...classification,note,record,detail,annotation,quality,metrics:quality.metrics,monitorStatus,events,latestEvent,profileStatuses,projects:row.row?.projects||[],rawFields:row.row?.rawFields||{},rowNumber:row.row?.rowNumber||null,preferences:globalThis.ExtLinkLibraryClassifier.libraryPreferences(annotation),pinned:annotation.library?.pinned===true,time:row.row?.time||row.row?.addedAt||''};
   item.groups=globalThis.ExtLinkLibraryGroups.GROUPS.filter(([id])=>globalThis.ExtLinkLibraryGroups.matches(item,id)).map(([id])=>id);
-  item.progress=timeline.deriveLibraryProgress(item);return item;
+  item.progress=timeline.deriveLibraryProgress(item);item.lastActivityAt=localTasks.filter(taskActive).reduce((time,task)=>stamp(task.updatedAt||task.preparedAt||task.createdAt)>stamp(time)?task.updatedAt||task.preparedAt||task.createdAt:time,item.progress.historyAt);return item;
  });
- return{products,profileSelection,library,libraryCategories:[...globalThis.ExtLinkLibraryClassifier.CATEGORY_ORDER],total:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
+ return{products,profileSelection,library,libraryCategories:[...globalThis.ExtLinkLibraryClassifier.CATEGORY_ORDER],total:library.length,inventoryTotal:inventory.total,sources:inventory.sources,combinations:[...combinations.values()],activity:[...combinations.values()].filter(c=>c.hasActivity).sort((a,b)=>stamp(b.lastActivityAt)-stamp(a.lastActivityAt))};
 }
 export const taskSummary=task=>({...Object.fromEntries(['id','url','profileId','runId','status','siteStatus','reason','attentionType','attemptBoundary','receipt','indexNowNotification','cloudVerified','syncStatus','pendingEvents','acceptanceId','reviewStatus','controller','artifactRef','screenshot','updatedAt','createdAt','preparedAt'].filter(key=>task[key]!==undefined).map(key=>[key,task[key]])),...(taskActive(task)?{hasActivity:true}:{})});

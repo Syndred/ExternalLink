@@ -2,6 +2,7 @@ import './queue.js';
 import './target-filters.js';
 import './library-classifier.js';
 import './submission-timeline.js';
+import {canonicalLibraryDestination} from './library-records.mjs';
 import {backupKeys,mergeApplicationBackup} from './application-backup.mjs';
 import {mergeSubmify,applySubmifyGates} from './submify-sync.mjs';
 import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
@@ -124,7 +125,7 @@ export function libraryMutation(documents,operation,options={}){
   for(const url of urls){const key=keyOf(url);if(known.has(key))continue;known.add(key);table.entries.push({link:new URL(url).href,indexPage:new URL(url).href,source:'application_import',addedAt:at,mutationId:id});}
   return{key:'sheetTableData',data:table};
  }
- const destinationKey=keyOf(operation.url);
+ const validatedKey=keyOf(operation.url),destinationKey=operation.type==='preferences'?canonicalLibraryDestination(operation.url):validatedKey;
  if(operation.type==='preferences'){
   const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
   const patch=operation.preferences;
@@ -176,7 +177,7 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='settings'){if(operation.key==='domainBlacklist'&&operation.value&&typeof operation.value==='object'&&!Array.isArray(operation.value)&&operation.value.replace!==true)return false;try{return JSON.stringify(documents[operation.key])===JSON.stringify(libraryMutation(documents,operation).data);}catch{return false;}}
  if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}
  if(operation.type==='import'){const known=new Set((documents.sheetTableData?.entries||[]).map(storedKey));return operation.urls.every(url=>known.has(keyOf(url)));}
- const key=keyOf(operation.url);
+ const validatedKey=keyOf(operation.url),key=operation.type==='preferences'?canonicalLibraryDestination(operation.url):validatedKey;
  if(operation.type==='preferences'){const annotation=documents.siteAnnotations?.[key],library=annotation?.library,domain=globalThis.ExtLinkQueue.extractDomain(operation.url),classifier=globalThis.ExtLinkLibraryClassifier;return !!library&&annotation.url===operation.url&&annotation.domain===domain&&(Object.hasOwn(library,'groups')||JSON.stringify(documents.siteAnnotations?.[domain])===JSON.stringify(annotation))&&Object.entries(operation.preferences).every(([k,v])=>JSON.stringify(library[k])===JSON.stringify(k==='groups'?classifier.normalizeLibraryGroups(v):k==='profileIds'?classifier.normalizeProfileIds(v):v));}
  if(operation.type==='mark'){const annotation=documents.siteAnnotations?.[key],queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),statuses=queue.normalizeAnnotationStatuses(operation.statuses??[operation.status]);return annotation?.auto===false&&annotation.url===operation.url&&annotation.domain===domain&&annotation.status===queue.primaryAnnotationStatus(statuses)&&JSON.stringify(annotation.statuses)===JSON.stringify(statuses)&&JSON.stringify(documents.siteAnnotations?.[domain])===JSON.stringify(annotation)&&(!operation.note||annotation.note===String(operation.note).slice(0,10000));}
  if(operation.type==='edit'){const row=documents.sheetTableData?.entries.find(r=>storedKey(r)===key);return !!row&&Object.entries(operation.fields||{}).every(([key,value])=>row[key]===value);}

@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-07",
+  "observedAt": "2026-10-07T00:01:11.786Z",
+  "completion": "not_complete",
+  "sourceCheckpoint": "bcfa169",
+  "regression": {
+    "passed": 516,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 13
+  },
+  "originalComparison": {
+    "preparedExistingProfileMap": true,
+    "catalogRows": 2948,
+    "progressEventIdsMonitorAndQualityMatch": true,
+    "rawSnapshotReadOnly": true,
+    "historicalProfileSeedingVerified": false
+  },
+  "isolated": {
+    "sameHostPathIsolation": true,
+    "strongOriginalReceiptCheck": true,
+    "notePublicationFallback": true,
+    "originalRecordOrderAndTimes": true,
+    "allNineDisplayAliases": true,
+    "rawSourceRowsRetained": true,
+    "oneQueueJobPerProfileAndDisplayDestination": true,
+    "savedCursorAndAutoVisitAlignment": true,
+    "canonicalPreferencesSaveAndLostReply": true,
+    "authenticatedHttpD1Readback": true,
+    "quickOpenOriginalFunctionComparison": true,
+    "productionRecordUiEditDeleteAndAliasPreferenceReopen": true,
+    "actualAutoVisitAndCommentIframeFields": true,
+    "allBusinessSubmissionRequests": 0
+  },
+  "live": {
+    "catalogRows": 2948,
+    "products": 9,
+    "combinations": 897,
+    "uiTimelineChecks": [
+      {
+        "originalTime": true,
+        "originalDetails": true,
+        "events": 9,
+        "displayAlias": false
+      },
+      {
+        "originalTime": true,
+        "originalDetails": true,
+        "events": 9,
+        "displayAlias": false
+      },
+      {
+        "originalTime": true,
+        "originalDetails": true,
+        "events": 10,
+        "displayAlias": true
+      }
+    ],
+    "malformedPreferencesRejected": 3,
+    "validPreferencePatchBlockedBeforeNetwork": true,
+    "blockedMutationRequests": 1,
+    "externalBrowserRequests": 0,
+    "allBusinessDocumentsAndRevisionsUnchanged": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "fa66ccdc-bce4-4551-a1a0-f9dd22dec116",
+  "servicesStartedAfterDurableIdleAndMissingListenerCheck": true,
+  "realBusinessEdits": 0,
+  "realAiCalls": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "other original controls and dynamic operations",
+    "receipt semantics in other overview and queue consumers",
+    "historical profile seeding and latest original-browser favorites and profiles",
+    "original-device media ownership",
+    "real special publishing pages and external services"
+  ]
+}

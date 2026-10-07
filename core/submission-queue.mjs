@@ -1,4 +1,5 @@
 import {applicationModel} from './application-model.mjs';
+import {canonicalLibraryDestination} from './library-records.mjs';
 import './scheduler.js';
 import './profiles.js';
 const {selectScope}=globalThis.ExtLinkExecutorContract,queue=globalThis.ExtLinkQueue,profiles=globalThis.ExtLinkProfiles,opportunity=globalThis.ExtLinkOpportunityScore;
@@ -7,10 +8,11 @@ export function pendingSubmissionQueue(snapshot,input={}){
  const docs=snapshot.documents,configured=Object.keys(docs.siteProfiles||{}).filter(id=>!docs.siteProfiles[id].archived&&profiles.profileConfigured(docs.siteProfiles[id]));
  const selectedProfileIds=[...new Set(input.selectedSiteIds??(docs.selectedSiteIds?.length?docs.selectedSiteIds:[docs.activeSiteId||configured[0]]))].filter(Boolean);
  if(selectedProfileIds.some(id=>!configured.includes(id)))throw Error('请选择已配置资料的在用产品');
- const library=new Map(applicationModel(snapshot).library.map(row=>[row.destinationKey,row])),grouped=new Map(),exclusions=[];
+ const library=new Map(applicationModel(snapshot).library.flatMap(row=>(row.aliases||[{destinationKey:row.destinationKey}]).map(alias=>[alias.destinationKey,row]))),grouped=new Map(),exclusions=[];
  for(const profileId of selectedProfileIds){const selected=selectScope(snapshot,null,profileId);exclusions.push(...selected.exclusions.map(item=>({...item,profileId})));
   for(const item of selected.tasks){const row=library.get(item.destinationKey);if(input.category&&row?.category!==input.category||input.group&&!row?.groups?.includes(input.group))continue;
-   let group=grouped.get(item.destinationKey);if(!group){group={key:item.destinationKey,destinationKey:item.destinationKey,url:item.url,domain:queue.extractDomain(item.url),quality:row?.quality,category:row?.category||'',groups:row?.groups||[],jobs:[],status:'pending'};grouped.set(group.key,group);}
+   const displayKey=canonicalLibraryDestination(item.url);let group=grouped.get(displayKey);if(!group){group={key:displayKey,destinationKey:displayKey,url:item.url,domain:queue.extractDomain(item.url),quality:row?.quality,category:row?.category||'',groups:row?.groups||[],jobs:[],status:'pending'};grouped.set(group.key,group);}
+   if(group.jobs.some(job=>job.profileId===profileId))continue;
    group.jobs.push({id:item.destinationKey+'::'+profileId,profileId,profileName:docs.siteProfiles[profileId].name||profileId,url:item.url,destinationKey:item.destinationKey,status:'pending'});
   }
  }

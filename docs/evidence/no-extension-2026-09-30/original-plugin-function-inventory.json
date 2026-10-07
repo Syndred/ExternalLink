@@ -1191,5 +1191,29 @@
     "newRealSubmissions": 0,
     "evidence": "original-library-view-2026-10-06.json",
     "completion": "not_complete"
+  },
+  "originalLibraryRecordsCheckpoint": {
+    "date": "2026-10-07",
+    "concreteDestinationRecordTimelineMonitorIsolation": true,
+    "originalStrongReceiptAndLegacyHistorySemantics": true,
+    "ordinaryNotesFallBackToOriginalPublication": true,
+    "originalRecordOrderSubmissionAndHistoryTime": true,
+    "originalProjectsAndMultilineSourceDetails": true,
+    "readOnlyCanonicalAliasProjectionAndRawRowsRetained": true,
+    "originalSavedCursorAndAutoVisitAlignment": true,
+    "canonicalPreferencesAndSameIdUnknownReply": true,
+    "originalQuickOpenAllNineDisplayAliases": true,
+    "authenticatedHttpD1AndProductionUi": true,
+    "testsPassed": 516,
+    "newTests": 13,
+    "liveOriginalCatalogRowsCompared": 2948,
+    "liveBusinessDocumentsAndRevisionsUnchanged": true,
+    "workerVersion": "fa66ccdc-bce4-4551-a1a0-f9dd22dec116",
+    "realBusinessEdits": 0,
+    "newRealSubmissions": 0,
+    "historicalProfileSeedingVerified": false,
+    "otherOverviewAndQueueReceiptConsumersVerified": false,
+    "evidence": "original-library-records-2026-10-07.json",
+    "completion": "not_complete"
   }
 }

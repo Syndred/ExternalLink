@@ -1,5 +1,22 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalSinglePageContextCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-single-page-context-2026-10-07.json",
+    "fullSuitePassed": 634,
+    "originalCommentHandlerAndFillOnly": true,
+    "actualMapperOriginalCommentReadback": true,
+    "staleSelectionBrowserBoundaries": 5,
+    "lateConsentCancelledWithEvidencePreserved": true,
+    "actualPosts": 0,
+    "migrationComplete": false
+  },
+  "originalCloudReconnectGap": {
+    "originalFunction": "connectCloudSync",
+    "nativeFunction": "connectWorkbench",
+    "status": "missing_existing_pair_reconnect",
+    "detail": "原连接操作可更新配置；当前已连接状态拒绝新登记文件，要求清空工作区。保留原台账及待同步的凭据更新或重连尚未恢复。"
+  },
   "originalLibraryBatchScopeCheckpoint": {
     "date": "2026-10-07",
     "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
@@ -299,8 +316,8 @@
       "source": "extension/sidepanel.html",
       "id": "btnSubmitPage",
       "label": "提交本页",
-      "mapping": "运行任务 / 继续原任务",
-      "verification": "仅固定范围已对应，人工任意页面待補",
+      "mapping": "当前网页填写 / 产品表单 / 填写后继续普通免费投稿；Product Hunt 单独确认创建草稿",
+      "verification": "任意普通网页原任务、资料冻结、原页继续及5个失效边界已隔离验证；评论模式始终仅填写。真实外部投稿继续暂停，特殊页面仍须逐项验收",
       "status": "mapped_requires_full_acceptance"
     },
     {

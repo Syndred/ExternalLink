@@ -62,6 +62,7 @@ async function showSinglePage(){
  },true);
  const configureSubmission=()=>{
   submit=false;confirmProductHuntCreate=false;fill.textContent='填写所选网页';
+  if(mode.value==='comment'){submissionControls.replaceChildren(el('p',{class:'muted',text:'评论模式只填写评论内容，沿用原插件规则；提交由你在所选网页确认。'}));return;}
   const url=listing.pages.find(p=>p.targetId===pageSelect.value).url,productHunt=mode.value==='form'&&/(^|\.)producthunt\.com$/i.test(new URL(url).hostname);
   submissionControls.replaceChildren(checkControl(productHunt?'确认填写后创建 Product Hunt 草稿':'填写后继续普通免费投稿',false,v=>{submit=v;confirmProductHuntCreate=productHunt&&v;fill.textContent=v?productHunt?'填写并创建原草稿':'填写并继续原任务':'填写所选网页';}));
   if(productHunt)submissionControls.append(el('p',{class:'muted',text:'先逐步准备产品、图片和发布资料。勾选后仅授权创建这次产品草稿，取得新确认后保存记录。'}));

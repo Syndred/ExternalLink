@@ -1,0 +1,82 @@
+{
+  "kind": "original_single_page_context_verified_scope_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "previousFeatureCommit": "7e2b5ee",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionsCompared": ["runSidepanelFill", "handleSidepanelFill"],
+  "confirmedDifferencesFixed": [
+    "Comment mode exposed a native continuation option absent from the original fill-only behavior",
+    "Native generic smartFill ignored comment platform selection and could fill product description into the comment",
+    "Generic single-page async operations did not consistently bind the selected panel generation, page and product",
+    "Manual continuation could activate after single-page selection changed during acknowledgement"
+  ],
+  "verifiedScope": [
+    "Comment mode uses the original executeSubmit comment handler with fillOnly",
+    "Original supplied comment text is read back from the actual comment field",
+    "Comment-mode submit flag does not activate an original task",
+    "Captured original panel generation, page and product reject stale operations",
+    "Panel close, workspace changes and other queue execution invalidate old context",
+    "Registration response loss still recovers the same original task and profile snapshot",
+    "Late single-page consent cancellation persists with original filled evidence retained"
+  ],
+  "tests": {
+    "passed": 634,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 4,
+    "source": "tests/executor-single-page-context.test.mjs",
+    "fullOutput": "executor/test-output/single-page-context-all-2026-10-07.txt",
+    "firstActualCommentReadback": "failed because product description was filled; corrected original comment handler and reran successfully"
+  },
+  "actualMapperAndChrome": {
+    "isolated": true,
+    "originalCommentTextFilled": true,
+    "commentModeSubmitFlagIgnored": true,
+    "staleSnapshotNoRegistration": true,
+    "staleRegistrationNoWrite": true,
+    "staleLeaseNoWrite": true,
+    "stalePreparationAcknowledgementNoSubmit": true,
+    "staleManualAcknowledgementNoActivation": true,
+    "filledEvidenceRetained": true,
+    "posts": 0,
+    "externalRequests": 0,
+    "source": "executor/test/single-page.mjs",
+    "output": "executor/test-output/single-page-context-browser-2026-10-07.txt"
+  },
+  "relatedRegressions": {
+    "sixPageUiPassed": true,
+    "originalAutoVisitPassed": true,
+    "originalProductHuntPassed": true,
+    "productHuntFixtureInterceptedRequests": 1,
+    "productHuntNetworkPosts": 0,
+    "productHuntIsRealExternalDraft": false,
+    "outputs": ["executor/test-output/single-page-context-ui-2026-10-07.txt", "executor/test-output/single-page-context-auto-visit-2026-10-07.txt", "executor/test-output/single-page-context-product-hunt-2026-10-07.txt"]
+  },
+  "release": {
+    "nativeOriginalServicesUpdated": true,
+    "processIdentityVerified": true,
+    "idleAndDurableStateGuardsPassed": true,
+    "cloudCodeChangedThisRound": false,
+    "workerVersion": "f24bd30b-a2ae-4010-a19b-567e4939e673"
+  },
+  "productionVerification": {
+    "stalePanelBothServices400": true,
+    "updatedChineseUiSourceServed": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "originalLocalBusinessUnchanged": true,
+    "tasksRunsBatchesPanelOutboxUnchangedByInvalidRequests": true,
+    "fixedBatch": { "status": "paused", "cursor": 13, "count": 30 },
+    "realPreparations": 0,
+    "newRealSubmissions": 0,
+    "realAiCalls": 0,
+    "outputs": ["executor/test-output/single-page-context-api-2026-10-07.txt", "executor/test-output/single-page-context-production-state-2026-10-07.txt"]
+  },
+  "nextConfirmedGap": {
+    "originalFunction": "connectCloudSync",
+    "nativeFunction": "connectWorkbench",
+    "detail": "Existing paired devices cannot update credentials or reconnect without first clearing local workspace state",
+    "source": "executor/src/workbench-connect.mjs",
+    "status": "not_restored"
+  },
+  "migrationComplete": false
+}

@@ -95,7 +95,7 @@ async function performFlush(runtime){
   if(blocked.has(item.key)&&!(item.status==='pending'&&item.resolution?.choice==='local')||item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status!=='confirmed')continue;
   // Revision zero alone cannot establish absence. Read the cloud first; only
   // a genuinely absent document can be created from the complete retained key.
-  if(item.baseRevision===0&&item.baseData!==undefined&&!Object.hasOwn(snapshot.documents,item.key)&&!snapshot.revisions[item.key]&&item.operation.type!=='recover_local'&&item.operation.type!=='timeline'){
+  if(item.baseRevision===0&&item.baseData!==undefined&&!Object.hasOwn(snapshot.documents,item.key)&&!snapshot.revisions[item.key]&&item.operation.type!=='recover_local'&&item.operation.type!=='timeline'&&!item.relatedBaseRevisions){
    const original=item.operation,change=libraryMutation({...snapshot.documents,[item.key]:item.baseData},original);item.originalOperation=original;item.localOnlyBaseData=item.baseData;item.baseData=undefined;item.operation={type:'recover_local',key:item.key,data:change.data,id:original.id,at:original.at};runtime.store.set('appMutation:'+item.id,item);
   }
   // A retained original timestamp can make a fetched row disappear during pruning.

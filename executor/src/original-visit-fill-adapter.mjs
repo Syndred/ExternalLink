@@ -4,6 +4,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fillOriginalVisitForm,mergeOriginalFrameFill} from './original-visit-fill.mjs';
 import {capturePageEvidence} from './page-evidence.mjs';
+import {classifyOriginalFillGate} from './original-site-classification.mjs';
 
 export async function prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase,allowAgent=true}){
  const keys=['id','runId','profileId','profileRevision','version','targetId','browserInstance','controller'],identity=Object.fromEntries(keys.map(key=>[key,task[key]])),profile=structuredClone(task.profileSnapshot);
@@ -36,5 +37,5 @@ export async function prepareOriginalVisitFields(runtime,{task,config,page,candi
   },
   async recordVisual(plan,actions,visual){await assertCurrent();runtime.update(task,{visitFillVisualHistory:[...(task.visitFillVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:actions.map(action=>({type:action.type,selector:action.selector})),localScreenshot:visual.localScreenshot,artifactRef:visual.artifactRef,artifactError:visual.artifactError}].slice(-8)},'assistant_visual_plan');}
  }});
- const actual=await selectedCall({action:'getFilledFieldsReport'});await assertCurrent();return{fill,actual,assertCurrent};
+ const actual=await selectedCall({action:'getFilledFieldsReport'});await assertCurrent();const classification=await classifyOriginalFillGate(runtime,{url:page.url(),fill,assertCurrent});await assertCurrent();if(classification)fill.classification=classification;return{fill,actual,assertCurrent};
 }

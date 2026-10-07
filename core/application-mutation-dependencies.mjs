@@ -15,6 +15,7 @@ export function applicationMutationDependencies(operation){
   :['submify_refs','submify_import','create','import','edit'].includes(type)?['sheetTableData']
   :type==='monitor_result'?['submissionRecords','linkMonitorResults']
   :type==='monitor_publication'?['submissionRecords','linkMonitorResults','siteProfiles']
+  :type==='automatic_mark'?['siteAnnotations','deletedSubmissionKeys']
   :['submify_gates','mark','clear_annotation','remove_queue','form_knowledge'].includes(type)?['siteAnnotations']
   :type==='preferences'?['siteAnnotations','siteProfiles']
   :type==='timeline'?timelineDocumentKeys

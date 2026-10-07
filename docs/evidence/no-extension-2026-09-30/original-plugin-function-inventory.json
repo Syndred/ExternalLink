@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalAutomaticObservationCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-site-observation-2026-10-07.json",
+    "implementedScope": "ordinary automatic and manual product form gates",
+    "manualVerdictNoteFavoritesGroupsAndReceiptsPreserved": true,
+    "semanticUncertaintyDoesNotAnnotateSite": true,
+    "originalWriterParityFixtureVariants": 12,
+    "linkedAnnotationAndDeletedKeyRevisionsFencedInD1AndNeon": true,
+    "realSqliteOfflineReopenAndLostReplyReadbackPassed": true,
+    "fullSuitePassed": 774,
+    "workerDeploymentVersion": "410c5591-6702-493b-9441-5523840fc14b",
+    "currentDeviceSnapshotDocumentsHashAndRevisionUnchanged": 19,
+    "liveSuccessfulAutomaticWritePerformed": false,
+    "allClassificationEntryPointsProven": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalManualFullFillCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-manual-full-fill-2026-10-07.json",
@@ -1196,7 +1214,7 @@
       "action": "sidepanelFill",
       "mapping": "当前网页填写 / 默认仅填表 → sidepanelFill",
       "status": "mapped_requires_full_acceptance",
-      "verification": "手动普通产品表单实际隔离Chrome11种情形覆盖原字段理解／两轮视觉／最终修正、关闭AI、未完成提交请求及迟到收件未知，模型／云任务为夹具；工作台实际渲染未完成后补齐的中文提示通过。原特殊发布、自动分类、各入口媒体优先及完整原资料仍待核验，未做真实投稿"
+      "verification": "手动普通产品表单实际隔离Chrome11种情形覆盖原字段理解／两轮视觉／最终修正、关闭AI、未完成提交请求及迟到收件未知，模型／云任务为夹具；工作台实际渲染未完成后补齐的中文提示通过。普通自动／手动明确关口的自动观察补验保留手工标记、收藏分组，语义不确定不分类；主执行／提交后／特殊发布分类、各入口媒体优先及完整原资料仍待核验，未做真实投稿"
     },
     {
       "action": "sidepanelOpened",

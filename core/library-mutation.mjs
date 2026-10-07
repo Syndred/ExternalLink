@@ -129,7 +129,7 @@ export function libraryMutation(documents,operation,options={}){
   for(const url of urls){const key=keyOf(url);if(known.has(key))continue;known.add(key);table.entries.push({link:new URL(url).href,indexPage:new URL(url).href,source:'application_import',addedAt:at,mutationId:id});}
   return{key:'sheetTableData',data:table};
  }
- const destinationKey=['preferences','mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
+ const destinationKey=['preferences','mark','automatic_mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
  if(operation.type==='preferences'){
   const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
   const patch=operation.preferences;
@@ -150,6 +150,21 @@ export function libraryMutation(documents,operation,options={}){
   const queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),normalized=queue.normalizeAnnotationStatuses(statuses);
   annotations[destinationKey]={...previous,url:operation.url,domain,status:queue.primaryAnnotationStatus(normalized),statuses:normalized,note:String(operation.note||previous.note||'').slice(0,10000),updatedAt:at,auto:false,source:'application_manual',mutationId:id};annotations[domain]=structuredClone(annotations[destinationKey]);
   return{key:'siteAnnotations',data:annotations};
+ }
+ if(operation.type==='automatic_mark'){
+  const queue=globalThis.ExtLinkQueue,status=operation.status;
+  if(!['can_submit','paid','broken','skip','needs_otp','needs_captcha','needs_login','needs_manual','deleted'].includes(status)||typeof operation.note!=='string'||operation.note.length>10000)fail('无效自动网站观察');
+  const annotations=structuredClone(documents.siteAnnotations||{}),domain=queue.extractDomain(operation.url),previous=annotations[destinationKey]||annotations[domain]||{},previousStatuses=queue.normalizeAnnotationStatuses(previous),note=operation.note;
+  let annotation,deleted=documents.deletedSubmissionKeys||[];
+  if(previousStatuses.length&&previous.auto!==true){
+   annotation={...previous,status:queue.primaryAnnotationStatus(previousStatuses),statuses:previousStatuses,lastAutomaticObservation:{status,statuses:[status],note,updatedAt:at,mutationId:id}};
+  }else{
+   annotation={...previous,url:operation.url,domain,status:queue.primaryAnnotationStatus([status]),statuses:[status],note:note||previous.note||'',submittedProjects:Array.isArray(previous.submittedProjects)?[...previous.submittedProjects]:[],updatedAt:at,auto:true,mutationId:id};
+   deleted=status==='deleted'?[...new Set([...deleted,destinationKey])]:deleted.filter(key=>key!==destinationKey);
+  }
+  annotations[destinationKey]=annotation;annotations[domain]=structuredClone(annotation);
+  const updates={siteAnnotations:annotations,...(previousStatuses.length&&previous.auto!==true?{}:{deletedSubmissionKeys:deleted})};
+  return{key:'siteAnnotations',data:annotations,updates,revisionKeys:['siteAnnotations','deletedSubmissionKeys']};
  }
  if(operation.type==='edit'){
   const table=structuredClone(documents.sheetTableData||{entries:[]}),row=table.entries.find(r=>storedKey(r)===destinationKey);if(!row)fail('该入口不是可编辑的表格行');
@@ -182,7 +197,13 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='settings'){if(operation.key==='domainBlacklist'&&operation.value&&typeof operation.value==='object'&&!Array.isArray(operation.value)&&operation.value.replace!==true)return false;try{return jsonValueEqual(documents[operation.key],libraryMutation(documents,operation).data);}catch{return false;}}
  if(operation.type==='create'){const row=documents.sheetTableData?.entries?.find(r=>storedKey(r)===keyOf(operation.url));return !!row&&Object.entries(operation.fields||{}).every(([k,v])=>row[k]===v);}
  if(operation.type==='import'){const known=new Set((documents.sheetTableData?.entries||[]).map(storedKey));return operation.urls.every(url=>known.has(keyOf(url)));}
- const key=['preferences','mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
+ const key=['preferences','mark','automatic_mark'].includes(operation.type)?catalogKeyOf(operation.url):keyOf(operation.url);
+ if(operation.type==='automatic_mark'){
+  const annotation=documents.siteAnnotations?.[key],queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),observation=annotation?.lastAutomaticObservation;
+  if(!jsonValueEqual(documents.siteAnnotations?.[domain],annotation))return false;
+  if(observation?.mutationId===operation.id)return observation.status===operation.status&&jsonValueEqual(observation.statuses,[operation.status])&&observation.note===operation.note&&observation.updatedAt===operation.at;
+  return annotation?.auto===true&&annotation.mutationId===operation.id&&annotation.status===queue.primaryAnnotationStatus([operation.status])&&jsonValueEqual(annotation.statuses,[operation.status])&&annotation.updatedAt===operation.at&&(!operation.note||annotation.note===operation.note)&&((documents.deletedSubmissionKeys||[]).includes(key)===(operation.status==='deleted'));
+ }
  if(operation.type==='preferences'){const annotation=documents.siteAnnotations?.[key],library=annotation?.library,domain=globalThis.ExtLinkQueue.extractDomain(operation.url),classifier=globalThis.ExtLinkLibraryClassifier;return !!library&&annotation.url===operation.url&&annotation.domain===domain&&(Object.hasOwn(library,'groups')||jsonValueEqual(documents.siteAnnotations?.[domain],annotation))&&Object.entries(operation.preferences).every(([k,v])=>jsonValueEqual(library[k],k==='groups'?classifier.normalizeLibraryGroups(v):k==='profileIds'?classifier.normalizeProfileIds(v):v));}
  if(operation.type==='mark'){const annotation=documents.siteAnnotations?.[key],queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),statuses=queue.normalizeAnnotationStatuses(operation.statuses??[operation.status]);return annotation?.auto===false&&annotation.url===operation.url&&annotation.domain===domain&&annotation.status===queue.primaryAnnotationStatus(statuses)&&jsonValueEqual(annotation.statuses,statuses)&&jsonValueEqual(documents.siteAnnotations?.[domain],annotation)&&(!operation.note||annotation.note===String(operation.note).slice(0,10000));}
  if(operation.type==='edit'){const row=documents.sheetTableData?.entries.find(r=>storedKey(r)===key);return !!row&&Object.entries(operation.fields||{}).every(([key,value])=>row[key]===value);}

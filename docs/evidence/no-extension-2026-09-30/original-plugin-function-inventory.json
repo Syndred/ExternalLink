@@ -27,14 +27,6 @@
     },
     {
       "source": "extension/settings.html",
-      "id": "tab-journal",
-      "label": "外链总览",
-      "mapping": "提交总览",
-      "verification": "界面已核验",
-      "status": "mapped_requires_full_acceptance"
-    },
-    {
-      "source": "extension/settings.html",
       "id": "btnAddSite",
       "label": "+ 添加",
       "mapping": "我的网站 / 新增网站",
@@ -355,10 +347,18 @@
     },
     {
       "source": "extension/sidepanel.html",
-      "id": "btnUseLibraryFilter",
-      "label": "将当前筛选送到工作台",
-      "mapping": "外链库筛选 / 批量提交预览",
-      "verification": "原筛选和冻结范围回归",
+      "id": "btnStartLibraryCategory",
+      "label": "从此分类开始提交",
+      "mapping": "外链库分类筛选／选择当前筛选 → 批量提交固定范围预览",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStartLibraryGroup",
+      "label": "从此分组开始提交",
+      "mapping": "外链库分组筛选／选择当前筛选 → 批量提交固定范围预览",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
       "status": "mapped_requires_full_acceptance"
     },
     {
@@ -384,6 +384,62 @@
       "mapping": "外链库 / 分页",
       "verification": "界面回归",
       "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStart",
+      "label": "开始提交",
+      "mapping": "批量提交 → 明确开始",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnBatchToggle",
+      "label": "暂停批量",
+      "mapping": "任务与日志 → 暂停／原批次范围继续",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnContinue",
+      "label": "继续等待中的任务",
+      "mapping": "任务详情 → 原任务人工继续",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStop",
+      "label": "停止",
+      "mapping": "停止本次执行 → stop",
+      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportAutomationRun",
+      "label": "导出执行记录",
+      "mapping": "尚无对应可用入口",
+      "verification": "旧页面实际存在；当前工作台未找到同等入口",
+      "status": "missing_original_function"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportBatchReport",
+      "label": "导出本轮报告",
+      "mapping": "尚无对应可用入口",
+      "verification": "旧页面实际存在；当前工作台未找到同等入口",
+      "status": "missing_original_function"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnCopyBatchLog",
+      "label": "复制日志",
+      "mapping": "任务与日志 → 查看执行日志 → 复制日志",
+      "verification": "隔离界面复制2条显示日志并验证失败保留；真实工作台当前无已保存日志，只验证空日志提示，未写用户剪贴板",
+      "status": "implemented_requires_full_acceptance"
     }
   ],
   "backgroundActions": [
@@ -445,11 +501,6 @@
     "sidepanelOpened",
     "start",
     "stop",
-    "submissionJournalArtifact",
-    "submissionJournalCloud",
-    "submissionJournalDocuments",
-    "submissionJournalProgress",
-    "submissionJournalRecoverLocal",
     "syncSubmifyLibrary",
     "updateDomainBlacklist",
     "updateLibraryPreferences",
@@ -755,32 +806,6 @@
       "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
     },
     {
-      "action": "submissionJournalArtifact",
-      "mapping": "workspace/automation/artifacts 与 taskDetails",
-      "status": "mapped_requires_full_acceptance"
-    },
-    {
-      "action": "submissionJournalCloud",
-      "mapping": "workspace journal 接口",
-      "status": "mapped_requires_full_acceptance"
-    },
-    {
-      "action": "submissionJournalDocuments",
-      "mapping": "workbenchDocuments / workspace/journal-documents",
-      "status": "mapped_requires_full_acceptance"
-    },
-    {
-      "action": "submissionJournalProgress",
-      "mapping": "journalProgress",
-      "status": "mapped_requires_full_acceptance"
-    },
-    {
-      "action": "submissionJournalRecoverLocal",
-      "mapping": "设置与备份 / 本机缓存和备份选择、比较、逐项恢复及原编号续办 → recoverLocalDocuments",
-      "status": "mapped_requires_full_acceptance",
-      "verification": "隔离真实 HTTP/D1 全部21份资料、响应丢失及SQLite重开通过；真实只列来源和比较，没有覆盖真实资料"
-    },
-    {
       "action": "syncSubmifyLibrary",
       "mapping": "startPublicLibrarySync",
       "status": "mapped_requires_full_acceptance"
@@ -801,7 +826,7 @@
       "status": "mapped_requires_full_acceptance"
     }
   ],
-  "updatedAt": "2026-10-06",
+  "updatedAt": "2026-10-07T01:42:36.176Z",
   "completion": "not_complete",
   "specialLaunchCheckpoint": {
     "platform": "Product Hunt",
@@ -1301,5 +1326,669 @@
     "workerVersion": "b966c883-a875-4f0d-b26f-d951173d497f",
     "evidence": "original-backup-profiles-2026-10-07.json",
     "completion": "not_complete"
-  }
+  },
+  "postRefactorSupplementalButtons": [
+    {
+      "source": "extension/settings.html",
+      "id": "tab-journal",
+      "label": "外链总览",
+      "mapping": "提交总览",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnUseLibraryFilter",
+      "label": "将当前筛选送到工作台",
+      "mapping": "外链库筛选 / 批量提交预览",
+      "verification": "原筛选和冻结范围回归",
+      "status": "mapped_requires_full_acceptance"
+    }
+  ],
+  "postRefactorSupplementalBackgroundActions": [
+    "submissionJournalArtifact",
+    "submissionJournalCloud",
+    "submissionJournalDocuments",
+    "submissionJournalProgress",
+    "submissionJournalRecoverLocal"
+  ],
+  "postRefactorSupplementalBackgroundMappings": [
+    {
+      "action": "submissionJournalArtifact",
+      "mapping": "workspace/automation/artifacts 与 taskDetails",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalCloud",
+      "mapping": "workspace journal 接口",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalDocuments",
+      "mapping": "workbenchDocuments / workspace/journal-documents",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalProgress",
+      "mapping": "journalProgress",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "action": "submissionJournalRecoverLocal",
+      "mapping": "设置与备份 / 本机缓存和备份选择、比较、逐项恢复及原编号续办 → recoverLocalDocuments",
+      "status": "mapped_requires_full_acceptance",
+      "verification": "隔离真实 HTTP/D1 全部21份资料、响应丢失及SQLite重开通过；真实只列来源和比较，没有覆盖真实资料"
+    }
+  ],
+  "originalInputControls": [
+    {
+      "source": "extension/settings.html",
+      "id": "siteExtractUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLanguage",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteName",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteHomeUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePromoUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteTitle",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteEmail",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLogoUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLogoFile",
+      "tag": "input",
+      "type": "file"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteScreenshots",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteShortDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteMediumDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLongDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteNote",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAudience",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteValueProp",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteUseCases",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteTags",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteFeatures",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteSellPoints",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePricing",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePricingType",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAvoidContent",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteBrandKeywords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteUrlKeywords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteNaturalExprs",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteKeywordExprs",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAvoidWords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAllowExactAnchor",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteBlogTone",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteMaxLinks",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePreferredAnchor",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "librarySearch",
+      "tag": "input",
+      "type": "search"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryCategoryFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryStatusFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryProgressFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryQualityFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryGroupFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "librarySort",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudWorkerEndpoint",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudAccessToken",
+      "tag": "input",
+      "type": "password"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudWorkspaceId",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "linkMonitorEnabled",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "linkMonitorMinutes",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "ledgerImportFile",
+      "tag": "input",
+      "type": "file"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgEmail",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgName",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgCommentTemplate",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgConcurrency",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoFillOnVisit",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoSubmitDirectoryListings",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoSubmitStandardWpComments",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgPingIndex",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterBlacklistEnabled",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterMinDomainAge",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterRequireKnownAge",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterMinOpportunityScore",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "domainBlacklistText",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterAiComments",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterAiCommentAllowLink",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterManualFillIcons",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "spSiteSelect",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineProfileSelect",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineEventType",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineOccurredAt",
+      "tag": "input",
+      "type": "datetime-local"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineNote",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelinePublicUrl",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineEvidenceUrl",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "commentTone",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "spCommentText",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibrarySearch",
+      "tag": "input",
+      "type": "search"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryCategory",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryGroup",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryAccess",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryFavorite",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryEnabled",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenBatchSize",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenInterval",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenRemoveOpened",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgFillOnly",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattended",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedHours",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedTasks",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedManualTabs",
+      "tag": "input",
+      "type": "number"
+    }
+  ],
+  "originalButtonsWithoutIds": [
+    {
+      "source": "extension/sidepanel.html",
+      "label": "执行"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "外链"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "批量"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "待人工"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "可提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "需人工"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "需登录"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "验证码"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "付费"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "无法提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "跳过"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "删除"
+    }
+  ],
+  "sourceBaseline": {
+    "commit": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "firstRefactorCommit": "3c0200f",
+    "previousInventoryUsedPostRefactorHtml": true,
+    "previousButtons": 48,
+    "originalButtons": 55,
+    "originalBackgroundActions": 62,
+    "originalInputControls": 84,
+    "evidence": "original-pre-refactor-baseline-2026-10-07.json",
+    "functionBodiesCompared": {
+      "profileSeeds": true,
+      "submissionSchema": true,
+      "libraryCatalog": true,
+      "preferences": true,
+      "quickOpen": true
+    }
+  },
+  "originalControlGaps": [
+    {
+      "id": "cfgConcurrency",
+      "scope": "全局并发设置",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    },
+    {
+      "id": "cfgFillOnly",
+      "scope": "批量仅填写选项",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    },
+    {
+      "id": "cfgUnattended",
+      "scope": "无人值守开关",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    },
+    {
+      "id": "cfgUnattendedHours",
+      "scope": "无人值守最长运行时间",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    },
+    {
+      "id": "cfgUnattendedTasks",
+      "scope": "无人值守项目组合上限",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    },
+    {
+      "id": "cfgUnattendedManualTabs",
+      "scope": "无人值守待人工页签容量",
+      "status": "requires_original_behavior_migration",
+      "verification": "原页面控件存在，现工作台尚无同等完整设置及执行行为证据"
+    }
+  ]
 }

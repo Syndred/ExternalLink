@@ -1,0 +1,988 @@
+{
+  "kind": "pre_refactor_original_surface_audit_not_completion_proof",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "firstRefactorCommit": "3c0200f",
+  "previousInventoryReadPostRefactorPages": true,
+  "previousButtonCount": 48,
+  "baselineButtonCount": 55,
+  "baselineControlCount": 84,
+  "baselineButtonsWithoutIds": [
+    {
+      "source": "extension/sidepanel.html",
+      "label": "执行"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "外链"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "批量"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "待人工"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "可提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "需人工"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "需登录"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "验证码"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "付费"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "无法提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "跳过"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "label": "删除"
+    }
+  ],
+  "missingFromPreviousInventory": [
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStartLibraryCategory",
+      "label": "从此分类开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStartLibraryGroup",
+      "label": "从此分组开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStart",
+      "label": "开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnBatchToggle",
+      "label": "暂停批量"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnContinue",
+      "label": "继续等待中的任务"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStop",
+      "label": "停止"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportAutomationRun",
+      "label": "导出执行记录"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportBatchReport",
+      "label": "导出本轮报告"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnCopyBatchLog",
+      "label": "复制日志"
+    }
+  ],
+  "postRefactorOnly": [
+    {
+      "source": "extension/settings.html",
+      "id": "tab-journal",
+      "label": "外链总览",
+      "mapping": "提交总览",
+      "verification": "界面已核验",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnUseLibraryFilter",
+      "label": "将当前筛选送到工作台",
+      "mapping": "外链库筛选 / 批量提交预览",
+      "verification": "原筛选和冻结范围回归",
+      "status": "mapped_requires_full_acceptance"
+    }
+  ],
+  "backgroundActionCount": 62,
+  "missingBackgroundActions": [],
+  "postRefactorActions": [
+    "submissionJournalArtifact",
+    "submissionJournalCloud",
+    "submissionJournalDocuments",
+    "submissionJournalProgress",
+    "submissionJournalRecoverLocal"
+  ],
+  "previousOriginalFunctionBodiesMatchBaseline": {
+    "profileSeeds": true,
+    "submissionSchema": true,
+    "libraryCatalog": true,
+    "preferences": true,
+    "quickOpen": true
+  },
+  "baselineButtons": [
+    {
+      "source": "extension/settings.html",
+      "id": "tab-sites",
+      "label": "网站资料"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "tab-library",
+      "label": "外链库"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "tab-config",
+      "label": "全局配置"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnAddSite",
+      "label": "+ 添加"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRemoveSite",
+      "label": "删除"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnExtractSite",
+      "label": "🔍 从网址提取资料"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnGenerateSite",
+      "label": "✨ 完善当前资料"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnClearLogo",
+      "label": "清除图片"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveSite",
+      "label": "💾 保存当前站点资料"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnLibraryLoadMore",
+      "label": "加载更多外链"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudRefresh",
+      "label": "轻量核对版本"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudConnect",
+      "label": "连接云端"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudMigrate",
+      "label": "首次迁移到云端"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudPull",
+      "label": "回读云端更新"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnCloudPush",
+      "label": "确认本机为准并上传"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSyncSubmifyLibrary",
+      "label": "同步 Submify 最新库"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRunLinkMonitor",
+      "label": "立即复查"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveLinkMonitor",
+      "label": "保存复查频率"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnExportLedger",
+      "label": "导出 JSON"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnImportLedger",
+      "label": "导入 JSON"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveConfig",
+      "label": "💾 保存全局配置"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnClearData",
+      "label": "🗑 清除所有数据"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveTargetGate",
+      "label": "保存闸门设置"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnPrefetchDomainAge",
+      "label": "预取当前队列域名年龄"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnSaveAssistant",
+      "label": "保存助手设置"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "btnRefreshMediaLibrary",
+      "label": "检查云端媒体"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnOpenSettings",
+      "label": "⚙"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnPrevSite",
+      "label": "◀"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnNextSite",
+      "label": "▶"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRefreshSidepanelTimeline",
+      "label": "刷新"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnAddTimelineEvent",
+      "label": "登记外链动态"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSaveTimelineEvent",
+      "label": "保存人工动态"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnCancelTimelineEvent",
+      "label": "取消"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnDetect",
+      "label": "检测"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnFillForm",
+      "label": "填表"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSubmitPage",
+      "label": "提交本页"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnFillComment",
+      "label": "填入评论"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnLaunchNext",
+      "label": "下一站"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRegenComment",
+      "label": "生成 3 条"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRestoreComment",
+      "label": "恢复上一版"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnRefreshMedia",
+      "label": "刷新"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnAddToUrlList",
+      "label": "加入外链列表（置顶）"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnOpenLibrarySettings",
+      "label": "完整管理"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStartLibraryCategory",
+      "label": "从此分类开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStartLibraryGroup",
+      "label": "从此分组开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnQuickOpenSelectFiltered",
+      "label": "选择当前筛选"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnQuickOpenBatch",
+      "label": "打开下一批"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnSidepanelLibraryMore",
+      "label": "加载更多"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStart",
+      "label": "开始提交"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnBatchToggle",
+      "label": "暂停批量"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnContinue",
+      "label": "继续等待中的任务"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnStop",
+      "label": "停止"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportAutomationRun",
+      "label": "导出执行记录"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnExportBatchReport",
+      "label": "导出本轮报告"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "btnCopyBatchLog",
+      "label": "复制日志"
+    }
+  ],
+  "baselineControls": [
+    {
+      "source": "extension/settings.html",
+      "id": "siteExtractUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLanguage",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteName",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteHomeUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePromoUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteTitle",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteEmail",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLogoUrl",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLogoFile",
+      "tag": "input",
+      "type": "file"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteScreenshots",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteShortDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteMediumDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteLongDesc",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteNote",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAudience",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteValueProp",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteUseCases",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteTags",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteFeatures",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteSellPoints",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePricing",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePricingType",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAvoidContent",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteBrandKeywords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteUrlKeywords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteNaturalExprs",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteKeywordExprs",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAvoidWords",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteAllowExactAnchor",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteBlogTone",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "siteMaxLinks",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "sitePreferredAnchor",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "librarySearch",
+      "tag": "input",
+      "type": "search"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryCategoryFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryStatusFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryProgressFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryQualityFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "libraryGroupFilter",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "librarySort",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudWorkerEndpoint",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudAccessToken",
+      "tag": "input",
+      "type": "password"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cloudWorkspaceId",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "linkMonitorEnabled",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "linkMonitorMinutes",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "ledgerImportFile",
+      "tag": "input",
+      "type": "file"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgEmail",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgName",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgCommentTemplate",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgConcurrency",
+      "tag": "input",
+      "type": "text"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoFillOnVisit",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoSubmitDirectoryListings",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "autoSubmitStandardWpComments",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "cfgPingIndex",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterBlacklistEnabled",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterMinDomainAge",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterRequireKnownAge",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterMinOpportunityScore",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "domainBlacklistText",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterAiComments",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterAiCommentAllowLink",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/settings.html",
+      "id": "filterManualFillIcons",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "spSiteSelect",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineProfileSelect",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineEventType",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineOccurredAt",
+      "tag": "input",
+      "type": "datetime-local"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineNote",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelinePublicUrl",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "timelineEvidenceUrl",
+      "tag": "input",
+      "type": "url"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "commentTone",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "spCommentText",
+      "tag": "textarea",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibrarySearch",
+      "tag": "input",
+      "type": "search"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryCategory",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryGroup",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryAccess",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryFavorite",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "sidepanelLibraryEnabled",
+      "tag": "select",
+      "type": null
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenBatchSize",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenInterval",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "quickOpenRemoveOpened",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgFillOnly",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattended",
+      "tag": "input",
+      "type": "checkbox"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedHours",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedTasks",
+      "tag": "input",
+      "type": "number"
+    },
+    {
+      "source": "extension/sidepanel.html",
+      "id": "cfgUnattendedManualTabs",
+      "tag": "input",
+      "type": "number"
+    }
+  ],
+  "baselineBackgroundActions": [
+    "ackPendingSubmissionCloudTab",
+    "addSubmissionTimelineEvent",
+    "addToUrlList",
+    "advanceSubmission",
+    "captchaResolved",
+    "clearSiteAnnotation",
+    "cloudAiExtractSite",
+    "cloudAiGenerateSite",
+    "cloudSyncConnect",
+    "cloudSyncMigrate",
+    "cloudSyncPull",
+    "cloudSyncPush",
+    "cloudSyncStatus",
+    "confirmSubmissionSuccess",
+    "contentReady",
+    "exportSubmissionData",
+    "fetchCloudSubmissionMedia",
+    "fetchSubmissionMedia",
+    "generateCommentDrafts",
+    "generateCommentPreview",
+    "getActiveFillConfig",
+    "getBatchLog",
+    "getDomainMetrics",
+    "getLibraryManagerState",
+    "getLinkMonitorState",
+    "getSiteAnnotation",
+    "getState",
+    "getSubmissionQueue",
+    "getTargetGateState",
+    "importSubmissionData",
+    "listCloudSubmissionMedia",
+    "listSiteAnnotations",
+    "log",
+    "manualContinue",
+    "manualSkip",
+    "manualSubmissionClicked",
+    "manualSubmissionWatchReady",
+    "manualSubmissionWatchRequest",
+    "manualSubmit",
+    "markSubmissionSite",
+    "pause",
+    "pinLibraryUrl",
+    "prescanPage",
+    "quickOpenLibraryUrls",
+    "refreshSubmissionLedger",
+    "removeFromSubmissionQueue",
+    "removeSubmissionTimelineEvent",
+    "requestAutoFill",
+    "resume",
+    "runLinkMonitor",
+    "saveLinkMonitorSchedule",
+    "saveTargetFilters",
+    "sidepanelClosed",
+    "sidepanelDetect",
+    "sidepanelFill",
+    "sidepanelOpened",
+    "start",
+    "stop",
+    "syncSubmifyLibrary",
+    "updateDomainBlacklist",
+    "updateLibraryPreferences",
+    "updateSubmissionTimelineEvent"
+  ],
+  "completion": "not_complete"
+}

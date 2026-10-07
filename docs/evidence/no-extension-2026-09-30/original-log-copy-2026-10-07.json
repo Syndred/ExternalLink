@@ -1,0 +1,33 @@
+{
+  "kind": "pre_refactor_log_copy_control_checkpoint",
+  "date": "2026-10-07",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalControl": "btnCopyBatchLog",
+  "workbenchEntry": "任务与日志 / 查看执行日志 / 复制日志",
+  "copyScope": "Only displayed entries from the current log viewer, retaining target, product, time and message.",
+  "isolatedProductionUi": {
+    "source": "executor/test-output/original-pre-refactor-log-copy-ui.txt",
+    "sixPagesPassed": true,
+    "copiedEntries": 2,
+    "actualNewlineAndOriginalMessagesVerified": true,
+    "clipboardFailureRetainsLogsAndShowsReason": true,
+    "isolatedClipboardStub": true,
+    "userClipboardWrites": 0
+  },
+  "targetedRegression": { "passed": 3, "failed": 0, "skipped": 0, "source": "executor/test-output/original-log-copy-targeted.txt" },
+  "lastFullRegression": { "passed": 556, "scope": "preceding published backup import checkpoint; not rerun for this frontend copy control" },
+  "productionReadback": {
+    "source": "executor/test-output/original-log-copy-live-result-final.txt",
+    "loadedLogEntries": 0,
+    "emptyLogMessageVerified": true,
+    "populatedLogCopyVerifiedOnProductionData": false,
+    "userClipboardWrites": 0,
+    "businessDocumentsAndRevisionsUnchanged": true,
+    "newRealSubmissions": 0,
+    "externalRequests": 0
+  },
+  "workerDeploymentChanged": false,
+  "servicesReloaded": false,
+  "goalStatus": "not_complete",
+  "remainingOriginalControls": ["btnExportAutomationRun", "btnExportBatchReport", "cfgConcurrency", "cfgFillOnly", "cfgUnattended", "cfgUnattendedHours", "cfgUnattendedTasks", "cfgUnattendedManualTabs"]
+}

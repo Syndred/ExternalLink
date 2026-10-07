@@ -1,0 +1,102 @@
+{
+  "kind": "documentation_checkpoint_unpublished_parallel_resume_not_completion_proof",
+  "date": "2026-10-07",
+  "migrationComplete": false,
+  "authorization": "写好进度推送先",
+  "git": {
+    "pullCommand": "git pull --ff-only",
+    "pullResult": "Already up to date",
+    "headBeforeDocumentationCommit": "fb2b9c2",
+    "aheadBehindBeforeDocumentationCommit": [0, 0],
+    "latestPublishedFeatureCommit": "3414072",
+    "thisCommitScope": "progress_documents_inventory_and_redacted_checkpoint_only",
+    "parallelFeatureSourceIncluded": false,
+    "existingUnrelatedChangesPreserved": true
+  },
+  "unpublishedImplementation": {
+    "originalWorkbenchTaskRequeuedInSameDispatcher": true,
+    "originalTaskScopeProfileManifestCursorAndBudgetsRetained": true,
+    "originalConcurrencyAndSameDestinationLockRetained": true,
+    "nativeWorkbenchManualContinueUsesOriginalQueue": true,
+    "preparationCancellationRevokesConsent": true,
+    "lastOtherWorkerCompletionWaitsForPreparation": true,
+    "productionParallelFeatureUpdated": false
+  },
+  "verification": {
+    "fullSuiteRerunThisCheckpoint": {
+      "command": "node --test tests/*.test.mjs",
+      "output": "executor/test-output/progress-push-parallel-final-2026-10-07.txt",
+      "tests": 751,
+      "passed": 751,
+      "failed": 0,
+      "skipped": 0,
+      "newTestsSincePublished746": 5
+    },
+    "previouslyCompletedIsolatedBrowser": {
+      "output": "executor/test-output/original-parallel-controls-browser-budget-first-2026-10-07.txt",
+      "cases": 9,
+      "rerunThisDocumentationCheckpoint": false,
+      "usesActualNativeWorkForRecoveredTask": true,
+      "otherWorkerReceiptsAreLocalFixtures": true,
+      "posts": 0,
+      "externalRequests": 0,
+      "realModelCalls": 0,
+      "productionWrites": 0,
+      "provesRealCaptchaCompletion": false,
+      "provesRealSiteReceipt": false
+    },
+    "previouslyCompletedAuthenticatedCloudRecovery": {
+      "output": "executor/test-output/original-parallel-controls-cloud-first-2026-10-07.txt",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "rerunThisDocumentationCheckpoint": false,
+      "newOriginalQueuedIntentLostReplyAndFullPausedRestoreCase": true,
+      "isolatedWorkerAndDatabaseFixtures": true,
+      "productionCloudWrites": 0
+    }
+  },
+  "currentProductionReadonly": {
+    "output": "executor/test-output/progress-push-parallel-readonly-2026-10-07.txt",
+    "recheckedThisCheckpoint": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "productsIncludingArchived": 9,
+    "libraryDisplayItems": 2948,
+    "existingCombinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "fullProductionUiRechecked": false,
+    "latestOriginalChromeDataRead": false
+  },
+  "remaining": [
+    "Queued original task continuation after explicit user pause and resume",
+    "Parallel manual preparation synchronization failure recovery",
+    "Original queued resume and parallel manual skip interleaving",
+    "Dedicated fixed acceptance, continuous library and original run recovery evidence",
+    "Original page manualContinue, manualSubmit, manualSkip and requestAutoFill callbacks",
+    "Latest original products, favorites and category groups",
+    "Other devices, old aliases, complete original history and media ownership",
+    "Remaining original dynamic controls and special launch flows",
+    "Real external service and site receipt evidence"
+  ],
+  "businessRestoresThisCheckpoint": 0,
+  "realModelCallsThisCheckpoint": 0,
+  "newRealSubmissionsThisCheckpoint": 0,
+  "nativeServicesReloadedThisCheckpoint": false,
+  "workerDeployedThisCheckpoint": false
+}

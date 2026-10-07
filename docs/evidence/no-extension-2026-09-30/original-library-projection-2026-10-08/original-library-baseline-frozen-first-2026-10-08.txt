@@ -1,0 +1,117 @@
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (23.3151ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (23.5374ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (10.9435ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (11.3172ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (15.5204ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (14.4398ms)
+✔ adding an existing original alias from the browser removes its canonical archive flag and retains original URL metadata (5.455ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (6.8448ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (115.6112ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (1.9748ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (3.2451ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.0803ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (11.5901ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (19.1908ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.7347ms)
+✔ later ordinary notes fall back to the original record publication state (4.7553ms)
+✔ record display uses the latest matching original row rather than insertion order (5.2825ms)
+✔ all original display aliases read the same original submission and timeline evidence (24.2995ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (2.622ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.7337ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (4.2742ms)
+✔ saved queue cursor and explicit URL keep the original alias destination after display merging (3.6081ms)
+✔ automatic visit queue alignment resolves the original concrete alias to its merged destination (2.4652ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (6.5821ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (4.0119ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1996.7514ms)
+✔ manual multi-mark uses original primary priority and host alias while retaining knowledge, preferences and receipts (3.9334ms)
+✔ original blank mark note retains the old note and original host alias is required before a lost reply is confirmed (0.4814ms)
+✔ favorite and enabled preferences share the original host alias until a route has explicit groups (0.8473ms)
+✔ original group and product preference lists normalize duplicates without discarding other annotation data (0.3854ms)
+✔ archiving and restoring an original mark persist a full offline plan and resume original ids after SQLite reopen and lost replies (134.8267ms)
+✔ discarding a concurrent archive mark also cancels its dependent queue exclusion, retaining both records (2.979ms)
+✔ local persistence failure rolls back the original mark and its queue list before cloud access (1.409ms)
+✖ table-only original sources restore product seeds and original current/batch defaults without changing the source (5.7073ms)
+✖ old profile aliases restore original product fields, choices, strong receipts, monitoring and original catalog history (9.3517ms)
+✔ original source validation rejects malformed table profile seeds rather than accepting an empty replacement (0.7902ms)
+✔ source alias collisions retain strong original receipts and all immutable media versions; conflicting versions stop recovery (3.1262ms)
+✔ unchanged original profile identities still normalize stale current and repeated batch selections (0.8775ms)
+✔ restored original product assignments select the canonical profile and keep source preferences recoverable (2.4236ms)
+✔ legacy table and annotation seeds retain canonical history without creating an old-profile success or receipt (1.7416ms)
+✔ reviewed profile sources couple old identities and history, preserve raw local cache, and resume exact SQLite ids after a lost reply (210.5245ms)
+✔ keeping a concurrent cloud product cancels its coupled old-profile history without writing detached identities (131.2453ms)
+✔ failure to persist a coupled profile recovery child rolls back the parent and all mutations before network writes (77.6661ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 41
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2402.7311
+
+✖ failing tests:
+
+test at tests\executor-original-profile-source.test.mjs:23:1
+✖ table-only original sources restore product seeds and original current/batch defaults without changing the source (5.7073ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      OldPhotoLive: {
+        anchorRules: {
+          allowExactMatch: false,
+          avoidWords: [],
+  ...
+        targetAudience: '',
+  +     updatedAt: '2026-10-07T00:00:00.000Z',
+  -     updatedAt: '2026-10-07T22:31:04.813Z',
+        url: 'https://old-photo.example',
+        useCases: [],
+        valueProposition: ''
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-profile-source.test.mjs:26:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { OldPhotoLive: { id: 'OldPhotoLive', name: 'OldPhotoLive AI', url: 'https://old-photo.example', promoUrl: 'https://old-photo.example', language: 'auto', fields: [Object], anchorRules: [Object], blogRules: [Object], targetAudience: '', valueProposition: '', useCases: [], sellablePoints: [], avoidContent: [], updatedAt: '2026-10-07T00:00:00.000Z', source: 'table' } },
+    expected: { OldPhotoLive: { id: 'OldPhotoLive', name: 'OldPhotoLive AI', url: 'https://old-photo.example', promoUrl: 'https://old-photo.example', language: 'auto', fields: [Object], anchorRules: [Object], blogRules: [Object], targetAudience: '', valueProposition: '', useCases: [], sellablePoints: [], avoidContent: [], updatedAt: '2026-10-07T22:31:04.813Z', source: 'table' } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-profile-source.test.mjs:32:1
+✖ old profile aliases restore original product fields, choices, strong receipts, monitoring and original catalog history (9.3517ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      OldPhotoLive: {
+        fields: {
+          Name: 'Owner name',
+          Pricing: 'owner',
+  ...
+        targetAudience: '',
+  +     updatedAt: '2026-10-07T00:00:00.000Z',
+  -     updatedAt: '2026-10-07T22:31:04.819Z',
+        url: 'https://comparison.example',
+        useCases: [],
+        valueProposition: ''
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-profile-source.test.mjs:35:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { OldPhotoLive: { id: 'OldPhotoLive', name: 'OldPhotoLive AI', source: 'user', url: 'https://owner-photo.example', fields: [Object], learnedFieldMappings: [Object], mediaVersions: [Array] }, TextComparison: { id: 'TextComparison', name: 'Comparison Text', url: 'https://comparison.example', promoUrl: 'https://comparison.example', language: 'auto', fields: [Object], anchorRules: [Object], blogRules: [Object], targetAudience: '', valueProposition: '', useCases: [], sellablePoints: [], avoidContent: [], updatedAt: '2026-10-07T00:00:00.000Z', source: 'table' } },
+    expected: { OldPhotoLive: { id: 'OldPhotoLive', name: 'OldPhotoLive AI', source: 'user', url: 'https://owner-photo.example', fields: [Object], learnedFieldMappings: [Object], mediaVersions: [Array] }, TextComparison: { id: 'TextComparison', name: 'Comparison Text', url: 'https://comparison.example', promoUrl: 'https://comparison.example', language: 'auto', fields: [Object], anchorRules: [Object], blogRules: [Object], targetAudience: '', valueProposition: '', useCases: [], sellablePoints: [], avoidContent: [], updatedAt: '2026-10-07T22:31:04.819Z', source: 'table' } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

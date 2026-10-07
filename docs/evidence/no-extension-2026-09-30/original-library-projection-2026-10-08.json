@@ -1,0 +1,210 @@
+{
+  "kind": "original_library_current_and_backup_projection_verified_not_full_migration",
+  "date": "2026-10-08",
+  "featureCommit": "cfe72d207feaaad986b85dba31cbaadf1630aab5",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourcePull": "Already up to date before work",
+  "reference": {
+    "backgroundAndSettingsSourceFrozen": true,
+    "originalProfilesQueueTimelineQualityClassifierAndGroupsFrozen": true,
+    "sameTestClockKeptAcrossReferenceAndMigration": true
+  },
+  "changes": [
+    "Keep library per-product status order from the original profile map",
+    "Do not interpret imported directory row metadata as backlink metrics"
+  ],
+  "repositoryTests": {
+    "passed": 918,
+    "failed": 0,
+    "skipped": 0,
+    "newTestsSince915": 3,
+    "latestSourceCovered": true
+  },
+  "actualReadOnlyAudit": {
+    "sources": 6,
+    "currentRows": 2948,
+    "archiveRows": [
+      2900,
+      2909,
+      2948,
+      2948,
+      2948
+    ],
+    "fieldsCompared": [
+      "url",
+      "domain",
+      "name",
+      "category",
+      "language",
+      "accessModel",
+      "tags",
+      "note",
+      "record",
+      "detail",
+      "rawFields",
+      "rowNumber",
+      "projects",
+      "time",
+      "annotation",
+      "quality",
+      "monitorStatus",
+      "metrics",
+      "preferences",
+      "profileStatuses",
+      "events",
+      "latestEvent",
+      "groups",
+      "progress"
+    ],
+    "comparisons": 422424,
+    "initialDifferences": 18864,
+    "remainingOriginalDisplayDifferences": 504,
+    "unexplainedDifferences": 0,
+    "exactOriginalDisplayMatches": false,
+    "dateDecodedProgressMatchesFrozenOriginalAlgorithm": true,
+    "originalRawDatesAndBusinessDataNotRewritten": true,
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "originalFilesAndLocalStateUnchanged": true,
+    "currentFacts": {
+      "products": 9,
+      "storedReceipts": 112,
+      "storedTimelineEvents": 462,
+      "favorites": 0,
+      "highQualityGroup": 40,
+      "freeSubmitGroup": 13,
+      "rowsWithDr": 81
+    }
+  },
+  "datePresentation": {
+    "existingMigrationBehavior": "Excel serial and Chinese morning/afternoon timestamps are decoded into calendar dates",
+    "originalDisplayDifferencesPreservedInAudit": true,
+    "originalProgressFunctionSourceUsedWithOnlyDateParserSubstituted": true,
+    "notAClaimOfExactOldDateDisplay": true
+  },
+  "nativeServices": {
+    "guardedReloadPassed": true,
+    "beforeAndAfterHistoricBusinessBaselinePassed": true,
+    "actualBothServiceModelsReadBack": true,
+    "actualRowsEach": 2948,
+    "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true,
+    "paused": true,
+    "busy": false,
+    "pendingQueues": 0,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "credentialsDraftHistoryAndPendingUnchanged": true
+  },
+  "workerChangedOrDeployed": false,
+  "originalChromeLaunched": false,
+  "productionBusinessWrites": 0,
+  "realModels": 0,
+  "realSubmissions": 0,
+  "historicalFavorites": {
+    "currentAndReviewedArchivesCount": 0,
+    "latestOriginalBrowserFavoriteDataVerified": false,
+    "completeHistoricalFavoritesMigrationClaimed": false
+  },
+  "remaining": [
+    "Latest original browser data and favorites",
+    "Complete history and other devices",
+    "All original execution and special publishing branches",
+    "Remaining original settings and dynamic controls"
+  ],
+  "migrationComplete": false,
+  "outputs": [
+    {
+      "path": "original-library-projection-2026-10-08/original-library-baseline-fixed-first-2026-10-08.txt",
+      "sha256": "43e5b859ec47f514f100e2e7c31a87f13642481aa34a458c8f26572f38bff32a",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "82816384ce470061cccc25160042bf0a16e52e065ff1f2dd2742764c8c537415"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-baseline-frozen-first-2026-10-08.txt",
+      "sha256": "4e926102372394aab0b8fe6274d503ff0d457d008ca53d73934a6d8efdc66376",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "52422cd1c8e10be8b117d1d42931ce650acff8d1c711986f9581f750e311c629"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-baseline-frozen-second-2026-10-08.txt",
+      "sha256": "03e4fbe1a4c4a24b3882119d010463cf5157487599c03ba8317b357dc0c85f5e",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "ba0dfbb015f3691e690f73428ddb04a8f392c27ab2263cd824b94ca1a03df083"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-frozen-view-2026-10-08.txt",
+      "sha256": "cdd425ccd4e42b8e95653212a32e9202470ac22d6e55263fc0ff229664718e33",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "0a0dcee9b5c85fb30568ac82cbc6d4834cd6f82c57b99a38f89adb5f0f4b863d"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-current-projection-first-2026-10-08.txt",
+      "sha256": "b4dec24d3ca50d52d28f462e92705f8cdeac762f41149ab07feed2257befac98",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "29777677fdaec4c357ffd66ff33702e13a9925fc105c94ff8e7b5806da556345"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-current-projection-second-2026-10-08.txt",
+      "sha256": "2832f0eb35e651540c652cb8e9ff13b7e31195278c4bdb92085df2a510309df7",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "f5e941de09f796ecee0efaf9e204684c610e0cd0f47a74880b94cc376ff85bbf"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-current-projection-final-2026-10-08.txt",
+      "sha256": "e71acdcf23879323ec83748e24ef3cee32c35c4e002e948e05cf406caa319fbb",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "de8f420727204ce3cbcedbbf0d4696ddab8456815b06613be1ea621ebf50fe95"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-field-diagnosis-2026-10-08.txt",
+      "sha256": "6b110da75312889729170f79f000a5fb8a5ebd599cbf3241770e9592a51692ea",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "a8ec91f9a30237c95906097f8d9448248535499282e34836c5fd7115c1cd3664"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-date-codec-source-2026-10-08.txt",
+      "sha256": "01d78792b36cdfc0976e2da2214a83a99d430b4e2b2038fcc43640004f75a300",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "b37f2aa8e18f9b70608c445993cf2958965e474597de1f1959c9bef5900df114"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-date-codec-source-second-2026-10-08.txt",
+      "sha256": "25c9c5ed4d2bb77eb4c280b3f75cfb46aa4abe650e0dadd3d038489c8367e1ae",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "fa4e6e744685dca2f941cd5ec49416c600571253bc1cbc92963cbf6e824a5eec"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-date-codec-repository-final-2026-10-08.txt",
+      "sha256": "ff011be0a8f18f6bd1df604c9918a0b89f98cc7f31156435b48f7c51cf50d2fd",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "e9d8f4b224d4a76341268b8cebcb693e404d5bde3b141a4e401a51ce42d2508d"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-projection-native-before-2026-10-08.txt",
+      "sha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-projection-native-after-2026-10-08.txt",
+      "sha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-projection-native-reload-2026-10-08.txt",
+      "sha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e"
+    },
+    {
+      "path": "original-library-projection-2026-10-08/original-library-native-model-readonly-2026-10-08.txt",
+      "sha256": "72efee84e0e0814bd45d4ddb7f7e7e64ba73a679aa0a936358d488e3d1187209",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "f7f2067b919dec7087919d7e9abb8dc5abf9c267263eb353eaf799d504c62c6a"
+    }
+  ]
+}

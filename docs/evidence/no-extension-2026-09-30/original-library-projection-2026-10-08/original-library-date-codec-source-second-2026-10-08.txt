@@ -1,0 +1,11 @@
+✔ full original library projection preserves preferences groups metrics original details and per-product timeline facts (19.0284ms)
+✔ imported row category metadata never becomes a backlink type and original per-product status order is retained (2.1508ms)
+✔ legacy date decoding is an explicit original-display difference and must still follow the frozen original progress algorithm (2.4294ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 272.836

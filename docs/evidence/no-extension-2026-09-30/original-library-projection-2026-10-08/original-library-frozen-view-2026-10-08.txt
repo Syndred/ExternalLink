@@ -1,0 +1,15 @@
+✔ full original library projection preserves preferences groups metrics original details and per-product timeline facts (13.9265ms)
+✔ library progress filters match original multi-product flags instead of only current status (10.0507ms)
+✔ library station status filtering uses the original multi-marker normalization and empty-list precedence (5.7486ms)
+✔ library original quality, position and domain sorts are not overridden by pinned preferences (10.1455ms)
+✔ library search matches original language, status/group labels, event notes, profile names and surrounding spaces (6.4154ms)
+✔ library model retains original positions, source fields and names of products with no submission (3.6047ms)
+✔ added favorite, enabled, fee, DR and product-assignment filters still compose with original filters (3.9048ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 337.6371

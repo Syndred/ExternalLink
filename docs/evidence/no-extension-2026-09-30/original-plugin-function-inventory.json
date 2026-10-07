@@ -2876,5 +2876,20 @@
     "migrationComplete": false,
     "originalEmbeddedLogoPriorityVerified": true,
     "actualOriginalBackupFilesReadonly": 47
+  },
+  "originalCurrentLibraryProjectionCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "cfe72d207feaaad986b85dba31cbaadf1630aab5",
+    "evidence": "original-library-projection-2026-10-08.json",
+    "repositoryTestsPassed": 918,
+    "actualSourcesCompared": 6,
+    "actualFieldComparisons": 422424,
+    "initialDifferences": 18864,
+    "remainingDatePresentationDifferences": 504,
+    "unexplainedDifferences": 0,
+    "exactOriginalDisplayMatches": false,
+    "nativeServicesUpdatedAndModelsReadBack": true,
+    "latestOriginalBrowserFavoritesAndCompleteHistoryVerified": false,
+    "migrationComplete": false
   }
 }

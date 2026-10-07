@@ -49,7 +49,7 @@ test('navigation uses pending local blacklist, contact and new-target edits whil
  try{
   for(const [key,value]of [['domainBlacklist',['first.fixture.invalid']],['cfgEmail','saved@fixture.invalid']])await enqueueLibraryMutation(runtime,{operation:{type:'settings',key,value}});await enqueueLibraryMutation(runtime,{operation:{type:'create',url:'https://new.fixture.invalid/form',fields:{note:'AI tool directory'}}});
   const local=overlayApplication(runtime,saved),expected=await originalLibraryBatchQueue(local),actual=await submissionQueue(runtime);
-  assert.deepEqual(actual.tasks.map(shape),expected.groups.map(shape));const first=actual.tasks.find(group=>group.url===urls[0]);assert.ok(first);assert.equal(first.jobs.every(job=>job.eligible===false),true);assert.equal(first.jobs.every(job=>job.config.email==='saved@fixture.invalid'),true);assert.ok(actual.tasks.some(group=>group.url==='https://new.fixture.invalid/form'));assert.deepEqual(saved,before);assert.equal(store.values('task:').length,0);assert.equal(store.values('run:').length,0);
+  assert.deepEqual(actual.tasks.map(shape),expected.groups.map(shape));const first=actual.tasks.find(group=>group.url===urls[0]);assert.ok(first);assert.equal(first.jobs.every(job=>job.eligible===false),true);assert.equal(actual.task.url,urls[0]);assert.equal(actual.task.jobs.every(job=>job.config.email==='saved@fixture.invalid'),true);assert.ok(actual.tasks.some(group=>group.url==='https://new.fixture.invalid/form'));assert.deepEqual(saved,before);assert.equal(store.values('task:').length,0);assert.equal(store.values('run:').length,0);
  }finally{store.close();}
 });
 
@@ -60,6 +60,17 @@ test('quick open accepts a locally saved pending target exactly as the frozen or
   const url='https://new.fixture.invalid/form';await enqueueLibraryMutation(runtime,{operation:{type:'create',url,fields:{note:'AI tool directory'}}});const expected=await originalLibraryQuickOpen(overlayApplication(runtime,saved),{urls:[url],batchSize:1});
   const result=await quickOpenLibrary(runtime,{urls:[url],batchSize:1});await runtime.quickOpenJob;assert.equal(store.get('quickOpenJob:'+result.job.id).status,'paused');connected=true;await quickOpenLibrary(runtime,{jobId:result.job.id});await runtime.quickOpenJob;
   assert.deepEqual(visited,expected);assert.equal(store.get('quickOpenJob:'+result.job.id).id,result.job.id);assert.deepEqual(store.get('quickOpenJob:'+result.job.id).history.map(row=>row.phase),['paused','resume_previous_error']);assert.deepEqual(saved,before);assert.equal(store.values('task:').length,0);assert.equal(store.values('run:').length,0);assert.equal(store.get('paused'),true);
+ }finally{store.close();}
+});
+
+test('original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations',async()=>{
+ const store=new Store(':memory:'),saved=snapshot();saved.documents.siteProfiles.p.logoDataUrl='data:image/png;base64,'+'A'.repeat(200000);store.set('pair',{endpoint:'https://cloud.fixture.invalid',workspaceId:'summary-nav'});store.set('paused',true);const runtime={store,cloud:{async request(){return structuredClone(saved);}}};
+ try{
+  const reference=await originalNavigationState(saved),actual=await submissionQueue(runtime),summaryKeys=Object.keys(reference.result.tasks[0]);
+  assert.deepEqual(actual.tasks.map(group=>Object.fromEntries(summaryKeys.map(key=>[key,group[key]]))),reference.result.tasks);assert.equal(actual.tasks.every(group=>group.jobs.every(job=>!Object.hasOwn(job,'config'))),true);assert.ok(actual.task.jobs[0].config.logoDataUrl.length>100000);
+  const complete=queues.originalNavigationQueue(saved);assert.ok(JSON.stringify(actual).length<JSON.stringify(complete.groups).length/20);
+  const legacy=await submissionQueue(runtime,{delta:1,open:false},true);assert.ok(legacy.tasks.every(group=>group.jobs.every(job=>Object.hasOwn(job,'config'))));assert.ok(legacy.jobs.every(job=>Object.hasOwn(job,'config')));
+  const compact=await submissionQueue(runtime,{delta:-1,open:false,compact:true},true);assert.equal(compact.tasks.every(group=>group.jobs.every(job=>!Object.hasOwn(job,'config'))),true);assert.ok(compact.task.jobs[0].config.logoDataUrl.length>100000);assert.equal(compact.task.key,actual.task.key);assert.equal(store.get('paused'),true);
  }finally{store.close();}
 });
 

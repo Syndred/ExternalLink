@@ -78,7 +78,7 @@ async function showSinglePage(){
 }
 async function showSubmissionQueue(){
  if(!detail.open)detail.showModal();const panel=$('detail-content'),selected=new Set(selectedProductIds()),choices=el('div',{class:'controls'}),current=el('div'),message=el('p',{role:'status'});let result,revision=0;
- const parameters=()=>({selectedSiteIds:orderedSelection(selected),category:libraryCategory,group:libraryGroup});
+ const parameters=()=>({compact:true,selectedSiteIds:orderedSelection(selected),category:libraryCategory,group:libraryGroup});
  const refresh=async(input,version=++revision)=>{const next=await request(input?.delta!==undefined?'/advanceSubmission':'/getSubmissionQueue',{...parameters(),...input});if(version!==revision||!choices.isConnected||!detail.open)return;result=next;if(!selected.size&&next.selectedProfileIds?.length){next.selectedProfileIds.forEach(id=>selected.add(id));renderChoices();message.textContent='未选择产品，沿用当前产品。';}renderCurrent();};
  function renderChoices(){choices.replaceChildren(...data.model.products.filter(p=>!p.archived).map(p=>checkControl('队列产品：'+p.name,selected.has(p.id),checked=>{
   if(checked)selected.add(p.id);else selected.delete(p.id);const version=++revision;result=null;current.replaceChildren(el('p',{text:'正在更新所选产品的队列…'}));

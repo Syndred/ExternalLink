@@ -1,0 +1,28 @@
+{
+  "kind": "progress_only_original_fresh_round_admission_gap",
+  "date": "2026-10-08",
+  "remotePull": {"command": "git pull --ff-only", "result": "Already up to date", "branch": "main", "headBeforeDocumentation": "657dd9b", "aheadBeforeDocumentation": 0, "behindBeforeDocumentation": 0},
+  "latestPublishedFeatureCommit": "df82ae72a07439f11640fa58fd5d17a23f6ccf39",
+  "existingTestOutputRead": {"source": "executor/test-output/original-agent-unavailable-complete-final-2026-10-08.txt", "tests": 825, "pass": 825, "fail": 0, "skipped": 0, "rerunThisCheckpoint": false, "provesCompleteMigration": false},
+  "readOnlySourceAudit": {
+    "nativeHistoricalTerminalStatusAdmissionGap": "executor/src/workbench-features.mjs:previewWorkbenchBatch",
+    "originalFreshQueueUsesReceiptsAndSiteAnnotations": "core/queue.js:buildDestinationGroups",
+    "d1UniqueIdentityAndProductHostConstraints": "cloud/worker/migrations/0002_d1_executor.sql:executor_controls",
+    "d1RegistrationInsertsNewControls": "cloud/worker/src/d1-executor.mjs:POST runs",
+    "previewOnlyChangeWouldNotRestoreCompleteRegistration": true,
+    "freshRoundGapFixedOrTested": false,
+    "productionDatabaseSchemaRechecked": false
+  },
+  "requiredNextWork": ["fresh_round_native_admission", "cloud_registration_preserving_historical_tasks_and_events", "current_selected_profile_and_new_round_budget", "receipt_unknown_attempt_active_controller_and_concurrency_protection", "lost_registration_reply_exact_id_recovery", "local_and_cloud_round_restore"],
+  "notYetProven": ["every_user_requested_ui_function_and_chinese_explanation", "latest_original_products_groups_favorites_settings", "original_visual_final_submission_receipt_and_navigation_rejudge", "captcha_order_and_all_visit_entries", "all_media_priorities_complete_old_history_media_other_devices_aliases"],
+  "featureCodeChangedThisCheckpoint": false,
+  "uncommittedFeatureDraftThisCheckpoint": false,
+  "nativeRuntimeRecheckedThisCheckpoint": false,
+  "nativeServiceReloadedThisCheckpoint": false,
+  "workerDeployedThisCheckpoint": false,
+  "allCloudBusinessDocumentsRecheckedThisCheckpoint": false,
+  "originalChromeLaunchedThisCheckpoint": false,
+  "realModelCallsThisCheckpoint": 0,
+  "realSubmissionsThisCheckpoint": 0,
+  "migrationComplete": false
+}

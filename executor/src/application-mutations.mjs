@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto';import { isDeepStrictEqual } from 'node
 import { applicationMutation as libraryMutation,applicationMutationSatisfied as libraryMutationSatisfied } from '../../core/application-mutation.mjs';import {workbenchScope} from './workbench-sync.mjs';
 import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
 export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
+function mutationIntent(snapshot,operation,change,hasPrior,knownRemote){
+ const localOnly=operation.type!=='recover_local'&&!hasPrior&&!snapshot.revisions[change.key]&&Object.hasOwn(snapshot.documents,change.key)&&knownRemote&&!Object.hasOwn(knownRemote.documents,change.key);
+ return localOnly?{operation:{type:'recover_local',key:change.key,data:change.data,id:operation.id,at:operation.at},originalOperation:operation,localOnlyBaseData:snapshot.documents[change.key],baseData:undefined,baseRevision:0}:{operation,baseData:snapshot.documents[change.key],baseRevision:snapshot.revisions[change.key]||0};
+}
 export async function resolveApplicationConflict(runtime,input){
  if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
  if(runtime.appMutationFlush)await runtime.appMutationFlush;
@@ -32,7 +36,7 @@ export async function enqueueLibraryMutation(runtime,input){
    return{...result,id:runtime.store.get('applicationPlan:'+result.planId).items[0].id,persisted:true};
   }
  }
- const item={id:operation.id,scope,at:operation.at,operation,key:change.key,baseData:snapshot.documents[change.key],baseRevision:saved.snapshot.revisions[change.key]||0,status:'pending'};
+ const prior=pendingApplication(runtime).some(item=>item.key===change.key),baseline={documents:snapshot.documents,revisions:saved.snapshot.revisions},item={id:operation.id,scope,at:operation.at,key:change.key,...mutationIntent(baseline,operation,change,prior,saved.remoteSnapshot),status:'pending'};
  runtime.store.set('appMutation:'+item.id,item); // Durable before the first cloud request.
  const result=await flushApplicationMutations(runtime);return{ok:true,id:item.id,persisted:true,...result};
 }
@@ -51,12 +55,12 @@ export async function enqueueApplicationPlan(runtime,{planId,operations,allowPen
  const scope=workbenchScope(runtime.store.get('pair'));let plan=planId&&runtime.store.get('applicationPlan:'+planId);
  if(planId&&(!plan||plan.scope!==scope))throw Error('原资料变更计划不存在');
  if(!plan){const saved=runtime.store.get('applicationSnapshot'),prior=pendingApplication(runtime);if(saved?.scope!==scope||!allowPending&&prior.length)throw Error('请先回读并同步现有资料');const baseline=baseSnapshot||saved.snapshot,working=allowPending?overlayApplication(runtime,baseline):structuredClone(baseline),id=randomUUID(),started=Math.max(Date.now(),allowPending&&prior.length?Date.parse(prior.at(-1).at)+1:0),items=[];
-  for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,operation,baseData:working.documents[change.key],baseRevision:baseline.revisions[change.key]||0,status:'pending',applicationPlanId:id});working.documents[change.key]=change.data;}
-  const catalogPlan=['clear_annotation','remove_queue','pin'].includes(items[0]?.operation.type);
+  for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,...mutationIntent({documents:working.documents,revisions:baseline.revisions},operation,change,prior.some(item=>item.key===change.key)||items.some(item=>item.key===change.key),baseSnapshot||saved.remoteSnapshot),status:'pending',applicationPlanId:id});working.documents[change.key]=change.data;}
+  const firstType=items[0]?.originalOperation?.type||items[0]?.operation.type,catalogPlan=['clear_annotation','remove_queue','pin'].includes(firstType);
   const profileRecovery=dependencyKind==='profile_recovery';
   if(catalogPlan||profileRecovery){for(let i=1;i<items.length;i++)items[i].dependsOn=items[i-1].id;}
-  else if(allowPending&&['profile_create','profile_delete','mark'].includes(items[0]?.operation.type)&&items[1])items[1].dependsOn=items[0].id;
-  plan={id,scope,at:new Date(started).toISOString(),items,status:'queued',...(profileRecovery?{kind:'profile_recovery'}:catalogPlan?{kind:'catalog_lifecycle'}:allowPending&&items[1]?.dependsOn?{kind:items[0].operation.type==='mark'?'annotation_lifecycle':'profile_lifecycle'}:{})};
+  else if(allowPending&&['profile_create','profile_delete','mark'].includes(firstType)&&items[1])items[1].dependsOn=items[0].id;
+  plan={id,scope,at:new Date(started).toISOString(),items,status:'queued',...(profileRecovery?{kind:'profile_recovery'}:catalogPlan?{kind:'catalog_lifecycle'}:allowPending&&items[1]?.dependsOn?{kind:firstType==='mark'?'annotation_lifecycle':'profile_lifecycle'}:{})};
   if(allowPending||catalogPlan||profileRecovery){runtime.store.db.exec('BEGIN IMMEDIATE');try{runtime.store.set('applicationPlan:'+id,plan);for(const item of items)runtime.store.set('appMutation:'+item.id,item);onPersist?.(id);runtime.store.db.exec('COMMIT');}catch(error){runtime.store.db.exec('ROLLBACK');throw error;}}
   else{runtime.store.set('applicationPlan:'+id,plan);onPersist?.(id);}
  }
@@ -75,6 +79,11 @@ async function performFlush(runtime){
   if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.length,error:'工作区已切换，原资料计划保留，停止写入'};
   if(item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status==='discarded'){item.status='discarded';item.discardedAt=new Date().toISOString();item.error=item.backupImportId?'原产品导入已选择保留云端，关联历史导入一并取消':runtime.store.get('applicationPlan:'+item.applicationPlanId)?.kind==='profile_recovery'?'原产品恢复已选择保留云端，关联资料恢复一并取消':item.operation.type==='profile_selection'?'产品变更已选择保留云端，关联的当前网站变更一并取消':'原网站操作已选择保留云端，后续关联变更一并取消';runtime.store.set('appMutation:'+item.id,item);continue;}
   if(blocked.has(item.key)&&!(item.status==='pending'&&item.resolution?.choice==='local')||item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status!=='confirmed')continue;
+  // Revision zero alone cannot establish absence. Read the cloud first; only
+  // a genuinely absent document can be created from the complete retained key.
+  if(item.baseRevision===0&&item.baseData!==undefined&&!Object.hasOwn(snapshot.documents,item.key)&&!snapshot.revisions[item.key]&&item.operation.type!=='recover_local'){
+   const original=item.operation,change=libraryMutation({...snapshot.documents,[item.key]:item.baseData},original);item.originalOperation=original;item.localOnlyBaseData=item.baseData;item.baseData=undefined;item.operation={type:'recover_local',key:item.key,data:change.data,id:original.id,at:original.at};runtime.store.set('appMutation:'+item.id,item);
+  }
   // A retained original timestamp can make a fetched row disappear during pruning.
   // Confirm the complete frozen cache result, rather than rewriting after a lost reply.
   const originalDomainResult=item.operation.type==='domain_metrics'&&libraryMutation({[item.key]:item.baseData},item.operation).data;

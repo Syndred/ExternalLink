@@ -27,6 +27,7 @@ export function pushLocalChanges(runtime){
  const operation=Promise.resolve().then(async()=>{
   if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
   const status=await cloudStatus(runtime);if(!status.connected)throw Error(status.error||'云端当前不可用，未上传本机修改');
+  const scope=workbenchScope(runtime.store.get('pair')),confirmedBefore=new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed').map(item=>item.id)),timelineBefore=pendingWorkbench(runtime).length;
   // A refreshed display cache must not authorize replacing a newer cloud value.
   const pending=pendingApplication(runtime),first=new Map();for(const item of pending)if(!first.has(item.key))first.set(item.key,item);
   const changed=[...first].filter(([key,item])=>item.status!=='conflict'&&(!Number.isInteger(item.baseRevision)||(status.revisions[key]||0)!==item.baseRevision)).map(([key])=>key);
@@ -36,6 +37,6 @@ export function pushLocalChanges(runtime){
   if(pendingApplication(runtime).length)await flushApplicationMutations(runtime);
   if(pendingFillLearning(runtime).length)await flushFillLearning(runtime);
   if(pendingWorkbench(runtime).length&&!blocked.has('submissionTimeline'))await journalSync(runtime).flush();
-  await runtime.cloud.flush(runtime.store);return cloudStatus(runtime);
+  await runtime.cloud.flush(runtime.store);const result=await cloudStatus(runtime),saved=[...new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed'&&!confirmedBefore.has(item.id)).map(item=>item.key))];if(pendingWorkbench(runtime).length<timelineBefore&&!saved.includes('submissionTimeline'))saved.push('submissionTimeline');return{...result,saved};
  });runtime.cloudPushOperation=operation.finally(()=>{runtime.cloudPushOperation=null;});return runtime.cloudPushOperation;
 }

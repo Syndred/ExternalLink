@@ -8,7 +8,7 @@ import {Store} from '../executor/src/store.mjs';
 import {workbenchScope,journalSync} from '../executor/src/workbench-sync.mjs';
 import {cloudStatus,pushLocalChanges} from '../executor/src/cloud-status.mjs';
 import {pullCloudState,previewCloudPull,commitCloudPull} from '../executor/src/cloud-pull.mjs';
-import {pendingApplication,flushApplicationMutations,enqueueLibraryMutation} from '../executor/src/application-mutations.mjs';
+import {pendingApplication,flushApplicationMutations,enqueueLibraryMutation,enqueueApplicationPlan} from '../executor/src/application-mutations.mjs';
 import {flushMediaUploads} from '../executor/src/media-uploads.mjs';
 import {flushFillLearning} from '../executor/src/fill-learning.mjs';
 import {applicationMutation} from '../core/application-mutation.mjs';
@@ -134,5 +134,18 @@ test('ordinary synchronization and individual cloud conflict choice retain unrel
 test('explicit individual local conflict choice can proceed while another edit of the same document remains held',async()=>{
  const f=await fixture();try{
   edit(f,'a','cfgName','conflict');edit(f,'b','cfgName','conflict');await resolveApplicationConflict(f.runtime,{id:'a',choice:'local',revision:1});assert.equal(f.remote.documents.cfgName,'Local a');assert.equal(f.store.get('appMutation:a').status,'confirmed');assert.equal(f.store.get('appMutation:b').status,'conflict');await resolveApplicationConflict(f.runtime,{id:'b',choice:'local',revision:2});assert.equal(f.remote.documents.cfgName,'Local b');assert.equal(pendingApplication(f.runtime).length,0);
+ }finally{await f.close();}
+});
+test('editing a local-only document uploads all original entries rather than only the latest edited row',async()=>{
+ const f=await fixture();try{
+  const saved=f.store.get('applicationSnapshot');saved.snapshot.documents.siteAnnotations={'keep.example':{note:'original note',library:{favorite:true,groups:['high_quality']}}};delete saved.snapshot.revisions.siteAnnotations;f.store.set('applicationSnapshot',saved);delete f.remote.documents.siteAnnotations;delete f.remote.revisions.siteAnnotations;
+  const result=await enqueueLibraryMutation(f.runtime,{operation:{type:'mark',url:'https://new.example/form',status:'needs_login'}});assert.equal(result.pending,0);assert.equal(f.remote.documents.siteAnnotations['keep.example'].note,'original note');assert.deepEqual(f.remote.documents.siteAnnotations['keep.example'].library.groups,['high_quality']);assert.equal(f.store.values('appMutation:')[0].originalOperation.type,'mark');assert.equal(f.requests.filter(request=>request.route==='library').length,1);
+ }finally{await f.close();}
+});
+test('offline local-only product creation retains original products, plan dependencies and explicit upload confirmations',async()=>{
+ const f=await fixture();try{
+  delete f.remote.documents.siteProfiles;delete f.remote.revisions.siteProfiles;const saved=f.store.get('applicationSnapshot');delete saved.snapshot.revisions.siteProfiles;saved.remoteSnapshot=structuredClone(f.remote);f.store.set('applicationSnapshot',saved);f.runtime.handle=async()=>{throw Error('offline');};
+  const plan=await enqueueApplicationPlan(f.runtime,{operations:[{type:'profile_create',profileId:'new',profile:{id:'new',name:'New',fields:{Name:'New',Url:'https://new-product.example'}}},{type:'profile_selection',key:'activeSiteId',value:'new'}],allowPending:true});const stored=f.store.get('applicationPlan:'+plan.planId);assert.equal(stored.kind,'profile_lifecycle');assert.equal(stored.items[1].dependsOn,stored.items[0].id);assert.equal(stored.items[0].originalOperation.type,'profile_create');f.runtime.handle=null;
+  const result=await pushLocalChanges(f.runtime);assert.deepEqual(new Set(result.saved),new Set(['siteProfiles','activeSiteId']));assert.equal(f.remote.documents.siteProfiles.p.name,'Original');assert.equal(f.remote.documents.siteProfiles.new.name,'New');assert.equal(f.remote.documents.activeSiteId,'new');assert.equal(pendingApplication(f.runtime).length,0);assert.equal(f.store.get('task:unknown').profileSnapshot.name,'Original');
  }finally{await f.close();}
 });

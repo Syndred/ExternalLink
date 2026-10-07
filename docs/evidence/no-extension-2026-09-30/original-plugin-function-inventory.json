@@ -601,7 +601,7 @@
     },
     {
       "action": "cloudSyncPush",
-      "mapping": "cloudSyncPush：原待同步编辑修订号检查及冲突跳过；本轮主要单元证据",
+      "mapping": "cloudSyncPush：原待同步版本检查、冲突跳过、完整仅本机资料；认证D1手动上传及远端变化拦截已验证",
       "status": "implemented_requires_full_acceptance"
     },
     {
@@ -2119,6 +2119,20 @@
     "productionReadOnlyControls": true,
     "productionAdoptions": 0,
     "manualUploadPreflightUnitEvidence": true,
+    "goalComplete": false
+  },
+  "originalCloudUploadCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-cloud-upload-2026-10-07.json",
+    "tests": 670,
+    "newTests": 2,
+    "authenticatedD1ServicesAndChrome": true,
+    "actualManualUpload": true,
+    "actualRemoteAdvanceBeforeWrite": true,
+    "actualLocalOnlyFullDocument": true,
+    "productionLatestCloudReadVerified": false,
+    "productionCloudError": "ECONNRESET",
+    "productionUploads": 0,
     "goalComplete": false
   }
 }

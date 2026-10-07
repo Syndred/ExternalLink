@@ -2814,5 +2814,19 @@
     "allOriginalEntriesVerified": false,
     "completeHistoryAndOtherDevicesVerified": false,
     "migrationComplete": false
+  },
+  "originalHumanGateDraftProgressCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "progress-push-human-gate-draft-2026-10-08.json",
+    "publishedFeatureCommit": "e95b48d7399ed70eb9aa57c8e8f1e51731fab38b",
+    "draftPublished": false,
+    "reasonPreferredPairsCompared": 96,
+    "focusedPassed": 12,
+    "executorPatternPassed": 781,
+    "entireRepositorySuiteVerified": false,
+    "authenticatedD1AndPostgresHumanAttentionRestoreVerified": false,
+    "allOriginalBranchesVerified": false,
+    "latestOriginalDataAndFullHistoryVerified": false,
+    "migrationComplete": false
   }
 }

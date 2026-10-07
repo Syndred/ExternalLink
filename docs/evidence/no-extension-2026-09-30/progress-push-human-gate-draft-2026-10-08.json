@@ -1,0 +1,130 @@
+{
+  "kind": "progress_only_human_gate_draft_not_completion_proof",
+  "date": "2026-10-08",
+  "repository": {
+    "branch": "main",
+    "pull": "git pull --ff-only",
+    "pullResult": "Already up to date.",
+    "headBeforeProgressCommit": "e95b48d7399ed70eb9aa57c8e8f1e51731fab38b",
+    "originMainBeforeProgressCommit": "e95b48d7399ed70eb9aa57c8e8f1e51731fab38b",
+    "ahead": 0,
+    "behind": 0
+  },
+  "published": {
+    "featureCommit": "e95b48d7399ed70eb9aa57c8e8f1e51731fab38b",
+    "uiEvidence": "user-visible-ui-2026-10-08/ui-state.json",
+    "latestNativeRuntimeCommitFromPreviousReadback": "b3776ca0e91f23f92dbd5aeb5e7bcc9dec74cd0a",
+    "nativeRuntimeRecheckedThisProgressPush": false
+  },
+  "draft": {
+    "files": [
+      {
+        "path": "executor/src/original-site-classification.mjs",
+        "sha256": "402c46d96f9bee87188e7d9f89b80cdced7896958417a6529db869604cc666b8"
+      },
+      {
+        "path": "executor/src/runtime.mjs",
+        "sha256": "857b96191c7d9ca9f653b5b3e3e1c3feeaad40d8a2cee53b1fdb07d662124747"
+      },
+      {
+        "path": "executor/src/browser-assistant.mjs",
+        "sha256": "e9da31a5081c1774b72b6be3631e4b3fe929a668f8005c5748dec79bdef016d3"
+      },
+      {
+        "path": "executor/src/single-page.mjs",
+        "sha256": "e53389b1e67a2b22a351ff2206b22c995b74ac85875b20c2b001f0fa9ea5db83"
+      },
+      {
+        "path": "executor/src/product-hunt.mjs",
+        "sha256": "b973a21a227f7eb636f1b2eef6c8064fe480a5b51a6bf5fff879fe71b402eb7e"
+      },
+      {
+        "path": "tests/executor-original-task-classification.test.mjs",
+        "sha256": "1c19a609f43eafe391ebd4698a1db1b320d63f3e2dba1beca1380bbb0f593729"
+      },
+      {
+        "path": "tests/executor-original-human-gates.test.mjs",
+        "sha256": "87eb66ea6912249451fc27a8d06e962a3c61ba97f0d2172a0ff2b4bd174380c6"
+      },
+      {
+        "path": "executor/test/original-full-visit-fill.mjs",
+        "sha256": "2d24608d52b8a851044cde108c5aaf9f8e293b9b7e7def4dc7e1500ef531d1de"
+      },
+      {
+        "path": "tests/executor-original-full-visit-fill.test.mjs",
+        "sha256": "3f1e68d2247e04101339d6978e8c4a413f938c55dac44a3e367470cf617d6066"
+      }
+    ],
+    "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "originalReasonPreferredPairsCompared": 96,
+    "actualIsolatedAutoVisitScenarios": 13,
+    "actualIsolatedManualSinglePageScenarios": 14,
+    "committed": false,
+    "pushed": false,
+    "nativeServicesReloaded": false,
+    "deployed": false,
+    "authenticatedD1AndPostgresHumanAttentionRestoreVerified": false,
+    "allOriginalBranchesVerified": false
+  },
+  "verification": {
+    "red": {
+      "path": "executor/test-output/original-human-gate-attention-red-2026-10-08.txt",
+      "passed": 6,
+      "failed": 1,
+      "sha256": "dd8c7c3d5766052224fea476eab93ab4c99b310c14ea92e62ed308af04b448dc",
+      "bytes": 1923,
+      "outputReadThisProgressPush": true,
+      "testsRerunThisProgressPush": false
+    },
+    "source": {
+      "path": "executor/test-output/original-human-gate-source-final-2026-10-08.txt",
+      "passed": 2,
+      "failed": 0,
+      "sha256": "75d5bcefe71d9832d5b68f00295009feef0993edb112de710da43860df518f26",
+      "bytes": 406,
+      "outputReadThisProgressPush": true,
+      "testsRerunThisProgressPush": false
+    },
+    "sourceAndNative": {
+      "path": "executor/test-output/original-human-gate-source-native-2026-10-08.txt",
+      "passed": 9,
+      "failed": 0,
+      "sha256": "428fb730a5338a0b3525b79a6ef4ba397bd09621dfb6bcdb67871a29235b7690",
+      "bytes": 1318,
+      "outputReadThisProgressPush": true,
+      "testsRerunThisProgressPush": false
+    },
+    "focused": {
+      "path": "executor/test-output/original-human-gate-focused-2026-10-08.txt",
+      "passed": 12,
+      "failed": 0,
+      "sha256": "d7e796019482a935ba1d7be8bdc69fd52c40c538999362c1eed364ae2ec3ba6d",
+      "bytes": 1750,
+      "outputReadThisProgressPush": true,
+      "testsRerunThisProgressPush": false
+    },
+    "executorPattern": {
+      "path": "executor/test-output/original-human-gate-all-2026-10-08.txt",
+      "passed": 781,
+      "failed": 0,
+      "sha256": "205d376b5022d4b53f65f41034db3367373744d310195df19ba14723d5df3204",
+      "bytes": 92290,
+      "outputReadThisProgressPush": true,
+      "testsRerunThisProgressPush": false,
+      "command": "node --test tests/executor*.test.mjs",
+      "skipped": 0,
+      "entireRepositorySuite": false,
+      "comparableToPrevious898": false
+    }
+  },
+  "productionStateRecheckedThisProgressPush": false,
+  "cloudBusinessHashesRecheckedThisProgressPush": false,
+  "originalChromeLaunchedThisProgressPush": false,
+  "nativeServicesReloadedThisProgressPush": false,
+  "workerDeployedThisProgressPush": false,
+  "productionBusinessWritesThisProgressPush": 0,
+  "realModelCallsThisProgressPush": 0,
+  "realSubmissionsThisProgressPush": 0,
+  "allUserRequirementsRetained": true,
+  "migrationComplete": false
+}

@@ -1,0 +1,20 @@
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (52.3006ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (8.7301ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1538.8452ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1011.7603ms)
+✔ cloud fallback logo and screenshots match the first pre-refactor fill helper without modifying original profile or public image fields (29.3491ms)
+✔ explicit selected cloud versions and disabled slots retain their selection while cloud defaults cannot use other products or non-images (0.5115ms)
+✔ D1 catalogue pagination keeps the original list order and refuses repeated cursors (0.5366ms)
+✔ original catalogue failure and bounded timeout preserve public and embedded fields without suppressing explicit cloud selections (12.1131ms)
+✔ original native work consumes frozen cloud defaults even when current cloud catalogue and public-only original fields differ (11.2538ms)
+✔ old native catalogues recover only their own proved image versions and are never rewritten or replaced by the current catalogue (0.5602ms)
+✔ actual isolated automatic and manual single-page fields upload original frozen cloud defaults with exact file SHA and no model or submission (1469.2827ms)
+✔ actual original mapper keeps embedded logo priority with a frozen cloud fallback in both automatic and manual entry points (1391.6717ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3275.3617

@@ -2,13 +2,13 @@
   "kind": "original_cloud_media_defaults_and_fallback_verified_checkpoint_not_full_migration",
   "date": "2026-10-08",
   "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
-  "featureCommit": "ec63ff80191a5772313cf3744f7a1ec7e7881171",
+  "featureCommit": "b09f2a3d9530fcc5ebe03bd6e02c39ccaf0c1875",
   "sourcePublished": true,
   "repositorySuite": {
-    "passed": 914,
+    "passed": 915,
     "failed": 0,
     "skipped": 0,
-    "additionalTestsSince902": 12,
+    "additionalTestsSince902": 13,
     "latestPublishedSourceCovered": true
   },
   "originalBehavior": {
@@ -21,7 +21,8 @@
     "oldTasksUseOnlyTheirOwnProvedFrozenMedia": true,
     "newEmptyDefaultMarkerPreventsLaterCatalogueSubstitution": true,
     "staleManualPageCallbacksRejectChangedFrozenMediaDefaults": true,
-    "profileAndManifestNotRewritten": true
+    "profileAndManifestNotRewritten": true,
+    "embeddedLogoPriorityRetained": true
   },
   "authenticatedFixtures": {
     "backends": [
@@ -45,7 +46,7 @@
     "productionWrites": 0
   },
   "deployment": {
-    "workerVersion": "451853e0-f299-4a63-b390-7eff4ea0736f",
+    "workerVersion": "b26f51e9-c6ce-4fe3-a02c-dd2739868dca",
     "anonymousSnapshotStatus": 401,
     "nativeOriginalServicePorts": [
       19388,
@@ -69,7 +70,8 @@
     },
     "currentDeviceCloudDocuments": 19,
     "currentDeviceInventoryTasks": 778,
-    "beforeAndAfterAllDocumentHashAndRevisionReadbackPassed": true
+    "beforeAndAfterAllDocumentHashAndRevisionReadbackPassed": true,
+    "latestEmbeddedCorrectionNativeAndCloudReadbackPassed": true
   },
   "productionBusinessWrites": 0,
   "originalChromeLaunched": false,
@@ -84,43 +86,131 @@
   "outputs": [
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-repository-final-2026-10-08.txt",
-      "sha256": "745f3f73c0d7238e31b027bc09d63151b0913296e114a5188c8d392a3c9c35ca"
+      "sha256": "2b58ae3333446ebe562807af2279efb872ffc759322841af3652f52a5cd2d4ca",
+      "originalOutputSha256": "745f3f73c0d7238e31b027bc09d63151b0913296e114a5188c8d392a3c9c35ca",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-fallback-first-2026-10-08.txt",
-      "sha256": "88444e2b76d4c80f09c20954bcd77f42e14ee91f74f5ff7c51dafd728839271d"
+      "sha256": "23fa72a004057a608646d3e73126f4ddaaa1bc9128eb5079e53fb29d08572c3d",
+      "originalOutputSha256": "88444e2b76d4c80f09c20954bcd77f42e14ee91f74f5ff7c51dafd728839271d",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-browser-second-2026-10-08.txt",
-      "sha256": "fd343fec02d9e7d9bf0804da72b2a21ca398cedb694c8dab1fdffe2078c08c4a"
+      "sha256": "0e33d347b8c0ac222a039c1fb6b2701619281dfbc6bda4b48dcde62b5d995961",
+      "originalOutputSha256": "fd343fec02d9e7d9bf0804da72b2a21ca398cedb694c8dab1fdffe2078c08c4a",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-native-before-2026-10-08.txt",
-      "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+      "sha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "originalOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-native-after-2026-10-08.txt",
-      "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+      "sha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "originalOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-native-reload-2026-10-08.txt",
-      "sha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e"
+      "sha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e",
+      "originalOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-cloud-before-2026-10-08.txt",
-      "sha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b"
+      "sha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486",
+      "originalOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-cloud-after-2026-10-08.txt",
-      "sha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b"
+      "sha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486",
+      "originalOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-worker-deploy-2026-10-08.txt",
-      "sha256": "15270fa5d388acb23a500f7b418839f1907b43cb5f558c02bb8b86f9ce260810"
+      "sha256": "93d1ab787d48c0476f4671684bfd3577459c92681336444e8679633d680a811d",
+      "originalOutputSha256": "15270fa5d388acb23a500f7b418839f1907b43cb5f558c02bb8b86f9ce260810",
+      "sha256Covers": "published Git blob bytes"
     },
     {
       "path": "original-cloud-media-2026-10-08/original-cloud-media-worker-smoke-2026-10-08.txt",
-      "sha256": "de83fbf3f98947a69dd962a307ac8fbb9fb03f0b8a0ef9ae374c1c4e96b3af2a"
+      "sha256": "ebbc7fb405424f601175486df27bfef979ef2f31fa5a698f312ccf3de65a4320",
+      "originalOutputSha256": "de83fbf3f98947a69dd962a307ac8fbb9fb03f0b8a0ef9ae374c1c4e96b3af2a",
+      "sha256Covers": "published Git blob bytes"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-focused-2026-10-08.txt",
+      "sha256": "209424642b27b78dd2bd299d955941896e1eb0d31239b5589677cf2da0c95d87",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "f2b7a90af7a5e8dec52262a4c3433f5cb64d7f3c2f97f4cd62e0b5e2fe8bafb8"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-repository-final-2026-10-08.txt",
+      "sha256": "ebd953e0a1385d5388656bb27843f02ca3cc6dbbde3bdeca2016a0ea8c7f36a4",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "63156855c8e468807ed8b1568f3e8a3effafe479bf7268b40a7ad5d5bf0f3519"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-worker-deploy-2026-10-08.txt",
+      "sha256": "6da0d3dfae9d01ab48f7321d6bb4d34fc699e249dbea67d36858ba1d4dc13978",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "2f01c8ba7ae2d7990afec6cba2786c95020f771e0253441d1f5307202b5f3149"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-native-reload-2026-10-08.txt",
+      "sha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-native-after-2026-10-08.txt",
+      "sha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-embedded-cloud-after-2026-10-08.txt",
+      "sha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-backup-scope-readonly-2026-10-08.txt",
+      "sha256": "8cfdf79cf0a7e28d350ced5d2aebbbc66d1c18c00e0ce61ff3fc054aad977f1c",
+      "sha256Covers": "published Git blob bytes",
+      "originalOutputSha256": "16b05d7f57fff008e818390002e1cf6ba3122128005d3dce4cee472d1f60895c"
     }
-  ]
+  ],
+  "originalDefaultsFeatureCommit": "ec63ff80191a5772313cf3744f7a1ec7e7881171",
+  "previousRepositorySuite": {
+    "passed": 914,
+    "failed": 0,
+    "skipped": 0,
+    "additionalTestsSince902": 12,
+    "latestPublishedSourceCovered": true
+  },
+  "embeddedPriorityCorrection": {
+    "featureCommit": "b09f2a3d9530fcc5ebe03bd6e02c39ccaf0c1875",
+    "originalBackgroundAndContentSourceCompared": true,
+    "earlierClearingOfEmbeddedLogoWasIncorrect": true,
+    "originalEmbeddedLogoRetainedBeforeCloudFallback": true,
+    "actualAutomaticAndManualBrowserFilesShaVerified": true,
+    "successfulEmbeddedUploadDoesNotFetchCloudLogo": true,
+    "focusedTestsPassed": 12,
+    "allOriginalMediaBranchesVerified": false
+  },
+  "actualOriginalBackupScopeReadOnly": {
+    "files": 47,
+    "acceptedJson": 5,
+    "rejectedCloudPullJson": 18,
+    "foreignWorkspace": 36,
+    "originalFilesAndExecutorStateUnchanged": true,
+    "realHistoryImported": false
+  }
 }

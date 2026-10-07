@@ -2861,18 +2861,20 @@
   },
   "originalCloudMediaDefaultsCheckpoint": {
     "date": "2026-10-08",
-    "featureCommit": "ec63ff80191a5772313cf3744f7a1ec7e7881171",
+    "featureCommit": "b09f2a3d9530fcc5ebe03bd6e02c39ccaf0c1875",
     "evidence": "original-cloud-media-2026-10-08.json",
-    "repositoryTestsPassed": 914,
+    "repositoryTestsPassed": 915,
     "failed": 0,
     "skipped": 0,
     "authenticatedD1AndNeonRegistrationAndErrorFallbackRestore": true,
     "actualIsolatedAutomaticAndManualFileShaVerified": true,
-    "workerVersion": "451853e0-f299-4a63-b390-7eff4ea0736f",
+    "workerVersion": "b26f51e9-c6ce-4fe3-a02c-dd2739868dca",
     "nativeServicesGuardedReloadPassed": true,
     "currentDeviceCloudHashReadbackPassed": true,
     "allOriginalMediaBranchesVerified": false,
     "latestOriginalDataAndCompleteHistoryVerified": false,
-    "migrationComplete": false
+    "migrationComplete": false,
+    "originalEmbeddedLogoPriorityVerified": true,
+    "actualOriginalBackupFilesReadonly": 47
   }
 }

@@ -217,7 +217,7 @@
   document.addEventListener("submit", observeManualSubmission, true);
 
   function onExtensionMessage(msg, sender, sendResponse) {
-    if (!services.authorized && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
+    if (!services.authorized && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','normalizeNativeMediaUpload','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
       sendResponse({ ok: false, migrated: true, error: '自动填写与提交已迁入 Windows 执行器' });
       return true;
     }
@@ -420,6 +420,12 @@
         .catch((err) => {
           sendResponse({ ok: false, results: [], error: err.message });
         });
+      return true;
+    }
+    if (msg.action === "normalizeNativeMediaUpload") {
+      normalizeNativeMediaUpload(msg.selector, msg.dataUrl)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
     }
     if (msg.action === "prepareVisualSnapshot") {
@@ -7584,6 +7590,30 @@
       source: response.source || "cloud",
       sourceSha256: response.sha256 || "",
     };
+  }
+
+  async function normalizeNativeMediaUpload(selector, dataUrl) {
+    const pageContext = capturePageContext();
+    const inputs = document.querySelectorAll(selector);
+    if (inputs.length !== 1 || inputs[0].type !== "file" || inputs[0].disabled) {
+      throw new Error("原图片上传控件已变化");
+    }
+    if (typeof dataUrl !== "string" || dataUrl.length > 9 * 1024 * 1024 ||
+        !/^data:image\/(?:png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl)) {
+      throw new Error("原图片数据无效");
+    }
+    const blob = await (await fetch(dataUrl)).blob();
+    const normalized = await normalizeImageForFileInput(blob, inputs[0]);
+    const output = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("转换后的图片无法读取"));
+      reader.readAsDataURL(normalized);
+    });
+    if (!isCurrentPageContext(pageContext) || !inputs[0].isConnected || inputs[0].disabled) {
+      throw new Error("图片上传页面或控件已变化");
+    }
+    return { ok: true, dataUrl: output, mime: normalized.type, bytes: normalized.size };
   }
 
   async function attachBlobToFileInput(input, blob, sourceName) {

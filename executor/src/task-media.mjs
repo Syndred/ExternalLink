@@ -2,10 +2,17 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import {originalTaskMediaEvidence} from './task-media-evidence.mjs';
+import {decodeImageAsset} from '../../core/media-assets.mjs';
+import {profiles} from './shared.mjs';
 
-export async function materializeTaskMedia(runtime,task,config,kind) {
+export async function materializeTaskMedia(runtime,task,config,kind,{useEmbeddedLogo=true}={}) {
+  if(kind==='screenshot')kind='screenshot1';
+  if(!/^(?:logo|featured|screenshot[1-4])$/.test(kind))throw Error('素材类别无效');
+  if(config.mediaDisabled?.[kind])throw Error('该产品已停用 '+kind+' 素材');
   const index=Number(kind.replace('screenshot',''))||1;
-  const ref=kind==='logo'?config.logoUrl:kind==='featured'?config.featuredImage:config.screenshots?.[index-1];
+  const embedded=kind==='logo'&&useEmbeddedLogo?config.logoDataUrl:'';
+  if(embedded&&task.profileSnapshot&&profiles.buildAgentConfigFromProfile(task.profileSnapshot).logoDataUrl!==embedded)throw Error('内置图片不属于原任务冻结的产品资料');
+  const ref=embedded||(kind==='logo'?config.logoUrl:kind==='featured'?config.featuredImage:config.screenshots?.[index-1]);
   if(!ref)throw Error('该产品缺少已配置的 '+kind+' 素材');
   const frozen=task.acceptanceId?runtime.store.get('acceptance:'+task.acceptanceId):null;
   const asset=frozen?.combinations.find(c=>c.profileId===task.profileId)?.mediaManifest.find(a=>a.kind===kind&&a.ref===ref&&a.ok);
@@ -19,7 +26,9 @@ export async function materializeTaskMedia(runtime,task,config,kind) {
     return file;
   }
   let bytes,mime,originalEvidence;
-  if(ref.startsWith('cloud-media://')){
+  if(embedded){
+    bytes=Buffer.from(decodeImageAsset(embedded));mime=embedded.slice(5,embedded.indexOf(';'));
+  }else if(ref.startsWith('cloud-media://')){
     const original=runtime.store.get('run:'+task.runId)?.mediaManifest?.find(asset=>asset.asset_id===ref.slice(14));
     originalEvidence=await originalTaskMediaEvidence(runtime,task,ref);
     const expected=original?.sha256||originalEvidence?.sha256;
@@ -43,6 +52,20 @@ export async function materializeTaskMedia(runtime,task,config,kind) {
   const folder=join(runtime.home,'task-media');await mkdir(folder,{recursive:true});
   const file=join(folder,sha256+'.'+(mime==='image/jpeg'?'jpg':mime==='image/svg+xml'?'svg':mime.split('/')[1].replace(/[^a-z0-9]/gi,'')));
   await writeFile(file,bytes);
-  runtime.update(task,{usedMedia:[...(task.usedMedia||[]).filter(m=>m.kind!==kind),{kind,ref,sha256,bytes:bytes.length,mime,at:new Date().toISOString(),...(originalEvidence?{source:originalEvidence.source,sourceScopeSha256:originalEvidence.sourceScopeSha256,recoveredOriginalChecksum:originalEvidence.recoveredOriginalChecksum}:{})}]},'media_materialized');
+  runtime.update(task,{usedMedia:[...(task.usedMedia||[]).filter(m=>m.kind!==kind),{kind,ref,sha256,bytes:bytes.length,mime,at:new Date().toISOString(),...(embedded?{source:'embedded'}:originalEvidence?{source:originalEvidence.source,sourceScopeSha256:originalEvidence.sourceScopeSha256,recoveredOriginalChecksum:originalEvidence.recoveredOriginalChecksum}:{})}]},'media_materialized');
   return file;
+}
+
+// Keep the original frozen checksum distinct from the file transformed for a
+// particular site's format, dimensions or crop. The shared original mapper
+// owns those transformations for both ordinary fill and native upload actions.
+export async function materializeTaskUpload(runtime,task,config,kind,engine,selector){
+  const file=await materializeTaskMedia(runtime,task,config,kind),canonicalKind=kind==='screenshot'?'screenshot1':kind,original=task.usedMedia.find(item=>item.kind===canonicalKind),bytes=await readFile(file);
+  if(createHash('sha256').update(bytes).digest('hex')!==original.sha256)throw Error('原图片落地后校验失败，禁止替换版本');
+  const result=await engine.call({action:'normalizeNativeMediaUpload',selector,dataUrl:'data:'+original.mime+';base64,'+bytes.toString('base64')});
+  if(!result?.ok)throw Error(result?.error||'原图片转换失败');
+  const output=Buffer.from(decodeImageAsset(result.dataUrl)),mime=result.dataUrl.slice(5,result.dataUrl.indexOf(';')),sha256=createHash('sha256').update(output).digest('hex'),extension=mime==='image/jpeg'?'jpg':mime==='image/svg+xml'?'svg':mime.split('/')[1],uploadFile=join(runtime.home,'task-media',sha256+'.'+extension);
+  await writeFile(uploadFile,output);
+  runtime.update(task,{usedMedia:task.usedMedia.map(item=>item.kind===canonicalKind?{...item,uploadSha256:sha256,uploadMime:mime,uploadBytes:output.length,transformed:sha256!==original.sha256||mime!==original.mime}:item)},'media_upload_prepared');
+  return uploadFile;
 }

@@ -42,7 +42,7 @@ export class AgentBrowserAdapter {
     else if(action.type==='check')args=[action.checked===false?'uncheck':'check',action.selector];
     else if(action.type==='click')args=['click',action.selector];
     else if(action.type==='wait')args=['wait',String(Math.min(3000,Number(action.timeout_ms)||500))];
-    else if(action.type==='upload')args=['upload',action.selector,await this.upload(action.mediaKind)];
+    else if(action.type==='upload'){const file=await this.upload(action.mediaKind,action.selector);await this.assertTarget();args=['upload',action.selector,file];}
     else throw Error('接管动作不受支持');
     return this.command(args);
   }

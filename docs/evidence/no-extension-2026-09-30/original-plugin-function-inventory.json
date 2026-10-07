@@ -1,5 +1,21 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalEmbeddedNativeMediaCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-embedded-native-media-2026-10-07.json",
+    "fullSuitePassed": 737,
+    "newTests": 6,
+    "actualNativeMainAndIframeImageCases": 8,
+    "originalSharedImageTransformUsed": true,
+    "originalEmbeddedTaskSnapshotKept": true,
+    "realModelCalls": 0,
+    "nativeServicesUpdated": true,
+    "actualOriginalBackupCatalogueBothServicesVerified": true,
+    "originalEightSourcesKeptAndOneCurrentCacheCaptured": true,
+    "originalNativeBusinessMatchesHistoricBaseline": true,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalBackupScopeCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-backup-scope-2026-10-07.json",

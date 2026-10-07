@@ -43,7 +43,7 @@ import{getTargetInfo}from'./browser-target.mjs';
 import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenchScope}from'./workbench-sync.mjs';
 import { runPreparationTakeover } from './auto-takeover.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
-import { materializeTaskMedia } from './task-media.mjs';
+import { materializeTaskMedia,materializeTaskUpload } from './task-media.mjs';
 import {selectedFrozenPngLogo} from '../../core/task-media-selection.mjs';
 import {originalTaskMediaEvidence} from './task-media-evidence.mjs';
 import {recordTaskMediaUpload} from './task-media-feedback.mjs';
@@ -866,7 +866,7 @@ export class Runtime {
     let candidate;
     let normalDone=normalFillDone;
     const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
-      upload:kind=>materializeTaskMedia(this,task,config,kind)});
+      upload:async(kind,selector)=>{const file=await materializeTaskUpload(this,task,config,kind,candidate.engine,selector);if(!active())throw Error('原任务已暂停，未上传图片');return file;}});
     let bound=false;
     const observe=async()=>{
       await this.preparePublicPage(page,task);
@@ -912,7 +912,7 @@ export class Runtime {
         if(candidate.frame===page.mainFrame())result=await adapter.act(action);
         // Embedded forms share the same registered task page. The normal
         // Playwright frame executor supplies the scope that CLI selectors lack.
-        else if(action.type==='upload')result=await candidate.frame.locator(action.selector).setInputFiles(await materializeTaskMedia(this,task,config,action.mediaKind));
+        else if(action.type==='upload'){const file=await materializeTaskUpload(this,task,config,action.mediaKind,candidate.engine,action.selector);if(!active())throw Error('原任务已暂停，未上传图片');result=await candidate.frame.locator(action.selector).setInputFiles(file);}
         else result=await candidate.engine.call({action:'executeActionPlan',actions:[action]});
         if(action.type==='click')await settleObservedClick(page,before);
         return result;
@@ -1819,7 +1819,7 @@ export class Runtime {
       const entries=[['logo',config.logoUrl],['featured',config.featuredImage],...(config.screenshots||[]).map((ref,index)=>['screenshot'+(index+1),ref])];
       const entry=entries.find(([,ref])=>ref&&ref===message.url);
       if(!entry)return{ok:false,error:'素材不属于原任务产品资料'};
-      const file=await materializeTaskMedia(this,task,config,entry[0]),used=task.usedMedia.find(m=>m.kind===entry[0]);
+      const file=await materializeTaskMedia(this,task,config,entry[0],{useEmbeddedLogo:false}),used=task.usedMedia.find(m=>m.kind===entry[0]);
       return{ok:true,dataUrl:'data:'+used.mime+';base64,'+(await readFile(file)).toString('base64')};
     }
     return { ok: false, error: '请使用资料中已上传的云端素材；未配置的内容服务进入待办' };

@@ -1215,5 +1215,23 @@
     "otherOverviewAndQueueReceiptConsumersVerified": false,
     "evidence": "original-library-records-2026-10-07.json",
     "completion": "not_complete"
+  },
+  "originalReceiptConsumersCheckpoint": {
+    "date": "2026-10-07",
+    "originalConfirmedByAndConcreteEvidenceRules": true,
+    "migrationSeedEvidenceExcluded": true,
+    "hostProductDeduplicationPreserved": true,
+    "legacyRecordsRetainActivityAndHistory": true,
+    "queueAutoVisitPreparationAndManualContinue": true,
+    "overviewReceiptAgreesWithOriginalLibrary": true,
+    "authenticatedD1FiveEvidenceVariants": true,
+    "originalUnknownAndHostTaskGuardsPreserved": true,
+    "testsPassed": 519,
+    "newTests": 3,
+    "workerVersion": "b871111a-60db-4cd0-8729-17322b423aa3",
+    "realBusinessEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-receipt-consumers-2026-10-07.json",
+    "completion": "not_complete"
   }
 }

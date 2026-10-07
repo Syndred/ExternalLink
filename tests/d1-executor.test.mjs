@@ -4,6 +4,14 @@ import {D1Store} from '../cloud/worker/src/d1-store.mjs';
 import {d1Executor} from '../cloud/worker/src/d1-executor.mjs';
 import {Cloud} from '../executor/src/cloud.mjs';
 import {createHash} from 'node:crypto';
+test('authenticated single-page preparation follows original receipt evidence and preserves imported history',async()=>{
+ const original={status:'success',profileId:'p',destinationUrl:'https://receipt.example/old',confirmedBy:'manual',evidence:'Original concrete receipt'},variants=[original,{...original,confirmedBy:'legacy_import'},{...original,evidence:''},{...original,evidence:'Table.xlsx submitted seed'},{...original,evidence:'Legacy siteAnnotations.submittedProjects'}];
+ for(const [index,record]of variants.entries()){const f=fixture();try{
+  await f.store.putDocument('siteProfiles',{p:{id:'p',name:'原产品',fields:{Url:'https://product.example'}}},0);
+  const call=async(route,token,body)=>{const response=await d1Executor(new Request('https://cloud.test/v2/executor/'+route,{method:'POST',headers:{Authorization:'Bearer '+token},body:JSON.stringify(body)}),f.env,'default',async()=>({}));return{http:response.status,...await response.json()};},device=await call('devices','admin-test',{});
+  await f.store.putDocument('submissionRecords',{'receipt.example/old::p':record},0);const before=await f.store.document('submissionRecords'),result=await call('runs',device.deviceToken,{run:{id:'original-evidence-'+index,profileId:'p',profileRevision:1,createdAt:'now',mode:'single_page_preparation',authorization:'fill_only',feeLimit:0,tasks:[{id:'original-task-'+index,url:'https://receipt.example/new',destinationKey:'receipt.example/new'}]}});assert.equal(result.http,index===0?409:200,JSON.stringify(result));if(index>0){assert.equal(result.tasks[0].attentionType,'fill_only');assert.equal(result.tasks[0].attemptBoundary,undefined);}assert.deepEqual(await f.store.document('submissionRecords'),before);assert.equal(f.sqlite.prepare('SELECT count(*) n FROM executor_runs').get().n,index===0?0:1);
+ }finally{f.sqlite.close();}}
+});
 test('large library transfers resume original verified parts, require the same device and preserve CAS and receipts',async()=>{
  const f=fixture();const oldFetch=globalThis.fetch;try{
   await f.store.putDocument('submissionRecords',{original:{status:'success',evidence:'keep receipt'}},0);
@@ -53,7 +61,7 @@ test('device local recovery archives source and previous versions before CAS, pr
  }finally{f.sqlite.close();}
 });
 test('single-page preparation registers an unlisted page without releasing it for submission and validates original profile and mode',async()=>{
- const f=fixture();try{for(const [key,value]of Object.entries({siteProfiles:{p:{id:'p',name:'Product',fields:{Url:'https://product.example'}}},sheetTableData:{entries:[]},siteAnnotations:{},deletedSubmissionKeys:[],submissionRecords:{'received.example::p':{profileId:'p',destinationUrl:'https://received.example/old',status:'success'}}}))await f.store.putDocument(key,value,0);
+ const f=fixture();try{for(const [key,value]of Object.entries({siteProfiles:{p:{id:'p',name:'Product',fields:{Url:'https://product.example'}}},sheetTableData:{entries:[]},siteAnnotations:{},deletedSubmissionKeys:[],submissionRecords:{'received.example::p':{profileId:'p',destinationUrl:'https://received.example/old',status:'success',confirmedBy:'manual',evidence:'Original site receipt'}}}))await f.store.putDocument(key,value,0);
  const call=async(route,token,body)=>{const r=await d1Executor(new Request('https://cloud.test/v2/executor/'+route,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token},body:body?JSON.stringify(body):undefined}),f.env,'default',async()=>({}));return{http:r.status,...await r.json()};};
  const device=await call('devices','admin-test',{name:'single-page'}),token=device.deviceToken,run={id:'prepare-original',profileId:'p',profileRevision:1,createdAt:'now',mode:'single_page_preparation',authorization:'fill_only',feeLimit:0,tasks:[{id:'prepare-task',url:'https://unlisted.example/form',destinationKey:'unlisted.example/form'}]};
  const saved=await call('runs',token,{run});assert.equal(saved.http,200,JSON.stringify(saved));assert.equal(saved.tasks[0].status,'needs_manual');assert.equal(saved.tasks[0].attentionType,'fill_only');assert.equal(saved.tasks[0].attemptBoundary,undefined);assert.equal(saved.run.authorization,'fill_only');assert.equal(saved.run.profile.name,'Product');

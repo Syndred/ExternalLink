@@ -22,6 +22,8 @@
       const recordedProfile = record.profileId || (separator < 0 ? '' : key.slice(separator + 2));
       if (recordedProfile !== profileId) return false;
       const destination = record.destinationUrl || record.destinationKey || (separator < 0 ? key : key.slice(0, separator));
+      const destinationKey = queue.normalizeDestinationKey(destination);
+      if (!queue.isSubmissionSuccessful({ [queue.submissionRecordKey(destinationKey, recordedProfile)]: record }, destinationKey, recordedProfile)) return false;
       return queue.extractDomain(destination).toLowerCase() === host;
     });
   }

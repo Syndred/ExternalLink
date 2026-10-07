@@ -7,8 +7,8 @@ test('historical success on a different submit path excludes the same product an
     sheetTableData: { entries: [{ link: 'https://www.example.com/submit-new' }, { link: 'https://other.example/submit' }] },
     urlList: '', siteAnnotations: {}, domainBlacklist: [], deletedSubmissionKeys: [],
     submissionRecords: {
-      'example.com/old-submit::JevPlay': { status: 'success', destinationUrl: 'https://example.com/old-submit', profileId: 'JevPlay' },
-      'other.example/previous::Different': { status: 'success', destinationUrl: 'https://other.example/previous', profileId: 'Different' },
+      'example.com/old-submit::JevPlay': { status: 'success', destinationUrl: 'https://example.com/old-submit', profileId: 'JevPlay', confirmedBy: 'agent', evidence: 'Original site confirmation' },
+      'other.example/previous::Different': { status: 'success', destinationUrl: 'https://other.example/previous', profileId: 'Different', confirmedBy: 'manual', evidence: 'Original manual confirmation' },
     },
   } };
   const scope = selectScope(snapshot, null, 'JevPlay');

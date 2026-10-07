@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-07",
+  "observedAt": "2026-10-07T00:06:51.262Z",
+  "completion": "not_complete",
+  "sourceCheckpoint": "5534836",
+  "regression": {
+    "passed": 519,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 3
+  },
+  "originalEvidenceRule": {
+    "source": "core/queue.js isSubmissionSuccessful",
+    "agentOrManualAndConcreteEvidence": true,
+    "legacySeedEvidenceExcluded": true,
+    "hostProductDeduplicationPreserved": true,
+    "legacyRecordsNotDeleted": true
+  },
+  "isolated": {
+    "twoOriginalConsumerFailuresReproduced": true,
+    "fiveReceiptVariants": true,
+    "queueCatalogAndOverviewAgree": true,
+    "autoVisitSelectionMatchesEvidence": true,
+    "authenticatedD1PreparationCases": true,
+    "onlyFillPreparationNotSubmission": true,
+    "originalRecordsAndRevisionsPreserved": true,
+    "productionOverviewShowsLegacyActivityWithoutReceipt": true,
+    "originalUnknownAttemptAndSameHostTaskGatesPreserved": true
+  },
+  "live": {
+    "combinationsChecked": 897,
+    "originalSuccessRecords": 112,
+    "verifiedSuccessRecords": 93,
+    "unverifiedSuccessRecords": 19,
+    "receivedActivityCombinations": 91,
+    "actualOverviewStatAndReceivedFilterMatch": true,
+    "allBusinessDocumentsAndRevisionsUnchanged": true,
+    "blockedMutationRequests": 0,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    }
+  },
+  "workerVersion": "b871111a-60db-4cd0-8729-17322b423aa3",
+  "servicesReloadedAfterIdentityAndIdleChecks": true,
+  "realBusinessEdits": 0,
+  "newRealSubmissions": 0,
+  "remaining": [
+    "other original dynamic controls and operations",
+    "historical product seeding and latest original-browser favorites and profiles",
+    "original-device media ownership",
+    "real special pages and external service results"
+  ]
+}

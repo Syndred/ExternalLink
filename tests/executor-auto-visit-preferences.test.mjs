@@ -19,7 +19,7 @@ test('a fresh cloud disable overrides an older local visit flag and an assistant
 test('visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path',()=>{
  const snapshot={documents:{siteProfiles:{p:profile},sheetTableData:{entries:[{link:'https://target.example/submit',indexPage:'https://target.example/submit',metrics:{dr:20}}]},submissionRecords:{}}},url='https://target.example/actual-form';
  assert.equal(autoVisitTarget(snapshot,'p',url).url,'https://target.example/submit');assert.equal(autoVisitTarget(snapshot,'missing',url),null);
- snapshot.documents.submissionRecords={'target.example/older::p':{profileId:'p',destinationUrl:'https://target.example/older',status:'success'}};assert.equal(autoVisitTarget(snapshot,'p',url),null);snapshot.documents.submissionRecords={};
+ snapshot.documents.submissionRecords={'target.example/older::p':{profileId:'p',destinationUrl:'https://target.example/older',status:'success',confirmedBy:'agent',evidence:'Original received submission'}};assert.equal(autoVisitTarget(snapshot,'p',url),null);snapshot.documents.submissionRecords={};
  snapshot.documents.targetFilters={minDr:60};assert.equal(autoVisitTarget(snapshot,'p',url),null);snapshot.documents.targetFilters={};
  snapshot.documents.siteAnnotations={'target.example/actual-form':{status:'paid'}};assert.equal(autoVisitTarget(snapshot,'p',url),null);
 });

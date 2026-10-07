@@ -37,7 +37,7 @@ test('manual continue keeps frozen profile and original tab, releases one task o
 test('manual continue rejects archived or already received product, missing run and attempted original task',async()=>{
  for(const mode of ['archived','received','missing_run','attempted','stopped']){const f=fixture();try{
   if(mode==='archived')f.runtime.cloud.request=async()=>({documents:{siteProfiles:{p:{archived:true}},submissionRecords:{}}});
-  if(mode==='received')f.runtime.cloud.request=async()=>({documents:{siteProfiles:{p:f.profile},submissionRecords:{'target.example::p':{profileId:'p',status:'success',destinationUrl:'https://target.example/other'}}}});
+  if(mode==='received')f.runtime.cloud.request=async()=>({documents:{siteProfiles:{p:f.profile},submissionRecords:{'target.example::p':{profileId:'p',status:'success',destinationUrl:'https://target.example/other',confirmedBy:'manual',evidence:'Original concrete manual receipt'}}}});
   if(mode==='missing_run')f.store.db.prepare('DELETE FROM state WHERE id=?').run('run:run');
   if(mode==='attempted')f.store.set('task:original',{...f.task,attemptBoundary:'unknown'});
   if(mode==='stopped')f.store.set('executionStopped',{status:'stopped'});

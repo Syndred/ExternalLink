@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalUserVisibleUiCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "user-visible-ui-2026-10-08/ui-state.json",
+    "actualNativeInAppPagesInspected": 6,
+    "actualDynamicCreateFormsInspected": 2,
+    "actualVisibleFieldsMeasured": 50,
+    "emptyArchivedProductHiddenFromFilters": true,
+    "archivedTimelineAndTaskFilterRegressionVerified": true,
+    "actualProductControlsAlignedAndCentered": true,
+    "sourceConditionsQualityExplainedInChinese": true,
+    "focusedTestsPassed": 18,
+    "isolatedSixPageUiRegressionPassed": true,
+    "nativeBusinessReadonlyBaselineMatched": true,
+    "allOriginalDynamicBranchesVerified": false,
+    "latestOriginalDataAndFullHistoryVerified": false,
+    "realSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalVisualSubmissionCheckpoint": {
     "date": "2026-10-08",
     "featureCommit": "f1b191c5c88601eb7b2665181c5342f8b6ae987f",

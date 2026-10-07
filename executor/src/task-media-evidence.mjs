@@ -1,5 +1,6 @@
 import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
 import {taskMediaReferences} from '../../core/task-media-selection.mjs';
+import {frozenOriginalMediaDefaults} from '../../core/original-cloud-media.mjs';
 import {jsonValueEqual} from '../../core/json-value.mjs';import {validateImageBytes} from '../../core/media-assets.mjs';
 const validHash=value=>/^[a-f0-9]{64}$/.test(value||''),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 
@@ -10,7 +11,7 @@ export async function originalRunMediaEvidence(runtime,runId,ref){
  const run=runtime.store.get('run:'+runId);
  if(!run?.acceptanceId||typeof ref!=='string'||!ref.startsWith('cloud-media://'))return null;
  const original=run.mediaManifest?.find(asset=>asset.asset_id===ref.slice(14));if(!original)return null;
- if(!run.profile||!taskMediaReferences(run.profile).some(entry=>entry.ref===ref))return null;
+ if(!run.profile||!taskMediaReferences(run.profile,frozenOriginalMediaDefaults(run)).some(entry=>entry.ref===ref))return null;
  if(original.sha256&&!validHash(original.sha256))throw Error('原任务素材校验值无效');
  const pair=runtime.store.get('pair');if(run.workspaceId&&pair?.workspaceId&&run.workspaceId!==pair.workspaceId)throw Error('原素材工作区不匹配');
  const frozen=runtime.store.get('acceptance:'+run.acceptanceId);if(!frozen)return null;
@@ -31,6 +32,6 @@ export async function originalRunMediaEvidence(runtime,runId,ref){
 export async function originalTaskMediaEvidence(runtime,task,ref){
  const run=runtime.store.get('run:'+task.runId),profile=task.profileSnapshot||run?.profile;
  if(!run||run.profileId!==task.profileId||!Array.isArray(run.tasks)||!run.tasks.includes(task.id))throw Error('原素材任务与批次身份不匹配');
- if(!profile||!taskMediaReferences(profile).some(entry=>entry.ref===ref))throw Error('素材不属于原任务当前选定的产品资料');
+ if(!profile||!taskMediaReferences(profile,frozenOriginalMediaDefaults(run)).some(entry=>entry.ref===ref))throw Error('素材不属于原任务当前选定的产品资料');
  return originalRunMediaEvidence(runtime,task.runId,ref);
 }

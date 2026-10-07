@@ -52,6 +52,8 @@ import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia,materializeTaskUpload } from './task-media.mjs';
 import {selectedFrozenPngLogo} from '../../core/task-media-selection.mjs';
+import {originalTaskMediaConfig} from './original-task-media-config.mjs';
+import {frozenOriginalMediaDefaults} from '../../core/original-cloud-media.mjs';
 import {originalTaskMediaEvidence} from './task-media-evidence.mjs';
 import {recordTaskMediaUpload} from './task-media-feedback.mjs';
 import { readAfterNavigation, settleObservedClick } from './navigation-read.mjs';
@@ -667,7 +669,7 @@ export class Runtime {
     const defaults=snapshot?.documents||this.store.get('applicationSnapshot')?.snapshot?.documents||{};
     const frozenBatch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);
     this.update(task,{indexNotificationPreference:frozenBatch?.config?frozenBatch.config.pingIndex!==false:defaults.cfgPingIndex!==false},'index_notification_preference');
-    const config = applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url));
+    const config = originalTaskMediaConfig(this,task,applySubmissionPreferences(this,task,defaults,applyDestinationFormKnowledge(defaults,plain(profiles.buildAgentConfigFromProfile(profile,{email:defaults.cfgEmail,username:defaults.cfgName,commentTemplate:defaults.cfgCommentTemplate})),task.url)));
     config.ordinaryTermsAuthorized = task.consentHistory?.some(c=>c.scope==='ordinary_submission_permissions'&&['user_reply','approved_plan','workbench_manual_continue'].includes(c.source)) === true;
     // Hosted forms need the actual directory source when classifying their
     // final receipt. The product website URL is not the submission source.
@@ -1221,7 +1223,7 @@ export class Runtime {
         const logoInput=frame.locator('input[type=file]');
         if(await logoInput.count()!==1)throw new Error('Logo上传控件未唯一核实');
         if(!await logoInput.evaluate(e=>Boolean(e.files?.length))){
-          const logo=selectedFrozenPngLogo(profile,this.store.get('run:'+task.runId)?.mediaManifest);
+          const logoRun=this.store.get('run:'+task.runId),logo=selectedFrozenPngLogo(profile,logoRun?.mediaManifest,frozenOriginalMediaDefaults(logoRun));
           if(!logo)throw new Error('冻结资料缺少PNG Logo');
           const media=await this.bridge(task,{action:'fetchCloudSubmissionMedia',ref:'cloud-media://'+logo.asset_id}),bytes=Buffer.from(media.dataUrl.split(',')[1],'base64');
           const verifiedLogo=validateSquarePng(bytes,logo.sha256||media.sha256);
@@ -1301,7 +1303,7 @@ export class Runtime {
           await browse.waitFor({ timeout: 5000 });
         }
         const run = this.store.get('run:' + task.runId);
-        const logo = selectedFrozenPngLogo(profile,run.mediaManifest);
+        const logo = selectedFrozenPngLogo(profile,run.mediaManifest,frozenOriginalMediaDefaults(run));
         if (!logo) throw new Error('本站要求 PNG logo，冻结素材中没有对应文件');
         const media = await this.bridge(task, { action:'fetchCloudSubmissionMedia', ref: 'cloud-media://' + logo.asset_id });
         const chooserPromise = frame.page().waitForEvent('filechooser', { timeout: 5000 });
@@ -1526,7 +1528,7 @@ export class Runtime {
       }
       this.update(task,{profileSnapshot:profile,profileRevision,
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
-      const config=applyDestinationFormKnowledge(snapshot.documents,plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),task.url);
+      const config=originalTaskMediaConfig(this,task,applyDestinationFormKnowledge(snapshot.documents,plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),task.url));
       let prepared,preparationStale=false;
       const preparationScope=workbenchScope(this.store.get('pair'));
       const preparationCurrent=()=>{const current=this.store.get('task:'+task.id);return !preparationStale&&current&&preparationScope===workbenchScope(this.store.get('pair'))&&['runId','profileId','profileRevision','version','controller','controllerId','targetId','browserInstance'].every(key=>current[key]===task[key])&&isDeepStrictEqual(current.profileSnapshot,profile)&&!current.attemptBoundary&&!current.receipt&&!page.isClosed();};
@@ -1947,7 +1949,7 @@ export class Runtime {
     if(message.action==='generateCommentDrafts')return originalCommentRequest(this,{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,language:message.language,tone:message.config?.blogRules?.tone,refresh:message.refresh},payload=>this.batchModelRequest(task,'ai/comment',payload));
     if (message.action === 'fetchCloudSubmissionMedia') return await originalTaskMediaEvidence(this,task,message.ref)||this.cloud.request('media', { taskId: task.id, action:message.action,ref:message.ref });
     if(message.action==='fetchSubmissionMedia'){
-      const config=plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{}));
+      const config=originalTaskMediaConfig(this,task,plain(profiles.buildAgentConfigFromProfile(task.profileSnapshot||{})));
       const entries=[['logo',config.logoUrl],['featured',config.featuredImage],...(config.screenshots||[]).map((ref,index)=>['screenshot'+(index+1),ref])];
       const entry=entries.find(([,ref])=>ref&&ref===message.url);
       if(!entry)return{ok:false,error:'素材不属于原任务产品资料'};

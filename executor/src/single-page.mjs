@@ -8,6 +8,7 @@ import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {prepareOriginalVisitFields} from './original-visit-fill-adapter.mjs';
 import {originalHumanGateAttention} from './original-site-classification.mjs';
+import {originalTaskMediaConfig} from './original-task-media-config.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function cancelVisitWork(runtime,reason){
@@ -68,7 +69,7 @@ export async function sidepanelFill(runtime,input){
    if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原 Product Hunt 任务结果或控制权已变化');
    await runtime.lease(task,{online:true});const current=assertPanel(runtime,input);if(current.generation!==generation||current.selectedTargetId!==input.targetId||current.profileId!==input.profileId)throw Error('原 Product Hunt 面板选择已变化');
    const history=task.targetId&&task.targetId!==input.targetId?[...(task.pageHistory||[]),{targetId:task.targetId,browserInstance:task.browserInstance,at:at()}]:task.pageHistory;
-   runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',...(history?{pageHistory:history}:{}),profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,productHuntCreationConsent:null},'single_page_producthunt_selected');config=configFor(snapshot,task.profileSnapshot,page.url());
+   runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',...(history?{pageHistory:history}:{}),profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,productHuntCreationConsent:null},'single_page_producthunt_selected');config=originalTaskMediaConfig(runtime,task,configFor(snapshot,task.profileSnapshot,page.url()));
    const active=()=>{const current=singlePagePanel(runtime);return current?.open&&current.id===input.panelId&&current.generation===generation&&current.selectedTargetId===input.targetId&&current.profileId===input.profileId&&!page.isClosed();};
    const fill=await runProductHuntWorkflow(runtime,task,page,config,{active,confirmCreate:false});let syncError='';try{await runtime.synchronize();}catch(error){syncError=error.message;}
    assertCurrent();if(submitRequested){if(syncError)throw Error('Product Hunt 准备记录尚未回读，暂不创建草稿');const result=await manualSubmit(runtime,{taskId:task.id,expectedRunId:task.runId,expectedTargetId:task.targetId,ordinaryPermissionsAuthorized:input.ordinaryPermissionsAuthorized,confirmProductHuntCreate:input.confirmProductHuntCreate},{assertContext:assertCurrent});return{...result,filled:true,platform:'product_hunt'};}
@@ -80,7 +81,7 @@ export async function sidepanelFill(runtime,input){
   assertCurrent();const task=await preparedTask(runtime,input,snapshot);assertCurrent();if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原任务结果或控制权已变化，请先核验');await runtime.lease(task,{online:true});assertCurrent();
   const history=task.targetId&&task.targetId!==input.targetId?[...(task.pageHistory||[]),{targetId:task.targetId,browserInstance:task.browserInstance,at:at()}]:task.pageHistory;
   runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',...(history?{pageHistory:history}:{}),profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles},'single_page_selected');
-  config=configFor(snapshot,task.profileSnapshot,candidate.frame.url());if(input.mode==='comment')config.commentTemplate=input.commentText;config.sidepanelContext={profileId:task.profileId,url:page.url()};
+  config=originalTaskMediaConfig(runtime,task,configFor(snapshot,task.profileSnapshot,candidate.frame.url()));if(input.mode==='comment')config.commentTemplate=input.commentText;config.sidepanelContext={profileId:task.profileId,url:page.url()};
   for(const item of engines){if(item.frame.isDetached()||item.frame.url()!==item.url)throw Error('原表单区域已变化');await item.engine.detach();item.engine=await attachEngine(runtime.context,item.frame,message=>runtime.bridge(task,message));assertCurrent();}
   const assertPage=async()=>{assertCurrent();if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');};await assertPage();let fill,actual,validation,counts,submitReady=true;
   if(input.mode==='comment'){fill=await candidate.engine.call({action:'executeSubmit',config,platformType:'wp_comment'});if(fill?.error||fill?.ok===false)throw Error(fill.error||'填写未完成');actual=await candidate.engine.call({action:'getFilledFieldsReport'});validation=await candidate.engine.call({action:'collectFormValidation'});await assertPage();}

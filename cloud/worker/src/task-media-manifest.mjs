@@ -2,9 +2,9 @@ import {taskMediaReferences} from '../../../core/task-media-selection.mjs';
 import {validateImageBytes} from '../../../core/media-assets.mjs';
 import {mediaObjectKey} from './worker-core.mjs';import {sha256} from './d1-store.mjs';
 const fail=(message,status=409)=>{throw Object.assign(Error(message),{status});};
-export async function freezeD1TaskMedia(bucket,workspace,profile,taskProfileId=profile.id){
+export async function freezeD1TaskMedia(bucket,workspace,profile,taskProfileId=profile.id,defaults){
  const manifest=[];
- for(const {ref,kind}of taskMediaReferences(profile)){
+ for(const {ref,kind}of taskMediaReferences(profile,defaults)){
   const assetId=ref.slice(14),key=mediaObjectKey(workspace,assetId),head=await bucket.head(key);
   if(!head)fail('选定素材不存在，请恢复原素材后重新预览');
   if(head.customMetadata?.profileId&&head.customMetadata.profileId!==taskProfileId)fail('选定素材不属于当前任务产品',403);

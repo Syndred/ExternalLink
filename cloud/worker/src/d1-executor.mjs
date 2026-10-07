@@ -12,6 +12,7 @@ import '../../../core/submission-timeline.js';
 import '../../../core/executor-contract.js';
 import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
 import {freezeD1TaskMedia} from './task-media-manifest.mjs';
+import {resolveOriginalCloudMediaDefaults,listOriginalD1Media} from '../../../core/original-cloud-media.mjs';
 import {backupKeys} from '../../../core/application-backup.mjs';
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
@@ -121,8 +122,8 @@ export async function d1Executor(request,env,workspace,plan,assistant){
     if(source.host_identity!==task.profileId+'::'+freshRoundHost(task.url))fail('原任务同站索引不匹配');
     retirements.push({source,task});
    }
-   const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=await freezeD1TaskMedia(env.MEDIA_BUCKET,workspace,profile,run.profileId);
-   const savedRun={...run,profile,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
+   const profile=snap.documents.siteProfiles[run.profileId],mediaLookup=await resolveOriginalCloudMediaDefaults(profile,()=>listOriginalD1Media(env.MEDIA_BUCKET,workspace)),mediaManifest=await freezeD1TaskMedia(env.MEDIA_BUCKET,workspace,profile,run.profileId,mediaLookup.originalMediaDefaults);
+   const savedRun={...run,profile,...mediaLookup,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
    const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt,workbenchBatchId:run.workbenchBatchId,workbenchBatchManifestId:run.workbenchBatchManifest?.id}),runObject.key,runObject.checksum)];
    // Move only the proved, unsubmitted terminal control out of the live unique
    // index. Body, journal row, run and events remain intact and readable. CAS

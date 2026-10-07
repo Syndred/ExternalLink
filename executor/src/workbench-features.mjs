@@ -75,7 +75,7 @@ export async function startWorkbenchBatch(runtime,input){
    const original=await runtime.cloud.request('runs?runId='+encodeURIComponent(item.runId));assertBatchPolicy(runtime,batch);const remote=original.tasks.find(t=>t.id===item.taskId),run=original.runs.find(r=>r.id===item.runId);
    if(!remote||remote.runId!==item.runId||remote.profileId!==item.profileId||remote.url!==item.url||remote.destinationKey!==item.destinationKey||!run?.profile||run.profileId!==item.profileId||!run.tasks?.includes(item.taskId)||!Array.isArray(run.mediaManifest))throw Error('原任务、完整批次或素材回读不一致，禁止重复注册');
    if(task&&(remote.attemptBoundary&&!task.attemptBoundary||remote.receipt&&!task.receipt))throw Error('云端原任务已有提交边界或收件，请先核验');
-   const localRun=runtime.store.get('run:'+run.id);for(const key of ['id','profileId','profileRevision','profile','mediaManifest','tasks','createdAt'])if(localRun?.[key]!==undefined&&!jsonValueEqual(localRun[key],run[key]))throw Error('原批次与本机档案冲突，保留原件');
+   const localRun=runtime.store.get('run:'+run.id);for(const key of ['id','profileId','profileRevision','profile','mediaManifest','originalMediaDefaults','tasks','createdAt'])if(localRun?.[key]!==undefined&&!jsonValueEqual(localRun[key],run[key]))throw Error('原批次与本机档案冲突，保留原件');
    task=task||remote;runtime.store.set('run:'+run.id,{...run,...localRun});
   }
   if(task){item.status='registered';runtime.store.transitionMany([],{...freshRoundRetirementState(runtime,item),['task:'+task.id]:task,['workbenchBatch:'+batch.id]:batch});continue;}

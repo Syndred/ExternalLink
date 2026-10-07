@@ -17,6 +17,7 @@ import {libraryTransfer} from './library-transfer.mjs';
 import {neonWorkspaceRead,readNeonDeviceMedia,putNeonDeviceMedia} from './neon-workspace.mjs';
 import {applicationMutation} from '../../../core/application-mutation.mjs';
 import {taskMediaReferences} from '../../../core/task-media-selection.mjs';
+import {resolveOriginalCloudMediaDefaults} from '../../../core/original-cloud-media.mjs';
 import {verifiedNeonMediaBytes} from './neon-workspace.mjs';
 import {freshRoundHost,freshRoundSuccessor,freshRoundRetiredIdentity,validateFreshRoundSource} from '../../../core/original-fresh-round.mjs';
 
@@ -212,7 +213,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         if(source.controller_id&&source.controller_id!==run.freshRoundControllerId&&new Date(source.lease_until).getTime()>Date.now())fail('原任务仍由其他控制者持有',409);
         retirements.set(task.id,source);
       }
-      const profile=snapshot.documents.siteProfiles[run.profileId],selected=taskMediaReferences(profile),mediaManifest=[];
+      const profile=snapshot.documents.siteProfiles[run.profileId],mediaLookup=await resolveOriginalCloudMediaDefaults(profile,()=>env.MEDIA_BUCKET?sql`select asset_id,profile_id,media_kind,media_index,content_type from externallink_media_assets where workspace_id=${workspaceId} and profile_id=${run.profileId} order by file_name`:[]),selected=taskMediaReferences(profile,mediaLookup.originalMediaDefaults),mediaManifest=[];
       if(selected.length){
         const ids=[...new Set(selected.map(({ref})=>ref.slice(14)))];
         const assets=await sql`select asset_id,profile_id,object_key,sha256,file_name from externallink_media_assets where workspace_id=${workspaceId} and asset_id=any(${ids}::text[])`;
@@ -227,7 +228,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
             media_index:kind.startsWith('screenshot')?Number(kind.slice(10)):null,sha256:asset.sha256,file_name:asset.file_name});
         }
       }
-      const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };
+      const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], ...mediaLookup, mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };
       // All registrations serialize on their workspace row. This also guards
       // same-host alternate entrances and other devices on the Neon backend.
       const queries = [sql`select workspace_id from externallink_workspaces where workspace_id=${workspaceId} for update`,sql`insert into externallink_executor_runs(workspace_id, run_id, device_id, data)

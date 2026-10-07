@@ -7,10 +7,11 @@ import {capturePageEvidence} from './page-evidence.mjs';
 import {classifyOriginalFillGate} from './original-site-classification.mjs';
 
 export async function prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase,allowAgent=true}){
- const keys=['id','runId','profileId','profileRevision','version','targetId','browserInstance','controller'],identity=Object.fromEntries(keys.map(key=>[key,task[key]])),profile=structuredClone(task.profileSnapshot);
+ const keys=['id','runId','profileId','profileRevision','version','targetId','browserInstance','controller'],identity=Object.fromEntries(keys.map(key=>[key,task[key]])),profile=structuredClone(task.profileSnapshot),run=runtime.store.get('run:'+task.runId),media=structuredClone([run?.mediaManifest,run?.originalMediaDefaults]);
  async function assertCurrent(){
   await assertBase();const current=runtime.store.get('task:'+task.id);
   if(!current||keys.some(key=>current[key]!==identity[key])||!isDeepStrictEqual(current.profileSnapshot,profile)||current.attemptBoundary||current.receipt||['unknown_receipt','payment','paid','login','human_verification'].includes(current.attentionType)||['ai','supervisor'].includes(current.controller)||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))throw Error('原填写任务、产品或控制权已变化，停止旧计划');
+  const currentRun=runtime.store.get('run:'+task.runId);if(!isDeepStrictEqual([currentRun?.mediaManifest,currentRun?.originalMediaDefaults],media))throw Error('原填写素材清单或默认选择已变化，停止旧计划');
   for(const item of engines)if(item.frame.isDetached()||item.frame.url()!==item.url||!await item.engine.isCurrentDocument())throw Error('原填写文档或表单区域已变化，停止旧计划');
  }
  async function selectedCall(message){await assertCurrent();const result=await candidate.engine.call(message);await assertCurrent();return result;}

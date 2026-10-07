@@ -73,5 +73,11 @@
     "remaining original dynamic controls and external outcomes"
   ],
   "newRealSubmissions": 0,
+  "subsequentSourceFidelityCorrection": {
+    "evidence": "original-auto-fill-validation-fidelity-2026-10-07.json",
+    "automaticNextQueueGatePendingAssertionWasTooBroad": true,
+    "originalListedFillOnlyGateBranchesDoNotAdvance": true,
+    "actualRemainingFlow": "original field understanding, agent completion, final AI validation and automatic-classification fidelity"
+  },
   "migrationComplete": false
 }

@@ -12,6 +12,8 @@ import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {resumeExecution} from './execution-lifecycle.mjs';
 import {queuedParkedTasks,selectParkedResume} from './parked-task-resume.mjs';
 import {jsonValueEqual} from '../../core/json-value.mjs';
+import {previewFreshRound,assertFreshRoundRegistration,freshRoundRetirementState} from './original-fresh-round.mjs';
+import {freshRoundTaskReason} from '../../core/original-fresh-round.mjs';
 import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const frozenDigest=(batch,value)=>batch.cloudRecoveryVersion===batchRecoveryVersion?createHash('sha256').update(batchJson(value)).digest('hex'):digest(value);
@@ -38,10 +40,11 @@ export async function previewWorkbenchBatch(runtime,input){
   const destinationKey=queue.normalizeDestinationKey(url),known=originalTasks.get(profileId+'::'+site(url))||[],previous=known.find(task=>task.url===url&&task.destinationKey===destinationKey&&task.runId),blocked=known.find(task=>task.receipt||task.attemptBoundary||!['pending','needs_manual'].includes(task.status));
    let reason=exclusions.get(queue.normalizeLibraryDestinationKey(url))||'';
    if(seen.has(site(url)))reason='同站其他入口，保留一个投稿目标';seen.add(site(url));
-   if(!reason&&blocked)reason='同站有原任务结果或提交边界，请先查看或核验原任务';
-   if(!reason&&known.length&&!previous)reason='同站有原任务使用其他入口，请先查看或核验原任务';
-   const reuse=previous&&!reason;
-   items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:reuse?previous.id:randomUUID(),runId:reuse?previous.runId:randomUUID(),existingTask:!!reuse,...(known.length&&!reuse?{relatedOriginalTaskId:(blocked||previous||known[0]).id}:{}),status:reason?'excluded':'ready',reason});
+   let renewal={};
+   if(!reason&&blocked){if(known.every(task=>!freshRoundTaskReason(task))){renewal=await previewFreshRound(runtime,[...new Map(known.map(task=>[task.id,task])).values()],{profileId,url});reason=renewal.reason||'';}else reason='同站有原任务结果或提交边界，请先查看或核验原任务';}
+   if(!reason&&known.length&&!previous&&!renewal.originalFreshRound)reason='同站有原任务使用其他入口，请先查看或核验原任务';
+   const reuse=previous&&!reason&&!renewal.originalFreshRound;
+   items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:reuse?previous.id:randomUUID(),runId:reuse?previous.runId:randomUUID(),existingTask:!!reuse,...(renewal.originalFreshRound?{originalFreshRound:renewal.originalFreshRound}:{}),...(known.length&&!reuse?{relatedOriginalTaskId:(blocked||previous||known[0]).id}:{}),status:reason?'excluded':'ready',reason});
  }
  const batch={id:randomUUID(),scope:expectedScope,...freezeBatchConfig(snapshot.documents,input.config),cloudRecoveryVersion:batchRecoveryVersion,createdAt:new Date().toISOString(),status:'preview',count:items.length,items,cursor:0,feeLimit:0,...(scoped?{libraryScope:{kind:input.libraryScope.kind,value:input.libraryScope.value.trim(),meta:originalScope.meta,exclusions:originalScope.exclusions}}:{})};batch.configSha256=frozenDigest(batch,batch.config);batch.scopeSha256=frozenDigest(batch,batchScopeRows(batch));
  runtime.store.set('workbenchBatch:'+batch.id,batch);return{ok:true,batch};
@@ -75,13 +78,14 @@ export async function startWorkbenchBatch(runtime,input){
    const localRun=runtime.store.get('run:'+run.id);for(const key of ['id','profileId','profileRevision','profile','mediaManifest','tasks','createdAt'])if(localRun?.[key]!==undefined&&!jsonValueEqual(localRun[key],run[key]))throw Error('原批次与本机档案冲突，保留原件');
    task=task||remote;runtime.store.set('run:'+run.id,{...run,...localRun});
   }
-  if(task){runtime.store.set('task:'+task.id,task);item.status='registered';save();continue;}
+  if(task){item.status='registered';runtime.store.transitionMany([],{...freshRoundRetirementState(runtime,item),['task:'+task.id]:task,['workbenchBatch:'+batch.id]:batch});continue;}
   if(item.existingTask)throw Error('原任务暂不可读，不创建替代任务');
   // A lost response is recovered only by these exact IDs; never replace them.
   if(item.status==='registration_unknown'||item.status==='registering'){batch.status='registration_unknown';save();throw Error('注册结果未知，原 ID 暂未回读，禁止重复注册');}
-  const run={id:item.runId,profileId:item.profileId,profileRevision:item.profileRevision,createdAt:batch.createdAt,authorization:'ordinary_free_submission',ordinaryPermissionsAuthorized:true,feeLimit:0,workbenchBatchId:batch.id,...batchRunMetadata(batch,item),tasks:[{id:item.taskId,url:item.url,destinationKey:item.destinationKey}]};
+  const renewalGuard=await assertFreshRoundRegistration(runtime,item);assertBatchPolicy(runtime,batch);
+  const run={id:item.runId,profileId:item.profileId,profileRevision:item.profileRevision,createdAt:batch.createdAt,authorization:'ordinary_free_submission',ordinaryPermissionsAuthorized:true,feeLimit:0,workbenchBatchId:batch.id,...batchRunMetadata(batch,item),...(item.originalFreshRound?{freshRoundControllerId:runtime.controllerId}:{}),tasks:[{id:item.taskId,url:item.url,destinationKey:item.destinationKey,...(item.originalFreshRound?{originalFreshRound:item.originalFreshRound}:{})}]};
   item.status='registering';item.request=run;save();
-  try{const result=await runtime.cloud.request('runs',{run});assertBatchPolicy(runtime,batch);if(result.run?.id!==item.runId||result.tasks?.[0]?.id!==item.taskId)throw Error('注册身份不一致');runtime.store.set('run:'+item.runId,result.run);runtime.store.set('task:'+item.taskId,{...result.tasks[0],profileSnapshot:item.profile});item.status='registered';delete item.request;save();}
+  try{const result=await runtime.cloud.request('runs',{run});assertBatchPolicy(runtime,batch);if(result.run?.id!==item.runId||result.tasks?.[0]?.id!==item.taskId)throw Error('注册身份不一致');const retirement=freshRoundRetirementState(runtime,item,renewalGuard);item.status='registered';delete item.request;runtime.store.transitionMany([],{...retirement,['run:'+item.runId]:result.run,['task:'+item.taskId]:{...result.tasks[0],profileSnapshot:item.profile},['workbenchBatch:'+batch.id]:batch});}
   catch(error){item.status=error.status>=400&&error.status<500?'excluded':'registration_unknown';item.reason=error.message;batch.status=item.status==='registration_unknown'?'registration_unknown':'paused';save();throw error;}
  }
  initializeBatchPolicy(batch);batch.status='running';batch.startedAt=batch.startedAt||new Date().toISOString();save();runtime.store.set('executionStopped',null);runtime.store.set('manualResumeRunId',null);runtime.store.set('activeWorkbenchBatch',batch.id);runtime.store.set('singleTaskId',null);

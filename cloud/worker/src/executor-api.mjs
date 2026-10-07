@@ -3,7 +3,7 @@ import '../../../core/url-library.js';
 // administrator's state replacement, migration or credential-issuing powers.
 import { parseBearerToken, secureEqual,mediaObjectKey } from './worker-core.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
-import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
+import {batchRegisteredTask,validateBatchRunMetadata,batchJson} from '../../../core/workbench-batch-recovery.mjs';
 import {backupKeys} from '../../../core/application-backup.mjs';
 import '../../../core/queue.js';
 import '../../../core/target-filters.js';
@@ -18,6 +18,7 @@ import {neonWorkspaceRead,readNeonDeviceMedia,putNeonDeviceMedia} from './neon-w
 import {applicationMutation} from '../../../core/application-mutation.mjs';
 import {taskMediaReferences} from '../../../core/task-media-selection.mjs';
 import {verifiedNeonMediaBytes} from './neon-workspace.mjs';
+import {freshRoundHost,freshRoundSuccessor,freshRoundRetiredIdentity,validateFreshRoundSource} from '../../../core/original-fresh-round.mjs';
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 // PostgreSQL builds these authenticated read envelopes as JSON text. Returning
@@ -113,8 +114,10 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       return reply({ ok: true, diagnostic: rows[0].data, r2Readback: read === JSON.stringify(payload), businessDocumentsUnchanged: JSON.stringify(before) === JSON.stringify(after), before, after });
     }
     const readTask = async taskId => {
-      const rows = await sql`select * from externallink_executor_tasks where workspace_id=${workspaceId} and task_id=${taskId} and device_id=${deviceId}`;
+      const rows = await sql`select *,md5(data::text) as body_checksum from externallink_executor_tasks where workspace_id=${workspaceId} and task_id=${taskId} and device_id=${deviceId}`;
       if (!rows[0]) fail('任务不属于当前设备', 403);
+      const successor=freshRoundSuccessor(rows[0].identity);
+      if(successor&&request.method==='POST'&&!['/v1/executor/review','/v1/executor/artifact-read'].includes(path))fail('旧任务已进入历史，新一轮任务为 '+successor,409);
       return rows[0];
     };
     if (path === '/v1/executor/snapshot' && request.method === 'GET') {
@@ -165,7 +168,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
           'tasks',coalesce((select jsonb_agg(jsonb_build_object('id',t.task_id,'runId',t.run_id,'url',t.data->>'url',
             'destinationKey',t.data->>'destinationKey','profileId',t.data->>'profileId','status',t.data->>'status',
             'siteStatus',t.data->>'siteStatus','attemptBoundary',t.data->'attemptBoundary','version',t.version,
-            'controllerId',t.data->'controllerId') || case when t.data ? 'workbenchBatchId' then jsonb_build_object('workbenchBatchId',t.data->'workbenchBatchId') else '{}'::jsonb end order by t.updated_at desc)
+            'controllerId',t.controller_id) || case when t.identity like 'retired:%' then jsonb_build_object('originalFreshRoundSuccessorTaskId',split_part(t.identity,':',2)) else '{}'::jsonb end || case when t.data ? 'workbenchBatchId' then jsonb_build_object('workbenchBatchId',t.data->'workbenchBatchId') else '{}'::jsonb end order by t.updated_at desc)
             from externallink_executor_tasks t where t.workspace_id=${workspaceId} and t.device_id=${deviceId}),'[]'::jsonb))::text as payload`;
         return replyJsonText(rows[0].payload);
       }
@@ -173,14 +176,14 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         const rows=await sql`select jsonb_build_object('ok',true,
           'runs',coalesce((select jsonb_agg(r.data) from externallink_executor_runs r
             where r.workspace_id=${workspaceId} and r.device_id=${deviceId} and r.run_id=${runId}),'[]'::jsonb),
-          'tasks',coalesce((select jsonb_agg(t.data || jsonb_build_object('version',t.version) order by t.updated_at desc)
+          'tasks',coalesce((select jsonb_agg(t.data || jsonb_build_object('version',t.version,'controllerId',t.controller_id) || case when t.identity like 'retired:%' then jsonb_build_object('originalFreshRoundSuccessorTaskId',split_part(t.identity,':',2)) else '{}'::jsonb end order by t.updated_at desc)
             from externallink_executor_tasks t where t.workspace_id=${workspaceId} and t.device_id=${deviceId} and t.run_id=${runId}),'[]'::jsonb))::text as payload`;
         return replyJsonText(rows[0].payload);
       }
       const rows=await sql`select jsonb_build_object('ok',true,
         'runs',coalesce((select jsonb_agg(r.data) from
           (select data from externallink_executor_runs where workspace_id=${workspaceId} and device_id=${deviceId} order by updated_at desc limit 30) r),'[]'::jsonb),
-        'tasks',coalesce((select jsonb_agg(data || jsonb_build_object('version',version) order by updated_at desc)
+        'tasks',coalesce((select jsonb_agg(data || jsonb_build_object('version',version,'controllerId',controller_id) || case when identity like 'retired:%' then jsonb_build_object('originalFreshRoundSuccessorTaskId',split_part(identity,':',2)) else '{}'::jsonb end order by updated_at desc)
           from externallink_executor_tasks where workspace_id=${workspaceId} and device_id=${deviceId}),'[]'::jsonb))::text as payload`;
       return replyJsonText(rows[0].payload);
     }
@@ -200,8 +203,15 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         const recordKey = globalThis.ExtLinkQueue.submissionRecordKey(destinationKey, run.profileId);
         if (snapshot.documents.submissionRecords?.[recordKey]?.status === 'success') fail(`已提交：${recordKey}`, 409);
         return { id: t.id, runId: run.id, url: t.url, destinationKey: t.destinationKey, profileId: run.profileId, identity: recordKey,
-          ...batchRegisteredTask(run),status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
+          ...batchRegisteredTask(run),...(t.originalFreshRound?{originalFreshRound:t.originalFreshRound}:{}),status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
       });
+      const retirements=new Map();
+      for(const task of tasks.filter(t=>t.originalFreshRound)){
+        const source=await readTask(task.originalFreshRound.sourceTaskId);
+        await validateFreshRoundSource({...source.data,version:source.version,controllerId:source.controller_id},task.originalFreshRound,task,digest);
+        if(source.controller_id&&source.controller_id!==run.freshRoundControllerId&&new Date(source.lease_until).getTime()>Date.now())fail('原任务仍由其他控制者持有',409);
+        retirements.set(task.id,source);
+      }
       const profile=snapshot.documents.siteProfiles[run.profileId],selected=taskMediaReferences(profile),mediaManifest=[];
       if(selected.length){
         const ids=[...new Set(selected.map(({ref})=>ref.slice(14)))];
@@ -218,11 +228,27 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         }
       }
       const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };
-      const queries = [sql`insert into externallink_executor_runs(workspace_id, run_id, device_id, data)
-        values(${workspaceId},${run.id},${deviceId},${JSON.stringify(savedRun)}::jsonb) on conflict do nothing`];
-      for (const t of tasks) queries.push(sql`insert into externallink_executor_tasks(workspace_id,task_id,run_id,device_id,identity,data)
-        values(${workspaceId},${t.id},${run.id},${deviceId},${t.identity},${JSON.stringify(t)}::jsonb)`);
-      await sql.transaction(queries);
+      // All registrations serialize on their workspace row. This also guards
+      // same-host alternate entrances and other devices on the Neon backend.
+      const queries = [sql`select workspace_id from externallink_workspaces where workspace_id=${workspaceId} for update`,sql`insert into externallink_executor_runs(workspace_id, run_id, device_id, data)
+        values(${workspaceId},${run.id},${deviceId},${JSON.stringify(savedRun)}::jsonb)`];
+      for (const t of tasks){
+        const source=retirements.get(t.id);
+        if(source){const retired=freshRoundRetiredIdentity(t.id,source.task_id);
+          queries.push(sql`update externallink_executor_tasks set identity=${retired},version=version+1
+            where workspace_id=${workspaceId} and task_id=${source.task_id} and device_id=${deviceId} and version=${source.version}
+            and identity=${source.identity} and md5(data::text)=${source.body_checksum} and controller_id is not distinct from ${source.controller_id}
+            and lease_until is not distinct from ${source.lease_until}::timestamptz returning task_id`);
+          queries.push(sql`select 1 / ((count(*)=1)::int) from externallink_executor_tasks where workspace_id=${workspaceId} and task_id=${source.task_id}
+            and device_id=${deviceId} and identity=${retired} and version=${source.version+1}`);
+        }
+        queries.push(sql`select 1 / ((count(*)=0)::int) from externallink_executor_tasks where workspace_id=${workspaceId}
+          and data->>'profileId'=${t.profileId} and identity not like 'retired:%'
+          and regexp_replace(regexp_replace(regexp_replace(lower(split_part(data->>'url','/',3)), '^[^@]*@', ''), '^www\\.', ''), ':[0-9]+$', '')=${freshRoundHost(t.url)}`);
+        queries.push(sql`insert into externallink_executor_tasks(workspace_id,task_id,run_id,device_id,identity,data)
+          values(${workspaceId},${t.id},${run.id},${deviceId},${t.identity},${JSON.stringify(t)}::jsonb)`);
+      }
+      try{await sql.transaction(queries);}catch(error){if(error.code==='22012')fail('原同站任务在注册时变化或仍受保护，新一轮未创建',409);throw error;}
       return reply({ ok: true, run: savedRun, tasks });
     }
     if (path === '/v1/executor/lease' && request.method === 'POST') {
@@ -231,7 +257,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       if (!input.controllerId) fail('缺少控制会话');
       const rows = await sql`update externallink_executor_tasks set lease_until=now()+interval '90 seconds',
         version=case when controller_id is not null and controller_id<>${input.controllerId} then version+1 else version end, controller_id=${input.controllerId}
-        where workspace_id=${workspaceId} and task_id=${input.taskId} and device_id=${deviceId} and version=${input.version}
+        where workspace_id=${workspaceId} and task_id=${input.taskId} and device_id=${deviceId} and version=${input.version} and identity not like 'retired:%'
         and (controller_id is null or controller_id=${input.controllerId} or lease_until<now())
         returning version, lease_until`;
       if (!rows.length) fail('原控制会话租约仍有效，请等待停止或过期', 409);
@@ -241,13 +267,14 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       const task = await readTask(input.taskId);
       if (!input.controllerId || !input.previousControllerId) fail('接管缺少控制会话');
       const rows = await sql`update externallink_executor_tasks set version=version+1,controller_id=${input.controllerId},lease_until=now()+interval '90 seconds'
-        where workspace_id=${workspaceId} and task_id=${input.taskId} and device_id=${deviceId} and version=${input.version} and controller_id=${input.previousControllerId} returning version`;
+        where workspace_id=${workspaceId} and task_id=${input.taskId} and device_id=${deviceId} and version=${input.version} and identity not like 'retired:%' and controller_id=${input.previousControllerId} returning version`;
       if (!rows.length) fail('接管控制权冲突', 409);
       return reply({ ok: true, version: rows[0].version });
     }
     if (path === '/v1/executor/event' && request.method === 'POST') {
       const task = await readTask(input.taskId);
       if (!input.id || !input.state || input.state.id !== input.taskId || input.state.runId !== task.run_id || input.state.profileId !== task.data.profileId || input.state.destinationKey !== task.data.destinationKey) fail('事件范围不匹配', 403);
+      if(batchJson(input.state.originalFreshRound)!==batchJson(task.data.originalFreshRound))fail('原新一轮来源不允许修改',403);
       // A supervisor can hand the browser back before the earlier takeover
       // event is flushed. Preserve that one audit event without restoring its
       // stale task state over the newer controller/version.

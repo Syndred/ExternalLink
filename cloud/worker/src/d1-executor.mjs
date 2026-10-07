@@ -16,8 +16,9 @@ import {backupKeys} from '../../../core/application-backup.mjs';
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
 import {libraryTransfer} from './library-transfer.mjs';
-import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
+import {batchRegisteredTask,validateBatchRunMetadata,batchJson} from '../../../core/workbench-batch-recovery.mjs';
 import {applicationMutationDependencies} from '../../../core/application-mutation-dependencies.mjs';
+import {freshRoundHost,freshRoundSuccessor,freshRoundRetiredIdentity,validateFreshRoundSource} from '../../../core/original-fresh-round.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
@@ -60,10 +61,12 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path==='revisions'&&request.method==='GET')return json({ok:true,deviceId,workspaceId:workspace,revisions:await store.revisions()});
   if(path==='runs'&&url.pathname.startsWith('/v1/')&&request.headers.get('X-Executor-Protocol')!=='2')return json({ok:false,error:'执行器需要更新以支持分页恢复；本机任务保持不变',code:'EXECUTOR_UPGRADE_REQUIRED'},426);
   const readTask=async id=>{
-   const row=await db.prepare('SELECT c.*,j.object_key,j.checksum,j.item_index FROM executor_controls c JOIN journal_tasks j ON j.workspace=c.workspace AND j.id=c.id WHERE c.workspace=? AND c.id=? AND c.device_id=?').bind(workspace,id,deviceId).first();
+   const row=await db.prepare('SELECT c.*,j.object_key,j.checksum,j.item_index,j.summary FROM executor_controls c JOIN journal_tasks j ON j.workspace=c.workspace AND j.id=c.id WHERE c.workspace=? AND c.id=? AND c.device_id=?').bind(workspace,id,deviceId).first();
    if(!row)fail('任务不属于当前设备',403);
+   const successor=freshRoundSuccessor(row.identity);
+   if(successor&&request.method==='POST'&&!['review','artifact-read'].includes(path))fail('旧任务已进入历史，新一轮任务为 '+successor);
    const object=await store.readObject(row.object_key,row.checksum),data=row.item_index===null?object:object[row.item_index];
-   return{...row,storedVersion:data.version,data:{...data,version:row.version,controllerId:row.controller_id,reviewStatus:row.review_status}};
+   return{...row,storedVersion:data.version,data:{...data,version:row.version,controllerId:row.controller_id,reviewStatus:row.review_status,...(successor?{originalFreshRoundSuccessorTaskId:successor}:{})}};
   };
   const snapshot=async()=>{const documents={},revisions=await store.revisions();for(const key of Object.keys(revisions)){const row=await store.document(key);documents[key]=row.data;revisions[key]=row.revision;}return{ok:true,deviceId,workspaceId:workspace,documents,revisions};};
   const updateDocument=async(key,change)=>{for(let i=0;i<3;i++){const old=await store.document(key);const data=change(old?.data||{});try{return{data,...await store.putDocument(key,data,old?.revision||0)};}catch(e){if(e.status!==409||i===2)throw e;}}};
@@ -95,9 +98,9 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path==='runs'&&request.method==='GET'){
    const runId=url.searchParams.get('runId'),inventory=url.searchParams.get('view')==='inventory',after=url.searchParams.get('after')||'',limit=inventory?200:10;
    const runRows=after?{results:[]}:await db.prepare('SELECT * FROM executor_runs WHERE workspace=? AND device_id=? AND (? IS NULL OR id=?) ORDER BY id').bind(workspace,deviceId,runId,runId).all();
-   const taskRows=await db.prepare('SELECT c.version,c.controller_id,c.review_status,j.* FROM executor_controls c JOIN journal_tasks j ON j.workspace=c.workspace AND j.id=c.id WHERE c.workspace=? AND c.device_id=? AND (? IS NULL OR c.run_id=?) AND c.id>? ORDER BY c.id LIMIT ?').bind(workspace,deviceId,runId,runId,after,limit+1).all();
+   const taskRows=await db.prepare('SELECT c.version,c.controller_id,c.review_status,c.identity AS control_identity,c.run_id AS control_run_id,j.* FROM executor_controls c JOIN journal_tasks j ON j.workspace=c.workspace AND j.id=c.id WHERE c.workspace=? AND c.device_id=? AND (? IS NULL OR c.run_id=?) AND c.id>? ORDER BY c.id LIMIT ?').bind(workspace,deviceId,runId,runId,after,limit+1).all();
    const runs=[],tasks=[];for(const r of runRows.results)runs.push(inventory?JSON.parse(r.summary):await store.readObject(r.object_key,r.checksum));
-   const objects=new Map();for(const t of taskRows.results.slice(0,limit)){let value;if(inventory)value=JSON.parse(t.summary);else{if(!objects.has(t.object_key))objects.set(t.object_key,await store.readObject(t.object_key,t.checksum));const object=objects.get(t.object_key);value=t.item_index===null?object:object[t.item_index];}tasks.push({...value,version:t.version,controllerId:t.controller_id,reviewStatus:t.review_status});}
+   const objects=new Map();for(const t of taskRows.results.slice(0,limit)){let value;if(inventory)value=JSON.parse(t.summary);else{if(!objects.has(t.object_key))objects.set(t.object_key,await store.readObject(t.object_key,t.checksum));const object=objects.get(t.object_key);value=t.item_index===null?object:object[t.item_index];}const successor=freshRoundSuccessor(t.control_identity);tasks.push({...value,runId:t.control_run_id,version:t.version,controllerId:t.controller_id,reviewStatus:t.review_status,...(successor?{originalFreshRoundSuccessorTaskId:successor}:{})});}
    return json({ok:true,runs,tasks,next:taskRows.results.length>limit?taskRows.results[limit-1].id:null,storageBackend:'d1'});
   }
   if(path.startsWith('tasks/')&&request.method==='GET')return json({ok:true,task:(await readTask(path.slice(6))).data});
@@ -108,10 +111,26 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    const snap=await snapshot();if(run.profileRevision!==snap.revisions.siteProfiles||!snap.documents.siteProfiles?.[run.profileId])fail('资料已更新，请重新预览');
    const preparation=run.mode==='single_page_preparation';
    if(preparation)globalThis.ExtLinkExecutorContract.validateSinglePagePreparation(snap,run);else{const scope=globalThis.ExtLinkExecutorContract.selectScope(snap,null,run.profileId,run.tasks.map(t=>t.url));if(scope.exclusions.length||scope.tasks.length!==run.tasks.length)fail('当前范围含已提交、重复或排除目标');}
-   const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),...batchRegisteredTask(run),status:preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
+   const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),...batchRegisteredTask(run),...(t.originalFreshRound?{originalFreshRound:t.originalFreshRound}:{}),status:preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
+   const retirements=[];
+   for(const task of tasks.filter(t=>t.originalFreshRound)){
+    const source=await readTask(task.originalFreshRound.sourceTaskId);
+    await validateFreshRoundSource(source.data,task.originalFreshRound,task,hash);
+    const summary=JSON.parse(source.summary);if(summary.receipt||summary.attemptBoundary||['accepted','sent_unconfirmed','submitted_unconfirmed'].includes(summary.siteStatus))fail('原同站索引仍有收件或未知投稿，须先核验');
+    if(source.controller_id&&source.controller_id!==run.freshRoundControllerId&&source.lease_until>Date.now())fail('原任务仍由其他控制者持有');
+    if(source.host_identity!==task.profileId+'::'+freshRoundHost(task.url))fail('原任务同站索引不匹配');
+    retirements.push({source,task});
+   }
    const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=await freezeD1TaskMedia(env.MEDIA_BUCKET,workspace,profile,run.profileId);
    const savedRun={...run,profile,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
    const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt,workbenchBatchId:run.workbenchBatchId,workbenchBatchManifestId:run.workbenchBatchManifest?.id}),runObject.key,runObject.checksum)];
+   // Move only the proved, unsubmitted terminal control out of the live unique
+   // index. Body, journal row, run and events remain intact and readable. CAS
+   // includes the body object, since event writes need not increment version.
+   for(const {source,task}of retirements){const retired=freshRoundRetiredIdentity(task.id,source.id);
+    writes.push(db.prepare('UPDATE executor_controls SET identity=?,host_identity=?,version=version+1 WHERE workspace=? AND id=? AND device_id=? AND version=? AND identity=? AND host_identity=? AND controller_id IS ? AND lease_until=? AND review_status=? AND EXISTS(SELECT 1 FROM journal_tasks WHERE workspace=? AND id=? AND object_key=? AND checksum=? AND item_index IS ? AND summary=?)').bind(retired,retired,workspace,source.id,deviceId,source.version,source.identity,source.host_identity,source.controller_id,source.lease_until,source.review_status,workspace,source.id,source.object_key,source.checksum,source.item_index,source.summary));
+    writes.push(db.prepare("SELECT CASE WHEN changes()=1 THEN 1 ELSE json('fresh_round_conflict') END"));
+   }
    // Multi-row inserts keep each statement under D1's 100 bind-parameter limit.
    for(let start=0;start<tasks.length;start+=10){const group=tasks.slice(start,start+10);
     writes.push(db.prepare('INSERT INTO journal_tasks(workspace,id,profile_id,destination,summary,object_key,checksum,updated_at,item_index) VALUES '+group.map(()=>'(?,?,?,?,?,?,?,?,?)').join(','))
@@ -119,7 +138,7 @@ export async function d1Executor(request,env,workspace,plan,assistant){
     writes.push(db.prepare('INSERT INTO executor_controls(workspace,id,run_id,device_id,identity,host_identity,version) VALUES '+group.map(()=>'(?,?,?,?,?,?,1)').join(','))
      .bind(...group.flatMap(t=>[workspace,t.id,t.runId,deviceId,t.identity,t.profileId+'::'+new URL(t.url).hostname.toLowerCase().replace(/^www\./,'')])));
    }
-   await db.batch(writes);return json({ok:true,run:savedRun,tasks});
+   try{await db.batch(writes);}catch(error){if(retirements.length&&/malformed JSON/i.test(error.message))fail('原任务在注册时变化，新一轮未创建');throw error;}return json({ok:true,run:savedRun,tasks});
   }
   if(path==='recover-run'&&request.method==='POST'){
    const archive=await db.prepare("SELECT * FROM recovery_objects WHERE workspace=? AND id=? AND kind='run'").bind(workspace,'run-'+input.runId).first();if(!archive)fail('原批次档案不存在',404);
@@ -132,13 +151,13 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   }
   if(path==='lease'&&request.method==='POST'){
    if(!input.controllerId)fail('缺少控制会话',400);const now=Date.now();
-   const result=await db.prepare(`UPDATE executor_controls SET version=CASE WHEN controller_id IS NOT NULL AND controller_id<>? THEN version+1 ELSE version END,controller_id=?,lease_until=? WHERE workspace=? AND id=? AND device_id=? AND version=? AND (controller_id IS NULL OR controller_id=? OR lease_until<?) RETURNING version,lease_until`)
+   const result=await db.prepare(`UPDATE executor_controls SET version=CASE WHEN controller_id IS NOT NULL AND controller_id<>? THEN version+1 ELSE version END,controller_id=?,lease_until=? WHERE workspace=? AND id=? AND device_id=? AND version=? AND identity NOT LIKE 'retired:%' AND (controller_id IS NULL OR controller_id=? OR lease_until<?) RETURNING version,lease_until`)
     .bind(input.controllerId,input.controllerId,now+90000,workspace,input.taskId,deviceId,input.version,input.controllerId,now).first();
    if(!result)fail('控制权版本冲突或原租约仍有效');return json({ok:true,...result});
   }
   if(path==='handoff'&&request.method==='POST'){
    if(!input.controllerId||!input.previousControllerId)fail('缺少控制会话',400);
-   const result=await db.prepare('UPDATE executor_controls SET version=version+1,controller_id=?,lease_until=? WHERE workspace=? AND id=? AND device_id=? AND version=? AND controller_id=? RETURNING version')
+   const result=await db.prepare("UPDATE executor_controls SET version=version+1,controller_id=?,lease_until=? WHERE workspace=? AND id=? AND device_id=? AND version=? AND identity NOT LIKE 'retired:%' AND controller_id=? RETURNING version")
     .bind(input.controllerId,Date.now()+90000,workspace,input.taskId,deviceId,input.version,input.previousControllerId).first();
    if(!result)fail('接管控制权冲突');return json({ok:true,...result});
   }
@@ -148,6 +167,7 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    if(existing){if(existing.checksum!==checksum)fail('事件编号已有不同内容');return json({ok:true,eventId:input.id,checksum,duplicate:true});}
    const task=await readTask(input.taskId),state=input.state;
    if(!input.id||!state||state.id!==task.id||state.runId!==task.run_id||state.profileId!==task.data.profileId||state.destinationKey!==task.data.destinationKey)fail('事件范围不匹配',403);
+   if(batchJson(state.originalFreshRound)!==batchJson(task.data.originalFreshRound))fail('原新一轮来源不允许修改',403);
    if(task.version===Number(input.version)+1&&input.type==='takeover'&&state.controller==='supervisor'&&state.version===input.version&&Number(task.storedVersion||1)<task.version){
     const object=await store.object(input);
     const result=await db.prepare('INSERT INTO executor_events SELECT ?,?,?,?,?,?,?,NULL,? FROM executor_controls WHERE workspace=? AND id=? AND device_id=? AND version=? ON CONFLICT DO NOTHING')

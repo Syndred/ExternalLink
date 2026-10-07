@@ -400,6 +400,7 @@ export class Runtime {
   }
   update(task, patch, type, stateChanges) { const checkpoint=checkpointTaskUpdate(this,task,patch,stateChanges);const next={...task,...checkpoint.patch};const event=this.store.transition(next,type,checkpoint.stateChanges);Object.assign(task,next);return event; }
   async lease(task,{online=false}={}) {
+    if(task.originalFreshRoundSuccessorTaskId)throw Object.assign(Error('旧任务已进入历史，请使用原新一轮任务'),{status:409});
     const leaseScope=workbenchScope(this.store.get('pair')),leaseTask=structuredClone(this.store.get('task:'+task.id));
     if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;

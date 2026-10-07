@@ -1,0 +1,90 @@
+{
+  "kind": "progress_only_checkpoint_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "publishedFeatureCommit": "ac0716401b5f43225d909c4958877b0040e2da88",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "gitBeforeCheckpoint": {
+    "branch": "main",
+    "pullCommand": "git pull --ff-only",
+    "pullResult": "Already up to date",
+    "ahead": 0,
+    "behind": 0,
+    "uncommittedFeatureCode": false,
+    "unrelatedLocalChangesPreserved": true
+  },
+  "previousPublishedTests": {
+    "passed": 648,
+    "failed": 0,
+    "skipped": 0,
+    "source": "original-cloud-connections-2026-10-07.json",
+    "existingOutputRead": "executor/test-output/cloud-connections-all-2026-10-07.txt",
+    "rerunThisCheckpoint": false,
+    "provesFullMigration": false
+  },
+  "confirmedOriginalGaps": [
+    {
+      "originalFunction": "getCloudSyncStatus",
+      "nativeFunctions": ["cloudStatus", "showCloudStatus"],
+      "detail": "Displayed current status does not follow original conflict, pending, remote change and local-only document priority",
+      "status": "not_restored_or_accepted"
+    },
+    {
+      "originalFunction": "pullCloudState and original settings backup-before-confirmation flow",
+      "nativeFunction": "refresh button load(true)",
+      "detail": "Refresh overlays pending local edits and lacks original explicit backup, cloud adoption and conflict-only resolution workflow",
+      "status": "not_restored_or_accepted"
+    },
+    {
+      "originalFunction": "pushCloudState allowBeforePull under startup hold",
+      "nativeFunction": "pushLocalChanges",
+      "detail": "Native explicit upload calls cloudStatus but ignores its remote revision differences before flushing",
+      "status": "not_restored_or_accepted"
+    }
+  ],
+  "currentRound": {
+    "featureImplementationStarted": false,
+    "newTestsRun": 0,
+    "fullTestRun": false,
+    "browserAcceptanceRun": false,
+    "deployment": false,
+    "nativeServicesReloaded": false,
+    "cloudPullPreview": false,
+    "cloudAdoption": false,
+    "realBusinessImport": false,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0
+  },
+  "authenticatedReadOnlyObservation": {
+    "source": "node executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "exitCode": 0,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "existingProducts": 9,
+    "existingLibrary": 2948,
+    "existingCombinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "fullCloudDocumentHashComparisonThisCheckpoint": false
+  },
+  "remainingAcceptance": [
+    "Original cloud status, pull, conflict resolution and explicit upload guards",
+    "Every original dynamic control and content-script interaction",
+    "Latest original browser products, favorites and groups",
+    "Complete original history and media ownership",
+    "Real special publishing pages and external service results"
+  ],
+  "goalComplete": false
+}

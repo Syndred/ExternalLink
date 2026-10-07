@@ -1,0 +1,38 @@
+✖ batch preview uses locally saved concurrency and gates when setting writes fail, matching the original local queue (28.0757ms)
+✖ a pending blacklist edit after preview blocks registration at batch start while preserving the original scope and frozen configuration (4.6564ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 329.2776
+
+✖ failing tests:
+
+test at tests\executor-original-pending-batch-settings.test.mjs:12:1
+✖ batch preview uses locally saved concurrency and gates when setting writes fail, matching the original local queue (28.0757ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-batch-settings.test.mjs:13:488)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-pending-batch-settings.test.mjs:16:1
+✖ a pending blacklist edit after preview blocks registration at batch start while preserving the original scope and frozen configuration (4.6564ms)
+  Error: Unexpected registration runs
+      at Object.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-batch-settings.test.mjs:10:1029)
+      at startWorkbenchBatch (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/workbench-features.mjs:89:40)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-pending-batch-settings.test.mjs:17:322)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

@@ -1,0 +1,5 @@
+{"sourceNumber": 1, "scopeCases": 26, "mismatchCount": 0}
+{"sourceNumber": 2, "scopeCases": 26, "mismatchCount": 0}
+{"sourceNumber": 3, "scopeCases": 26, "mismatchCount": 0}
+{"sourceNumber": 4, "scopeCases": 26, "mismatchCount": 0}
+{"sourceNumber": 5, "scopeCases": 26, "mismatchCount": 0}

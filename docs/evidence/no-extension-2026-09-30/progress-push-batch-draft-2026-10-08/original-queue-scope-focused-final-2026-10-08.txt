@@ -1,0 +1,26 @@
+✔ the original category and group scope functions are copied exactly from the pre-refactor baseline (1.2899ms)
+✔ category and group queues match original functions including assignment, profile order, quality and compiled defaults (52.1561ms)
+✔ explicit category editing keeps its documented addition while the unmodified original classifier reference remains independent (6.4438ms)
+✔ all original categories and groups compare ordered task identities, quality and range counts without altering source documents (211.1272ms)
+✔ original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection (42.811ms)
+✔ scoped preview freezes the original job sequence instead of expanding it into a different Cartesian scope (8.3731ms)
+✔ a complete original scoped range above five hundred keeps all identities with compact profiles and cloud recovery (240.8201ms)
+✔ unknown category, unknown group and empty original queue reject without creating or replacing any batch (4.2098ms)
+✔ another pending path on the same host stays excluded with its original reference instead of adopting mismatched recovery identities (5.845ms)
+✔ same-host duplicate previews keep unique frozen identities and stronger cloud boundaries prevent local pending task reuse (7.3085ms)
+✔ batch preview uses locally saved concurrency and gates when setting writes fail, matching the original local queue (30.3918ms)
+✔ a pending blacklist edit after preview blocks registration at batch start while preserving the original scope and frozen configuration (4.5178ms)
+✔ pending original settings take effect without borrowing unconfirmed profiles, ledger edits or cloud revisions (10.1331ms)
+✔ locally recovered original setting documents also govern execution before their first cloud revision (1.0016ms)
+✔ original task comment bridge checks pending disabled AI before cache or model and pending link preference before a fresh request (1.8505ms)
+✔ pending original submission switches govern the actual execution preferences while fill-only stays enforced (0.9193ms)
+✔ actual native page and comment studio use pending local preferences through SQLite restart, matching the frozen original configuration (3067.4891ms)
+✔ frozen pre-refactor comment engine fills the same selected text and local contact values without a model or submission (793.3045ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4283.9545

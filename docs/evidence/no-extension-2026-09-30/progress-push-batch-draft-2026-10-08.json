@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-08",
+  "kind": "progress_only_not_feature_release",
+  "migrationComplete": false,
+  "pulledLatestCode": true,
+  "checkedHead": "b6cd294dabc12e7e9c13348ab5ae089670e80e96",
+  "checkedRemote": "b6cd294dabc12e7e9c13348ab5ae089670e80e96",
+  "lastPublishedFeature": "3441c61",
+  "lastPublishedRepositoryTests": {
+    "tests": 924,
+    "pass": 924,
+    "fail": 0,
+    "skipped": 0,
+    "rerunThisProgressPush": false
+  },
+  "draft": {
+    "published": false,
+    "pendingBatchSettingsBefore": {
+      "tests": 2,
+      "fail": 2
+    },
+    "afterRelatedTests": {
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    "latestFocusedTests": {
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "skipped": 0
+    },
+    "finalRepositoryTestsRun": false,
+    "sourceHashes": [
+      {
+        "path": "executor/src/workbench-features.mjs",
+        "sha256": "b83adf061dc0b5023703e6e44691ce969f37f622f7578f862c72b424d19661fe"
+      },
+      {
+        "path": "tests/helpers/original-library-catalog.mjs",
+        "sha256": "34236b57302519c0ab5da1617dc8edb61583683827504d9b05d6eace7c562821"
+      },
+      {
+        "path": "tests/helpers/original-library-queue-projection.mjs",
+        "sha256": "e077a771b1717d63d1ff1ddab4207145bbc9f687d10e04282b4b83281708c220"
+      },
+      {
+        "path": "tests/executor-original-library-batch-scope.test.mjs",
+        "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+      },
+      {
+        "path": "tests/executor-original-pending-batch-settings.test.mjs",
+        "sha256": "b5353902bb065a6166828eedf8115bdbd0f7b1f3fdb1584844f375bca04e7c41"
+      },
+      {
+        "path": "executor/test/original-library-queue-readonly.mjs",
+        "sha256": "5383c2dd4cf4b1d2b36ef0fd34f69d9ed5a450f31a6c43e98b311574a4453c8f"
+      }
+    ]
+  },
+  "originalReference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "explicitChineseCategoryBehavior": "Intentional added support; frozen original may classify as other without source-text hints. No full exact parity claim.",
+  "readOnlyQueueAudit": {
+    "statusAtCheckpoint": "running",
+    "completedSourceProgress": [
+      {
+        "sourceNumber": 1,
+        "scopeCases": 26,
+        "mismatchCount": 0
+      },
+      {
+        "sourceNumber": 2,
+        "scopeCases": 26,
+        "mismatchCount": 0
+      },
+      {
+        "sourceNumber": 3,
+        "scopeCases": 26,
+        "mismatchCount": 0
+      },
+      {
+        "sourceNumber": 4,
+        "scopeCases": 26,
+        "mismatchCount": 0
+      },
+      {
+        "sourceNumber": 5,
+        "scopeCases": 26,
+        "mismatchCount": 0
+      }
+    ],
+    "finalReadOnlyGuardsVerified": false,
+    "scopeCasesPerSource": 26,
+    "projectedTaskFields": 12,
+    "doesNotVerifyAllFormOrExecutionBehavior": true
+  },
+  "progressPushActions": {
+    "featureSourcePublished": false,
+    "servicesReloaded": false,
+    "workerDeployed": false,
+    "realSubmissions": 0
+  },
+  "remaining": [
+    "latest original browser data and previous favorites",
+    "complete old history and other devices",
+    "all original execution and special publishing branches",
+    "remaining settings and dynamic controls and media branches"
+  ],
+  "outputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/progress-push-batch-draft-2026-10-08/original-pending-batch-settings-before-2026-10-08.txt",
+      "capturedOutputSha256": "3d315538667aac6075735d1c768a9940d8342e15363e53bb8cd648074a4053c2",
+      "gitLfBlobSha256": "1c3d5b7bc95e231c466d820a41ba89437fb698a8b1194b78af02ca4733ebb927"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/progress-push-batch-draft-2026-10-08/original-pending-batch-settings-after-2026-10-08.txt",
+      "capturedOutputSha256": "ac7a85980e4b09b79d68a6371090b23344e446b7625fdb6e7b8fd5c73c16f9a9",
+      "gitLfBlobSha256": "81ce929900ba72f984f709a08e9fec3026f79d0135997403a4b5794077c9c824"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/progress-push-batch-draft-2026-10-08/original-queue-scope-focused-final-2026-10-08.txt",
+      "capturedOutputSha256": "f33e69e9b7dcae7322adbbbdd4f347345c2ce90145f22fb551af43f67343de7a",
+      "gitLfBlobSha256": "a0d9084163d9aac8cd68e16ad6e722d42fd52c3c91574507985820f2a70fe89b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/progress-push-batch-draft-2026-10-08/original-queue-scope-progress-snapshot.txt",
+      "capturedOutputSha256": "ce08e57eb9c4720fbeb47bd7836d56908ebaa43dbff740ec079be747b03de66d",
+      "gitLfBlobSha256": "ce08e57eb9c4720fbeb47bd7836d56908ebaa43dbff740ec079be747b03de66d"
+    }
+  ]
+}

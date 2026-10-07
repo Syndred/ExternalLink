@@ -3,6 +3,7 @@ import {retainBatchManualPage} from './workbench-batch-policy.mjs';
 export async function closeAcceptanceTask(runtime,task){
  if(!(task.acceptanceId||task.workbenchBatchId)||!task.targetId||task.tabClosedAt)return;
  if(retainBatchManualPage(runtime,task))return;
+ const pausedBatch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(pausedBatch?.status==='paused'&&pausedBatch.pauseReasonCode==='user_pause'&&pausedBatch.pausedTaskIds?.includes(task.id))return;
  if(task.attemptBoundary&&!task.receipt)return; // Preserve original verification page.
  if(!task.screenshot||!['needs_manual','finished','excluded'].includes(task.status))return;
  const frozen=runtime.store.get('acceptance:'+task.acceptanceId),execution=runtime.store.get('acceptanceExecution:'+task.acceptanceId);

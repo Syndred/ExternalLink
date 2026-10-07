@@ -55,8 +55,10 @@ export class Store {
   pendingBatch(limit=100) { return this.db.prepare('SELECT value FROM outbox ORDER BY seq LIMIT ?').all(limit).map(x=>JSON.parse(x.value)); }
   pendingSummary() { return this.db.prepare("SELECT id,json_extract(value,'$.taskId') AS taskId FROM outbox ORDER BY seq").all(); }
   ack(id) { this.db.prepare('DELETE FROM outbox WHERE id=?').run(id); }
-  recover() {
+  recover({taskIds}={}) {
+    const selected=taskIds&&new Set(taskIds);
     for (const task of this.values('task:')) {
+      if(selected&&!selected.has(task.id))continue;
       if(task.controller==='ai'&&!task.attemptBoundary&&!task.receipt){
         this.transition({...task,controller:'executor',aiTakeover:{...task.aiTakeover,interruptedAt:new Date().toISOString(),reason:'后台重启，原 AI 动作预算保留；重新观察原页后恢复'}},'recovered_ai_control');
         task.controller='executor';task.aiTakeover=this.get('task:'+task.id).aiTakeover;

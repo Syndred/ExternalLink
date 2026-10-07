@@ -51,13 +51,16 @@ export async function refreshBatchManualCapacity(runtime,batch){
 export function releaseBatchTask(runtime,batch,task,patch,index=batch.cursor){
  assertBatchPolicy(runtime,batch);const config=batchConfig(batch),changes={...patch,fillOnlyRun:config.fillOnly===true,manualSubmissionConsent:null};let next={...batch};
  if(batch.status!=='running'||runtime.store.get('paused')!==false)return false;
+ const resuming=batch.resumingPausedTaskIds?.includes(task.id)&&task.pauseContinuation?.batchId===batch.id&&task.pauseContinuation?.scope===batch.scope&&!task.attemptBoundary&&!task.receipt&&['targetId','browserInstance','taskDeadlineAt','profileRevision'].every(key=>task.pauseContinuation[key]===task[key]);
  if(config.unattended){
   const state=U.createCheckpoint(config,Date.now(),batch.unattendedState),decision=U.canStartTask(state,Date.now());
-  if(!decision.ok){pauseBatchPolicy(runtime,batch,decision.reason);return false;}
+  if(!decision.ok&&(!resuming||decision.reason==='deadline')){pauseBatchPolicy(runtime,batch,decision.reason);return false;}
+  if(resuming&&task.taskDeadlineAt&&Date.now()>=task.taskDeadlineAt){const result=U.interruptedTaskStatus({status:'running'});next.items[index].status='complete';next.items[index].result=result.status;next.items[index].reason=reasons.task_deadline;next.unattendedState=U.addManualTodo(state,task.id);next.resumingPausedTaskIds=next.resumingPausedTaskIds.filter(id=>id!==task.id);runtime.update(task,{...result,reason:reasons.task_deadline,attentionType:'unattended_timeout',pauseContinuation:null},'paused_task_deadline',{['workbenchBatch:'+batch.id]:next});return false;}
   const already=task.unattendedClaimed===true&&task.unattendedBatchId===batch.id;
   const claim=already?{ok:true,next:state}:U.claimTask(state,Date.now());if(!claim.ok){pauseBatchPolicy(runtime,batch,claim.reason);return false;}
-  next.unattendedState=claim.next;changes.unattendedBatchId=batch.id;changes.unattendedClaimed=true;changes.taskDeadlineAt=U.taskDeadline(claim.next,Date.now());
+  next.unattendedState=claim.next;changes.unattendedBatchId=batch.id;changes.unattendedClaimed=true;changes.taskDeadlineAt=resuming?task.taskDeadlineAt:U.taskDeadline(claim.next,Date.now());
  }
+ if(resuming){next.resumingPausedTaskIds=next.resumingPausedTaskIds.filter(id=>id!==task.id);changes.pauseContinuation=null;}
  const item=next.items[index];if(item?.taskId!==task.id)throw Error('原批次任务身份已变化');item.status='running';item.startedAt=item.startedAt||new Date().toISOString();
  runtime.update(task,changes,'workbench_task_released',{['workbenchBatch:'+batch.id]:next});return true;
 }
@@ -69,6 +72,7 @@ export function reserveBatchModelCall(runtime,task){
  if(batch.status!=='running'||runtime.store.get('paused')!==false)throw Error('原无人值守批次已暂停，未调用模型');save(runtime,{...batch,unattendedState:result.next});
 }
 export function batchActionAllowed(runtime,task){
+ const skip=runtime.store.get('manualSkipPending:'+task.id);if(skip?.scope===workbenchScope(runtime.store.get('pair')))return false;
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch)return !task.workbenchBatchId||hasManualSubmissionConsent(runtime,task);
  assertBatchPolicy(runtime,batch);if(hasManualSubmissionConsent(runtime,task)||!batchConfig(batch).unattended)return true;if(batch.status!=='running')return false;
  if(batchConfig(batch).unattended){const now=Date.now();if(U.isExpired(batch.unattendedState,now)){pauseBatchPolicy(runtime,batch,'deadline',task.id);return false;}if(task.taskDeadlineAt&&now>=task.taskDeadlineAt){interruptBatchTask(runtime,batch,task.id);return false;}}

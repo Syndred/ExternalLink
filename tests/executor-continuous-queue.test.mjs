@@ -96,12 +96,14 @@ test('a network pause probes recovery while a deliberate user pause stays paused
 
 test('resumption recovers a pre-submit interruption but preserves an in-flight submission boundary',async()=>{
  const store=new Store(':memory:');store.set('paused',true);
- store.set('task:opening',{id:'opening',version:1,status:'opening'});
- store.set('task:sent',{id:'sent',version:1,status:'submitting',attemptBoundary:'original-boundary'});
+ store.set('pair',{endpoint:'https://cloud.example',workspaceId:'default'});store.set('run:original-run',{id:'original-run'});store.set('executionPaused',{scope:'https://cloud.example|default',kind:'run',id:'original-run'});
+ store.set('task:opening',{id:'opening',runId:'original-run',version:1,status:'opening'});
+ store.set('task:sent',{id:'sent',runId:'original-run',version:1,status:'submitting',attemptBoundary:'original-boundary'});
+ store.set('task:unrelated',{id:'unrelated',runId:'other-run',version:1,status:'opening'});
  const runtime={store,synchronize:async()=>{for(const e of store.pending())store.ack(e.id);},tick(){},status:()=>({})};
  await Runtime.prototype.control.call(runtime,'resume',{});
  assert.equal(store.get('task:opening').status,'pending');assert.equal(store.get('task:sent').status,'submitted_unconfirmed');
- assert.equal(store.get('task:sent').attemptBoundary,'original-boundary');store.close();
+ assert.equal(store.get('task:sent').attemptBoundary,'original-boundary');assert.equal(store.get('task:unrelated').status,'opening');assert.equal(store.get('manualResumeRunId'),'original-run');store.close();
 });
 
 test('offline batches use the frozen profile, isolate existing host boundaries, and survive restart without reposting',async()=>{

@@ -53,6 +53,7 @@ import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
 import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
 import {checkpointTaskUpdate,recoverCloudBatchRecords,parkRestoredBatchTask,flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
+import {requestExecutionPause,finalizeUserPause,resumeExecution,persistBatchLifecycle} from './execution-lifecycle.mjs';
 import {commentHistory,saveCommentVersion} from './comment-history.mjs';
 import {quickOpenLibrary} from './quick-open.mjs';
 import {mediaLibrary} from './media-library.mjs';
@@ -222,7 +223,7 @@ export class Runtime {
     const saved = await this.cloud.request('runs', { run });
     this.store.set(`run:${run.id}`, saved.run);
     for (const task of saved.tasks) this.store.set(`task:${task.id}`, task);
-    this.store.set('executionStopped',null);this.store.set('manualResumeRunId',null);this.store.set('paused', false); this.tick();
+    this.store.set('executionStopped',null);this.store.set('manualResumeRunId',run.id);this.store.set('paused', false); this.tick();
     return this.status();
   }
   async startLibrary(input) {
@@ -667,13 +668,16 @@ export class Runtime {
       if(!targetInfo)throw new Error('browser page target disappeared before its task identity could be verified');
       const target = targetInfo.targetId;
       this.update(task, { targetId: target, browserInstance: this.host.startedAt }, 'target');
+      if(!active())return;
       Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
       if (!reused) await page.goto(task.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       // Hydrated forms can appear after DOMContentLoaded. Wait on visible
       // controls/frames, rather than treating the initial HTML as a dead end.
       await page.locator('input:visible, textarea:visible, select:visible, iframe:visible, [contenteditable=true]:visible, a[href]:visible, button:visible').first().waitFor({ timeout: 15000 }).catch(() => {});
       if(continuous)await page.waitForTimeout(1500);
+      if(!active())return;
       await this.preparePublicPage(page,task);
+      if(!active())return;
       await this.prepareKnownPage(page, task.url, task);
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_fill'); return; }
       this.update(task, { status: 'filling' }, 'filling');
@@ -683,6 +687,7 @@ export class Runtime {
         return;
       }
       for (const frame of page.frames()) {
+        if(!active())return;
         if(!/^https?:/.test(frame.url()))continue;
         try {
           const engine = await attachEngine(this.context, frame, msg => this.bridge(task, msg));
@@ -691,6 +696,7 @@ export class Runtime {
         } catch (error) { task.frameError = error.message; }
       }
       let candidate = engines.filter(e => e.detection.operable).sort((a, b) => b.detection.formFieldCount - a.detection.formFieldCount)[0];
+      if(!active())return;
       if (!candidate && /^https:\/\/toolscout\.ai\/submit\/?$/i.test(task.url) &&
           task.stageHistory?.some(s => s.stage === 1) &&
           await page.getByRole('button', { name: 'Submit for review', exact: true }).isEnabled().catch(() => false)) {
@@ -710,13 +716,16 @@ export class Runtime {
       const forceRefreshExisting = !!task.preparationHistory?.length || !!task.attemptHistory?.length || !!task.stageHistory?.length ||
         /^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(task.url);
       const preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false,forceRefreshExisting};
+      if(!active())return;
       let fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call(detection.platform==='wp_comment'?{action:'executeSubmit',platformType:'wp_comment',config:preparationConfig}:{action:'smartFill',config:preparationConfig});
+      if(!active())return;
       if(!task.submitPreparedRun) {
         await this.reconcileTextInputs(candidate.frame, await engine.call({ action: 'getFilledFieldsReport' }), fill.mappings);
         try{await this.completeKnownForm(candidate.frame, task.url, profile, task);}
         catch(error){this.update(task,{normalPreparationFailure:{at:new Date().toISOString(),reason:error.message}},'normal_preparation_failed');fill={...fill,ok:false,reason:error.message};}
       }
       let validation = await engine.call({ action: 'collectFormValidation' });
+      if(!active())return;
       const initialAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly) && !detection.hasCaptcha) {
         for(const item of engines)await item.engine.detach();engines=[];
@@ -757,6 +766,7 @@ export class Runtime {
           issues: [...new Set([...(validation.issues || []), ...qualityIssues])] };
       }
       this.update(task, { actualSubmission, fill, validation }, 'filled_snapshot');
+      if(!active())return;
       if(/^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?$/.test(task.url)&&task.attemptHistory?.some(a=>a.kind==='verified_captcha_rejection')&&
        !await page.evaluate(()=>[...document.querySelectorAll('[name="cf-turnstile-response"]')].some(e=>Boolean(e.value?.trim())))){
         this.update(task,{attentionType:'human_verification'},'recovered_captcha_gate');
@@ -777,10 +787,12 @@ export class Runtime {
       if(!submitAction.finalFound)throw new Error(submitAction.advanceFound?'当前只有前进动作，后台接管未完成下一步；未建立投稿边界':'未找到可用最终投稿按钮；未建立投稿边界');
       // Revalidate ownership and cloud dedup immediately before the mutation.
       await this.lease(task);
+      if(!active())return;
       Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
       const currentAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       if(currentAction.allowed===false||!currentAction.finalFound)throw new Error('原提交授权或最终按钮已变化，请重新检查原任务；未建立投稿边界');
       const baseline = await engine.call({ action: 'classifySubmitEvidence', destinationUrl: task.url });
+      if(!active())return;
       this.update(task, { status: 'submitting', siteStatus: 'sent_unconfirmed', attemptBoundary: new Date().toISOString(), baselineEvidence: baseline.evidence || '' }, 'attempt_boundary');
       if(!offline)await this.cloud.flush(this.store); // Online mode confirms the boundary before click; offline mode records it durably first.
       if (!active()) { this.update(task, { status: 'submitted_unconfirmed', reason: '尝试已保留，暂停后先核验' }, 'paused_boundary'); return; }
@@ -827,6 +839,7 @@ export class Runtime {
       try{
         if (page && responseListener) page.off('response', responseListener);
         finalizeBatchDeadline(this,task);
+        finalizeUserPause(this,task);
         for (const { engine } of engines) await withinDeadline(engine.detach(),3000,'表单引擎断开').catch(()=>{});
         if (page && !page.isClosed()) {
           const file = path.join(this.home, `${task.id}-${Date.now()}.png`);
@@ -1337,10 +1350,11 @@ export class Runtime {
       return this.status();
     }
     if (action === 'review' && this.job) await this.job;
-    if (action === 'pause' || action === 'takeover') { this.store.set('paused', true); if (this.job) await this.job; }
-    if (action === 'pause') {pauseWorkbenchBatch(this,input.reason);const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:input.reason||'用户暂停',pausedAt:new Date().toISOString()});const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return this.status();}
+    if (action === 'pause')requestExecutionPause(this,input.reason);
+    if (action === 'takeover') { this.store.set('paused', true); if (this.job) await this.job; }
+    if (action === 'pause') {pauseWorkbenchBatch(this,input.reason);const id=this.store.get('activeWorkbenchBatch');let syncError='';try{if(id)await persistBatchLifecycle(this,this.store.get('workbenchBatch:'+id),'workbench_run_paused');}catch(error){syncError=error.message;}const plan=this.store.get('libraryPlan');if(plan?.globalPause)this.store.set('libraryPlan',{...plan,globalPause:{...plan.globalPause,resumeEligible:false,manualPausedAt:new Date().toISOString()}});return{...this.status(),syncError};}
     if (action === 'offlineResume') return this.resumeOffline(input);
-    if (action === 'resume') { if(this.job)await this.job;await this.synchronize();this.store.recover();await this.synchronize();const plan=this.store.get('libraryPlan');if(plan)this.store.set('libraryPlan',{...plan,globalPause:null});this.store.set('paused', false); this.tick(); return this.status(); }
+    if (action === 'resume') return resumeExecution(this,input);
     if (action === 'startLibrary') return this.startLibrary(input);
     if (action === 'runOne') {
       if (this.job || this.store.get('paused') !== true || this.store.get('singleTaskId')) throw new Error('逐站放行需要先暂停并等待当前动作结束');

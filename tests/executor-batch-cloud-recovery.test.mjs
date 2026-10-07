@@ -16,9 +16,34 @@ import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbe
 import {recoverCloudBatchRecords} from '../executor/src/workbench-batch-recovery.mjs';
 import {batchActionAllowed} from '../executor/src/workbench-batch-policy.mjs';
 import {batchJson} from '../core/workbench-batch-recovery.mjs';
+import {finalizeUserPause} from '../executor/src/execution-lifecycle.mjs';
 import {PGlite} from '../executor/node_modules/@electric-sql/pglite/dist/index.js';
 import {executorApi} from '../cloud/worker/src/executor-api.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+
+test('authenticated lifecycle events preserve user pause and resume identities, original budget and stopped cloud recovery',async()=>{
+ const f=await fixture();try{
+  const task=await nextWorkbenchTask(f.original),before=f.original.store.get('workbenchBatch:'+f.batchId).unattendedState,deadline=task.taskDeadlineAt;
+  f.original.activeTaskIds=new Set([task.id]);f.original.update(task,{status:'filling'},'fixture_filling');
+  await f.original.control('pause',{});finalizeUserPause(f.original,task);await f.cloud.flush(f.original.store);
+  let saved=await f.cloud.request('tasks/'+task.id);assert.equal(saved.task.workbenchBatchCheckpoint.status,'paused');assert.deepEqual(saved.task.workbenchBatchCheckpoint.pausedTaskIds,[task.id]);assert.equal(saved.task.taskDeadlineAt,deadline);
+  await f.original.control('resume',{expectedBatchId:f.batchId});saved=await f.cloud.request('tasks/'+task.id);assert.equal(saved.task.workbenchBatchCheckpoint.status,'running');assert.equal(saved.task.workbenchBatchCheckpoint.unattendedState.runDeadlineAt,before.runDeadlineAt);assert.equal(saved.task.workbenchBatchCheckpoint.unattendedState.taskBudgetUsed,1);
+  f.original.activeTaskIds.clear();await f.original.control('stop',{});const inventory=await f.cloud.request('runs');
+  const restored=f.runtime();await restored.restoreCloud();const batch=restored.store.get('workbenchBatch:'+f.batchId);
+  assert.equal(batch.status,'stopped');assert.equal(batch.count,6);assert.equal(batch.unattendedState.taskBudgetUsed,1);assert.equal(batch.unattendedState.runDeadlineAt,before.runDeadlineAt);assert.ok(inventory.tasks.some(t=>t.workbenchBatchCheckpoint?.status==='stopped'));
+  await assert.rejects(restored.control('resume',{expectedBatchId:f.batchId}),/停止/);assert.equal(restored.store.get('paused'),true);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
+
+test('authenticated selected skip retry retains exact request and original cloud denominator after readback failure',async()=>{
+ const f=await fixture();try{
+  const batch=f.original.store.get('workbenchBatch:'+f.batchId),task=f.original.store.get('task:'+batch.items[1].taskId),input={taskId:task.id,expectedRunId:task.runId};
+  const synchronize=f.original.synchronize.bind(f.original);f.original.synchronize=async()=>{throw Error('fixture lost readback');};
+  const failed=await f.original.control('manualSkip',input);assert.equal(failed.skipped,true);assert.match(failed.syncError,/lost readback/);const request=f.original.store.get('manualSkipPending:'+task.id);
+  f.original.synchronize=synchronize;await f.original.control('manualSkip',input);
+  const readback=(await f.cloud.request('tasks/'+task.id)).task;assert.equal(readback.manualDisposition.requestId,request.id);assert.equal(readback.status,'skip');assert.equal(readback.workbenchBatchCheckpoint.items.length,6);assert.equal(readback.attemptBoundary,undefined);assert.equal(f.original.store.get('manualSkipPending:'+task.id),null);assert.equal(f.original.store.get('paused'),false);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
 
 async function fixture() {
   const sqlite=new DatabaseSync(':memory:');
@@ -205,6 +230,21 @@ test('authenticated PostgreSQL JSONB recovery preserves original hashes and rest
     const restored=runtime();await restored.restoreCloud();const batch=restored.store.get('workbenchBatch:'+preview.batch.id);
     assert.equal(batch.configSha256,before.configSha256);assert.equal(batch.scopeSha256,before.scopeSha256);assert.equal(batch.count,1);assert.equal(batch.config.fillOnly,true);assert.equal(batch.unattendedState.taskBudgetUsed,1);assert.equal(batch.unattendedState.runDeadlineAt,before.unattendedState.runDeadlineAt);assert.equal(restored.store.get('task:'+task.id).status,'needs_manual');assert.equal(restored.store.get('paused'),true);
   }finally{globalThis.fetch=fetchBefore;for(const store of stores)store.close();await db.close();}
+});
+
+test('actual mapper user pause and resume reuse the same filled page and original unattended budget without posting',async()=>{
+ const f=await fixture(),home=await mkdtemp(join(tmpdir(),'el-lifecycle-browser-'));let browser;
+ try{
+  const runtime=f.original;runtime.home=home;browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext();let posts=0,gets=0,external=0;
+  await context.route('**/*',async route=>{if(!/^https:\/\/target[0-2]\.example\//.test(route.request().url())){external++;await route.abort();return;}if(route.request().method()==='POST'){posts++;await route.fulfill({body:'unexpected submit'});return;}gets++;await route.fulfill({contentType:'text/html',body:'<!doctype html><title>Submit your tool</title><form><label>Product name<input name="name" required></label><label>Website<input name="url" type="url" required></label><button type="submit">Submit tool</button></form>'});});
+  runtime.context=context;runtime.host={startedAt:'isolated-original-lifecycle-browser'};const task=await nextWorkbenchTask(runtime),deadline=task.taskDeadlineAt,budget=runtime.store.get('workbenchBatch:'+f.batchId).unattendedState;
+  runtime.activeTaskIds=new Set([task.id]);const update=runtime.update.bind(runtime);let pause;
+  runtime.update=(task,patch,type,stateChanges)=>{const event=update(task,patch,type,stateChanges);if(type==='filled_snapshot'&&!pause)pause=runtime.control('pause',{});return event;};
+  await runtime.work({taskId:task.id});await pause;runtime.update=update;runtime.activeTaskIds.clear();
+  const paused=runtime.store.get('task:'+task.id),target=paused.targetId,page=await runtime.findPage(paused);assert.equal(paused.status,'pending');assert.equal(paused.pauseContinuation.targetId,target);assert.equal(await page.locator('input[name=url]').inputValue(),'https://product-p.example');assert.equal(page.isClosed(),false);assert.equal(paused.attemptBoundary,undefined);
+  const loaded=gets;await runtime.control('resume',{expectedBatchId:f.batchId});const continuation=await nextWorkbenchTask(runtime);assert.equal(continuation.id,task.id);await runtime.work({taskId:continuation.id});
+  const saved=runtime.store.get('task:'+task.id);assert.equal(saved.targetId,target);assert.equal(saved.browserInstance,paused.browserInstance);assert.equal(saved.taskDeadlineAt,deadline);assert.equal(saved.status,'needs_manual');assert.equal(saved.fillOnlyPrepared,true);assert.equal(page.isClosed(),false);assert.equal(gets,loaded);assert.equal(posts,0);assert.equal(external,0);assert.equal(f.models(),0);assert.equal(runtime.store.get('workbenchBatch:'+f.batchId).unattendedState.taskBudgetUsed,1);assert.equal(runtime.store.get('workbenchBatch:'+f.batchId).unattendedState.runDeadlineAt,budget.runDeadlineAt);assert.equal(runtime.store.get('workbenchBatch:'+f.batchId).count,6);
+ }finally{await browser?.close();f.close();const absolute=resolve(home);assert.ok(absolute.startsWith(resolve(tmpdir())+sep)&&absolute.split(sep).at(-1).startsWith('el-lifecycle-browser-'));await rm(absolute,{recursive:true,force:true});}
 });
 
 test('the actual mapper prepares a cloud-restored fill-only batch in an isolated browser without posting or changing the remaining range',async()=>{

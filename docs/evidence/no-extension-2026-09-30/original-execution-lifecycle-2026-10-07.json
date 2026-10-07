@@ -1,0 +1,112 @@
+{
+  "kind": "original_execution_lifecycle_verified_scope_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "previousProgressCommit": "13eaa22",
+  "previousFeatureCommit": "5c82b0a",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceFunctionsCompared": [
+    "pauseBatchRun",
+    "resumeBatchRun",
+    "claimUnattendedTask",
+    "handleManualSkip",
+    "closeAutomatedTabs"
+  ],
+  "verifiedScope": [
+    "Pause stops new dispatch while every active original worker drains",
+    "User-paused pre-submit work preserves original target, browser, profile revision, run deadline and task deadline",
+    "Original claimed unattended continuation does not consume a new combination; new tasks remain subject to original limit",
+    "Selected concurrent skip cancels only its worker; other destination groups continue",
+    "Original skip proof failure reserves selected destination and last batch pointer; retry preserves request ID and one manual_skip event",
+    "Unknown attempts, receipts and manually owned pages remain; only original unattempted automatic target is closed after checkpoint",
+    "Unattended stop preserves all actual in-flight tasks and original pending denominator",
+    "Authenticated cloud recovery preserves stopped status and refuses generic resume",
+    "Fixed, original single-run and library resume recover only their existing original scope; repeated pause preserves run identity"
+  ],
+  "tests": {
+    "passed": 620,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 12,
+    "fullOutput": "executor/test-output/dynamic-lifecycle-all-final-2026-10-07.txt",
+    "sources": [
+      "tests/executor-execution-lifecycle.test.mjs",
+      "tests/executor-batch-cloud-recovery.test.mjs",
+      "tests/executor-continuous-queue.test.mjs"
+    ]
+  },
+  "actualMapperBrowser": {
+    "isolated": true,
+    "authenticatedD1": true,
+    "userPauseAfterActualFill": true,
+    "sameOriginalTargetAfterResume": true,
+    "sameBrowser": true,
+    "originalWebsiteValue": true,
+    "taskDeadlineUnchanged": true,
+    "runDeadlineUnchanged": true,
+    "taskBudgetUsed": 1,
+    "count": 6,
+    "posts": 0,
+    "externalRequests": 0,
+    "modelCalls": 0,
+    "fillOnlyPreparedAfterResume": true
+  },
+  "uiFixture": {
+    "pages": 6,
+    "continuedOriginalBatchIdentity": true,
+    "skipNotCompleteBeforeLease": true,
+    "originalSkipRetryAfterStatusSkip": true,
+    "stoppedRequiresExplicitRestart": true,
+    "output": "executor/test-output/dynamic-lifecycle-ui-final-2026-10-07.txt"
+  },
+  "release": {
+    "workerDryRunPassed": true,
+    "workerVersion": "0cd0b1ed-24b5-46a6-af48-4139bc0838c0",
+    "workerDeploymentPassed": true,
+    "nativeOriginalServicesUpdated": true,
+    "processIdentityVerified": true,
+    "idleAndDurableStateGuardsPassed": true
+  },
+  "productionReadOnlyVerification": {
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "localTasksRangesHistoryOutboxAndLogsUnchanged": true,
+    "originalResumeAndStopControlsVisible": true,
+    "invalidSettingsBothServices400": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveOrRunningJobs": 0,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30
+    },
+    "cursorIsNotReceiptCount": true,
+    "currentProducts": 9,
+    "currentCatalogue": 2948,
+    "currentCombinations": 897,
+    "businessEdits": 0,
+    "businessImports": 0,
+    "newRealSubmissions": 0,
+    "realAiCalls": 0,
+    "realBatchPreviews": 0
+  },
+  "failuresCorrectedBeforeFinalRun": [
+    "New unit browser fixture initially lacked pages() required by original manual capacity inspection",
+    "First full run used a historical resume fixture without original run/range identity; updated with the actual original identity and an unrelated-task preservation assertion; scoped recovery added",
+    "Source review found an extra repeated-pause run identity loss; corrected and regression added"
+  ],
+  "unverifiedFamilies": [
+    "remaining original dynamic controls and category/group start semantics",
+    "cloud and browser/device lifecycle boundaries outside this coverage",
+    "latest original browser favorites profiles and groups",
+    "complete old historical data and media ownership",
+    "real special launch pages and external service results"
+  ],
+  "completion": "not_complete",
+  "goalComplete": false
+}

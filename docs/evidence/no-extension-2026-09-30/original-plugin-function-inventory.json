@@ -414,8 +414,9 @@
       "id": "btnStop",
       "label": "停止",
       "mapping": "停止本次执行 → stop",
-      "verification": "已有相关流程，原按钮行为仍须逐项对照",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "原停止中断／页归属保留、认证云端恢复仍停止、隔离界面明确重开及真实只读入口已核验；其他设备和特殊页面仍须验收",
+      "status": "implemented_requires_full_acceptance",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -681,8 +682,9 @@
     {
       "action": "manualSkip",
       "mapping": "原任务 / 跳过 → manualSkip",
-      "status": "mapped_requires_full_acceptance",
-      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "并发所选任务单独跳过、原请求失败重试、末项保留、未知回执／人工页保护经回归及认证D1验证；真实业务跳过未执行",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json"
     },
     {
       "action": "manualSubmissionClicked",
@@ -2046,6 +2048,16 @@
     "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json",
     "workerVersion": "c0d5ebd7-b505-4e7c-ac83-be84276f49b5",
     "nativeServicesUpdated": true,
+    "goalComplete": false
+  },
+  "originalExecutionLifecycleCheckpoint": {
+    "date": "2026-10-07",
+    "tests": 620,
+    "newTests": 12,
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json",
+    "workerVersion": "0cd0b1ed-24b5-46a6-af48-4139bc0838c0",
+    "nativeServicesUpdated": true,
+    "status": "implemented_requires_full_acceptance",
     "goalComplete": false
   }
 }

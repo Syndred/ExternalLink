@@ -7,6 +7,7 @@ import {freezeBatchConfig,assertBatchPolicy,initializeBatchPolicy,refreshBatchMa
 import {originalUnattended} from '../../core/original-batch-config.mjs';
 import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScopeRows} from '../../core/workbench-batch-recovery.mjs';
 import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
+import {resumeExecution} from './execution-lifecycle.mjs';
 import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const frozenDigest=(batch,value)=>batch.cloudRecoveryVersion===batchRecoveryVersion?createHash('sha256').update(batchJson(value)).digest('hex'):digest(value);
@@ -39,6 +40,7 @@ export async function startWorkbenchBatch(runtime,input){
  const batch=runtime.store.get('workbenchBatch:'+input.batchId);if(!batch||!['preview','paused','registration_unknown','stopped','waiting_manual'].includes(batch.status))throw Error('批次不存在或不能启动');
  assertBatchPolicy(runtime,batch);
  const active=runtime.store.get('activeWorkbenchBatch');if(active&&active!==batch.id&&!['complete','waiting_manual','stopped'].includes(runtime.store.get('workbenchBatch:'+active)?.status))throw Error('请先处理原批次');
+ if(batch.status==='paused'&&active===batch.id&&!runtime.store.get('executionStopped')){await resumeExecution(runtime,{expectedBatchId:batch.id});return{ok:true,batch:runtime.store.get('workbenchBatch:'+batch.id)};}
  if(batch.scopeSha256!==frozenDigest(batch,batchScopeRows(batch)))throw Error('批次范围校验不一致');
  const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
  const save=()=>runtime.store.set('workbenchBatch:'+batch.id,batch);
@@ -79,6 +81,7 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
  batch=await refreshBatchManualCapacity(runtime,batch);if(batch.status!=='running'||batch.unattendedState?.waitReason==='manual_capacity')return null;
  advanceWorkbenchCursor(batch);
  const liveIds=runtime.activeTaskIds||new Set(),busyDestinations=new Set(batch.items.filter(i=>liveIds.has(i.taskId)).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
+ for(const pending of runtime.store.values('manualSkipPending:').filter(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id)){const item=batch.items.find(item=>item.taskId===pending.taskId);if(item)busyDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));}
  const parkedDestinations=new Set(batch.items.filter(i=>{const task=runtime.store.get('task:'+i.taskId);return i.status==='complete'&&!task?.receipt&&!task?.manualDisposition&&['needs_manual','submitted_unconfirmed'].includes(task?.status);}).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
  const order=scheduler.groupTasksByDestination(batch.items.map((item,index)=>({...item,index,destinationGroupKey:item.destinationKey||queue.normalizeDestinationKey(item.url)}))).flatMap(group=>group.tasks.map(task=>task.index));
  for(const index of order){
@@ -90,7 +93,7 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
   runtime.store.set('workbenchBatch:'+id,batch);await runtime.lease(task,{online:true});batch=runtime.store.get('workbenchBatch:'+id);if(batch.items[index]?.taskId!==task.id||['excluded','complete'].includes(batch.items[index].status))return null;if(!releaseBatchTask(runtime,batch,task,{status:'pending',controller:'executor',profileSnapshot:task.profileSnapshot||item.profile,profileRevision:task.profileRevision||item.profileRevision,workbenchBatchId:id,consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'user_reply',text:'用户确认本批次普通免费投稿'}]},index))return null;
   if(single)runtime.store.set('singleTaskId',task.id);return task;
  }
- if(liveIds.size)return null;
+ if(liveIds.size||runtime.store.values('manualSkipPending:').some(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id))return null;
  advanceWorkbenchCursor(batch);if(parkedDestinations.size){batch.status='waiting_manual';batch.reason='自动队列已处理，原任务及同站后续产品保留等待人工';runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('paused',true);return null;}if(batch.cursor<batch.items.length)return null;
  batch.status='complete';batch.completedAt=new Date().toISOString();runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('activeWorkbenchBatch',null);runtime.store.set('paused',true);return null;
 }

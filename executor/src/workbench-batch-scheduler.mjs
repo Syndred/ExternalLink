@@ -7,7 +7,7 @@ export function workbenchConcurrency(batch){const config=batchConfig(batch);retu
 export async function runWorkbenchBatch(runtime){
  const id=runtime.store.get('activeWorkbenchBatch'),jobs=new Map();runtime.activeTaskIds??=new Set();
  const current=()=>runtime.store.get('activeWorkbenchBatch')===id&&runtime.store.get('workbenchBatch:'+id);
- await runtime.synchronize();if(runtime.store.get('paused')!==false)return;if(!runtime.context)await runtime.connect();
+ await runtime.synchronize();if(runtime.store.get('paused')!==false)return;if(!runtime.context)await runtime.connect();runtime.workbenchTaskJobs=jobs;
  try{
   while(runtime.store.get('paused')===false&&current()?.status==='running'){
    const batch=current();assertBatchPolicy(runtime,batch);const limit=workbenchConcurrency(batch);
@@ -26,6 +26,6 @@ export async function runWorkbenchBatch(runtime){
   await Promise.allSettled(jobs.values());
   // Read back terminal evidence only after its owning worker has relinquished
   // the task, so another worker cannot overwrite a receipt or screenshot.
-  await runtime.synchronize();
+  try{await runtime.synchronize();}finally{if(runtime.workbenchTaskJobs===jobs)runtime.workbenchTaskJobs=null;}
  }
 }

@@ -542,8 +542,9 @@ export class Runtime {
   tick() {
     // API operations own the single writer until their readbacks finish.
     // A paused timer must not flush their in-flight events concurrently.
-    if (this.controlBusy||this.localRecoveryOperation||this.fillLearningFlush) return;
+    if (this.controlBusy||this.connectionBusy||this.localRecoveryOperation||this.fillLearningFlush) return;
     if(Date.now()<(this.syncRetryAt||0)){if(this.job)watchBatchDeadline(this);return;}
+    if(this.store.get('connectionExecutionHold')&&this.store.get('paused')===false)this.store.set('connectionExecutionHold',null);
     watchBatchDeadline(this);
     const startupGate=this.store.get('libraryPlan')?.globalPause;
     if(this.store.get('paused')===true&&(startupGate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(startupGate?.reason||''))&&!this.store.get('offlineMode')?.enabled){this.cloudError=startupGate.reason;return;}
@@ -554,7 +555,7 @@ export class Runtime {
     if (this.store.get('paused') !== false) {
       const plan=this.store.get('libraryPlan'),gate=plan?.globalPause;
       if(gate?.attentionType==='cloud_quota'||/Your account or project has exceeded the quota/i.test(gate?.reason||''))return;
-      if(!this.store.get('executionStopped')&&!this.store.get('acceptanceBatch')&&plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
+      if(!this.store.get('connectionExecutionHold')&&!this.store.get('executionStopped')&&!this.store.get('acceptanceBatch')&&plan?.status==='active'&&gate?.resumeEligible&&Date.now()>=(gate.nextProbeAt||0)){
         this.job=this.recoverContinuousConnection().catch(error=>{
           this.cloudError=error.message;const attempts=(gate.probes||0)+1;
           this.store.set('libraryPlan',{...this.store.get('libraryPlan'),globalPause:{...gate,probes:attempts,reason:error.message,

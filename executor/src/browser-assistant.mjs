@@ -67,6 +67,7 @@ export async function fillAssistantTask(runtime,input){
 }
 async function formShape(page){const shapes=[];for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;try{shapes.push([frame.url(),await frame.evaluate(()=>[...document.querySelectorAll('input,textarea,select')].filter(e=>!e.closest('[data-extlink-root],#extlink-manual-icons')).map(e=>[e.tagName,e.id,e.name,e.type,e.disabled,e.required,e.options?.length||0]))]);}catch{}}return createHash('sha256').update(JSON.stringify(shapes)).digest('hex').slice(0,16);}
 export async function checkBrowserAssistant(runtime){
+ if(runtime.connectionBusy||runtime.store.get('connectionExecutionHold'))return;
  if(runtime.browserAssistantScan||runtime.job||runtime.controlBusy)return;const settings=assistantState(runtime).settings;if(!settings.enabled){await stopBrowserAssistant(runtime);return;}if(!settings.autoFillOnVisit)cancelAutoTimers(runtime,'访问自动填写已关闭');
  runtime.browserAssistantScan=true;try{
   if(!runtime.context)await runtime.connect();runtime.browserAssistantFrames||=new Map();const live=new Set(),snapshot=snapshotFor(runtime),profileId=effectiveProfile(runtime,settings),panel=singlePagePanel(runtime),scope=workbenchScope(runtime.store.get('pair'));

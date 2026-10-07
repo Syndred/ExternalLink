@@ -33,6 +33,11 @@ export async function backupWorkspace({ home, output }) {
       tasks:check.prepare("SELECT count(*) AS total FROM state WHERE id LIKE 'task:%'").get().total,
       outbox:check.prepare('SELECT count(*) AS total FROM outbox').get().total,
       inventory,evidence,credentialsIncluded:true,privateLocalBackup:true};
+    if(check.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='connection_profiles'").get())manifest.savedConnections={
+      profiles:check.prepare('SELECT count(*) AS n FROM connection_profiles').get().n,
+      tasks:check.prepare("SELECT count(*) AS n FROM connection_state WHERE id LIKE 'task:%'").get().n,
+      pendingEvents:check.prepare('SELECT count(*) AS n FROM connection_outbox').get().n,
+      logs:check.prepare('SELECT count(*) AS n FROM connection_audit').get().n};
     await writeFile(join(output,'manifest.json'),JSON.stringify(manifest,null,2),{flag:'wx'});
   } finally {check.close();}
   return manifest;

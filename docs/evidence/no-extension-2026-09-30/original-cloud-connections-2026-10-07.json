@@ -1,0 +1,125 @@
+{
+  "kind": "original_cloud_connections_verified_scope_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "previousProgressCommit": "1970b98",
+  "previousFeatureCommit": "23364f0",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunction": "connectCloudSync",
+  "nativeFunctions": [
+    "previewConnection",
+    "commitConnection",
+    "connectionProfiles",
+    "connectionHistory"
+  ],
+  "verifiedScope": [
+    "Same-device credential update preserves original local ledger and pending bases",
+    "Endpoint, workspace and device identity determine separate local archives",
+    "Original tasks, event sequence, logs, fixed scope, batch policy, deadline and budgets restore without reassignment",
+    "Online private SQLite backup precedes replacement; failed retry never overwrites previous backup",
+    "Transactional failure rolls back active and archived rows",
+    "Same confirmation receipt recovers lost response across restart without replacing again",
+    "Failed post-commit initialization is reported as committed and retried only for its original pending operation",
+    "Older receipts cannot clear newer initialization failures or restart an active background",
+    "Read-only saved task history is paginated and available with unavailable old credentials",
+    "Cloud target identity, version changes, local changes and ongoing jobs prevent stale replacement",
+    "Original address format and cached pending bases survive switching, including trailing slash legacy scopes",
+    "Original device data synchronization remains available while automatic execution resume is held",
+    "Gmail credentials use separate connection vault namespaces and original namespace restores",
+    "Modern page request identities and queued request arrival identities reject old connection operations",
+    "Previous UI draft and temporary display filters do not carry into the selected connection",
+    "Full workspace clear privately backs up then clears all active and archived connection data"
+  ],
+  "tests": {
+    "passed": 648,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 14,
+    "source": "tests/executor-cloud-connections.test.mjs",
+    "fullOutput": "executor/test-output/cloud-connections-all-2026-10-07.txt"
+  },
+  "authenticatedD1ServicesAndChrome": {
+    "ok": true,
+    "kind": "authenticated_d1_actual_services_and_chrome_connection_fixture",
+    "credentialRotationRetainsOriginalState": true,
+    "sameWorkspaceDifferentDeviceIsolation": true,
+    "differentWorkspaceIsolation": true,
+    "bothServicesRejectStalePage409": true,
+    "actualOldPageRefresh409": true,
+    "cookieSessionSurvivesSwitch": true,
+    "actualLostCommitReplyRetryOriginalReceipt": true,
+    "previousDraftAndDisplayFiltersCleared": true,
+    "readOnlyHistoryTasks": 53,
+    "historyPages": 2,
+    "historyAvailableWithRevokedCredentials": true,
+    "restoreOriginalTasksAndFrozenBatch": true,
+    "automaticExecutionAfterRestore": false,
+    "originalUnknownAttemptPreserved": true,
+    "postEnrollmentFixtureRuns": 1,
+    "newRuntimeRuns": 0,
+    "cloudEvents": 0,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "legacyNeonScope": {
+    "tested": "isolated local key update, legacy scope preservation and D1 switch/restore",
+    "realLegacyServiceReconnectVerified": false,
+    "originalLegacyBackendAliasesPreserved": true
+  },
+  "sixPageUi": {
+    "passed": true,
+    "pages": 6,
+    "output": "executor/test-output/cloud-connections-ui-2026-10-07.txt"
+  },
+  "firstFailuresCorrected": [
+    "Runtime hold check initially read state during cloud synchronization backoff; moved after the existing backoff guard",
+    "Archived legacy endpoint normalization changed its original pending scope; preserve the archived endpoint representation",
+    "Authenticated device denial is HTTP 403 rather than fixture expectation 404",
+    "Fixture needed the actual refresh button label and awaited the second history page response"
+  ],
+  "productionReadOnlyVerification": {
+    "ok": true,
+    "kind": "production_read_only_connection_controls",
+    "bothServicesMetadataRead": true,
+    "noSecretsInMetadata": true,
+    "unconfirmedAndMissingPreview400": true,
+    "staleRequestsBothServices409": true,
+    "chineseConnectionControlsVisible": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "originalBusinessAndCredentialsUnchanged": true,
+    "savedConnections": 0,
+    "commits": 0,
+    "productionPreviews": 0,
+    "productionSwitches": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "fixedBatch": "paused 13/30"
+  },
+  "productionOriginalStateVerification": {
+    "ok": true,
+    "kind": "production_read_only_original_batch_controls",
+    "originalSixControlsVisible": true,
+    "originalPauseResumeStopControlsVisible": true,
+    "valuesMatchOriginalSavedPreferences": true,
+    "invalidSettingsBothServices400": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "localTasksRangesHistoryOutboxAndLogsUnchanged": true,
+    "fixedBatch": "paused 13/30",
+    "businessEdits": 0,
+    "newRealSubmissions": 0,
+    "realAiCalls": 0,
+    "realBatchPreviews": 0
+  },
+  "release": {
+    "nativeOriginalServicesUpdated": true,
+    "processIdentityVerified": true,
+    "idleAndDurableStateGuardsPassed": true,
+    "cloudCodeChangedThisRound": false,
+    "cloudDeploymentsThisRound": 0
+  },
+  "limitations": [
+    "Production connection preview and switch intentionally not executed",
+    "No real provider submission, AI call or business import performed",
+    "This checkpoint does not prove all original controls, latest browser data, historical sources or old media associations are migrated"
+  ],
+  "migrationComplete": false
+}

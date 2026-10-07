@@ -13,9 +13,10 @@
   },
   "originalCloudReconnectGap": {
     "originalFunction": "connectCloudSync",
-    "nativeFunction": "connectWorkbench",
-    "status": "missing_existing_pair_reconnect",
-    "detail": "原连接操作可更新配置；当前已连接状态拒绝新登记文件，要求清空工作区。保留原台账及待同步的凭据更新或重连尚未恢复。"
+    "nativeFunction": "previewConnection / commitConnection",
+    "status": "implemented_requires_full_acceptance",
+    "detail": "已连接设备在设置核验登记文件并更新凭据；按连接保存和切回原台账、待同步、日志及范围，真实连接切换未在生产执行。",
+    "evidence": "original-cloud-connections-2026-10-07.json"
   },
   "originalLibraryBatchScopeCheckpoint": {
     "date": "2026-10-07",
@@ -124,9 +125,10 @@
       "source": "extension/settings.html",
       "id": "btnCloudConnect",
       "label": "连接云端",
-      "mapping": "首次连接页面 / setup / 本机登记文件",
+      "mapping": "首次连接 setup；设置与备份 / 云端连接与保存的记录 / 核验并更新",
       "status": "implemented_requires_full_acceptance",
-      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+      "verification": "648项、实际认证D1／两服务／Chrome重连和切回通过；生产只读入口及400／409验证通过，真实生产连接切换未执行",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-cloud-connections-2026-10-07.json"
     },
     {
       "source": "extension/settings.html",
@@ -582,8 +584,10 @@
     },
     {
       "action": "cloudSyncConnect",
-      "mapping": "首次连接 setup，隔离 HTTP 流程",
-      "status": "implemented_requires_full_acceptance"
+      "mapping": "首次连接 setup；已有连接 previewConnection / commitConnection，保留原台账",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "同设备凭据轮换、工作区／设备隔离、原记录切回和丢失回复验证；生产只读入口及拒绝检查",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-cloud-connections-2026-10-07.json"
     },
     {
       "action": "cloudSyncMigrate",
@@ -2089,6 +2093,21 @@
     "workerVersion": "0cd0b1ed-24b5-46a6-af48-4139bc0838c0",
     "nativeServicesUpdated": true,
     "status": "implemented_requires_full_acceptance",
+    "goalComplete": false
+  },
+  "originalCloudConnectionsCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-cloud-connections-2026-10-07.json",
+    "tests": 648,
+    "newTests": 14,
+    "actualAuthenticatedD1ServicesAndChrome": true,
+    "oldPage409": true,
+    "originalTaskAndEventIdentityPreserved": true,
+    "lostConfirmationReplyRecovered": true,
+    "archivedHistoryTasks": 53,
+    "nativeOriginalServicesUpdated": true,
+    "productionConnectionPreviews": 0,
+    "productionConnectionSwitches": 0,
     "goalComplete": false
   }
 }

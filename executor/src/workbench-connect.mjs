@@ -9,7 +9,7 @@ export async function setupInfo(runtime){
  const enrollmentAvailable=await stat(join(runtime.home,'enrollment.json')).then(s=>s.isFile(),()=>false);return{ok:true,setupRequired:true,nonce:nonce.value,expiresAt:nonce.expiresAt,enrollmentAvailable};
 }
 export async function connectWorkbench(runtime,input){
- if(runtime.store.get('pair'))throw Error('本机已有连接，请先备份并清空本机工作区后更换');
+ if(runtime.store.get('pair'))throw Error('本机已有连接，请在设置的“云端连接与保存的记录”中核验更新，原记录会保留');
  const nonce=runtime.store.get('workbenchSetupNonce');if(!nonce||nonce.expiresAt<Date.now()||nonce.value!==input.nonce)throw Error('连接页面已过期，请刷新');
  if(runtime.store.pendingCount()||runtime.store.values('task:').length)throw Error('本机存在未连接的历史任务，请先备份恢复，不能覆盖');
  const config=input.enrollment||JSON.parse(await readFile(join(runtime.home,'enrollment.json'),'utf8'));

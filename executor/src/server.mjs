@@ -15,6 +15,7 @@ import {enqueueMediaUpload} from './media-uploads.mjs';
 import {recoverDataJobs,checkMonitorSchedule} from './link-monitor.mjs';
 import {setupInfo,connectWorkbench} from './workbench-connect.mjs';
 import {resetWorkspace} from './workspace-reset.mjs';
+import {connectionIdentity,connectionProfiles,connectionHistory,previewConnection,commitConnection} from './workbench-connections.mjs';
 import {checkBrowserAssistant,stopBrowserAssistant} from './browser-assistant.mjs';
 import {singlePagePanel,sidepanelClosed} from './single-page.mjs';
 
@@ -26,15 +27,19 @@ const runtime = new Runtime(store, home);
 const priorSinglePanel=singlePagePanel(runtime);if(priorSinglePanel?.open)sidepanelClosed(runtime,{panelId:priorSinglePanel.id});
 recoverDataJobs(runtime);
 const monitorScheduler=setInterval(()=>checkMonitorSchedule(runtime).catch(error=>console.error('外链监测计划：'+error.message)),60000);monitorScheduler.unref();
-const gmail=new GmailSync({store,vault:new CredentialVault(home)});gmail.start();
+let gmailVaultScope=store.get('gmailCredentialScope')||home,gmail=new GmailSync({store,vault:new CredentialVault(gmailVaultScope)});gmail.start();
+runtime.connectionExternalBusy=()=>gmail.syncing||gmail.refreshing||gmail.accountRefresh||store.get('gmail')?.status==='authorizing';
+runtime.onConnectionChanging=async()=>{gmail.stop();await stopBrowserAssistant(runtime);const panel=singlePagePanel(runtime);if(panel?.open)sidepanelClosed(runtime,{panelId:panel.id});};
+runtime.onConnectionChanged=async()=>{const scope=store.get('gmailCredentialScope')||home;if(scope!==gmailVaultScope){gmail.stop();gmailVaultScope=scope;gmail=new GmailSync({store,vault:new CredentialVault(scope)});}gmail.start();};
+runtime.onConnectionChangeAborted=async()=>gmail.start();
 runtime.onWorkspaceReset=async()=>{gmail.stop();await stopBrowserAssistant(runtime);};
 const code = randomBytes(18).toString('base64url');
 const codeExpires = Date.now() + 10 * 60 * 1000;
 const match = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || '')); return x.length === y.length && timingSafeEqual(x, y); };
 let serial = Promise.resolve(), pairUsed = false;
-runtime.dispatchControl=(action,input)=>{const result=serial.then(()=>runtime.withControl(()=>runtime.control(action,input)));serial=result.catch(()=>{});return result;};
+runtime.dispatchControl=(action,input)=>{const expected=connectionIdentity(store.get('pair')),result=serial.then(()=>runtime.withControl(()=>{if(expected!==connectionIdentity(store.get('pair')))throw Error('云端连接已切换，旧网页操作已停止');return runtime.control(action,input);}));serial=result.catch(()=>{});return result;};
 const assistantScheduler=setInterval(()=>checkBrowserAssistant(runtime).catch(error=>console.error('浏览器助手：'+error.message)),5000);assistantScheduler.unref();
-const manualWatchScheduler=setInterval(()=>{if(!runtime.controlBusy)runtime.dispatchControl('checkManualWatches',{}).catch(error=>console.error('人工提交核验：'+error.message));},2000);manualWatchScheduler.unref();
+const manualWatchScheduler=setInterval(()=>{if(!runtime.controlBusy&&!runtime.connectionBusy&&!store.get('connectionExecutionHold'))runtime.dispatchControl('checkManualWatches',{}).catch(error=>console.error('人工提交核验：'+error.message));},2000);manualWatchScheduler.unref();
 function send(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); }
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
@@ -47,7 +52,7 @@ const server = http.createServer(async (req, res) => {
   if (origin && !localSetupOrigin&&(!extensionOrigin || (pair && pair.origin !== origin))) return send(res, { ok: false, error: '插件来源未授权' }, 403);
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Workbench-Connection');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const route = new URL(req.url, 'http://localhost').pathname;
@@ -81,7 +86,14 @@ const server = http.createServer(async (req, res) => {
     }
     if (route === '/catalog' && req.method === 'GET') { const snapshot = await runtime.cloud.request('snapshot'); send(res, { ok: true, profiles: snapshot.documents.siteProfiles, revision: snapshot.revisions.siteProfiles }); return; }
     if (req.method !== 'POST') { send(res, { ok: false, error: '接口不存在' }, 404); return; }
+    const arrivedConnectionId=connectionIdentity(pair);
     const operation = async () => {
+      const expectedId=req.headers['x-workbench-connection']||arrivedConnectionId;
+      if(expectedId&&expectedId!==connectionIdentity(store.get('pair'))&&route!=='/commitConnection')throw Object.assign(Error('云端连接已切换，请刷新页面；旧请求未写入新工作区'),{status:409});
+      if(route==='/connectionProfiles')return connectionProfiles(runtime);
+      if(route==='/connectionHistory')return connectionHistory(runtime,input);
+      if(route==='/previewConnection')return previewConnection(runtime,input);
+      if(route==='/commitConnection')return commitConnection(runtime,input,{expectedId});
       if(['/localRecoverySources','/previewLocalRecovery','/submissionJournalRecoverLocal'].includes(route))return runtime.control(route.slice(1),input);
       if(['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'].includes(route))return runtime.control(route.slice(1),input);
       if(['/clearSiteAnnotation','/getBatchLog','/manualSkip','/manualSubmit','/stop','/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'].includes(route))return runtime.control(route.slice(1),input);

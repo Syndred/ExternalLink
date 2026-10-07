@@ -10,7 +10,12 @@ export class Store {
       CREATE TABLE IF NOT EXISTS state (id TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE NOT NULL, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS audit_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE NOT NULL, scope TEXT NOT NULL, run_id TEXT, task_id TEXT, value TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS owner (id INTEGER PRIMARY KEY CHECK(id=1), pid INTEGER NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS owner (id INTEGER PRIMARY KEY CHECK(id=1), pid INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS connection_profiles (id TEXT PRIMARY KEY, endpoint TEXT NOT NULL, workspace_id TEXT NOT NULL, device_id TEXT NOT NULL, saved_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS connection_state (connection_id TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, position INTEGER NOT NULL, PRIMARY KEY(connection_id,id));
+      CREATE TABLE IF NOT EXISTS connection_outbox (connection_id TEXT NOT NULL, seq INTEGER NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(connection_id,id));
+      CREATE TABLE IF NOT EXISTS connection_audit (connection_id TEXT NOT NULL, seq INTEGER NOT NULL, event_id TEXT NOT NULL, scope TEXT NOT NULL, run_id TEXT, task_id TEXT, value TEXT NOT NULL, PRIMARY KEY(connection_id,event_id));
+      CREATE TABLE IF NOT EXISTS connection_commits (id TEXT PRIMARY KEY, from_id TEXT NOT NULL, to_id TEXT NOT NULL, pair_sha256 TEXT NOT NULL, result TEXT NOT NULL);`);
   }
   get(id) { const row = this.db.prepare('SELECT value FROM state WHERE id=?').get(id); return row ? JSON.parse(row.value) : null; }
   acquireOwner() {

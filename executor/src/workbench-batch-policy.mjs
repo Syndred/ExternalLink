@@ -66,15 +66,14 @@ export function releaseBatchTask(runtime,batch,task,patch,index=batch.cursor){
 }
 export function reserveBatchModelCall(runtime,task){
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch||!batchConfig(batch).unattended)return;
- if(hasManualSubmissionConsent(runtime,task))return;
  assertBatchPolicy(runtime,batch);const result=U.reserveModelCall(U.createCheckpoint(batchConfig(batch),Date.now(),batch.unattendedState),Date.now());
  if(!result.ok){pauseBatchPolicy(runtime,batch,result.reason,task.id);throw Error(reasons[result.reason]||'无人值守调用预算不足');}
- if(batch.status!=='running'||runtime.store.get('paused')!==false)throw Error('原无人值守批次已暂停，未调用模型');save(runtime,{...batch,unattendedState:result.next});
+ if((batch.status!=='running'&&!hasManualSubmissionConsent(runtime,task))||runtime.store.get('paused')!==false)throw Error('原无人值守批次已暂停，未调用模型');save(runtime,{...batch,unattendedState:result.next});
 }
 export function batchActionAllowed(runtime,task){
  const skip=runtime.store.get('manualSkipPending:'+task.id);if(skip?.scope===workbenchScope(runtime.store.get('pair')))return false;
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch)return !task.workbenchBatchId||hasManualSubmissionConsent(runtime,task);
- assertBatchPolicy(runtime,batch);if(hasManualSubmissionConsent(runtime,task)||!batchConfig(batch).unattended)return true;if(batch.status!=='running')return false;
+ assertBatchPolicy(runtime,batch);if(!batchConfig(batch).unattended)return true;if(batch.status!=='running'&&!hasManualSubmissionConsent(runtime,task))return false;
  if(batchConfig(batch).unattended){const now=Date.now();if(U.isExpired(batch.unattendedState,now)){pauseBatchPolicy(runtime,batch,'deadline',task.id);return false;}if(task.taskDeadlineAt&&now>=task.taskDeadlineAt){interruptBatchTask(runtime,batch,task.id);return false;}}
  return !batch.interruptedTasks?.[task.id];
 }

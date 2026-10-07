@@ -1,5 +1,19 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalManualBudgetCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-manual-budget-2026-10-07.json",
+    "fullSuitePassed": 694,
+    "frozenOriginalManualFlows": 2,
+    "frozenOriginalModelBudgetCases": 3,
+    "manualCallsConsumeOriginalBudget": true,
+    "globalDeadlineAndUsedBudgetsPreserved": true,
+    "originalTaskDeadlineTodoAndCapacityRestored": true,
+    "taskAndBatchSqliteAtomicCheckpoint": true,
+    "lateCancellationRestoresOriginalManualTodo": true,
+    "realManualContinuations": 0,
+    "migrationComplete": false
+  },
   "originalAiWorkflowCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-ai-workflow-2026-10-07.json",
@@ -744,8 +758,9 @@
     },
     {
       "action": "manualContinue",
-      "mapping": "continueTask 原任务恢复",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "原任务 / 人工继续确认 → manualSubmit；原manualContinue与manualSubmit同一处理流程",
+      "verification": "固定原代码对照任务时限、待人工容量、模型预算，原未知任务、SQLite回滚／重开及取消恢复验证；完整特殊页面仍待验收",
+      "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "manualSkip",
@@ -772,8 +787,8 @@
     {
       "action": "manualSubmit",
       "mapping": "原任务 / 人工继续确认 → manualSubmit",
-      "status": "mapped_requires_full_acceptance",
-      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "固定原代码对照任务时限、待人工容量、原模型预算；取消、SQLite事务回滚及重开保留原范围与未知任务，真实人工投稿及特殊页面仍待验收"
     },
     {
       "action": "markSubmissionSite",

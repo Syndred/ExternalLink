@@ -4,8 +4,10 @@ import {recoveryCheckpoint} from './tab-cleanup.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {assertOriginalBatch,persistBatchLifecycle} from './execution-lifecycle.mjs';
+import {batchConfig} from './workbench-batch-policy.mjs';
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 const at=()=>new Date().toISOString();
+function manualTargetIds(runtime,scope,excluded){return new Set(runtime.store.values('task:').filter(other=>{const source=other.workbenchBatchId&&runtime.store.get('workbenchBatch:'+other.workbenchBatchId);return other.id!==excluded&&source&&(!source.scope||source.scope===scope)&&other.targetId&&!other.tabClosedAt&&!other.receipt&&['needs_manual','submitted_unconfirmed'].includes(other.status);}).map(other=>other.targetId));}
 function selectedTask(runtime,input){const task=runtime.store.get('task:'+input.taskId);if(!task?.runId||input.expectedRunId!==task.runId)throw Error('原任务或批次已变化，请刷新后重试');if(input.expectedTargetId!==undefined&&input.expectedTargetId!==task.targetId)throw Error('原标签页已变化，请刷新后重试');if(['supervisor','ai'].includes(task.controller))throw Error('请先等待原控制器交回任务');return task;}
 function finishSkippedScope(runtime,task){
  const time=at(),fixed=runtime.store.get('acceptanceBatch'),execution=fixed&&runtime.store.get('acceptanceExecution:'+fixed.id),frozen=fixed&&runtime.store.get('acceptance:'+fixed.id);
@@ -69,9 +71,19 @@ export async function manualSubmit(runtime,input,{assertContext=()=>{}}={}){
  const productHuntCreationConsent=input.confirmProductHuntCreate===true?{at:at(),runId:task.runId,profileId:task.profileId,targetId:task.targetId,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,browserInstance:task.browserInstance}:null;
  const manualSubmissionConsent={scope,at:at(),...identity,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles};
  if(input.confirmProductHuntCreate===true&&(!/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname)||task.productHunt?.readyToCreate!==true))throw Error('请先完成原 Product Hunt 逐步填写，再确认创建草稿');
- runtime.update(task,{status:'pending',controller:'executor',profileSnapshot:plain(profile),profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,fillOnlyRun:false,submitPreparedRun:false,productHuntCreationConsent,manualSubmissionConsent,attentionType:'',reason:'用户继续原任务，重新检测和校验后执行',consentHistory:[...(task.consentHistory||[]),{at:at(),scope:'ordinary_submission_permissions',source:'workbench_manual_continue',text:'用户在原任务详情确认普通免费投稿；额外权限及本人验证仍留待人工'},...(productHuntCreationConsent?[{at:at(),scope:'producthunt_create_draft',source:'workbench_manual_continue',text:'用户明确确认创建原 Product Hunt 草稿；未授权排期、推广或购买'}]:[])]},'manual_continue');
+ const originalBatch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId),resumed={},batchUpdates={};
+ if(originalBatch&&batchConfig(originalBatch).unattended){
+  assertOriginalBatch(runtime,originalBatch);const time=Date.now(),state=originalBatch.unattendedState||U.createCheckpoint(batchConfig(originalBatch),time),next={...originalBatch,unattendedState:U.removeManualTodo(state,task.id),interruptedTasks:{...originalBatch.interruptedTasks},taskInterruptionReasons:{...originalBatch.taskInterruptionReasons}};
+  delete next.interruptedTasks[task.id];delete next.taskInterruptionReasons[task.id];resumed.taskDeadlineAt=U.taskDeadline(state,time);
+  next.unattendedState=U.noteManualCapacity(next.unattendedState,manualTargetIds(runtime,scope,task.id).size,time);batchUpdates['workbenchBatch:'+originalBatch.id]=next;
+ }
+ runtime.update(task,{...resumed,status:'pending',controller:'executor',profileSnapshot:plain(profile),profileRevision:task.profileRevision??snapshot.revisions.siteProfiles,fillOnlyRun:false,submitPreparedRun:false,productHuntCreationConsent,manualSubmissionConsent,attentionType:'',reason:'用户继续原任务，重新检测和校验后执行',consentHistory:[...(task.consentHistory||[]),{at:at(),scope:'ordinary_submission_permissions',source:'workbench_manual_continue',text:'用户在原任务详情确认普通免费投稿；额外权限及本人验证仍留待人工'},...(productHuntCreationConsent?[{at:at(),scope:'producthunt_create_draft',source:'workbench_manual_continue',text:'用户明确确认创建原 Product Hunt 草稿；未授权排期、推广或购买'}]:[])]},'manual_continue',batchUpdates);
  identity.profileRevision=task.profileRevision;await runtime.synchronize();
- try{assertContext();}catch(error){const current=runtime.store.get('task:'+task.id);if(current?.manualSubmissionConsent?.at===manualSubmissionConsent.at&&!current.attemptBoundary&&!current.receipt)runtime.update(current,{manualSubmissionConsent:null,productHuntCreationConsent:null,fillOnlyRun:true,submitPreparedRun:false,status:'needs_manual',attentionType:'fill_only',reason:'原网页选择已变化，保留已填资料，投稿确认已取消'},'single_page_submit_cancelled');throw error;}
+ try{assertContext();}catch(error){const current=runtime.store.get('task:'+task.id);if(current?.manualSubmissionConsent?.at===manualSubmissionConsent.at&&!current.attemptBoundary&&!current.receipt){
+  const cancelledUpdates={},savedBatch=originalBatch&&runtime.store.get('workbenchBatch:'+originalBatch.id);
+  if(savedBatch?.scope===scope&&batchConfig(savedBatch).unattended){const targets=manualTargetIds(runtime,scope,current.id);if(current.targetId&&!current.tabClosedAt)targets.add(current.targetId);cancelledUpdates['workbenchBatch:'+savedBatch.id]={...savedBatch,unattendedState:U.noteManualCapacity(U.addManualTodo(savedBatch.unattendedState,current.id),targets.size,Date.now())};}
+  runtime.update(current,{manualSubmissionConsent:null,productHuntCreationConsent:null,fillOnlyRun:true,submitPreparedRun:false,status:'needs_manual',attentionType:'fill_only',reason:'原网页选择已变化，保留已填资料，投稿确认已取消'},'single_page_submit_cancelled',cancelledUpdates);
+ }throw error;}
  assertCurrent();runtime.store.set('singleTaskId',task.id);runtime.store.set('paused',false);runtime.tick();return{ok:true,taskId:task.id,running:true};
 }
 export function stopTabDisposition(task){

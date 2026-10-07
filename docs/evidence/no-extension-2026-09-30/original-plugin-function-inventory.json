@@ -2858,5 +2858,21 @@
     "allOriginalMediaBranchesVerified": false,
     "latestOriginalDataAndCompleteHistoryVerified": false,
     "migrationComplete": false
+  },
+  "originalCloudMediaDefaultsCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "ec63ff80191a5772313cf3744f7a1ec7e7881171",
+    "evidence": "original-cloud-media-2026-10-08.json",
+    "repositoryTestsPassed": 914,
+    "failed": 0,
+    "skipped": 0,
+    "authenticatedD1AndNeonRegistrationAndErrorFallbackRestore": true,
+    "actualIsolatedAutomaticAndManualFileShaVerified": true,
+    "workerVersion": "451853e0-f299-4a63-b390-7eff4ea0736f",
+    "nativeServicesGuardedReloadPassed": true,
+    "currentDeviceCloudHashReadbackPassed": true,
+    "allOriginalMediaBranchesVerified": false,
+    "latestOriginalDataAndCompleteHistoryVerified": false,
+    "migrationComplete": false
   }
 }

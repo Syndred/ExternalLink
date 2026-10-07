@@ -1,0 +1,126 @@
+{
+  "kind": "original_cloud_media_defaults_and_fallback_verified_checkpoint_not_full_migration",
+  "date": "2026-10-08",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "featureCommit": "ec63ff80191a5772313cf3744f7a1ec7e7881171",
+  "sourcePublished": true,
+  "repositorySuite": {
+    "passed": 914,
+    "failed": 0,
+    "skipped": 0,
+    "additionalTestsSince902": 12,
+    "latestPublishedSourceCovered": true
+  },
+  "originalBehavior": {
+    "ownProductCloudLogoAndOrderedScreenshotsPreferred": true,
+    "originalCatalogueOrderRetained": true,
+    "explicitSelectedVersionsAndDisabledSlotsPreserved": true,
+    "optionalCatalogueFailureAndFourSecondTimeoutKeepOriginalMedia": true,
+    "explicitSelectedAssetValidationStillRequired": true,
+    "newTaskMediaDefaultsAndShaFrozenAtRegistration": true,
+    "oldTasksUseOnlyTheirOwnProvedFrozenMedia": true,
+    "newEmptyDefaultMarkerPreventsLaterCatalogueSubstitution": true,
+    "staleManualPageCallbacksRejectChangedFrozenMediaDefaults": true,
+    "profileAndManifestNotRewritten": true
+  },
+  "authenticatedFixtures": {
+    "backends": [
+      "D1",
+      "Neon PostgreSQL"
+    ],
+    "catalogueAvailableAndErrorCases": 4,
+    "lostRegistrationReplyRecovered": true,
+    "emptyNativeStoreRestoresSameTaskAndMedia": true,
+    "laterImagesAndOtherProductsRejected": true,
+    "originalDocumentsAndRevisionsPreserved": true
+  },
+  "actualIsolatedBrowser": {
+    "automaticAndManual": true,
+    "filesRead": 4,
+    "exactOriginalImageShaMatched": true,
+    "originalSourceSha256": "4dfe406e18fcd8fa67ff8aa3c8ea2001d8757648f9afd4293cfdb67b6a71f741",
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0
+  },
+  "deployment": {
+    "workerVersion": "451853e0-f299-4a63-b390-7eff4ea0736f",
+    "anonymousSnapshotStatus": 401,
+    "nativeOriginalServicePorts": [
+      19388,
+      19389
+    ],
+    "processIdentityAndPausedDurableStateGuarded": true,
+    "beforeAndAfterReadOnlyPassed": true,
+    "originalBusinessMatchesHistoricalBaseline": true,
+    "paused": true,
+    "busy": false,
+    "pendingQueues": 0,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "currentDeviceCloudDocuments": 19,
+    "currentDeviceInventoryTasks": 778,
+    "beforeAndAfterAllDocumentHashAndRevisionReadbackPassed": true
+  },
+  "productionBusinessWrites": 0,
+  "originalChromeLaunched": false,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "remaining": [
+    "All original execution entries, callbacks and media branches",
+    "Latest original products, groups, favorites, quality metrics and settings",
+    "Complete old history and other device associations"
+  ],
+  "migrationComplete": false,
+  "outputs": [
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-repository-final-2026-10-08.txt",
+      "sha256": "745f3f73c0d7238e31b027bc09d63151b0913296e114a5188c8d392a3c9c35ca"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-fallback-first-2026-10-08.txt",
+      "sha256": "88444e2b76d4c80f09c20954bcd77f42e14ee91f74f5ff7c51dafd728839271d"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-browser-second-2026-10-08.txt",
+      "sha256": "fd343fec02d9e7d9bf0804da72b2a21ca398cedb694c8dab1fdffe2078c08c4a"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-native-before-2026-10-08.txt",
+      "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-native-after-2026-10-08.txt",
+      "sha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-native-reload-2026-10-08.txt",
+      "sha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-cloud-before-2026-10-08.txt",
+      "sha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-cloud-after-2026-10-08.txt",
+      "sha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-worker-deploy-2026-10-08.txt",
+      "sha256": "15270fa5d388acb23a500f7b418839f1907b43cb5f558c02bb8b86f9ce260810"
+    },
+    {
+      "path": "original-cloud-media-2026-10-08/original-cloud-media-worker-smoke-2026-10-08.txt",
+      "sha256": "de83fbf3f98947a69dd962a307ac8fbb9fb03f0b8a0ef9ae374c1c4e96b3af2a"
+    }
+  ]
+}

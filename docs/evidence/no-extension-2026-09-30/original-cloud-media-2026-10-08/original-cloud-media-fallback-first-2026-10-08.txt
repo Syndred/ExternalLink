@@ -1,0 +1,22 @@
+✔ authenticated d1 registration freezes original cloud media fallback, ignores caller substitutions and restores identical image bytes from an empty native store (51.3377ms)
+✔ authenticated neon registration freezes original cloud media fallback, ignores caller substitutions and restores identical image bytes from an empty native store (1751.1197ms)
+✔ cloud fallback logo and screenshots match the first pre-refactor fill helper without modifying original profile or public image fields (29.9714ms)
+✔ explicit selected cloud versions and disabled slots retain their selection while cloud defaults cannot use other products or non-images (0.6701ms)
+✔ D1 catalogue pagination keeps the original list order and refuses repeated cursors (0.5575ms)
+✔ original catalogue failure and bounded timeout preserve public and embedded fields without suppressing explicit cloud selections (24.7352ms)
+✔ original native work consumes frozen cloud defaults even when current cloud catalogue and public-only original fields differ (8.8844ms)
+✔ old native catalogues recover only their own proved image versions and are never rewritten or replaced by the current catalogue (0.4586ms)
+✔ actual isolated automatic and manual single-page fields upload original frozen cloud defaults with exact file SHA and no model or submission (1590.8945ms)
+✔ original page controls exclude receipts unknown attempts other controllers closed tabs stopped execution and conflicting target tasks (5.5822ms)
+✔ stale original page callbacks reject run task document frame scope product and browser replacements before lease or mutation (6.5166ms)
+✔ a page callback without its original private binding or recognized source cannot add permission or select a task (2.393ms)
+✔ changed frozen default image selection invalidates original page buttons before a lease or any permission event (1.2984ms)
+✔ rendered original page buttons polling navigation and failed readback retries reach native work while preserving permission and unknown boundaries (9628.126ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10028.9146

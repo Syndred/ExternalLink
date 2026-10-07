@@ -1,0 +1,26 @@
+
+> deploy
+> wrangler deploy
+
+
+ ⛅️ wrangler 4.137.0
+────────────────────
+Total Upload: 636.36 KiB / gzip: 154.31 KiB
+Worker Startup Time: 23 ms
+Your Worker has access to the following bindings:
+Binding                                                                              Resource                  
+env.LEDGER_DB (externallink-ledger)                                                  D1 Database               
+env.MEDIA_BUCKET (externallink-media)                                                R2 Bucket                 
+env.STATE_BACKEND ("d1")                                                             Environment Variable      
+env.EXECUTOR_BACKEND ("d1")                                                          Environment Variable      
+env.ALLOW_AUTHENTICATED_EXTENSIONS ("true")                                          Environment Variable      
+env.ALLOWED_ORIGIN ("chrome-extension://pbddnjpahdahahnpkh...")                      Environment Variable      
+env.ALLOWED_WORKSPACE_ID ("default")                                                 Environment Variable      
+env.DEEPSEEK_BASE_URL ("https://api.deepseek.com")                                   Environment Variable      
+env.DEEPSEEK_MODEL ("deepseek-v4-pro")                                               Environment Variable      
+env.DEEPSEEK_VISION_MODEL ("deepseek-v4-flash-vision-exp")                           Environment Variable      
+
+Uploaded externallink-cloud (4.63 sec)
+Deployed externallink-cloud triggers (1.24 sec)
+  https://externallink-cloud.syndred.workers.dev
+Current Version ID: 451853e0-f299-4a63-b390-7eff4ea0736f

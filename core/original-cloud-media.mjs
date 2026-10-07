@@ -17,7 +17,7 @@ export function originalCloudMediaDefaults(profile,assets=[]){
 
 export function applyOriginalCloudMediaDefaults(config,defaults={}){
  const result={...config,projectFields:{...config.projectFields}};
- if(defaults.logo&&!config.mediaDisabled?.logo&&!String(config.logoUrl||'').startsWith('cloud-media://'))Object.assign(result,{logoUrl:defaults.logo,logoDataUrl:'',projectFields:{...result.projectFields,'Cloud LOGO':defaults.logo}});
+ if(defaults.logo&&!config.mediaDisabled?.logo&&!String(config.logoUrl||'').startsWith('cloud-media://'))Object.assign(result,{logoUrl:defaults.logo,projectFields:{...result.projectFields,'Cloud LOGO':defaults.logo}});
  if(defaults.screenshots&&!(config.screenshots||[]).some(ref=>String(ref).startsWith('cloud-media://')))result.screenshots=defaults.screenshots.map((ref,index)=>config.mediaDisabled?.['screenshot'+(index+1)]?'':ref);
  return result;
 }

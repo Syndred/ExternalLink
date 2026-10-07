@@ -61,7 +61,7 @@ async function showSinglePage(){
  const parameters=()=>({panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value,expectedUrl:listing.pages.find(p=>p.targetId===pageSelect.value).url,mode:mode.value,commentText:comment.value,confirmProductHuntCreate});
  const fill=button('填写所选网页',async()=>{
   const result=await request('/sidepanelFill',{...parameters(),submit,ordinaryPermissionsAuthorized:submit});
-  message.textContent=result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
+  message.textContent=result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
   if(result.syncError)message.textContent+=' 本机记录已保存，云端待同步：'+result.syncError;
   await load();if(result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
  },true);

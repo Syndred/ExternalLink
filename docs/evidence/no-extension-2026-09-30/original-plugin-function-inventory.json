@@ -1,5 +1,23 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalManualFullFillCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-manual-full-fill-2026-10-07.json",
+    "fullSuitePassed": 769,
+    "newSince768": 1,
+    "actualManualProductFormIsolatedCases": 11,
+    "originalOrdinaryVisitCasesStillPassed": 10,
+    "manualProductFormOriginalUnderstandingVisualCompletionAndCorrectionsConnected": true,
+    "noAgentLocalFillAndValidationPreserved": true,
+    "incompleteSubmissionRequestStoppedBeforeSubmit": true,
+    "actualUiIncompleteThenFilledMessagesPassedWithFixtureApi": true,
+    "automaticClassificationFullyMigrated": false,
+    "specialLaunchAndCommentFullFidelityProvenByThisCheckpoint": false,
+    "allEntryCloudMediaPreferenceParityProven": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalFullVisitFillCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-full-visit-fill-2026-10-07.json",
@@ -1178,7 +1196,7 @@
       "action": "sidepanelFill",
       "mapping": "当前网页填写 / 默认仅填表 → sidepanelFill",
       "status": "mapped_requires_full_acceptance",
-      "verification": "隔离回归通过；真实投稿、跳过、移除和停止未执行，原特殊发布流程待核验"
+      "verification": "手动普通产品表单实际隔离Chrome11种情形覆盖原字段理解／两轮视觉／最终修正、关闭AI、未完成提交请求及迟到收件未知，模型／云任务为夹具；工作台实际渲染未完成后补齐的中文提示通过。原特殊发布、自动分类、各入口媒体优先及完整原资料仍待核验，未做真实投稿"
     },
     {
       "action": "sidepanelOpened",

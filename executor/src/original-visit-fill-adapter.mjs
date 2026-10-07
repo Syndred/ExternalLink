@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {fillOriginalVisitForm,mergeOriginalFrameFill} from './original-visit-fill.mjs';
 import {capturePageEvidence} from './page-evidence.mjs';
 
-export async function prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase}){
+export async function prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase,allowAgent=true}){
  const keys=['id','runId','profileId','profileRevision','version','targetId','browserInstance','controller'],identity=Object.fromEntries(keys.map(key=>[key,task[key]])),profile=structuredClone(task.profileSnapshot);
  async function assertCurrent(){
   await assertBase();const current=runtime.store.get('task:'+task.id);
@@ -20,7 +20,7 @@ export async function prepareOriginalVisitFields(runtime,{task,config,page,candi
   return mergeOriginalFrameFill(results);
  }
  runtime.originalVisitUnderstoodForms||=new Map();
- const fill=await fillOriginalVisitForm({config,platformType:candidate.detection.platform,cache:runtime.originalVisitUnderstoodForms,cacheKey:JSON.stringify([task.runId,task.id,task.targetId,candidate.engine.documentId]),io:{assertCurrent,call:selectedCall,across,
+ const fill=await fillOriginalVisitForm({config,platformType:candidate.detection.platform,allowAgent,cache:runtime.originalVisitUnderstoodForms,cacheKey:JSON.stringify([task.runId,task.id,task.targetId,candidate.engine.documentId]),io:{assertCurrent,call:selectedCall,across,
   notice(message){runtime.update(task,{visitFillProgress:{at:new Date().toISOString(),message}},'assistant_fill_progress');},
   async model(route,body,options){await assertCurrent();await runtime.synchronize();await assertCurrent();return runtime.batchModelRequest(task,route,body,options);},
   async settle(ms){await new Promise(resolve=>setTimeout(resolve,ms));},

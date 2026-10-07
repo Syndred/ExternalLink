@@ -302,7 +302,12 @@
     "fullSuitePassed": 766,
     "newTestsSince764": 2,
     "targetedTestsPassed": 18,
-    "d1AndNeonDeviceRoutesImplemented": ["plan", "vision-plan", "judge", "validate-fill"],
+    "d1AndNeonDeviceRoutesImplemented": [
+      "plan",
+      "vision-plan",
+      "judge",
+      "validate-fill"
+    ],
     "isolatedOriginalWorkerHandlersExecuted": true,
     "workerDeploymentDryRunPassed": true,
     "workerDeployedThisCheckpoint": false,
@@ -1239,8 +1244,10 @@
     },
     {
       "action": "confirmSubmissionSuccess",
-      "mapping": "verify / review 原站回执",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "工作台人工确认成功 → previewManualConfirmation / confirmSubmissionSuccess；原批次、凭证及人工证明，独立账本回读后计成功",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "889项全量通过，原成功函数4种分支及21种迟到保护；实际两本机服务、工作台和认证D1覆盖账本已写但回复丢失后的原确认重试。认证PostgreSQL与云端恢复、SQLite重启保留原资料和尝试。生产人工确认未执行",
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-2026-10-08.json"
     },
     {
       "action": "contentReady",
@@ -2767,5 +2774,16 @@
     "productionCloudError": "ECONNRESET",
     "productionUploads": 0,
     "goalComplete": false
+  },
+  "originalManualConfirmationCheckpoint": {
+    "featureCommit": "b36a111e0fa8e4e8a6fee874340a9628e8b3707b",
+    "finalUiCommit": "e4d9b6af771d680e9926f54342fb4676bee4eb34",
+    "passed": 889,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "original-manual-confirmation-2026-10-08.json",
+    "allOriginalEntriesVerified": false,
+    "latestOriginalDataAndFullHistoryVerified": false,
+    "migrationComplete": false
   }
 }

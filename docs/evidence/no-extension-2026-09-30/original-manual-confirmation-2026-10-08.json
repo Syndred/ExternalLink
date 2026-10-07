@@ -1,0 +1,72 @@
+{
+  "kind": "original_manual_confirmation_validation_not_full_migration",
+  "date": "2026-10-08",
+  "featureCommit": "b36a111e0fa8e4e8a6fee874340a9628e8b3707b",
+  "finalUiCommit": "e4d9b6af771d680e9926f54342fb4676bee4eb34",
+  "originalBaselineCommit": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "behavior": {
+    "workbenchManualSuccessConfirmationConnected": true,
+    "originalRunNonceParkedStatusAndManualProofRetained": true,
+    "originalPageBridgeCannotRequestOrConfirmSuccess": true,
+    "frozenProductAndWorkspaceLateResultsProtected": true,
+    "unknownAttemptAndActualFieldsPreserved": true,
+    "unobservedFieldsNotInvented": true,
+    "independentCloudReadbackPrecedesSuccess": true,
+    "failedSyncAndLostReplyRetainOriginalConfirmation": true,
+    "retryDoesNotCreateAnotherReceipt": true,
+    "manualTimelineSourceOnD1AndNeon": true,
+    "defaultWorkbenchEvidenceInChinese": true,
+    "taskStateSyncFailureShown": true
+  },
+  "verification": {
+    "focusedPassed": 7,
+    "fullPassed": 889,
+    "failed": 0,
+    "skipped": 0,
+    "fullOutput": "executor/test-output/manual-confirmation-all-final-2026-10-08.txt",
+    "originalFunctionVmComparisonCases": [
+      "valid",
+      "wrong_run",
+      "wrong_nonce",
+      "not_parked"
+    ],
+    "lateResultCases": 21,
+    "actualNativeWorkbenchAndAuthenticatedD1": true,
+    "actualAuthenticatedPostgreSqlAndCloudRestore": true,
+    "sqliteRestartPreserved": true,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "publication": {
+    "nativeServicesUpdated": true,
+    "workerVersion": "a82ab87e-db8a-4512-b2ea-5d9d52ea3b5d",
+    "currentDeviceCloudDocumentsChecked": 19,
+    "currentDeviceInventoryTasksChecked": 778,
+    "currentDeviceCloudHashesRevisionsAndInventoryUnchanged": true,
+    "originalLocalBusinessMatchesHistoricBaseline": true,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "pendingQueues": 0,
+    "assistantEnabled": false
+  },
+  "failureEvidenceRetained": {
+    "unitMissingActivitySet": "manual-confirmation-unit-2026-10-08.txt",
+    "fixtureClosedStoreDuringFinalRead": "manual-confirmation-focused-2026-10-08.txt",
+    "mockSynchronizationDuplicatedReadbackEvent": "manual-confirmation-focused-final-2026-10-08.txt",
+    "readonlyProbeExpected404ButOriginalDeviceScopeReturns403": "manual-confirmation-cloud-after-2026-10-08.txt"
+  },
+  "limits": {
+    "productionManualConfirmationPerformed": false,
+    "otherDevicesFullyVerified": false,
+    "completeOriginalHistoryVerified": false,
+    "allOriginalExecutionAndVisitBranchesVerified": false,
+    "migrationComplete": false
+  }
+}

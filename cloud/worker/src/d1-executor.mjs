@@ -1,3 +1,4 @@
+import '../../../core/url-library.js';
 import { D1Store,sha256 } from './d1-store.mjs';
 import { d1Api } from './d1-api.mjs';
 import {parseBearerToken,secureEqual,artifactObjectKey,mediaObjectKey} from './worker-core.mjs';

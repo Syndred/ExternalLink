@@ -5,7 +5,8 @@ import {saveCommentVersion,copyCommentDraft} from './comment-history.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {freezeBatchConfig,assertBatchPolicy,initializeBatchPolicy,refreshBatchManualCapacity,releaseBatchTask,noteBatchTaskResult,batchConfig,pauseBatchPolicy} from './workbench-batch-policy.mjs';
 import {originalUnattended} from '../../core/original-batch-config.mjs';
-import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScopeRows} from '../../core/workbench-batch-recovery.mjs';
+import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScopeRows,maximumLibraryBatchCombinations} from '../../core/workbench-batch-recovery.mjs';
+import {originalLibraryBatchScope} from '../../core/library-batch-scope.mjs';
 import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {resumeExecution} from './execution-lifecycle.mjs';
 import '../../core/target-filters.js';
@@ -13,25 +14,33 @@ const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('h
 const frozenDigest=(batch,value)=>batch.cloudRecoveryVersion===batchRecoveryVersion?createHash('sha256').update(batchJson(value)).digest('hex'):digest(value);
 const site=url=>queue.extractDomain(url).toLowerCase();
 export async function previewWorkbenchBatch(runtime,input){
- if(!Array.isArray(input.profileIds)||!input.profileIds.length||!Array.isArray(input.urls)||!input.urls.length||input.profileIds.length*input.urls.length>500)throw Error('请选择产品与外链，每批最多 500 个组合');
- const profileIds=[...new Set(input.profileIds)],urls=[...new Set(input.urls)];
+ const scoped=input.libraryScope!==undefined;
+ if(!Array.isArray(input.profileIds)||!input.profileIds.length||!scoped&&(!Array.isArray(input.urls)||!input.urls.length||input.profileIds.length*input.urls.length>500))throw Error('请选择产品与外链，每批最多 500 个组合');
+ if(scoped&&(!input.libraryScope||!['category','group'].includes(input.libraryScope.kind)||typeof input.libraryScope.value!=='string'||!input.libraryScope.value.trim()||input.urls!==undefined))throw Error('请选择明确的原分类或分组范围');
+ const profileIds=[...new Set(input.profileIds)];let urls=[...new Set(input.urls||[])];
  const expectedScope=workbenchScope(runtime.store.get('pair'));
  const optionKeys=['concurrency','pingIndex','fillOnly','unattended','unattendedMaxHours','unattendedMaxTasks','unattendedMaxManualTabs'];
  if(input.config!==undefined&&(!input.config||typeof input.config!=='object'||Array.isArray(input.config)||Object.entries(input.config).some(([key,value])=>!optionKeys.includes(key)||!['string','number','boolean'].includes(typeof value))))throw Error('批量参数格式无效');
  const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
  if(expectedScope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新预览');
- const items=[];
- for(const profileId of profileIds){
+ const originalScope=scoped?originalLibraryBatchScope(snapshot,{profileIds,[input.libraryScope.kind]:input.libraryScope.value}):null;
+ if(scoped&&!originalScope.tasks.length)throw Error('该分类或分组没有新的待提交组合，原批次和待办保留');
+ if(scoped&&originalScope.tasks.length>maximumLibraryBatchCombinations)throw Error('原分类或分组超过可保存的完整范围，未截断或启动；请先处理原范围');
+ if(scoped)urls=[...new Set(originalScope.tasks.map(task=>task.url))];
+ const rows=scoped?originalScope.tasks:profileIds.flatMap(profileId=>urls.map(url=>({profileId,url}))),items=[],seenByProfile=new Map(),scopes=new Map(),originalTasks=new Map();
+ for(const task of [...runtime.store.values('task:'),...(inventory.tasks||[])]){const key=task.profileId+'::'+site(task.url),known=originalTasks.get(key)||[];known.push(task);originalTasks.set(key,known);}
+ for(const {profileId,url} of rows){
   const profile=snapshot.documents.siteProfiles?.[profileId];if(!profile||profile.archived)throw Error('所选产品不存在或已归档');
-  const scope=selectScope(snapshot,null,profileId,urls),exclusions=new Map(scope.exclusions.map(e=>[queue.normalizeLibraryDestinationKey(e.url),e.reason])),seen=new Set();
-  for(const url of urls){const destinationKey=queue.normalizeDestinationKey(url),previous=runtime.store.values('task:').find(t=>t.profileId===profileId&&site(t.url)===site(url))||inventory.tasks.find(t=>t.profileId===profileId&&site(t.url)===site(url));
+  if(!scopes.has(profileId))scopes.set(profileId,selectScope(snapshot,null,profileId,urls));const scope=scopes.get(profileId),exclusions=new Map(scope.exclusions.map(e=>[queue.normalizeLibraryDestinationKey(e.url),e.reason])),seen=seenByProfile.get(profileId)||new Set();seenByProfile.set(profileId,seen);
+  const destinationKey=queue.normalizeDestinationKey(url),known=originalTasks.get(profileId+'::'+site(url))||[],previous=known.find(task=>task.url===url&&task.destinationKey===destinationKey&&task.runId),blocked=known.find(task=>task.receipt||task.attemptBoundary||!['pending','needs_manual'].includes(task.status));
    let reason=exclusions.get(queue.normalizeLibraryDestinationKey(url))||'';
    if(seen.has(site(url)))reason='同站其他入口，保留一个投稿目标';seen.add(site(url));
-   if(!reason&&previous&&(previous.receipt||previous.attemptBoundary||!['pending','needs_manual'].includes(previous.status)))reason='同站有原任务结果或提交边界，请先查看或核验原任务';
-   items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:previous?.id||randomUUID(),runId:previous?.runId||randomUUID(),existingTask:!!previous,status:reason?'excluded':'ready',reason});
-  }
+   if(!reason&&blocked)reason='同站有原任务结果或提交边界，请先查看或核验原任务';
+   if(!reason&&known.length&&!previous)reason='同站有原任务使用其他入口，请先查看或核验原任务';
+   const reuse=previous&&!reason;
+   items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:reuse?previous.id:randomUUID(),runId:reuse?previous.runId:randomUUID(),existingTask:!!reuse,...(known.length&&!reuse?{relatedOriginalTaskId:(blocked||previous||known[0]).id}:{}),status:reason?'excluded':'ready',reason});
  }
- const batch={id:randomUUID(),scope:expectedScope,...freezeBatchConfig(snapshot.documents,input.config),cloudRecoveryVersion:batchRecoveryVersion,createdAt:new Date().toISOString(),status:'preview',count:items.length,items,cursor:0,feeLimit:0};batch.configSha256=frozenDigest(batch,batch.config);batch.scopeSha256=frozenDigest(batch,batchScopeRows(batch));
+ const batch={id:randomUUID(),scope:expectedScope,...freezeBatchConfig(snapshot.documents,input.config),cloudRecoveryVersion:batchRecoveryVersion,createdAt:new Date().toISOString(),status:'preview',count:items.length,items,cursor:0,feeLimit:0,...(scoped?{libraryScope:{kind:input.libraryScope.kind,value:input.libraryScope.value.trim(),meta:originalScope.meta,exclusions:originalScope.exclusions}}:{})};batch.configSha256=frozenDigest(batch,batch.config);batch.scopeSha256=frozenDigest(batch,batchScopeRows(batch));
  runtime.store.set('workbenchBatch:'+batch.id,batch);return{ok:true,batch};
 }
 export async function startWorkbenchBatch(runtime,input){

@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {batchManifest,batchCheckpoint,batchScopeRows,batchRecoveryVersion,batchJson} from '../../core/workbench-batch-recovery.mjs';
+import {batchManifest,batchCheckpoint,batchScopeRows,batchRecoveryVersion,batchJson,maximumLibraryBatchCombinations} from '../../core/workbench-batch-recovery.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
@@ -34,7 +34,7 @@ export function recoverCloudBatchRecords(runtime,runs,tasks) {
   for(const source of [...runs,...tasks]) {
     const manifest=source.workbenchBatchManifest;
     if(manifest) {
-      if(manifest.cloudRecoveryVersion!==batchRecoveryVersion||manifest.scope!==scope||!Array.isArray(manifest.items)||manifest.count!==manifest.items.length||manifest.count<1||manifest.count>500||manifest.configSha256!==digest(manifest.config)||manifest.scopeSha256!==digest(batchScopeRows(manifest))||new Set(manifest.items.map(i=>i.taskId)).size!==manifest.count) throw Error('云端原批次范围、参数或工作区校验失败');
+      if(manifest.cloudRecoveryVersion!==batchRecoveryVersion||manifest.scope!==scope||!Array.isArray(manifest.items)||manifest.count!==manifest.items.length||manifest.count<1||manifest.count>maximumLibraryBatchCombinations||manifest.configSha256!==digest(manifest.config)||manifest.scopeSha256!==digest(batchScopeRows(manifest))||new Set(manifest.items.map(i=>i.taskId)).size!==manifest.count) throw Error('云端原批次范围、参数或工作区校验失败');
       const previous=manifests.get(manifest.id);
       if(previous&&!isDeepStrictEqual(previous,manifest))throw Error('云端原批次清单存在不同内容，保持暂停');
       manifests.set(manifest.id,manifest);
@@ -51,7 +51,7 @@ export function recoverCloudBatchRecords(runtime,runs,tasks) {
   for(const [id,manifest] of manifests) {
     const checkpoint=checkpoints.get(id);
     if(checkpoint&&(checkpoint.configSha256!==manifest.configSha256||checkpoint.scopeSha256!==manifest.scopeSha256||!Array.isArray(checkpoint.items)||checkpoint.items.length!==manifest.count||checkpoint.items.some((i,n)=>i.taskId!==manifest.items[n].taskId)))throw Error('云端原批次检查点改变了原范围');
-    const items=manifest.items.map((item,index)=>({...item,...checkpoint?.items[index]})),batch={...manifest,...checkpoint,cloudManifest:manifest,items,status:checkpoint?.status==='stopped'?'stopped':'paused',reason:checkpoint?.status==='stopped'?'原批次已停止，范围和任务保留；需要明确重新开始':'已恢复云端原范围和参数，请核验原任务后继续',recoveredFromCloudAt:new Date().toISOString()};
+    const items=manifest.items.map((item,index)=>({...item,profile:item.profile||manifest.profileSnapshots?.[item.profileId],...checkpoint?.items[index]})),batch={...manifest,...checkpoint,cloudManifest:manifest,items,status:checkpoint?.status==='stopped'?'stopped':'paused',reason:checkpoint?.status==='stopped'?'原批次已停止，范围和任务保留；需要明确重新开始':'已恢复云端原范围和参数，请核验原任务后继续',recoveredFromCloudAt:new Date().toISOString()};
     for(const item of items) {
       const task=tasks.find(t=>t.id===item.taskId)||runtime.store.get('task:'+item.taskId);
       if(task&&(task.runId!==item.runId||task.profileId!==item.profileId||task.url!==item.url||task.destinationKey!==item.destinationKey))throw Error('恢复任务与原批次身份不一致');

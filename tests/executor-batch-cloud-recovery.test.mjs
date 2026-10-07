@@ -21,6 +21,25 @@ import {PGlite} from '../executor/node_modules/@electric-sql/pglite/dist/index.j
 import {executorApi} from '../cloud/worker/src/executor-api.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
 
+test('authenticated D1 registers and restores an original category with over five hundred combinations and compact profiles',async()=>{
+ const f=await fixture();try{
+  const snapshot=await f.cloud.request('snapshot'),entries=Array.from({length:501},(_,n)=>({link:'https://large-scope-'+n+'.example/form',category:'AI 工具目录',metrics:{dr:80}}));
+  await f.backend.putDocument('sheetTableData',{entries},snapshot.revisions.sheetTableData);const runtime=f.runtime(),preview=await previewWorkbenchBatch(runtime,{profileIds:['p'],libraryScope:{kind:'category',value:'AI 工具目录'},config:{fillOnly:true}});
+  assert.equal(preview.batch.count,501);await startWorkbenchBatch(runtime,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});const before=runtime.store.get('workbenchBatch:'+preview.batch.id);assert.equal(before.cloudManifest.items.length,501);assert.equal(before.cloudManifest.items[0].profile,undefined);assert.ok(before.cloudManifest.profileSnapshots.p);
+  const task=await nextWorkbenchTask(runtime);await f.cloud.flush(runtime.store);const restored=f.runtime();await restored.restoreCloud();const batch=restored.store.get('workbenchBatch:'+preview.batch.id);
+  assert.equal(batch.count,501);assert.deepEqual(batch.items.map(i=>i.taskId),before.items.map(i=>i.taskId));assert.deepEqual(batch.items[500].profile,before.items[500].profile);assert.equal(batch.libraryScope.value,'AI 工具目录');assert.equal(batch.config.fillOnly,true);assert.equal(batch.unattendedState.taskBudgetUsed,1);assert.equal(restored.store.get('task:'+task.id).fillOnlyRun,true);assert.equal(restored.store.get('paused'),true);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
+
+test('authenticated original free group can register a compiled route without admitting arbitrary unknown URLs',async()=>{
+ const f=await fixture();try{
+  const snapshot=await f.cloud.request('snapshot'),compiled=globalThis.ExtLinkUrlLibrary[0];await f.backend.putDocument('siteAnnotations',{[globalThis.ExtLinkQueue.normalizeDestinationKey(compiled)]:{library:{groups:['free_submit']}}},snapshot.revisions.siteAnnotations||0);
+  const runtime=f.runtime(),preview=await previewWorkbenchBatch(runtime,{profileIds:['p'],libraryScope:{kind:'group',value:'free_submit'},config:{fillOnly:true}});
+  assert.ok(preview.batch.items.some(item=>item.url===compiled));await startWorkbenchBatch(runtime,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});const batch=runtime.store.get('workbenchBatch:'+preview.batch.id);assert.equal(batch.items.every(item=>['registered','excluded'].includes(item.status)),true);assert.equal(batch.count,preview.batch.count);
+  await assert.rejects(previewWorkbenchBatch(runtime,{profileIds:['p'],urls:['https://unrelated-not-in-library.example/form']}),/外链库/);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
+
 test('authenticated lifecycle events preserve user pause and resume identities, original budget and stopped cloud recovery',async()=>{
  const f=await fixture();try{
   const task=await nextWorkbenchTask(f.original),before=f.original.store.get('workbenchBatch:'+f.batchId).unattendedState,deadline=task.taskDeadlineAt;

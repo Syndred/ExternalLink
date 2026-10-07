@@ -1,3 +1,4 @@
+import '../../../core/url-library.js';
 // Formal, workspace-scoped executor API. Device credentials never inherit the
 // administrator's state replacement, migration or credential-issuing powers.
 import { parseBearerToken, secureEqual } from './worker-core.mjs';

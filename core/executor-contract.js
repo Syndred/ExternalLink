@@ -31,6 +31,9 @@
     if(snapshot.documents?.siteProfiles?.[profileId]?.archived)throw new Error('产品已归档，请恢复后安排新任务');
     const library = inventory(snapshot, bundled), docs = snapshot.documents, exclusions = [], tasks = [];
     const requested = new Set((requestedUrls || []).map(url => queue.normalizeLibraryDestinationKey(url))), seen = new Set();
+    // The original group queue also contains compiled library routes. Add only
+    // explicitly requested, known routes; this never admits arbitrary URLs.
+    if(requested.size){const present=new Set(library.candidates.map(item=>queue.normalizeLibraryDestinationKey(item.url)));for(const url of global.ExtLinkUrlLibrary||[]){const key=queue.normalizeLibraryDestinationKey(url);if(requested.has(key)&&!present.has(key)){library.candidates.push({url,destinationKey:queue.normalizeDestinationKey(url),source:'builtin.url-library'});present.add(key);}}}
     const records = queue.migrateSubmissionRecords({ records: docs.submissionRecords || {}, annotations: docs.siteAnnotations || {}, tableData: docs.sheetTableData || bundled || {} }).records;
     const filters=global.ExtLinkTargetFilters.normalize(docs.targetFilters);
     const blacklist = filters.blacklistEnabled===false?null:queue.buildBlacklistMatcher(Array.isArray(docs.domainBlacklist) ? docs.domainBlacklist : String(docs.domainBlacklist || '').split(/[\n,]/));

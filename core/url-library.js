@@ -188,4 +188,4 @@
   "https://yourstory.com/companies",
   "https://zumvu.com/"
 ];
-})(typeof self !== "undefined" ? self : window);
+})(typeof self !== "undefined" ? self : globalThis);

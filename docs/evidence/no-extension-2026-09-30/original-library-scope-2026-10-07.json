@@ -1,0 +1,91 @@
+{
+  "kind": "original_library_scope_verified_behavior_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "previousProgressCommit": "b94b271",
+  "previousFeatureCommit": "5ee8745",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionsComparedExactly": [
+    "scopeDestinationGroupsByLibraryCategory",
+    "scopeDestinationGroupsByLibraryGroup",
+    "expandSubmissionRecordsForQueue"
+  ],
+  "originalQueueCompared": "loadPendingSubmissionTasks",
+  "verifiedScope": [
+    "Independent category and group batch controls",
+    "Complete original task sequence and product assignments unaffected by display filters",
+    "Original quality ordering, successful receipt aliases, group removals, blacklist and age exclusions",
+    "Explicitly requested compiled library routes register; arbitrary unknown routes reject",
+    "Compact product snapshots and complete fifty-row pagination above five hundred combinations",
+    "Original combinations, profile snapshots, policy and budget survive authenticated cloud recovery",
+    "Alternate pending paths remain excluded and reference the untouched original task",
+    "Duplicate host exclusions retain unique frozen task identities",
+    "Stronger cloud attempt boundaries protect against local pending task reuse"
+  ],
+  "tests": {
+    "passed": 630,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 10,
+    "fullOutput": "executor/test-output/library-scope-all-final-2026-10-07.txt",
+    "sources": ["tests/executor-original-library-batch-scope.test.mjs", "tests/executor-batch-cloud-recovery.test.mjs"],
+    "firstAliasRegressionRun": "one fixture failure: no independent registration anchor; corrected fixture, then full suite passed"
+  },
+  "largeRange": {
+    "localCombinations": 601,
+    "authenticatedFixtureD1RegisteredAndRecovered": 501,
+    "previewRowsPerPage": 50,
+    "explicitCategoryGroupMaximum": 50000,
+    "aboveMaximum": "reject without truncation",
+    "ordinaryCheckboxBatchMaximum": 500
+  },
+  "actualServicesAndChrome": {
+    "isolatedHomeAndCloud": true,
+    "combinations": 601,
+    "bothServicesCompleteCategoryAndGroupScope": true,
+    "invalidScopesBothServices400": true,
+    "independentCategoryAndGroupControls": true,
+    "noSearchMatchesStillFullScope": true,
+    "paginationFinalItemAndOriginalOrder": true,
+    "invalidPreviewsDoNotCreateBatches": true,
+    "originalFixedBatchUnchanged": true,
+    "pendingEvents": 0,
+    "startedFixtureBatches": 0,
+    "externalRequests": 0,
+    "output": "executor/test-output/library-scope-services-2026-10-07.txt",
+    "source": "executor/test/library-batch-scope.mjs"
+  },
+  "uiFixture": {
+    "pages": 6,
+    "passed": true,
+    "output": "executor/test-output/library-scope-ui-final-2026-10-07.txt"
+  },
+  "release": {
+    "workerDryRunPassed": true,
+    "workerDeploymentPassed": true,
+    "workerVersion": "f24bd30b-a2ae-4010-a19b-567e4939e673",
+    "nativeOriginalServicesUpdated": true,
+    "processIdentityVerified": true,
+    "idleAndDurableStateGuardsPassed": true
+  },
+  "productionReadOnlyVerification": {
+    "firstObservation": "initial immediate count preceded asynchronous library rendering; awaited visible controls and rechecked without service restart",
+    "independentControlsVisible": true,
+    "disabledDuringOriginalPausedBatch": true,
+    "cloudDocumentsAndRevisionsUnchanged": true,
+    "localTasksRangesHistoryOutboxAndLogsUnchanged": true,
+    "businessEdits": 0,
+    "newRealSubmissions": 0,
+    "realAiCalls": 0,
+    "realBatchPreviews": 0,
+    "fixedBatch": { "status": "paused", "cursor": 13, "count": 30 },
+    "cursorIsNotReceiptCount": true,
+    "outputs": ["executor/test-output/library-scope-production-state-2026-10-07.txt", "executor/test-output/library-scope-production-ui-2026-10-07.txt"]
+  },
+  "migrationComplete": false,
+  "remainingScope": [
+    "Other original dynamic controls and cloud or device lifecycle",
+    "Latest original browser profiles and favorites",
+    "Complete original historical records and legacy media ownership",
+    "Special publication pages and real external service results"
+  ]
+}

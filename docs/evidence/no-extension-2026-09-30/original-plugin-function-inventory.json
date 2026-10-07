@@ -1,5 +1,19 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalLibraryBatchScopeCheckpoint": {
+    "date": "2026-10-07",
+    "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "evidence": "original-library-scope-2026-10-07.json",
+    "fullSuitePassed": 630,
+    "independentCategoryAndGroupControls": true,
+    "originalQueueSemanticsCompared": true,
+    "actualServicesAndChromeCombinations": 601,
+    "authenticatedD1RecoveredCombinations": 501,
+    "uniqueOriginalIdentitiesAndCloudBoundaryProtection": true,
+    "workerVersion": "f24bd30b-a2ae-4010-a19b-567e4939e673",
+    "productionReadOnlyControlsVerified": true,
+    "migrationComplete": false
+  },
   "buttons": [
     {
       "source": "extension/settings.html",
@@ -349,16 +363,16 @@
       "source": "extension/sidepanel.html",
       "id": "btnStartLibraryCategory",
       "label": "从此分类开始提交",
-      "mapping": "外链库分类筛选／选择当前筛选 → 批量提交固定范围预览",
-      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "mapping": "外链库 → 从此分类开始提交 → 原分类完整范围预览",
+      "verification": "原函数及队列对照、601组合实际服务与Chrome、501组合认证D1恢复、生产只读入口和原暂停禁用已验证；见 original-library-scope-2026-10-07.json",
       "status": "mapped_requires_full_acceptance"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "btnStartLibraryGroup",
       "label": "从此分组开始提交",
-      "mapping": "外链库分组筛选／选择当前筛选 → 批量提交固定范围预览",
-      "verification": "已有相关流程，原按钮行为仍须逐项对照",
+      "mapping": "外链库 → 从此分组开始提交 → 原分组完整范围预览",
+      "verification": "原分组及排除规则对照、实际服务与Chrome、认证D1内置目标、生产只读入口和原暂停禁用已验证；见 original-library-scope-2026-10-07.json",
       "status": "mapped_requires_full_acceptance"
     },
     {

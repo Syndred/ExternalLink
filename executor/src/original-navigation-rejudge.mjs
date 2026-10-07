@@ -16,8 +16,8 @@ export const pendingNavigationMarker=task=>task.aiTakeover?.originalVisual?.pend
 export const hasPendingNavigation=task=>['waiting_navigation','ready','rejudging'].includes(pendingNavigationMarker(task)?.status);
 const groupDigest=group=>{let frozen=frozenGroup(group);if(group.key==='acceptanceBatch')frozen={...frozen,identities:frozen.identities.map(({combo,entry,id})=>({combo,id,runId:entry?.runId}))};return frozen&&createHash('sha256').update(batchJson(frozen)).digest('hex');};
 export function navigationScope(runtime,task){const group=originalGroup(runtime,task);if(!group.key)throw Object.assign(Error('原待重判缺少持久运行组'),{staleTask:true});return JSON.parse(batchJson({scope:workbenchScope(runtime.store.get('pair')),groupKey:group.key,groupSha256:groupDigest(group),identity:Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance','taskDeadlineAt'].map(key=>[key,task[key]])),profileSnapshot:structuredClone(task.profileSnapshot),...(task.workbenchBatchId?{workbenchBatchId:task.workbenchBatchId,scopeSha256:group.record.scopeSha256,configSha256:group.record.configSha256}:{})}));}
-export function assertNavigationScope(runtime,task,marker){
- if(!marker||!isDeepStrictEqual(navigationScope(runtime,task),marker.navigationScope)||task.attemptBoundary||task.receipt||task.syncConflict||task.originalFreshRoundSuccessorTaskId||task.controller!=='executor'||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))throw Object.assign(Error('原待重判任务、范围、产品或控制状态已变化'),{staleTask:true});
+export function assertNavigationScope(runtime,task,marker,{liveAttemptBoundary}={}){
+ if(!marker||!isDeepStrictEqual(navigationScope(runtime,task),marker.navigationScope)||(task.attemptBoundary&&(marker.submissionPhase!==true||task.attemptBoundary!==liveAttemptBoundary))||task.receipt||task.syncConflict||task.originalFreshRoundSuccessorTaskId||task.controller!=='executor'||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))throw Object.assign(Error('原待重判任务、范围、产品或控制状态已变化'),{staleTask:true});
 }
 export function navigationBatchContinuation(task,batch){
  const marker=pendingNavigationMarker(task),scope=marker?.navigationScope;
@@ -29,11 +29,27 @@ export function originalReadinessSignature({snapshot={},detection={}},initialMod
  return JSON.stringify({url:snapshot.url||'',title:String(snapshot.title||'').trim(),textLength:text.length,textHead:text.slice(0,160),textTail:text.slice(-160),contentShape:globalThis.ExtLinkBatchControls.contentFingerprint({forms:snapshot.forms||[],fields:snapshot.fields||[],buttons:snapshot.buttons||[]}),platform:detection.platform||initialMode,fieldCount:Number(detection.formFieldCount||snapshot.meta?.fieldCount||0),buttonCount:Number(snapshot.meta?.buttonCount||0),operable:detection.operable===true});
 }
 
+// Original post-action content readiness also applies when no navigation
+// exception occurred. This observer never establishes a retry permission.
+export async function waitForOriginalSubmissionContent({assertCurrent,probe,wait,now=Date.now}){
+ const deadline=now()+originalReadinessLimits.timeoutMs;let signature='',stableChecks=0,lastError='';
+ while(now()<deadline){
+  await assertCurrent();let observed;
+  try{observed=await probe();}catch(error){if(!nativeNavigationSnapshotError(error))throw error;lastError=error.message;}
+  await assertCurrent();
+  if(observed){const ready=globalThis.ExtLinkBatchControls.hasContentReadySignal(observed),next=originalReadinessSignature(observed);stableChecks=ready&&signature===next?stableChecks+1:ready?1:0;signature=next;
+   if(globalThis.ExtLinkBatchControls.isStableContentReady({tabStatus:observed.tabStatus,contentReady:ready,stableChecks,requiredStableChecks:originalReadinessLimits.stableChecks}))return{ok:true,stableChecks,observed};
+  }
+  await wait(originalReadinessLimits.pollMs);
+ }
+ throw Object.assign(Error('原投稿动作后页面未稳定，保留原页与尝试：'+(lastError||'内容就绪检查超时')),{readinessTimeout:true});
+}
+
 // Original waitForTabContentReady: reads only, two matching stable snapshots,
 // 30 seconds, then manual attention. No action or model result is replayed.
-export async function waitForOriginalNavigation(runtime,{task,marker,assertCurrent,probe,wait,now=Date.now}){
+export async function waitForOriginalNavigation(runtime,{task,marker,assertCurrent,probe,wait,now=Date.now,liveAttemptBoundary}){
  const started=now(),deadline=started+originalReadinessLimits.timeoutMs;let signature='',stableChecks=0,lastError='';
- const check=async()=>{await assertCurrent();const current=runtime.store.get('task:'+task.id);if(!isDeepStrictEqual(JSON.parse(batchJson(current)),JSON.parse(batchJson(task)))||pendingNavigationMarker(current)?.id!==marker.id)throw Object.assign(Error('原待重判检查点已变化'),{staleTask:true});assertNavigationScope(runtime,current,marker);};
+ const check=async()=>{await assertCurrent();const current=runtime.store.get('task:'+task.id);if(!isDeepStrictEqual(JSON.parse(batchJson(current)),JSON.parse(batchJson(task)))||pendingNavigationMarker(current)?.id!==marker.id)throw Object.assign(Error('原待重判检查点已变化'),{staleTask:true});assertNavigationScope(runtime,current,marker,{liveAttemptBoundary});};
  const flush=async()=>{try{await flushBatchTaskEvents(runtime,task);}catch(error){if(!error.staleTask&&!error.batchPaused&&!error.unattendedBudget)error.originalTaskSyncFailure=true;throw error;}};
  await check();await flush();await check();
  while(now()<deadline){

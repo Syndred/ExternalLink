@@ -8,7 +8,7 @@ import {join,resolve,sep} from 'node:path';
 import {Store} from '../executor/src/store.mjs';
 import {Runtime} from '../executor/src/runtime.mjs';
 import {runOriginalAgentPreparation} from '../executor/src/original-agent-flow.mjs';
-import {navigationScope,pendingNavigationMarker,originalNavigationSnapshotError,nativeNavigationSnapshotError,waitForOriginalNavigation,navigationBudgetContinuation,originalReadinessSignature} from '../executor/src/original-navigation-rejudge.mjs';
+import {navigationScope,assertNavigationScope,pendingNavigationMarker,originalNavigationSnapshotError,nativeNavigationSnapshotError,waitForOriginalNavigation,navigationBudgetContinuation,originalReadinessSignature} from '../executor/src/original-navigation-rejudge.mjs';
 import {freezeBatchConfig,initializeBatchPolicy,releaseBatchTask} from '../executor/src/workbench-batch-policy.mjs';
 import {nextWorkbenchTask} from '../executor/src/workbench-features.mjs';
 import {resumeExecution} from '../executor/src/execution-lifecycle.mjs';
@@ -118,4 +118,11 @@ test('navigation continuation never renews elapsed deadlines or admits forged an
   if(mode==='scope')assert.throws(()=>releaseBatchTask(f.runtime,f.batch,f.task,{}));else assert.equal(releaseBatchTask(f.runtime,f.batch,f.task,{}),false,mode);
   assert.equal(f.store.get('workbenchBatch:b').unattendedState.taskBudgetUsed,1);assert.equal(f.task.targetId,mode==='target'?'different-target':'original-target');
  }finally{f.store.close();}}
+});
+
+
+test('only the live original submission invocation may observe its boundary; persisted unknown navigation cannot authorize a retry',async()=>{
+ const f=fixture();try{const marker={id:'visual-navigation',status:'waiting_navigation',submissionPhase:true,navigationScope:navigationScope(f.runtime,f.task)};f.runtime.update(f.task,{attemptBoundary:'live-boundary',aiTakeover:{id:'visual-agent',calls:2,actions:1,originalVisual:{loops:1,pendingRejudge:marker}}},'fixture_visual_navigation');
+  assert.throws(()=>assertNavigationScope(f.runtime,f.task,marker),error=>error.staleTask===true);assert.throws(()=>assertNavigationScope(f.runtime,f.task,marker,{liveAttemptBoundary:'foreign'}),error=>error.staleTask===true);assertNavigationScope(f.runtime,f.task,marker,{liveAttemptBoundary:'live-boundary'});let time=0;await waitForOriginalNavigation(f.runtime,{task:f.task,marker,liveAttemptBoundary:'live-boundary',assertCurrent:async()=>{},probe:async()=>f.stable,wait:async ms=>{time+=ms;},now:()=>time});assert.equal(pendingNavigationMarker(f.task).status,'ready');assert.equal(f.task.attemptBoundary,'live-boundary');assert.equal(f.task.aiTakeover.actions,1);assert.equal(f.task.aiTakeover.calls,2);assert.equal(navigationBudgetContinuation(f.task,f.runtime.store.get('workbenchBatch:b')),false);
+ }finally{f.store.close();}
 });

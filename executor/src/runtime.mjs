@@ -42,9 +42,11 @@ import{advanceBasicGoogleLogin,canAuthenticateOffline,readBasicGoogleUI}from'./b
 import{getTargetInfo}from'./browser-target.mjs';
 import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenchScope}from'./workbench-sync.mjs';
 import {runOriginalAgentPreparation,originalPlanDecision} from './original-agent-flow.mjs';
-import {navigationScope,assertNavigationScope,hasPendingNavigation,pendingNavigationMarker,nativeNavigationSnapshotError,waitForOriginalNavigation} from './original-navigation-rejudge.mjs';
+import {runOriginalAgentSubmission,originalVisualActions} from './original-submission-flow.mjs';
+import {createOriginalSubmissionAdapter} from './original-submission-adapter.mjs';
+import {navigationScope,assertNavigationScope,hasPendingNavigation,pendingNavigationMarker,nativeNavigationSnapshotError,waitForOriginalNavigation,waitForOriginalSubmissionContent} from './original-navigation-rejudge.mjs';
 import {captureOriginalTaskVisual} from './task-visual-context.mjs';
-import {originalSubmitSuccessDecision,nativeSuccessRecord,nativeReceiptReadbackMatches} from './original-submission-proof.mjs';
+import {originalSubmitSuccessDecision,originalJudgeSuccessDecision,nativeSuccessRecord,nativeReceiptReadbackMatches} from './original-submission-proof.mjs';
 import {originalVisualFillActions} from './original-visit-fill.mjs';
 import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
@@ -716,8 +718,9 @@ export class Runtime {
       if(!active())return;
       let navigationPrepared;
       if(hasPendingNavigation(task)){
-        navigationPrepared=await this.prepareWithAi(page,task,config,active);
+        navigationPrepared=await this.prepareWithAi(page,task,config,active,{submission:pendingNavigationMarker(task)?.submissionPhase===true});
         if(navigationPrepared.candidate)engines.push(navigationPrepared.candidate);
+        if(navigationPrepared.receiptRecorded||task.receipt)return;
         requirePrepared(navigationPrepared);
       }
       await this.preparePublicPage(page,task,{active});
@@ -749,8 +752,9 @@ export class Runtime {
       }
       if (!candidate && !task.attemptBoundary && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly)) {
         for(const item of engines)await item.engine.detach();engines=[];
-        const takeover=await this.prepareWithAi(page,task,config,active);
+        const takeover=await this.prepareWithAi(page,task,config,active,{submission:true});
         candidate=takeover.candidate;if(candidate)engines.push(candidate);
+        if(takeover.receiptRecorded||task.receipt)return;
         requirePrepared(takeover);
       }
       if (!candidate) throw new Error('没有可识别表单，后台 AI 已尝试原页并记录结果');
@@ -775,8 +779,9 @@ export class Runtime {
       const initialAction=await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly) && !detection.hasCaptcha) {
         for(const item of engines)await item.engine.detach();engines=[];
-        const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true});
+        const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true,submission:true});
         if(takeover.candidate)engines.push(takeover.candidate);
+        if(takeover.receiptRecorded||task.receipt)return;
         requirePrepared(takeover);
         if(takeover.candidate){candidate=takeover.candidate;engine=candidate.engine;detection=candidate.detection;validation=await engine.call({action:'collectFormValidation'});fill={...fill,ok:true,needs_manual:false,aiPrepared:true};}
       }
@@ -833,7 +838,11 @@ export class Runtime {
       const submitAction = await engine.call({action:'inspectSubmitAction',config,platform:detection.platform||'directory'});
       this.update(task,{submitAction},'submit_action_preflight');
       if(submitAction.allowed===false)throw new Error(detection.platform==='wp_comment'?'评论已填写；标准 WordPress 评论自动提交未开启或表单未通过标准预检，请人工核对':'资料已填写；目录站自动提交未开启或当前页面仅允许填写，请人工核对');
-      if(!submitAction.finalFound)throw new Error(submitAction.advanceFound?'当前只有前进动作，后台接管未完成下一步；未建立投稿边界':'未找到可用最终投稿按钮；未建立投稿边界');
+      if(!submitAction.finalFound){
+        for(const item of engines)await item.engine.detach();engines=[];
+        const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true,submission:true});if(takeover.candidate)engines.push(takeover.candidate);
+        if(takeover.receiptRecorded||task.receipt)return;requirePrepared(takeover);throw Error('原视觉投稿尚未取得明确回执，请检查原任务');
+      }
       // Revalidate ownership and cloud dedup immediately before the mutation.
       await this.lease(task);
       if(!active())return;
@@ -886,6 +895,7 @@ export class Runtime {
       if(error.staleTask){staleWork=true;return;}
       if(error.originalTaskSyncFailure)throw error;
       if(error.preparationInterrupted)return;
+      if(error.preparationResult?.unconfirmed){this.update(task,{status:'submitted_unconfirmed',siteStatus:'sent_unconfirmed',attentionType:'unknown_receipt',reason:error.message},'original_visual_unknown');return;}
       if(error.preparationResult?.originalAgentUnavailable&&task.status==='skip'&&task.attentionType==='agent_unavailable'&&!task.attemptBoundary&&!task.receipt)return;
       if([401,403,409].includes(error.status)||!error.preparationResult&&(error.cloudNetwork||error.status>=500))throw error;
       if(task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end'&&!task.attemptBoundary&&!task.receipt)return;
@@ -918,11 +928,13 @@ export class Runtime {
       }finally{if(!assignedTaskId)this.activeTaskId=null;}
     }
   }
-  async prepareWithAi(page,task,config,active,{normalFillDone=false,readyCheck}={}) {
+  async prepareWithAi(page,task,config,active,{normalFillDone=false,readyCheck,submission=false}={}) {
+    submission=submission===true&&!task.fillOnlyRun&&config.fillOnly!==true&&config.autoSubmitDirectory!==false;
+    const ownership={attemptBoundary:undefined,receipt:undefined};
     let candidate;
     let normalDone=normalFillDone;
-    const scope=workbenchScope(this.store.get('pair')),identity=Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance'].map(key=>[key,task[key]])),profile=plain(task.profileSnapshot||{}),preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
-    const canRelease=current=>scope===workbenchScope(this.store.get('pair'))&&Object.entries(identity).every(([key,value])=>current[key]===value)&&current.version===task.version&&current.controllerId===task.controllerId&&!current.attemptBoundary&&!current.receipt&&isDeepStrictEqual(plain(current.profileSnapshot||{}),profile);
+    const scope=workbenchScope(this.store.get('pair')),identity=Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance'].map(key=>[key,task[key]])),profile=plain(task.profileSnapshot||{}),preparationConfig=submission?{...config,fillOnly:false}:{...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
+    const canRelease=current=>scope===workbenchScope(this.store.get('pair'))&&Object.entries(identity).every(([key,value])=>current[key]===value)&&current.version===task.version&&current.controllerId===task.controllerId&&(submission?current.attemptBoundary===ownership.attemptBoundary&&isDeepStrictEqual(current.receipt,ownership.receipt):!current.attemptBoundary&&!current.receipt)&&isDeepStrictEqual(plain(current.profileSnapshot||{}),profile);
     const assertCurrent=async()=>{const check=()=>{const current=this.store.get('task:'+task.id);if(!current||!canRelease(current)||current.controller!==task.controller||this.store.get('executionStopped')||this.store.get('connectionExecutionHold')||page.isClosed()||!/^https?:\/\//.test(page.url()))throw Object.assign(Error('原AI接管任务、产品、控制权或网页已变化'),{staleTask:true});if(!active())throw Object.assign(Error('原AI接管已暂停，原任务与预算保留'),this.store.get('paused')===true?{batchPaused:true}:{staleTask:true});};check();const target=await getTargetInfo(this.context,page);check();if(target?.targetId!==identity.targetId)throw Object.assign(Error('原AI接管页签身份已变化'),{staleTask:true});};
     const assertDocument=async()=>{await assertCurrent();if(!candidate||candidate.frame.isDetached()||candidate.frame.url()!==candidate.url||!await candidate.engine.isCurrentDocument())throw Object.assign(Error('原AI接管文档已变化，请重新观察'),{staleTask:true,originalDocumentChanged:true});await assertCurrent();};
     const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
@@ -974,14 +986,16 @@ export class Runtime {
       await assertDocument();await originalTaskSync(()=>flushBatchTaskEvents(this,task));await assertDocument();
       if(kind==='vision-plan'){
         const visual=await captureOriginalTaskVisual(this,{task,page,candidate,assertCurrent:assertDocument});await assertDocument();
-        lastVisual=visual;const plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,fillOnly:true});await assertDocument();
-        return{...plan,actions:originalVisualFillActions(plan.actions,visual.elements)};
+        lastVisual=visual;const plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,fillOnly:!submission});await assertDocument();
+        return{...plan,actions:(submission?originalVisualActions:originalVisualFillActions)(plan.actions,visual.elements)};
       }
-      if(kind==='judge'){const judge=await this.batchModelRequest(task,'ai/judge',{task:taskPayload(),config:preparationConfig,...input});await assertDocument();return judge;}
-      const plan=await this.batchModelRequest(task,'plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config:preparationConfig,...input,fillOnly:true});await assertDocument();return{...plan,actions:restrictPreparationActions(plan.actions,input.snapshot)};
+      if(kind==='judge'){const judge=await this.batchModelRequest(task,'ai/judge',{task:taskPayload(),config:preparationConfig,...input});await assertDocument();return submission?{...judge,networkEvidence:submissionAdapter.networkEvidence()}:judge;}
+      const plan=await this.batchModelRequest(task,'plan',{...(!submission?{mode:'prepare_takeover'}:{}),taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config:preparationConfig,...input,fillOnly:!submission});await assertDocument();return{...plan,actions:submission?(plan.actions||[]).filter(action=>['fill','select','check','wait'].includes(action.type)):restrictPreparationActions(plan.actions,input.snapshot)};
     };
-    const act=async(action,{visual=false}={})=>{
+    const submissionAdapter=submission?createOriginalSubmissionAdapter(this,{task,page,config,active,assertDocument,candidate:()=>candidate,visual:()=>lastVisual,ownership}):null;
+    const act=async(action,{visual=false,entry={}}={})=>{
         await assertDocument();await originalTaskSync(()=>this.lease(task,{online:true}));await assertDocument();
+        if(submission)return submissionAdapter.act(action,{visual,entry});
         const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
         if(action.type==='click')await candidate.engine.call({action:'persistFillLearnings',config});
         let result;
@@ -993,7 +1007,7 @@ export class Runtime {
         if(action.type==='click')await settleObservedClick(page,before);
         return result;
     };
-    const io={assertCurrent,canRelease,observe,ready,navigationScope:()=>navigationScope(this,task),readyBeforeJudge:config.productHuntPrepared===true,model,act,
+    const io={assertCurrent,canRelease,observe,ready,...(submission?{authorized:true,complete:submissionAdapter.complete,deterministicSubmit:submissionAdapter.deterministicSubmit,ownedAttemptBoundary:submissionAdapter.ownedAttemptBoundary}:{}),navigationScope:()=>navigationScope(this,task),readyBeforeJudge:config.productHuntPrepared===true,model,act,
       settle:ms=>page.waitForTimeout(ms),
       recordPlan:async plan=>{await assertDocument();this.update(task,{agentVisualHistory:[...(task.agentVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),...(lastVisual?{localScreenshot:lastVisual.localScreenshot,artifactRef:lastVisual.artifactRef,artifactError:lastVisual.artifactError}:{}),...(!plan.visualAgent?{visualFallbackReason:task.aiTakeover?.visualFallbackReason||''}:{}),visualAgent:plan.visualAgent===true}].slice(-8)},'original_agent_plan');},
       visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
@@ -1003,15 +1017,16 @@ export class Runtime {
       for(const frame of page.frames())if(/^https?:/.test(frame.url())){let engine;try{engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config:preparationConfig}),snapshot=await engine.call({action:'getPageSnapshot'}),documentTimeOrigin=await page.evaluate(()=>performance.timeOrigin);if(!await engine.isCurrentDocument())throw Object.assign(Error('导航快照文档仍在变化'),{originalDocumentChanged:true});options.push({detection,snapshot,documentTimeOrigin,tabStatus});}finally{await engine?.detach();}}
       await assertCurrent();const observed=options.sort((a,b)=>(b.snapshot.fields?.length||Number(b.detection.formFieldCount)||0)-(a.snapshot.fields?.length||Number(a.detection.formFieldCount)||0))[0];if(!observed)throw Error('snapshot unavailable during navigation readiness');return observed;
     };
-    const waitNavigation=async()=>{await candidate?.engine.detach();candidate=null;const marker=pendingNavigationMarker(task);assertNavigationScope(this,task,marker);let waited;try{waited=await waitForOriginalNavigation(this,{task,marker,assertCurrent,probe:probeNavigation,wait:ms=>page.waitForTimeout(ms)});}catch(error){if(error.batchPaused||error.unattendedBudget)return{ok:false,interrupted:true,reason:error.message};throw error;}normalDone=false;lastVisual=undefined;return waited;};
+    if(submission)io.waitForContentReady=async()=>{const result=await waitForOriginalSubmissionContent({assertCurrent,probe:probeNavigation,wait:ms=>page.waitForTimeout(ms)});await assertCurrent();this.update(task,{originalSubmissionReadiness:{at:new Date().toISOString(),stableChecks:result.stableChecks,url:result.observed.snapshot.url,documentTimeOrigin:result.observed.documentTimeOrigin}},'original_submission_content_ready');return result;};
+    const waitNavigation=async()=>{await candidate?.engine.detach();candidate=null;const marker=pendingNavigationMarker(task);assertNavigationScope(this,task,marker,{liveAttemptBoundary:ownership.attemptBoundary});let waited;try{waited=await waitForOriginalNavigation(this,{task,marker,assertCurrent,liveAttemptBoundary:ownership.attemptBoundary,probe:probeNavigation,wait:ms=>page.waitForTimeout(ms)});}catch(error){if(error.batchPaused||error.unattendedBudget)return{ok:false,interrupted:true,reason:error.message};throw error;}normalDone=false;lastVisual=undefined;return waited;};
     let result;
-    if(hasPendingNavigation(task)){const waited=await waitNavigation();if(!waited.ok)result=waited;}
-    while(!result){result=await runOriginalAgentPreparation(this,{task,io});if(result.pendingRejudge){this.update(task,{reason:result.reason,attentionType:'navigation_rejudge'},'original_navigation_waiting');const waited=await waitNavigation();if(waited.ok){this.update(task,{reason:'原页面已稳定，继续原任务重判',attentionType:undefined},'original_navigation_rejudging');result=null;}else result=waited;}}
+    try{if(hasPendingNavigation(task)){const waited=await waitNavigation();if(!waited.ok)result=waited;}
+    while(!result){result=await (submission?runOriginalAgentSubmission:runOriginalAgentPreparation)(this,{task,io});if(result.pendingRejudge){this.update(task,{reason:result.reason,attentionType:'navigation_rejudge'},'original_navigation_waiting');const waited=await waitNavigation();if(waited.ok){this.update(task,{reason:'原页面已稳定，继续原任务重判',attentionType:undefined},'original_navigation_rejudging');result=null;}else result=waited;}}}finally{submissionAdapter?.dispose();}
     if(result.staleTask){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{staleTask:true});}
     if(result.originalTaskSyncFailure){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{originalTaskSyncFailure:true,status:result.status,cloudNetwork:result.cloudNetwork});}
     const assertResultDocument=result.originalPublicGateDocumentTimeOrigin===undefined?assertDocument:async()=>{await assertCurrent();if(await page.evaluate(()=>performance.timeOrigin)!==result.originalPublicGateDocumentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，接管关口已放弃'),{staleTask:true});await assertCurrent();};
     if(result.originalAgentUnavailable)await skipOriginalUnavailableTask(this,{task,page,result,assertCurrent:async()=>{await assertCurrent();await assertResultDocument();}});
-    if(!result.serviceUnavailable&&!result.interrupted&&!result.originalReadinessTimeout&&!result.pendingRejudge&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
+    if(!result.receiptRecorded&&!task.receipt&&!result.serviceUnavailable&&!result.interrupted&&!result.originalReadinessTimeout&&!result.pendingRejudge&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
     return {...result,candidate};
   }
   async reobserveNavigatedReceipt(page, task) {
@@ -1331,11 +1346,11 @@ export class Runtime {
     if (!state.pricing.trim()||pricing&&state.pricing!==pricing) issues.push('价格类型为空或未与原产品资料一致');
     return issues;
   }
-  async accept(task, page, evidence) {
+  async accept(task, page, evidence, {judge,entry}={}) {
     const scope=workbenchScope(this.store.get('pair')),check=()=>{const current=this.store.get('task:'+task.id);if(scope!==workbenchScope(this.store.get('pair'))||!isDeepStrictEqual(plain(current),plain(task))||page.isClosed?.())throw Object.assign(Error('原回执任务、资料或页面已变化，结果已放弃'),{staleTask:true});};check();
     if(task.receipt)throw Object.assign(Error('原回执已经存在，禁止覆盖'),{staleTask:true});
     if(evidence.matched!==true||!evidence.evidence)throw Object.assign(Error('原页面尚无匹配的收件证据'),{originalReceiptRejected:true});
-    const decision=originalSubmitSuccessDecision(task,evidence);if(!decision.proof.ok)throw Object.assign(Error(decision.proof.reason),{originalReceiptRejected:true});
+    const decision=judge?originalJudgeSuccessDecision(task,entry,judge):originalSubmitSuccessDecision(task,evidence);if(!decision.proof.ok)throw Object.assign(Error(decision.proof.reason),{originalReceiptRejected:true});
     if(!task.indexNowNotification)this.update(task,{indexNowNotification:prepareIndexNotification(this,task)},'index_notification_scheduled');
     this.update(task, { status: 'finished', siteStatus: 'accepted', receipt: { ...decision.receipt, url: page.url(),receivedAt:new Date().toISOString(),syncStatus:'pending' }, cloudVerified: false,
       reason: decision.receipt.publicationStatus === 'pending_moderation' ? '站方明确收件，等待审核' : '站方明确收件', completedAt: new Date().toISOString() }, 'receipt');

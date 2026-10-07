@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 import {applicationModel} from '../core/application-model.mjs';
+import {originalLibraryGlobals} from './helpers/original-library-catalog.mjs';
 
-const originalSource=readFileSync(new URL('../extension/settings.js',import.meta.url),'utf8');
+const originalSource=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/settings.js'],{encoding:'utf8',maxBuffer:4*1024*1024});
 const migratedSource=readFileSync(new URL('../executor/web/application.js',import.meta.url),'utf8');
 const originalStart=originalSource.indexOf('  function renderLibrary()');
 const originalBody=originalSource.slice(originalSource.indexOf('    const query = ',originalStart),originalSource.indexOf('    el.replaceChildren();',originalStart));
@@ -14,7 +16,7 @@ const Q=globalThis.ExtLinkQueue,Timeline=globalThis.ExtLinkSubmissionTimeline,Li
 const groupLabels=Object.fromEntries(LibraryGroups.GROUPS),markLabels={can_submit:'可以提交',paid:'需要付费',broken:'网址失效',skip:'暂不提交',needs_otp:'需要邮箱或手机验证码',needs_captcha:'需要完成验证码',needs_login:'需要登录',needs_manual:'需要人工处理',deleted:'已归档'};
 function original(items,filters={}){
  const values={librarySearch:filters.query||'',libraryCategoryFilter:filters.category||'',libraryStatusFilter:filters.status||'',libraryGroupFilter:filters.group||'',libraryProgressFilter:filters.progress||'',libraryQualityFilter:filters.quality||0,librarySort:filters.sort||'quality'};
- const context=vm.createContext({libraryItems:items,Timeline,Q,LibraryGroups,$:id=>({value:values[id]}),annotationStatuses:Q.normalizeAnnotationStatuses,matchedLibraryGroups:item=>LibraryGroups.GROUPS.filter(([id])=>LibraryGroups.matches(item,id))});
+ const originals=originalLibraryGlobals,groups=originals.ExtLinkLibraryGroups,context=vm.createContext({libraryItems:items,Timeline:originals.ExtLinkSubmissionTimeline,Q:originals.ExtLinkQueue,LibraryGroups:groups,$:id=>({value:values[id]}),annotationStatuses:originals.ExtLinkQueue.normalizeAnnotationStatuses,matchedLibraryGroups:item=>groups.GROUPS.filter(([id])=>groups.matches(item,id))});
  return Array.from(vm.runInContext(originalLabel+'\n(()=>{'+originalBody+'return filtered;})()',context),r=>r.url);
 }
 function migrated(items,filters={}){

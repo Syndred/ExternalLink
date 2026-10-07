@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {compareOriginalLibraryProjection} from './helpers/original-library-projection.mjs';
+
+test('full original library projection preserves preferences groups metrics original details and per-product timeline facts',async()=>{
+ const snapshot={documents:{siteProfiles:{p:{id:'p',name:'Original product',url:'https://product.fixture.invalid'}},submissionSchemaVersion:2,sheetTableData:{entries:[{link:'https://library.fixture.invalid/form',name:'Original entry',metrics:{dr:70,da:55},record:'Original imported record',detail:'Original detail',projects:['p'],time:'2026年9月19日',rawFields:{keep:'Original imported field'}}]},siteAnnotations:{'library.fixture.invalid/form':{note:'Original note',status:'can_submit',library:{favorite:true,groups:['high_quality'],profileIds:['p'],enabled:true}}},submissionRecords:{'library.fixture.invalid/form::p':{profileId:'p',destinationUrl:'https://library.fixture.invalid/form',destinationKey:'library.fixture.invalid/form',status:'success',confirmedBy:'manual',evidence:'Original receipt',submittedAt:'2026-09-20T00:00:00Z',publicationStatus:'pending_moderation'}},submissionTimeline:{'library.fixture.invalid/form::p':[{id:'original-note',profileId:'p',destinationUrl:'https://library.fixture.invalid/form',type:'note',note:'Original followup',occurredAt:'2026-10-01T00:00:00Z'}]},domainMetricsCache:{'library.fixture.invalid':{dr:75,da:65}},linkMonitorResults:{'library.fixture.invalid/form::p':{status:'live'}}}},before=structuredClone(snapshot),result=await compareOriginalLibraryProjection(snapshot);
+ assert.deepEqual(result.mismatches,[]);assert.equal(result.fieldsCompared.length,24);assert.equal(result.comparisons,24);assert.equal(result.referenceProjectionSha256,result.currentProjectionSha256);assert.equal(result.sourceUnchanged,true);assert.equal(result.facts.favorites,1);assert.equal(result.facts.highQualityGroup,1);assert.equal(result.facts.rowsWithDr,1);assert.deepEqual(snapshot,before);
+});
+
+test('imported row category metadata never becomes a backlink type and original per-product status order is retained',async()=>{
+ const snapshot={documents:{siteProfiles:{z:{id:'z',name:'Original last',sortIndex:9},a:{id:'a',name:'Original first',sortIndex:0}},submissionSchemaVersion:2,sheetTableData:{entries:[{link:'https://metadata.fixture.invalid/form',type:'directory',dr:99,metrics:{dr:40}}]},submissionRecords:{}}};
+ const result=await compareOriginalLibraryProjection(snapshot);assert.deepEqual(result.mismatches,[]);assert.equal(result.referenceProjectionSha256,result.currentProjectionSha256);assert.equal(result.sourceUnchanged,true);
+});
+
+test('legacy date decoding is an explicit original-display difference and must still follow the frozen original progress algorithm',async()=>{
+ const snapshot={documents:{siteProfiles:{p:{id:'p',name:'Original product'}},submissionSchemaVersion:2,sheetTableData:{entries:[{link:'https://old-dates.fixture.invalid',time:'45299'}]},submissionRecords:{},submissionTimeline:{'old-dates.fixture.invalid::p':[{id:'later-note',profileId:'p',destinationUrl:'https://old-dates.fixture.invalid',type:'note',note:'Later real activity',occurredAt:'2026-10-01T00:00:00Z'}]}}},result=await compareOriginalLibraryProjection(snapshot);
+ assert.deepEqual(result.mismatches.map(item=>item.field),['progress']);assert.notEqual(result.referenceProjectionSha256,result.currentProjectionSha256);assert.deepEqual(result.unexplainedMismatches,[]);assert.equal(result.originalDateDecodedProjectionSha256,result.currentProjectionSha256);assert.equal(result.sourceUnchanged,true);
+});

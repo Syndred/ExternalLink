@@ -47,8 +47,8 @@ export function applicationModel(snapshot,tasks=[]){
  for(const row of inventory.candidates){const key=canonicalLibraryDestination(row.url),existing=displayCandidates.get(key);if(existing)existing.aliases.push({url:row.url,destinationKey:row.destinationKey});else displayCandidates.set(key,{row,key,aliases:[{url:row.url,destinationKey:row.destinationKey}]});}
  const library=[...displayCandidates.values()].map(({row,key,aliases},position)=>{
   const site=host(row.url),annotation=documents.siteAnnotations?.[key]||documents.siteAnnotations?.[site]||{};
-  const {events,latestEvent,profileStatuses,monitorStatus,localTasks}=libraryDestinationFacts({records:displayRecords,groupedTimeline,products,destination:row.url,monitorResults:documents.linkMonitorResults||{},tasks});
-  const quality=globalThis.ExtLinkOpportunityScore.scoreOpportunity({metrics:{...row.row,...row.row?.metrics,...documents.domainMetricsCache?.[site]},annotation,monitorStatus});
+  const {events,latestEvent,profileStatuses,monitorStatus,localTasks}=libraryDestinationFacts({records:displayRecords,groupedTimeline,products:Object.entries(documents.siteProfiles||{}).map(([id,profile])=>({...profile,id})),destination:row.url,monitorResults:documents.linkMonitorResults||{},tasks});
+  const quality=globalThis.ExtLinkOpportunityScore.scoreOpportunity({metrics:{...row.row?.metrics,...documents.domainMetricsCache?.[site]},annotation,monitorStatus});
   const note=row.row?.note||annotation.note||'',record=row.row?.record||'',detail=row.row?.detail||'';
   const classification=globalThis.ExtLinkLibraryClassifier.describe({entry:row.row||{},url:row.url,domain:site,note,detail,metrics:quality.metrics});
   const item={...row,key,aliases,site,domain:site,position,...classification,note,record,detail,annotation,quality,metrics:quality.metrics,monitorStatus,events,latestEvent,profileStatuses,projects:row.row?.projects||[],rawFields:row.row?.rawFields||{},rowNumber:row.row?.rowNumber||null,preferences:globalThis.ExtLinkLibraryClassifier.libraryPreferences(annotation),pinned:annotation.library?.pinned===true,time:row.row?.time||row.row?.addedAt||''};

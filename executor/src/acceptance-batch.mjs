@@ -14,6 +14,7 @@ export async function nextAcceptanceTask(runtime){
   const combo=frozen.combinations[batch.cursor],item=execution.items[combo.identity];
   const task=item?.taskId&&runtime.store.get('task:'+item.taskId);
   if(!task){batch.attempts[combo.identity]={status:item?.status||'unregistered',reason:item?.reason||'原注册未确认',completedAt:new Date().toISOString()};runtime.store.set('acceptanceBatch',batch);continue;}
+  if(task.receipt&&task.cloudVerified!==true){batch.status='paused';batch.reason='站方回执尚未完成云端确认，保留原任务及范围';runtime.store.set('acceptanceBatch',batch);runtime.store.set('paused',true);return null;}
   if(task.receipt||task.attemptBoundary){batch.attempts[combo.identity]={taskId:task.id,status:task.receipt?'received':'verification_only',cloudVerified:!!task.cloudVerified,reason:task.reason||'',completedAt:new Date().toISOString()};runtime.store.set('acceptanceBatch',batch);continue;}
   if(batch.attempts[combo.identity]?.completedAt)continue;
   if(task.controller==='supervisor'||task.controller==='ai')throw Error('原任务控制权尚未交回');
@@ -28,6 +29,7 @@ export async function nextAcceptanceTask(runtime){
 export function finishAcceptanceTask(runtime,taskId){
  const batch=runtime.store.get('acceptanceBatch');if(batch?.status!=='running'||runtime.store.get('paused')!==false)return false;
  const task=runtime.store.get('task:'+taskId);if(!task||['pending','opening','filling','submitting'].includes(task.status))return false;
+ if(task.receipt&&task.cloudVerified!==true){runtime.store.set('acceptanceBatch',{...batch,status:'paused',reason:'站方回执尚未完成云端确认，保留原任务及范围'});runtime.store.set('paused',true);return false;}
  const identity=Object.keys(batch.attempts).find(key=>batch.attempts[key].taskId===taskId);if(!identity)return false;
  batch.attempts[identity]={...batch.attempts[identity],completedAt:new Date().toISOString(),status:task.receipt?'received':task.attemptBoundary?'verification_only':task.status,reason:task.reason||'',cloudVerified:!!task.cloudVerified};
  batch.cursor++;runtime.store.set('acceptanceBatch',batch);return true;

@@ -73,7 +73,7 @@ test('expired paused task is parked with original budget while expired run, chan
 test('skipping the second concurrent worker cancels only it and advances its destination without pausing the first',async()=>{
  const f=fixture(),holds=new Map(),started=[];let job,skipping;
  try{
-  f.runtime.work=async({taskId})=>{started.push(taskId);const hold=gate();holds.set(taskId,hold);f.runtime.update(f.store.get('task:'+taskId),{status:'filling'},'fixture_filling');await hold.promise;if(batchActionAllowed(f.runtime,f.store.get('task:'+taskId)))f.runtime.update(f.store.get('task:'+taskId),{status:'finished',receipt:{evidence:'fixture receipt'}},'fixture_receipt');};
+  f.runtime.work=async({taskId})=>{started.push(taskId);const hold=gate();holds.set(taskId,hold);f.runtime.update(f.store.get('task:'+taskId),{status:'filling'},'fixture_filling');await hold.promise;if(batchActionAllowed(f.runtime,f.store.get('task:'+taskId)))f.runtime.update(f.store.get('task:'+taskId),{status:'finished',cloudVerified:true,receipt:{evidence:'fixture receipt'}},'fixture_receipt');};
   job=runWorkbenchBatch(f.runtime);f.runtime.job=job;await until(()=>started.length===2);skipping=f.runtime.control('manualSkip',f.input('p1'));await until(()=>!!f.store.get('manualSkipPending:p1'));
   assert.equal(batchActionAllowed(f.runtime,f.store.get('task:p1')),false);assert.equal(batchActionAllowed(f.runtime,f.store.get('task:p0')),true);assert.equal(f.store.get('paused'),false);
   holds.get('p1').resolve();const result=await skipping;assert.equal(result.skipped,true);assert.equal(result.isolated,true);assert.equal(f.store.get('task:p1').attemptBoundary,undefined);assert.equal(f.store.get('paused'),false);

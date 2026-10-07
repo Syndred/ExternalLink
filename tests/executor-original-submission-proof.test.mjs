@@ -41,6 +41,16 @@ test('native judge proof and baseline rejection match the complete original succ
  }
 });
 
+test('the complete original success function parks a local receipt and advances only after its independent cloud confirmation',async()=>{
+ const start=original.indexOf('function completeTaskFromJudge('),end=original.indexOf('\nfunction markTaskUnconfirmed(',start),shortStart=original.indexOf('function shortText('),shortEnd=original.indexOf('\nfunction handleTerminalJudge(',shortStart);
+ for(const synced of [false,true]){
+  let release,entered,finished;const proofWait=new Promise(done=>release=done),proofEntered=new Promise(done=>entered=done),terminal=new Promise(done=>finished=done),events=[],entry={submissionAttempted:true},task={id:'t',profileId:'p',url:signal.url};
+  const sandbox=vm.createContext({state:{activeTabs:new Map([[1,entry]]),config:{}},self:{ExtLinkQueue:queue,ExtLinkAutomationLedger:automationLedger},log(){},broadcastTaskUpdate(){},recordAutomationEvent(){events.push('success_recorded');},recordSubmittedProject:async()=>{events.push('local_record');return{status:'success',profileId:'p'};},confirmSubmissionRecordInCloud:async()=>{events.push('independent_cloud_readback');entered();return proofWait;},recordUnattendedSuccess(){events.push('budget_success');},advanceDestinationGroup:async()=>{events.push('advance');finished();},parkTaskEntry(){events.push('park_original');finished();},pingIndexNow(){}});
+  vm.runInContext(original.slice(shortStart,shortEnd)+original.slice(start,end),sandbox);assert.equal(sandbox.completeTaskFromJudge(1,task,{source:'deterministic_submit',evidence:signal.text,evidenceSignals:[signal]}),true);await proofEntered;assert.equal(task.status,'verifying');assert.deepEqual(events,['local_record','independent_cloud_readback']);release({synced,reason:'fixture proof pending'});await terminal;
+  assert.equal(task.status,synced?'ok':'verifying');assert.deepEqual(events,synced?['local_record','independent_cloud_readback','success_recorded','budget_success','advance']:['local_record','independent_cloud_readback','park_original']);
+ }
+});
+
 test('deterministic submit proof keeps publication, public URL and signal details while refusing identical baseline evidence',()=>{
  const task={id:'t',url:signal.url,attemptBoundary:'original-attempt'},result={matched:true,evidence:'Published Original',publicationStatus:'published',publicUrl:'https://site.example/listing/original',evidenceUrl:'https://site.example/listing/original',evidenceSignals:[{...signal,type:'public_listing',text:'Published Original',url:'https://site.example/listing/original'}]};
  const accepted=originalSubmitSuccessDecision(task,result);assert.equal(accepted.proof.ok,true);assert.equal(accepted.receipt.publicationStatus,'published');assert.equal(accepted.receipt.publicUrl,result.publicUrl);assert.equal(accepted.receipt.evidenceType,'public_listing');assert.deepEqual(accepted.receipt.successProof.evidenceSignals,result.evidenceSignals);

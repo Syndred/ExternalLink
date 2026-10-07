@@ -470,6 +470,10 @@ export class Runtime {
       if (!nativeReceiptReadbackMatches(read,record)) throw new Error('云端回执回读不一致；原证据或公开结果字段未完整保存');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
+    if(this.context)for(const task of this.store.values('task:'))if(task.receipt&&task.cloudVerified===true&&task.controller==='executor'&&!task.tabClosedAt&&task.browserInstance===this.host?.startedAt&&!this.activeTaskIds?.has(task.id)&&(task.acceptanceId||task.workbenchBatchId)){
+      const cleanupScope=workbenchScope(this.store.get('pair'));
+      try{await closeAcceptanceTask(this,task);}catch(error){if(!error.staleTask&&cleanupScope===workbenchScope(this.store.get('pair'))&&isDeepStrictEqual(this.store.get('task:'+task.id),task))this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'synced_receipt_cleanup_deferred');}
+    }
     let notificationDocuments;
     for(const task of this.store.values('task:'))if(!this.activeTaskIds?.has(task.id)&&task.cloudVerified&&task.receipt&&['pending','sending'].includes(task.indexNowNotification?.status)){
       if(task.indexNowNotification.status==='pending'&&!notificationDocuments)notificationDocuments=(await this.cloud.request('snapshot')).documents;

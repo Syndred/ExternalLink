@@ -23,7 +23,7 @@ import { observeTask, closeObservation } from './observation.mjs';
 import { findGooglePopup } from './google-auth.mjs';
 import { registerAccount, verifyRegistration } from './registration.mjs';
 import { selectVerifiedOption } from './react-picker.mjs';
-import { aiOfDayCopy } from './known-copy.mjs';
+import { aiOfDayCopy,profileFieldChoices,profileTagline } from './known-copy.mjs';
 import { finishProductPreview } from './product-preview.mjs';
 import {annotateObservation} from './observation-note.mjs';
 import {rejectOptionalCookies,inspectCookiePreferences,enableFunctionalCookies,acceptAuthorizedCookies} from './necessary-cookies.mjs';
@@ -762,7 +762,7 @@ export class Runtime {
         return attachments;
       });
       const qualityIssues = assessSubmissionQuality(actualSubmission, profile);
-      qualityIssues.push(...await this.knownFormIssues(candidate.frame, task.url));
+      qualityIssues.push(...await this.knownFormIssues(candidate.frame, task.url,profile));
       if (qualityIssues.length) {
         validation = { ...validation, validationFailed: true, allValid: false,
           issues: [...new Set([...(validation.issues || []), ...qualityIssues])] };
@@ -1070,10 +1070,10 @@ export class Runtime {
       await fillAndVerifyText(frame.locator('#name'),profile.name);await fillAndVerifyText(frame.locator('#url'),profile.url);
       await fillAndVerifyText(frame.locator('#description'),profile.fields['Short Discription(100-150 words)']);
       await fillAndVerifyText(frame.locator('#email'),profile.fields['Business mail']);
-      const github=frame.locator('#github');if(await github.count()===1)await fillAndVerifyText(github,'');
+      const github=frame.locator('#github'),[githubUrl]=profileFieldChoices(profile,['GitHub URL','Github URL','GitHub','Github','Repository URL']);if(githubUrl&&await github.count()===1)await fillAndVerifyText(github,githubUrl);
       await fillAndVerifyText(frame.locator('#email'),profile.fields['Business mail']);
-      const selected={};for(const [id,label]of [['category','AI/ML Tools'],['pricing','Free']]){
-        selected[id]=await selectCommittedMenuOption(frame,'#'+id,label);
+      const selected={};for(const [id,keys]of [['category',['DevPages Category','Category']],['pricing',['PRICING TYPE','Pricing']]]){
+        const [label]=profileFieldChoices(profile,keys);if(label)selected[id]=await selectCommittedMenuOption(frame,'#'+id,label);
       }this.update(task,{selectedPickers:selected},'verified_picker_values');
     }
     if(new URL(url).hostname==='aioftheday.com' && await frame.locator('input[name=features]').count()===5) {
@@ -1081,10 +1081,11 @@ export class Runtime {
       await frame.locator('input[name=tagline]').fill(copy.tagline);
       await frame.locator('textarea[name=description]').fill(copy.description);
       const features=frame.locator('input[name=features]');
-      for(let i=0;i<5;i++)await features.nth(i).fill(copy.features[i]);
-      await frame.locator('#PriceType').selectOption({label:'Free'});
-      await selectVerifiedOption(frame,'#react-select-2-input',['Productivity','Personal Assistant','Communication']);
-      await selectVerifiedOption(frame,'#react-select-3-input',['React']);
+      for(let i=0;i<copy.features.length;i++)await features.nth(i).fill(copy.features[i]);
+      const [pricing]=profileFieldChoices(profile,['PRICING TYPE','Pricing']);if(pricing)await frame.locator('#PriceType').selectOption({label:pricing});
+      const category=profileFieldChoices(profile,['AIoftheday Category','Category']),technology=profileFieldChoices(profile,['Tech Stack','Technology','Technologies']);
+      if(category.length)await selectVerifiedOption(frame,'#react-select-2-input',category);
+      if(technology.length)await selectVerifiedOption(frame,'#react-select-3-input',technology);
     }
     if(/^https:\/\/poweredbyai\.app\/submit-tool\/?$/i.test(url) && task) {
       const prefill=frame.getByRole('button',{name:/^(?:从 URL 自动填充|Auto-?fill from URL)$/});
@@ -1097,16 +1098,12 @@ export class Runtime {
         throw new Error('PoweredByAI 已用核实URL获取下一步表单，先核对抓取结果；未点击最终投稿');
       }
       if(await frame.locator('input[name=name]').isVisible().catch(()=>false)) {
-        if(profile.name!=='JevPlay' || profile.url!=='https://jevplay.com')throw new Error('PoweredByAI资料身份需重新核对');
         await frame.locator('input[name=name]').fill(profile.name);
-        await frame.locator('textarea[name=description]').fill(profile.fields['Short Discription(100-150 words)']);
-        await frame.locator('input[name=full_name]').fill(profile.fields['Contact person']);
-        await frame.locator('input[name=email]').fill(profile.fields['Business mail']);
+        for(const [selector,value]of [['textarea[name=description]',profile.fields['Short Discription(100-150 words)']],['input[name=full_name]',profile.fields['Contact person']],['input[name=email]',profile.fields['Business mail']]])if(value)await frame.locator(selector).fill(String(value));
         const selected={};
-        selected.category=await selectVerifiedOption(frame,'#react-select-submit-tool-category-input',['NLP']);
-        selected.subcategory=await selectVerifiedOption(frame,'#react-select-submit-tool-subcategory-input',['Classification']);
-        const removeChatbot=frame.getByRole('button',{name:'Remove Chatbot',exact:true});
-        if(await removeChatbot.count()===1)await removeChatbot.click();
+        const category=profileFieldChoices(profile,['PoweredByAI Category','Category']),subcategory=profileFieldChoices(profile,['PoweredByAI Subcategory','Subcategory']);
+        if(category.length)selected.category=await selectVerifiedOption(frame,'#react-select-submit-tool-category-input',category);
+        if(subcategory.length)selected.subcategory=await selectVerifiedOption(frame,'#react-select-submit-tool-subcategory-input',subcategory);
         const logoInput=frame.locator('input[type=file]');
         if(await logoInput.count()!==1)throw new Error('Logo上传控件未唯一核实');
         if(!await logoInput.evaluate(e=>Boolean(e.files?.length))){
@@ -1137,15 +1134,12 @@ export class Runtime {
       }
       if(await frame.locator('input#name').isVisible().catch(()=>false)) {
         const tagline=frame.locator('#tagline');
-        await tagline.fill('Free AI tools for conversation insights, intent analysis, and everyday decisions');
+        const currentTagline=profileTagline(profile);if(currentTagline)await tagline.fill(currentTagline);
         const selected={};
         // This site renders committed tag chips below the search control.
         const readTags=()=>frame.locator('#tag').evaluate(e=>[...e.closest('[class$="-container"]').parentElement.parentElement.querySelectorAll('button')].map(b=>b.innerText.trim()).join(', '));
-        for(const old of ['Tools','Support']) {
-          const remove=frame.getByRole('button',{name:old,exact:true});if(await remove.count()===1)await remove.click();
-        }
-        for(const [selector,choices] of [['#pricing',['Free']],['#category',['Artificial Intelligence','AI','Productivity']],['#tag',['Data Analysis']]]) {
-          selected[selector]=await selectVerifiedOption(frame,selector,choices,selector==='#tag'?readTags:undefined);
+        for(const [selector,keys] of [['#pricing',['PRICING TYPE','Pricing']],['#category',['10015 Category','Category']],['#tag',['10015 Tags','Tags Keywords/Hashtags']]]) {
+          const choices=profileFieldChoices(profile,keys);if(choices.length)selected[selector]=await selectVerifiedOption(frame,selector,choices,selector==='#tag'?readTags:undefined);
         }
         this.update(task,{selectedPickers:selected},'verified_picker_values');
       }
@@ -1169,11 +1163,13 @@ export class Runtime {
     }
     if (/^https:\/\/(?:www\.)?nextgentools\.me\/submit-your-tool\/?/i.test(url)) {
       const picker = frame.getByRole('combobox');
-      if (await picker.count() === 1 &&
-          !await picker.evaluate(e => e.parentElement?.textContent?.includes('Productivity'))) {
+      const categories=profileFieldChoices(profile,['NextGenTools Category','Category']);
+      if (categories.length&&await picker.count() === 1 &&
+          !await picker.evaluate((e,choices) => choices.some(value=>e.parentElement?.textContent?.includes(value)),categories)) {
         await picker.click({ timeout: 5000 });
-        const productivity = frame.getByRole('option', { name: 'Productivity', exact: true });
-        if (await productivity.count() === 1 && await productivity.isVisible()) await productivity.click();
+        let selected=false;
+        for(const category of categories){const option=frame.getByRole('option',{name:category,exact:true});if(await option.count()===1&&await option.isVisible()){await option.click();if(!await picker.evaluate((e,value)=>e.parentElement?.textContent?.includes(value),category))throw Error('NextGenTools 分类未保持');selected=true;break;}}
+        if(!selected)throw Error('NextGenTools 缺少原产品资料指定的分类');
       }
       const drop = frame.getByText('Drop files here or click to browse', { exact: true });
       const upload = frame.getByRole('button', { name: 'Upload 1 file', exact: true });
@@ -1203,30 +1199,30 @@ export class Runtime {
     }
     if (/^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(url)) {
       const category = frame.locator('select[name="category"]');
-      if (await category.count() === 1 && !await category.inputValue()) await category.selectOption('other');
+      const [categoryLabel]=profileFieldChoices(profile,['FutureTools Category','Category']);if (categoryLabel&&await category.count() === 1 && !await category.inputValue()) await category.selectOption({label:categoryLabel});
       const free = frame.getByRole('radio', { name: 'Free', exact: true });
-      if (await free.count() === 1 && !await free.isChecked()) await free.check();
+      if (profileFieldChoices(profile,['PRICING TYPE','Pricing']).includes('Free')&&await free.count() === 1 && !await free.isChecked()) await free.check();
     }
     if (!/^https:\/\/(?:www\.)?tools-ai\.online\//i.test(url)) return;
     const description = String(profile?.fields?.['Short Discription(100-150 words)'] || '').trim();
     const editor = frame.locator('#toolDescription');
     if (description && await editor.count() === 1 && (await editor.inputValue()).length < 500) await editor.fill(description);
     const pricing = frame.locator('select[name="pricing"]');
-    if (await pricing.count() === 1 && !await pricing.inputValue()) await pricing.selectOption({ label: 'Free' });
+    const [pricingLabel]=profileFieldChoices(profile,['PRICING TYPE','Pricing']);if (pricingLabel&&await pricing.count() === 1 && !await pricing.inputValue()) await pricing.selectOption({ label: pricingLabel });
     const category = frame.getByText('Select categories', { exact: true });
-    if (await category.count() === 1) {
+    const [categoryLabel]=profileFieldChoices(profile,['ToolsAI Category','Category']);if (categoryLabel&&await category.count() === 1) {
       await category.click();
-      const game = frame.getByText('Gaming & Entertainment', { exact: true });
+      const game = frame.getByText(categoryLabel, { exact: true });
       if (await game.count() === 1 && await game.isVisible()) await game.click();
     }
     const tags = frame.getByText('Select tags', { exact: true });
-    if (await tags.count() === 1) {
+    const [tagLabel]=profileFieldChoices(profile,['ToolsAI Tags','Tags Keywords/Hashtags']);if (tagLabel&&await tags.count() === 1) {
       await tags.click();
-      const aiGaming = frame.getByText('AI gaming', { exact: true });
+      const aiGaming = frame.getByText(tagLabel, { exact: true });
       if (await aiGaming.count() === 1 && await aiGaming.isVisible()) await aiGaming.click();
     }
   }
-  async knownFormIssues(frame, url) {
+  async knownFormIssues(frame, url,profile) {
     if (!/^https:\/\/(?:www\.)?tools-ai\.online\//i.test(url)) return [];
     const state = await frame.evaluate(() => {
       const section = label => [...document.querySelectorAll('form label')].find(e => e.textContent?.trim().startsWith(label))?.parentElement?.innerText || '';
@@ -1234,9 +1230,10 @@ export class Runtime {
     });
     const issues = [];
     if (state.description.length < 500) issues.push('Tool Description 少于站方要求的 500 字符');
-    if (!state.categories.includes('Gaming & Entertainment') || state.categories.includes('Select categories')) issues.push('缺少适配的 Gaming & Entertainment 分类');
-    if (!state.tags.includes('AI gaming') || state.tags.includes('Select tags')) issues.push('缺少真实对应的 AI gaming 标签');
-    if (state.pricing !== 'Free') issues.push('价格类型未与 JevPlay 免费资料一致');
+    const categories=profileFieldChoices(profile,['ToolsAI Category','Category']),tags=profileFieldChoices(profile,['ToolsAI Tags','Tags Keywords/Hashtags']),[pricing]=profileFieldChoices(profile,['PRICING TYPE','Pricing']);
+    if (!state.categories.trim()||state.categories.includes('Select categories')||categories.length&&!categories.some(value=>state.categories.includes(value))) issues.push('分类为空或未保持原产品指定的分类');
+    if (!state.tags.trim()||state.tags.includes('Select tags')||tags.length&&!tags.some(value=>state.tags.includes(value))) issues.push('标签为空或未保持原产品指定的标签');
+    if (!state.pricing.trim()||pricing&&state.pricing!==pricing) issues.push('价格类型为空或未与原产品资料一致');
     return issues;
   }
   async accept(task, page, evidence) {

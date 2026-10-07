@@ -1,5 +1,22 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalNewProductKnownFormsCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-new-product-known-forms-2026-10-07.json",
+    "fullSuitePassed": 739,
+    "newTestsSince737": 2,
+    "actualIsolatedChromeFixtureHosts": 7,
+    "frozenCurrentProductFieldsUsed": true,
+    "missingCategoryNotInvented": true,
+    "unavailableCategoryStops": true,
+    "configuredGithubUrlKept": true,
+    "originalUnknownTaskAndFixedBudgetPreserved": true,
+    "nativeServicesUpdatedWithIdleProtection": true,
+    "originalNativeBusinessMatchesHistoricBaseline": true,
+    "allCloudDocumentHashesRechecked": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalEmbeddedNativeMediaCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-embedded-native-media-2026-10-07.json",

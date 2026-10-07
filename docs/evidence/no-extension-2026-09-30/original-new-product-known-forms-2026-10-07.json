@@ -1,0 +1,73 @@
+{
+  "kind": "original_new_product_known_forms_checkpoint_not_full_acceptance",
+  "date": "2026-10-07",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "fixed": [
+    "AIoftheday accepts a new product and uses its own frozen description, tagline and supplied features",
+    "PoweredByAI no longer rejects non-JevPlay products or forces NLP and Classification",
+    "10015 no longer forces chat copy, Free, AI category or Data Analysis tags",
+    "DevPages uses the product category and pricing and preserves the configured GitHub URL",
+    "FutureTools no longer selects Other or Free without source fields",
+    "Tools-AI pricing, category, tags and quality checks use the current product",
+    "NextGenTools uses the product category and stops when the specified category is unavailable",
+    "NavTools documentation now describes its actual generic frozen-profile behavior"
+  ],
+  "fullSuite": {
+    "firstOutput": "executor/test-output/original-new-product-known-forms-all-first-2026-10-07.txt",
+    "finalOutput": "executor/test-output/original-new-product-known-forms-all-final-2026-10-07.txt",
+    "passed": 739,
+    "failed": 0,
+    "skipped": 0,
+    "newTestsSince737": 2,
+    "provesFullMigration": false
+  },
+  "actualIsolatedChrome": {
+    "script": "executor/test/original-new-product-known-forms.mjs",
+    "output": "executor/test-output/original-new-product-known-forms-browser-final-2026-10-07.txt",
+    "passed": true,
+    "fixtureHosts": ["aioftheday.com", "poweredbyai.app", "10015.io", "devpages.io", "futuretools.io", "nextgentools.me", "tools-ai.online"],
+    "ownProductCopyAndPricing": true,
+    "githubUrlKept": true,
+    "missingCategoryNotInvented": true,
+    "unavailableCategoryStops": true,
+    "originalUnknownTaskAndFixedBudgetPreserved": true,
+    "frozenProfileUnchanged": true,
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "provesRealSiteSubmissionAcceptance": false
+  },
+  "originalNativeServices": {
+    "updated": true,
+    "verifiedProcessIdentityBeforeStop": true,
+    "idleGuardBeforeStop": true,
+    "stoppedDurableStateGuard": true,
+    "beforeOutput": "executor/test-output/original-new-product-native-before-2026-10-07.txt",
+    "afterOutput": "executor/test-output/original-new-product-native-after-2026-10-07.txt",
+    "bothServicesReadonlyPassed": true,
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchangedDuringChecks": true,
+    "paused": true,
+    "busy": false,
+    "pendingQueues": 0,
+    "productsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false},
+    "allCloudDocumentHashesRechecked": false,
+    "completeProductionUiRechecked": false,
+    "actualOriginalChromeStateRead": false
+  },
+  "workerDeploymentThisCheckpoint": false,
+  "newRealSubmissions": 0,
+  "productionDocumentAdoptions": 0,
+  "realModelCalls": 0,
+  "remaining": [
+    "latest original browser products, favorites, groups and categories",
+    "complete original history, other devices, aliases and old media ownership",
+    "remaining original callbacks and manual, dynamic and special page flows",
+    "actual external service results and each original requirement with complete evidence"
+  ]
+}

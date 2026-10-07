@@ -7,6 +7,7 @@ export async function closeAcceptanceTask(runtime,task){
  const deadEnd=task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end';
  const unavailable=task.status==='skip'&&task.originalAgentSkip&&task.attentionType==='agent_unavailable';
  if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable)||!task.targetId||task.tabClosedAt)return;
+ if(['waiting_navigation','ready','rejudging','readiness_timeout','original_page_missing'].includes(task.aiTakeover?.originalVisual?.pendingRejudge?.status))return;
  if(task.originalGroupAdvance?.status==='transferred'||unavailable&&retainOriginalUnavailablePage(runtime,task))return;
  if(task.originalGroupPage?.status==='navigation_failed'||task.originalGroupPage?.status==='original_page_missing')return;
  if(retainBatchManualPage(runtime,task))return;

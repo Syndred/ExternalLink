@@ -4,6 +4,7 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
 import {hasManualSubmissionConsent} from './submission-preferences.mjs';
 import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+import {hasPendingNavigation,navigationBatchContinuation,navigationBudgetContinuation} from './original-navigation-rejudge.mjs';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const reasons={deadline:'无人值守运行已达到截止时间，已暂停并保留原任务',task_budget:'无人值守项目组合上限已达到，原范围和未完成项保留',model_budget:'无人值守模型调用预算已达到，原任务待核验',task_deadline:'无人值守单个任务超过时限，原任务保留待核验',consecutive_failures:'无人值守连续失败达到上限，原范围保留'};
 export function batchConfig(batch){return batch.config||originalBatchConfig({},{});}
@@ -21,12 +22,14 @@ export function recoverBatchTasks(runtime){
  try{assertBatchPolicy(runtime,batch);}catch(error){runtime.store.set('paused',true);runtime.cloudError=error.message;return;}
  initializeBatchPolicy(batch);
  for(const item of batch.items){const task=runtime.store.get('task:'+item.taskId);if(!task||task.receipt||!['opening','filling','submitting'].includes(task.status))continue;
+  if(navigationBatchContinuation(task,batch)&&(!batchConfig(batch).unattended||navigationBudgetContinuation(task,batch))){runtime.update(task,{status:'pending',reason:'后台重启，保留原页等待重判及已用预算；请继续原批次'},'original_navigation_recovered');continue;}
   const result=U.interruptedTaskStatus({status:'running',submissionAttempted:!!task.attemptBoundary});
   runtime.update(task,{...result,siteStatus:task.attemptBoundary?'sent_unconfirmed':'not_submitted',attentionType:task.attemptBoundary?'unknown_receipt':'interrupted_task'},'workbench_interrupted_recovered');
   item.status='complete';item.result=task.attemptBoundary?'sent_unconfirmed':result.status;item.reason=result.reason;
   if(batchConfig(batch).unattended)batch.unattendedState=U.addManualTodo(batch.unattendedState,task.id);
  }
  while(batch.cursor<batch.items.length&&['complete','excluded'].includes(batch.items[batch.cursor].status))batch.cursor++;
+ const saved=runtime.store.get('workbenchBatch:'+id);if(saved?.cloudCheckpointRevision>batch.cloudCheckpointRevision)batch.cloudCheckpointRevision=saved.cloudCheckpointRevision;
  save(runtime,batch);if(U.isExpired(batch.unattendedState))pauseBatchPolicy(runtime,batch,'deadline');
 }
 function save(runtime,batch){runtime.store.set('workbenchBatch:'+batch.id,batch);}
@@ -51,16 +54,19 @@ export async function refreshBatchManualCapacity(runtime,batch){
 export function releaseBatchTask(runtime,batch,task,patch,index=batch.cursor){
  assertBatchPolicy(runtime,batch);const config=batchConfig(batch),changes={...patch,fillOnlyRun:config.fillOnly===true,manualSubmissionConsent:null};let next={...batch};
  if(batch.status!=='running'||runtime.store.get('paused')!==false)return false;
- const resuming=batch.resumingPausedTaskIds?.includes(task.id)&&task.pauseContinuation?.batchId===batch.id&&task.pauseContinuation?.scope===batch.scope&&!task.attemptBoundary&&!task.receipt&&['targetId','browserInstance','taskDeadlineAt','profileRevision'].every(key=>task.pauseContinuation[key]===task[key]);
+ if(next.items[index]?.taskId!==task.id)throw Error('原批次任务身份已变化');
+ if(hasPendingNavigation(task)&&(!navigationBatchContinuation(task,batch)||config.unattended&&!navigationBudgetContinuation(task,batch))){const reason='原导航待重判范围、产品、页面或预算检查点已变化，保留原任务等待人工核验';next.items[index]={...next.items[index],status:'complete',result:'needs_manual',reason};runtime.update(task,{status:'needs_manual',attentionType:'navigation_scope_changed',reason},'original_navigation_scope_changed',{['workbenchBatch:'+batch.id]:next});return false;}
+ const pauseResuming=batch.resumingPausedTaskIds?.includes(task.id)&&task.pauseContinuation?.batchId===batch.id&&task.pauseContinuation?.scope===batch.scope&&!task.attemptBoundary&&!task.receipt&&['targetId','browserInstance','taskDeadlineAt','profileRevision'].every(key=>task.pauseContinuation[key]===task[key]);
+ const navigationResuming=navigationBudgetContinuation(task,batch),resuming=pauseResuming||navigationResuming;
  if(config.unattended){
   const state=U.createCheckpoint(config,Date.now(),batch.unattendedState),decision=U.canStartTask(state,Date.now());
-  if(!decision.ok&&(!resuming||decision.reason==='deadline')){pauseBatchPolicy(runtime,batch,decision.reason);return false;}
-  if(resuming&&task.taskDeadlineAt&&Date.now()>=task.taskDeadlineAt){const result=U.interruptedTaskStatus({status:'running'});next.items[index].status='complete';next.items[index].result=result.status;next.items[index].reason=reasons.task_deadline;next.unattendedState=U.addManualTodo(state,task.id);next.resumingPausedTaskIds=next.resumingPausedTaskIds.filter(id=>id!==task.id);runtime.update(task,{...result,reason:reasons.task_deadline,attentionType:'unattended_timeout',pauseContinuation:null},'paused_task_deadline',{['workbenchBatch:'+batch.id]:next});return false;}
+  if(!decision.ok&&(!resuming||decision.reason!=='task_budget')){pauseBatchPolicy(runtime,batch,decision.reason);return false;}
+  if(resuming&&task.taskDeadlineAt&&Date.now()>=task.taskDeadlineAt){const result=U.interruptedTaskStatus({status:'running'});next.items[index].status='complete';next.items[index].result=result.status;next.items[index].reason=reasons.task_deadline;next.unattendedState=U.addManualTodo(state,task.id);next.resumingPausedTaskIds=(next.resumingPausedTaskIds||[]).filter(id=>id!==task.id);runtime.update(task,{...result,reason:reasons.task_deadline,attentionType:'unattended_timeout',pauseContinuation:null},'paused_task_deadline',{['workbenchBatch:'+batch.id]:next});return false;}
   const already=task.unattendedClaimed===true&&task.unattendedBatchId===batch.id;
   const claim=already?{ok:true,next:state}:U.claimTask(state,Date.now());if(!claim.ok){pauseBatchPolicy(runtime,batch,claim.reason);return false;}
   next.unattendedState=claim.next;changes.unattendedBatchId=batch.id;changes.unattendedClaimed=true;changes.taskDeadlineAt=resuming?task.taskDeadlineAt:U.taskDeadline(claim.next,Date.now());
  }
- if(resuming){next.resumingPausedTaskIds=next.resumingPausedTaskIds.filter(id=>id!==task.id);changes.pauseContinuation=null;}
+ if(pauseResuming){next.resumingPausedTaskIds=next.resumingPausedTaskIds.filter(id=>id!==task.id);changes.pauseContinuation=null;}
  const item=next.items[index];if(item?.taskId!==task.id)throw Error('原批次任务身份已变化');item.status='running';item.startedAt=item.startedAt||new Date().toISOString();
  runtime.update(task,changes,'workbench_task_released',{['workbenchBatch:'+batch.id]:next});return true;
 }

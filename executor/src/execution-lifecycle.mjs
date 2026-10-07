@@ -6,6 +6,7 @@ import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 import {createHash} from 'node:crypto';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
 import {captureParkedResumeRequests,pausedParkedResumeTasks} from './parked-task-resume.mjs';
+import {navigationBudgetContinuation} from './original-navigation-rejudge.mjs';
 const now=()=>new Date().toISOString();
 const activeIds=runtime=>[...new Set([...(runtime.activeTaskIds||[]),runtime.activeTaskId,runtime.store.get('singleTaskId')].filter(Boolean))];
 export function assertOriginalBatch(runtime,batch) {
@@ -49,7 +50,8 @@ export async function resumeExecution(runtime,input={}) {
     if(batchConfig(batch).unattended&&U.isExpired(batch.unattendedState)){pauseBatchPolicy(runtime,batch,'deadline');throw Error('无人值守截止时间已到，原任务和预算保留');}
     const continuations=(batch.pausedTaskIds||[]).filter(taskId=>{const task=runtime.store.get('task:'+taskId),saved=task?.pauseContinuation;return task?.status==='pending'&&!task.attemptBoundary&&!task.receipt&&saved?.batchId===batch.id&&saved.scope===scope&&['targetId','browserInstance','taskDeadlineAt','profileRevision'].every(key=>saved[key]===task[key]);});
     const parked=pausedParkedResumeTasks(runtime,batch);
-    if(batchConfig(batch).unattended&&!continuations.length&&!parked.length&&batch.items.some(item=>!['complete','excluded'].includes(item.status))){const decision=U.canStartTask(batch.unattendedState);if(!decision.ok){pauseBatchPolicy(runtime,batch,decision.reason);throw Error('原无人值守预算已达到上限，未开始新组合');}}
+    const navigation=batch.items.filter(item=>!['complete','excluded'].includes(item.status)).map(item=>runtime.store.get('task:'+item.taskId)).filter(task=>task?.status==='pending'&&navigationBudgetContinuation(task,batch));
+    if(batchConfig(batch).unattended&&!continuations.length&&!parked.length&&!navigation.length&&batch.items.some(item=>!['complete','excluded'].includes(item.status))){const decision=U.canStartTask(batch.unattendedState);if(!decision.ok){pauseBatchPolicy(runtime,batch,decision.reason);throw Error('原无人值守预算已达到上限，未开始新组合');}}
     await runtime.synchronize();check();assertOriginalBatch(runtime,runtime.store.get('workbenchBatch:'+id));
     const next={...runtime.store.get('workbenchBatch:'+id),status:'running',reason:'',resumedAt:now(),resumingPausedTaskIds:continuations};runtime.store.set('workbenchBatch:'+id,next);
     try{for(const task of parked){const current=runtime.store.get('task:'+task.id);if(!pausedParkedResumeTasks(runtime,next).some(saved=>saved.id===current.id))throw Error('原待人工接续任务已变化，保持暂停');runtime.update(current,{originalResume:{...current.originalResume,pauseAt:paused?.at||''}},'parked_task_user_resumed');}await persistBatchLifecycle(runtime,next,'workbench_run_resumed');check();}catch(error){const current=runtime.store.get('workbenchBatch:'+id);if(current)runtime.store.set('workbenchBatch:'+id,{...current,status:'paused',reason:error.message});throw error;}

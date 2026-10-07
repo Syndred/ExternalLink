@@ -3,6 +3,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {batchManifest,batchCheckpoint,batchScopeRows,batchRecoveryVersion,batchJson,maximumLibraryBatchCombinations} from '../../core/workbench-batch-recovery.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
+import {navigationBatchContinuation,navigationBudgetContinuation} from './original-navigation-rejudge.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
 
 export async function flushBatchTaskEvents(runtime,task,eventId) {
@@ -77,6 +78,7 @@ export function parkRestoredBatchTask(runtime,task) {
     return;
   }
   if(['opening','filling','submitting'].includes(task.status)) {
+    if(navigationBatchContinuation(task,batch)&&(!batch.config?.unattended||navigationBudgetContinuation(task,batch))){runtime.update(task,{status:'pending',reason:'已恢复原导航待重判检查点，原页及已用预算保留；请继续原批次'},'cloud_original_navigation_recovered');return;}
     const result=U.interruptedTaskStatus({status:'running',submissionAttempted:!!task.attemptBoundary});
     const item=batch.items.find(i=>i.taskId===task.id);if(!item)throw Error('中断任务不属于恢复的原范围');
     item.status='complete';item.result=task.attemptBoundary?'sent_unconfirmed':result.status;item.reason=result.reason;

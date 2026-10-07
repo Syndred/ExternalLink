@@ -42,6 +42,7 @@ import{advanceBasicGoogleLogin,canAuthenticateOffline,readBasicGoogleUI}from'./b
 import{getTargetInfo}from'./browser-target.mjs';
 import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenchScope}from'./workbench-sync.mjs';
 import {runOriginalAgentPreparation,originalPlanDecision} from './original-agent-flow.mjs';
+import {navigationScope,assertNavigationScope,hasPendingNavigation,pendingNavigationMarker,nativeNavigationSnapshotError,waitForOriginalNavigation} from './original-navigation-rejudge.mjs';
 import {captureOriginalTaskVisual} from './task-visual-context.mjs';
 import {originalVisualFillActions} from './original-visit-fill.mjs';
 import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
@@ -669,6 +670,10 @@ export class Runtime {
       let reused = false;
       if (task.targetId) {
         try { page = await this.findPage(task); reused = true; } catch (error) {
+          if(hasPendingNavigation(task)){
+            if(!isDeepStrictEqual(this.store.get('task:'+task.id),task))throw Object.assign(Error('原待重判页面检查期间任务已变化'),{staleTask:true});
+            assertNavigationScope(this,task,pendingNavigationMarker(task));const state=structuredClone(task.aiTakeover);state.originalVisual.pendingRejudge={...state.originalVisual.pendingRejudge,status:'original_page_missing',reason:error.message};this.update(task,{status:'needs_manual',attentionType:'navigation_original_page_missing',reason:'原待重判页面暂不可读，请明确恢复原任务；未替换页签',aiTakeover:state},'original_navigation_page_missing');return;
+          }
           if (task.attemptBoundary||task.originalGroupPage) throw Object.assign(error,{staleTask:true});
         }
       }
@@ -689,6 +694,7 @@ export class Runtime {
       const targetInfo=await getTargetInfo(this.context,page);
       if(!targetInfo)throw new Error('browser page target disappeared before its task identity could be verified');
       const target = targetInfo.targetId;
+      if(hasPendingNavigation(task)){assertNavigationScope(this,task,pendingNavigationMarker(task));if(target!==task.targetId||this.host.startedAt!==task.browserInstance)throw Object.assign(Error('原待重判页签身份已变化，保持原任务'),{staleTask:true});}
       this.update(task, { targetId: target, browserInstance: this.host.startedAt }, 'target');
       if(!active())return;
       Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
@@ -699,6 +705,12 @@ export class Runtime {
       await page.locator('input:visible, textarea:visible, select:visible, iframe:visible, [contenteditable=true]:visible, a[href]:visible, button:visible').first().waitFor({ timeout: 15000 }).catch(() => {});
       if(continuous)await page.waitForTimeout(1500);
       if(!active())return;
+      let navigationPrepared;
+      if(hasPendingNavigation(task)){
+        navigationPrepared=await this.prepareWithAi(page,task,config,active);
+        if(navigationPrepared.candidate)engines.push(navigationPrepared.candidate);
+        requirePrepared(navigationPrepared);
+      }
       await this.preparePublicPage(page,task,{active});
       if(!active())return;
       await this.prepareKnownPage(page, task.url, task);
@@ -709,7 +721,7 @@ export class Runtime {
         await runProductHuntWorkflow(this,task,page,config,{active,offline,confirmCreate:task.productHuntCreationConsent?.targetId===task.targetId&&!task.fillOnlyRun});
         return;
       }
-      for (const frame of page.frames()) {
+      for (const frame of navigationPrepared?[]:page.frames()) {
         if(!active())return;
         if(!/^https?:/.test(frame.url()))continue;
         try {
@@ -742,7 +754,7 @@ export class Runtime {
         /^https:\/\/(?:www\.)?futuretools\.io\/submit-a-tool\/?/i.test(task.url);
       const preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false,forceRefreshExisting};
       if(!active())return;
-      let fill = task.submitPreparedRun ? {ok:true,preparedForm:true,filledCount:0} : await engine.call(detection.platform==='wp_comment'?{action:'executeSubmit',platformType:'wp_comment',config:preparationConfig}:{action:'smartFill',config:preparationConfig});
+      let fill = task.submitPreparedRun||navigationPrepared?.ok ? {ok:true,preparedForm:true,filledCount:0} : await engine.call(detection.platform==='wp_comment'?{action:'executeSubmit',platformType:'wp_comment',config:preparationConfig}:{action:'smartFill',config:preparationConfig});
       if(!active())return;
       if(!task.submitPreparedRun) {
         await this.reconcileTextInputs(candidate.frame, await engine.call({ action: 'getFilledFieldsReport' }), fill.mappings);
@@ -903,7 +915,7 @@ export class Runtime {
     const scope=workbenchScope(this.store.get('pair')),identity=Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance'].map(key=>[key,task[key]])),profile=plain(task.profileSnapshot||{}),preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
     const canRelease=current=>scope===workbenchScope(this.store.get('pair'))&&Object.entries(identity).every(([key,value])=>current[key]===value)&&current.version===task.version&&current.controllerId===task.controllerId&&!current.attemptBoundary&&!current.receipt&&isDeepStrictEqual(plain(current.profileSnapshot||{}),profile);
     const assertCurrent=async()=>{const check=()=>{const current=this.store.get('task:'+task.id);if(!current||!canRelease(current)||current.controller!==task.controller||this.store.get('executionStopped')||this.store.get('connectionExecutionHold')||page.isClosed()||!/^https?:\/\//.test(page.url()))throw Object.assign(Error('原AI接管任务、产品、控制权或网页已变化'),{staleTask:true});if(!active())throw Object.assign(Error('原AI接管已暂停，原任务与预算保留'),this.store.get('paused')===true?{batchPaused:true}:{staleTask:true});};check();const target=await getTargetInfo(this.context,page);check();if(target?.targetId!==identity.targetId)throw Object.assign(Error('原AI接管页签身份已变化'),{staleTask:true});};
-    const assertDocument=async()=>{await assertCurrent();if(!candidate||candidate.frame.isDetached()||candidate.frame.url()!==candidate.url||!await candidate.engine.isCurrentDocument())throw Object.assign(Error('原AI接管文档已变化，请重新观察'),{staleTask:true});await assertCurrent();};
+    const assertDocument=async()=>{await assertCurrent();if(!candidate||candidate.frame.isDetached()||candidate.frame.url()!==candidate.url||!await candidate.engine.isCurrentDocument())throw Object.assign(Error('原AI接管文档已变化，请重新观察'),{staleTask:true,originalDocumentChanged:true});await assertCurrent();};
     const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
       upload:async(kind,selector)=>{const file=await materializeTaskUpload(this,task,config,kind,candidate.engine,selector);if(!active())throw Error('原任务已暂停，未上传图片');return file;}});
     let bound=false;
@@ -912,13 +924,13 @@ export class Runtime {
       await assertCurrent();
       if(!bound){await adapter.bind();bound=true;}
       await candidate?.engine.detach();candidate=null;
-      const options=[];
+      const options=[];let navigationError;
       for(const frame of page.frames())if(/^https?:/.test(frame.url())){
-        let engine;try{await assertCurrent();engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config:preparationConfig}),observed=await engine.call({action:'getPageSnapshot'});options.push({engine,frame,detection,url:frame.url(),observed});}catch(error){await engine?.detach();if(error.staleTask||error.batchPaused){for(const item of options)await item.engine.detach();throw error;}}
+        let engine;try{await assertCurrent();engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config:preparationConfig}),observed=await engine.call({action:'getPageSnapshot'});options.push({engine,frame,detection,url:frame.url(),observed});}catch(error){await engine?.detach();if(nativeNavigationSnapshotError(error))navigationError=error;if(error.staleTask||error.batchPaused){for(const item of options)await item.engine.detach();throw error;}}
       }
       candidate=options.sort((a,b)=>(b.observed.fields?.length||Number(b.detection.formFieldCount)||0)-(a.observed.fields?.length||Number(a.detection.formFieldCount)||0))[0];
       for(const item of options)if(item!==candidate)await item.engine.detach();
-      if(!candidate)throw Error('原任务页面没有可观察上下文');
+      if(!candidate)throw navigationError||Error('原任务页面没有可观察上下文');
       await assertDocument();
       if(!normalDone&&candidate.detection.operable){
         normalDone=true;
@@ -972,16 +984,25 @@ export class Runtime {
         if(action.type==='click')await settleObservedClick(page,before);
         return result;
     };
-    const result=await runOriginalAgentPreparation(this,{task,io:{assertCurrent,canRelease,observe,ready,readyBeforeJudge:config.productHuntPrepared===true,model,act,
+    const io={assertCurrent,canRelease,observe,ready,navigationScope:()=>navigationScope(this,task),readyBeforeJudge:config.productHuntPrepared===true,model,act,
       settle:ms=>page.waitForTimeout(ms),
       recordPlan:async plan=>{await assertDocument();this.update(task,{agentVisualHistory:[...(task.agentVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),...(lastVisual?{localScreenshot:lastVisual.localScreenshot,artifactRef:lastVisual.artifactRef,artifactError:lastVisual.artifactError}:{}),...(!plan.visualAgent?{visualFallbackReason:task.aiTakeover?.visualFallbackReason||''}:{}),visualAgent:plan.visualAgent===true}].slice(-8)},'original_agent_plan');},
       visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
-    }});
+    };
+    const probeNavigation=async()=>{
+      await assertCurrent();const tabStatus=await page.evaluate(()=>document.readyState==='complete'?'complete':'loading'),options=[];
+      for(const frame of page.frames())if(/^https?:/.test(frame.url())){let engine;try{engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config:preparationConfig}),snapshot=await engine.call({action:'getPageSnapshot'}),documentTimeOrigin=await page.evaluate(()=>performance.timeOrigin);if(!await engine.isCurrentDocument())throw Object.assign(Error('导航快照文档仍在变化'),{originalDocumentChanged:true});options.push({detection,snapshot,documentTimeOrigin,tabStatus});}finally{await engine?.detach();}}
+      await assertCurrent();const observed=options.sort((a,b)=>(b.snapshot.fields?.length||Number(b.detection.formFieldCount)||0)-(a.snapshot.fields?.length||Number(a.detection.formFieldCount)||0))[0];if(!observed)throw Error('snapshot unavailable during navigation readiness');return observed;
+    };
+    const waitNavigation=async()=>{await candidate?.engine.detach();candidate=null;const marker=pendingNavigationMarker(task);assertNavigationScope(this,task,marker);let waited;try{waited=await waitForOriginalNavigation(this,{task,marker,assertCurrent,probe:probeNavigation,wait:ms=>page.waitForTimeout(ms)});}catch(error){if(error.batchPaused||error.unattendedBudget)return{ok:false,interrupted:true,reason:error.message};throw error;}normalDone=false;lastVisual=undefined;return waited;};
+    let result;
+    if(hasPendingNavigation(task)){const waited=await waitNavigation();if(!waited.ok)result=waited;}
+    while(!result){result=await runOriginalAgentPreparation(this,{task,io});if(result.pendingRejudge){this.update(task,{reason:result.reason,attentionType:'navigation_rejudge'},'original_navigation_waiting');const waited=await waitNavigation();if(waited.ok){this.update(task,{reason:'原页面已稳定，继续原任务重判',attentionType:undefined},'original_navigation_rejudging');result=null;}else result=waited;}}
     if(result.staleTask){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{staleTask:true});}
     if(result.originalTaskSyncFailure){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{originalTaskSyncFailure:true,status:result.status,cloudNetwork:result.cloudNetwork});}
     const assertResultDocument=result.originalPublicGateDocumentTimeOrigin===undefined?assertDocument:async()=>{await assertCurrent();if(await page.evaluate(()=>performance.timeOrigin)!==result.originalPublicGateDocumentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，接管关口已放弃'),{staleTask:true});await assertCurrent();};
     if(result.originalAgentUnavailable)await skipOriginalUnavailableTask(this,{task,page,result,assertCurrent:async()=>{await assertCurrent();await assertResultDocument();}});
-    if(!result.serviceUnavailable&&!result.interrupted&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
+    if(!result.serviceUnavailable&&!result.interrupted&&!result.originalReadinessTimeout&&!result.pendingRejudge&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
     return {...result,candidate};
   }
   async reobserveNavigatedReceipt(page, task) {

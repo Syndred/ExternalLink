@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import '../../core/queue.js';
 import {originalAgentUnavailableError} from './original-agent-unavailable.mjs';
+import {nativeNavigationSnapshotError} from './original-navigation-rejudge.mjs';
 
 export const originalAgentLimits=Object.freeze({loops:8,settleMs:600});
 export function originalExplicitHumanGate(reply,snapshot){
@@ -32,6 +33,8 @@ export function originalPlanDecision(reply,snapshot){
 export async function runOriginalAgentPreparation(runtime,{task,io}){
  await io.assertCurrent();if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原任务控制权或投稿结果不允许开始接管');
  const prior=task.aiTakeover||{},state={...structuredClone(prior),id:prior.id||randomUUID(),startedAt:prior.startedAt||new Date().toISOString(),calls:Number(prior.calls)||0,actions:Number(prior.actions)||0,history:structuredClone(prior.history||[]),originalVisual:{...prior.originalVisual,loops:Number(prior.originalVisual?.loops)||0,history:structuredClone(prior.originalVisual?.history||[])}};
+ const rejudging=state.originalVisual.pendingRejudge?.status==='ready';
+ if(rejudging){state.originalVisual.loopBase=state.originalVisual.loops;state.originalVisual.pendingRejudge={...state.originalVisual.pendingRejudge,status:'rejudging',resumedAt:new Date().toISOString()};}
  // Existing modern takeovers keep their already-frozen ceilings on migration.
  if(prior.id&&!prior.originalVisual)state.legacyCeilings={calls:10,actions:20};
  runtime.update(task,{controller:'ai',aiTakeover:state},'original_agent_started');
@@ -45,13 +48,13 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
  const terminal=value=>({ok:false,...value});
  try{
   let snapshot=await guarded(io.observe);
-  if(io.readyBeforeJudge&&await guarded(()=>io.ready(snapshot)))return result={ok:true,reason:'prepared'};
+  if((io.readyBeforeJudge||rejudging)&&await guarded(()=>io.ready(snapshot)))return result={ok:true,reason:'prepared'};
   {
    const judge=await model('judge',{snapshot,phase:'initial'});if(judge?.status==='legacy_budget')return result=terminal({interrupted:true,reason:judge.reason});
    state.originalVisual.initialJudgeDone=true;persist('original_agent_initial_judge');const decision=originalJudgeTerminal(judge,snapshot);if(decision)return result=terminal(decision);
   }
-  while(state.originalVisual.loops<originalAgentLimits.loops){
-   state.originalVisual.loops++;persist('original_agent_loop_boundary');const step=state.originalVisual.loops-1;
+  while(state.originalVisual.loops-(state.originalVisual.loopBase||0)<originalAgentLimits.loops){
+   state.originalVisual.loops++;persist('original_agent_loop_boundary');const step=state.originalVisual.loops-(state.originalVisual.loopBase||0)-1;
    let plan;
    try{plan=await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:state.originalVisual.noProgressCount?'Previous action produced no visible page change. Reassess the screenshot and choose a different action.':''});plan={...plan,visualAgent:true};}
    catch(error){if(error.staleTask||error.unattendedBudget||error.batchPaused||error.originalTaskSyncFailure||[401,403,409].includes(error.status))throw error;await io.assertCurrent();state.visualFallbackReason=String(error.message||error).slice(0,2000);persist('original_agent_visual_unavailable');plan=await model('plan',{snapshot,step,history:state.originalVisual.history.slice(-8),visualError:state.visualFallbackReason});plan={...plan,visualAgent:false};}
@@ -69,7 +72,11 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
     if(outcome?.interrupted)return result=terminal(outcome);
     if(action.type==='click'||event.ok===false)break;
    }
-   await guarded(()=>io.settle(originalAgentLimits.settleMs));snapshot=await guarded(io.observe);
+   await guarded(()=>io.settle(originalAgentLimits.settleMs));
+   try{snapshot=await guarded(io.observe);}catch(error){
+    if(!nativeNavigationSnapshotError(error))throw error;await io.assertCurrent();
+    state.originalVisual.pendingRejudge={id:randomUUID(),status:'waiting_navigation',at:new Date().toISOString(),reason:error.message,afterActionLoop:state.originalVisual.loops,...(io.navigationScope?{navigationScope:io.navigationScope()}:{} )};persist('original_navigation_pending_rejudge');return result={ok:false,pendingRejudge:true,reason:'等待原页面导航完成后重新判断'};
+   }
    const expectedMutation=plan.actions?.some(action=>['fill','select','check','click','scroll'].includes(action.type)),changed=!expectedMutation||!snapshot.domHash||snapshot.domHash!==beforeHash;
    state.originalVisual.noProgressCount=changed?0:(state.originalVisual.noProgressCount||0)+1;
    state.originalVisual.history.push({step:step+1,stage:plan.stage||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),result:actionResults.map(outcome=>({ok:outcome.ok!==false})),changed,url:snapshot.url||''});state.originalVisual.history=state.originalVisual.history.slice(-8);persist('original_agent_snapshot_observed');
@@ -83,6 +90,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
  }catch(error){if(error.originalPublicGateResult){result=terminal({...error.originalPublicGateResult,reason:String(error.message||error),originalPublicGateClassified:error.originalPublicGateClassified===true,originalPublicGateDocumentTimeOrigin:error.originalPublicGateDocumentTimeOrigin});return result;}result=terminal({reason:String(error.message||error),status:error.status,cloudNetwork:error.cloudNetwork,...(error.staleTask?{staleTask:true,interrupted:true}:error.originalTaskSyncFailure?{originalTaskSyncFailure:true,interrupted:true}:error.unattendedBudget||error.batchPaused?{interrupted:true}:originalAgentUnavailableError(error)?{originalAgentUnavailable:true,serviceUnavailable:true}:{needs_manual:true,serviceUnavailable:[401,403,409].includes(error.status)})});return result;}
  finally{
   const current=runtime.store.get('task:'+task.id);if(current?.aiTakeover?.id===state.id&&current.controller==='ai'&&io.canRelease(current)){
+   if(state.originalVisual.pendingRejudge?.status==='rejudging'&&!result.pendingRejudge&&!result.interrupted&&!result.staleTask&&!result.originalTaskSyncFailure)state.originalVisual.pendingRejudge={...state.originalVisual.pendingRejudge,status:result.ok?'completed':'finished',completedAt:new Date().toISOString()};
    state.finishedAt=new Date().toISOString();state.reason=result.reason;state.ok=result.ok;runtime.update(current,{controller:'executor',aiTakeover:structuredClone(state)},'original_agent_returned');Object.assign(task,current);
   }
  }

@@ -1,5 +1,25 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalVisualSubmissionCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "f1b191c5c88601eb7b2665181c5342f8b6ae987f",
+    "finalIdentityCheckCommit": "b4cdb77c0846cfe69b2915a3620f7ddd02183e1f",
+    "evidence": "original-visual-submission-2026-10-08.json",
+    "nativeVisualSubmissionConnected": true,
+    "originalFullLoopOrderAndActionSourceCompared": true,
+    "boundaryCloudReadbackBeforeActualPostVerified": true,
+    "finalFrozenProductAndRequiredFieldsRechecked": true,
+    "actualIsolatedVisualBrowserCases": 9,
+    "actualNativeWorkFrozenProducts": 2,
+    "authenticatedD1ProofAndEmptyRestoreVerified": true,
+    "fullSuitePassed": 882,
+    "newSince871": 11,
+    "nativeServicesGuardedReloadAndReadbacksPassed": true,
+    "allOriginalVisualAndVisitEntriesVerified": false,
+    "latestOriginalDataAndFullHistoryVerified": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "visualSubmissionDraftProgressPushCheckpoint": {
     "date": "2026-10-08",
     "evidence": "progress-push-submission-draft-2026-10-08.json",

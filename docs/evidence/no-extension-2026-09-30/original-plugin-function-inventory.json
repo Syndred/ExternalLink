@@ -1,5 +1,17 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalPageControlsCallgraphAudit": {
+    "date": "2026-10-07",
+    "evidence": "original-page-control-callgraph-2026-10-07.json",
+    "featureHeadAtAudit": "e3e1ff5",
+    "originalParkedBannerDisplaySentByNativeRuntime": false,
+    "nativeTaskWorkDetachesEngineAtFinish": true,
+    "originalPageManualCallbacksFullyMigrated": false,
+    "originalAutoFillActualEntrypoint": "sidepanel open, tab URL change and product selection",
+    "originalContentMaybeRequestAutoFillHasInvocation": false,
+    "sourceAuditIsRuntimeAcceptance": false,
+    "migrationComplete": false
+  },
   "originalParallelTaskResumeCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-parallel-task-resume-2026-10-07.json",

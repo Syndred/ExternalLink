@@ -1,0 +1,42 @@
+{
+  "kind": "original_page_control_source_audit_confirmed_missing_behavior",
+  "date": "2026-10-07",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "nativeFeatureHeadAtAudit": "e3e1ff5",
+  "migrationComplete": false,
+  "originalSourcesInspected": [
+    "extension/background.js: handleManualSubmit, handleManualSkip, parkProductHuntTask, handleRequestAutoFill",
+    "extension/content.js: showWaitingBanner, showManualWaitBanner, maybeRequestAutoFill",
+    "extension/sidepanel.js: requestAutoFillForTab and its call sites"
+  ],
+  "nativeSourcesInspected": [
+    "core/form-engine.js: showWaitingBanner, showManualWaitBanner, message handler, navigation hooks",
+    "executor/src/engine.mjs: request action allowlist and binding lifetime",
+    "executor/src/browser-assistant.mjs: frame bridge and original visit scanner",
+    "executor/src/runtime.mjs: bridge and work finalization"
+  ],
+  "confirmed": {
+    "originalParkedProductHuntTaskSendsShowManualWaitBanner": true,
+    "originalManualBannerCallsManualContinueAndManualSkip": true,
+    "originalWaitingBannerCallsManualSubmitOnButtonAndFormPolling": true,
+    "nativeRuntimeSendsShowManualWaitBanner": false,
+    "nativeEngineAllowsOriginalPageManualActions": false,
+    "nativeWorkDetachesAllOwnedFormEnginesAtFinish": true,
+    "originalSidepanelRequestsAutoFillOnOpenTabUrlChangeAndProductSelection": true,
+    "originalContentMaybeRequestAutoFillInvocationFound": false
+  },
+  "requiredNextWork": [
+    "Restore original parked page banner and no-form waiting interaction",
+    "Bind every callback to the original task run product browser page frame and document",
+    "Retain or reattach the parked page bridge without replacing an interactive assistant",
+    "Preserve original fill-only settings for automatic form-detected continuation",
+    "Handle explicit continue skip and navigation with original scope and unknown-attempt guards",
+    "Keep banner and error state accurate after failed callbacks",
+    "Verify real rendered buttons and callbacks through the shared engine",
+    "Verify original sidepanel auto-fill trigger correspondence and request routing separately"
+  ],
+  "newFeatureChangesFromThisAudit": 0,
+  "productionWrites": 0,
+  "newRealSubmissions": 0,
+  "sourceAuditIsRuntimeAcceptance": false
+}

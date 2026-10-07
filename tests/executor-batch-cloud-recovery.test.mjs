@@ -70,6 +70,15 @@ test('actual mapper preserves original login and captcha groups while closing ex
  }
 });
 
+test('explicit preparation while globally paused observes a public gate without granting execution to the remaining group',async()=>{
+ const f=await fixture(),home=await mkdtemp(join(tmpdir(),'el-paused-public-'));let browser;
+ try{
+  const runtime=f.original,task=await nextWorkbenchTask(runtime);runtime.home=home;runtime.store.set('paused',true);runtime.store.set('singleTaskId',null);browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext();await context.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Submit your tool</title><p>Verify you are human</p><form><input name="url" type="url"></form>'}));runtime.context=context;runtime.host={endpoint:'http://127.0.0.1:1',startedAt:'isolated-paused-public-preparation'};const page=await context.newPage();await page.goto(task.url);const {getTargetInfo}=await import('../executor/src/browser-target.mjs');runtime.update(task,{targetId:(await getTargetInfo(context,page)).targetId,browserInstance:runtime.host.startedAt},'fixture_paused_original_page');
+  await assert.rejects(()=>runtime.preparePublicPage(page,task,{active:()=>runtime.store.get('paused')===true}),error=>!error.staleTask&&/真人验证/.test(error.message));assert.equal(task.siteAutomaticObservation.status,'needs_captcha');assert.equal(runtime.store.get('paused'),true);assert.equal(runtime.store.get('workbenchBatch:'+f.batchId).count,6);assert.equal(runtime.store.values('task:').filter(t=>t.status==='pending').length,6);assert.equal(page.isClosed(),false);assert.equal(f.models(),0);
+  const result=await runtime.control('prepareTask',{taskId:task.id}),saved=runtime.store.get('task:'+task.id);assert.equal(result.ok,true);assert.equal(result.prepared,false);assert.match(result.reason,/真人验证/);assert.equal(saved.controller,'executor');assert.equal(saved.aiTakeover.calls,0);assert.equal(saved.siteAutomaticObservation.status,'needs_captcha');assert.ok(saved.screenshot);assert.equal(saved.actualPreparation,undefined);assert.equal(saved.attemptBoundary,undefined);assert.equal(saved.receipt,undefined);assert.equal(page.isClosed(),false);assert.equal(runtime.store.get('paused'),true);assert.equal(runtime.store.get('workbenchBatch:'+f.batchId).count,6);assert.equal(f.models(),0);
+ }finally{await browser?.close();f.close();const absolute=resolve(home);assert.ok(absolute.startsWith(resolve(tmpdir())+sep));await rm(absolute,{recursive:true,force:true});}
+});
+
 test('authenticated PostgreSQL dead-end group cancellation has independent event proof and restores unchanged range and budgets',async()=>{
  const db=new PGlite(),stores=[],fetchBefore=globalThis.fetch;
  try{

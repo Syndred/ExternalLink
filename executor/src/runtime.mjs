@@ -352,7 +352,7 @@ export class Runtime {
     this.store.set('libraryPlan',{...plan,globalPause:null,lastConnectionRecovery:new Date().toISOString()});
     this.store.set('paused',false);this.cloudError='';
   }
-  async preparePublicPage(page,task){
+  async preparePublicPage(page,task,{active=()=>this.store.get('paused')===false&&batchActionAllowed(this,task)}={}){
     for(let step=0;step<3;step++){
       const inspected=await readAfterNavigation(page,()=>page.evaluate(()=>({url:location.origin+location.pathname,documentTimeOrigin:performance.timeOrigin,title:document.title,text:document.body?.innerText?.slice(0,16000)||'',
         hasPassword:[...document.querySelectorAll('input[type=password]')].some(e=>e.getBoundingClientRect().width>0),
@@ -380,8 +380,8 @@ export class Runtime {
       if(gate&&!(gate.attentionType==='payment'&&free)){
         this.update(task,{attentionType:gate.attentionType},'public_gate');
         const result=['payment','site_form_unavailable','site_unavailable'].includes(gate.attentionType)?{blocked:true,reason:gate.reason}:gate.attentionType==='human_verification'?{captcha:true,reason:gate.reason}:gate.attentionType==='login'?{gate:'login',reason:gate.reason}:null;
-        if(result)await classifyOriginalTaskGate(this,{task,page,result,active:()=>this.store.get('paused')===false&&batchActionAllowed(this,task),assertPageDocument:async()=>{if(await page.evaluate(()=>performance.timeOrigin)!==inspected.documentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，自动观察停止'),{staleTask:true});}});
-        throw new Error(gate.reason);
+        if(result&&task.controller!=='ai')await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:async()=>{if(await page.evaluate(()=>performance.timeOrigin)!==inspected.documentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，自动观察停止'),{staleTask:true});}});
+        throw Object.assign(new Error(gate.reason),result?{originalPublicGateResult:result,originalPublicGateClassified:task.controller!=='ai',originalPublicGateDocumentTimeOrigin:inspected.documentTimeOrigin}:{});
       }
       const hasForm=hasSubmissionFields(inspected);
       const entry=!hasForm&&(chooseObservedEntry(page.url(),inspected.links)||free);
@@ -692,7 +692,7 @@ export class Runtime {
       await page.locator('input:visible, textarea:visible, select:visible, iframe:visible, [contenteditable=true]:visible, a[href]:visible, button:visible').first().waitFor({ timeout: 15000 }).catch(() => {});
       if(continuous)await page.waitForTimeout(1500);
       if(!active())return;
-      await this.preparePublicPage(page,task);
+      await this.preparePublicPage(page,task,{active});
       if(!active())return;
       await this.prepareKnownPage(page, task.url, task);
       if (!active()) { this.update(task, { status: 'pending' }, 'paused_before_fill'); return; }
@@ -899,7 +899,7 @@ export class Runtime {
       upload:async(kind,selector)=>{const file=await materializeTaskUpload(this,task,config,kind,candidate.engine,selector);if(!active())throw Error('原任务已暂停，未上传图片');return file;}});
     let bound=false;
     const observe=async()=>{
-      await this.preparePublicPage(page,task);
+      await this.preparePublicPage(page,task,{active});
       await assertCurrent();
       if(!bound){await adapter.bind();bound=true;}
       await candidate?.engine.detach();candidate=null;
@@ -969,7 +969,8 @@ export class Runtime {
       visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
     }});
     if(result.staleTask){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{staleTask:true});}
-    if(!result.serviceUnavailable&&!result.interrupted)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertDocument});}catch(error){await assertCurrent();await assertDocument();throw error;}
+    const assertResultDocument=result.originalPublicGateDocumentTimeOrigin===undefined?assertDocument:async()=>{await assertCurrent();if(await page.evaluate(()=>performance.timeOrigin)!==result.originalPublicGateDocumentTimeOrigin)throw Object.assign(Error('原公开页面文档已变化，接管关口已放弃'),{staleTask:true});await assertCurrent();};
+    if(!result.serviceUnavailable&&!result.interrupted&&!result.originalPublicGateClassified)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertResultDocument});}catch(error){await assertCurrent();await assertResultDocument();throw error;}
     return {...result,candidate};
   }
   async reobserveNavigatedReceipt(page, task) {

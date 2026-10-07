@@ -1,5 +1,17 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalPausedPublicPreparationCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "original-paused-public-preparation-2026-10-08.json",
+    "actualPausedPrepareTaskApiCaptchaVerified": true,
+    "originalAiReturnAndPublicDocumentGuardRetained": true,
+    "fullSuitePassed": 808,
+    "newSince806": 2,
+    "originalUnavailableGroupTabReuseFlowMigrated": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalDestinationDispositionCheckpoint": {
     "date": "2026-10-08",
     "evidence": "original-destination-disposition-2026-10-08.json",

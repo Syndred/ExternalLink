@@ -1,0 +1,51 @@
+{
+  "kind": "original_paused_public_preparation_gate_fix",
+  "date": "2026-10-08",
+  "precedingFeatureCommit": "e97144df7480666c52290a5beefc2c9b0d227ebf",
+  "remotePull": {"command": "git pull --ff-only", "result": "Already up to date"},
+  "implemented": {
+    "publicGateUsesActualCallerActivePredicate": true,
+    "originalAiControlReturnedBeforePublicGateClassification": true,
+    "publicDocumentTimeOriginRevalidatedWithoutCandidateEngine": true,
+    "alreadySavedPublicGateNotClassifiedAgain": true,
+    "originalTaskProfileScopeVersionAndControllerGuardsRetained": true
+  },
+  "verification": {
+    "actualIsolatedNativePrepareTaskApi": true,
+    "captchaGateWhilePaused": true,
+    "preparedResult": false,
+    "originalPageRetained": true,
+    "globalPauseAndSixOriginalPendingCombinationsRetained": true,
+    "noCandidateEngineOrModelRequired": true,
+    "modelCalls": 0,
+    "fullSuite": {"tests": 808, "pass": 808, "fail": 0, "skipped": 0, "source": "executor/test-output/original-paused-public-preparation-all-final-2026-10-08.txt"},
+    "newTestsSince806": 2,
+    "initialFullApiFailureRetained": "executor/test-output/original-paused-public-preparation-native-2026-10-08.txt"
+  },
+  "nativeUpdate": {
+    "beforeAndAfterReadbacksCompleteAndPassed": true,
+    "before": "executor/test-output/original-paused-public-native-before-2026-10-08.txt",
+    "after": "executor/test-output/original-paused-public-native-after-2026-10-08.txt",
+    "guardedReload": "executor/test-output/original-paused-public-service-reload-2026-10-08.txt",
+    "ports": [19388, 19389],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftsAndPendingQueuesUnchangedWithinChecks": true,
+    "paused": true,
+    "pendingQueues": 0,
+    "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false},
+    "workerChangedOrDeployed": false,
+    "allCloudHashesRechecked": false
+  },
+  "originalAgentUnavailableFlowAudit": {
+    "originalFunctions": ["isAgentUnavailableError", "skipTaskWithReason", "advanceDestinationGroup"],
+    "originalUnavailableMessagePattern": "云端|cloud|worker|fetch",
+    "skipsOnlyCurrentTaskWithoutSiteClassification": true,
+    "nextPendingProductClaimsBudgetThenReusesAndReloadsOriginalTab": true,
+    "migrationImplementedOrVerified": false
+  },
+  "originalChromeLaunched": false,
+  "realModelCalls": 0,
+  "productionBusinessWrites": 0,
+  "realSubmissions": 0,
+  "migrationComplete": false
+}

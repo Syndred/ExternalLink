@@ -45,6 +45,10 @@ test('eight rounds exhaust the original loop without a model-success receipt or 
  const f=fixture({model:async kind=>kind==='judge'?{status:'success',reason:'No hard evidence'}:{status:'act',actions:[{type:'wait',timeout_ms:1}]}});try{const result=await f.run();assert.equal(result.needs_manual,true);assert.match(result.reason,/8 轮/);assert.equal(f.routes.length,17);assert.equal(f.routes.filter(r=>r.kind==='vision-plan').length,8);assert.equal(f.task.aiTakeover.originalVisual.loops,8);assert.equal(f.task.aiTakeover.originalVisual.history.length,8);assert.deepEqual(f.settles,Array(8).fill(600));assert.equal(f.task.receipt,undefined);}finally{f.store.close();}
 });
 
+test('an already classified public gate returns its exact disposition before a candidate or model is available',async()=>{
+ const f=fixture();f.io.observe=async()=>{throw Object.assign(Error('Original public CAPTCHA'),{originalPublicGateClassified:true,originalPublicGateResult:{captcha:true}});};try{const result=await f.run();assert.equal(result.captcha,true);assert.equal(result.originalPublicGateClassified,true);assert.equal(result.reason,'Original public CAPTCHA');assert.equal(f.routes.length,0);assert.equal(f.task.controller,'executor');assert.equal(f.task.aiTakeover.calls,0);assert.equal(f.task.attemptBoundary,undefined);assert.equal(f.task.receipt,undefined);}finally{f.store.close();}
+});
+
 test('visual service failures use original DOM planning and a DOM exception can escalate back to visual actions',async()=>{
  const f=fixture({model:async kind=>{if(kind==='judge')return{status:'incomplete'};if(kind==='vision-plan')throw Error('Fixture visual unavailable');return{status:'act',actions:[{type:'fill',selector:'#field',value:'Original'}]};},ready:async()=>true});
  f.io.act=async(_action,{visual})=>{if(!visual)throw Error('DOM control changed');return{ok:true};};f.io.visualFallback=async(snapshot,error,model,execute)=>{assert.equal(error,'DOM control changed');f.io.model=async kind=>{f.routes.push({kind});return{status:'act',actions:[{type:'check',selector:'#choice'}]};};await model('vision-plan',{snapshot});return execute({type:'check',selector:'#choice'});};

@@ -79,7 +79,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
    if(await guarded(()=>io.ready(snapshot)))return result={ok:true,reason:'prepared'};
   }
   return result;
- }catch(error){result=terminal({reason:String(error.message||error),status:error.status,cloudNetwork:error.cloudNetwork,...(error.staleTask?{staleTask:true,interrupted:true}:error.unattendedBudget||error.batchPaused?{interrupted:true}:{needs_manual:true,serviceUnavailable:!!(error.cloudNetwork||error.status>=500||/云端|cloud|worker|fetch/i.test(error.message||''))})});return result;}
+ }catch(error){if(error.originalPublicGateResult){result=terminal({...error.originalPublicGateResult,reason:String(error.message||error),originalPublicGateClassified:error.originalPublicGateClassified===true,originalPublicGateDocumentTimeOrigin:error.originalPublicGateDocumentTimeOrigin});return result;}result=terminal({reason:String(error.message||error),status:error.status,cloudNetwork:error.cloudNetwork,...(error.staleTask?{staleTask:true,interrupted:true}:error.unattendedBudget||error.batchPaused?{interrupted:true}:{needs_manual:true,serviceUnavailable:!!(error.cloudNetwork||error.status>=500||/云端|cloud|worker|fetch/i.test(error.message||''))})});return result;}
  finally{
   const current=runtime.store.get('task:'+task.id);if(current?.aiTakeover?.id===state.id&&current.controller==='ai'&&io.canRelease(current)){
    state.finishedAt=new Date().toISOString();state.reason=result.reason;state.ok=result.ok;runtime.update(current,{controller:'executor',aiTakeover:structuredClone(state)},'original_agent_returned');Object.assign(task,current);

@@ -1,0 +1,16 @@
+✔ the original category and group scope functions are copied exactly from the pre-refactor baseline (1.1474ms)
+✔ category and group queues match original functions including assignment, profile order, quality and compiled defaults (49.6849ms)
+✔ original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection (34.9678ms)
+✔ scoped preview freezes the original job sequence instead of expanding it into a different Cartesian scope (7.9966ms)
+✔ a complete original scoped range above five hundred keeps all identities with compact profiles and cloud recovery (185.4609ms)
+✔ unknown category, unknown group and empty original queue reject without creating or replacing any batch (2.3189ms)
+✔ another pending path on the same host stays excluded with its original reference instead of adopting mismatched recovery identities (3.1464ms)
+✔ same-host duplicate previews keep unique frozen identities and stronger cloud boundaries prevent local pending task reuse (3.4446ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 840.2791

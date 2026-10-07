@@ -1,0 +1,285 @@
+{
+  "date": "2026-10-08",
+  "kind": "original_batch_pending_settings_and_independent_queue_scope_verification",
+  "featureCommit": "24f5b562a827cef48f93f641485bebffef085f44",
+  "originalReference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "pulledLatestCodeBeforeCommit": true,
+  "migrationComplete": false,
+  "fixes": [
+    "Preview applies local saved pending concurrency and blacklist settings before freezing parameters and evaluating exclusions.",
+    "Start rechecks the latest local saved blacklist settings before any registration, retaining original task and run identities and frozen configuration."
+  ],
+  "pendingProfilesAndLedgerNotBorrowed": true,
+  "reproductionBeforeFix": {
+    "tests": 2,
+    "fail": 2
+  },
+  "afterRelatedTests": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0
+  },
+  "focusedTestsBeforeActualServiceTest": {
+    "tests": 18,
+    "pass": 18,
+    "fail": 0
+  },
+  "actualNativeUiAndServicesFixture": {
+    "ok": true,
+    "kind": "actual_services_pending_batch_settings_fixture",
+    "actualUiSavedPendingSettings": true,
+    "actualUiPreviewConcurrency": 4,
+    "bothServicesReadPendingGates": true,
+    "afterPreviewPendingBlacklistBlocksRegistration": true,
+    "frozenTaskAndRunIdsUnchanged": true,
+    "frozenConfigUnchanged": true,
+    "originalFixedBatchUnchanged": true,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "pendingEdits": 3,
+    "registeredTasks": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "externalRequests": 0
+  },
+  "repositoryTests": {
+    "tests": 929,
+    "pass": 929,
+    "fail": 0,
+    "skipped": 0,
+    "newTests": 5
+  },
+  "queueProjectionAudit": {
+    "sources": 6,
+    "scopeCases": 156,
+    "comparisons": 4388256,
+    "mismatchCount": 0,
+    "fields": [
+      "id",
+      "key",
+      "url",
+      "domain",
+      "profileId",
+      "profileName",
+      "source",
+      "platformType",
+      "category",
+      "quality",
+      "destinationGroupKey",
+      "groupJobIndex"
+    ],
+    "orderingAndMetadataCompared": true,
+    "originalLocalStateAndBackupBytesUnchanged": true,
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "sourceReports": [
+      {
+        "rows": 2944,
+        "configuredProducts": 8,
+        "selectedProducts": 3,
+        "scopeCases": 26,
+        "comparisons": 765216,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      },
+      {
+        "rows": 2905,
+        "configuredProducts": 7,
+        "selectedProducts": 1,
+        "scopeCases": 26,
+        "comparisons": 563400,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      },
+      {
+        "rows": 2905,
+        "configuredProducts": 8,
+        "selectedProducts": 3,
+        "scopeCases": 26,
+        "comparisons": 763992,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      },
+      {
+        "rows": 2944,
+        "configuredProducts": 8,
+        "selectedProducts": 3,
+        "scopeCases": 26,
+        "comparisons": 765216,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      },
+      {
+        "rows": 2944,
+        "configuredProducts": 8,
+        "selectedProducts": 3,
+        "scopeCases": 26,
+        "comparisons": 765216,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      },
+      {
+        "rows": 2944,
+        "configuredProducts": 8,
+        "selectedProducts": 3,
+        "scopeCases": 26,
+        "comparisons": 765216,
+        "mismatchCount": 0,
+        "sourceUnchanged": true
+      }
+    ],
+    "limitations": [
+      "Only twelve projected task fields, their order, and selected metadata were compared; task config values, every UI behavior and every execution branch are not proven by this audit.",
+      "Current cloud and five available backups do not establish the latest original browser data, previous favorites, all older history, or all other devices."
+    ]
+  },
+  "frozenReferenceFixtureDiagnosis": {
+    "initialFailures": 2,
+    "initialFailureOutputsPreserved": true,
+    "cause": "The frozen classifier infers from supported source text; the newer classifier additionally honors explicit Chinese categories. Earlier fixtures with only explicit Chinese categories did not establish original classification parity.",
+    "resolution": "Use original supported source-text hints for parity fixtures and a separate test to document added Chinese category behavior. Original source remains frozen; no normalization in the live queue projection audit."
+  },
+  "originalBothServices": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "serviceReloadedWithProcessPauseAndDiskGuards": true,
+  "cloudReadback": {
+    "ok": true,
+    "kind": "manual_confirmation_deployment_after_readonly",
+    "currentDeviceAllCloudDocumentsAndInventoryUnchanged": true,
+    "documents": 19,
+    "taskCount": 778,
+    "authenticatedReceiptRouteMissingTaskRejected": 403,
+    "liveManualConfirmationPerformed": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "firstCloudReadbackFailure": {
+    "terminal": true,
+    "curlExitCode": 35,
+    "subsequentIndependentReadbackPassed": true,
+    "outputPreserved": true
+  },
+  "workerChangedOrDeployed": false,
+  "originalChromeLaunched": false,
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "remaining": [
+    "latest original browser data and previous favorites",
+    "complete old history and other devices",
+    "all original execution and special publishing branches",
+    "remaining settings and dynamic controls and media branches",
+    "navigation queue and quick-open local pending state correspondence"
+  ],
+  "outputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-pending-batch-settings-before-2026-10-08.txt",
+      "capturedOutputSha256": "3d315538667aac6075735d1c768a9940d8342e15363e53bb8cd648074a4053c2",
+      "gitLfBlobSha256": "1c3d5b7bc95e231c466d820a41ba89437fb698a8b1194b78af02ca4733ebb927"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-pending-batch-settings-after-2026-10-08.txt",
+      "capturedOutputSha256": "ac7a85980e4b09b79d68a6371090b23344e446b7625fdb6e7b8fd5c73c16f9a9",
+      "gitLfBlobSha256": "81ce929900ba72f984f709a08e9fec3026f79d0135997403a4b5794077c9c824"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-focused-final-2026-10-08.txt",
+      "capturedOutputSha256": "f33e69e9b7dcae7322adbbbdd4f347345c2ce90145f22fb551af43f67343de7a",
+      "gitLfBlobSha256": "a0d9084163d9aac8cd68e16ad6e722d42fd52c3c91574507985820f2a70fe89b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-pending-batch-settings-native-first-2026-10-08.txt",
+      "capturedOutputSha256": "b32a4be911b462a6ddeb9330ef99bab7998760327f06607d1dd990a4608b6dd4",
+      "gitLfBlobSha256": "91ace1f634126cd4b724a1713a0553ec02440022eab15fee83d0a962cf15710b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-repository-final-2026-10-08.txt",
+      "capturedOutputSha256": "36c4946f767e16d2c2ce14b3931f3ca94c632205176f564d69a435b8f1f00f83",
+      "gitLfBlobSha256": "848613dea2159d0f8eff92bbcfbfa054133561bc3a93a273276aa04d5b17589c"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-current-first-2026-10-08.txt",
+      "capturedOutputSha256": "53e0a6f2580547b5698cba94a080031f802c374749c1aba9349faf57d7cb11e1",
+      "gitLfBlobSha256": "37adbb39fc4da2eee687c5314057077bd8bf2e7d3a0a2dd4cc64b909fa9e38b3"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-frozen-first-2026-10-08.txt",
+      "capturedOutputSha256": "ff6c05d8d868d035d9b7e4735fbd2b0b446a47fdb05de93cdd99a3c974b6f982",
+      "gitLfBlobSha256": "0f6b07c9feffdaf2e0f7ca5e56055eb6bc065de05f862eef6bdb3a1d995e4468"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-frozen-second-2026-10-08.txt",
+      "capturedOutputSha256": "4dad0ccfc08b8b2ef8b90827b50211c6d5449731d593714a4d0aa061bb0ade6f",
+      "gitLfBlobSha256": "21e99ffdd49e01caa7ae9459e0f80a1fff42a326466afaebec2818104d4d5741"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-frozen-third-2026-10-08.txt",
+      "capturedOutputSha256": "280a6af2b9b0fb568eede90f32c748280def82fc2da2c34492bb6e9348c14fad",
+      "gitLfBlobSha256": "8446168103285005dfee701f1a8e7b8ac419a6bb390b61e451546045c12be8fb"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-queue-scope-frozen-diagnosis-third-2026-10-08.txt",
+      "capturedOutputSha256": "31bdfc2df549e23e4f4b4f522539d4b0fd65e197d40b7daab56b718ff24fa935",
+      "gitLfBlobSha256": "f149a65933bdc9d66b2f1f38dd7abd2e89f27bce416863b1b39e670ec76d932a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-native-before-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfBlobSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-service-reload-2026-10-08.txt",
+      "capturedOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-native-after-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfBlobSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-cloud-after-2026-10-08.txt",
+      "capturedOutputSha256": "ef8b630db1eec366881effeef1f255861e28f4aac2a69cf23a150ce7192d8def",
+      "gitLfBlobSha256": "dd88b559f3fe39b0d755c2cfcb28725d64452842db25a7b7739e888e297c5bb9"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08/original-batch-settings-cloud-after-retry-2026-10-08.txt",
+      "capturedOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitLfBlobSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486"
+    }
+  ]
+}

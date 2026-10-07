@@ -1,0 +1,10 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/manual-confirmation-cloud-readonly-2026-10-08.mjs:15
+ await new Promise((done,reject)=>{child.on('error',reject);child.on('exit',code=>code===0?done():reject(Error('Read-only curl failed '+code)));});const text=Buffer.concat(chunks).toString('utf8'),at=text.lastIndexOf('\n');return{status:Number(text.slice(at+1)),data:JSON.parse(text.slice(0,at))};
+                                                                                                         ^
+
+Error: Read-only curl failed 35
+    at ChildProcess.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/manual-confirmation-cloud-readonly-2026-10-08.mjs:15:106)
+    at ChildProcess.emit (node:events:514:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:295:12)
+
+Node.js v24.21.0

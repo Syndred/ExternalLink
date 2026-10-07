@@ -1,0 +1,142 @@
+✔ the original category and group scope functions are copied exactly from the pre-refactor baseline (1.3654ms)
+✖ category and group queues match original functions including assignment, profile order, quality and compiled defaults (15.6893ms)
+✖ original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection (9.9895ms)
+✔ scoped preview freezes the original job sequence instead of expanding it into a different Cartesian scope (9.9349ms)
+✔ a complete original scoped range above five hundred keeps all identities with compact profiles and cloud recovery (195.4312ms)
+✔ unknown category, unknown group and empty original queue reject without creating or replacing any batch (2.5834ms)
+✔ another pending path on the same host stays excluded with its original reference instead of adopting mismatched recovery identities (3.1688ms)
+✔ same-host duplicate previews keep unique frozen identities and stronger cloud boundaries prevent local pending task reuse (3.6989ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 775.1354
+
+✖ failing tests:
+
+test at tests\executor-original-library-batch-scope.test.mjs:22:1
+✖ category and group queues match original functions including assignment, profile order, quality and compiled defaults (15.6893ms)
+  AssertionError [ERR_ASSERTION]: {"category":"AI 工具目录"}
+  + actual - expected
+  
+  + [
+  +   {
+  +     category: 'AI 工具目录',
+  +     destinationGroupKey: 'first.example/form',
+  +     groupJobIndex: 1,
+  +     profileId: 'p',
+  +     quality: {
+  +       metrics: {
+  +         ageMonths: null,
+  +         da: 70,
+  +         difficulty: null,
+  +         dofollow: null,
+  +         dr: 80,
+  +         indexable: null,
+  +         linkType: '',
+  +         relevance: null,
+  +         spamScore: null,
+  +         traffic: null,
+  +         verifiedAt: ''
+  +       },
+  +       reasons: [
+  +         '权威 +16'
+  +       ],
+  +       score: 51,
+  +       tier: '观察'
+  +     },
+  +     source: 'table',
+  +     url: 'https://first.example/form'
+  +   },
+  +   {
+  +     category: 'AI 工具目录',
+  +     destinationGroupKey: 'third.example/form',
+  +     groupJobIndex: 1,
+  +     profileId: 'q',
+  +     quality: {
+  +       metrics: {
+  +         ageMonths: null,
+  +         da: 40,
+  +         difficulty: null,
+  +         dofollow: null,
+  +         dr: 50,
+  +         indexable: null,
+  +         linkType: '',
+  +         relevance: null,
+  +         spamScore: null,
+  +         traffic: null,
+  +         verifiedAt: ''
+  +       },
+  +       reasons: [
+  +         '权威 +10'
+  +       ],
+  +       score: 45,
+  +       tier: '观察'
+  +     },
+  +     source: 'table',
+  +     url: 'https://third.example/form'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-library-batch-scope.test.mjs:25:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { url: 'https://first.example/form', profileId: 'p', source: 'table', category: 'AI 工具目录', quality: [Object], destinationGroupKey: 'first.example/form', groupJobIndex: 1 }, { url: 'https://third.example/form', profileId: 'q', source: 'table', category: 'AI 工具目录', quality: [Object], destinationGroupKey: 'third.example/form', groupJobIndex: 1 } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-library-batch-scope.test.mjs:29:1
+✖ original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection (9.9895ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   {
+  +     category: 'AI 工具目录',
+  +     destinationGroupKey: 'tipseason.com/old',
+  +     groupJobIndex: 1,
+  +     profileId: 'q',
+  +     quality: {
+  +       metrics: {
+  +         ageMonths: 30,
+  +         da: 90,
+  +         difficulty: null,
+  +         dofollow: null,
+  +         dr: 90,
+  +         indexable: null,
+  +         linkType: '',
+  +         relevance: null,
+  +         spamScore: null,
+  +         traffic: null,
+  +         verifiedAt: ''
+  +       },
+  +       reasons: [
+  +         '权威 +18'
+  +       ],
+  +       score: 54,
+  +       tier: '观察'
+  +     },
+  +     source: 'table',
+  +     url: 'https://tipseason.com/old'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-library-batch-scope.test.mjs:33:227)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { url: 'https://tipseason.com/old', profileId: 'q', source: 'table', category: 'AI 工具目录', quality: [Object], destinationGroupKey: 'tipseason.com/old', groupJobIndex: 1 } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

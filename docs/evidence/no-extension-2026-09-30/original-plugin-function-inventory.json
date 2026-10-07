@@ -2653,9 +2653,9 @@
       "id": "cfgConcurrency",
       "scope": "全局并发设置",
       "status": "implemented_requires_full_acceptance",
-      "verification": "原参数及目标分组行为已接入；592项、实际服务界面及隔离原表单执行通过。真实只读参数显示及非法请求拒绝通过；其他完整原行为仍须验收",
+      "verification": "待同步并发与黑名单预览／启动已补齐；实际两个服务与界面夹具通过，最终929项全量通过。原服务更新前后只读保持。其余完整原分支仍须验收",
       "mapping": "设置与备份 / 同时处理的外链目标数",
-      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-controls-2026-10-07.json"
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-settings-2026-10-08.json"
     },
     {
       "id": "cfgFillOnly",
@@ -2913,5 +2913,29 @@
     "realSubmissions": 0,
     "migrationComplete": false,
     "evidence": "original-pending-settings-2026-10-08.json"
+  },
+  "originalPendingBatchSettingsCheckpoint": {
+    "featureCommit": "24f5b562a827cef48f93f641485bebffef085f44",
+    "pendingPreviewConcurrencyAndGates": true,
+    "pendingStartGatesBeforeRegistration": true,
+    "frozenOriginalHelperLibrariesAndQueueFunctions": true,
+    "actualNativeUiAndBothServicesFixture": true,
+    "frozenIdsAndConfigUnchanged": true,
+    "liveQueueProjectionSources": 6,
+    "liveQueueProjectionScopes": 156,
+    "liveTaskFieldComparisons": 4388256,
+    "liveProjectionMismatches": 0,
+    "taskConfigAndAllExecutionBranchesProven": false,
+    "repositoryTestsPassed": 929,
+    "newTests": 5,
+    "bothOriginalServicesUpdatedAndReadOnlyChecked": true,
+    "cloudDocuments": 19,
+    "currentDeviceTaskInventory": 778,
+    "firstCloudReadbackCurl35Preserved": true,
+    "subsequentCloudReadbackPassed": true,
+    "businessUnchanged": true,
+    "realSubmissions": 0,
+    "migrationComplete": false,
+    "evidence": "original-batch-settings-2026-10-08.json"
   }
 }

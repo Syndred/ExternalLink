@@ -1,5 +1,26 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalNavigationRejudgeCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "f7308c1",
+    "evidence": "original-navigation-rejudge-2026-10-08.json",
+    "preparationNavigationRejudgeConnected": true,
+    "originalReadinessAndErrorSourceCompared": true,
+    "originalSameTaskPageAndCumulativeBudgetsRetained": true,
+    "sqliteAndAuthenticatedD1PostgreSqlRestoreVerified": true,
+    "actualIsolatedNavigationPreparationCases": 2,
+    "actualIsolatedNativeWorkCases": 2,
+    "previousActualAgentPreparationCasesRerun": 12,
+    "fullSuitePassed": 854,
+    "newSince839": 15,
+    "nativeServicesReloadedAndBeforeAfterReadbacksPassed": true,
+    "workerCodeChangedOrRedeployed": false,
+    "allOriginalVisualFinalSubmissionAndReceiptsVerified": false,
+    "allOriginalNavigationAndVisitEntriesVerified": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "navigationDraftProgressPushCheckpoint": {
     "date": "2026-10-08",
     "evidence": "progress-push-navigation-draft-2026-10-08.json",

@@ -1,0 +1,87 @@
+{
+  "kind": "progress_only_unpublished_new_product_known_forms_review",
+  "date": "2026-10-07",
+  "latestFeatureCommit": "e4b5264",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "migrationComplete": false,
+  "gitPull": "Already up to date",
+  "functionalChangesPublishedThisCheckpoint": false,
+  "unpublishedFiles": [
+    "executor/src/known-copy.mjs",
+    "executor/src/runtime.mjs",
+    "tests/executor-aioftheday-copy.test.mjs",
+    "executor/test/original-new-product-known-forms.mjs"
+  ],
+  "unpublishedBehavior": "Six known-site adapters use the frozen current product fields instead of JevPlay-specific copy, pricing, technology, category or tag defaults; missing facts are not invented.",
+  "previousTestOutputsRead": {
+    "targeted": {
+      "path": "executor/test-output/original-new-product-copy-targeted-first-2026-10-07.txt",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "isolatedBrowser": {
+      "path": "executor/test-output/original-new-product-known-forms-browser-first-2026-10-07.txt",
+      "passed": true,
+      "fixtureHosts": ["aioftheday.com", "poweredbyai.app", "10015.io", "devpages.io", "futuretools.io", "tools-ai.online"],
+      "usesLocalFixtures": true,
+      "originalUnknownTaskAndFixedBudgetPreserved": true,
+      "posts": 0,
+      "externalRequests": 0,
+      "realModelCalls": 0,
+      "productionWrites": 0,
+      "provesRealSiteAcceptance": false
+    },
+    "lastPublishedFullSuite": {
+      "path": "executor/test-output/original-embedded-native-media-all-final-2026-10-07.txt",
+      "featureCommit": "e4b5264",
+      "passed": 737,
+      "failed": 0,
+      "skipped": 0,
+      "provesUnpublishedChanges": false
+    },
+    "rerunThisCheckpoint": false,
+    "fullSuiteAfterUnpublishedChangesRun": false,
+    "provesFullMigration": false
+  },
+  "currentReadOnlyState": {
+    "script": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "passed": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allProductionCloudDocumentHashesRechecked": false,
+    "originalBrowserConnectionRechecked": false,
+    "completeProductionUiRechecked": false
+  },
+  "remainingAcceptance": [
+    "full regression and guarded original-service validation of unpublished adapters",
+    "latest original browser products, favorites, categories and groups",
+    "other devices, old aliases, complete history and old media ownership",
+    "remaining callbacks, manual, dynamic and special pages",
+    "actual external service results and every original requirement with individual evidence"
+  ],
+  "workerDeploymentThisCheckpoint": false,
+  "nativeServicesReloadedThisCheckpoint": false,
+  "productionDocumentAdoptions": 0,
+  "aiRequestsThisCheckpoint": 0,
+  "newRealSubmissions": 0,
+  "unrelatedLocalChangesPreserved": true
+}

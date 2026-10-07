@@ -12,12 +12,12 @@ import '../../../core/submission-timeline.js';
 import '../../../core/executor-contract.js';
 import { applicationMutation as libraryMutation } from '../../../core/application-mutation.mjs';
 import {profileMediaReferences} from '../../../core/media-assets.mjs';
-import {backupKeys,backupKeyDependencies} from '../../../core/application-backup.mjs';
+import {backupKeys} from '../../../core/application-backup.mjs';
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
 import {libraryTransfer} from './library-transfer.mjs';
 import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
-import {timelineDocumentKeys} from '../../../core/original-timeline-mutation.mjs';
+import {applicationMutationDependencies} from '../../../core/application-mutation-dependencies.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
@@ -76,14 +76,14 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path.startsWith('media-assets/')&&request.method==='GET')return json({ok:true,asset:await readDeviceMedia(env.MEDIA_BUCKET,workspace,path.slice(13))});
   if(path==='media-upload'&&request.method==='POST')return json({ok:true,asset:await putDeviceMedia(env.MEDIA_BUCKET,workspace,input,(await store.document('siteProfiles'))?.data)});
   if(path==='library'&&request.method==='POST'){
-   const type=input.operation?.type,dependencies=['recover_local','backup_prepared_key'].includes(type)?[input.operation.key]:type==='pin'?['urlList']:['clear_deleted','set_deleted'].includes(type)?['deletedSubmissionKeys']:type==='backup_merge'?backupKeys:type==='backup_key_merge'?backupKeyDependencies(input.operation.key):type==='domain_metrics'?['domainMetricsCache']:type==='submify_refs'||type==='submify_import'||type==='create'||type==='import'||type==='edit'?['sheetTableData']:type==='monitor_result'?['submissionRecords','linkMonitorResults']:type==='monitor_publication'?['submissionRecords','linkMonitorResults','siteProfiles']:['submify_gates','mark','clear_annotation','remove_queue','form_knowledge'].includes(type)?['siteAnnotations']:type==='preferences'?['siteAnnotations','siteProfiles']:type==='timeline'?['submissionTimeline']:type==='settings'?[input.operation.key]:type==='profile_selection'?['siteProfiles',input.operation.key]:['siteProfiles'];
-   if(type==='timeline')dependencies.splice(0,dependencies.length,...timelineDocumentKeys);
+   const type=input.operation?.type,dependencies=applicationMutationDependencies(input.operation);
    if(dependencies.some(key=>!backupKeys.includes(key)))fail('外链库字段未授权',403);const documents={},revisions={};for(const key of dependencies){const row=await store.document(key);documents[key]=row?.data;revisions[key]=row?.revision||0;}
    const change=libraryMutation(documents,input.operation,{inPlace:true});
    if(revisions[change.key]!==input.revision)fail('外链库已由其他客户端更新，请先回读');
    if(change.updates){const expected=Object.fromEntries(change.revisionKeys.map(key=>[key,input.revisions?input.revisions[key]:revisions[key]]));const saved=await store.putDocuments(change.updates,expected);return json({ok:true,key:change.key,event:change.event,record:change.record,revision:saved.revisions[change.key],...saved});}
    if(type==='recover_local'){await store.archive('local-source-'+input.operation.id,'source_backup',{key:change.key,data:input.operation.data});await store.archive('local-before-'+input.operation.id+'-'+input.revision,'source_backup',{key:change.key,revision:input.revision,data:documents[change.key]??null});}
    if(type==='backup_prepared_key'){await store.archive('backup-source-'+input.operation.id,'source_backup',{key:change.key,patch:input.operation.patch,profileIdMap:input.operation.profileIdMap||{}});await store.archive('backup-before-'+input.operation.id+'-'+input.revision,'source_backup',{key:change.key,revision:input.revision,data:documents[change.key]??null});}
+   if(dependencies.length>1){const saved=await store.putDocuments({[change.key]:change.data},revisions);return json({ok:true,key:change.key,revision:saved.revisions[change.key],...saved});}
    return json({ok:true,key:change.key,...await store.putDocument(change.key,change.data,input.revision)});
   }
   if(path==='profile'&&request.method==='POST'){

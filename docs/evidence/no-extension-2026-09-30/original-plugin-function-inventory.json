@@ -1,5 +1,22 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalNeonLibraryCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-neon-library-2026-10-07.json",
+    "fullSuitePassed": 702,
+    "actualNeonHttpDriverIsolatedSqlOperations": 41,
+    "allOriginalApplicationMutationFamiliesRouted": true,
+    "nativeLargeBackupLostReplyRecovery": true,
+    "oldAndNewMediaCatalogPreserved": true,
+    "bothBackendAssociatedRevisionGuard": true,
+    "jsonbKeyOrderDoesNotCauseFalseConflicts": true,
+    "actualNativeChromeSaveAndReadback": true,
+    "originalTasksReceiptsAndBudgetsPreserved": true,
+    "productionFieldAlignmentSamples": 58,
+    "productionWrites": 0,
+    "productionNeonRequests": 0,
+    "migrationComplete": false
+  },
   "originalManualBudgetCheckpoint": {
     "date": "2026-10-07",
     "evidence": "original-manual-budget-2026-10-07.json",

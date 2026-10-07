@@ -12,6 +12,10 @@ import '../../../core/submission-timeline.js';
 import '../../../core/library-classifier.js';
 import '../../../core/executor-contract.js';
 import {neonTimelineMutation} from './neon-timeline.mjs';
+import {neonLibraryMutation} from './neon-library.mjs';
+import {libraryTransfer} from './library-transfer.mjs';
+import {neonWorkspaceRead,readNeonDeviceMedia,putNeonDeviceMedia} from './neon-workspace.mjs';
+import {applicationMutation} from '../../../core/application-mutation.mjs';
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 // PostgreSQL builds these authenticated read envelopes as JSON text. Returning
@@ -45,12 +49,15 @@ export async function installExecutorSchema(sql) {
 }
 
 export async function executorApi(request, env, sql, workspaceId, helpers) {
-  const path = new URL(request.url).pathname.replace(/\/+$/, '');
+  const url=new URL(request.url);let path = url.pathname.replace(/\/+$/, '');
   if (!path.startsWith('/v1/executor/')) return null;
   try {
     const token = parseBearerToken(request.headers.get('Authorization'));
     const admin = !!token && !!env.APP_ACCESS_TOKEN && await secureEqual(token, env.APP_ACCESS_TOKEN);
-    const input = request.method === 'GET' ? {} : await request.json();
+    const raw=request.method==='GET'?'{}':await request.text();
+    if(raw.length>9*1024*1024)fail('请求过大',413);
+    let input;try{input=JSON.parse(raw);}catch{fail('请求必须是有效JSON',400);}
+    if(!input||typeof input!=='object'||Array.isArray(input))fail('请求必须是JSON对象',400);
     if (path === '/v1/executor/devices' && request.method === 'POST') {
       let enrollment;
       try { enrollment = JSON.parse(env.EXECUTOR_ENROLLMENT || 'null'); } catch {}
@@ -78,6 +85,13 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
     if (!deviceId) return reply({ ok: false, error: '设备未授权或已撤销' }, 401);
     if (!schemaUpgrades.has(env)) schemaUpgrades.set(env, Promise.resolve(sql`alter table externallink_executor_tasks add column if not exists controller_id text`).catch(error => { schemaUpgrades.delete(env); throw error; }));
     await schemaUpgrades.get(env);
+    if(path.startsWith('/v1/executor/library-transfer/')){
+      const action=path.slice('/v1/executor/library-transfer/'.length);
+      if((action==='status'&&request.method!=='GET')||(action!=='status'&&request.method!=='POST'))fail('备份传输方法无效',405);
+      const transferred=await libraryTransfer(env.MEDIA_BUCKET,workspaceId,deviceId,action,action==='status'?{id:url.searchParams.get('id')}:input);
+      if(action!=='commit')return reply(transferred);
+      path='/v1/executor/'+transferred.route;input=transferred.payload;
+    }
     if(/^\/v1\/executor\/ai\/(extract-site|generate-site|comment|domain-metrics)$/.test(path)&&request.method==='POST'){
       if(!helpers.assistant)fail('资料与评论服务暂不可用',503);
       return reply(await helpers.assistant(path.split('/').at(-1),input));
@@ -108,21 +122,31 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         from externallink_workspace_documents where workspace_id=${workspaceId}`;
       return replyJsonText(rows[0].payload);
     }
+    if(path==='/v1/executor/revisions'&&request.method==='GET'){
+      const rows=await sql`select document_key,revision from externallink_workspace_documents where workspace_id=${workspaceId}`;
+      return reply({ok:true,deviceId,workspaceId,revisions:Object.fromEntries(rows.map(row=>[row.document_key,Number(row.revision)]))});
+    }
+    if(path.startsWith('/v1/executor/media-assets/')&&request.method==='GET')return reply({ok:true,asset:await readNeonDeviceMedia(sql,env.MEDIA_BUCKET,workspaceId,path.slice('/v1/executor/media-assets/'.length))});
+    if(path==='/v1/executor/media-upload'&&request.method==='POST')return reply({ok:true,asset:await putNeonDeviceMedia(sql,env.MEDIA_BUCKET,workspaceId,input)});
+    if(path.startsWith('/v1/executor/workspace/')){
+      const target=path.slice('/v1/executor/workspace/'.length);
+      if(!(request.method==='GET'&&/^(journal-documents|submission-tasks|media|media\/[a-zA-Z0-9._-]+|automation\/artifacts\/[a-zA-Z0-9._-]+)$/.test(target))&&!(request.method==='POST'&&target==='timeline'))fail('工作台接口未授权',403);
+      if(!['journal-documents','timeline'].includes(target))return await neonWorkspaceRead(sql,env.MEDIA_BUCKET,workspaceId,target,url.searchParams);
+    }
     if(path==='/v1/executor/workspace/journal-documents'&&request.method==='GET')return reply({ok:true,...await helpers.listSnapshot(sql,workspaceId)});
     if(path==='/v1/executor/workspace/timeline'&&request.method==='POST'){
       for(let attempt=0;attempt<3;attempt++)try{return reply(await neonTimelineMutation(sql,workspaceId,{action:'add',event:input.event}));}catch(error){if(error.status!==409||attempt===2||/编号已存在/.test(error.message))throw error;}
     }
-    if(path==='/v1/executor/library'&&request.method==='POST'&&input.operation?.type==='timeline')return reply(await neonTimelineMutation(sql,workspaceId,input.operation,input));
+    if(path==='/v1/executor/library'&&request.method==='POST')return reply(await neonLibraryMutation(sql,workspaceId,input.operation,input,env));
     if (path === '/v1/executor/profile' && request.method === 'POST') {
       const snapshot = await helpers.listSnapshot(sql, workspaceId);
       const original = snapshot.documents.siteProfiles?.[input.profileId];
       if (!original || input.profile?.id !== input.profileId) fail('资料身份不匹配', 403);
       if (input.revision !== snapshot.revisions.siteProfiles) fail('资料版本已变化，请回读后重试', 409);
-      const profile = { ...original, ...input.profile, fields: { ...original.fields, ...input.profile.fields }, media: { ...original.media, ...input.profile.media }, updatedAt: new Date().toISOString() };
-      const rows = await sql`update externallink_workspace_documents set data=jsonb_set(data,ARRAY[${input.profileId}],${JSON.stringify(profile)}::jsonb),revision=revision+1,updated_at=now()
-        where workspace_id=${workspaceId} and document_key='siteProfiles' and revision=${input.revision} returning revision`;
-      if (!rows.length) fail('资料发生并发变更',409);
-      return reply({ ok: true, profile, revision: Number(rows[0].revision) });
+      const operation={type:'profile',profileId:input.profileId,profile:input.profile,at:new Date().toISOString()};
+      const profile=applicationMutation(snapshot.documents,operation).data[input.profileId];
+      const saved=await neonLibraryMutation(sql,workspaceId,operation,input,env);
+      return reply({...saved,profile});
     }
     if (path === '/v1/executor/runs' && request.method === 'GET') {
       const query = new URL(request.url).searchParams;

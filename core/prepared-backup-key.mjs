@@ -1,6 +1,7 @@
 import {backupKeys,validateApplicationBackup} from './application-backup.mjs';
 import {remapProfileRecoveryKey,mergeProtectedBackupRecords} from './profile-recovery-source.mjs';
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),object=value=>value&&typeof value==='object'&&!Array.isArray(value),unsafe=new Set(['__proto__','constructor','prototype']);
+import {jsonValueEqual as same} from './json-value.mjs';
+const object=value=>value&&typeof value==='object'&&!Array.isArray(value),unsafe=new Set(['__proto__','constructor','prototype']);
 export function preparedBackupPatch(base,data){
  const changes=[];
  function visit(previous,next,path){

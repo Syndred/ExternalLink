@@ -1,5 +1,6 @@
 import './profiles.js';
 import './queue.js';
+import {jsonValueEqual} from './json-value.mjs';
 const P=globalThis.ExtLinkProfiles,Q=globalThis.ExtLinkQueue;
 const unsafe=key=>['__proto__','prototype','constructor'].includes(key);
 const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
@@ -43,12 +44,12 @@ export function formKnowledgeMutation(documents,operation){
   return{key:'siteProfiles',data:{...documents.siteProfiles,[operation.profileId]:{...expanded,learnedFieldMappings:{...profile.learnedFieldMappings,[host]:{...profile.learnedFieldMappings?.[host],...mappings}},updatedAt:operation.at}}};
  }
  const reusable=reusableDestinationMappings(mappings),schema=destinationFormSchema(operation.schema),annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[key]||annotations[domain]||{};
- const annotation={...previous,url:previous.url||operation.url,domain,formKnowledge:{version:1,mappings:{...previous.formKnowledge?.mappings,...reusable},schema:schema||previous.formKnowledge?.schema||null,stages:schema?[...(previous.formKnowledge?.stages||[]).filter(stage=>JSON.stringify(stage)!==JSON.stringify(schema)),schema].slice(-12):previous.formKnowledge?.stages||[],updatedAt:operation.at}};
+ const annotation={...previous,url:previous.url||operation.url,domain,formKnowledge:{version:1,mappings:{...previous.formKnowledge?.mappings,...reusable},schema:schema||previous.formKnowledge?.schema||null,stages:schema?[...(previous.formKnowledge?.stages||[]).filter(stage=>!jsonValueEqual(stage,schema)),schema].slice(-12):previous.formKnowledge?.stages||[],updatedAt:operation.at}};
  annotations[key]=annotation;annotations[domain]=structuredClone(annotation);return{key:'siteAnnotations',data:annotations};
 }
 export function formKnowledgeSatisfied(documents,operation){
  try{const mappings=operation.type==='form_learning'?fillLearningMappings(operation.mappings):reusableDestinationMappings(operation.mappings),host=new URL(operation.url).hostname;
-  if(operation.type==='form_learning'){formKnowledgeMutation(documents,operation);const profile=documents.siteProfiles?.[operation.profileId];return!!profile&&Object.entries(mappings).every(([key,item])=>JSON.stringify(profile.learnedFieldMappings?.[host]?.[key])===JSON.stringify(item))&&P.learnProfileFieldsFromFill(profile,mappings).added.length===0;}
-  const schema=destinationFormSchema(operation.schema);return[Q.normalizeDestinationKey(operation.url),Q.extractDomain(operation.url)].every(key=>{const knowledge=documents.siteAnnotations?.[key]?.formKnowledge;return!!knowledge&&Object.entries(mappings).every(([field,item])=>JSON.stringify(knowledge.mappings?.[field])===JSON.stringify(item))&&(!schema||(knowledge.stages||[]).some(stage=>JSON.stringify(stage)===JSON.stringify(schema)));});
+  if(operation.type==='form_learning'){formKnowledgeMutation(documents,operation);const profile=documents.siteProfiles?.[operation.profileId];return!!profile&&Object.entries(mappings).every(([key,item])=>jsonValueEqual(profile.learnedFieldMappings?.[host]?.[key],item))&&P.learnProfileFieldsFromFill(profile,mappings).added.length===0;}
+  const schema=destinationFormSchema(operation.schema);return[Q.normalizeDestinationKey(operation.url),Q.extractDomain(operation.url)].every(key=>{const knowledge=documents.siteAnnotations?.[key]?.formKnowledge;return!!knowledge&&Object.entries(mappings).every(([field,item])=>jsonValueEqual(knowledge.mappings?.[field],item))&&(!schema||(knowledge.stages||[]).some(stage=>jsonValueEqual(stage,schema)));});
  }catch{return false;}
 }

@@ -144,3 +144,14 @@ test('device field learning writes original product memory and answer-free desti
  assert.equal((await call('wrong',{operation,revision:1})).http,401);assert.equal((await call(token,{operation,revision:1})).http,200);assert.equal((await call(token,{operation,revision:1})).http,409);assert.equal((await f.store.document('siteProfiles')).data.p.learnedFieldMappings['directory.example'].slot.value,'Original Product');
  const schema={url:'https://directory.example/form?token=private',fields:[{name:'slot',type:'text',label:'Display identity',value:'Original Product'}]};const shared={id:'memory',at:operation.at,type:'form_knowledge',url:operation.url,mappings,schema};assert.equal((await call(token,{operation:shared,revision:1})).http,200);const annotation=(await f.store.document('siteAnnotations')).data['directory.example'];assert.equal(annotation.note,'Keep note');assert.equal(annotation.library.favorite,true);assert.equal(annotation.formKnowledge.mappings.slot.value,undefined);assert.equal(annotation.formKnowledge.schema.fields[0].value,undefined);assert.equal(annotation.formKnowledge.schema.url,operation.url);assert.equal((await f.store.document('submissionRecords')).data.old.evidence,'Keep receipt');
 });
+
+test('D1 favorite allocation rejects a concurrent product change even when its annotation revision has not changed',async()=>{
+ const f=fixture();try{
+  await f.store.putDocument('siteProfiles',{p:{id:'p',name:'Original'}},0);await f.store.putDocument('siteAnnotations',{original:{note:'Keep original'}},0);
+  const response=await d1Executor(new Request('https://fixture.invalid/v2/executor/devices',{method:'POST',headers:{Authorization:'Bearer admin-test'},body:'{}'}),f.env,'default'),token=(await response.json()).deviceToken;
+  const oldBatch=f.env.LEDGER_DB.batch.bind(f.env.LEDGER_DB);let inject=true;
+  f.env.LEDGER_DB.batch=async statements=>{if(inject){inject=false;await f.store.putDocument('siteProfiles',{p:{id:'p',name:'Original',archived:true}},1);}return oldBatch(statements);};
+  const result=await d1Executor(new Request('https://fixture.invalid/v2/executor/library',{method:'POST',headers:{Authorization:'Bearer '+token},body:JSON.stringify({operation:{type:'preferences',id:'original-favorite',at:'now',url:'https://directory.fixture.invalid',preferences:{favorite:true,profileIds:['p']}},revision:1})}),f.env,'default');
+  assert.equal(result.status,409,JSON.stringify(await result.json()));assert.equal((await f.store.document('siteProfiles')).data.p.archived,true);assert.deepEqual((await f.store.document('siteAnnotations')).data,{original:{note:'Keep original'}});assert.equal((await f.store.document('siteAnnotations')).revision,1);assert.equal(f.sqlite.prepare('SELECT count(*) n FROM executor_runs').get().n,0);
+ }finally{f.sqlite.close();}
+});

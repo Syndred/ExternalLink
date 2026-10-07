@@ -26,6 +26,16 @@ create table if not exists externallink_timeline_revisions (
   changed_at timestamptz not null default now()
 );
 
+-- Device recovery preserves both the exact import and the preceding document.
+create table if not exists externallink_executor_recovery (
+  workspace_id text not null references externallink_workspaces(workspace_id) on delete cascade,
+  archive_id text not null,
+  kind text not null,
+  data jsonb not null,
+  created_at timestamptz not null default now(),
+  primary key (workspace_id, archive_id)
+);
+
 create index if not exists externallink_timeline_revisions_event_idx
   on externallink_timeline_revisions (workspace_id, event_id, changed_at desc);
 

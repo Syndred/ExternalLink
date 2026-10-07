@@ -5,7 +5,7 @@ const flushOperations=new WeakMap();
 export class Cloud {
   constructor(config, {onNetworkFailure, onSuccess} = {}) { this.config = config; this.onNetworkFailure = onNetworkFailure; this.onSuccess = onSuccess; }
   async request(route, body, method = body ? 'POST' : 'GET') {
-    if(method==='POST'&&['library','profile'].includes(route)&&body&&this.config.storageBackend==='d1'){
+    if(method==='POST'&&['library','profile'].includes(route)&&body){
       const bytes=Buffer.from(JSON.stringify(body));
       if(bytes.length>1024*1024)return this.transferLibrary(route,bytes);
     }
@@ -45,7 +45,8 @@ export class Cloud {
     return data;
   }
   async transferLibrary(route,bytes){
-    const config=this.config,identity=JSON.stringify([config.endpoint,config.workspaceId,config.deviceToken]),check=()=>{if(identity!==JSON.stringify([this.config.endpoint,this.config.workspaceId,this.config.deviceToken]))throw Error('工作区或设备已切换，原备份传输保留');};
+    const identityOf=config=>JSON.stringify([config.endpoint,config.workspaceId,config.deviceId||'',config.storageBackend==='d1'?'d1':'neon',config.deviceToken]);
+    const identity=identityOf(this.config),check=()=>{if(identity!==identityOf(this.config))throw Error('工作区、设备或后端已切换，原备份传输保留');};
     const id=createHash('sha256').update(bytes).digest('hex'),parts=[];
     for(let offset=0;offset<bytes.length;offset+=512*1024){const part=bytes.subarray(offset,Math.min(offset+512*1024,bytes.length));parts.push({sha256:createHash('sha256').update(part).digest('hex'),bytes:part.length});}
     check();const status=await this.request('library-transfer/start',{id,route,bytes:bytes.length,parts});check();

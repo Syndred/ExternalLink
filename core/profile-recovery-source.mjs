@@ -2,6 +2,7 @@ import './profiles.js';
 import './queue.js';
 import './submission-timeline.js';
 import './backup.js';
+import {jsonValueEqual} from './json-value.mjs';
 
 const stableId=id=>/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(id)&&!['constructor','prototype','__proto__'].includes(id);
 export function mergeProtectedBackupRecords(current,candidate){
@@ -40,11 +41,11 @@ export function remapProfileRecoveryKey(value,key,idMap){
  if(key==='submissionRecords')return remapProfileRecords(data,idMap);
  if(key==='siteProfiles'){
   const projects=Object.fromEntries([...new Set(Object.entries(idMap).filter(([old,stable])=>data[old]||data[stable]).map(([,stable])=>stable))].map(id=>[id,{}])),seeded=globalThis.ExtLinkProfiles.stabilizeTableProfiles(projects,data).profiles;
-  for(const [id,profile]of Object.entries(seeded)){const versions=new Map();for(const old of [id,...Object.keys(idMap).filter(old=>idMap[old]===id)])for(const asset of data[old]?.mediaVersions||[]){const previous=versions.get(asset.assetId);if(!asset.assetId||previous&&JSON.stringify(previous)!==JSON.stringify(asset))throw Error('同一素材编号内容不一致，合并已停止');versions.set(asset.assetId,asset);}if(versions.size)profile.mediaVersions=[...versions.values()];}return seeded;
+  for(const [id,profile]of Object.entries(seeded)){const versions=new Map();for(const old of [id,...Object.keys(idMap).filter(old=>idMap[old]===id)])for(const asset of data[old]?.mediaVersions||[]){const previous=versions.get(asset.assetId);if(!asset.assetId||previous&&!jsonValueEqual(previous,asset))throw Error('同一素材编号内容不一致，合并已停止');versions.set(asset.assetId,asset);}if(versions.size)profile.mediaVersions=[...versions.values()];}return seeded;
  }
  if(key==='sheetTableData'){for(const row of data.entries||[])remapProfileReferences(row,idMap);if(data.submissionRecords)data.submissionRecords=remapProfileRecords(data.submissionRecords,idMap);}
  if(key==='siteAnnotations')for(const row of Object.values(data))if(row&&typeof row==='object')remapProfileReferences(row,idMap);
- if(key==='linkMonitorResults'){const result={};for(const [old,row]of Object.entries(data)){const separator=old.lastIndexOf('::'),next=separator<0?old:old.slice(0,separator+2)+remap(old.slice(separator+2));if(Object.hasOwn(result,next)&&JSON.stringify(result[next])!==JSON.stringify(row))throw Error('旧产品监测引用内容不同，请先核对来源');result[next]=row;}return result;}
+ if(key==='linkMonitorResults'){const result={};for(const [old,row]of Object.entries(data)){const separator=old.lastIndexOf('::'),next=separator<0?old:old.slice(0,separator+2)+remap(old.slice(separator+2));if(Object.hasOwn(result,next)&&!jsonValueEqual(result[next],row))throw Error('旧产品监测引用内容不同，请先核对来源');result[next]=row;}return result;}
  return data;
 }
 export function prepareProfileRecoverySource(original){
@@ -60,7 +61,7 @@ export function prepareProfileRecoverySource(original){
   const versions=new Map();
   for(const originalId of [id,...Object.keys(seeded.idRemap).filter(old=>remap(old)===id)])for(const asset of documents.siteProfiles?.[originalId]?.mediaVersions||[]){
    if(!asset?.assetId)throw Error('恢复素材版本缺少编号');
-   const previous=versions.get(asset.assetId);if(previous&&JSON.stringify(previous)!==JSON.stringify(asset))throw Error('同一素材编号内容不一致，恢复已停止');
+   const previous=versions.get(asset.assetId);if(previous&&!jsonValueEqual(previous,asset))throw Error('同一素材编号内容不一致，恢复已停止');
    versions.set(asset.assetId,asset);
   }
   if(versions.size)profile.mediaVersions=[...versions.values()];
@@ -82,7 +83,7 @@ export function prepareProfileRecoverySource(original){
  const timeline=globalThis.ExtLinkSubmissionTimeline;
  documents.submissionTimeline=timeline.migrateLegacy({timeline:documents.submissionTimeline||{},submissionRecords:documents.submissionRecords,tableData:sourceTable,profileIdMap:seeded.idRemap}).timeline;
  documents.timelineSchemaVersion=Math.max(Number(documents.timelineSchemaVersion||1),timeline.SCHEMA_VERSION);
- if(documents.linkMonitorResults){const results={};for(const [key,result]of Object.entries(documents.linkMonitorResults)){const separator=key.lastIndexOf('::'),profile=separator<0?'':key.slice(separator+2),next=separator<0?key:key.slice(0,separator+2)+remap(profile);if(Object.hasOwn(results,next)&&JSON.stringify(results[next])!==JSON.stringify(result))throw Error('旧产品的监测记录对应同一入口但内容不同，请先核对来源');results[next]=result;}documents.linkMonitorResults=results;}
+ if(documents.linkMonitorResults){const results={};for(const [key,result]of Object.entries(documents.linkMonitorResults)){const separator=key.lastIndexOf('::'),profile=separator<0?'':key.slice(separator+2),next=separator<0?key:key.slice(0,separator+2)+remap(profile);if(Object.hasOwn(results,next)&&!jsonValueEqual(results[next],result))throw Error('旧产品的监测记录对应同一入口但内容不同，请先核对来源');results[next]=result;}documents.linkMonitorResults=results;}
  return documents;
 }
 export function profileRecoveryDependencyKeys(original,prepared){

@@ -1,0 +1,71 @@
+{
+  "kind": "progress_only_neon_original_feature_review_not_full_acceptance",
+  "date": "2026-10-07",
+  "latestFeatureCommit": "fd5f6bc",
+  "migrationComplete": false,
+  "cloudCodePull": {
+    "command": "git pull --ff-only",
+    "result": "Already up to date",
+    "aheadBeforeCommit": 0,
+    "behindBeforeCommit": 0
+  },
+  "previousFullSuiteReadThisCheckpoint": {
+    "output": "executor/test-output/original-manual-budget-all-final-2026-10-07.txt",
+    "passed": 694,
+    "failed": 0,
+    "skipped": 0,
+    "rerunThisCheckpoint": false,
+    "provesFullMigration": false
+  },
+  "confirmedCodeGaps": {
+    "source": "cloud/worker/src/executor-api.mjs",
+    "deviceLibraryOnlyHandlesTimeline": true,
+    "otherOriginalLibraryMutationFamiliesNotFullyRouted": true,
+    "profileStillUsesPartialDirectMerge": true,
+    "deviceLibraryTransferAndMediaEndpointsStillMissing": true,
+    "someWorkspaceReadEndpointsStillMissing": true,
+    "fixedThisCheckpoint": false,
+    "realNeonWriteAcceptance": false
+  },
+  "currentReadOnlyState": {
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "pendingLearning": 0,
+    "pendingMedia": 0,
+    "assistantEnabled": false,
+    "liveJobs": 0,
+    "runningJobs": 0,
+    "checkingWatches": 0,
+    "productRecordsIncludingArchived": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {
+      "id": "no-extension-30-2026-09-30",
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "fullCloudDocumentHashesComparedThisCheckpoint": false
+  },
+  "thisCheckpoint": {
+    "featureSourceChanged": false,
+    "newTests": 0,
+    "workerDeployed": false,
+    "nativeServicesReloaded": false,
+    "businessDocumentsAdopted": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "unrelatedLocalChangesPreserved": true
+  },
+  "remaining": [
+    "all original feature families and full save/readback over supported backends",
+    "original latest profiles, categories, groups and favorites",
+    "complete history and old media ownership",
+    "complete original manual and special page workflows",
+    "activity-only overview, add-site flows, field alignment and clear Chinese explanations",
+    "high-quality priority, DR, quality score, batch workflows, extraction, timeline, progress and AI comments"
+  ]
+}

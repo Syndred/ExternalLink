@@ -1,5 +1,6 @@
 import {backupKeys,validateApplicationBackup} from './application-backup.mjs';
 import {normalizeLegacyPreferences} from './application-preferences.mjs';
+import {prepareProfileRecoverySource} from './profile-recovery-source.mjs';
 const objectKeys=new Set(['targetFilters','linkMonitorSchedule']);
 const arrayKeys=new Set(['selectedSiteIds','deletedSubmissionKeys','domainBlacklist']);
 const stringKeys=new Set(['activeSiteId','cfgEmail','cfgName','cfgCommentTemplate']);
@@ -13,11 +14,16 @@ function validateValue(key,value){
  if(key.endsWith('SchemaVersion')&&(!Number.isSafeInteger(Number(value))||Number(value)<1))throw Error('恢复资料版本无效：'+key);
 }
 
-export function localRecoveryDocuments(raw){
+export function localRecoveryOriginalDocuments(raw){
  const value=normalizeLegacyPreferences(raw?.documents||raw?.snapshot?.documents||raw||{});
- if(!value||typeof value!=='object'||!Object.keys(value.siteProfiles||{}).length)throw Error('恢复来源没有产品资料，不能恢复');
+ if(!value||typeof value!=='object')throw Error('恢复来源没有产品资料，不能恢复');
  const picked=Object.fromEntries(backupKeys.filter(k=>Object.hasOwn(value,k)).map(k=>[k,value[k]]));
  validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...picked});for(const [key,value]of Object.entries(picked))validateValue(key,value);return structuredClone(picked);
+}
+export function localRecoveryDocuments(raw){
+ const original=localRecoveryOriginalDocuments(raw),documents=prepareProfileRecoverySource(original);
+ if(!Object.keys(documents.siteProfiles||{}).length)throw Error('恢复来源没有产品资料，不能恢复');
+ validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...documents});for(const [key,value]of Object.entries(documents))validateValue(key,value);return documents;
 }
 export function recoveryDocument(documents,key,raw){
  if(!backupKeys.includes(key))throw Error('恢复字段未授权');

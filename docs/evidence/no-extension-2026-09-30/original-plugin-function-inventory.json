@@ -1256,5 +1256,25 @@
     "newRealSubmissions": 0,
     "evidence": "original-library-actions-2026-10-07.json",
     "completion": "not_complete"
+  },
+  "originalProfileSourceCheckpoint": {
+    "date": "2026-10-07",
+    "originalProfileFunctionAndFullCatalogSeedChainCompared": true,
+    "tableOnlySourceAndLegacyProfileIdsRestored": true,
+    "originalProductChoicesReceiptsAssignmentsAndTableHistory": true,
+    "originalRawSourceAndMediaVersionsRetained": true,
+    "coupledSelectionAndDurableRecoveryDependencies": true,
+    "sqliteReopenLostReplyAndAtomicRollback": true,
+    "retainedCloudProductCancelsDependentRecovery": true,
+    "authenticatedHttpD1AndProductionUiRecovery": true,
+    "liveProductsAndFullCatalogFactsMatch": true,
+    "separateBackupImportStillMissingSeedsAndStableIds": true,
+    "testsPassed": 542,
+    "newTests": 10,
+    "workerVersion": "5449ca4c-5d3b-428c-beed-31b0b9ccb381",
+    "realBusinessEdits": 0,
+    "newRealSubmissions": 0,
+    "evidence": "original-profile-source-2026-10-07.json",
+    "completion": "not_complete"
   }
 }

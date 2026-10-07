@@ -5,6 +5,11 @@ const source=readFileSync(new URL('../../extension/background.js',import.meta.ur
 const destinationHelpers=source.slice(source.indexOf('const DISPLAY_HOST_DESTINATIONS'),source.indexOf('function expandSubmissionRecordsForQueue'));
 const catalog=source.slice(source.indexOf('async function getLibraryManagerStateUnlocked('),source.indexOf('function applyTimelinePublicationUpgrade('));
 const schema=source.slice(source.indexOf('async function ensureSubmissionSchema('),source.indexOf('function scopeDestinationGroupsByLibraryCategory('));
+const seedProfiles=source.slice(source.indexOf('async function ensureProfilesFromTable('),source.indexOf('async function ensureSubmissionSchema('));
+export async function originalProfileSource(initial){
+ const documents=structuredClone(initial),context=vm.createContext({URL,self:{ExtLinkProfiles:globalThis.ExtLinkProfiles},chrome:{storage:{local:{async set(values){Object.assign(documents,structuredClone(values));}}}},initial:documents});
+ const result=await vm.runInContext(seedProfiles+'\nensureProfilesFromTable(initial.sheetTableData,initial.siteProfiles,initial.activeSiteId,initial.selectedSiteIds)',context);return{result:structuredClone(result),documents};
+}
 const preferences=source.slice(source.indexOf('async function updateLibraryPreferences('),source.indexOf('async function quickOpenLibraryUrls('));
 const quickOpen=source.slice(source.indexOf('async function quickOpenLibraryUrls('),source.indexOf('async function getLibraryManagerState('));
 export async function originalLibraryAction(initial,type,input){
@@ -21,8 +26,8 @@ export async function originalLibraryPreferences(initial,input){
  const result=await vm.runInContext(destinationHelpers+'\n'+preferences+'\nupdateLibraryPreferences(input)',context);
  return{result:structuredClone(result),documents};
 }
-export async function originalLibraryCatalog(snapshot){
+export async function originalLibraryCatalog(snapshot,{seedOriginalProfiles=false}={}){
  const documents=structuredClone(snapshot.documents),table=documents.sheetTableData||{entries:[]};
- const context=vm.createContext({URL,structuredClone,SUBMISSION_SCHEMA_VERSION:globalThis.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION,chrome:{storage:{local:{async get(keys){return Object.fromEntries(keys.filter(k=>k in documents).map(k=>[k,structuredClone(documents[k])]));},async set(values){Object.assign(documents,structuredClone(values));}}}},self:{ExtLinkQueue:globalThis.ExtLinkQueue,ExtLinkSubmissionTimeline:globalThis.ExtLinkSubmissionTimeline,ExtLinkOpportunityScore:globalThis.ExtLinkOpportunityScore,ExtLinkLibraryClassifier:globalThis.ExtLinkLibraryClassifier,ExtLinkLibraryGroups:globalThis.ExtLinkLibraryGroups,ExtLinkUrlLibrary:[]},applySubmissionLedgerCloudPull:async()=>({}),loadTableLibrary:async()=>structuredClone(table),ensureProfilesFromTable:async()=>({profiles:structuredClone(documents.siteProfiles||{}),idRemap:{}})});
- return structuredClone(await vm.runInContext(destinationHelpers+'\n'+schema+'\n'+catalog+'\ngetLibraryManagerStateUnlocked()',context));
+ const context=vm.createContext({URL,structuredClone,SUBMISSION_SCHEMA_VERSION:globalThis.ExtLinkQueue.SUBMISSION_SCHEMA_VERSION,chrome:{storage:{local:{async get(keys){return Object.fromEntries(keys.filter(k=>k in documents).map(k=>[k,structuredClone(documents[k])]));},async set(values){Object.assign(documents,structuredClone(values));}}}},self:{ExtLinkProfiles:globalThis.ExtLinkProfiles,ExtLinkQueue:globalThis.ExtLinkQueue,ExtLinkSubmissionTimeline:globalThis.ExtLinkSubmissionTimeline,ExtLinkOpportunityScore:globalThis.ExtLinkOpportunityScore,ExtLinkLibraryClassifier:globalThis.ExtLinkLibraryClassifier,ExtLinkLibraryGroups:globalThis.ExtLinkLibraryGroups,ExtLinkUrlLibrary:[]},applySubmissionLedgerCloudPull:async()=>({}),loadTableLibrary:async()=>structuredClone(table),ensureProfilesFromTable:async()=>({profiles:structuredClone(documents.siteProfiles||{}),idRemap:{}})});
+ return structuredClone(await vm.runInContext(destinationHelpers+'\n'+(seedOriginalProfiles?seedProfiles+'\n':'')+schema+'\n'+catalog+'\ngetLibraryManagerStateUnlocked()',context));
 }

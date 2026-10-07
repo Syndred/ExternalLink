@@ -36,7 +36,8 @@ async function showLocalRecovery(){
  });
  const compare=button('比较恢复内容',async()=>{
   const result=await request('/previewLocalRecovery',{sourceId:selection.value}),preview=result.preview,selected=new Set(preview.changes),confirmation=el('input',{'aria-label':'本机资料恢复确认文字'});
-  previewPanel.replaceChildren(el('p',{text:'来源 '+preview.sourceCounts.profiles+' 个产品、'+preview.sourceCounts.targets+' 个网站、'+preview.sourceCounts.records+' 条历史记录；当前 '+preview.currentCounts.profiles+' 个产品、'+preview.currentCounts.targets+' 个网站。'}),...preview.changes.map(key=>checkControl(recoveryLabels[key]||'补充资料 '+key,true,checked=>{if(checked)selected.add(key);else selected.delete(key);})),fieldRow('输入“恢复所选本机资料”确认',confirmation),button('恢复所选资料',async()=>{
+  const related=new Set(preview.dependencyKeys||[]),controls=new Map(),choices=preview.changes.map(key=>{const control=checkControl(recoveryLabels[key]||'补充资料 '+key,true,checked=>{for(const member of related.has(key)?related:[key]){if(checked)selected.add(member);else selected.delete(member);const input=controls.get(member)?.querySelector('input');if(input)input.checked=checked;}});controls.set(key,control);return control;});
+  previewPanel.replaceChildren(el('p',{text:'来源 '+preview.sourceCounts.profiles+' 个产品、'+preview.sourceCounts.targets+' 个网站、'+preview.sourceCounts.records+' 条历史记录；当前 '+preview.currentCounts.profiles+' 个产品、'+preview.currentCounts.targets+' 个网站。'}),...(related.size>1?[el('p',{text:'旧产品编号需要与对应资料一起恢复。勾选或取消产品相关项时，会同时选择或取消关联的历史记录、时间线及网站资料。其他设置可单独选择。'})]:[]),...choices,fieldRow('输入“恢复所选本机资料”确认',confirmation),button('恢复所选资料',async()=>{
    const restored=await request('/submissionJournalRecoverLocal',{id:preview.id,keys:[...selected],confirmation:confirmation.value});await load();message.textContent=recoveryMessage(restored);
    if(restored.remaining)previewPanel.append(button('继续原本机恢复计划',resume(preview.id,confirmation)));
   },true));

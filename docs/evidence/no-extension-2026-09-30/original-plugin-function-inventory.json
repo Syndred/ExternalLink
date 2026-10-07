@@ -1,5 +1,27 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalFreshRoundCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "a6edb1298b4095c1bb440b1106cc592c3be552e5",
+    "evidence": "original-fresh-round-2026-10-08.json",
+    "unsubmittedHistoricalTerminalTaskFreshRoundAdmissionConnected": true,
+    "oldTaskBodiesEventsAndReasonsPreserved": true,
+    "authenticatedD1AndPostgreSqlRegistrationRollbackRestoreVerified": true,
+    "currentSelectedProfileAndIndependentRoundBudgetVerified": true,
+    "actualIsolatedNewRoundPreparationVerified": true,
+    "fullSuitePassed": 839,
+    "newSince825": 14,
+    "workerVersion": "53cc0f87-6ecd-4a41-bf5b-6aa361b946a6",
+    "productionGuardRejectionReadbackPassed": true,
+    "productionSuccessfulFreshRoundRegistrationPerformed": false,
+    "nativeServicesReloadedAndBeforeAfterReadbacksPassed": true,
+    "allExplicitRetryAndManualEntriesVerified": false,
+    "originalNavigationPendingRejudgeGapConfirmed": true,
+    "originalNavigationPendingRejudgeFullyMigrated": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalAgentUnavailableCheckpoint": {
     "date": "2026-10-08",
     "featureCommit": "df82ae72a07439f11640fa58fd5d17a23f6ccf39",

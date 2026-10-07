@@ -2,6 +2,8 @@
 // administrator's state replacement, migration or credential-issuing powers.
 import { parseBearerToken, secureEqual } from './worker-core.mjs';
 import {encodeBase64,decodePngEvidence} from './executor-binary.mjs';
+import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
+import {backupKeys} from '../../../core/application-backup.mjs';
 import '../../../core/queue.js';
 import '../../../core/target-filters.js';
 import '../../../core/opportunity-score.js';
@@ -95,8 +97,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
     };
     if (path === '/v1/executor/snapshot' && request.method === 'GET') {
       const rows=await sql`select jsonb_build_object('ok',true,'deviceId',${deviceId}::text,'workspaceId',${workspaceId}::text,
-        'documents',coalesce(jsonb_object_agg(document_key,data) filter(where document_key in
-          ('siteProfiles','sheetTableData','urlList','siteAnnotations','submissionRecords','submissionTimeline','domainBlacklist','targetFilters','deletedSubmissionKeys')),'{}'::jsonb),
+        'documents',coalesce(jsonb_object_agg(document_key,data) filter(where document_key=any(${backupKeys}::text[])),'{}'::jsonb),
         'revisions',coalesce(jsonb_object_agg(document_key,revision),'{}'::jsonb))::text as payload
         from externallink_workspace_documents where workspace_id=${workspaceId}`;
       return replyJsonText(rows[0].payload);
@@ -121,12 +122,13 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       if (inventory) {
         const rows=await sql`select jsonb_build_object('ok',true,
           'runs',coalesce((select jsonb_agg(jsonb_build_object('id',r.run_id,'profileId',r.data->>'profileId',
-            'profileRevision',r.data->'profileRevision','createdAt',r.data->'createdAt','libraryPlanId',r.data->'libraryPlanId') order by r.updated_at desc)
+            'profileRevision',r.data->'profileRevision','createdAt',r.data->'createdAt','libraryPlanId',r.data->'libraryPlanId') ||
+            case when r.data ? 'workbenchBatchId' then jsonb_build_object('workbenchBatchId',r.data->'workbenchBatchId','workbenchBatchManifestId',r.data->'workbenchBatchManifest'->'id') else '{}'::jsonb end order by r.updated_at desc)
             from externallink_executor_runs r where r.workspace_id=${workspaceId} and r.device_id=${deviceId}),'[]'::jsonb),
           'tasks',coalesce((select jsonb_agg(jsonb_build_object('id',t.task_id,'runId',t.run_id,'url',t.data->>'url',
             'destinationKey',t.data->>'destinationKey','profileId',t.data->>'profileId','status',t.data->>'status',
             'siteStatus',t.data->>'siteStatus','attemptBoundary',t.data->'attemptBoundary','version',t.version,
-            'controllerId',t.data->'controllerId') order by t.updated_at desc)
+            'controllerId',t.data->'controllerId') || case when t.data ? 'workbenchBatchId' then jsonb_build_object('workbenchBatchId',t.data->'workbenchBatchId') else '{}'::jsonb end order by t.updated_at desc)
             from externallink_executor_tasks t where t.workspace_id=${workspaceId} and t.device_id=${deviceId}),'[]'::jsonb))::text as payload`;
         return replyJsonText(rows[0].payload);
       }
@@ -148,6 +150,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
     if (path === '/v1/executor/runs' && request.method === 'POST') {
       const run = input.run;
       if (!run?.id || !Array.isArray(run.tasks) || !run.tasks.length || run.tasks.length > 500) fail('每批次需包含 1–500 个任务');
+      await validateBatchRunMetadata(run,workspaceId,digest);
       const snapshot = await helpers.listSnapshot(sql, workspaceId);
       if (run.profileRevision !== snapshot.revisions.siteProfiles || !snapshot.documents.siteProfiles?.[run.profileId]) fail('资料已更新，请重新预览', 409);
       const preparation=run.mode==='single_page_preparation';
@@ -160,7 +163,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
         const recordKey = globalThis.ExtLinkQueue.submissionRecordKey(destinationKey, run.profileId);
         if (snapshot.documents.submissionRecords?.[recordKey]?.status === 'success') fail(`已提交：${recordKey}`, 409);
         return { id: t.id, runId: run.id, url: t.url, destinationKey: t.destinationKey, profileId: run.profileId, identity: recordKey,
-          status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
+          ...batchRegisteredTask(run),status: preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus: 'not_submitted', reviewStatus: 'pending_review', version: 1 };
       });
       const mediaManifest = await sql`select asset_id,media_kind,media_index,sha256,file_name from externallink_media_assets where workspace_id=${workspaceId} and profile_id=${run.profileId}`;
       const savedRun = { ...run, profile: snapshot.documents.siteProfiles[run.profileId], mediaManifest, tasks: tasks.map(t => t.id), deviceId, workspaceId };

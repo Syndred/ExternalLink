@@ -15,6 +15,7 @@ import {backupKeys,backupKeyDependencies} from '../../../core/application-backup
 import {deviceSnapshotResponse} from './device-snapshot.mjs';
 import {putDeviceMedia,readDeviceMedia} from './device-media.mjs';
 import {libraryTransfer} from './library-transfer.mjs';
+import {batchRegisteredTask,validateBatchRunMetadata} from '../../../core/workbench-batch-recovery.mjs';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const hash=value=>sha256(new TextEncoder().encode(value));
@@ -97,15 +98,16 @@ export async function d1Executor(request,env,workspace,plan,assistant){
   if(path.startsWith('tasks/')&&request.method==='GET')return json({ok:true,task:(await readTask(path.slice(6))).data});
   if(path==='runs'&&request.method==='POST'){
    const run=input.run;if(!run?.id||!Array.isArray(run.tasks)||!run.tasks.length||run.tasks.length>100)fail('D1 每批支持 1–100 个任务，请分批安排',400);
+   await validateBatchRunMetadata(run,workspace,hash);
    const old=await db.prepare('SELECT checksum FROM executor_runs WHERE workspace=? AND id=?').bind(workspace,run.id).first();if(old)fail('批次已存在，请回读');
    const snap=await snapshot();if(run.profileRevision!==snap.revisions.siteProfiles||!snap.documents.siteProfiles?.[run.profileId])fail('资料已更新，请重新预览');
    const preparation=run.mode==='single_page_preparation';
    if(preparation)globalThis.ExtLinkExecutorContract.validateSinglePagePreparation(snap,run);else{const scope=globalThis.ExtLinkExecutorContract.selectScope(snap,null,run.profileId,run.tasks.map(t=>t.url));if(scope.exclusions.length||scope.tasks.length!==run.tasks.length)fail('当前范围含已提交、重复或排除目标');}
-   const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),status:preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
+   const tasks=run.tasks.map(t=>{const destinationKey=globalThis.ExtLinkQueue.normalizeDestinationKey(t.url);if(!t.id||destinationKey!==t.destinationKey||!/^https?:\/\//.test(t.url))fail('目标身份无效',400);return{id:t.id,runId:run.id,url:t.url,destinationKey,profileId:run.profileId,identity:globalThis.ExtLinkQueue.submissionRecordKey(destinationKey,run.profileId),...batchRegisteredTask(run),status:preparation?'needs_manual':'pending',...(preparation?{attentionType:'fill_only',reason:'单页填写，尚未授权投稿'}:{}),siteStatus:'not_submitted',reviewStatus:'pending_review',version:1};});
    const profile=snap.documents.siteProfiles[run.profileId],mediaManifest=[];
    for(const {ref,kind}of profileMediaReferences(profile)){const assetId=ref.slice(14),object=await env.MEDIA_BUCKET.head(mediaObjectKey(workspace,assetId));if(object)mediaManifest.push({asset_id:assetId,media_kind:kind,sha256:object.customMetadata?.sha256||'',file_name:object.customMetadata?.fileName||assetId});}
    const savedRun={...run,profile,mediaManifest,tasks:tasks.map(t=>t.id),deviceId,workspaceId:workspace};
-   const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt}),runObject.key,runObject.checksum)];
+   const runObject=await store.object(savedRun),taskObject=await store.object(tasks),writes=[db.prepare('INSERT INTO executor_runs VALUES(?,?,?,?,?,?)').bind(workspace,run.id,deviceId,JSON.stringify({id:run.id,profileId:run.profileId,profileRevision:run.profileRevision,createdAt:run.createdAt,workbenchBatchId:run.workbenchBatchId,workbenchBatchManifestId:run.workbenchBatchManifest?.id}),runObject.key,runObject.checksum)];
    // Multi-row inserts keep each statement under D1's 100 bind-parameter limit.
    for(let start=0;start<tasks.length;start+=10){const group=tasks.slice(start,start+10);
     writes.push(db.prepare('INSERT INTO journal_tasks(workspace,id,profile_id,destination,summary,object_key,checksum,updated_at,item_index) VALUES '+group.map(()=>'(?,?,?,?,?,?,?,?,?)').join(','))

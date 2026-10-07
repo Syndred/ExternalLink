@@ -46,13 +46,13 @@ test('manual timeline edit and removal never erase a receipt ledger; rules and o
 test('batch preview is side effect free, isolates pending tasks, supports multiple products and preserves the original fixed denominator',async()=>{
  const f=runtimeFixture(),r=f.runtime;const fixed={id:'original',count:30,cursor:13,status:'paused'};r.store.set('acceptanceBatch',fixed);r.store.set('task:unrelated',{id:'unrelated',profileId:'p',url:'https://other.example',status:'pending'});
  const {batch}=await previewWorkbenchBatch(r,{profileIds:['p','q'],urls:['https://one.example/submit','https://two.example/add']});assert.equal(batch.count,4);assert.equal(f.writes,0);assert.equal(f.ticks,0);assert.equal(r.store.get('paused'),true);
- await startWorkbenchBatch(r,{batchId:batch.id,ordinaryPermissionsAuthorized:true});assert.equal(f.writes,4);assert.deepEqual(r.store.get('acceptanceBatch'),fixed);assert.equal(r.store.get('task:unrelated').status,'pending');
+ r.cloud.flush=async store=>{for(const event of store.pending())store.ack(event.id);};await startWorkbenchBatch(r,{batchId:batch.id,ordinaryPermissionsAuthorized:true});assert.equal(f.writes,4);assert.deepEqual(r.store.get('acceptanceBatch'),fixed);assert.equal(r.store.get('task:unrelated').status,'pending');
  const first=await nextWorkbenchTask(r);assert.equal(first.id,batch.items[0].taskId);first.status='finished';first.receipt={evidence:'Received'};r.store.set('task:'+first.id,first);assert.equal(finishWorkbenchTask(r,first.id),true);assert.equal(r.store.get('workbenchBatch:'+batch.id).cursor,1);
  pauseWorkbenchBatch(r);r.store.set('paused',true);assert.equal(r.store.get('workbenchBatch:'+batch.id).status,'paused');assert.deepEqual(r.store.get('acceptanceBatch'),fixed);r.store.close();
 });
 test('a lost batch registration response reads back exact IDs and never creates a replacement task',async()=>{
  const f=runtimeFixture();f.lost=true;const {batch}=await previewWorkbenchBatch(f.runtime,{profileIds:['p'],urls:['https://one.example/submit']});await assert.rejects(startWorkbenchBatch(f.runtime,{batchId:batch.id,ordinaryPermissionsAuthorized:true}),/reply lost/);assert.equal(f.writes,1);assert.equal(f.runtime.store.get('paused'),true);
- f.lost=false;await startWorkbenchBatch(f.runtime,{batchId:batch.id,ordinaryPermissionsAuthorized:true});assert.equal(f.writes,1);assert.equal(f.runtime.store.get('task:'+batch.items[0].taskId).id,batch.items[0].taskId);f.runtime.store.close();
+ f.runtime.cloud.flush=async store=>{for(const event of store.pending())store.ack(event.id);};f.lost=false;await startWorkbenchBatch(f.runtime,{batchId:batch.id,ordinaryPermissionsAuthorized:true});assert.equal(f.writes,1);assert.equal(f.runtime.store.get('task:'+batch.items[0].taskId).id,batch.items[0].taskId);f.runtime.store.close();
 });
 test('quality, DR, blacklist and age gates affect actual batch eligibility instead of only the UI',async()=>{
  const f=runtimeFixture();f.snapshot.documents.targetFilters={minDr:60,minDomainAgeMonths:6,requireKnownDomainAge:true};f.snapshot.documents.domainMetricsCache={'one.example':{ageMonths:36}};

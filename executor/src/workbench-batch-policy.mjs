@@ -3,13 +3,14 @@ import {originalBatchConfig,originalUnattended as U} from '../../core/original-b
 import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
 import {hasManualSubmissionConsent} from './submission-preferences.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const reasons={deadline:'无人值守运行已达到截止时间，已暂停并保留原任务',task_budget:'无人值守项目组合上限已达到，原范围和未完成项保留',model_budget:'无人值守模型调用预算已达到，原任务待核验',task_deadline:'无人值守单个任务超过时限，原任务保留待核验',consecutive_failures:'无人值守连续失败达到上限，原范围保留'};
 export function batchConfig(batch){return batch.config||originalBatchConfig({},{});}
 export function freezeBatchConfig(documents,options={}){const config=originalBatchConfig(documents,options);return{config,configSha256:digest(config)};}
 export function assertBatchPolicy(runtime,batch){
  if(batch.scope&&batch.scope!==workbenchScope(runtime.store.get('pair')))throw Error('原批次属于其他工作区');
- if(batch.configSha256&&batch.configSha256!==digest(batch.config))throw Error('原批次参数校验不一致，请重新预览');
+ if(batch.configSha256&&batch.configSha256!==(batch.cloudRecoveryVersion===1?createHash('sha256').update(batchJson(batch.config)).digest('hex'):digest(batch.config)))throw Error('原批次参数校验不一致，请重新预览');
 }
 export function initializeBatchPolicy(batch,now=Date.now()){
  if(batchConfig(batch).unattended)batch.unattendedState=U.createCheckpoint(batchConfig(batch),now,batch.unattendedState||{});
@@ -68,7 +69,7 @@ export function reserveBatchModelCall(runtime,task){
  if(batch.status!=='running'||runtime.store.get('paused')!==false)throw Error('原无人值守批次已暂停，未调用模型');save(runtime,{...batch,unattendedState:result.next});
 }
 export function batchActionAllowed(runtime,task){
- const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch)return true;
+ const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch)return !task.workbenchBatchId||hasManualSubmissionConsent(runtime,task);
  assertBatchPolicy(runtime,batch);if(hasManualSubmissionConsent(runtime,task)||!batchConfig(batch).unattended)return true;if(batch.status!=='running')return false;
  if(batchConfig(batch).unattended){const now=Date.now();if(U.isExpired(batch.unattendedState,now)){pauseBatchPolicy(runtime,batch,'deadline',task.id);return false;}if(task.taskDeadlineAt&&now>=task.taskDeadlineAt){interruptBatchTask(runtime,batch,task.id);return false;}}
  return !batch.interruptedTasks?.[task.id];

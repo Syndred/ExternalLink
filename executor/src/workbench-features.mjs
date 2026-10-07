@@ -5,8 +5,11 @@ import {saveCommentVersion,copyCommentDraft} from './comment-history.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {freezeBatchConfig,assertBatchPolicy,initializeBatchPolicy,refreshBatchManualCapacity,releaseBatchTask,noteBatchTaskResult,batchConfig,pauseBatchPolicy} from './workbench-batch-policy.mjs';
 import {originalUnattended} from '../../core/original-batch-config.mjs';
+import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScopeRows} from '../../core/workbench-batch-recovery.mjs';
+import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const frozenDigest=(batch,value)=>batch.cloudRecoveryVersion===batchRecoveryVersion?createHash('sha256').update(batchJson(value)).digest('hex'):digest(value);
 const site=url=>queue.extractDomain(url).toLowerCase();
 export async function previewWorkbenchBatch(runtime,input){
  if(!Array.isArray(input.profileIds)||!input.profileIds.length||!Array.isArray(input.urls)||!input.urls.length||input.profileIds.length*input.urls.length>500)throw Error('请选择产品与外链，每批最多 500 个组合');
@@ -27,7 +30,7 @@ export async function previewWorkbenchBatch(runtime,input){
    items.push({identity:profileId+'::'+destinationKey,profileId,url,destinationKey,profile:plain(profile),profileRevision:snapshot.revisions.siteProfiles,taskId:previous?.id||randomUUID(),runId:previous?.runId||randomUUID(),existingTask:!!previous,status:reason?'excluded':'ready',reason});
   }
  }
- const batch={id:randomUUID(),scope:expectedScope,...freezeBatchConfig(snapshot.documents,input.config),createdAt:new Date().toISOString(),status:'preview',count:items.length,items,cursor:0,feeLimit:0};batch.scopeSha256=digest(items.map(i=>({identity:i.identity,url:i.url,profile:i.profile,profileRevision:i.profileRevision,taskId:i.taskId,runId:i.runId})));
+ const batch={id:randomUUID(),scope:expectedScope,...freezeBatchConfig(snapshot.documents,input.config),cloudRecoveryVersion:batchRecoveryVersion,createdAt:new Date().toISOString(),status:'preview',count:items.length,items,cursor:0,feeLimit:0};batch.configSha256=frozenDigest(batch,batch.config);batch.scopeSha256=frozenDigest(batch,batchScopeRows(batch));
  runtime.store.set('workbenchBatch:'+batch.id,batch);return{ok:true,batch};
 }
 export async function startWorkbenchBatch(runtime,input){
@@ -36,10 +39,14 @@ export async function startWorkbenchBatch(runtime,input){
  const batch=runtime.store.get('workbenchBatch:'+input.batchId);if(!batch||!['preview','paused','registration_unknown','stopped','waiting_manual'].includes(batch.status))throw Error('批次不存在或不能启动');
  assertBatchPolicy(runtime,batch);
  const active=runtime.store.get('activeWorkbenchBatch');if(active&&active!==batch.id&&!['complete','waiting_manual','stopped'].includes(runtime.store.get('workbenchBatch:'+active)?.status))throw Error('请先处理原批次');
- if(batch.scopeSha256!==digest(batch.items.map(i=>({identity:i.identity,url:i.url,profile:i.profile,profileRevision:i.profileRevision,taskId:i.taskId,runId:i.runId}))))throw Error('批次范围校验不一致');
+ if(batch.scopeSha256!==frozenDigest(batch,batchScopeRows(batch)))throw Error('批次范围校验不一致');
  const snapshot=await runtime.cloud.request('snapshot'),inventory=await runtime.cloud.request('runs?view=inventory');
  const save=()=>runtime.store.set('workbenchBatch:'+batch.id,batch);
  assertBatchPolicy(runtime,batch);
+ // Refresh exclusions before choosing the sole manifest anchor. A newly
+ // received first target must not strand all the other original combinations.
+ for(const item of batch.items){if(['excluded','complete'].includes(item.status))continue;if(priorProductSuccess(snapshot.documents.submissionRecords,item.profileId,item.url)){item.status='excluded';item.reason='该产品同站已有收件';save();continue;}if(snapshot.revisions.siteProfiles!==item.profileRevision||JSON.stringify(snapshot.documents.siteProfiles[item.profileId])!==JSON.stringify(item.profile))throw Error('产品资料已变化，原预览保留，请重新预览');const allowed=selectScope(snapshot,null,item.profileId,[item.url]);if(!allowed.tasks.length){item.status='excluded';item.reason=allowed.exclusions[0]?.reason||'当前站点不允许提交';save();}}
+ if(batch.cloudRecoveryVersion===batchRecoveryVersion&&!batch.cloudManifest){const anchor=batch.items.find(i=>i.status!=='excluded'&&!i.existingTask)||batch.items.find(i=>i.status!=='excluded');if(anchor){batch.cloudManifestTaskId=anchor.taskId;batch.cloudManifestInTask=!!anchor.existingTask;batch.cloudManifest=batchManifest(batch);save();}}
  for(const item of batch.items){
   if(['excluded','complete'].includes(item.status))continue;
   if(priorProductSuccess(snapshot.documents.submissionRecords,item.profileId,item.url)){item.status='excluded';item.reason='该产品同站已有收件';save();continue;}
@@ -47,17 +54,18 @@ export async function startWorkbenchBatch(runtime,input){
   const allowed=selectScope(snapshot,null,item.profileId,[item.url]);if(!allowed.tasks.length){item.status='excluded';item.reason=allowed.exclusions[0]?.reason||'当前站点不允许提交';save();continue;}
   let task=runtime.store.get('task:'+item.taskId);
   const known=inventory.tasks.find(t=>t.id===item.taskId);
-  if(!task&&known)task=(await runtime.cloud.request('tasks/'+item.taskId)).task;
+  if(!task&&known){task=(await runtime.cloud.request('tasks/'+item.taskId)).task;assertBatchPolicy(runtime,batch);}
   if(task){runtime.store.set('task:'+task.id,task);item.status='registered';save();continue;}
   if(item.existingTask)throw Error('原任务暂不可读，不创建替代任务');
   // A lost response is recovered only by these exact IDs; never replace them.
   if(item.status==='registration_unknown'||item.status==='registering'){batch.status='registration_unknown';save();throw Error('注册结果未知，原 ID 暂未回读，禁止重复注册');}
-  const run={id:item.runId,profileId:item.profileId,profileRevision:item.profileRevision,createdAt:batch.createdAt,authorization:'ordinary_free_submission',ordinaryPermissionsAuthorized:true,feeLimit:0,workbenchBatchId:batch.id,tasks:[{id:item.taskId,url:item.url,destinationKey:item.destinationKey}]};
+  const run={id:item.runId,profileId:item.profileId,profileRevision:item.profileRevision,createdAt:batch.createdAt,authorization:'ordinary_free_submission',ordinaryPermissionsAuthorized:true,feeLimit:0,workbenchBatchId:batch.id,...batchRunMetadata(batch,item),tasks:[{id:item.taskId,url:item.url,destinationKey:item.destinationKey}]};
   item.status='registering';item.request=run;save();
-  try{const result=await runtime.cloud.request('runs',{run});if(result.run?.id!==item.runId||result.tasks?.[0]?.id!==item.taskId)throw Error('注册身份不一致');runtime.store.set('run:'+item.runId,result.run);runtime.store.set('task:'+item.taskId,{...result.tasks[0],profileSnapshot:item.profile});item.status='registered';delete item.request;save();}
+  try{const result=await runtime.cloud.request('runs',{run});assertBatchPolicy(runtime,batch);if(result.run?.id!==item.runId||result.tasks?.[0]?.id!==item.taskId)throw Error('注册身份不一致');runtime.store.set('run:'+item.runId,result.run);runtime.store.set('task:'+item.taskId,{...result.tasks[0],profileSnapshot:item.profile});item.status='registered';delete item.request;save();}
   catch(error){item.status=error.status>=400&&error.status<500?'excluded':'registration_unknown';item.reason=error.message;batch.status=item.status==='registration_unknown'?'registration_unknown':'paused';save();throw error;}
  }
  initializeBatchPolicy(batch);batch.status='running';batch.startedAt=batch.startedAt||new Date().toISOString();save();runtime.store.set('executionStopped',null);runtime.store.set('manualResumeRunId',null);runtime.store.set('activeWorkbenchBatch',batch.id);runtime.store.set('singleTaskId',null);
+ if(batch.cloudRecoveryVersion===batchRecoveryVersion&&batch.cloudManifestTaskId){const anchor=runtime.store.get('task:'+batch.cloudManifestTaskId);if(!anchor)throw Error('原批次云端清单任务不可读');await runtime.lease(anchor,{online:true});assertBatchPolicy(runtime,batch);runtime.update(anchor,{workbenchBatchId:batch.id,fillOnlyRun:batch.config.fillOnly===true},'workbench_batch_policy_registered');await flushBatchTaskEvents(runtime,anchor);assertBatchPolicy(runtime,runtime.store.get('workbenchBatch:'+batch.id));Object.assign(batch,runtime.store.get('workbenchBatch:'+batch.id));}
  if(batchConfig(batch).unattended){const decision=originalUnattended.canStartTask(batch.unattendedState);if(!decision.ok){const paused=pauseBatchPolicy(runtime,batch,decision.reason);return{ok:true,batch:paused};}batch.unattendedState.stopReason='';save();}
  runtime.store.set('paused',false);runtime.tick();return{ok:true,batch};
 }
@@ -90,7 +98,8 @@ export function finishWorkbenchTask(runtime,taskId){
  const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id);const item=batch?.items.find(i=>i.taskId===taskId);if(!item)return false;
  const task=runtime.store.get('task:'+taskId);if(!task||['pending','opening','filling','submitting'].includes(task.status))return false;
  const previousResult=item.result;item.result=task.receipt?'received':task.attemptBoundary?'sent_unconfirmed':task.status;item.reason=task.reason||'';
- if(item.status!=='complete'||previousResult!==item.result){item.status='complete';item.completedAt=new Date().toISOString();batch=noteBatchTaskResult(runtime,batch,task);}advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);return batch.status==='running'&&runtime.store.get('paused')===false;
+ const changed=item.status!=='complete'||previousResult!==item.result;
+ if(changed){item.status='complete';item.completedAt=new Date().toISOString();batch=noteBatchTaskResult(runtime,batch,task);}advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);if(changed&&batch.cloudRecoveryVersion===batchRecoveryVersion)runtime.update(task,{},'workbench_batch_result_checkpoint');return batch.status==='running'&&runtime.store.get('paused')===false;
 }
 export function pauseWorkbenchBatch(runtime,reason='用户暂停'){const id=runtime.store.get('activeWorkbenchBatch'),batch=id&&runtime.store.get('workbenchBatch:'+id);if(batch?.status==='running')runtime.store.set('workbenchBatch:'+id,{...batch,status:'paused',reason});}
 export async function applicationAi(runtime,action,input){

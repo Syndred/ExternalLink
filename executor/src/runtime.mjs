@@ -15,7 +15,7 @@ import { Cloud } from './cloud.mjs';
 import { queue, profiles, plain, selectScope, priorProductSuccess, repo } from './shared.mjs';
 import { attachEngine } from './engine.mjs';
 import { assessSubmissionQuality } from './quality.mjs';
-import {applySubmissionPreferences} from './submission-preferences.mjs';
+import {applySubmissionPreferences,hasManualSubmissionConsent} from './submission-preferences.mjs';
 import { canRetryNoAction } from './recovery.mjs';
 import { closeTaskTab,archiveDeferredTabs,recoveryCheckpoint } from './tab-cleanup.mjs';
 import { observeTask, closeObservation } from './observation.mjs';
@@ -39,7 +39,7 @@ import {restoreLostPreparation} from './lost-preparation.mjs';
 import {toolScoutFinalPreparation} from './staged-form.mjs';
 import{advanceBasicGoogleLogin,canAuthenticateOffline,readBasicGoogleUI}from'./basic-google-login.mjs';
 import{getTargetInfo}from'./browser-target.mjs';
-import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench}from'./workbench-sync.mjs';
+import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenchScope}from'./workbench-sync.mjs';
 import { runPreparationTakeover } from './auto-takeover.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia } from './task-media.mjs';
@@ -52,6 +52,7 @@ import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './ac
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
 import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
+import {checkpointTaskUpdate,recoverCloudBatchRecords,parkRestoredBatchTask,flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {commentHistory,saveCommentVersion} from './comment-history.mjs';
 import {quickOpenLibrary} from './quick-open.mjs';
 import {mediaLibrary} from './media-library.mjs';
@@ -378,7 +379,7 @@ export class Runtime {
       await page.goto(entry.href,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(1500);
     }
   }
-  update(task, patch, type, stateChanges) { Object.assign(task, patch); this.store.transition(task, type,stateChanges); }
+  update(task, patch, type, stateChanges) { const checkpoint=checkpointTaskUpdate(this,task,patch,stateChanges);const next={...task,...checkpoint.patch};const event=this.store.transition(next,type,checkpoint.stateChanges);Object.assign(task,next);return event; }
   async lease(task,{online=false}={}) {
     if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;
@@ -508,13 +509,32 @@ export class Runtime {
     if (this.hydrated || this.hydrating || !this.store.get('pair')) return;
     this.hydrating = true;
     try {
+      const scope=workbenchScope(this.store.get('pair')),assertScope=()=>{if(scope!==workbenchScope(this.store.get('pair')))throw Error('工作区已切换，原云端恢复结果已放弃');};
       if(this.cloud.config?.storageBackend==='d1'){
         const index=await this.cloud.request('runs?view=inventory');
-        if(index.runs.every(run=>this.store.get(`run:${run.id}`))&&index.tasks.every(task=>this.store.get(`task:${task.id}`))){this.store.recover();this.hydrated=true;return;}
+        assertScope();
+        if(index.runs.every(run=>this.store.get(`run:${run.id}`)&&(!run.workbenchBatchId||this.store.get('workbenchBatch:'+run.workbenchBatchId)))&&index.tasks.every(task=>this.store.get(`task:${task.id}`)&&(!task.workbenchBatchId||this.store.get('workbenchBatch:'+task.workbenchBatchId))&&(!task.workbenchBatchCheckpointRevision||task.workbenchBatchCheckpointRevision<=(this.store.get('workbenchBatch:'+task.workbenchBatchId)?.cloudCheckpointRevision||0)))){recoverBatchTasks(this);this.store.recover();this.hydrated=true;return;}
       }
       const saved = await this.cloud.request('runs');
-      for (const run of saved.runs) if (!this.store.get(`run:${run.id}`)) this.store.set(`run:${run.id}`, run);
-      for (const task of saved.tasks) if (!this.store.get(`task:${task.id}`)) this.store.set(`task:${task.id}`, task);
+      assertScope();
+      // The original Neon envelope only lists its latest 30 runs. Keep every
+      // original task association by reading missing runs by their exact IDs.
+      const missingRunIds=[...new Set(saved.tasks.map(task=>task.runId).filter(id=>id&&!saved.runs.some(run=>run.id===id)&&!this.store.get('run:'+id)))];
+      for(const id of missingRunIds){const page=await this.cloud.request('runs?runId='+encodeURIComponent(id));assertScope();for(const run of page.runs)if(!saved.runs.some(r=>r.id===run.id))saved.runs.push(run);}
+      for(const task of saved.tasks){const run=saved.runs.find(r=>r.id===task.runId)||this.store.get('run:'+task.runId);if(run?.workbenchBatchId&&!task.workbenchBatchId)task.workbenchBatchId=run.workbenchBatchId;}
+      const batches=recoverCloudBatchRecords(this,saved.runs,saved.tasks);
+      const pendingTaskIds=new Set((this.store.pendingSummary?.()||this.store.pending()).map(event=>event.taskId)),restoredTasks=[];
+      for(const remote of saved.tasks){const local=this.store.get('task:'+remote.id);if(!local){restoredTasks.push(remote);continue;}if(remote.workbenchBatchId&&!pendingTaskIds.has(remote.id)&&(remote.workbenchBatchCheckpoint?.cloudCheckpointRevision||0)>(local.workbenchBatchCheckpoint?.cloudCheckpointRevision||0)){if(['runId','profileId','url','destinationKey'].some(key=>local[key]!==remote[key]))throw Error('云端原任务身份与本机记录冲突');if(local.attemptBoundary&&!remote.attemptBoundary||local.receipt&&!remote.receipt)throw Error('云端恢复不能清除本机原提交边界或回执');restoredTasks.push(remote);}}
+      this.store.db.exec('BEGIN IMMEDIATE');
+      try {
+        for (const run of saved.runs) if (!this.store.get(`run:${run.id}`)) this.store.set(`run:${run.id}`, run);
+        for (const task of restoredTasks) this.store.set(`task:${task.id}`, task);
+        for(const batch of batches)this.store.set('workbenchBatch:'+batch.id,batch);
+        if(batches.length){this.store.set('paused',true);this.store.set('singleTaskId',null);if(!this.store.get('activeWorkbenchBatch'))this.store.set('activeWorkbenchBatch',batches.slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))[0].id);}
+        this.store.db.exec('COMMIT');
+      }catch(error){this.store.db.exec('ROLLBACK');throw error;}
+      for(const task of saved.tasks){const local=this.store.get('task:'+task.id);if(local)parkRestoredBatchTask(this,local);}
+      recoverBatchTasks(this);
       this.store.recover(); this.hydrated = true;
     } finally { this.hydrating = false; }
   }
@@ -581,11 +601,12 @@ export class Runtime {
       }
     }
     const manualResumeRunId=this.store.get('manualResumeRunId');
-    const eligiblePending=t=>t.status==='pending'&&(singleTaskId?t.id===singleTaskId:manualResumeRunId?t.runId===manualResumeRunId:!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId);
+    const eligiblePending=t=>t.status==='pending'&&(singleTaskId?t.id===singleTaskId:!t.workbenchBatchId&&(manualResumeRunId?t.runId===manualResumeRunId:!currentPlan||currentPlan.status!=='active'||t.profileId===currentPlan.profileId));
     if(!singleTaskId&&manualResumeRunId&&!this.store.values('task:').some(eligiblePending)){this.store.set('paused',true);this.store.set('manualResumeRunId',null);return;}
     if(!singleTaskId&&!this.store.values('task:').some(eligiblePending))await this.queueLibraryBatch();
     const task = this.store.values('task:').find(t => eligiblePending(t) && (!singleTaskId || t.id === singleTaskId));
     if (!task || this.store.get('paused') !== false) return;
+    if(task.workbenchBatchRecoveryVersion===1)await flushBatchTaskEvents(this,task);
     const offline=!task.acceptanceId&&!!this.store.get('offlineMode')?.enabled;
     let snapshot=null;
     if(!offline){snapshot=await this.cloud.request('snapshot');if (priorProductSuccess(snapshot.documents.submissionRecords, task.profileId, task.url)) {this.update(task, { status: 'excluded', reason: '最新云端已有该产品提交，未打开投稿' }, 'dedup'); return;}}
@@ -1764,7 +1785,7 @@ export class Runtime {
     }
     throw new Error('未知控制操作');
   }
-  async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);return this.cloud.request(route,body);}
+  async batchModelRequest(task,route,body){reserveBatchModelCall(this,task);const batch=task.workbenchBatchId&&this.store.get('workbenchBatch:'+task.workbenchBatchId);if(batch?.cloudRecoveryVersion===1){const event=this.update(task,{},'workbench_model_reserved');await flushBatchTaskEvents(this,task,event.id);if(!batchActionAllowed(this,task)||this.store.get('paused')!==false&&!hasManualSubmissionConsent(this,task))throw Error('原批次已暂停，预算保留且未调用模型');}return this.cloud.request(route,body);}
   async bridge(task, message) {
     if(message.action==='saveFillLearnings'){
       const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};

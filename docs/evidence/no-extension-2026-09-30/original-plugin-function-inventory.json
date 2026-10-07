@@ -2021,6 +2021,16 @@
     ],
     "complete": false
   },
+  "originalBatchCloudRecoveryCheckpoint": {
+    "date": "2026-10-07",
+    "tests": 608,
+    "newTests": 16,
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-batch-cloud-recovery-2026-10-07.json",
+    "workerVersion": "35659526-d3f7-4a1d-890d-a6e80a6cf5e7",
+    "nativeServicesUpdated": true,
+    "status": "implemented_requires_full_acceptance",
+    "goalComplete": false
+  },
   "originalBatchControlsCheckpoint": {
     "date": "2026-10-07",
     "originalControls": [

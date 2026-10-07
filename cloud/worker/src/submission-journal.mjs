@@ -14,5 +14,5 @@ export async function readJournal(sql,workspaceId,query){
 }
 
 export function automationSummary(state={}){
-  return Object.fromEntries(['id','url','profileId','destinationKey','status','siteStatus','attentionType','reason','attemptBoundary','artifactRef','profileRevision','version'].filter(k=>state[k]!==undefined).map(k=>[k,state[k]]));
+  return {...Object.fromEntries(['id','url','profileId','destinationKey','status','siteStatus','attentionType','reason','attemptBoundary','artifactRef','profileRevision','version','workbenchBatchId','workbenchBatchRecoveryVersion','workbenchBatchConfigSha256','workbenchBatchScopeSha256'].filter(k=>state[k]!==undefined).map(k=>[k,state[k]])),...(state.workbenchBatchCheckpoint?{workbenchBatchCheckpointRevision:state.workbenchBatchCheckpoint.cloudCheckpointRevision}:{})};
 }

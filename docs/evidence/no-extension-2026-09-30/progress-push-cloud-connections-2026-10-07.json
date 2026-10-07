@@ -1,0 +1,68 @@
+{
+  "kind": "progress_only_checkpoint_not_full_migration_acceptance",
+  "date": "2026-10-07",
+  "publishedFeatureCommit": "23364f0",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "gitBeforeCheckpoint": {
+    "branch": "main",
+    "pullCommand": "git pull --ff-only",
+    "pullResult": "Already up to date",
+    "ahead": 0,
+    "behind": 0
+  },
+  "previousPublishedTests": {
+    "passed": 634,
+    "failed": 0,
+    "skipped": 0,
+    "source": "original-single-page-context-2026-10-07.json",
+    "rerunThisCheckpoint": false,
+    "appliesToCurrentConnectionDraft": false
+  },
+  "confirmedOriginalGap": {
+    "originalFunction": "connectCloudSync",
+    "nativeFunction": "connectWorkbench",
+    "detail": "Updating an already paired device currently requires clearing the local workspace",
+    "status": "not_restored_or_accepted"
+  },
+  "uncommittedDraftScope": [
+    "Same-device credential update and reconnect preview",
+    "Connection-specific preservation and restoration of state, outbox and audit rows",
+    "Read-only saved-connection history pagination",
+    "Request connection identity checks and background operation idle guards",
+    "Connection-specific Gmail credential vault scope"
+  ],
+  "notCompletedOrVerified": [
+    "Reachable UI entry and initial connection identity loading",
+    "New connection tests and full suite against current draft",
+    "Actual service and isolated browser acceptance",
+    "Failure retry after backup and transactional rollback",
+    "Post-commit lifecycle error recovery",
+    "Original IDs, event sequence, frozen scope and budgets through switch and restore",
+    "Prevention of automatic execution after switching",
+    "Device ownership and pending-event isolation",
+    "Offline archived history and stale page concurrency"
+  ],
+  "productionReadOnlySnapshot": {
+    "source": "executor/test-output/progress-push-snapshot.mjs --idle-guard",
+    "passed": true,
+    "runtime": {"paused": true, "busy": false, "pendingEvents": 0, "cloudError": ""},
+    "guard": {"paused": true, "busy": false, "pendingEvents": 0, "pendingEdits": 0, "pendingLearning": 0, "pendingMedia": 0, "assistantEnabled": false, "liveJobs": 0, "runningJobs": 0, "checkingWatches": 0},
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "fixedBatch": {"id": "no-extension-30-2026-09-30", "status": "paused", "cursor": 13, "count": 30},
+    "cursorIsReceiptCount": false
+  },
+  "checkpointActions": {
+    "featureSourceIncluded": false,
+    "newTestsRun": false,
+    "deployments": 0,
+    "serviceReloads": 0,
+    "productionConnectionPreviews": 0,
+    "productionConnectionSwitches": 0,
+    "realBusinessImports": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0
+  },
+  "migrationComplete": false
+}

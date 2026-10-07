@@ -10,6 +10,7 @@ import {batchManifest,batchRunMetadata,batchRecoveryVersion,batchJson,batchScope
 import {originalLibraryBatchScope} from '../../core/library-batch-scope.mjs';
 import {flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {resumeExecution} from './execution-lifecycle.mjs';
+import {queuedParkedTasks,selectParkedResume} from './parked-task-resume.mjs';
 import {jsonValueEqual} from '../../core/json-value.mjs';
 import '../../core/target-filters.js';
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -95,9 +96,14 @@ export function nextWorkbenchTask(runtime,options={}){
 export function advanceWorkbenchCursor(batch){while(batch.cursor<batch.items.length&&['excluded','complete'].includes(batch.items[batch.cursor].status))batch.cursor++;return batch;}
 async function selectWorkbenchTask(runtime,{single=true}={}){
  const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id);if(batch?.status!=='running')return null;assertBatchPolicy(runtime,batch);
+ const liveIds=runtime.activeTaskIds||new Set(),busyDestinations=new Set(batch.items.filter(i=>liveIds.has(i.taskId)).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
+ for(const pending of runtime.store.values('manualSkipPending:').filter(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id)){const item=batch.items.find(item=>item.taskId===pending.taskId);if(item)busyDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));}
+ const resumed=await selectParkedResume(runtime,batch,{busyDestinations,destinationFor:task=>queue.normalizeDestinationKey(task.url)});
+ if(resumed){if(single)runtime.store.set('singleTaskId',resumed.id);return resumed;}
+ batch=runtime.store.get('workbenchBatch:'+id);if(batch?.status!=='running'||runtime.store.get('paused')!==false)return null;
  batch=await refreshBatchManualCapacity(runtime,batch);if(batch.status!=='running'||batch.unattendedState?.waitReason==='manual_capacity')return null;
  advanceWorkbenchCursor(batch);
- const liveIds=runtime.activeTaskIds||new Set(),busyDestinations=new Set(batch.items.filter(i=>liveIds.has(i.taskId)).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
+ const queued=queuedParkedTasks(runtime,batch);for(const task of queued)busyDestinations.add(queue.normalizeDestinationKey(task.url));
  for(const pending of runtime.store.values('manualSkipPending:').filter(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id)){const item=batch.items.find(item=>item.taskId===pending.taskId);if(item)busyDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));}
  const parkedDestinations=new Set(batch.items.filter(i=>{const task=runtime.store.get('task:'+i.taskId);return i.status==='complete'&&!task?.receipt&&!task?.manualDisposition&&['needs_manual','submitted_unconfirmed'].includes(task?.status);}).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
  const order=scheduler.groupTasksByDestination(batch.items.map((item,index)=>({...item,index,destinationGroupKey:item.destinationKey||queue.normalizeDestinationKey(item.url)}))).flatMap(group=>group.tasks.map(task=>task.index));
@@ -111,6 +117,8 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
   if(single)runtime.store.set('singleTaskId',task.id);return task;
  }
  if(liveIds.size||runtime.store.values('manualSkipPending:').some(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id))return null;
+ if(queued.some(task=>task.originalResume.status==='preparing'))return null;
+ if(queued.length){batch.status='waiting_manual';batch.reason=runtime.parkedResumeError||'原待人工接续仍需同步或核验，原任务和预算保留';runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('paused',true);return null;}
  advanceWorkbenchCursor(batch);if(parkedDestinations.size){batch.status='waiting_manual';batch.reason='自动队列已处理，原任务及同站后续产品保留等待人工';runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('paused',true);return null;}if(batch.cursor<batch.items.length)return null;
  batch.status='complete';batch.completedAt=new Date().toISOString();runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('activeWorkbenchBatch',null);runtime.store.set('paused',true);return null;
 }

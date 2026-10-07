@@ -8,6 +8,7 @@ import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 import {priorProductSuccess} from './shared.mjs';
 import {manualTargetIds} from './manual-controls.mjs';
 import {batchScopeRows} from '../../core/workbench-batch-recovery.mjs';
+import {parkedResumeIntent} from './parked-task-resume.mjs';
 
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const identity=task=>({runId:task.runId,profileId:task.profileId,profileRevision:task.profileRevision,targetId:task.targetId,browserInstance:task.browserInstance,profileSha256:hash(task.profileSnapshot)});
@@ -48,11 +49,13 @@ export async function armPageCaptchaResume(runtime,task,page,{active=()=>runtime
 function eligible(runtime,task){
  const saved=task?.captchaResume;if(!saved||!['armed','await_sync'].includes(saved.status)||task.status!=='needs_manual'||task.attentionType!=='human_verification'||task.controller!=='executor'||task.attemptBoundary||task.receipt||task.tabClosedAt||runtime.store.get('executionStopped')||runtime.store.get('singleTaskId')||saved.pauseAt!==(runtime.store.get('executionPaused')?.at||'')||Object.entries(identity(task)).some(([key,value])=>saved[key]!==value)||task.browserInstance!==runtime.host?.startedAt)return false;
  const current=authority(runtime,task);if(!current||hash(current)!==hash(saved.execution))return false;
+ if(runtime.activeTaskIds?.has(task.id)||runtime.workbenchTaskJobs?.has(task.id)||runtime.activeTaskId===task.id)return false;
+ if(runtime.job&&!(current.kind==='workbench'&&runtime.workbenchTaskJobs&&runtime.store.get('activeWorkbenchBatch')===current.id))return false;
  if(runtime.store.get('paused')!==false){const batch=current.kind==='workbench'&&runtime.store.get('workbenchBatch:'+current.id);if((!batch||batch.status!=='waiting_manual')&&current.kind!=='single')return false;}
  return true;
 }
 export async function checkCaptchaResumes(runtime,input={}){
- if(runtime.captchaResumeScan||runtime.browserAssistantScan||runtime.manualWatchJob||runtime.job||runtime.connectionBusy||runtime.cloudPullOperation||runtime.cloudPushOperation||runtime.localRecoveryOperation||runtime.store.get('connectionExecutionHold')||!runtime.context)return{ok:true,resumed:[],waiting:[]};
+ if(runtime.captchaResumeScan||runtime.browserAssistantScan||runtime.manualWatchJob||runtime.connectionBusy||runtime.cloudPullOperation||runtime.cloudPushOperation||runtime.localRecoveryOperation||runtime.store.get('connectionExecutionHold')||!runtime.context)return{ok:true,resumed:[],waiting:[]};
  runtime.captchaResumeScan=true;const resumed=[],waiting=[];
  try{
   for(const original of runtime.store.values('task:').filter(task=>!input.taskId||task.id===input.taskId)){
@@ -80,8 +83,9 @@ export async function checkCaptchaResumes(runtime,input={}){
      if(batchConfig(batch).unattended){patch.taskDeadlineAt=U.taskDeadline(batch.unattendedState,Date.now());next.unattendedState=U.removeManualTodo(batch.unattendedState,task.id);next.unattendedState=U.noteManualCapacity(next.unattendedState,manualTargetIds(runtime,saved.execution.scope,task.id).size,Date.now());next.interruptedTasks={...batch.interruptedTasks};next.taskInterruptionReasons={...batch.taskInterruptionReasons};delete next.interruptedTasks[task.id];delete next.taskInterruptionReasons[task.id];}
      updates['workbenchBatch:'+batch.id]=next;
     }
-    runtime.update(task,{...patch,status:'pending',siteStatus:'not_submitted',attentionType:'',captchaResume:{...task.captchaResume,status:'resumed',resumedAt:new Date().toISOString()},reason:'原页验证码已完成，沿原任务资料、范围与预算重新检测后继续'},'captcha_resolved_original_task',updates);
-    runtime.store.set('singleTaskId',task.id);runtime.store.set('paused',false);runtime.tick();resumed.push(task.id);break;
+    const parallel=saved.execution.kind==='workbench'&&runtime.workbenchTaskJobs;
+    runtime.update(task,{...patch,status:'pending',siteStatus:'not_submitted',attentionType:'',captchaResume:{...task.captchaResume,status:'resumed',resumedAt:new Date().toISOString()},...(parallel?{originalResume:parkedResumeIntent(task,saved)}:{}),reason:parallel?'原页验证码已完成，沿原任务、范围与预算等待原批次接续':'原页验证码已完成，沿原任务资料、范围与预算重新检测后继续'},'captcha_resolved_original_task',updates);
+    if(!parallel)runtime.store.set('singleTaskId',task.id);runtime.store.set('paused',false);runtime.wakeWorkbench?.();runtime.tick();resumed.push(task.id);break;
    }catch(error){waiting.push({taskId:original.id,reason:error.message});}
    finally{if(ownsEngine)await engine?.detach();}
   }

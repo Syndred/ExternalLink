@@ -17,11 +17,20 @@ import {recoverCloudBatchRecords} from '../executor/src/workbench-batch-recovery
 import {batchActionAllowed} from '../executor/src/workbench-batch-policy.mjs';
 import {batchJson} from '../core/workbench-batch-recovery.mjs';
 import {finalizeUserPause} from '../executor/src/execution-lifecycle.mjs';
+import {parkedResumeIntent} from '../executor/src/parked-task-resume.mjs';
 import {PGlite} from '../executor/node_modules/@electric-sql/pglite/dist/index.js';
 import {executorApi} from '../cloud/worker/src/executor-api.mjs';
 import {freezeAcceptance} from '../executor/src/acceptance-freeze.mjs';
 import {registerAcceptance} from '../executor/src/acceptance-register.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+
+test('authenticated D1 preserves an original parked resume after a lost event reply and full paused recovery',async()=>{
+ const f=await fixture();try{const runtime=f.original,task=await nextWorkbenchTask(runtime),batch=runtime.store.get('workbenchBatch:'+f.batchId),run=structuredClone(runtime.store.get('run:'+task.runId));runtime.store.set('singleTaskId',null);
+  runtime.update(task,{status:'pending',targetId:'original-page',browserInstance:'original-browser',originalResume:parkedResumeIntent({...task,targetId:'original-page',browserInstance:'original-browser'},{execution:{kind:'workbench',id:batch.id,scope:batch.scope,scopeSha256:batch.scopeSha256,configSha256:batch.configSha256},pageUrl:task.url,frameUrl:task.url,documentId:27,pauseAt:''})},'captcha_resolved_original_task');const saved=structuredClone(task.originalResume),request=f.cloud.request.bind(f.cloud);let lost=true;
+  f.cloud.request=async(route,body)=>{const result=await request(route,body);if(route==='event'&&body.type==='captcha_resolved_original_task'&&lost){lost=false;throw Object.assign(Error('Lost parked resume event reply after commit'),{cloudNetwork:true});}return result;};await f.cloud.flush(runtime.store);assert.equal(lost,false);assert.equal(runtime.store.pendingCount(),0);const remote=await request('runs?runId='+task.runId);assert.deepEqual(remote.tasks.find(row=>row.id===task.id).originalResume,saved);assert.deepEqual(remote.runs.find(row=>row.id===task.runId).profile,run.profile);assert.deepEqual(remote.runs.find(row=>row.id===task.runId).mediaManifest,run.mediaManifest);
+  const restored=f.runtime();await restored.restoreCloud();assert.equal(restored.store.get('paused'),true);assert.deepEqual(restored.store.get('task:'+task.id).originalResume,saved);assert.equal(restored.store.get('task:'+task.id).status,'pending');assert.equal(restored.store.get('workbenchBatch:'+f.batchId).count,batch.count);assert.equal(restored.store.get('workbenchBatch:'+f.batchId).scopeSha256,batch.scopeSha256);assert.equal(restored.store.get('workbenchBatch:'+f.batchId).unattendedState.taskBudgetUsed,batch.unattendedState.taskBudgetUsed);assert.equal(restored.store.get('workbenchBatch:'+f.batchId).unattendedState.modelCallsUsed,batch.unattendedState.modelCallsUsed);assert.equal(restored.store.get('workbenchBatch:'+f.batchId).unattendedState.runDeadlineAt,batch.unattendedState.runDeadlineAt);assert.equal(restored.store.get('singleTaskId'),null);assert.equal(f.models(),0);
+ }finally{f.close();}
+});
 
 test('authenticated D1 fixed registration recovers a lost reply through full original IDs without replacing the frozen run',async()=>{
  const f=await fixture();try{
@@ -31,6 +40,10 @@ test('authenticated D1 fixed registration recovers a lost reply through full ori
   const uncertain=await registerAcceptance(runtime,frozen.id),intent=structuredClone(uncertain.items[frozen.combinations[0].identity]);assert.equal(intent.status,'registration_unknown');const full=(await original('runs?runId='+intent.runId)).runs[0];assert.ok(full.profile);assert.deepEqual(full.mediaManifest,[]);
   const before=await original('runs'),recovered=await registerAcceptance(runtime,frozen.id);assert.equal(recovered.items[frozen.combinations[0].identity].status,'registered');assert.deepEqual(runtime.store.get('run:'+intent.runId),full);assert.equal(runtime.store.get('task:'+intent.taskId).runId,intent.runId);assert.equal(posts,1);assert.deepEqual(await original('runs'),before);assert.equal(runtime.store.get('paused'),true);assert.equal(f.models(),0);
  }finally{f.close();}
+});
+
+test('authenticated D1 restores the exact queued original requests captured by user pause without granting execution',async()=>{
+ const f=await fixture();try{const runtime=f.original,task=await nextWorkbenchTask(runtime),batch=runtime.store.get('workbenchBatch:'+f.batchId);runtime.store.set('singleTaskId',null);runtime.update(task,{status:'pending',targetId:'original-page',browserInstance:'original-browser',originalResume:parkedResumeIntent({...task,targetId:'original-page',browserInstance:'original-browser'},{execution:{kind:'workbench',id:batch.id,scope:batch.scope,scopeSha256:batch.scopeSha256,configSha256:batch.configSha256},pageUrl:task.url,frameUrl:task.url,documentId:27,pauseAt:''})},'captcha_resolved_original_task');await runtime.control('pause',{});const saved=runtime.store.get('workbenchBatch:'+f.batchId);assert.deepEqual(saved.pausedParkedResumes,[{taskId:task.id,requestId:task.originalResume.id}]);assert.equal((await f.cloud.request('tasks/'+task.id)).task.workbenchBatchCheckpoint.pausedParkedResumes[0].requestId,task.originalResume.id);const restored=f.runtime();await restored.restoreCloud();const recovered=restored.store.get('workbenchBatch:'+f.batchId);assert.deepEqual(recovered.pausedParkedResumes,saved.pausedParkedResumes);assert.equal(recovered.status,'paused');assert.equal(recovered.count,saved.count);assert.equal(recovered.scopeSha256,saved.scopeSha256);assert.deepEqual(recovered.unattendedState,saved.unattendedState);assert.deepEqual(restored.store.get('task:'+task.id).originalResume,task.originalResume);assert.equal(restored.store.get('singleTaskId'),null);assert.equal(restored.store.get('paused'),true);assert.equal(f.models(),0);}finally{f.close();}
 });
 
 test('authenticated D1 registers and restores an original category with over five hundred combinations and compact profiles',async()=>{

@@ -1,5 +1,26 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalParallelTaskResumeCheckpoint": {
+    "date": "2026-10-07",
+    "evidence": "original-parallel-task-resume-2026-10-07.json",
+    "fullSuitePassed": 755,
+    "newTestsSince746": 9,
+    "actualIsolatedParallelBrowserCases": 12,
+    "actualIsolatedIdleCaptchaBrowserCases": 12,
+    "authenticatedCloudRecoveryTests": 24,
+    "originalWorkbenchParallelResumeVerified": true,
+    "nativeWorkbenchParallelManualContinueVerified": true,
+    "explicitPausedQueueResumeWithoutNewBudgetClaimVerified": true,
+    "preparingSyncFailureRevokesConsentAndAllowsExplicitRetry": true,
+    "parallelSkipDuringDispatchKeepsDestinationUntilReadback": true,
+    "originalPausedQueuedRequestsPreservedInCloudCheckpoint": true,
+    "originalServicesUpdatedWithPauseAndIdentityGuards": true,
+    "remainingOriginalPageManualCallbacksFullyMigrated": false,
+    "latestOriginalChromeDataRead": false,
+    "realCaptchaCompletionVerified": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "unpublishedOriginalParallelResumeProgressCheckpoint": {
     "date": "2026-10-07",
     "evidence": "progress-push-parallel-review-2026-10-07.json",
@@ -790,7 +811,7 @@
       "action": "captchaResolved",
       "mapping": "原本机验证码等待检查点 / captchaResolved / checkCaptchaResumes / 普通任务与Product Hunt原页恢复",
       "status": "implemented_requires_full_acceptance",
-      "verification": "已发布3414072版本为746项回归及12种隔离浏览器情形通过，恢复等待执行器空闲；本机未发布草稿新增工作台并行接续，751项回归、9种隔离浏览器情形及23项认证云端恢复测试通过。并发跳过交错、暂停后继续和人工准备同步失败仍待完整核验；固定批次／连续目录／原run恢复另须专门验证。旧任务无原文档检查点时不自动恢复，不代表真实验证码或收件验收"
+      "verification": "原工作台并行接续及人工继续已接入原调度，755项回归、12种并行和12种原空闲隔离浏览器情形通过，24项认证云端恢复测试通过。覆盖跳过派发交错、满预算队列暂停后明确继续、人工准备同步失败撤销授权及重试；固定批次／连续目录／原run恢复另须专门验证。原页面人工回调仍待接入；旧任务无原文档检查点时不自动恢复，不代表真实验证码或收件验收"
     },
     {
       "action": "clearSiteAnnotation",

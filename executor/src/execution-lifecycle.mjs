@@ -5,6 +5,7 @@ import {batchJson,batchScopeRows} from '../../core/workbench-batch-recovery.mjs'
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 import {createHash} from 'node:crypto';
 import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
+import {captureParkedResumeRequests,pausedParkedResumeTasks} from './parked-task-resume.mjs';
 const now=()=>new Date().toISOString();
 const activeIds=runtime=>[...new Set([...(runtime.activeTaskIds||[]),runtime.activeTaskId,runtime.store.get('singleTaskId')].filter(Boolean))];
 export function assertOriginalBatch(runtime,batch) {
@@ -18,7 +19,7 @@ export function requestExecutionPause(runtime,reason='用户暂停') {
   const single=ids.map(id=>runtime.store.get('task:'+id)).filter(Boolean),runIds=[...new Set(single.map(task=>task.runId).filter(Boolean))];
   const runId=runtime.store.get('manualResumeRunId')||(wasPaused&&prior?.scope===scope&&prior.kind==='run'?prior.id:null);if(!runIds.length&&runId&&runtime.store.get('run:'+runId))runIds.push(runId);
   runtime.store.set('executionPaused',{scope:workbenchScope(runtime.store.get('pair')),at:now(),reason,taskIds:ids,...(batch?{kind:'workbench',id:batch.id}:fixed?.status==='running'?{kind:'fixed',id:fixed.id}:plan?.status==='active'?{kind:'library',id:plan.id}:runIds.length===1?{kind:'run',id:runIds[0]}:{kind:'idle'})});
-  if(batch?.status==='running'){assertOriginalBatch(runtime,batch);runtime.store.set('workbenchBatch:'+id,{...batch,status:'paused',reason,pauseReasonCode:'user_pause',pausedAt:now(),pausedTaskIds:ids.filter(taskId=>batch.items.some(item=>item.taskId===taskId)),resumingPausedTaskIds:[]});}
+  if(batch?.status==='running'){assertOriginalBatch(runtime,batch);runtime.store.set('workbenchBatch:'+id,{...batch,status:'paused',reason,pauseReasonCode:'user_pause',pausedAt:now(),pausedTaskIds:ids.filter(taskId=>batch.items.some(item=>item.taskId===taskId)),pausedParkedResumes:captureParkedResumeRequests(runtime,batch),resumingPausedTaskIds:[]});}
   if(fixed?.status==='running')runtime.store.set('acceptanceBatch',{...fixed,status:'paused',reason,pausedAt:now()});
 }
 export function finalizeUserPause(runtime,task) {
@@ -47,10 +48,11 @@ export async function resumeExecution(runtime,input={}) {
     if(batch.status!=='paused')throw Error('请从原批次范围处理待人工或停止的任务');assertOriginalBatch(runtime,batch);
     if(batchConfig(batch).unattended&&U.isExpired(batch.unattendedState)){pauseBatchPolicy(runtime,batch,'deadline');throw Error('无人值守截止时间已到，原任务和预算保留');}
     const continuations=(batch.pausedTaskIds||[]).filter(taskId=>{const task=runtime.store.get('task:'+taskId),saved=task?.pauseContinuation;return task?.status==='pending'&&!task.attemptBoundary&&!task.receipt&&saved?.batchId===batch.id&&saved.scope===scope&&['targetId','browserInstance','taskDeadlineAt','profileRevision'].every(key=>saved[key]===task[key]);});
-    if(batchConfig(batch).unattended&&!continuations.length&&batch.items.some(item=>!['complete','excluded'].includes(item.status))){const decision=U.canStartTask(batch.unattendedState);if(!decision.ok){pauseBatchPolicy(runtime,batch,decision.reason);throw Error('原无人值守预算已达到上限，未开始新组合');}}
+    const parked=pausedParkedResumeTasks(runtime,batch);
+    if(batchConfig(batch).unattended&&!continuations.length&&!parked.length&&batch.items.some(item=>!['complete','excluded'].includes(item.status))){const decision=U.canStartTask(batch.unattendedState);if(!decision.ok){pauseBatchPolicy(runtime,batch,decision.reason);throw Error('原无人值守预算已达到上限，未开始新组合');}}
     await runtime.synchronize();check();assertOriginalBatch(runtime,runtime.store.get('workbenchBatch:'+id));
     const next={...runtime.store.get('workbenchBatch:'+id),status:'running',reason:'',resumedAt:now(),resumingPausedTaskIds:continuations};runtime.store.set('workbenchBatch:'+id,next);
-    try{await persistBatchLifecycle(runtime,next,'workbench_run_resumed');check();}catch(error){const current=runtime.store.get('workbenchBatch:'+id);if(current)runtime.store.set('workbenchBatch:'+id,{...current,status:'paused',reason:error.message});throw error;}
+    try{for(const task of parked){const current=runtime.store.get('task:'+task.id);if(!pausedParkedResumeTasks(runtime,next).some(saved=>saved.id===current.id))throw Error('原待人工接续任务已变化，保持暂停');runtime.update(current,{originalResume:{...current.originalResume,pauseAt:paused?.at||''}},'parked_task_user_resumed');}await persistBatchLifecycle(runtime,next,'workbench_run_resumed');check();}catch(error){const current=runtime.store.get('workbenchBatch:'+id);if(current)runtime.store.set('workbenchBatch:'+id,{...current,status:'paused',reason:error.message});throw error;}
   }else if(fixed?.status==='paused'){
     const frozen=runtime.store.get('acceptance:'+fixed.id),execution=runtime.store.get('acceptanceExecution:'+fixed.id);if(frozen?.sha256!==fixed.scopeSha256||execution?.scopeSha256!==frozen?.sha256||frozen?.count!==fixed.count)throw Error('原固定批次范围校验失败');
     const taskIds=[...(frozen.combinations||[]).map(item=>item.existingTaskId),...Object.values(execution.items||{}).map(item=>item.taskId)].filter(Boolean);

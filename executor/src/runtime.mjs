@@ -67,6 +67,7 @@ import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
 import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captcha-resume.mjs';
+import {assertParkedResumePage} from './parked-task-resume.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
 import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
@@ -646,6 +647,7 @@ export class Runtime {
     let page, engines = [], responseListener;
     const responseTasks = [], submissionResponses = [];
     try {
+      await assertParkedResumePage(this,task);
       this.update(task, { status: 'opening', controller: 'executor' }, 'opening');
       let reused = false;
       if (task.targetId) {

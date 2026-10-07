@@ -12,7 +12,7 @@ export function batchManifest(batch) {
   return manifest;
 }
 export function batchCheckpoint(batch) {
-  const keys = ['id','scope','configSha256','scopeSha256','cloudCheckpointRevision','status','startedAt','completedAt','reason','pauseReasonCode','unattendedState','interruptedTasks','taskInterruptionReasons','cursor','pausedAt','resumedAt','stoppedAt','pausedTaskIds','resumingPausedTaskIds'];
+  const keys = ['id','scope','configSha256','scopeSha256','cloudCheckpointRevision','status','startedAt','completedAt','reason','pauseReasonCode','unattendedState','interruptedTasks','taskInterruptionReasons','cursor','pausedAt','resumedAt','stoppedAt','pausedTaskIds','pausedParkedResumes','resumingPausedTaskIds'];
   return structuredClone({...Object.fromEntries(keys.filter(key => batch[key] !== undefined).map(key => [key,batch[key]])),items:batch.items.map(({taskId,status,result,reason,startedAt,completedAt}) => ({taskId,status,...(result===undefined?{}:{result}),...(reason===undefined?{}:{reason}),...(startedAt===undefined?{}:{startedAt}),...(completedAt===undefined?{}:{completedAt})}))});
 }
 export function batchRunMetadata(batch, item) {

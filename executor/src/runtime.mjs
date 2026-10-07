@@ -78,7 +78,8 @@ import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captc
 import {assertParkedResumePage} from './parked-task-resume.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
 import {manualSkip,manualSubmit,stopExecution} from './manual-controls.mjs';
-import {previewManualConfirmation,confirmManualSubmission} from './manual-confirmation.mjs';
+import {previewManualConfirmation,confirmManualSubmission,recoverManualConfirmation} from './manual-confirmation.mjs';
+import {connectionIdentity} from './workbench-connections.mjs';
 import {handleTaskPageMessage} from './task-page-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
@@ -406,6 +407,7 @@ export class Runtime {
   update(task, patch, type, stateChanges) { const checkpoint=checkpointTaskUpdate(this,task,patch,stateChanges);const next={...task,...checkpoint.patch};const event=this.store.transition(next,type,checkpoint.stateChanges);Object.assign(task,next);return event; }
   async lease(task,{online=false}={}) {
     if(task.originalFreshRoundSuccessorTaskId)throw Object.assign(Error('旧任务已进入历史，请使用原新一轮任务'),{status:409});
+    if(!isDeepStrictEqual(plain(this.store.get('task:'+task.id)),plain(task)))throw Object.assign(Error('原任务在领取前已变化，保留最新状态'),{staleTask:true});
     const leaseScope=workbenchScope(this.store.get('pair')),leaseTask=structuredClone(this.store.get('task:'+task.id));
     if(this.store.get('offlineMode')?.enabled&&!online){task.version=Number(task.version)||0;task.controllerId=this.controllerId;task.localLease={at:new Date().toISOString(),controllerId:this.controllerId,authority:'single-local-executor'};this.store.set(`task:${task.id}`,task);return;}
     let lease;
@@ -544,7 +546,7 @@ export class Runtime {
     if (this.hydrated || this.hydrating || !this.store.get('pair')) return;
     this.hydrating = true;
     try {
-      const scope=workbenchScope(this.store.get('pair')),assertScope=()=>{if(scope!==workbenchScope(this.store.get('pair')))throw Error('工作区已切换，原云端恢复结果已放弃');};
+      const scope=connectionIdentity(this.store.get('pair')),assertScope=()=>{if(scope!==connectionIdentity(this.store.get('pair')))throw Error('工作区、设备或后端已切换，原云端恢复结果已放弃');};
       if(this.cloud.config?.storageBackend==='d1'){
         const index=await this.cloud.request('runs?view=inventory');
         assertScope();
@@ -563,7 +565,7 @@ export class Runtime {
       this.store.db.exec('BEGIN IMMEDIATE');
       try {
         for (const run of saved.runs) if (!this.store.get(`run:${run.id}`)) this.store.set(`run:${run.id}`, run);
-        for (const task of restoredTasks) this.store.set(`task:${task.id}`, task);
+        for (const task of restoredTasks){this.store.set(`task:${task.id}`, task);recoverManualConfirmation(this,task,{trustedCloud:true});}
         for(const batch of batches)this.store.set('workbenchBatch:'+batch.id,batch);
         if(batches.length){this.store.set('paused',true);this.store.set('singleTaskId',null);if(!this.store.get('activeWorkbenchBatch'))this.store.set('activeWorkbenchBatch',batches.slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))[0].id);}
         this.store.db.exec('COMMIT');
@@ -1777,12 +1779,15 @@ export class Runtime {
           task.receipt || (task.attemptHistory || []).length || !input.expectedReason || task.reason !== input.expectedReason) {
         throw new Error('只能恢复状态一致、没有提交尝试或收件的原人工待办');
       }
+      const retryScope=connectionIdentity(this.store.get('pair')),checkRetry=()=>{if(retryScope!==connectionIdentity(this.store.get('pair'))||this.job||this.store.get('paused')!==true||!isDeepStrictEqual(plain(this.store.get('task:'+task.id)),plain(task)))throw Object.assign(Error('原任务、工作区或暂停状态已变化，未投稿恢复已停止'),{staleTask:true});};
       const snapshot = await this.cloud.request('snapshot');
+      checkRetry();
       const profile = snapshot.documents.siteProfiles?.[task.profileId];
       if (!profile || priorProductSuccess(snapshot.documents.submissionRecords, task.profileId, task.url)) {
         throw new Error('资料缺失或最新云端已有本站成功记录，禁止再次提交');
       }
       await this.lease(task);
+      checkRetry();
       const prior = { at: new Date().toISOString(), reason: task.reason, attentionType: task.attentionType,
         profileRevision: task.profileRevision, targetId: task.targetId, browserInstance: task.browserInstance,
         tabClosedAt: task.tabClosedAt, tabRetainReason: task.tabRetainReason,

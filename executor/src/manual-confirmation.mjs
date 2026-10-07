@@ -1,12 +1,17 @@
-import {randomUUID} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {automationLedger,plain,queue,priorProductSuccess} from './shared.mjs';
 import {connectionIdentity} from './workbench-connections.mjs';
 import {finishWorkbenchTask} from './workbench-features.mjs';
 import {prepareIndexNotification} from './index-notification.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
 
 const parkedStatuses=new Set(['needs_manual','needs_captcha','needs_login','captcha','filled','submitted_unconfirmed']);
 const key=id=>'manualConfirmation:'+id;
+const frozenKeys=['runId','profileId','profileSnapshot','profileRevision','url','destinationKey','targetId','browserInstance','attemptBoundary','actualSubmission'];
+const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+const frozenDigest=task=>digest(Object.fromEntries(frozenKeys.filter(field=>task[field]!==undefined).map(field=>[field,task[field]])));
+const receiptDigest=receipt=>digest(Object.fromEntries(['evidence','evidenceType','confirmedBy','successProof','receivedAt'].map(field=>[field,receipt[field]])));
 function taskFor(runtime,input){
  const task=runtime.store.get('task:'+input.taskId);
  if(!task?.runId||task.runId!==input.runId)throw Error('批次已变化，请刷新待人工列表后重试');
@@ -16,13 +21,29 @@ function taskFor(runtime,input){
 }
 function checkScope(runtime,ticket){if(ticket.scope!==connectionIdentity(runtime.store.get('pair')))throw Error('工作区或设备已切换，旧人工确认已放弃');if(runtime.store.get(key(ticket.task.id))?.id!==ticket.id)throw Error('人工确认凭证已变化，请重新确认');}
 function ownedReceipt(task,ticket){return task.receipt?.successProof?.manualConfirmationId===ticket.id&&task.receipt.confirmedBy==='manual'&&(!ticket.receipt||isDeepStrictEqual(task.receipt,ticket.receipt));}
-function checkFrozenTask(task,ticket){if(['runId','profileId','profileSnapshot','profileRevision','url','destinationKey','targetId','browserInstance','attemptBoundary'].some(field=>!isDeepStrictEqual(task[field],ticket.task[field])))throw Error('原任务、产品资料或提交边界已变化，请重新确认');}
+function checkFrozenTask(task,ticket){if(frozenKeys.some(field=>!isDeepStrictEqual(task[field],ticket.task[field])))throw Error('原任务、产品资料或提交边界已变化，请重新确认');}
+
+// This is recovery of an existing human proof, never authority to create a new
+// receipt. Legacy markers lacking hashes are accepted only during the guarded,
+// authenticated full task restore; arbitrary local previews cannot adopt them.
+export function recoverManualConfirmation(runtime,task,{trustedCloud=false}={}){
+ const marker=task.manualConfirmation,receipt=task.receipt;
+ if(!marker||!receipt||receipt.confirmedBy!=='manual')return null;
+ if(!['pending_sync','confirmed'].includes(marker.status)||!marker.id||marker.id!==receipt.successProof?.manualConfirmationId||receipt.successProof.source!=='manual'||receipt.evidenceType!=='manual_confirmation'||!task.actualSubmission||!automationLedger.validateSuccessProof({confirmedBy:'manual',evidence:receipt.evidence}).ok)throw Error('原人工确认与收件证明不一致，保持原任务');
+ const scope=connectionIdentity(runtime.store.get('pair'));
+ if(marker.scope&&marker.scope!==scope||marker.frozenSha256&&marker.frozenSha256!==frozenDigest(task)||marker.receiptSha256&&marker.receiptSha256!==receiptDigest(receipt))throw Error('原人工确认的设备、资料或证明已变化，保持暂停');
+ if(!trustedCloud&&(!marker.scope||!marker.frozenSha256||!marker.receiptSha256))return null;
+ const old=runtime.store.get(key(task.id));
+ if(old){checkScope(runtime,old);checkFrozenTask(task,old);if(!ownedReceipt(task,old))throw Error('原人工确认凭证与恢复结果冲突');return old;}
+ const ticket={id:marker.id,scope,task:plain(task),receipt:plain(receipt),at:marker.at,status:marker.status,recoveredFromCloud:trustedCloud,recoveryOnly:true};
+ runtime.store.set(key(task.id),ticket);return ticket;
+}
 
 // Only the authenticated native workbench exposes this challenge. The original
 // page bridge cannot request it or confirm success on the user's behalf.
 export function previewManualConfirmation(runtime,input){
- const task=taskFor(runtime,input),old=runtime.store.get(key(task.id));
- if(old&&ownedReceipt(task,old)){checkScope(runtime,old);checkFrozenTask(task,old);return{ok:true,confirmationNonce:old.id,taskId:task.id,runId:task.runId,pending:task.cloudVerified!==true,evidence:task.receipt.evidence};}
+ const task=taskFor(runtime,input),old=runtime.store.get(key(task.id))||recoverManualConfirmation(runtime,task);
+ if(old&&ownedReceipt(task,old)){checkScope(runtime,old);checkFrozenTask(task,old);return{ok:true,confirmationNonce:old.id,taskId:task.id,runId:task.runId,pending:task.manualConfirmation?.status!=='confirmed'||task.cloudVerified!==true,evidence:task.receipt.evidence};}
  if(task.receipt||!parkedStatuses.has(task.status))throw Error('该任务当前不在待人工确认状态');
  const ticket={id:randomUUID(),scope:connectionIdentity(runtime.store.get('pair')),task:plain(task),at:new Date().toISOString(),status:'prepared'};
  runtime.store.set(key(task.id),ticket);
@@ -45,11 +66,11 @@ export async function confirmManualSubmission(runtime,input){
   const receivedAt=new Date().toISOString(),receipt={evidence:proof.evidence,evidenceType:proof.evidenceType,confirmedBy:'manual',publicationStatus:queue.inferPublicationStatus({evidence:proof.evidence,publicationStatus:task.publicationStatus,publicUrl:task.publicUrl||'',evidenceUrl:task.evidenceUrl||task.url}),publicUrl:task.publicUrl||'',url:task.url,evidenceUrl:task.evidenceUrl||task.url,receivedAt,syncStatus:'pending',successProof:{source:'manual',manualConfirmationId:ticket.id}};
   // A user's confirmation is evidence of receipt, not a report of fields the
   // executor never saw. Existing actual fields and unknown attempts stay intact.
-  runtime.update(task,{receipt,cloudVerified:false,confirmedBy:'manual',successEvidence:proof.evidence,
-   actualSubmission:task.actualSubmission||{profileId:task.profileId,profileRevision:task.profileRevision,source:'manual_confirmation',fields:{},attachments:[]},
-   manualConfirmation:{id:ticket.id,at:receivedAt,status:'pending_sync'},
+  const actualSubmission=task.actualSubmission||{profileId:task.profileId,profileRevision:task.profileRevision,source:'manual_confirmation',fields:{},attachments:[]};
+  runtime.update(task,{receipt,cloudVerified:false,confirmedBy:'manual',successEvidence:proof.evidence,actualSubmission,
+   manualConfirmation:{id:ticket.id,at:receivedAt,status:'pending_sync',scope:ticket.scope,frozenSha256:frozenDigest({...task,actualSubmission}),receiptSha256:receiptDigest(receipt)},
    indexNowNotification:task.indexNowNotification||prepareIndexNotification(runtime,task),reason:'人工已确认成功，等待云端账本回读'},'manual_success_confirmation',
-   {[key(task.id)]:{...ticket,status:'pending_sync',receipt}});
+   {[key(task.id)]:{...ticket,task:{...ticket.task,actualSubmission},status:'pending_sync',receipt}});
   ticket=runtime.store.get(key(task.id));
  }
  if(task.cloudVerified!==true){

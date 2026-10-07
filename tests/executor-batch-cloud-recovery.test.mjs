@@ -423,7 +423,7 @@ test('cloud scope changes and conflicting original checkpoints are rejected befo
   const f=await fixture();try{
     const saved=await f.cloud.request('runs'),runtime=f.runtime();let requests=0;
     Object.defineProperty(runtime,'cloud',{value:{config:{storageBackend:'d1'},request:async()=>{requests++;runtime.store.set('pair',{...f.pair,workspaceId:'other'});return saved;}},configurable:true});
-    await assert.rejects(runtime.restoreCloud(),/工作区已切换/);assert.equal(runtime.store.values('run:').length,0);assert.equal(runtime.store.values('task:').length,0);assert.equal(requests,1);
+    await assert.rejects(runtime.restoreCloud(),/工作区、设备或后端已切换/);assert.equal(runtime.store.values('run:').length,0);assert.equal(runtime.store.values('task:').length,0);assert.equal(requests,1);
     runtime.store.set('pair',f.pair);
     const changed=structuredClone(saved);changed.runs.find(run=>run.workbenchBatchManifest).workbenchBatchManifest.config.fillOnly=false;
     assert.throws(()=>recoverCloudBatchRecords(runtime,changed.runs,changed.tasks),/校验失败/);

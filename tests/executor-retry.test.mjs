@@ -53,3 +53,13 @@ test('reopening an unsubmitted task preserves closed-tab history but resets curr
  assert.equal(after.preparationHistory[0].tabClosedAt,history[0].closedAt);
  store.close();
 });
+
+test('late snapshot and lease results cannot overwrite new receipts, unknown attempts, products or execution permissions',async()=>{
+ for(const stage of ['snapshot','lease'])for(const change of ['attempt','receipt','product','controller','workspace','device','backend','resume','worker']){
+  const {store,task,runtime}=fixture();try{store.set('pair',{endpoint:'https://cloud.example',workspaceId:'original',deviceId:'one',storageBackend:'d1'});const snapshot={documents:{siteProfiles:{JevPlay:{name:'JevPlay',fields:{Url:'https://jevplay.com'}}},submissionRecords:{}},revisions:{siteProfiles:154}},mutate=()=>{if(['workspace','device','backend'].includes(change))store.set('pair',{...store.get('pair'),...({workspace:{workspaceId:'changed'},device:{deviceId:'changed'},backend:{storageBackend:'neon'}}[change])});else if(change==='resume')store.set('paused',false);else if(change==='worker')runtime.job=Promise.resolve();else store.set('task:original',{...store.get('task:original'),...({attempt:{attemptBoundary:'new-unknown',status:'submitted_unconfirmed'},receipt:{receipt:{evidence:'New protected receipt'}},product:{profileId:'other'},controller:{controller:'supervisor'}}[change])});};if(stage==='snapshot')runtime.cloud.request=async()=>{mutate();return snapshot;};else{runtime.cloud.request=async()=>snapshot;runtime.lease=async()=>{mutate();};}await assert.rejects(runtime.control('prepareRetry',{taskId:task.id,expectedReason:task.reason}),error=>error.staleTask===true);assert.equal(store.pendingCount(),0);assert.equal(store.get('task:original').preparationHistory,undefined);if(change==='attempt')assert.equal(store.get('task:original').attemptBoundary,'new-unknown');if(change==='receipt')assert.equal(store.get('task:original').receipt.evidence,'New protected receipt');}finally{store.close();}
+ }
+});
+
+test('the original lease refuses an already stale task before contacting the cloud or granting offline authority',async()=>{
+ for(const offline of [false,true]){const {store,task,runtime}=fixture();try{store.set('pair',{endpoint:'https://cloud.example',workspaceId:'one'});if(offline)store.set('offlineMode',{enabled:true});store.set('task:original',{...task,attemptBoundary:'Protected unknown'});let calls=0;runtime.cloud.request=async()=>{calls++;return{version:2};};await assert.rejects(Runtime.prototype.lease.call(runtime,task),error=>error.staleTask===true);assert.equal(calls,0);assert.equal(store.get('task:original').attemptBoundary,'Protected unknown');assert.equal(store.get('task:original').localLease,undefined);}finally{store.close();}}
+});

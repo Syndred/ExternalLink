@@ -6,7 +6,7 @@ test('a failed cloud synchronization backs off instead of repeatedly querying a 
  assert.doesNotThrow(()=>Runtime.prototype.tick.call(runtime));
 });
 test('D1 startup with a complete local checkpoint reads the lightweight index only',async()=>{
- const store=new Store(':memory:');try{store.set('pair',{});store.set('run:r',{id:'r'});store.set('task:t',{id:'t',status:'finished'});const calls=[];
+ const store=new Store(':memory:');try{store.set('pair',{endpoint:'https://cloud.fixture.invalid',workspaceId:'original',deviceId:'original-device',storageBackend:'d1'});store.set('run:r',{id:'r'});store.set('task:t',{id:'t',status:'finished'});const calls=[];
  const runtime={store,cloud:{config:{storageBackend:'d1'},request:async route=>{calls.push(route);return{runs:[{id:'r'}],tasks:[{id:'t'}]};}}};
  await Runtime.prototype.restoreCloud.call(runtime);assert.deepEqual(calls,['runs?view=inventory']);assert.equal(runtime.hydrated,true);
  }finally{store.close();}

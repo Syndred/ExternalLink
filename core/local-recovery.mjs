@@ -4,7 +4,7 @@ import {prepareProfileRecoverySource} from './profile-recovery-source.mjs';
 const objectKeys=new Set(['targetFilters','linkMonitorSchedule']);
 const arrayKeys=new Set(['selectedSiteIds','deletedSubmissionKeys','domainBlacklist']);
 const stringKeys=new Set(['activeSiteId','cfgEmail','cfgName','cfgCommentTemplate']);
-function validateValue(key,value){
+export function validateRecoveryValue(key,value){
  if(objectKeys.has(key)&&(!value||typeof value!=='object'||Array.isArray(value)))throw Error('恢复资料格式无效：'+key);
  if(arrayKeys.has(key)&&(!Array.isArray(value)||value.some(item=>typeof item!=='string')))throw Error('恢复资料格式无效：'+key);
  if(stringKeys.has(key)&&typeof value!=='string')throw Error('恢复资料格式无效：'+key);
@@ -18,16 +18,16 @@ export function localRecoveryOriginalDocuments(raw){
  const value=normalizeLegacyPreferences(raw?.documents||raw?.snapshot?.documents||raw||{});
  if(!value||typeof value!=='object')throw Error('恢复来源没有产品资料，不能恢复');
  const picked=Object.fromEntries(backupKeys.filter(k=>Object.hasOwn(value,k)).map(k=>[k,value[k]]));
- validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...picked});for(const [key,value]of Object.entries(picked))validateValue(key,value);return structuredClone(picked);
+ validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...picked});for(const [key,value]of Object.entries(picked))validateRecoveryValue(key,value);return structuredClone(picked);
 }
 export function localRecoveryDocuments(raw){
  const original=localRecoveryOriginalDocuments(raw),documents=prepareProfileRecoverySource(original);
  if(!Object.keys(documents.siteProfiles||{}).length)throw Error('恢复来源没有产品资料，不能恢复');
- validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...documents});for(const [key,value]of Object.entries(documents))validateValue(key,value);return documents;
+ validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},...documents});for(const [key,value]of Object.entries(documents))validateRecoveryValue(key,value);return documents;
 }
 export function recoveryDocument(documents,key,raw){
  if(!backupKeys.includes(key))throw Error('恢复字段未授权');
- validateValue(key,raw);
+ validateRecoveryValue(key,raw);
  validateApplicationBackup({format:'externallink-submission-backup',submissionRecords:{},siteProfiles:{},[key]:raw});
  let data=structuredClone(raw);if(data===undefined)throw Error('恢复资料缺失');
  if(key==='submissionRecords'){

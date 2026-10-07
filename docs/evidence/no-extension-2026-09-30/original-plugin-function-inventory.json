@@ -1276,5 +1276,30 @@
     "newRealSubmissions": 0,
     "evidence": "original-profile-source-2026-10-07.json",
     "completion": "not_complete"
+  },
+  "originalBackupProfilesCheckpoint": {
+    "date": "2026-10-07",
+    "originalBackupMergeAndSeedFunctionsCompared": true,
+    "separateImportSeedsStableIdentitiesAndCoupledHistory": true,
+    "previewAndActualSparseTaskReceiptProtectionMatch": true,
+    "frozenFieldChangesRetainConcurrentCloudData": true,
+    "atomicSqlitePlanLostReplyAndSameIdRecovery": true,
+    "ordinaryProductSelectionsAndConflictExclusions": true,
+    "parallelConfirmationsAndBackgroundFlushResume": true,
+    "repeatedLostRepliesRetainUiContinuation": true,
+    "authenticatedHttpD1AndBeforeSourceArchives": true,
+    "largeBackupBytes": 12351334,
+    "largeBackupDocuments": 23,
+    "productionOriginalExportAndUiPreview": true,
+    "liveOldProfileAliasObserved": false,
+    "realBusinessImports": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "businessDocumentsAndRevisionsUnchanged": true,
+    "testsPassed": 556,
+    "newTests": 14,
+    "workerVersion": "b966c883-a875-4f0d-b26f-d951173d497f",
+    "evidence": "original-backup-profiles-2026-10-07.json",
+    "completion": "not_complete"
   }
 }

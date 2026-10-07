@@ -176,7 +176,7 @@ export class Runtime {
       enrolled:planned.length,processed:planned.filter(t=>!['pending','opening','filling','submitting'].includes(t.status)).length,counts,
       exclusions:plan.exclusions.length,runtimeExclusions:plan.runtimeExclusions.length,batches:plan.batches.length,scopeHash:plan.scopeHash,snapshotAt:plan.offlineSnapshotAt||null,
       globalPause:plan.globalPause?{...plan.globalPause,active:globalGateActive,historical:!globalGateActive}:null}:null;
-    return { ok: true, runtimeMode:'standalone-core', paired: !!this.store.get('pair'), paused, busy: !!this.job||!!this.indexNowJobs?.size,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
+    return { ok: true, runtimeMode:'standalone-core', paired: !!this.store.get('pair'), paused, busy: !!this.job||!!this.indexNowJobs?.size||!!this.backupImportOperations?.size,offlineMode:offlineMode?.enabled?offlineMode:null,libraryPlan,activeTaskId:this.activeTaskId,
     runs: this.store.values('run:'), tasks: tasks.map(task => ({ ...task, pendingEvents:pending.filter(e=>e.taskId===task.id).length, syncStatus:task.syncConflict?'conflict':pending.some(e => e.taskId === task.id) || (task.receipt && !task.cloudVerified) ? 'pending' : 'confirmed' })), pendingEvents: pending.length, workbenchPendingEvents:pendingWorkbench(this).length, cloudError:activeOfflineMode?'':this.cloudError, host: this.host ? { version: this.host.version, instance: this.host.startedAt } : null }; }
   async connect() {
     this.host = JSON.parse(await readFile(path.join(this.home, 'host.json'), 'utf8'));

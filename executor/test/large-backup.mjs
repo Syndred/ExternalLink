@@ -41,7 +41,7 @@ try{
  assert.deepEqual(await cloudStore.revisions(),Object.fromEntries(backupKeys.map(k=>[k,1])),'preview must not write business documents');
  await page.getByRole('button',{name:'确认合并导入',exact:true}).click();await page.getByRole('button',{name:'继续同步此备份',exact:true}).waitFor({timeout:60000});
  localStore=new Store(join(home,'outbox.sqlite'),{readOnly:true});const plan=localStore.values('backupImport:')[0],ids=plan.items;assert.ok(ids.length);localStore.close();localStore=null;
- await page.getByRole('button',{name:'继续同步此备份',exact:true}).click();await page.getByText('备份已完成云端回读',{exact:true}).waitFor({timeout:60000});
+ const importResponse=page.waitForResponse(response=>response.url().endsWith('/importBackup'));await page.getByRole('button',{name:'继续同步此备份',exact:true}).click();const importResult=await(await importResponse).json();assert.equal(importResult.remaining,0,JSON.stringify(importResult));await page.getByText('备份已完成云端回读',{exact:true}).waitFor({timeout:60000});
  for(const key of backupKeys)assert.deepEqual((await cloudStore.document(key))?.data,expected[key],key);
  localStore=new Store(join(home,'outbox.sqlite'),{readOnly:true});assert.deepEqual(localStore.get('backupImport:'+plan.id).items,ids);assert.equal(localStore.get('backupImport:'+plan.id).status,'completed');assert.equal(localStore.get('paused'),true);assert.deepEqual(localStore.get('acceptanceBatch'),{id:'original-fixed',status:'paused',cursor:13,count:30});assert.equal(localStore.values('task:').length,0);assert.equal(localStore.pending().length,0);
  assert.equal(sqlite.prepare('SELECT count(*) n FROM executor_runs').get().n,0);assert.equal(sqlite.prepare('SELECT count(*) n FROM journal_tasks').get().n,0);assert.equal(external,0);assert.deepEqual(errors,[]);

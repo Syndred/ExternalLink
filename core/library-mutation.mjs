@@ -6,7 +6,8 @@ import {canonicalLibraryDestination} from './library-records.mjs';
 import {backupKeys,mergeApplicationBackup} from './application-backup.mjs';
 import {mergeSubmify,applySubmifyGates} from './submify-sync.mjs';
 import {checkablePublicUrl,targetHostForProfile} from './link-monitor.mjs';
-import {recoveryDocument} from './local-recovery.mjs';
+import {recoveryDocument,validateRecoveryValue} from './local-recovery.mjs';
+import {applyPreparedBackupKey} from './prepared-backup-key.mjs';
 import {formKnowledgeMutation,formKnowledgeSatisfied} from './form-knowledge.mjs';
 import {applicationSettingKeys} from './application-preferences.mjs';
 import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
@@ -32,6 +33,7 @@ export function libraryMutation(documents,operation,options={}){
  const at=operation.at||'',id=operation.id;if(!id||!at)fail('缺少修改身份');
  if(['form_learning','form_knowledge'].includes(operation.type)){keyOf(operation.url);return formKnowledgeMutation(documents,operation);}
  if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
+ if(operation.type==='backup_prepared_key'){try{const data=applyPreparedBackupKey(documents,operation);validateRecoveryValue(operation.key,data);return{key:operation.key,data};}catch(error){fail(error.message);}}
  if(operation.type==='pin'){
   const key=catalogKeyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return catalogKeyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return catalogKeyOf(s.split('|')[0])!==key;}catch{return true;}});
   return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
@@ -78,7 +80,7 @@ export function libraryMutation(documents,operation,options={}){
  }
  if(['backup_merge','backup_key_merge'].includes(operation.type)){
   if(!backupKeys.includes(operation.key))fail('不支持的备份字段');
-  const merged=mergeApplicationBackup(documents,operation.backup);if(!Object.hasOwn(merged,operation.key))fail('备份未包含该字段');
+  const merged=mergeApplicationBackup(documents,operation.backup,{prepareProfiles:false});if(!Object.hasOwn(merged,operation.key))fail('备份未包含该字段');
   return{key:operation.key,data:merged[operation.key]};
  }
  if(operation.type==='timeline'){
@@ -170,7 +172,8 @@ export function libraryMutationSatisfied(documents,operation){
  if(operation.type==='monitor_result')return documents.linkMonitorResults?.[operation.recordKey]?.monitorJobId===operation.jobId&&Object.entries(operation.result).every(([k,v])=>JSON.stringify(documents.linkMonitorResults[operation.recordKey][k])===JSON.stringify(v));
  if(operation.type==='monitor_publication')return documents.submissionRecords?.[operation.recordKey]?.status==='success'&&documents.submissionRecords[operation.recordKey].publicationStatus==='published';
  if(operation.type==='domain_metrics')return Object.keys(documents.domainMetricsCache||{}).length<=domainMetricsLimit&&operation.results.every(row=>Object.entries(row).every(([k,v])=>JSON.stringify(documents.domainMetricsCache?.[row.domain]?.[k])===JSON.stringify(v)));
- if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup)[operation.key]);}catch{return false;}}
+ if(operation.type==='backup_prepared_key'){try{return JSON.stringify(documents[operation.key])===JSON.stringify(applyPreparedBackupKey(documents,operation));}catch{return false;}}
+ if(['backup_merge','backup_key_merge'].includes(operation.type)){try{return JSON.stringify(documents[operation.key])===JSON.stringify(mergeApplicationBackup(documents,operation.backup,{prepareProfiles:false})[operation.key]);}catch{return false;}}
  if(operation.type==='timeline'){const event=Object.values(globalThis.ExtLinkSubmissionTimeline.normalizeTimeline(documents.submissionTimeline||{})).flat().find(e=>e.id===operation.eventId);return operation.action==='remove'?!event:!!event&&Object.entries(operation.patch||{}).every(([k,v])=>event[k]===v);}
  // Incremental blacklist edits are not idempotent in the original function:
  // existing wildcard prefixes normalize before new rules are added. The outbox

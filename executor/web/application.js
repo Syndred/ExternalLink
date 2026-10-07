@@ -302,15 +302,13 @@ function backupImportMessage(result,complete='备份已合并并回读云端'){
 }
 function showBackupImport(){
  const file=el('input',{type:'file',accept:'application/json,.json','aria-label':'原插件备份文件'}),summary=el('div',{'role':'status'});let generation=0;
+ async function importReviewedBackup(id,doneMessage){const result=await request('/importBackup',{id});await load();summary.replaceChildren(el('p',{text:backupImportMessage(result,doneMessage)}));if(result.remaining)summary.append(button('继续同步此备份',()=>importReviewedBackup(id,'备份已完成云端回读')));}
  if(!detail.open)detail.showModal();$('detail-content').replaceChildren(el('h2',{text:'导入原插件备份'}),el('p',{text:'先检查合并范围，再确认导入。已有收件证据保留；同一产品的非空资料按原备份规则合并。大备份分段保存到本机，中断后重新选择原文件可继续。媒体路径不会变成实际文件，请保留原素材。'}),file,summary);
  file.onchange=async()=>{const selectedGeneration=++generation;try{
   const chosen=file.files?.[0];if(!chosen)return;summary.textContent='正在读取并比较备份……';
   const result=await stageBackupFile(chosen,summary,()=>generation===selectedGeneration&&detail.open&&file.isConnected),preview=result.preview;
   if(generation!==selectedGeneration||!detail.open||!file.isConnected)return;
-  summary.replaceChildren(el('p',{text:'备份包含 '+preview.profilesImported+' 个产品、'+preview.recordsImported+' 条账本记录、'+preview.targetsImported+' 个外链入口；将合并 '+preview.changes.length+' 类资料。'}),button('确认合并导入',async()=>{
-   const result=await request('/importBackup',{id:preview.id});await load();summary.replaceChildren(el('p',{text:backupImportMessage(result)}));
-   if(result.remaining)summary.append(button('继续同步此备份',async()=>{const next=await request('/importBackup',{id:preview.id});await load();summary.textContent=backupImportMessage(next,'备份已完成云端回读');}));
-  },true));
+   summary.replaceChildren(el('p',{text:'备份包含 '+preview.profilesImported+' 个产品、'+preview.recordsImported+' 条账本记录、'+preview.targetsImported+' 个外链入口；'+(Number.isFinite(preview.profilesPrepared)&&preview.profilesPrepared!==preview.profilesImported?'从原表格补回产品后，共涉及 '+preview.profilesPrepared+' 个产品；':'')+'将合并 '+preview.changes.length+' 类资料。'}),...(preview.dependencyKeys?.length>1?[el('p',{text:'原产品与关联历史一起合并。冲突时选择保留云端产品，关联资料也会保留云端；其他设置仍按备份合并。'})]:[]),button('确认合并导入',()=>importReviewedBackup(preview.id),true));
  }catch(error){if(generation===selectedGeneration)summary.textContent=error.message;}};
 }
 

@@ -30,7 +30,7 @@ test('backup import stores only each key fragment and preserves the complete ori
   const expected=mergeApplicationBackup(f.snapshot.documents,backup),preview=await workbenchBackup(f.runtime,'previewBackup',{backup});
   const result=await workbenchBackup(f.runtime,'importBackup',{id:preview.preview.id});assert.equal(result.remaining,0);
   for(const key of preview.preview.changes)assert.deepEqual(f.snapshot.documents[key],expected[key],key);
-  const items=f.runtime.store.values('appMutation:');assert.ok(items.every(i=>i.operation.type==='backup_key_merge'));
+  const items=f.runtime.store.values('appMutation:');assert.ok(items.every(i=>i.operation.type==='backup_prepared_key'));
   for(const item of items)if(item.key!=='siteProfiles')assert.ok(!JSON.stringify(item.operation).includes('large source '),'must not repeat another document data in each import item');
  }finally{f.runtime.store.close();}
 });

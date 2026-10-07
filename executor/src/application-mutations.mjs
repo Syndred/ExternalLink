@@ -59,12 +59,12 @@ export async function enqueueApplicationPlan(runtime,{planId,operations,allowPen
  const result=await flushApplicationMutations(runtime),remaining=plan.items.filter(i=>!['confirmed','discarded'].includes(runtime.store.get('appMutation:'+i.id)?.status)).length;plan.status=remaining?'queued':'completed';runtime.store.set('applicationPlan:'+plan.id,plan);return{ok:true,planId:plan.id,status:plan.status,remaining,...result};
 }
 async function performFlush(runtime){
- const scope=workbenchScope(runtime.store.get('pair'));recoverCatalogPlanDependencies(runtime,scope);const pending=pendingApplication(runtime);if(!pending.length)return{pending:0};const cloud=runtime.cloud;let snapshot;
+ const scope=workbenchScope(runtime.store.get('pair'));recoverCatalogPlanDependencies(runtime,scope);recoverBackupPlanDependencies(runtime,scope);const pending=pendingApplication(runtime);if(!pending.length)return{pending:0};const cloud=runtime.cloud;let snapshot;
  const checkScope=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原资料计划保留，停止写入');};
  try{snapshot=await cloud.request('snapshot');checkScope();}catch(error){return{pending:pending.length,error:error.message};}
  for(const item of pending){
   if(scope!==workbenchScope(runtime.store.get('pair')))return{pending:pending.length,error:'工作区已切换，原资料计划保留，停止写入'};
-  if(item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status==='discarded'){item.status='discarded';item.discardedAt=new Date().toISOString();item.error=runtime.store.get('applicationPlan:'+item.applicationPlanId)?.kind==='profile_recovery'?'原产品恢复已选择保留云端，关联资料恢复一并取消':item.operation.type==='profile_selection'?'产品变更已选择保留云端，关联的当前网站变更一并取消':'原网站操作已选择保留云端，后续关联变更一并取消';runtime.store.set('appMutation:'+item.id,item);continue;}
+  if(item.dependsOn&&runtime.store.get('appMutation:'+item.dependsOn)?.status==='discarded'){item.status='discarded';item.discardedAt=new Date().toISOString();item.error=item.backupImportId?'原产品导入已选择保留云端，关联历史导入一并取消':runtime.store.get('applicationPlan:'+item.applicationPlanId)?.kind==='profile_recovery'?'原产品恢复已选择保留云端，关联资料恢复一并取消':item.operation.type==='profile_selection'?'产品变更已选择保留云端，关联的当前网站变更一并取消':'原网站操作已选择保留云端，后续关联变更一并取消';runtime.store.set('appMutation:'+item.id,item);continue;}
   // A retained original timestamp can make a fetched row disappear during pruning.
   // Confirm the complete frozen cache result, rather than rewriting after a lost reply.
   const originalDomainResult=item.operation.type==='domain_metrics'&&libraryMutation({[item.key]:item.baseData},item.operation).data;
@@ -84,6 +84,10 @@ async function performFlush(runtime){
  runtime.store.set('applicationSnapshot',{scope,snapshot,at:new Date().toISOString()});
  for(const planId of new Set(pending.map(item=>item.applicationPlanId).filter(Boolean))){const plan=runtime.store.get('applicationPlan:'+planId);if(!['profile_lifecycle','annotation_lifecycle','catalog_lifecycle','profile_recovery'].includes(plan?.kind))continue;const entries=plan.items.map(item=>runtime.store.get('appMutation:'+item.id));plan.status=entries.every(item=>['confirmed','discarded'].includes(item?.status))?'completed':'queued';plan.excludedIds=entries.filter(item=>item?.status==='discarded').map(item=>item.id);runtime.store.set('applicationPlan:'+planId,plan);}
  return{pending:pendingApplication(runtime).length,error:pendingApplication(runtime).find(item=>item.error)?.error||''};
+}
+function recoverBackupPlanDependencies(runtime,scope){
+ const updates=[];for(const plan of runtime.store.values('backupImport:'))if(plan.scope===scope&&plan.status==='queued'&&plan.operationFormat==='prepared_keys_v2')for(const [id,parent]of Object.entries(plan.itemDependencies||{})){const item=runtime.store.get('appMutation:'+id);if(item&&item.dependsOn!==parent)updates.push({...item,dependsOn:parent});}
+ if(!updates.length)return;runtime.store.db.exec('BEGIN IMMEDIATE');try{for(const item of updates)runtime.store.set('appMutation:'+item.id,item);runtime.store.db.exec('COMMIT');}catch(error){runtime.store.db.exec('ROLLBACK');throw error;}
 }
 function recoverCatalogPlanDependencies(runtime,scope){
  for(const id of new Set(pendingApplication(runtime).map(item=>item.applicationPlanId).filter(Boolean))){

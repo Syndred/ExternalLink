@@ -1,0 +1,90 @@
+{
+  "kind": "original_backup_profile_seed_and_durable_import_checkpoint",
+  "date": "2026-10-07",
+  "previousProgressCommit": "1824d4f",
+  "goalStatus": "not_complete",
+  "tests": { "passed": 556, "failed": 0, "skipped": 0, "newTests": 14, "source": "executor/test-output/original-backup-profiles-all-final.txt" },
+  "originalFunctionComparison": {
+    "originalBackupMergeAndProfileSeedFunctionsExecuted": true,
+    "oldImportMissingTableSeedAndStableIdReproduced": true,
+    "originalSourceFileRetained": true,
+    "tableOnlyAndOldAliasCasesVerifiedInIsolatedFixtures": true
+  },
+  "durableImport": {
+    "previewAndPerKeyImportRecoverSameProducts": true,
+    "sourceCountsDistinguishStoredAndRecoveredProducts": true,
+    "rawBackupAndOriginalMutationIdsRetained": true,
+    "oldQueuedBackupFormatsRetainOriginalBodies": true,
+    "profileHistoryAndSelectionsCoupled": true,
+    "ordinaryNewProductsCoupleSelections": true,
+    "cloudChoiceCancelsDependentHistory": true,
+    "localChoiceRetainsNewerCloudProductsReceiptsRowsAndMedia": true,
+    "sparseOriginalTaskReceiptsRetainedExactly": true,
+    "actualPublicationAdditionsRetainTaskEvidenceAndBoundaries": true,
+    "atomicParentAndChildPersistenceRollback": true,
+    "sqliteReopenAndMissingOriginalChildResume": true,
+    "savedDependenciesRepairedBeforeFlush": true,
+    "parallelConfirmationsShareOriginalImport": true,
+    "queuedResumeWaitsForOriginalBackgroundFlush": true,
+    "absentAndUnsafePreparedFieldRequestsRejected": true,
+    "sourceAndBeforeStateArchivesVerifiedInAuthenticatedD1Fixture": true
+  },
+  "productionUiFixture": {
+    "source": "executor/test-output/original-backup-profiles-ui-final.txt",
+    "originalLocalRecoveryRetested": true,
+    "separateBackupProductsReceiptsFavoritesAndHistory": true,
+    "twoLostRepliesResumeThroughVisibleButton": true,
+    "sameImportAndUniqueMutationIds": true,
+    "realBusinessSubmissions": 0
+  },
+  "largeBackupFixture": {
+    "source": "executor/test-output/original-backup-profiles-large-ui-final.txt",
+    "bytes": 12351334,
+    "documents": 23,
+    "productionServicesHttpChromeAndD1R2": true,
+    "restartContinuesOriginalStagedFile": true,
+    "uploadedChunksNotRepeated": true,
+    "lostCommitResponseAndOriginalMutationIds": true,
+    "allDocumentsCompared": true,
+    "originalReceiptAndMediaHistoryPreserved": true,
+    "externalRequests": 0,
+    "submissionTasks": 0
+  },
+  "regressions": { "sixPages": true, "originalCurrentAndBatchSelection": true, "authenticatedHttpD1": true },
+  "observedFailuresBeforeFinalPassingRun": [
+    "Authenticated import unexpectedly added identity/publication fields to a sparse original task receipt.",
+    "The prepared preview still normalized the protected receipt differently from actual persistence.",
+    "A queued import continuation was rejected while its original background synchronization was running.",
+    "The continuation button disappeared after another incomplete response.",
+    "The initial live script waited for the large-file upload endpoint although the actual file used the small-file preview endpoint; corrected only after confirming the script exited."
+  ],
+  "workerVersion": "b966c883-a875-4f0d-b26f-d951173d497f",
+  "originalServicesReloadedAfterIdentityAndIdleDurableGuards": true,
+  "productionReadback": {
+    "source": "executor/test-output/original-backup-profiles-live-result-final.txt",
+    "originalTableSeeds": 6,
+    "profiles": 9,
+    "originalProfileIdRemaps": 0,
+    "originalProfilesAndSelectionsMatch": true,
+    "originalCatalogRows": 2948,
+    "originalFullSeedCatalogFactsMatch": true,
+    "authenticatedOriginalFormatExportAndUiPreview": true,
+    "previewRawProfiles": 9,
+    "previewPreparedProfiles": 9,
+    "previewChanges": 2,
+    "invalidPreparedRequestsRejected": { "cloud": [400,400,400], "executor": [400,400,400], "workbench": [400,400,400] },
+    "businessDocumentsAndRevisionsUnchanged": true,
+    "realBusinessImports": 0,
+    "realAiCalls": 0,
+    "newRealSubmissions": 0,
+    "externalBrowserRequests": 0,
+    "pausedIdleAndPendingZero": true,
+    "fixedBatch": "paused 13/30"
+  },
+  "limits": [
+    "Actual cloud identities were already canonical; old alias and table-only recovery proof comes from isolated fixtures.",
+    "Production business imports were not performed; export and preview did not modify business documents or revisions.",
+    "This checkpoint does not prove recovery of the latest original browser favorites/profiles or availability and ownership of original external media.",
+    "Other original dynamic behaviors, complete historical associations, special pages and external service results remain under audit."
+  ]
+}

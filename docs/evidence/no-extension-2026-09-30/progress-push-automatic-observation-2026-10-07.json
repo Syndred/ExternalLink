@@ -1,0 +1,36 @@
+{
+  "kind": "documentation_only_progress_checkpoint",
+  "date": "2026-10-07",
+  "timezone": "Asia/Shanghai",
+  "requestedAction": "写好进度推送先",
+  "migrationComplete": false,
+  "remotePull": {"command": "git pull --ff-only", "result": "Already up to date"},
+  "latestPublishedFeatureCommit": "41424345dcfec40158e97d8831012785d144ead0",
+  "currentDraft": {
+    "feature": "original automatic site observation for ordinary auto and manual product form gates",
+    "committed": false,
+    "deployed": false,
+    "nativeServicesReloaded": false,
+    "preserves": ["manual verdict", "manual note", "favorites", "groups", "existing receipts"],
+    "semanticUncertaintyAnnotatesSite": false,
+    "relatedDocuments": ["siteAnnotations", "deletedSubmissionKeys"],
+    "verifiedInIsolation": ["12 original writer fixtures", "SQLite offline reopen and lost-reply readback", "D1 and PostgreSQL linked revision checks", "concurrent update rollback", "device authorization and revocation", "ordinary auto and manual isolated Chrome form gates"]
+  },
+  "existingValidationOutputsReviewed": {
+    "fullRegression": {"tests": 774, "pass": 774, "fail": 0, "skipped": 0, "source": "executor/test-output/original-site-observation-all-2026-10-07.txt"},
+    "targetedCloud": {"tests": 17, "pass": 17, "fail": 0, "skipped": 0, "source": "executor/test-output/original-site-observation-cloud-first-2026-10-07.txt"},
+    "workerDryRun": {"passed": true, "source": "executor/test-output/original-site-observation-worker-dryrun-2026-10-07.txt"},
+    "rerunForThisDocumentationPush": false
+  },
+  "savedBeforeUpdateChecks": {
+    "nativeServices": {"ports": [19388, 19389], "paused": true, "busy": false, "pendingQueues": 0, "productsIncludingArchived": 9, "library": 2948, "combinations": 897, "originalBusinessMatchesHistoricBaseline": true, "source": "executor/test-output/original-site-observation-native-before-2026-10-07.txt"},
+    "fixedBatch": {"status": "paused", "cursor": 13, "count": 30, "cursorIsReceiptCount": false},
+    "currentDeviceCloudSnapshot": {"documents": 19, "phase": "before", "source": "executor/test-output/original-site-observation-production-before-2026-10-07.txt"},
+    "currentWorkerVersion": "29074512-3d6c-4907-83b4-842090f7420d",
+    "afterUpdateValidationAvailable": false,
+    "coversOtherDevicesOrAllHistoricalData": false
+  },
+  "thisDocumentationPush": {"functionalFilesStaged": false, "serviceReloads": 0, "workerDeployments": 0, "productionBusinessWrites": 0, "realModelCalls": 0, "realSubmissions": 0, "originalChromeLaunched": false},
+  "remaining": ["publish and validate current automatic observation draft", "main execution and post-submit classification hooks", "Product Hunt and other special workflows", "cloud media preference across entry points", "latest original products favorites and groups", "complete history and old media ownership", "other devices and legacy aliases", "remaining dynamic controls and execution-mode recovery", "actual UI acceptance for requested overview Chinese labels and field alignment"],
+  "limitations": ["fixture models and cloud APIs are not real-site acceptance", "ordinary form gate coverage does not prove all classification entry points", "test counts and saved data counts do not prove complete migration"]
+}

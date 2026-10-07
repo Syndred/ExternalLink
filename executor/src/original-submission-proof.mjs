@@ -18,7 +18,7 @@ export function originalSubmitSuccessDecision(task,result){
 }
 export function nativeSuccessRecord(task){
  const receipt=task.receipt;
- const record=plain(queue.buildSuccessRecord({destinationUrl:task.url,destinationKey:task.destinationKey,profileId:task.profileId,submittedAt:task.attemptBoundary,evidence:receipt.evidence,evidenceUrl:receipt.evidenceUrl||receipt.url,publicUrl:receipt.publicUrl||'',publicationStatus:receipt.publicationStatus||'submitted',confirmedBy:receipt.confirmedBy||task.confirmedBy||'agent'}));
+ const record=plain(queue.buildSuccessRecord({destinationUrl:task.url,destinationKey:task.destinationKey,profileId:task.profileId,submittedAt:task.attemptBoundary||receipt.receivedAt,evidence:receipt.evidence,evidenceUrl:receipt.evidenceUrl||receipt.url,publicUrl:receipt.publicUrl||'',publicationStatus:receipt.publicationStatus||'submitted',confirmedBy:receipt.confirmedBy||task.confirmedBy||'agent'}));
  return{...record,taskId:task.id,runId:task.runId,actualSubmission:task.actualSubmission,reviewStatus:task.reviewStatus,artifactRef:task.artifactRef||'',executor:'windows-playwright',...(receipt.evidenceType?{evidenceType:receipt.evidenceType}:{}),...(receipt.successProof?{successProof:plain(receipt.successProof)}:{})};
 }
 export function nativeReceiptReadbackMatches(read,record){

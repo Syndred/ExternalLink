@@ -99,7 +99,7 @@ const server = http.createServer(async (req, res) => {
       if(route==='/commitConnection')return commitConnection(runtime,input,{expectedId});
       if(['/localRecoverySources','/previewLocalRecovery','/submissionJournalRecoverLocal'].includes(route))return runtime.control(route.slice(1),input);
       if(['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'].includes(route))return runtime.control(route.slice(1),input);
-      if(['/clearSiteAnnotation','/getBatchLog','/manualSkip','/manualSubmit','/stop','/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/clearSiteAnnotation','/getBatchLog','/manualSkip','/manualSubmit','/previewManualConfirmation','/confirmSubmissionSuccess','/stop','/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'].includes(route))return runtime.control(route.slice(1),input);
       if(['/runExportSources','/exportBatchReport','/exportAutomationRun'].includes(route))return runtime.control(route.slice(1),input);
       if(['/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'].includes(route))return runtime.control(route.slice(1),input);
       if(route==='/saveAssistantSettings')return runtime.control('saveAssistantSettings',input);

@@ -89,9 +89,18 @@ async function showSubmissionQueue(){
 }
 function showStopExecution(){if(!detail.open)detail.showModal();const panel=$('detail-content');panel.replaceChildren(el('h2',{text:'停止本次执行'}),el('p',{text:'停止原批次并关闭属于它的自动页签。需要人工处理、人工绑定和结果待核验的页签会保留；任务与收件记录保留。停止后需明确重新开始原范围。'}),button('确认停止本次执行',async()=>{const result=await request('/stop',{});await load();panel.replaceChildren(el('h2',{text:'本次执行已停止'}),el('p',{text:'关闭自动页签 '+result.results.filter(r=>r.disposition==='closed_automated').length+' 个，保留页签 '+result.results.filter(r=>r.disposition!=='closed_automated').length+' 个。'}),...(result.syncError?[el('p',{class:'notice',text:'本机停止状态已保存，云端尚待同步：'+result.syncError})]:[]));},true));}
 function appendManualControls(panel,task){
- if(data.executionStopped){panel.append(el('p',{class:'notice',text:'本次执行已停止，请在运行任务页明确重新开始原范围。'}));return;}
  if(!task.runId||['ai','supervisor'].includes(task.controller))return;
  const original={taskId:task.id,expectedRunId:task.runId,...(task.targetId?{expectedTargetId:task.targetId}:{})};
+ if(!task.receipt&&['needs_manual','needs_captcha','needs_login','captcha','filled','submitted_unconfirmed'].includes(task.status)||task.receipt?.confirmedBy==='manual'&&task.manualConfirmation?.status==='pending_sync'){
+  panel.append(button(task.receipt?'继续同步人工确认':'人工确认成功',async()=>{
+   const preview=await request('/previewManualConfirmation',{...original,runId:task.runId}),evidence=el('textarea',{'aria-label':'人工确认说明',placeholder:'填写你看到的站方收件、账户记录或公开链接说明'}),message=el('p',{role:'status'});let confirmed=false;
+   evidence.value=preview.evidence||'';
+   const save=async()=>{if(!preview.pending&&!confirmed)throw Error('请先确认已经看到站方成功结果');const result=await request('/confirmSubmissionSuccess',{...original,runId:task.runId,confirmationNonce:preview.confirmationNonce,evidence:evidence.value});if(result.confirmed){await load();panel.replaceChildren(el('h2',{text:'人工确认已保存'}),el('p',{text:'原产品的收件记录已写入云端账本并独立回读。'}));}else{preview.pending=true;message.textContent='人工确认已保存在本机，仍待云端同步：'+(result.syncError||'尚未回读');saveButton.textContent='继续同步人工确认';}};
+   const saveButton=button(preview.pending?'继续同步人工确认':'保存人工成功确认',save,true);
+   panel.replaceChildren(el('h2',{text:'人工确认成功'}),el('p',{text:(data.model.products.find(p=>p.id===task.profileId)?.name||task.profileId)+' · '+task.url}),el('p',{text:'把你已核实的站方结果登记到原任务。保留原提交尝试和资料，云端账本回读后才计入成功。'}),fieldRow('人工确认说明',evidence),...(!preview.pending?[checkControl('我已核实站方成功结果',false,value=>confirmed=value)]:[]),saveButton,message);
+  }));
+ }
+ if(data.executionStopped){panel.append(el('p',{class:'notice',text:'本次执行已停止，请在运行任务页明确重新开始原范围。'}));return;}
  if(!task.receipt&&!task.attemptBoundary&&['pending','needs_manual'].includes(task.status)&&task.targetId){
   panel.append(button('人工继续原任务',()=>{
    let authorized=false;const productHuntReady=task.productHunt?.readyToCreate===true&&/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname);

@@ -333,7 +333,7 @@ export async function executorApi(request, env, sql, workspaceId, helpers) {
       if (!current[0]?.record || current[0].record.taskId !== input.taskId) fail('已有记录受保护，请审阅冲突', 409);
       const timelineEvent = globalThis.ExtLinkSubmissionTimeline.normalizeEvent({ id: `executor-${input.taskId}`, destinationKey: task.data.destinationKey,
         destinationUrl: task.data.url, profileId: task.data.profileId, type: record.publicationStatus || 'submitted', status: record.publicationStatus || 'submitted',
-        occurredAt: record.submittedAt, note: record.evidence, evidenceUrl: record.evidenceUrl, source: 'agent', recordKey: key });
+        occurredAt: record.submittedAt, note: record.evidence, evidenceUrl: record.evidenceUrl, source: record.confirmedBy === 'manual' ? 'manual' : 'agent', recordKey: key });
       await sql`update externallink_workspace_documents set data=jsonb_set(data,ARRAY[${key}],coalesce(data->${key},'[]'::jsonb)||${JSON.stringify([timelineEvent])}::jsonb),revision=revision+1,updated_at=now()
         where workspace_id=${workspaceId} and document_key='submissionTimeline'
         and not exists(select 1 from jsonb_array_elements(coalesce(data->${key},'[]'::jsonb)) e where e->>'id'=${timelineEvent.id})`;

@@ -210,7 +210,7 @@ export async function d1Executor(request,env,workspace,plan,assistant){
    const task=await readTask(input.taskId),record=input.record;
    if(task.version!==input.version||!record||record.profileId!==task.data.profileId||record.destinationKey!==task.data.destinationKey||record.taskId!==task.id||!record.evidence||!record.actualSubmission)fail('回执范围或证据不完整',403);
    const saved=await updateDocument('submissionRecords',records=>{const old=records[task.identity];if(old&&(old.taskId!==task.id||old.evidence!==record.evidence||JSON.stringify(old.actualSubmission)!==JSON.stringify(record.actualSubmission)))fail('已有回执受保护');return{...records,[task.identity]:old||record};});
-   const event=globalThis.ExtLinkSubmissionTimeline.normalizeEvent({id:'executor-'+task.id,destinationKey:task.data.destinationKey,destinationUrl:task.data.url,profileId:task.data.profileId,type:record.publicationStatus||'submitted',status:record.publicationStatus||'submitted',occurredAt:record.submittedAt,note:record.evidence,evidenceUrl:record.evidenceUrl,source:'agent',recordKey:task.identity});
+   const event=globalThis.ExtLinkSubmissionTimeline.normalizeEvent({id:'executor-'+task.id,destinationKey:task.data.destinationKey,destinationUrl:task.data.url,profileId:task.data.profileId,type:record.publicationStatus||'submitted',status:record.publicationStatus||'submitted',occurredAt:record.submittedAt,note:record.evidence,evidenceUrl:record.evidenceUrl,source:record.confirmedBy==='manual'?'manual':'agent',recordKey:task.identity});
    await updateDocument('submissionTimeline',timeline=>globalThis.ExtLinkSubmissionTimeline.append(timeline,event));
    return json({ok:true,record:saved.data[task.identity],revision:saved.revision});
   }

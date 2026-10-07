@@ -67,8 +67,8 @@ export function releaseBatchTask(runtime,batch,task,patch,index=batch.cursor){
 export function reserveBatchModelCall(runtime,task){
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!batch||!batchConfig(batch).unattended)return;
  assertBatchPolicy(runtime,batch);const result=U.reserveModelCall(U.createCheckpoint(batchConfig(batch),Date.now(),batch.unattendedState),Date.now());
- if(!result.ok){pauseBatchPolicy(runtime,batch,result.reason,task.id);throw Error(reasons[result.reason]||'无人值守调用预算不足');}
- if((batch.status!=='running'&&!hasManualSubmissionConsent(runtime,task))||runtime.store.get('paused')!==false)throw Error('原无人值守批次已暂停，未调用模型');save(runtime,{...batch,unattendedState:result.next});
+ if(!result.ok){pauseBatchPolicy(runtime,batch,result.reason,task.id);throw Object.assign(Error(reasons[result.reason]||'无人值守调用预算不足'),{unattendedBudget:true});}
+ if((batch.status!=='running'&&!hasManualSubmissionConsent(runtime,task))||runtime.store.get('paused')!==false)throw Object.assign(Error('原无人值守批次已暂停，未调用模型'),{batchPaused:true});save(runtime,{...batch,unattendedState:result.next});
 }
 export function batchActionAllowed(runtime,task){
  const skip=runtime.store.get('manualSkipPending:'+task.id);if(skip?.scope===workbenchScope(runtime.store.get('pair')))return false;

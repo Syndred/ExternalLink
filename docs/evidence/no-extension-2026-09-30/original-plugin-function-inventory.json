@@ -1,5 +1,22 @@
 {
   "kind": "original_source_inventory_not_completion_proof",
+  "originalAgentPreparationCheckpoint": {
+    "date": "2026-10-08",
+    "evidence": "original-agent-preparation-2026-10-07.json",
+    "originalPreparationJudgeVisualDomFallbackAndEightRoundsConnected": true,
+    "nativeTerminalReasonsAndStaleCleanupProtected": true,
+    "legacyAndBatchBudgetsPreserved": true,
+    "actualIsolatedNativePreparationCases": 12,
+    "nativeWorkDependencyFixtureCases": 8,
+    "actualIsolatedImageUploads": 16,
+    "fullSuitePassed": 789,
+    "newSince779": 10,
+    "fullOriginalVisualSubmissionReceiptAndNavigationRecoveryProven": false,
+    "originalUnavailableSkipAndSiblingDispositionFullyMigrated": false,
+    "latestOriginalBrowserDataRead": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
+  },
   "originalAgentDraftProgressCheckpoint": {
     "date": "2026-10-07",
     "evidence": "progress-push-original-agent-draft-2026-10-07.json",

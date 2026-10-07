@@ -41,7 +41,10 @@ import {toolScoutFinalPreparation} from './staged-form.mjs';
 import{advanceBasicGoogleLogin,canAuthenticateOffline,readBasicGoogleUI}from'./basic-google-login.mjs';
 import{getTargetInfo}from'./browser-target.mjs';
 import{journalSync,pendingWorkbench,workbenchDocuments,enqueueWorkbench,workbenchScope}from'./workbench-sync.mjs';
-import { runPreparationTakeover } from './auto-takeover.mjs';
+import {runOriginalAgentPreparation,originalPlanDecision} from './original-agent-flow.mjs';
+import {captureOriginalTaskVisual} from './task-visual-context.mjs';
+import {originalVisualFillActions} from './original-visit-fill.mjs';
+import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia,materializeTaskUpload } from './task-media.mjs';
 import {selectedFrozenPngLogo} from '../../core/task-media-selection.mjs';
@@ -646,7 +649,8 @@ export class Runtime {
     const active = () => this.store.get('paused') === false && this.store.get(`task:${task.id}`).controller !== 'supervisor' && batchActionAllowed(this,task);
     if(!active()){finalizeBatchDeadline(this,task);return;}
     if(!assignedTaskId)this.activeTaskId=task.id;
-    let page, engines = [], responseListener;
+    let page, engines = [], responseListener, staleWork=false;
+    const requirePrepared=result=>{if(result.ok)return;throw Object.assign(Error(result.reason||'原AI接管未完成，请检查原任务'),{staleTask:result.staleTask===true,preparationInterrupted:result.interrupted===true,cloudNetwork:result.cloudNetwork,status:result.status,preparationResult:result});};
     const responseTasks = [], submissionResponses = [];
     try {
       await assertParkedResumePage(this,task);
@@ -714,6 +718,7 @@ export class Runtime {
         for(const item of engines)await item.engine.detach();engines=[];
         const takeover=await this.prepareWithAi(page,task,config,active);
         candidate=takeover.candidate;if(candidate)engines.push(candidate);
+        requirePrepared(takeover);
       }
       if (!candidate) throw new Error('没有可识别表单，后台 AI 已尝试原页并记录结果');
       let { engine, detection } = candidate;
@@ -738,7 +743,9 @@ export class Runtime {
       if ((validation.validationFailed || fill.ok===false || fill.needs_manual || initialAction.advanceFound&&!initialAction.finalFound) && active() && !task.submitPreparedRun && (!task.fillOnlyRun||task.workbenchBatchId&&frozenBatch?.config?.fillOnly) && !detection.hasCaptcha) {
         for(const item of engines)await item.engine.detach();engines=[];
         const takeover=await this.prepareWithAi(page,task,config,active,{normalFillDone:true});
-        if(takeover.candidate){candidate=takeover.candidate;engine=candidate.engine;detection=candidate.detection;engines.push(candidate);validation=await engine.call({action:'collectFormValidation'});if(takeover.ok)fill={...fill,ok:true,needs_manual:false,aiPrepared:true};}
+        if(takeover.candidate)engines.push(takeover.candidate);
+        requirePrepared(takeover);
+        if(takeover.candidate){candidate=takeover.candidate;engine=candidate.engine;detection=candidate.detection;validation=await engine.call({action:'collectFormValidation'});fill={...fill,ok:true,needs_manual:false,aiPrepared:true};}
       }
       if (validation.validationFailed && active() && !task.submitPreparedRun && !task.aiTakeover) {
         const snapshot = await engine.call({ action: 'getPageSnapshot' });
@@ -843,6 +850,8 @@ export class Runtime {
       if (result?.matched && result.evidence && result.evidence !== task.baselineEvidence) await this.accept(task, page, result);
       else this.update(task, { status: 'submitted_unconfirmed', attentionType:'unknown_receipt',reason: result.reason || result.error || '未取得明确新回执，先核验；不会自动重投', submitResult: result }, 'unknown');
     } catch (error) {
+      if(error.staleTask){staleWork=true;return;}
+      if(error.preparationInterrupted)return;
       if(error.cloudNetwork||[401,403,409].includes(error.status)||error.status>=500)throw error;
       this.update(task, { status: task.attemptBoundary ? 'submitted_unconfirmed' : 'needs_manual', siteStatus:task.attemptBoundary?'sent_unconfirmed':'not_submitted', reason: error.message,
         attentionType:task.attemptBoundary?'unknown_receipt':task.attentionType||classifyBlocker(error.message) }, 'attention');
@@ -850,6 +859,7 @@ export class Runtime {
     } finally {
       try{
         if (page && responseListener) page.off('response', responseListener);
+        if(staleWork){for(const {engine}of engines)await withinDeadline(engine.detach(),3000,'表单引擎断开').catch(()=>{});return;}
         finalizeBatchDeadline(this,task);
         finalizeUserPause(this,task);
         for (const { engine } of engines) await withinDeadline(engine.detach(),3000,'表单引擎断开').catch(()=>{});
@@ -875,24 +885,32 @@ export class Runtime {
   async prepareWithAi(page,task,config,active,{normalFillDone=false,readyCheck}={}) {
     let candidate;
     let normalDone=normalFillDone;
+    const scope=workbenchScope(this.store.get('pair')),identity=Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance'].map(key=>[key,task[key]])),profile=plain(task.profileSnapshot||{}),preparationConfig={...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
+    const canRelease=current=>scope===workbenchScope(this.store.get('pair'))&&Object.entries(identity).every(([key,value])=>current[key]===value)&&current.version===task.version&&current.controllerId===task.controllerId&&!current.attemptBoundary&&!current.receipt&&isDeepStrictEqual(plain(current.profileSnapshot||{}),profile);
+    const assertCurrent=async()=>{const check=()=>{const current=this.store.get('task:'+task.id);if(!current||!canRelease(current)||current.controller!==task.controller||this.store.get('executionStopped')||this.store.get('connectionExecutionHold')||page.isClosed()||!/^https?:\/\//.test(page.url()))throw Object.assign(Error('原AI接管任务、产品、控制权或网页已变化'),{staleTask:true});if(!active())throw Object.assign(Error('原AI接管已暂停，原任务与预算保留'),this.store.get('paused')===true?{batchPaused:true}:{staleTask:true});};check();const target=await getTargetInfo(this.context,page);check();if(target?.targetId!==identity.targetId)throw Object.assign(Error('原AI接管页签身份已变化'),{staleTask:true});};
+    const assertDocument=async()=>{await assertCurrent();if(!candidate||candidate.frame.isDetached()||candidate.frame.url()!==candidate.url||!await candidate.engine.isCurrentDocument())throw Object.assign(Error('原AI接管文档已变化，请重新观察'),{staleTask:true});await assertCurrent();};
     const adapter=new AgentBrowserAdapter({endpoint:this.host.endpoint,targetId:task.targetId,taskId:task.id,browserInstance:this.host.startedAt,
       upload:async(kind,selector)=>{const file=await materializeTaskUpload(this,task,config,kind,candidate.engine,selector);if(!active())throw Error('原任务已暂停，未上传图片');return file;}});
     let bound=false;
     const observe=async()=>{
       await this.preparePublicPage(page,task);
+      await assertCurrent();
       if(!bound){await adapter.bind();bound=true;}
       await candidate?.engine.detach();candidate=null;
       const options=[];
       for(const frame of page.frames())if(/^https?:/.test(frame.url())){
-        try{const engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config});options.push({engine,frame,detection});}catch{}
+        let engine;try{await assertCurrent();engine=await attachEngine(this.context,frame,msg=>this.bridge(task,msg));const detection=await engine.call({action:'detectPage',config:preparationConfig}),observed=await engine.call({action:'getPageSnapshot'});options.push({engine,frame,detection,url:frame.url(),observed});}catch(error){await engine?.detach();if(error.staleTask||error.batchPaused){for(const item of options)await item.engine.detach();throw error;}}
       }
-      candidate=options.sort((a,b)=>b.detection.formFieldCount-a.detection.formFieldCount)[0];
+      candidate=options.sort((a,b)=>(b.observed.fields?.length||Number(b.detection.formFieldCount)||0)-(a.observed.fields?.length||Number(a.detection.formFieldCount)||0))[0];
       for(const item of options)if(item!==candidate)await item.engine.detach();
       if(!candidate)throw Error('原任务页面没有可观察上下文');
+      await assertDocument();
       if(!normalDone&&candidate.detection.operable){
         normalDone=true;
         const fill=await candidate.engine.call({action:'smartFill',config:{...config,fillOnly:true,autoSubmitDirectory:false}});
+        await assertDocument();
         await this.reconcileTextInputs(candidate.frame,await candidate.engine.call({action:'getFilledFieldsReport'}),fill.mappings);
+        await assertDocument();
         this.update(task,{normalPreparation:{at:new Date().toISOString(),fill}},'normal_preparation_completed');
       }
       const snapshot=await candidate.engine.call({action:'getPageSnapshot'});
@@ -905,28 +923,47 @@ export class Runtime {
     const ready=async()=>{
       if(!candidate)return false;
       try{
+        await assertDocument();
         if(readyCheck)return await readyCheck(candidate.engine);
         const validation=await candidate.engine.call({action:'collectFormValidation'});
         const action=await candidate.engine.call({action:'inspectSubmitAction',config,platform:candidate.detection.platform||'directory'});
         const actual=await candidate.engine.call({action:'getFilledFieldsReport'});
         return !validation.validationFailed&&action.finalFound&&candidate.detection.operable&&
           !assessSubmissionQuality(actual,task.profileSnapshot||{}).length;
-      }catch{return false;}
+      }catch(error){if(error.staleTask)throw error;return false;}
     };
-    const result=await runPreparationTakeover(this,{task,active,observe,ready,
-      plan:async state=>{await this.cloud.flush(this.store);return this.batchModelRequest(task,'plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config,...state});},
-      act:async action=>{
+    let lastVisual;
+    const taskPayload=()=>({index:0,domain:queue.extractDomain(task.url),url:task.url,platformType:candidate?.detection.platform||'auto',projectKey:config.projectKey||task.profileId});
+    const model=async(kind,input)=>{
+      await assertDocument();await this.cloud.flush(this.store);await assertDocument();
+      if(kind==='vision-plan'){
+        const visual=await captureOriginalTaskVisual(this,{task,page,candidate,assertCurrent:assertDocument});await assertDocument();
+        lastVisual=visual;const plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,fillOnly:true});await assertDocument();
+        return{...plan,actions:originalVisualFillActions(plan.actions,visual.elements)};
+      }
+      if(kind==='judge'){const judge=await this.batchModelRequest(task,'ai/judge',{task:taskPayload(),config:preparationConfig,...input});await assertDocument();return judge;}
+      const plan=await this.batchModelRequest(task,'plan',{mode:'prepare_takeover',taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config:preparationConfig,...input,fillOnly:true});await assertDocument();return{...plan,actions:restrictPreparationActions(plan.actions,input.snapshot)};
+    };
+    const act=async(action,{visual=false}={})=>{
+        await assertDocument();await this.lease(task,{online:true});await assertDocument();
         const before=action.type==='click'?await readAfterNavigation(page,()=>page.evaluate(()=>location.href+'|'+(document.body?.innerText||''))):null;
         if(action.type==='click')await candidate.engine.call({action:'persistFillLearnings',config});
         let result;
-        if(candidate.frame===page.mainFrame())result=await adapter.act(action);
+        if(!visual&&candidate.frame===page.mainFrame()&&action.type!=='scroll')result=await adapter.act(action);
         // Embedded forms share the same registered task page. The normal
         // Playwright frame executor supplies the scope that CLI selectors lack.
         else if(action.type==='upload'){const file=await materializeTaskUpload(this,task,config,action.mediaKind,candidate.engine,action.selector);if(!active())throw Error('原任务已暂停，未上传图片');result=await candidate.frame.locator(action.selector).setInputFiles(file);}
         else result=await candidate.engine.call({action:'executeActionPlan',actions:[action]});
         if(action.type==='click')await settleObservedClick(page,before);
         return result;
-      }});
+    };
+    const result=await runOriginalAgentPreparation(this,{task,io:{assertCurrent,canRelease,observe,ready,readyBeforeJudge:config.productHuntPrepared===true,model,act,
+      settle:ms=>page.waitForTimeout(ms),
+      recordPlan:async plan=>{await assertDocument();this.update(task,{agentVisualHistory:[...(task.agentVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),...(lastVisual?{localScreenshot:lastVisual.localScreenshot,artifactRef:lastVisual.artifactRef,artifactError:lastVisual.artifactError}:{}),...(!plan.visualAgent?{visualFallbackReason:task.aiTakeover?.visualFallbackReason||''}:{}),visualAgent:plan.visualAgent===true}].slice(-8)},'original_agent_plan');},
+      visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
+    }});
+    if(result.staleTask){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{staleTask:true});}
+    if(!result.serviceUnavailable&&!result.interrupted)try{await classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:assertDocument});}catch(error){await assertCurrent();await assertDocument();throw error;}
     return {...result,candidate};
   }
   async reobserveNavigatedReceipt(page, task) {
@@ -1415,12 +1452,17 @@ export class Runtime {
       this.update(task,{profileSnapshot:profile,profileRevision,
         consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'approved_plan',text:'已批准普通免费投稿及目标站基本 Google 登录；额外 OAuth 权限及本人验证须由用户完成'}]},'preparation_profile_frozen');
       const config=applyDestinationFormKnowledge(snapshot.documents,plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),task.url);
-      let prepared;
+      let prepared,preparationStale=false;
+      const preparationScope=workbenchScope(this.store.get('pair'));
+      const preparationCurrent=()=>{const current=this.store.get('task:'+task.id);return !preparationStale&&current&&preparationScope===workbenchScope(this.store.get('pair'))&&['runId','profileId','profileRevision','version','controller','controllerId','targetId','browserInstance'].every(key=>current[key]===task[key])&&isDeepStrictEqual(current.profileSnapshot,profile)&&!current.attemptBoundary&&!current.receipt&&!page.isClosed();};
+      const assertPreparation=async()=>{if(!preparationCurrent()||prepared?.candidate&&!await prepared.candidate.engine.isCurrentDocument()||!preparationCurrent()){preparationStale=true;throw Object.assign(Error('原准备任务或文档已变化，迟到结果已放弃'),{staleTask:true});}};
       try{prepared=await this.prepareWithAi(page,task,config,()=>!page.isClosed()&&this.store.get('paused')===true);}
-      finally{const file=path.join(this.home,`${task.id}-${Date.now()}-ai-preparation.png`);
-        await capturePageEvidence(this.context,page,{path:file}).then(()=>this.update(task,{screenshot:file,artifactRef:''},'ai_preparation_evidence')).catch(error=>this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message}},'ai_preparation_evidence_failed'));
-      }
+      catch(error){preparationStale=error.staleTask===true;throw error;}
+      finally{if(preparationCurrent()){const file=path.join(this.home,`${task.id}-${Date.now()}-ai-preparation.png`);
+        await capturePageEvidence(this.context,page,{path:file}).then(async()=>{await assertPreparation();this.update(task,{screenshot:file,artifactRef:''},'ai_preparation_evidence');}).catch(error=>{if(preparationCurrent())this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message}},'ai_preparation_evidence_failed');});
+      }}
       try{
+        await assertPreparation();
         if(prepared.candidate){
           const engine=prepared.candidate.engine;
           const report=await engine.call({action:'getFilledFieldsReport'});
@@ -1430,11 +1472,12 @@ export class Runtime {
               result.push({field:input.name||input.id,name:file.name,type:file.type,bytes:file.size,sha256});
             }return result;
           });
+          const validation=await engine.call({action:'collectFormValidation'});await assertPreparation();
           this.update(task,{actualPreparation:{at:new Date().toISOString(),url:prepared.candidate.frame.url(),report,
-            validation:await engine.call({action:'collectFormValidation'}),qualityIssues:assessSubmissionQuality(report,profile),
+            validation,qualityIssues:assessSubmissionQuality(report,profile),
             prepared:prepared.ok,reason:prepared.reason}},'actual_preparation_recorded');
         }
-      }finally{await prepared.candidate?.engine.detach();await this.cloud.flush(this.store);}
+      }finally{await prepared.candidate?.engine.detach();if(!preparationStale)await this.cloud.flush(this.store);}
       return{ok:true,taskId:task.id,prepared:prepared.ok,reason:prepared.reason,aiTakeover:task.aiTakeover,actualPreparation:task.actualPreparation,submitted:false};
     }
     if(action==='openRecoveryTask'){

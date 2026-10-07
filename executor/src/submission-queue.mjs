@@ -1,18 +1,20 @@
-import {pendingSubmissionQueue} from '../../core/submission-queue.mjs';
+import {originalNavigationQueue} from '../../core/submission-queue.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
-import {scheduler} from './shared.mjs';
+import {scheduler,queue} from './shared.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
-import {enqueueApplicationPlan,flushApplicationMutations,pendingApplication} from './application-mutations.mjs';
+import {enqueueApplicationPlan,flushApplicationMutations,pendingApplication,overlayApplication} from './application-mutations.mjs';
 import {applicationData} from './application-data.mjs';
 
 export async function submissionQueue(runtime,input={},advance=false){
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('submissionQueue'),previous=saved?.scope===scope?saved:null;
  const options={selectedSiteIds:input.selectedSiteIds??previous?.selectedSiteIds,category:input.category??previous?.category??'',group:input.group??previous?.group??''};
- const snapshot=await runtime.cloud.request('snapshot'),result=pendingSubmissionQueue(snapshot,options),groups=result.groups;
- let index=Number.isInteger(previous?.index)?previous.index:0,key=canonicalLibraryDestination(input.currentKey||previous?.key||'');
- if(input.url){const matched=groups.findIndex(g=>g.key===canonicalLibraryDestination(input.url));if(matched>=0){index=matched;key=groups[matched].key;}}
- if(advance){const delta=input.delta??1;if(!Number.isInteger(delta)||Math.abs(delta)>1)throw Error('队列切换仅允许上一站或下一站');index=scheduler.resolveCursorIndex(groups,key,index,delta);}else{const matched=groups.findIndex(g=>g.key===key);if(matched>=0)index=matched;index=Math.max(0,Math.min(Math.max(0,groups.length-1),index));}
+ const snapshot=overlayApplication(runtime,await runtime.cloud.request('snapshot'));if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新查看队列');const result=originalNavigationQueue(snapshot,options),groups=result.groups;
+ let index=Number.isInteger(previous?.index)?previous.index:0,key=input.currentKey||previous?.key||'';
+ const matchKey=value=>groups.findIndex(group=>group.key===value),matchAlias=value=>{const exact=matchKey(value),normalized=matchKey(queue.normalizeDestinationKey(value));return exact>=0?exact:normalized>=0?normalized:groups.findIndex(group=>canonicalLibraryDestination(group.key)===canonicalLibraryDestination(value));};
+ if(input.url){const matched=queue.findSubmissionIndex(input.url,groups);if(matched>=0){index=matched;key=groups[matched].key;}}
+ if(matchKey(key)<0){const alias=matchAlias(key);if(alias>=0)key=groups[alias].key;}
+ if(advance){const delta=input.delta??1;if(!Number.isInteger(delta)||Math.abs(delta)>1)throw Error('队列切换仅允许上一站或下一站');index=scheduler.resolveCursorIndex(groups,key,index,delta);}else{const matched=matchKey(key);if(matched>=0)index=matched;if(index<0||index>=groups.length)index=0;}
  const task=groups[index]||null,cursor={scope,index,key:task?.key||'',selectedSiteIds:result.selectedProfileIds,category:options.category,group:options.group,at:new Date().toISOString()};
  runtime.store.set('submissionQueue',cursor);
  let page=previous?.page;

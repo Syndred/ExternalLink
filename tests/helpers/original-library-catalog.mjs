@@ -28,6 +28,14 @@ export async function originalLibraryBatchQueue(snapshot,input={}){
  const functions=['expandSubmissionRecordsForQueue','scopeDestinationGroupsByLibraryCategory','scopeDestinationGroupsByLibraryGroup','normalizeTargetFilters','loadPendingSubmissionTasks'].map(originalFunction).join('\n');
  return structuredClone(await vm.runInContext(destinationHelpers+'\n'+seedProfiles+'\n'+schema+'\n'+functions+'\nloadPendingSubmissionTasks(options)',context));
 }
+export async function originalNavigationState(snapshot,{input={},cursor={},advance=false}={}){
+ const queue=await originalLibraryBatchQueue(snapshot,{profileIds:advance?undefined:input.selectedSiteIds}),documents={submissionQueueIndex:cursor.index??0,submissionQueueKey:cursor.key||''},opened=[];
+ const context=vm.createContext({input,self:{...originalLibraryGlobals},loadPendingSubmissionTasks:async()=>structuredClone(queue),chrome:{storage:{local:{async get(){return structuredClone(documents);},async set(values){Object.assign(documents,structuredClone(values));}}},tabs:{async query(){return[{id:77}];},async update(id,options){opened.push({id,...options});}}}});
+ vm.runInContext(execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/lib/scheduler.js'],{encoding:'utf8'}),context);
+ const functions=['getSubmissionQueueState','toSubmissionGroupSummary','advanceSubmissionQueue'].map(originalFunction).join('\n');
+ const result=await vm.runInContext(functions+'\n'+(advance?'advanceSubmissionQueue':'getSubmissionQueueState')+'(input)',context);
+ return{result:structuredClone(result),cursor:{index:documents.submissionQueueIndex,key:documents.submissionQueueKey},opened};
+}
 export async function originalProfileSource(initial){
  const documents=structuredClone(initial),context=vm.createContext({URL,self:{ExtLinkProfiles:originalLibraryGlobals.ExtLinkProfiles},chrome:{storage:{local:{async set(values){Object.assign(documents,structuredClone(values));}}}},initial:documents});
  const result=await vm.runInContext(seedProfiles+'\nensureProfilesFromTable(initial.sheetTableData,initial.siteProfiles,initial.activeSiteId,initial.selectedSiteIds)',context);return{result:structuredClone(result),documents};

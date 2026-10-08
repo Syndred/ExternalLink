@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readFile,readdir,mkdir,writeFile,copyFile,stat} from 'node:fs/promises';
+import {join,resolve,sep} from 'node:path';
+import {homedir} from 'node:os';
+import {createHash,randomUUID} from 'node:crypto';
+import {ClassicLevel} from './original-chrome-storage-tools/node_modules/classic-level/index.js';
+import {Store} from '../src/store.mjs';
+import {workbenchScope} from '../src/workbench-sync.mjs';
+import {localRecoveryOriginalDocuments} from '../../core/local-recovery.mjs';
+const original=join(process.env.LOCALAPPDATA,'Google','Chrome','User Data','Default','Local Extension Settings','eagomdoflagkgjklppjfboddedgjjigm');
+const backupRoot=join(homedir(),'.externallink-backups'),folder=join(backupRoot,'original-plugin-storage-'+randomUUID()),copy=join(folder,'leveldb-copy');
+assert.ok(resolve(copy).startsWith(resolve(backupRoot)+sep));
+const hash=b=>createHash('sha256').update(b).digest('hex');
+async function files(){const result=[];for(const name of (await readdir(original)).sort()){const path=join(original,name);assert.ok((await stat(path)).isFile());const bytes=await readFile(path);result.push({name,bytes:bytes.length,sha256:hash(bytes)});}return result;}
+const before=await files();await mkdir(copy,{recursive:true});for(const row of before)await copyFile(join(original,row.name),join(copy,row.name));
+assert.deepEqual(await files(),before,'Original storage changed during capture; do not accept this copy');
+for(const row of before)assert.equal(hash(await readFile(join(copy,row.name))),row.sha256);
+// LevelDB recovery and locking happen exclusively in our copied directory.
+const db=new ClassicLevel(copy,{keyEncoding:'utf8',valueEncoding:'utf8',createIfMissing:false}),raw={};await db.open();try{for await(const [key,value] of db.iterator())raw[key]=JSON.parse(value);}finally{await db.close();}
+assert.deepEqual(await files(),before,'Original storage changed during read');
+const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true});let pair;try{pair=store.get('pair');}finally{store.close();}
+const config=raw.cloudSyncConfig||{},sourceScope=workbenchScope(config),sameScope=sourceScope===workbenchScope(pair),documents=localRecoveryOriginalDocuments(raw);
+await writeFile(join(folder,'private-storage.json'),JSON.stringify(raw),{flag:'wx'});
+await writeFile(join(folder,'capture-manifest.json'),JSON.stringify({source:original,files:before,scopeSha256:hash(sourceScope),currentWorkspaceMatches:sameScope,capturedAt:new Date().toISOString()},null,2),{flag:'wx'});
+if(sameScope)await writeFile(join(folder,'snapshot.json'),JSON.stringify({scope:sourceScope,workspaceId:config.workspaceId,documents,revisions:raw.cloudSyncRevisions||{},capturedAt:new Date().toISOString(),source:'stable_original_chrome_extension_storage_copy'}),{flag:'wx'});
+const report={ok:true,kind:'stable_original_plugin_storage_copy_readonly',originalStorageFiles:before.length,sourceFiles:before,originalFilesUnchanged:true,copiedLevelDbRecovered:true,storageKeys:Object.keys(raw).sort(),currentWorkspaceMatches:sameScope,originalStorageBackend:config.storageBackend||'legacy',currentStorageBackend:pair.storageBackend||'legacy',recoverableSnapshotSaved:sameScope,privateBackupFolder:folder,documents:Object.keys(documents).sort(),counts:{profiles:Object.keys(documents.siteProfiles||{}).length,targets:documents.sheetTableData?.entries?.length||0,records:Object.keys(documents.submissionRecords||{}).length,timelineEvents:Object.values(documents.submissionTimeline||{}).reduce((n,events)=>n+(Array.isArray(events)?events.length:0),0),annotationFavorites:Object.values(documents.siteAnnotations||{}).filter(a=>a.library?.favorite).length,legacyPreferenceFavorites:Array.isArray(raw.libraryPreferences?.favorites)?raw.libraryPreferences.favorites.length:0},originalChromeStarted:false,originalChromeStopped:false,productionBusinessWrites:0,realSubmissions:0};
+console.log(JSON.stringify(report));

@@ -1,0 +1,1 @@
+{"ok":true,"kind":"actual_original_plugin_history_import_in_isolated_store","originalCombinations":8815,"originalRuns":0,"originalEvents":0,"originalBatchAndLedgerExact":true,"repeatedImportDeduplicated":true,"noExecutableTaskCreated":true,"privateOriginalHistoryFileSaved":true,"productionHistoryImported":false,"productionBusinessWrites":0,"realSubmissions":0}

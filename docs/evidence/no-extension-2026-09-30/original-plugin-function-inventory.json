@@ -2993,5 +2993,25 @@
     "realSubmissions": 0,
     "migrationComplete": false,
     "evidence": "original-auto-visit-range-2026-10-08.json"
+  },
+  "originalVisitSelectionAndColdStorageCheckpoint": {
+    "date": "2026-10-08",
+    "featureCommit": "292c2de1e957e922cb5d983c4ed287715c0ecd3c",
+    "evidence": "original-auto-visit-selection-2026-10-08.json",
+    "repositoryTestsPassed": 953,
+    "focusedTestsPassed": 26,
+    "matchingCases": 34780,
+    "matchingMismatches": 0,
+    "guardedServicesReloaded": true,
+    "nativeAndCloudReadonlyMatched": true,
+    "coldOriginalSourceFound": true,
+    "originalFilesUnchanged": true,
+    "missingCurrentTimelineIds": 8,
+    "nativeRecoveryPreservesAllOriginalEventIdsAndFields": true,
+    "coldOriginalBatchCombinations": 8815,
+    "actualOriginalHistoryIsolatedImportVerified": true,
+    "productionOriginalHistoryRestored": false,
+    "favoritesAndOtherDevicesVerified": false,
+    "migrationComplete": false
   }
 }

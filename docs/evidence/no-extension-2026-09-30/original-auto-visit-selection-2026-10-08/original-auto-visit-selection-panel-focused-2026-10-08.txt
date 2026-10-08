@@ -1,0 +1,34 @@
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (8903.6414ms)
+✔ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (1361.2825ms)
+✔ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (11.0974ms)
+✔ automatic visit keeps the original batch product selection, empty-selection fallback and stale selection handling (124.7463ms)
+✔ one scan reuses its immutable candidate snapshot and the next scan reads new candidates and gates (165.261ms)
+✔ original visit exclusions still apply to built-in URLs and current host receipts and DR DA gates also stop them (88.8153ms)
+✔ the original request keeps active-tab profile URL parked-task payment and existing-product guards before calling fill (112.6265ms)
+✔ native compiled auto-visit fills actual browser fields without changing the library and recovers the same task after a lost reply (2371.2979ms)
+✔ complete original auto-visit browser regression retains dynamic iframe cancellation document scope and existing-task recovery behavior (6542.0027ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (19.2655ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.9268ms)
+✔ later ordinary notes fall back to the original record publication state (2.8889ms)
+✔ record display uses the latest matching original row rather than insertion order (3.035ms)
+✔ all original display aliases read the same original submission and timeline evidence (15.7681ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (1.6679ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.4904ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (4.0542ms)
+✔ saved queue cursor and explicit URL retain the exact frozen original alias route (110.1736ms)
+✔ automatic visit queue alignment resolves the original concrete alias within the complete original source range (17.5567ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (5.0028ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (4.5665ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1975.8317ms)
+✔ saved local batch and current-product choices affect visit matching without borrowing pending product payload or revisions (30.6984ms)
+✔ legacy assistant state follows the saved local active product and exposes the same current visit selection (3.2446ms)
+✔ selection guards reuse raw product and media references and ignore preferences from another workspace (6.0803ms)
+✔ current native panel supplies the original empty-batch fallback and never overrides explicit selected products (1.4515ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11162.9396

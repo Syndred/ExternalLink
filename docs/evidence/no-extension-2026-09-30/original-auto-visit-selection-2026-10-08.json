@@ -1,0 +1,2048 @@
+{
+  "date": "2026-10-08",
+  "kind": "original_visit_product_selection_and_stable_original_storage_checkpoint",
+  "originalReference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "featureCommit": "292c2de1e957e922cb5d983c4ed287715c0ecd3c",
+  "pulledLatestBeforeCommit": true,
+  "migrationComplete": false,
+  "focusedTests": {
+    "tests": 26,
+    "pass": 26,
+    "fail": 0,
+    "skip": 0
+  },
+  "repositoryTests": {
+    "tests": 953,
+    "pass": 953,
+    "fail": 0,
+    "skip": 0
+  },
+  "earlierRepositoryResultRetained": {
+    "tests": 952,
+    "pass": 950,
+    "fail": 2,
+    "skip": 0
+  },
+  "matchingAudit": {
+    "ok": true,
+    "kind": "actual_current_and_original_backup_compiled_auto_visit_range_readonly",
+    "reports": [
+      {
+        "source": "current_authenticated_cloud",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "selectionCases": 16,
+        "compiledRoutes": 185,
+        "cases": 5920,
+        "mismatchCount": 0,
+        "currentGateExclusions": 14,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "dd532702861a8e441f34e662e980ce25c6d720db47a88126b85d2eba7295458b",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 7,
+        "selectionCases": 14,
+        "compiledRoutes": 185,
+        "cases": 5180,
+        "mismatchCount": 0,
+        "currentGateExclusions": 6,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 368,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 368,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 368,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "0bd9b96df3f70f34db6ca33fb94b4f1c725f2a5dc7eb512796bde3dfa7fce417",
+        "scopeVerification": "workspace_only",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "selectionCases": 16,
+        "compiledRoutes": 185,
+        "cases": 5920,
+        "mismatchCount": 0,
+        "currentGateExclusions": 10,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 356,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 356,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 358,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "cd3939017c1c2c1774dce7fab543e8dc408e2a0891064587f9effd2ed542b54d",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "selectionCases": 16,
+        "compiledRoutes": 185,
+        "cases": 5920,
+        "mismatchCount": 0,
+        "currentGateExclusions": 14,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "67f8827d2d0f67920e3df91e6fa53c3a7ba203630ccacbc54005171442f8de1c",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "selectionCases": 16,
+        "compiledRoutes": 185,
+        "cases": 5920,
+        "mismatchCount": 0,
+        "currentGateExclusions": 14,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "9764aa85594520477081c01a14acda9f5691dadcc7269a648e6dd814b5092212",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "selectionCases": 16,
+        "compiledRoutes": 185,
+        "cases": 5920,
+        "mismatchCount": 0,
+        "currentGateExclusions": 14,
+        "reports": [
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "explicit_product",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "selection": "original_stored_selection",
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 0,
+            "originalExcluded": 370,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 0,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      }
+    ],
+    "totalCases": 34780,
+    "profiles": 47,
+    "mismatchCount": 0,
+    "currentGateExclusions": 72,
+    "currentExecutorGatesReportedSeparately": true,
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "originalLocalStateAndBackupBytesUnchanged": true,
+    "originalChromeLaunched": false,
+    "productionWrites": 0,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "nativeBefore": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "nativeAfter": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "cloudAfter": {
+    "ok": true,
+    "kind": "manual_confirmation_deployment_after_readonly",
+    "currentDeviceAllCloudDocumentsAndInventoryUnchanged": true,
+    "documents": 19,
+    "taskCount": 778,
+    "authenticatedReceiptRouteMissingTaskRejected": 403,
+    "liveManualConfirmationPerformed": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "guardedServicesReloaded": true,
+  "workerDeployed": false,
+  "coldOriginalStorage": {
+    "ok": true,
+    "kind": "stable_original_plugin_storage_copy_readonly",
+    "originalStorageFiles": 7,
+    "sourceFiles": [
+      {
+        "name": "000069.log",
+        "bytes": 2767821,
+        "sha256": "a0517f9e4469316ba1c8280c54205a61c815890e7ede749e34e49d8e14a3b486"
+      },
+      {
+        "name": "000071.ldb",
+        "bytes": 1246092,
+        "sha256": "69103bd8a34548aa21ea99d4e3fab4fe99dea8da06cda3824486c27ccf8bdbfa"
+      },
+      {
+        "name": "CURRENT",
+        "bytes": 16,
+        "sha256": "0f1bad70c7bd1e0a69562853ec529355462fcd0423263a3d39d6d0d70b780443"
+      },
+      {
+        "name": "LOCK",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "LOG",
+        "bytes": 421,
+        "sha256": "83c773d7bfe5a0924cafbac8f4bdabd7e0d3f86e1d1454899ccd352844d255e6"
+      },
+      {
+        "name": "LOG.old",
+        "bytes": 421,
+        "sha256": "4d43fd6399d26b8326e6a59474d5503abcac965ea40f4f34643fcb77dfc3ea69"
+      },
+      {
+        "name": "MANIFEST-000001",
+        "bytes": 2916,
+        "sha256": "12f7987f2cd9eb5cbe993e238b90ba9afa97b9354d6ba50847089ab1fa9163cc"
+      }
+    ],
+    "originalFilesUnchanged": true,
+    "copiedLevelDbRecovered": true,
+    "storageKeys": [
+      "activeBatchRun",
+      "activeSiteId",
+      "autoSubmitDirectoryListings",
+      "autoSubmitStandardWpComments",
+      "automationEventOutbox",
+      "automationRunLedger",
+      "batchRunLog",
+      "cfgCommentTemplate",
+      "cfgEmail",
+      "cfgName",
+      "cloudSyncConfig",
+      "cloudSyncConflictKeys",
+      "cloudSyncMetadata",
+      "cloudSyncPendingKeys",
+      "cloudSyncPendingPatches",
+      "deletedSubmissionKeys",
+      "domainMetricsCache",
+      "linkMonitorEnabled",
+      "linkMonitorLastRunAt",
+      "linkMonitorMinutes",
+      "linkMonitorResults",
+      "running",
+      "selectedSiteIds",
+      "sheetTableData",
+      "siteAnnotations",
+      "siteProfiles",
+      "stats",
+      "submissionJournalCache",
+      "submissionQueueIndex",
+      "submissionQueueKey",
+      "submissionRecords",
+      "submissionSchemaVersion",
+      "submissionTimeline",
+      "targetFilters",
+      "timelineSchemaVersion",
+      "urlList"
+    ],
+    "currentWorkspaceMatches": true,
+    "originalStorageBackend": "d1",
+    "currentStorageBackend": "d1",
+    "recoverableSnapshotSaved": true,
+    "privateBackupFolder": "C:\\Users\\Administrator\\.externallink-backups\\original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521",
+    "documents": [
+      "activeSiteId",
+      "autoSubmitDirectoryListings",
+      "autoSubmitStandardWpComments",
+      "cfgCommentTemplate",
+      "cfgEmail",
+      "cfgName",
+      "deletedSubmissionKeys",
+      "domainMetricsCache",
+      "linkMonitorResults",
+      "linkMonitorSchedule",
+      "selectedSiteIds",
+      "sheetTableData",
+      "siteAnnotations",
+      "siteProfiles",
+      "submissionRecords",
+      "submissionSchemaVersion",
+      "submissionTimeline",
+      "targetFilters",
+      "timelineSchemaVersion",
+      "urlList"
+    ],
+    "counts": {
+      "profiles": 8,
+      "targets": 2905,
+      "records": 105,
+      "timelineEvents": 458,
+      "annotationFavorites": 0,
+      "legacyPreferenceFavorites": 0
+    },
+    "originalChromeStarted": false,
+    "originalChromeStopped": false,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0
+  },
+  "coldOriginalComparison": {
+    "ok": true,
+    "kind": "current_cloud_vs_stable_original_plugin_storage_readonly",
+    "originalSourceCounts": {
+      "profiles": 8,
+      "targets": 2905,
+      "records": 105,
+      "timelineEvents": 458,
+      "annotationFavorites": 0,
+      "legacyPreferenceFavorites": 0
+    },
+    "currentCloudCounts": {
+      "profiles": 9,
+      "records": 112,
+      "timelineEvents": 462
+    },
+    "timelineMerge": {
+      "originalMergedTimelineEvents": 470,
+      "originalMergedMissingCurrentIds": [
+        "83c74f5006c02d712958294f29430ec02e2dc46521d6f7be15a518de946b0a81",
+        "faab1680f39068d8498217d8b393e997e1543df5ccfa49f0d4c799008a3723b4",
+        "bd4b9ce3dedcece775dfde29e75fbaad9c60b7b32d478e8c4276ee3be4fd479b",
+        "07e48433579d98f4d62e5b82d4bfe247df2247060ad7c06a300955e2dd616767",
+        "6d4bde72a4cecd55648c8a1f610c038eccb24993a5f1dc7514bf700c3579a851",
+        "b0641e86d266c6623737d63943ec5d904479d8486574da0815d99f9716f24aaa",
+        "4597deb3c9b1218dd2059493847a375fe2001dbbdcb7a86307dc88c3597b81e5",
+        "3880496ab73185a46f31d1ea6e289cbbedb7f9c39267ad8f4eb10b27d942938e"
+      ],
+      "rawMissingExcludedByOriginalMerge": 0,
+      "nativeRecoveryMatchesOriginalMerge": false,
+      "nativeRecoveredTimelineEvents": 470,
+      "nativeRecoveredOriginalIdsMissing": [],
+      "recoveryFieldDifferences": [],
+      "groupOrderingDifferences": 16,
+      "dateParserCorrectionExplainsAllOrderDifferences": true
+    },
+    "originalFrozenNormalizedTimeline": {
+      "reference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+      "events": 458,
+      "missingCurrentIds": [
+        "83c74f5006c02d712958294f29430ec02e2dc46521d6f7be15a518de946b0a81",
+        "faab1680f39068d8498217d8b393e997e1543df5ccfa49f0d4c799008a3723b4",
+        "bd4b9ce3dedcece775dfde29e75fbaad9c60b7b32d478e8c4276ee3be4fd479b",
+        "07e48433579d98f4d62e5b82d4bfe247df2247060ad7c06a300955e2dd616767",
+        "6d4bde72a4cecd55648c8a1f610c038eccb24993a5f1dc7514bf700c3579a851",
+        "b0641e86d266c6623737d63943ec5d904479d8486574da0815d99f9716f24aaa",
+        "4597deb3c9b1218dd2059493847a375fe2001dbbdcb7a86307dc88c3597b81e5",
+        "3880496ab73185a46f31d1ea6e289cbbedb7f9c39267ad8f4eb10b27d942938e"
+      ],
+      "rawMissingAlsoExcludedByOriginalNormalizer": 0,
+      "rawOriginalTimelineSavedInPrivateBackup": true
+    },
+    "originalHistoryRestoredSources": 0,
+    "missingProfiles": [],
+    "missingRecordKeys": [],
+    "missingTimelineIds": [
+      "83c74f5006c02d712958294f29430ec02e2dc46521d6f7be15a518de946b0a81",
+      "faab1680f39068d8498217d8b393e997e1543df5ccfa49f0d4c799008a3723b4",
+      "bd4b9ce3dedcece775dfde29e75fbaad9c60b7b32d478e8c4276ee3be4fd479b",
+      "07e48433579d98f4d62e5b82d4bfe247df2247060ad7c06a300955e2dd616767",
+      "6d4bde72a4cecd55648c8a1f610c038eccb24993a5f1dc7514bf700c3579a851",
+      "b0641e86d266c6623737d63943ec5d904479d8486574da0815d99f9716f24aaa",
+      "4597deb3c9b1218dd2059493847a375fe2001dbbdcb7a86307dc88c3597b81e5",
+      "3880496ab73185a46f31d1ea6e289cbbedb7f9c39267ad8f4eb10b27d942938e"
+    ],
+    "missingEventDetails": [
+      {
+        "idSha256": "83c74f5006c02d712958294f29430ec02e2dc46521d6f7be15a518de946b0a81",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T07:23:56.858Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "faab1680f39068d8498217d8b393e997e1543df5ccfa49f0d4c799008a3723b4",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T07:38:19.061Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "bd4b9ce3dedcece775dfde29e75fbaad9c60b7b32d478e8c4276ee3be4fd479b",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T06:27:54.618Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "07e48433579d98f4d62e5b82d4bfe247df2247060ad7c06a300955e2dd616767",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T05:07:37.035Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "6d4bde72a4cecd55648c8a1f610c038eccb24993a5f1dc7514bf700c3579a851",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T08:52:00.237Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "b0641e86d266c6623737d63943ec5d904479d8486574da0815d99f9716f24aaa",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T05:50:45.044Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "4597deb3c9b1218dd2059493847a375fe2001dbbdcb7a86307dc88c3597b81e5",
+        "type": "submitted",
+        "occurredAt": "2026-09-28T05:38:01.631Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      },
+      {
+        "idSha256": "3880496ab73185a46f31d1ea6e289cbbedb7f9c39267ad8f4eb10b27d942938e",
+        "type": "submitted",
+        "occurredAt": "2026-09-27T10:12:13.115Z",
+        "fields": [
+          "confirmedBy",
+          "destinationKey",
+          "destinationUrl",
+          "evidenceUrl",
+          "id",
+          "legacy",
+          "note",
+          "occurredAt",
+          "profileId",
+          "profileName",
+          "publicUrl",
+          "publicationStatus",
+          "recordKey",
+          "source",
+          "status",
+          "type"
+        ],
+        "identicalPayloadWithDifferentId": 0,
+        "sameTimeTypeAndProfile": 0,
+        "closestDifferences": []
+      }
+    ],
+    "changedTimelineIds": [],
+    "additionalCurrentTimelineEvents": 12,
+    "originalOtherHistoryStructures": {
+      "automationRunLedger": {
+        "present": true,
+        "type": "object",
+        "count": 3,
+        "keys": [
+          "order",
+          "runs",
+          "schemaVersion"
+        ]
+      },
+      "activeBatchRun": {
+        "present": true,
+        "type": "object",
+        "count": 16,
+        "keys": [
+          "config",
+          "destinations",
+          "parkedTaskIds",
+          "pauseReason",
+          "pausedAt",
+          "profileConfigs",
+          "runId",
+          "selectedSiteIds",
+          "startedAt",
+          "status",
+          "tasks",
+          "unattendedPausedAt",
+          "unattendedState",
+          "unattendedStopReason",
+          "unattendedWatchdogAt",
+          "version"
+        ]
+      },
+      "batchRunLog": {
+        "present": true,
+        "type": "object",
+        "count": 6,
+        "keys": [
+          "entries",
+          "runId",
+          "schemaVersion",
+          "selectedSiteIds",
+          "startedAt",
+          "updatedAt"
+        ]
+      },
+      "automationEventOutbox": {
+        "present": true,
+        "type": "array",
+        "count": 0,
+        "keys": []
+      },
+      "submissionJournalCache": {
+        "present": true,
+        "type": "object",
+        "count": 4,
+        "keys": [
+          "at",
+          "documents",
+          "identity",
+          "tasks"
+        ]
+      }
+    },
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "favoritesRecoveryComplete": false,
+    "otherDevicesVerified": false,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0
+  },
+  "coldOriginalHistoryIsolatedFixture": {
+    "ok": true,
+    "kind": "actual_original_plugin_history_import_in_isolated_store",
+    "originalCombinations": 8815,
+    "originalRuns": 0,
+    "originalEvents": 0,
+    "originalBatchAndLedgerExact": true,
+    "repeatedImportDeduplicated": true,
+    "noExecutableTaskCreated": true,
+    "privateOriginalHistoryFileSaved": true,
+    "productionHistoryImported": false,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0
+  },
+  "originalHistoryRestoredToProduction": false,
+  "timelineRestoredToProduction": false,
+  "originalChromeLaunched": false,
+  "productionBusinessWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "remaining": [
+    "8 original timeline events absent from current cloud",
+    "original 8815-combination batch absent from native historical sources",
+    "prior favorites and other devices",
+    "remaining original execution special publishing navigation recovery settings dynamic controls media branches"
+  ],
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-audit-2026-10-08.txt",
+      "capturedSha256": "428dc033599aaa36fd01d860fa4132bc19b9f5e9fe62b4dfa233ea5f78b5e625",
+      "gitLfSha256": "06c72a529499ee073f22ff139e2368209972a83130e3efc6146c9eac647447c8",
+      "bytes": 37508
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-before-2026-10-08.txt",
+      "capturedSha256": "da52e1790d741d5d7379705b04206f8900f5c25af0fb96341ed306e7a6c9b7f6",
+      "gitLfSha256": "eadda03c684700d68fb34f17be39086963a8dddcb1b6f1f922360260f254561e",
+      "bytes": 1282
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-browser-2026-10-08.txt",
+      "capturedSha256": "41eadb49b89e167f2499a7a0de138262e64c519cbb5222244ab67818b93fdf66",
+      "gitLfSha256": "5d353ba31b9db8deb6fc8ed51b99e045c35346fda7e07167cb23bcf96b1eb35d",
+      "bytes": 783
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-browser-complete-2026-10-08.txt",
+      "capturedSha256": "fcf92c5e8e15b3d2c5d8354635f66f8f308ceee9cde15d61e6a778318b4c4018",
+      "gitLfSha256": "8d19bfa9f3e40c92225a091d93de7d18bd364b2c3a50200b6981d3cb5b755532",
+      "bytes": 891
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-browser-final-2026-10-08.txt",
+      "capturedSha256": "37131b9a2f45b43873945ad73e8bfcdfeb7bea1f09249165fbd8850f3bfdfb46",
+      "gitLfSha256": "f1ddd4d1800725be92241b9054fb23d0ec65e07de3eebb56fe1d72cc094de6dd",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-cloud-after-2026-10-08.txt",
+      "capturedSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitLfSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486",
+      "bytes": 309
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-complete-focused-2026-10-08.txt",
+      "capturedSha256": "62b6a7ccadfda02a14243075fa6c36306227e335ba4d066d4afd9244ef232119",
+      "gitLfSha256": "7fd175412096f6bc802f2c67e07810c4e613e371073d81ae8f9c1c6f7539e9db",
+      "bytes": 3118
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-final-focused-2026-10-08.txt",
+      "capturedSha256": "77139b23e45663b7d743d903eb1c7d9ca7959383f5812eefc2edf4a911266b91",
+      "gitLfSha256": "7609bef538dfd6f664b534858f1d6ad512670c35dc5fa7f1894e69f591c390f2",
+      "bytes": 3118
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-focused-2026-10-08.txt",
+      "capturedSha256": "761ad153098b4a17ab386fe560288e9128e71b7b7832f326a09508008060b3bd",
+      "gitLfSha256": "af66efa378140ad7eac0a388b119856582135d4fc727a248295328c2ca199ef1",
+      "bytes": 2734
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-native-after-2026-10-08.txt",
+      "capturedSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-native-before-2026-10-08.txt",
+      "capturedSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-panel-focused-2026-10-08.txt",
+      "capturedSha256": "6096449f5225590bffbd0e70ae745b0626e94d72b128c7166908a14ea54b6e5d",
+      "gitLfSha256": "392e4f46dfc1a2433019b867f63352ee974ca742d923d85f95956af819cde998",
+      "bytes": 3308
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-repository-complete-2026-10-08.txt",
+      "capturedSha256": "379b757b20e37468858a837852e796e7f18f278b2961922a084dd09bf90b0a0e",
+      "gitLfSha256": "5a2cd04865d3317703a0c3a1d3b568a0af0683524b6f83ad4e7275982cd814bf",
+      "bytes": 115141
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-repository-final-2026-10-08.txt",
+      "capturedSha256": "e3ca288d063051c65c33097b8475117d60c7f1a37bd2b228e64a62868988ecac",
+      "gitLfSha256": "e37cd9456e00389fd0ffd05380d27f17c7beef75db6cb95e087cd8964d7cd3dc",
+      "bytes": 117910
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-auto-visit-selection-service-reload-2026-10-08.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e",
+      "bytes": 453
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-chrome-storage-reader-install-2026-10-08.txt",
+      "capturedSha256": "218bed87574c20fbdbfeaca8d675b5dc21efdabf148b4923cb34d293c4f98598",
+      "gitLfSha256": "51281ad26c02fbd87e92403b68a29b576454008e08203f9c9b82396f418ecb6f",
+      "bytes": 331
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-2026-10-08.txt",
+      "capturedSha256": "7e3563de5e376c0620bb16713432103b741db3158358bb3ccb0368c4b53b7449",
+      "gitLfSha256": "4066985cabfcc2497c64e2417f15781fc72c125e0b9fa2c570d805e893eb0a09",
+      "bytes": 1892
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-details-2026-10-08.txt",
+      "capturedSha256": "2c40e797e8fd51cd84b4058ac5b5fb25d473006dc7e27f5fdd6ccfaf07d1a47d",
+      "gitLfSha256": "b91330a89858d685e0c60a75c275e633d15e5b559ae9c23bbff4f1e339f11042",
+      "bytes": 5340
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-final-2026-10-08.txt",
+      "capturedSha256": "6aec3e6ceb19b2e2270259d4edfeb7f1e6639a681f2aeda53141033359d0c6e0",
+      "gitLfSha256": "2b7bc25c33f62c31a871d7ccc21a869d8c840bc4ad50602166834788755d0894",
+      "bytes": 7028
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-merge-2026-10-08.txt",
+      "capturedSha256": "cdf43475eca9e313b05b78a9acc82675b4937cad3f3a0fec4a29228fa0736d91",
+      "gitLfSha256": "7c0c1ebc5111b90b466a5d4bd1477e886b4031f31654c9d553aac8ab02733c5d",
+      "bytes": 6874
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-normalized-2026-10-08.txt",
+      "capturedSha256": "c331a4ee94195cf6f6b2a946cf34b68d7bbb33235d8740dfc633c0df3e2fe1b7",
+      "gitLfSha256": "a37a464cbf8a3e07de8adc92e5bb3dbcb585ee199527334084457f1e0779facc",
+      "bytes": 6132
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-recovery-2026-10-08.txt",
+      "capturedSha256": "66b30c9d434ed417d6e1a98aaae5f01da8385ab1f00a023e768b85af870d8bed",
+      "gitLfSha256": "73c7de33da43bd232e0da09b36e005dd5846a960da9bc3a8aab1b3bd1d1c029b",
+      "bytes": 6973
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-history-fixture-2026-10-08.txt",
+      "capturedSha256": "11efb025f34b2e17808c43f37c01971a441728b4441ca62be6d94d96f4daaf5b",
+      "gitLfSha256": "df295a29a6e813194d29b36fcb3a802134a6db278a146c62e85a1a57302b6346",
+      "bytes": 364
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-readonly-2026-10-08.txt",
+      "capturedSha256": "889b4b93be5b6717c169c0525a796a09aa71b1f4c6294bb623140c7420c18a23",
+      "gitLfSha256": "cca6b672f5af43e31b7265d030a1d1faf6d37fcce268d5b05db879573194b8cf",
+      "bytes": 2553
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-readonly-2026-10-08.mjs.txt",
+      "capturedSha256": "2552eeff53b1f7f3c440dea42519767daa4e229e41711fbbcb8b9f269aebd2f1",
+      "gitLfSha256": "2552eeff53b1f7f3c440dea42519767daa4e229e41711fbbcb8b9f269aebd2f1",
+      "bytes": 3976,
+      "probeSourceNotPortableProgram": true
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-compare-2026-10-08.mjs.txt",
+      "capturedSha256": "bbce61503f61579747f7841ff5ab00d8d379526bec050dc6e9083350a220b621",
+      "gitLfSha256": "bbce61503f61579747f7841ff5ab00d8d379526bec050dc6e9083350a220b621",
+      "bytes": 8104,
+      "probeSourceNotPortableProgram": true
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-2026-10-08/original-plugin-storage-history-fixture-2026-10-08.mjs.txt",
+      "capturedSha256": "b3432da143b6f0570c8604d4489d9ecef711a81ba8b4f4da898bf65fec7db7f5",
+      "gitLfSha256": "b3432da143b6f0570c8604d4489d9ecef711a81ba8b4f4da898bf65fec7db7f5",
+      "bytes": 2292,
+      "probeSourceNotPortableProgram": true
+    }
+  ]
+}

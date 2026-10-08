@@ -1,0 +1,27 @@
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (18.5255ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (5.3213ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (2.975ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (10.3889ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (2.104ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (15.4213ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (1.7555ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (57.318ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (2.1454ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (45.8604ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (4.2416ms)
+✔ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (1106.7268ms)
+✔ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (11.0769ms)
+✔ automatic visit keeps the original batch product selection, empty-selection fallback and stale selection handling (90.768ms)
+✔ one scan reuses its immutable candidate snapshot and the next scan reads new candidates and gates (156.5637ms)
+✔ original visit exclusions still apply to built-in URLs and current host receipts and DR DA gates also stop them (53.9602ms)
+✔ the original request keeps active-tab profile URL parked-task payment and existing-product guards before calling fill (73.881ms)
+✔ native compiled auto-visit fills actual browser fields without changing the library and recovers the same task after a lost reply (2207.4749ms)
+✔ complete original auto-visit browser regression retains dynamic iframe cancellation document scope and existing-task recovery behavior (6341.5261ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10370.8512

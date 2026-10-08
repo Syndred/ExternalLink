@@ -10,6 +10,7 @@ import {captureFillLearning} from './fill-learning.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {originalNavigationQueue} from '../../core/submission-queue.mjs';
+import {originalLibraryBatchScope} from '../../core/library-batch-scope.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
 import {handleTaskPageMessage,releaseTaskPageControl} from './task-page-controls.mjs';
 import {prepareOriginalVisitFields} from './original-visit-fill-adapter.mjs';
@@ -38,7 +39,20 @@ function snapshotFor(runtime){const snapshot=runtime.store.get('applicationSnaps
 function configFor(runtime,profileId,task){const snapshot=snapshotFor(runtime),profile=task?.profileSnapshot||snapshot.documents.siteProfiles?.[profileId];if(!profile||profile.archived)throw Error('助手产品资料已变化');return{...plain(profiles.buildAgentConfigFromProfile(profile,{email:snapshot.documents.cfgEmail,username:snapshot.documents.cfgName,commentTemplate:snapshot.documents.cfgCommentTemplate})),aiComments:snapshot.documents.targetFilters?.aiComments!==false,aiCommentAllowLink:snapshot.documents.targetFilters?.aiCommentAllowLink!==false,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};}
 const parked=task=>['supervisor','ai'].includes(task.controller)||['login','human_verification','unknown_receipt','payment','paid'].includes(task.attentionType);
 export function originalAssistantTask(runtime,profileId,targetId,url){return runtime.store.values('task:').find(t=>t.profileId===profileId&&t.targetId===targetId&&t.browserInstance===runtime.host?.startedAt&&!t.attemptBoundary&&!t.receipt&&['pending','needs_manual'].includes(t.status)&&!parked(t)&&queue.extractDomain(t.url)===queue.extractDomain(url));}
-export function autoVisitTarget(snapshot,profileId,url){const profile=snapshot.documents.siteProfiles?.[profileId],annotation=snapshot.documents.siteAnnotations?.[queue.normalizeDestinationKey(url)]||snapshot.documents.siteAnnotations?.[queue.extractDomain(url)];if(!profile||profile.archived||!profiles.profileConfigured(profile)||priorProductSuccess(snapshot.documents.submissionRecords,profileId,url)||annotation&&queue.hasAnnotationStatusInSet(annotation,queue.DEAD_END_STATUSES))return null;return queue.matchSubmissionTarget(url,selectScope(snapshot,null,profileId).tasks.map(task=>({...task,profileId})),profileId);}
+export function createAutoVisitMatcher(snapshot,profileId){
+ let original;
+ return url=>{
+  const profile=snapshot.documents.siteProfiles?.[profileId],annotation=snapshot.documents.siteAnnotations?.[queue.normalizeDestinationKey(url)]||snapshot.documents.siteAnnotations?.[queue.extractDomain(url)];
+  if(!profile||profile.archived||!profiles.profileConfigured(profile)||priorProductSuccess(snapshot.documents.submissionRecords,profileId,url)||annotation&&queue.hasAnnotationStatusInSet(annotation,queue.DEAD_END_STATUSES))return null;
+  // One immutable snapshot belongs to one scan. Reuse its original candidates
+  // across tabs; actual filling creates a fresh matcher after cloud readback.
+  original||=originalLibraryBatchScope(snapshot,{profileIds:[profileId]});
+  const match=queue.matchSubmissionTarget(url,original.tasks,profileId);
+  if(!match||!selectScope(snapshot,null,profileId,[match.url]).tasks.length)return null;
+  return match;
+ };
+}
+export function autoVisitTarget(snapshot,profileId,url){return createAutoVisitMatcher(snapshot,profileId)(url);}
 function recordVisitQueue(runtime,snapshot,profileId,match){
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('submissionQueue'),previous=saved?.scope===scope?saved:{},selectedSiteIds=previous.selectedSiteIds?.includes(profileId)?previous.selectedSiteIds:[profileId],destinationKey=canonicalLibraryDestination(match.destinationKey);let options={selectedSiteIds,category:previous.category||'',group:previous.group||''},result=originalNavigationQueue(snapshot,options),index=result.groups.findIndex(group=>canonicalLibraryDestination(group.key)===destinationKey);
  if(index<0){options={selectedSiteIds,category:'',group:''};result=originalNavigationQueue(snapshot,options);index=result.groups.findIndex(group=>canonicalLibraryDestination(group.key)===destinationKey);}if(index<0)throw Error('原待提交队列已变化');
@@ -87,7 +101,7 @@ export async function checkBrowserAssistant(runtime,request){
  if(runtime.connectionBusy||runtime.cloudPullOperation||runtime.store.get('connectionExecutionHold'))return;
  if(runtime.browserAssistantScan||runtime.job||runtime.controlBusy&&!request)return{scheduled:false,reason:'assistant_busy'};const settings=assistantState(runtime).settings;if(!settings.enabled){await stopBrowserAssistant(runtime);return;}if(!settings.autoFillOnVisit)cancelAutoTimers(runtime,'访问自动填写已关闭');
  runtime.browserAssistantScan=true;try{
-  if(!runtime.context)await runtime.connect();runtime.browserAssistantFrames||=new Map();const live=new Set(),snapshot=snapshotFor(runtime),profileId=effectiveProfile(runtime,settings),panel=singlePagePanel(runtime),scope=workbenchScope(runtime.store.get('pair'));
+  if(!runtime.context)await runtime.connect();runtime.browserAssistantFrames||=new Map();const live=new Set(),snapshot=snapshotFor(runtime),profileId=effectiveProfile(runtime,settings),panel=singlePagePanel(runtime),scope=workbenchScope(runtime.store.get('pair')),matchVisit=createAutoVisitMatcher(snapshot,profileId);
   for(const page of runtime.context.pages()){
    if(!/^https?:\/\//.test(page.url())||page.url().startsWith('http://127.0.0.1:'+Number(process.env.EXTERNALLINK_WEB_PORT||19389)+'/'))continue;const info=await getTargetInfo(runtime.context,page);if(!info)continue;if(request&&(info.targetId!==request.targetId||request.url&&page.url()!==request.url))continue;if(request)await request.assertRequest();
    for(const frame of page.frames()){
@@ -112,7 +126,7 @@ export async function checkBrowserAssistant(runtime,request){
     const engine=await attachEngine(runtime.context,frame,bridge,{interactive:true});item={engine,scope,profileId,url,browserInstance:runtime.host?.startedAt};runtime.browserAssistantFrames.set(key,item);
     }
     const known=originalAssistantTask(runtime,profileId,info.targetId,url);
-    if(settings.autoFillOnVisit&&frame===page.mainFrame()&&runtime.dispatchControl&&runtime.store.get('paused')===true&&(!panel?.open||panel.selectedTargetId===info.targetId)&&(known||autoVisitTarget(snapshot,profileId,url))){
+    if(settings.autoFillOnVisit&&frame===page.mainFrame()&&runtime.dispatchControl&&runtime.store.get('paused')===true&&(!panel?.open||panel.selectedTargetId===info.targetId)&&(known||matchVisit(url))){
      const fillKey='assistantFill:'+createHash('sha256').update(scope).digest('hex').slice(0,16)+'::'+info.targetId+'::'+profileId+'::'+item.engine.documentId+'::'+await formShape(page),previous=runtime.store.get(fillKey);if(previous?.scope===scope&&previous.status!=='cancelled')continue;
      if(request)await request.assertRequest();const binding={id:randomUUID(),engine:item.engine,scope,profileId,targetId:info.targetId,url,browserInstance:runtime.host?.startedAt};runtime.autoVisitBindings||=new Map();runtime.autoVisitBindings.set(fillKey,binding);
      const evidence={scope,profileId,targetId:info.targetId,url,fillKey,requestId:binding.id,documentId:item.engine.documentId,source:request?'requestAutoFill':'visit_scan',at:new Date().toISOString(),status:'preparing',submitted:false,...(previous?.scope===scope?{history:[...(previous.history||[]),{at:previous.at,status:previous.status,reason:previous.reason,cancelledAt:previous.cancelledAt}]}:{})};runtime.store.set(fillKey,evidence);

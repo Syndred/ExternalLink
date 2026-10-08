@@ -72,3 +72,10 @@ test('native compiled auto-visit fills actual browser fields without changing th
  for(const key of ['ordinaryProviderUrlsInterceptedByFixture','noCompiledUrlAddedToTableOrUserList','actualFourFieldsReadBack','originalDestinationAndQueuePosition','blacklistDrDaDeletedCurrentPathAndHostReceiptGates','remoteLoginTaskPreserved','lostReplyAndSqliteRestart','originalTaskIdProfileAndRevisionRetained','duplicateRegistrationPrevented','favoritesAndPausedFixedBatchUnchanged'])assert.equal(evidence[key],true);
  assert.equal(evidence.registrations,3);for(const key of ['posts','externalRequests','productionWrites','realModelCalls','realSubmissions'])assert.equal(evidence[key],0);
 });
+
+test('complete original auto-visit browser regression retains dynamic iframe cancellation document scope and existing-task recovery behavior',{timeout:65000},()=>{
+ const result=spawnSync(process.execPath,['executor/test/auto-visit.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:60000,maxBuffer:1024*1024});
+ assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const evidence=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(evidence.ok,true);
+ for(const key of ['alreadyConnectedPreferenceChange','liveLibraryAddition','dynamicFormMount','iframePrepared','differentProductGuard','articleExcluded','unknownAttemptPreserved','lostRegistrationReplyAndSqliteRestart','originalTaskAndProfileRetained','originalQueuePosition','cancelledOriginalPageResumesOnReenable','stageUrlKeepsLibraryDestination','remoteLoginGatePreserved','boundTaskSameHostUnknownPreserved','disabledDuringLeaseStopsFill','scopeChangeAndClosedPanelStopFill','fixedBatchPaused'])assert.equal(evidence[key],true);
+ assert.equal(evidence.posts,0);assert.equal(evidence.externalRequests,0);
+});

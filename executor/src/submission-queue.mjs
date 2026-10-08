@@ -5,6 +5,7 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
 import {enqueueApplicationPlan,flushApplicationMutations,pendingApplication,overlayApplication} from './application-mutations.mjs';
 import {applicationData} from './application-data.mjs';
+import {browsingSnapshot} from './browsing-snapshot.mjs';
 
 function navigationGroupSummary(group){
  return{id:group.id,key:group.key,destinationKey:group.destinationKey,url:group.url,domain:group.domain,platformType:group.platformType,source:group.source,note:group.note,quality:group.quality||null,status:group.status,index:group.index,profileIds:group.jobs.map(job=>job.profileId),profileTotal:group.jobs.length,profiles:group.jobs.map(job=>({profileId:job.profileId,profileName:job.profileName,status:job.status||'pending'})),jobs:group.jobs.map(({config,...job})=>({...job,url:job.destinationUrl||group.url}))};
@@ -13,7 +14,7 @@ function navigationGroupSummary(group){
 export async function submissionQueue(runtime,input={},advance=false){
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('submissionQueue'),previous=saved?.scope===scope?saved:null;
  const options={selectedSiteIds:input.selectedSiteIds??previous?.selectedSiteIds,category:input.category??previous?.category??'',group:input.group??previous?.group??''};
- const snapshot=overlayApplication(runtime,await runtime.cloud.request('snapshot'));if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新查看队列');const result=originalNavigationQueue(snapshot,options),groups=result.groups;
+ const {snapshot:raw,...browse}=await browsingSnapshot(runtime),snapshot=overlayApplication(runtime,raw);if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新查看队列');const result=originalNavigationQueue(snapshot,options),groups=result.groups;
  let index=Number.isInteger(previous?.index)?previous.index:0,key=input.currentKey||previous?.key||'';
  const matchKey=value=>groups.findIndex(group=>group.key===value),matchAlias=value=>{const exact=matchKey(value),normalized=matchKey(queue.normalizeDestinationKey(value));return exact>=0?exact:normalized>=0?normalized:groups.findIndex(group=>canonicalLibraryDestination(group.key)===canonicalLibraryDestination(value));};
  if(input.url){const matched=queue.findSubmissionIndex(input.url,groups);if(matched>=0){index=matched;key=groups[matched].key;}}
@@ -35,7 +36,7 @@ export async function submissionQueue(runtime,input={},advance=false){
  // The original getter returns summaries. Keep the legacy advance response
  // available, while the native UI explicitly requests compact navigation.
  const compact=!advance||input.compact===true,displayGroups=compact?groups.map(navigationGroupSummary):groups;
- return{ok:true,tasks:displayGroups,jobs:compact?displayGroups.flatMap(group=>group.jobs):result.tasks,task,index,total:groups.length,meta:result.meta,selectedProfileIds:result.selectedProfileIds,advanced:advance&&!!task,page};
+ return{ok:true,...browse,tasks:displayGroups,jobs:compact?displayGroups.flatMap(group=>group.jobs):result.tasks,task,index,total:groups.length,meta:result.meta,selectedProfileIds:result.selectedProfileIds,advanced:advance&&!!task,page};
 }
 export async function removeFromSubmissionQueue(runtime,input){
  if(input.planId)return enqueueApplicationPlan(runtime,{planId:input.planId});

@@ -14,12 +14,12 @@ import {originalLibraryBatchQueue,originalLibraryQuickOpen} from '../../tests/he
 const home=await mkdtemp(join(tmpdir(),'el-original-navigation-'));
 const documents={siteProfiles:{p:{id:'p',name:'Original',fields:{Name:'Original',Url:'https://product.fixture.invalid'}}},selectedSiteIds:['p'],activeSiteId:'p',urlList:'https://saved.fixture.invalid/submit',sheetTableData:{entries:[]},submissionRecords:{},domainBlacklist:[],targetFilters:{},autoFillOnVisit:false,unattendedPreferences:{enabled:false},linkMonitorSchedule:{enabled:false}};
 const revisions={siteProfiles:1,sheetTableData:1,domainBlacklist:1},fixed={status:'paused',cursor:13,count:30},calls=[];
-let backend,web,browser,store,targetGets=0,posts=0,externalRequests=0;
+let backend,web,browser,store,targetGets=0,posts=0,externalRequests=0,cloudUnavailable=false;
 const cloud=createServer(async(req,res)=>{
  const path=new URL(req.url,'http://localhost').pathname;for await(const chunk of req){};
  calls.push({path,method:req.method});
  if(path.startsWith('/target-')){if(req.method==='POST')posts++;else targetGets++;res.writeHead(200,{'Content-Type':'text/html'});res.end('<h1>Owned fixture destination</h1>');}
- else if(req.method==='GET'&&path.endsWith('/snapshot')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,documents,revisions}));}
+ else if(req.method==='GET'&&path.endsWith('/snapshot')){res.writeHead(cloudUnavailable?503:200,{'Content-Type':'application/json'});res.end(JSON.stringify(cloudUnavailable?{ok:false,error:'Fixture cloud offline'}:{ok:true,documents,revisions}));}
  else if(req.method==='GET'&&path.endsWith('/runs')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,tasks:[],runs:[]}));}
  else {res.writeHead(503,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:'Fixture writes unavailable'}));}
 });
@@ -43,12 +43,16 @@ try{
  await page.getByRole('button',{name:'关闭详情',exact:true}).click();await page.getByRole('button',{name:'设置与备份',exact:true}).click();await page.getByLabel('域名黑名单（每行一个）',{exact:true}).fill('127.0.0.1');await page.getByRole('button',{name:'保存设置',exact:true}).click();await page.getByText('设置已存本机，等待同步',{exact:false}).waitFor();
  await page.getByRole('button',{name:'外链库',exact:true}).click();await page.getByRole('button',{name:'单站投稿队列',exact:true}).click();await page.getByText('Original：域名黑名单。可浏览核对。',{exact:true}).waitFor();
  const created=await api(web.endpoint,'/libraryMutation',{operation:{type:'create',url:added,fields:{note:'AI tool directory'}}});assert.ok(created.pending);const actual=await api(backend.endpoint,'/getSubmissionQueue',{category:''});assert.ok(actual.tasks.some(group=>group.url===added));assert.equal(actual.total,original.groups.length+1);
- store=new Store(join(home,'outbox.sqlite'));const runtime={store,context:await browser.newContext(),cloud:{async request(route){assert.equal(route,'snapshot');return{documents:structuredClone(documents),revisions:structuredClone(revisions)};}}};
+ cloudUnavailable=true;
+ for(const origin of [backend.endpoint,web.endpoint]){const offline=await api(origin,'/getSubmissionQueue',{category:'',group:''});assert.equal(offline.browseSource,'local');assert.equal(offline.total,original.groups.length+1);assert.ok(offline.tasks.some(group=>group.url===added));const advanced=await api(origin,'/advanceSubmission',{delta:1,open:false,compact:true});assert.equal(advanced.browseSource,'local');}
+ await page.getByRole('button',{name:'更新队列产品',exact:true}).click();await page.getByText('云端暂不可用，当前按本机已保存资料浏览。',{exact:true}).waitFor();
+ store=new Store(join(home,'outbox.sqlite'));const runtime={store,context:await browser.newContext(),cloud:{async request(route){assert.equal(route,'snapshot');if(cloudUnavailable)throw Error('Fixture cloud offline');return{documents:structuredClone(documents),revisions:structuredClone(revisions)};}}};
  await runtime.context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==endpoint||!url.pathname.startsWith('/target-')){externalRequests++;await route.abort();return;}await route.continue();});
  const expected=await originalLibraryQuickOpen(overlayApplication(runtime,{documents,revisions}),{urls:[added],batchSize:1}),opened=await quickOpenLibrary(runtime,{urls:[added],batchSize:1});await runtime.quickOpenJob;
+ assert.equal(opened.job.browseSource,'local');
  assert.deepEqual(store.get('quickOpenJob:'+opened.job.id).items.map(item=>item.url),expected);assert.equal(store.get('quickOpenJob:'+opened.job.id).status,'completed');assert.equal(runtime.context.pages().length,1);assert.equal(runtime.context.pages()[0].url(),added);assert.equal(targetGets,1);
  assert.equal(store.values('task:').length,0);assert.equal(store.values('run:').length,0);assert.equal(store.get('paused'),true);assert.deepEqual(store.get('acceptanceBatch'),fixed);assert.equal(JSON.stringify({documents,revisions}),remoteBefore);assert.equal(calls.some(call=>call.method==='POST'&&call.path.endsWith('/runs')),false);assert.deepEqual(errors,[]);assert.equal(posts,0);assert.equal(externalRequests,0);
- console.log(JSON.stringify({ok:true,kind:'actual_services_original_navigation_and_pending_quick_open_fixture',completeOriginalRangeBothServices:true,originalDestinations:original.groups.length,scopedCategoryBothServices:true,actualUiNextAndPrevious:true,actualUiPendingBlacklistExplanation:true,pendingNewTargetVisible:true,actualChromeOpenedPendingTarget:true,ownedTargetGetRequests:targetGets,remoteDocumentsAndRevisionsUnchanged:true,originalFixedBatchUnchanged:true,registeredTasks:0,posts,externalRequests,productionWrites:0,realModelCalls:0,realSubmissions:0}));
+ console.log(JSON.stringify({ok:true,kind:'actual_services_original_navigation_and_pending_quick_open_fixture',completeOriginalRangeBothServices:true,originalDestinations:original.groups.length,scopedCategoryBothServices:true,actualUiNextAndPrevious:true,actualUiPendingBlacklistExplanation:true,pendingNewTargetVisible:true,actualChromeOpenedPendingTarget:true,offlineQueueAndAdvanceBothServices:true,actualUiOfflineChineseExplanation:true,offlineChromeOpenedPendingTarget:true,ownedTargetGetRequests:targetGets,remoteDocumentsAndRevisionsUnchanged:true,originalFixedBatchUnchanged:true,registeredTasks:0,posts,externalRequests,productionWrites:0,realModelCalls:0,realSubmissions:0}));
 }finally{
  store?.close();await browser?.close();await stop(web);await stop(backend);await new Promise(done=>cloud.close(done));const absolute=resolve(home);assert.ok(absolute.startsWith(resolve(tmpdir())+sep)&&absolute.split(sep).at(-1).startsWith('el-original-navigation-'));await rm(absolute,{recursive:true,force:true});
 }

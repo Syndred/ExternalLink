@@ -3050,5 +3050,18 @@
     "favoritesRecoveryComplete": false,
     "otherDevicesVerified": false,
     "migrationComplete": false
+  },
+  "originalAdditionalStorageAuditCheckpoint": {
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08.json",
+    "additionalStoresRead": 2,
+    "originalFilesUnchanged": true,
+    "executorBrowserOriginalProfiles": 7,
+    "executorBrowserOriginalRecords": 33,
+    "executorBrowserOriginalTimelineEvents": 87,
+    "missingCurrentOriginalIds": 0,
+    "unscopedDataNotRestored": true,
+    "favoritesRecoveryComplete": false,
+    "otherDevicesVerified": false,
+    "migrationComplete": false
   }
 }

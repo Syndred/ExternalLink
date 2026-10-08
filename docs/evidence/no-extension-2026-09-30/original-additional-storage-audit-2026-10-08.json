@@ -1,0 +1,255 @@
+{
+  "date": "2026-10-08",
+  "kind": "readonly_additional_original_plugin_storage_audit",
+  "nativeFeatureCommit": "d65f7867a3e69c13f557a50145631864b605991d",
+  "discovery": {
+    "ok": true,
+    "kind": "original_plugin_only_profile_storage_discovery",
+    "matchingStores": [
+      {
+        "root": "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data",
+        "profile": "Default",
+        "extensionId": "eagomdoflagkgjklppjfboddedgjjigm",
+        "storage": "Local Extension Settings",
+        "sourcePathMatchesRepository": true,
+        "files": 7,
+        "totalBytes": 4017687,
+        "storageDirectory": "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Local Extension Settings\\eagomdoflagkgjklppjfboddedgjjigm"
+      },
+      {
+        "root": "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data",
+        "profile": "Default",
+        "extensionId": "eagomdoflagkgjklppjfboddedgjjigm",
+        "storage": "Sync Extension Settings",
+        "sourcePathMatchesRepository": true,
+        "files": 5,
+        "totalBytes": 432,
+        "storageDirectory": "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Sync Extension Settings\\eagomdoflagkgjklppjfboddedgjjigm"
+      },
+      {
+        "root": "C:\\Users\\Administrator\\.externallink-executor\\browser-profile",
+        "profile": "Default",
+        "extensionId": "eagomdoflagkgjklppjfboddedgjjigm",
+        "storage": "Local Extension Settings",
+        "sourcePathMatchesRepository": true,
+        "files": 6,
+        "totalBytes": 4086338,
+        "storageDirectory": "C:\\Users\\Administrator\\.externallink-executor\\browser-profile\\Default\\Local Extension Settings\\eagomdoflagkgjklppjfboddedgjjigm"
+      }
+    ],
+    "unrelatedExtensionValuesNotRead": true,
+    "originalChromeNotLaunched": true,
+    "productionBusinessWrites": 0
+  },
+  "stableCopies": {
+    "ok": true,
+    "kind": "additional_original_plugin_storage_readonly_copies",
+    "sources": [
+      {
+        "source": "original_user_chrome_sync_storage",
+        "originalFilesUnchanged": true,
+        "sourceFiles": [
+          {
+            "name": "000003.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "CURRENT",
+            "bytes": 16,
+            "sha256": "0f1bad70c7bd1e0a69562853ec529355462fcd0423263a3d39d6d0d70b780443"
+          },
+          {
+            "name": "LOCK",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "LOG",
+            "bytes": 375,
+            "sha256": "14133829619635e4ca31903beb7484ea3613a88f96a9cdae876e08ea690386dc"
+          },
+          {
+            "name": "MANIFEST-000001",
+            "bytes": 41,
+            "sha256": "f9d31b278e215eb0d0e9cd709edfa037e828f36214ab7906f612160fead4b2b4"
+          }
+        ],
+        "privateBackupFolder": "C:\\Users\\Administrator\\.externallink-backups\\original-additional-storage-f3afcf9f-7aba-43c9-bcd4-305b2b175afe",
+        "currentWorkspaceMatches": false,
+        "documentsValidationFailed": false,
+        "storageKeys": [],
+        "nonJsonKeys": [],
+        "profiles": 0,
+        "targets": 0,
+        "records": 0,
+        "timelineEvents": 0,
+        "annotationFavorites": 0,
+        "legacyPreferenceFavorites": 0,
+        "oldBatchCombinations": 0,
+        "oldLedgerRuns": 0
+      },
+      {
+        "source": "original_executor_browser_profile",
+        "originalFilesUnchanged": true,
+        "sourceFiles": [
+          {
+            "name": "000003.log",
+            "bytes": 4085483,
+            "sha256": "4663f717a4059092e2e4b35829f3b8a766842c2f6470ce49f4e1e0a1c378e919"
+          },
+          {
+            "name": "CURRENT",
+            "bytes": 16,
+            "sha256": "0f1bad70c7bd1e0a69562853ec529355462fcd0423263a3d39d6d0d70b780443"
+          },
+          {
+            "name": "LOCK",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "LOG",
+            "bytes": 419,
+            "sha256": "4c982ec54314959e5b0035f3cbe231a0f04148d1cd36d87e7e6eb983362ab14d"
+          },
+          {
+            "name": "LOG.old",
+            "bytes": 379,
+            "sha256": "9c73d13a909e83c5e3318cf6335752ff08ad82484921f6a6b98d347242f52bdb"
+          },
+          {
+            "name": "MANIFEST-000001",
+            "bytes": 41,
+            "sha256": "f9d31b278e215eb0d0e9cd709edfa037e828f36214ab7906f612160fead4b2b4"
+          }
+        ],
+        "privateBackupFolder": "C:\\Users\\Administrator\\.externallink-backups\\original-additional-storage-d64d6478-e293-4073-b955-f5efcac6ee53",
+        "currentWorkspaceMatches": false,
+        "documentsValidationFailed": false,
+        "storageKeys": [
+          "activeSiteId",
+          "batchRunLog",
+          "cloudSyncConflictKeys",
+          "cloudSyncMetadata",
+          "cloudSyncPendingKeys",
+          "cloudSyncPendingPatches",
+          "executorConnection",
+          "linkMonitorEnabled",
+          "linkMonitorLastRunAt",
+          "linkMonitorMinutes",
+          "linkMonitorResults",
+          "selectedSiteIds",
+          "sheetTableData",
+          "siteProfiles",
+          "submissionRecords",
+          "submissionSchemaVersion",
+          "submissionTimeline",
+          "timelineSchemaVersion"
+        ],
+        "nonJsonKeys": [],
+        "profiles": 7,
+        "targets": 2905,
+        "records": 33,
+        "timelineEvents": 87,
+        "annotationFavorites": 0,
+        "legacyPreferenceFavorites": 0,
+        "oldBatchCombinations": 0,
+        "oldLedgerRuns": 0
+      }
+    ],
+    "originalChromeStarted": false,
+    "originalChromeStopped": false,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0
+  },
+  "currentDataComparison": {
+    "ok": true,
+    "kind": "additional_original_sources_compared_without_scope_assumption",
+    "sources": [
+      {
+        "source": "original_user_chrome_sync_storage",
+        "profileCount": 0,
+        "missingCurrentProfileIds": 0,
+        "recordCount": 0,
+        "missingCurrentRecordKeys": 0,
+        "timelineEvents": 0,
+        "missingCurrentTimelineEvents": 0,
+        "executorConnectionKeys": [],
+        "metadataKeys": [],
+        "executorLocalTokenMatchesCurrent": false,
+        "explicitCloudEndpointMatches": false,
+        "explicitCloudWorkspaceMatches": false,
+        "annotationsOrFavoritesFound": 0
+      },
+      {
+        "source": "original_executor_browser_profile",
+        "profileCount": 7,
+        "missingCurrentProfileIds": 0,
+        "recordCount": 33,
+        "missingCurrentRecordKeys": 0,
+        "timelineEvents": 87,
+        "missingCurrentTimelineEvents": 0,
+        "executorConnectionKeys": [
+          "deviceId",
+          "endpoint",
+          "localToken"
+        ],
+        "metadataKeys": [
+          "configIdentity",
+          "submissionLedgerPullStatus"
+        ],
+        "executorLocalTokenMatchesCurrent": true,
+        "explicitCloudEndpointMatches": false,
+        "explicitCloudWorkspaceMatches": false,
+        "annotationsOrFavoritesFound": 0
+      }
+    ],
+    "originalProductionStateUnchanged": true,
+    "unscopedDataNotRestored": true,
+    "favoritesRecoveryComplete": false,
+    "otherDevicesVerified": false
+  },
+  "favoritesRecoveryComplete": false,
+  "otherDevicesVerified": false,
+  "migrationComplete": false,
+  "productionBusinessWrites": 0,
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-profile-storage-discovery-2026-10-08.txt",
+      "bytes": 1406,
+      "capturedSha256": "6e8507eb54a6544caa387fa42c1ec1b8cb2fa1c9bfa0eaa16bf2c0f318781245",
+      "gitLfSha256": "33e47e6b7f5ad3861800e0bfb21b82e708bffd7c292a671949b87aeedd89f29c"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-profile-storage-discovery-2026-10-08.mjs.txt",
+      "bytes": 1919,
+      "capturedSha256": "a5fad94faa23643115c5501218c54b0058d485d9edaf8a24364642ab7478632d",
+      "gitLfSha256": "a5fad94faa23643115c5501218c54b0058d485d9edaf8a24364642ab7478632d"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-additional-storage-capture-2026-10-08.txt",
+      "bytes": 2715,
+      "capturedSha256": "d43ee907c4a5acbfd0750adb9a55c7f1b988e31a0fc8235cb084d399f8d0d555",
+      "gitLfSha256": "f73df4e72fe5e804216221d7bf1aedd366b6a2db759b01fd6cd4d47667368bd4"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-additional-storage-capture-2026-10-08.mjs.txt",
+      "bytes": 4039,
+      "capturedSha256": "ca75f6a3e934e21fbda19c1b9a462720a5d18557da75da448bfdb26afabc6dcd",
+      "gitLfSha256": "ca75f6a3e934e21fbda19c1b9a462720a5d18557da75da448bfdb26afabc6dcd"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-additional-storage-compare-2026-10-08.txt",
+      "bytes": 1078,
+      "capturedSha256": "93e7f6bbfbb75b9f4cedcd83c84c2e1c1ae25d5da79dd780fe7b706d9b6ce57c",
+      "gitLfSha256": "2127ca9ee93e400bae568b2a0ecaef1c701a448928f317dcd36894871ef54a01"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-additional-storage-audit-2026-10-08/original-plugin-additional-storage-compare-2026-10-08.mjs.txt",
+      "bytes": 2450,
+      "capturedSha256": "9d2526b9aa5b8cc6e7a57b7ded4bc4cad7da74e055749f4de72b9ed9a9b0d3dd",
+      "gitLfSha256": "9d2526b9aa5b8cc6e7a57b7ded4bc4cad7da74e055749f4de72b9ed9a9b0d3dd"
+    }
+  ]
+}

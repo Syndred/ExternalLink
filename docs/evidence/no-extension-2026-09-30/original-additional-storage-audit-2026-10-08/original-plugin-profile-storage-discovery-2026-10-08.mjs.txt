@@ -1,0 +1,14 @@
+import{readFile,readdir,stat}from'node:fs/promises';import{homedir}from'node:os';import{join}from'node:path';
+const roots=[join(homedir(),'AppData','Local','Google','Chrome','User Data'),join(homedir(),'.externallink-executor','browser-profile'),join(homedir(),'.externallink-executor','browser-profile-stable')],found=[];
+for(const root of roots){let dirs;try{dirs=await readdir(root,{withFileTypes:true});}catch(error){if(error.code==='ENOENT')continue;throw error;}
+ for(const profile of dirs.filter(value=>value.isDirectory()&&/^(Default|Profile \d+)$/.test(value.name))){
+  const path=join(root,profile.name);let prefs={};for(const name of ['Preferences','Secure Preferences'])try{const value=JSON.parse(await readFile(join(path,name),'utf8'));prefs={...prefs,...value.extensions?.settings};}catch(error){if(error.code!=='ENOENT')throw error;}
+  const ids=new Set(['eagomdoflagkgjklppjfboddedgjjigm','pbddnjpahdahahnpkhgjoeiionagmaia']);
+  for(const[id,value]of Object.entries(prefs))if(/ExternalLink|外链/i.test((value.path||'')+' '+(value.manifest?.name||'')))ids.add(id);
+  for(const id of ids)for(const kind of ['Local Extension Settings','Sync Extension Settings']){
+   const directory=join(path,kind,id);const files=await readdir(directory).catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(!files)continue;
+   const sizes=await Promise.all(files.map(async name=>{const info=await stat(join(directory,name));return info.isFile()?info.size:0;}));found.push({root,profile:profile.name,extensionId:id,storage:kind,sourcePathMatchesRepository:/ExternalLink/i.test(prefs[id]?.path||''),files:files.length,totalBytes:sizes.reduce((a,b)=>a+b,0),storageDirectory:directory});
+  }
+ }
+}
+console.log(JSON.stringify({ok:true,kind:'original_plugin_only_profile_storage_discovery',matchingStores:found,unrelatedExtensionValuesNotRead:true,originalChromeNotLaunched:true,productionBusinessWrites:0}));

@@ -1,0 +1,331 @@
+{
+  "date": "2026-10-08",
+  "kind": "original_history_formally_restored_with_full_original_bulk_merge_fidelity",
+  "sourceCommits": [
+    "f879bf6a8d8b5dcc9c3cd12e2605b3c7755dc348",
+    "d65f7867a3e69c13f557a50145631864b605991d"
+  ],
+  "pulledLatestBeforeSourceCommits": true,
+  "nativeServicesUpdated": true,
+  "workerVersion": "0d333b03-353f-4c62-95b4-bc6bd155041c",
+  "workerCpuLimitsOrAccountPlanChanged": false,
+  "repositoryTests": {
+    "tests": 965,
+    "pass": 965,
+    "fail": 0,
+    "skip": 0
+  },
+  "pausedSyncFocusedTests": {
+    "tests": 16,
+    "pass": 16,
+    "fail": 0
+  },
+  "priorIntermediateRepositoryTests": {
+    "tests": 962,
+    "pass": 962,
+    "fail": 0,
+    "skip": 0
+  },
+  "formalRestoration": {
+    "ok": true,
+    "kind": "actual_original_native_history_and_timeline_restored",
+    "source": "original_plugin_private_scoped_backup",
+    "nativeSourceSelection": true,
+    "originalHistoricalCombinations": 8815,
+    "originalBatchAndLedgerExact": true,
+    "repeatImportDeduplicated": true,
+    "restoredOriginalTimelineEvents": 8,
+    "totalTimelineEvents": 470,
+    "cloudTimelineRevisionIncrement": 1,
+    "otherCloudDocumentsUnchanged": true,
+    "currentDeviceCloudTasksUnchanged": 778,
+    "protectedLocalStateCredentialsTasksDraftsOutboxAndAuditUnchanged": true,
+    "beforeRestoreFullPrivateBackupSaved": true,
+    "nativeRecoveryPrivateBackupSaved": true,
+    "sourceFileBytesUnchanged": true,
+    "paused": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "realModelCalls": 0,
+    "realSubmissions": 0,
+    "otherDevicesVerified": false,
+    "favoritesRecoveryComplete": false,
+    "migrationComplete": false
+  },
+  "actualFormalUi": {
+    "ok": true,
+    "kind": "actual_formal_workbench_old_history_view_export_and_timeline_ui",
+    "originalHistoricalCombinations": 8815,
+    "actualNativeSourcePicker": true,
+    "alreadySavedShown": true,
+    "noManualUpload": true,
+    "repeatImportNoDuplicate": true,
+    "full8815ReportDownloaded": true,
+    "privateReportSaved": true,
+    "restoredOriginalEventsVisibleInOverview": 8,
+    "restoredOriginalEventsInExistingLibraryEntries": 7,
+    "actualTimelineDialogsChecked": 8,
+    "existingLocalBusinessTasksCredentialsDraftsAndHistoryUnchanged": true,
+    "sourceBytesNotEdited": true,
+    "unexpectedPageErrors": 0,
+    "externalBrowserRequests": 0,
+    "originalChromeNotLaunched": true,
+    "productionTimelineWrittenAgain": false,
+    "realModelCalls": 0,
+    "realSubmissions": 0,
+    "migrationComplete": false
+  },
+  "postUiFreshReadback": {
+    "ok": true,
+    "kind": "post_actual_ui_fresh_cloud_hash_revision_and_idle_readonly",
+    "all19CloudDocumentsMatchVerifiedRestoration": true,
+    "timelineRevisionRemainsSingleIncrement": true,
+    "originalHistorySources": 1,
+    "originalHistoryCombinations": 8815,
+    "totalStoredTimelineEvents": 470,
+    "restorePlanCompleted": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "realSubmissions": 0
+  },
+  "fullActualOriginalTimelineFidelity": {
+    "ok": true,
+    "kind": "actual_original_full_timeline_matches_frozen_merge_with_established_date_parser",
+    "events": 470,
+    "originalMissingEvents": 8,
+    "allIdsFieldsAndGroupOrderExact": true,
+    "sourceAndCurrentNotMutated": true,
+    "nodeOnlyTimingsNotWorkerCpuEvidence": {
+      "frozenMs": 2277,
+      "optimizedMs": 26
+    }
+  },
+  "beforeFixLiveWorkerError": {
+    "kind": "read_only_worker_history_error",
+    "outcome": "exceededCpu",
+    "method": "POST",
+    "path": "/v2/executor/library",
+    "status": 503,
+    "cpuTime": 31,
+    "wallTime": 530,
+    "exceptions": [
+      {
+        "name": "Error",
+        "message": "Worker exceeded CPU time limit."
+      }
+    ]
+  },
+  "independentFrozenMixedTimelineCases": 180,
+  "originalTimelineIntermediatePruningAndFinalNormalizationPreserved": true,
+  "previousFormalBusinessAndCloudBaselinesRetainedAsHistoricalEvidence": true,
+  "currentAuthoritativePrivateGuard": "formal-recovery-checkpoint-2026-10-08.json in original private backup folder",
+  "privateBackupAndOriginalReportNotCommitted": true,
+  "earlyFailuresRetained": [
+    "First restore retained one queued timeline mutation after Worker exceededCpu; initial output file is empty, not a success receipt",
+    "Resume guard observed live paused sync busy; same-plan request rejected before writing",
+    "npm test and node --test tests invoked nonexistent root package or directory module; full suite subsequently enumerated all test files",
+    "UI probe initially required all eight restored events in existing library entries; one original path has no matching existing library entry, all eight are in overview and were each viewed in actual timeline dialogs"
+  ],
+  "remaining": [
+    "Historical favorites source",
+    "Other device data and media associations",
+    "All remaining original execution and special launch branches",
+    "Navigation exceptions and recovery",
+    "Settings and dynamic controls",
+    "Remaining media branches"
+  ],
+  "migrationComplete": false,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-merge-fidelity-2026-10-08.txt",
+      "bytes": 2256,
+      "capturedSha256": "f80b2c950cfce053fda421add6d62a4a96a0ee81c414444dba3dfe8a8633f280",
+      "gitLfSha256": "80c1ea6696369dd68c1f4cb4946dfcf921857c6798994da728b2a12d3891e81b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-merge-native-reload-2026-10-08.txt",
+      "bytes": 453,
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-merge-native-sync-2026-10-08.txt",
+      "bytes": 148,
+      "capturedSha256": "ea7421f936d32ce0fa39eed759f374dba9eee5e04e9c0e803682a362b0e2aebd",
+      "gitLfSha256": "bfdb2b7a03dc5cafb17e74af3e98a0122990221763b031bd3f6e102c09bd4566"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-merge-repository-2026-10-08.txt",
+      "bytes": 113755,
+      "capturedSha256": "f07b8ff059220c745f9d28376e0ae4f6ce1d50a7c3e03c2ff73902636a9a9d42",
+      "gitLfSha256": "ffc56c344933c1cf285837bea0f4c99b59f20d888eecfc3e093a4f98eef71097"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-merge-worker-deploy-2026-10-08.txt",
+      "bytes": 1689,
+      "capturedSha256": "858ab123fc6032e04bbe5ff906cbb11f0cd120c8d1c3cb9b47d1316331d72c41",
+      "gitLfSha256": "d33d3bb5a293c80a33f399fb0b9dc4133ea75db73b62f0ca7f1b380afb03d9f2"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-real-fidelity-2026-10-08.txt",
+      "bytes": 286,
+      "capturedSha256": "acd5fdd05bc900c8a4e88f292458c2a046bef6be665e3b724c9fb8419ad4285e",
+      "gitLfSha256": "e1a38b510b7a45a66d9a79abb86fad40bbe729ae6a1327b0161bffecbc06cee3"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-recovery-2026-10-08.txt",
+      "bytes": 0,
+      "capturedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitLfSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-recovery-resume-2026-10-08.txt",
+      "bytes": 711,
+      "capturedSha256": "ba084300eed4ef2d301752121e27fdb6bdf5c87cf6afa1b178f5355699d319e0",
+      "gitLfSha256": "6f73ebe2d32af991e6f7b205933c205f795fdf611d4f61d97cae55e762e31912"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-recovery-same-plan-2026-10-08.txt",
+      "bytes": 662,
+      "capturedSha256": "fbdfb4e7c4578d07a4804d2d806923ed74ca83dbb30d5c89e4312aa380b1ad9f",
+      "gitLfSha256": "25ed815972698a9c2eaffe51f9fa3e356de657725d400aab5f5b11c3bb2a1d40"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-recovery-verified-2026-10-08.txt",
+      "bytes": 843,
+      "capturedSha256": "66205967e6105daf9cd6ebc1dc2614d2d6318bea760532211f0e01ad7aa8a0d7",
+      "gitLfSha256": "47d303059f7220c61f099b5217d58ffcb753a9289d79469ac40778d376eaf5c6"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-ui-2026-10-08.txt",
+      "bytes": 537,
+      "capturedSha256": "54ae6bff03c02c30e90a241e68c15cc9461b9038b09f952e6e89dbb032413a83",
+      "gitLfSha256": "2c65ec9eaba5dcd38550c64b00b6da22b75b4b8120b1fb8b2a5446b56e61ae79"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-ui-overview-2026-10-08.txt",
+      "bytes": 708,
+      "capturedSha256": "b38d1d62836eec78b0007d8370a3db88fd482797d1b1cc9e0f11e6f2ec6862fd",
+      "gitLfSha256": "52725c30a151a77c7e9dd087c51f43ea83c33f020761ca66eeaf4d0fc8ac56fe"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-paused-sync-recovery-focused-2026-10-08.txt",
+      "bytes": 2289,
+      "capturedSha256": "1b667dccb13e5c1da04c1897ba1a064ea0865b713facee42bbe20fe52d8ac923",
+      "gitLfSha256": "911c53813abeba3ff0f15028909ecde2e614fab281a06aadb08e16bf9850e31a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-paused-sync-recovery-repository-2026-10-08.txt",
+      "bytes": 547,
+      "capturedSha256": "50a47ca358a8bfd13e917c3a28abdc3e7bc5b5daaf10bc93b6d39d151526eb65",
+      "gitLfSha256": "c3da2bad9bd0391c7bf2d5f0ab249802cd22696597ad151c6d869b5f42c11d68"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-paused-sync-recovery-repository-complete-2026-10-08.txt",
+      "bytes": 113333,
+      "capturedSha256": "818bab3b4b038f6a010700a9ca5c8299d396fda33a9965fdaa1a193b866282b7",
+      "gitLfSha256": "783dc42e87b4fc3e01d509ac3ea70b890f35bf8ed40eec30b9ff628d260ac5ef"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-paused-sync-recovery-repository-final-2026-10-08.txt",
+      "bytes": 1016,
+      "capturedSha256": "b17d0f18937360b6c7ec23355f0f0c23748e1c6b4cff439be1da4dd3bb1784a7",
+      "gitLfSha256": "5c72760e51c394cac4448f28cb0b2b644d50e95d597ca7c50178a76226cef1c3"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-post-ui-readonly-2026-10-08.txt",
+      "bytes": 429,
+      "capturedSha256": "17bd343719f7e6c8c8f52ae6e81160d3fc801371b9ba1cc6bef24a83c274531c",
+      "gitLfSha256": "dcaa307438e3cfc2308e252e1f8cfc51d238b724414c0edda495d4dea3911c8d"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-ui-projection-diagnostic-2026-10-08.txt",
+      "bytes": 1744,
+      "capturedSha256": "082b0eb03b0368cfc93a8aec1b99d4d37edfae11ba7b03805f9fa58bf95ccd2e",
+      "gitLfSha256": "8fcf0ef42e9ceec9e7d1dc9cba7725cf9fb53c99270d24d9a4c1180222981a19"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-worker-error-readonly-2026-10-08.txt",
+      "bytes": 361,
+      "capturedSha256": "e6da55504df33531c5d94b3b25d42d239ca4fde5c36f6b036871e2a68157dd05",
+      "gitLfSha256": "6622b91db9276d385c01f503e56dcbe8c5277e9b077a0ad1dd5135eddb230909"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-local-history-release-after-2026-10-08.txt",
+      "bytes": 615,
+      "capturedSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-local-history-release-before-2026-10-08.txt",
+      "bytes": 615,
+      "capturedSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-local-history-release-reload-2026-10-08.txt",
+      "bytes": 453,
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-recovery-2026-10-08.mjs.txt",
+      "bytes": 11965,
+      "capturedSha256": "96ebce3fe9f48c0c36d7c2962d76015a7360a520a168a784356e79fdf9ba96ba",
+      "gitLfSha256": "96ebce3fe9f48c0c36d7c2962d76015a7360a520a168a784356e79fdf9ba96ba"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/continue-original-history-plan-2026-10-08.mjs.txt",
+      "bytes": 1920,
+      "capturedSha256": "f8c11a660d7a401bde64960e03155a5f9c46398268de0f29dd6914efa3538707",
+      "gitLfSha256": "f8c11a660d7a401bde64960e03155a5f9c46398268de0f29dd6914efa3538707"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/readonly-history-worker-tail-2026-10-08.mjs.txt",
+      "bytes": 1913,
+      "capturedSha256": "c02ea55c2746d139936757240655a400d5955e126c6891af1386800e28994fd1",
+      "gitLfSha256": "c02ea55c2746d139936757240655a400d5955e126c6891af1386800e28994fd1"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-bulk-real-fidelity-2026-10-08.mjs.txt",
+      "bytes": 1708,
+      "capturedSha256": "86412091ef6f17b4f4ca685a4b7374b2b7172a041f3ef46e80544bbc71d8ed8b",
+      "gitLfSha256": "86412091ef6f17b4f4ca685a4b7374b2b7172a041f3ef46e80544bbc71d8ed8b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/wait-original-history-sync-2026-10-08.mjs.txt",
+      "bytes": 1325,
+      "capturedSha256": "243906791968d8a7c547055d7a1ceff475e0fe767c0b94cd2dfeb589a79dd26d",
+      "gitLfSha256": "243906791968d8a7c547055d7a1ceff475e0fe767c0b94cd2dfeb589a79dd26d"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-formal-ui-2026-10-08.mjs.txt",
+      "bytes": 6848,
+      "capturedSha256": "3cd9c44d966dfd1a095634329a3f971aa73c163c268d15c70f4895ba6c9cffe6",
+      "gitLfSha256": "3cd9c44d966dfd1a095634329a3f971aa73c163c268d15c70f4895ba6c9cffe6"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-ui-projection-diagnostic-2026-10-08.mjs.txt",
+      "bytes": 1647,
+      "capturedSha256": "e70a3633bf614cb2fffed2f08158710c57aa182caf578bca827c5e990a755f82",
+      "gitLfSha256": "e70a3633bf614cb2fffed2f08158710c57aa182caf578bca827c5e990a755f82"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08/original-history-post-ui-readonly-2026-10-08.mjs.txt",
+      "bytes": 1960,
+      "capturedSha256": "7f40b17d2fd2138f4e27e67fb9788e709a0a088fa3f334abde6bd7eb4b488cff",
+      "gitLfSha256": "7f40b17d2fd2138f4e27e67fb9788e709a0a088fa3f334abde6bd7eb4b488cff"
+    }
+  ]
+}

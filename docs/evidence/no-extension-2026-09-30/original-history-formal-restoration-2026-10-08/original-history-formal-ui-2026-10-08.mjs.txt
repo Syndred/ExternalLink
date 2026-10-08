@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {chromium} from 'playwright';
+import {Store} from '../src/store.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+const hash=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+const folder=join(homedir(),'.externallink-backups','original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521'),checkpoint=JSON.parse(await readFile(join(folder,'formal-recovery-checkpoint-2026-10-08.json'),'utf8')),source=JSON.parse(await readFile(join(folder,'snapshot.json'),'utf8'));
+assert.equal(checkpoint.status,'verified');const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true}),pair=store.get('pair'),origin='http://127.0.0.1:19389';
+const business=()=>hash([store.get('pair'),store.values('task:'),store.values('run:'),store.values('acceptance:'),store.values('acceptanceExecution:'),store.get('acceptanceBatch'),store.values('workbenchBatch:'),store.values('originalRunHistory:'),store.pending(),store.db.prepare('SELECT * FROM audit_log ORDER BY seq').all(),store.values('profileDraft:'),store.values('commentDraft:')]);
+const before=business(),headers={Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'},native=async(route,input={})=>{const response=await fetch(origin+route,{method:'POST',headers,body:JSON.stringify(input)});assert.equal(response.status,200);const value=await response.json();assert.equal(value.ok,true);return value;};
+let browser;const errors=[],external=[];
+try{
+ const plan=await native('/submissionJournalRecoverLocal',{id:checkpoint.recoveryPlanId,keys:['submissionTimeline'],confirmation:'恢复所选本机资料'});assert.equal(plan.remaining,0);assert.equal(plan.status,'completed');
+ const app=await native('/appData',{refresh:true}),beforeIds=new Set(Object.values(checkpoint.before.documents.submissionTimeline).flat().map(event=>event.id)),missing=Object.values(source.documents.submissionTimeline).flat().filter(event=>!beforeIds.has(event.id));assert.equal(missing.length,8);
+ for(const event of missing)assert.ok(app.model.combinations.some(row=>row.events?.some(value=>value.id===event.id)),'Restored event missing from actual overview projection');
+ const libraryVisible=missing.filter(event=>app.model.library.some(row=>row.events?.some(value=>value.id===event.id))).length;
+ browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext({acceptDownloads:true,viewport:{width:1440,height:1000}});
+ await context.route('**/*',async route=>{if(route.request().url().startsWith(origin+'/'))await route.continue();else{external.push({type:route.request().resourceType()});await route.abort();}});
+ const page=await context.newPage();page.setDefaultTimeout(60000);page.on('pageerror',error=>errors.push(error.message));await page.goto(origin+'/#access='+encodeURIComponent(pair.localToken));await page.getByRole('button',{name:'运行任务',exact:true}).click();await page.getByRole('button',{name:'恢复原执行历史',exact:true}).click();
+ const sources=await native('/localRunHistorySources'),selected=sources.sources.find(value=>value.sha256===checkpoint.historyFileSha256);assert.ok(selected);
+ await page.getByLabel('本机保存的原执行历史').selectOption(selected.id);await page.getByRole('button',{name:'预览本机原历史',exact:true}).click();await page.getByText(/8815 个组合.*该文件已经恢复/).waitFor();assert.equal(await page.getByLabel('原执行历史JSON文件').evaluate(input=>input.files.length),0);
+ await page.getByRole('button',{name:'确认保存原执行历史',exact:true}).click();await page.getByText('这份原历史已保存，没有重复导入。',{exact:true}).waitFor();await page.getByRole('button',{name:'查看原批次报告',exact:true}).click();
+ await page.getByLabel('选择导出原记录').selectOption('original-batch:'+checkpoint.historyId);const downloadPromise=page.waitForEvent('download'),responsePromise=page.waitForResponse(response=>response.url().endsWith('/exportBatchReport'));await page.getByRole('button',{name:'下载本轮报告',exact:true}).click();
+ const downloaded=await downloadPromise,report=await(await responsePromise).json(),content=await readFile(await downloaded.path(),'utf8');assert.equal(hash(content),hash(report.content));assert.equal(report.count,8815);assert.equal(Object.values(report.report.groups).flat().length,8815);assert.ok(content.includes('原固定范围：8815 个组合'));await writeFile(join(folder,'formal-history-full-report-2026-10-08.md'),content);
+ await page.getByRole('button',{name:'关闭详情',exact:true}).click();await page.getByRole('button',{name:'提交总览',exact:true}).click();
+ let viewed=0;
+ for(const event of missing){const row=app.model.combinations.find(row=>row.events?.some(value=>value.id===event.id));await page.getByLabel('筛选产品',{exact:true}).selectOption(row.profileId);await page.getByLabel('搜索',{exact:true}).fill(row.site);const match=page.locator('tr').filter({has:page.getByRole('link',{name:row.site,exact:true})});await match.getByRole('button',{name:'查看动态',exact:true}).click();const timeline=page.locator('.timeline-event');assert.equal(await timeline.count(),row.events.length);if(event.note)assert.ok((await timeline.allTextContents()).some(text=>text.includes(event.note)));viewed++;await page.getByRole('button',{name:'关闭详情',exact:true}).click();}
+ assert.equal(viewed,8);assert.deepEqual(errors,[]);assert.deepEqual(external,[]);assert.equal(business(),before);assert.equal(store.get('localRecoveryPlan:'+checkpoint.recoveryPlanId).status,'completed');
+ for(const [file,expected]of [['snapshot.json',checkpoint.snapshotFileSha256],['original-run-history.json',checkpoint.historyFileSha256]])assert.equal(createHash('sha256').update(await readFile(join(folder,file))).digest('hex'),expected);
+ console.log(JSON.stringify({ok:true,kind:'actual_formal_workbench_old_history_view_export_and_timeline_ui',originalHistoricalCombinations:8815,actualNativeSourcePicker:true,alreadySavedShown:true,noManualUpload:true,repeatImportNoDuplicate:true,full8815ReportDownloaded:true,privateReportSaved:true,restoredOriginalEventsVisibleInOverview:8,restoredOriginalEventsInExistingLibraryEntries:libraryVisible,actualTimelineDialogsChecked:8,existingLocalBusinessTasksCredentialsDraftsAndHistoryUnchanged:true,sourceBytesNotEdited:true,unexpectedPageErrors:0,externalBrowserRequests:0,originalChromeNotLaunched:true,productionTimelineWrittenAgain:false,realModelCalls:0,realSubmissions:0,migrationComplete:false}));
+}finally{await browser?.close();store.close();}

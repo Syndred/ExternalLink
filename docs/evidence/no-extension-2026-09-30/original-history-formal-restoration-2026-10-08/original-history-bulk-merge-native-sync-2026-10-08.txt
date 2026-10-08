@@ -1,0 +1,1 @@
+{"ok":true,"kind":"original_saved_history_sync_terminal","paused":true,"busy":false,"pendingEdits":0,"pendingError":"","cachedTimelineEvents":470}

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {Store} from '../src/store.mjs';
+const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true});
+try{const pair=store.get('pair'),headers={Authorization:'Bearer '+pair.localToken};let latest;
+ for(let attempt=0;attempt<60;attempt++){
+  const status=await(await fetch('http://127.0.0.1:19388/status',{headers,signal:AbortSignal.timeout(10000)})).json();assert.equal(status.paused,true);assert.equal(status.pendingEvents,0);
+  const pending=store.values('appMutation:').filter(item=>!['confirmed','discarded'].includes(item.status));latest={paused:true,busy:status.busy,pendingEdits:pending.length,pendingError:pending[0]?.error||'',cachedTimelineEvents:Object.values(store.get('applicationSnapshot')?.remoteSnapshot?.documents?.submissionTimeline||{}).flat().length};
+  if(!status.busy&&!pending.length){assert.equal(latest.cachedTimelineEvents,470);console.log(JSON.stringify({ok:true,kind:'original_saved_history_sync_terminal',...latest}));break;}
+  if(attempt===59){console.log(JSON.stringify({ok:false,kind:'original_saved_history_sync_still_pending',...latest}));process.exitCode=1;break;}
+  await new Promise(resolve=>setTimeout(resolve,2000));
+ }
+}finally{store.close();}

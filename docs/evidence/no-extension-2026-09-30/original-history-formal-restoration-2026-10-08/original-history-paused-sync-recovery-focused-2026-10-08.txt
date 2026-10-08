@@ -1,0 +1,24 @@
+✔ native services and UI restore saved original history and timeline without starting tasks and retain them after restart (3596.6255ms)
+✔ existing original record upload, full exports and resumed large-history file workflow remain available (9450.3686ms)
+✔ original local documents recover through real HTTP, device authentication, D1 CAS and independent readback with a dropped write response (4097.6409ms)
+✔ unscoped JSON uses its original SQLite identity and rejects foreign endpoints or workspaces without exposing credentials (181.0496ms)
+✔ same-workspace original companion restores unscoped legacy favorites and history while keeping both backup files unchanged (307.3677ms)
+✔ genuine standalone legacy JSON remains explicitly unscoped and restores without inventing a workspace (151.1073ms)
+✔ JSON cannot contradict companion identity or bypass a conflicting second SQLite, stale database scope or nonempty WAL (184.1769ms)
+✔ companion deletion or identity changes after preview stop recovery before writing and retain the original plan (226.1288ms)
+✔ source changes during cloud comparison stop before the first restore write while retaining the verified local backup (142.657ms)
+✔ explicitly keeping a cloud version records an exclusion instead of claiming that document was restored (156.7376ms)
+✔ local recovery accepts original state keys, omits credentials and batch state, and preserves original receipt, timeline and media history (1.1816ms)
+✔ catalogue exposes only summaries, captures the original cache before cloud refresh and rejects foreign sources (68.8465ms)
+✔ lost cloud reply and SQLite restart continue the exact recovery plan after verified backup, without replaying writes or releasing submission (149.8078ms)
+✔ source changes, reviewed remote changes, invalid selection and concurrent activity reject before any restore write (112.7412ms)
+✔ paused original recovery joins an existing sync writer and continues the same saved plan without duplicate writes (109.6085ms)
+✔ waiting for original restore sync still rejects a new workspace before continuing the retained mutation (93.7182ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13104.8073

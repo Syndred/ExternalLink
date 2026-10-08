@@ -1,0 +1,70 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import {homedir} from 'node:os';
+import {join,resolve,sep} from 'node:path';
+import {Store} from '../src/store.mjs';
+import {backupWorkspace} from '../src/migration-backup.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+import {localRecoveryDocuments,recoveryDocument} from '../../core/local-recovery.mjs';
+
+const hash=value=>createHash('sha256').update(batchJson(value)).digest('hex'),bytesHash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const home=join(homedir(),'.externallink-executor'),store=new Store(join(home,'outbox.sqlite'),{readOnly:true}),pair=store.get('pair');
+const captured=JSON.parse(await readFile(new URL('./original-plugin-storage-readonly-2026-10-08.txt',import.meta.url),'utf8'));
+assert.ok(captured.currentWorkspaceMatches&&resolve(captured.privateBackupFolder).startsWith(resolve(join(homedir(),'.externallink-backups'))+sep));
+const folder=captured.privateBackupFolder,historyFile=join(folder,'original-run-history.json'),snapshotFile=join(folder,'snapshot.json');
+const historyBytes=await readFile(historyFile),snapshotBytes=await readFile(snapshotFile),history=JSON.parse(historyBytes),source=JSON.parse(snapshotBytes);
+assert.equal(source.scope,pair.endpoint+'|'+pair.workspaceId);assert.equal(history.scope,source.scope);assert.equal(history.activeBatchRun.tasks.length,8815);
+const checkpointFile=join(folder,'formal-recovery-checkpoint-2026-10-08.json');
+let checkpoint=await readFile(checkpointFile,'utf8').then(JSON.parse,error=>{if(error.code==='ENOENT')return null;throw error;});
+const save=async()=>writeFile(checkpointFile,JSON.stringify(checkpoint));
+const quote=value=>{assert.ok(!/[\r\n]/.test(value));return '"'+value.replaceAll('\\','\\\\').replaceAll('"','\\"')+'"';};
+async function cloud(route){
+ const url=new URL((pair.storageBackend==='d1'?'/v2/executor/':'/v1/executor/')+route,pair.endpoint);url.searchParams.set('workspace',pair.workspaceId);assert.equal(url.protocol,'https:');
+ const child=spawn('curl.exe',['--silent','--show-error','--max-time','45','--write-out','\n%{http_code}','--config','-'],{windowsHide:true,stdio:['pipe','pipe','pipe']}),chunks=[];
+ child.stdout.on('data',part=>chunks.push(part));child.stderr.resume();child.stdin.end('url = '+quote(url.href)+'\nheader = '+quote('Authorization: Bearer '+pair.deviceToken)+'\nrequest = "GET"\n');
+ await new Promise((done,reject)=>{child.on('error',reject);child.on('exit',code=>code===0?done():reject(Error('只读云端请求失败 '+code)));});
+ const text=Buffer.concat(chunks).toString('utf8'),at=text.lastIndexOf('\n');assert.equal(Number(text.slice(at+1)),200);return JSON.parse(text.slice(0,at));
+}
+async function inventory(){const tasks=[];let after='';const seen=new Set();do{const page=await cloud('runs?view=inventory'+(after?'&after='+encodeURIComponent(after):''));for(const task of page.tasks){assert.ok(!seen.has(task.id));seen.add(task.id);tasks.push(task);}const next=page.next||'';assert.notEqual(next&&next===after,true);after=next;}while(after);return{count:tasks.length,sha256:hash(tasks.sort((a,b)=>a.id.localeCompare(b.id)))};}
+async function native(route,input={},origin='http://127.0.0.1:19389'){
+ const response=await fetch(origin+route,{method:'POST',headers:{Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'},body:JSON.stringify(input),signal:AbortSignal.timeout(120000)});
+ const value=await response.json();if(response.status!==200||value.ok!==true)throw Error(route+' 未完成：'+String(value.error||response.status).slice(0,200));return value;
+}
+const allowedPrefixes=['applicationSnapshot','workbenchDocuments','localRecoverySource:','localRecoveryPlan:','runHistorySource:','runHistoryPreview:','originalRunHistory:','applicationPlan:','appMutation:'];
+function protectedState(){return{state:store.db.prepare('SELECT id,value FROM state ORDER BY id').all().filter(row=>!allowedPrefixes.some(prefix=>row.id===prefix||row.id.startsWith(prefix))),outbox:store.db.prepare('SELECT * FROM outbox ORDER BY seq').all(),logs:store.db.prepare('SELECT * FROM audit_log ORDER BY seq').all()};}
+const events=timeline=>Object.values(timeline||{}).flat();
+async function idle(){for(const origin of ['http://127.0.0.1:19388','http://127.0.0.1:19389']){const app=await native('/appData',{},origin);assert.equal(app.runtime.paused,true);assert.equal(app.runtime.busy,false);assert.equal(app.runtime.pendingEvents,0);assert.notEqual(app.assistant?.settings?.enabled,true);for(const key of ['pendingLearning','pendingMedia'])assert.equal(app[key]?.length||0,0);const pending=store.values('appMutation:').filter(item=>!['confirmed','discarded'].includes(item.status));assert.equal(app.pendingEdits?.length||0,pending.length);for(const item of pending){const plan=checkpoint?.recoveryPlanId&&store.get('localRecoveryPlan:'+checkpoint.recoveryPlanId);assert.ok(plan);assert.equal(item.applicationPlanId,plan.applicationPlanId);assert.equal(item.key,'submissionTimeline');assert.equal(item.status,'pending');assert.equal(item.operation.type,'recover_local');assert.equal(hash(item.operation.data),hash(localRecoveryDocuments(source).submissionTimeline));}assert.equal([...(app.linkMonitorJobs||[]),...(app.publicLibraryJobs||[])].filter(job=>job.live).length,0);assert.equal([...(app.quickOpenJobs||[]),...(app.domainAgeJobs||[])].filter(job=>job.status==='running').length,0);assert.equal((app.manualWatchJobs||[]).filter(job=>job.status==='checking').length,0);}}
+try{
+ await idle();
+ if(!checkpoint){
+  const current=await cloud('snapshot'),historical=JSON.parse(await readFile(new URL('./manual-confirmation-cloud-before-2026-10-08.json',import.meta.url),'utf8'));
+  assert.deepEqual(current.revisions,historical.revisions);assert.deepEqual(Object.fromEntries(Object.entries(current.documents).map(([key,value])=>[key,hash(value)])),historical.hashes);
+  const beforeIds=new Set(events(current.documents.submissionTimeline).map(event=>event.id));assert.equal(events(source.documents.submissionTimeline).filter(event=>!beforeIds.has(event.id)).length,8);
+  const expected=recoveryDocument(current.documents,'submissionTimeline',localRecoveryDocuments(source).submissionTimeline);assert.equal(events(expected).length,470);
+  const inventoryBefore=await inventory();assert.equal(inventoryBefore.count,778);assert.equal(inventoryBefore.sha256,historical.taskHash);
+  const backupDirectory=join(homedir(),'.externallink-backups','before-formal-original-history-2026-10-08');await mkdir(backupDirectory,{recursive:false});const backup=await backupWorkspace({home,output:backupDirectory});
+  checkpoint={status:'before',scope:source.scope,before:current,expectedTimeline:expected,inventoryBefore,protectedBefore:hash(protectedState()),backupDirectory,backupSha256:backup.sha256,historyFileSha256:bytesHash(historyBytes),snapshotFileSha256:bytesHash(snapshotBytes),startedAt:new Date().toISOString()};await save();
+ }
+ assert.equal(checkpoint.scope,source.scope);assert.equal(bytesHash(historyBytes),checkpoint.historyFileSha256);assert.equal(bytesHash(snapshotBytes),checkpoint.snapshotFileSha256);assert.equal(hash(protectedState()),checkpoint.protectedBefore);
+ const listing=await native('/localRunHistorySources'),selected=listing.sources.find(item=>item.sha256===checkpoint.historyFileSha256&&!item.unavailable);assert.ok(selected);
+ const preview=await native('/previewLocalRunHistory',{sourceId:selected.id});assert.equal(preview.preview.combinations,8815);checkpoint.historyId=preview.preview.id;await save();
+ const imported=await native('/importRunHistory',{previewId:checkpoint.historyId});assert.equal(imported.executionStarted,false);const repeated=await native('/importRunHistory',{previewId:checkpoint.historyId});assert.equal(repeated.alreadyRestored,true);
+ const saved=store.get('originalRunHistory:'+checkpoint.historyId);assert.equal(hash(saved.activeBatchRun),hash(history.activeBatchRun));assert.equal(hash(saved.automationRunLedger),hash(history.automationRunLedger));
+ const now=await cloud('snapshot');
+ if(hash(now.documents.submissionTimeline)!==hash(checkpoint.expectedTimeline)||store.values('appMutation:').some(item=>!['confirmed','discarded'].includes(item.status))){
+  if(hash(now.documents.submissionTimeline)!==hash(checkpoint.expectedTimeline)){assert.equal(hash(now.documents),hash(checkpoint.before.documents));assert.deepEqual(now.revisions,checkpoint.before.revisions);}
+  if(!checkpoint.recoveryPlanId){const sources=await native('/localRecoverySources'),chosen=sources.sources.find(item=>item.scopeVerified&&item.label.endsWith('original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521 / snapshot.json'));assert.ok(chosen);const plan=await native('/previewLocalRecovery',{sourceId:chosen.id});assert.ok(plan.preview.changes.includes('submissionTimeline'));checkpoint.recoveryPlanId=plan.preview.id;await save();}
+  const recovered=await native('/submissionJournalRecoverLocal',{id:checkpoint.recoveryPlanId,keys:['submissionTimeline'],confirmation:'恢复所选本机资料'});assert.equal(recovered.backupSaved,true);assert.equal(recovered.remaining,0);assert.equal(recovered.status,'completed');
+ }
+ const after=await cloud('snapshot');assert.equal(hash(after.documents.submissionTimeline),hash(checkpoint.expectedTimeline));
+ for(const key of Object.keys(checkpoint.before.documents))if(key!=='submissionTimeline'){assert.equal(hash(after.documents[key]),hash(checkpoint.before.documents[key]),key+' changed');assert.equal(after.revisions[key],checkpoint.before.revisions[key]);}
+ assert.equal(Object.keys(after.documents).length,Object.keys(checkpoint.before.documents).length);assert.equal(after.revisions.submissionTimeline,checkpoint.before.revisions.submissionTimeline+1);
+ const restored=new Map(events(after.documents.submissionTimeline).map(event=>[event.id,event]));for(const event of events(source.documents.submissionTimeline)){assert.ok(restored.has(event.id));for(const [key,value]of Object.entries(event))assert.equal(hash(restored.get(event.id)[key]),hash(value));}
+ assert.deepEqual(await inventory(),checkpoint.inventoryBefore);assert.equal(hash(protectedState()),checkpoint.protectedBefore);await idle();assert.equal(hash(protectedState()),checkpoint.protectedBefore);
+ const fixed=store.get('acceptanceBatch');assert.equal(fixed.status,'paused');assert.equal(fixed.cursor,13);assert.equal(fixed.count,30);assert.equal(store.pendingCount(),0);assert.equal(store.values('appMutation:').filter(item=>!['confirmed','discarded'].includes(item.status)).length,0);
+ assert.equal(bytesHash(await readFile(historyFile)),checkpoint.historyFileSha256);assert.equal(bytesHash(await readFile(snapshotFile)),checkpoint.snapshotFileSha256);
+ checkpoint.status='verified';checkpoint.after={hashes:Object.fromEntries(Object.entries(after.documents).map(([key,value])=>[key,hash(value)])),revisions:after.revisions};checkpoint.verifiedAt=new Date().toISOString();await save();
+ console.log(JSON.stringify({ok:true,kind:'actual_original_native_history_and_timeline_restored',source:'original_plugin_private_scoped_backup',nativeSourceSelection:true,originalHistoricalCombinations:8815,originalBatchAndLedgerExact:true,repeatImportDeduplicated:true,restoredOriginalTimelineEvents:8,totalTimelineEvents:470,cloudTimelineRevisionIncrement:1,otherCloudDocumentsUnchanged:true,currentDeviceCloudTasksUnchanged:778,protectedLocalStateCredentialsTasksDraftsOutboxAndAuditUnchanged:true,beforeRestoreFullPrivateBackupSaved:true,nativeRecoveryPrivateBackupSaved:true,sourceFileBytesUnchanged:true,paused:true,fixedBatch:{status:fixed.status,cursor:fixed.cursor,count:fixed.count,cursorIsReceiptCount:false},realModelCalls:0,realSubmissions:0,otherDevicesVerified:false,favoritesRecoveryComplete:false,migrationComplete:false}));
+}finally{store.close();}

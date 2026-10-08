@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {Store} from '../src/store.mjs';
+const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true});
+try{
+ const checkpoint=JSON.parse(await readFile(join(homedir(),'.externallink-backups','original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521','formal-recovery-checkpoint-2026-10-08.json'),'utf8')),pair=store.get('pair'),plan=store.get('localRecoveryPlan:'+checkpoint.recoveryPlanId);
+ assert.equal(checkpoint.scope,pair.endpoint+'|'+pair.workspaceId);assert.equal(plan.scope,checkpoint.scope);assert.deepEqual(plan.selectedKeys,['submissionTimeline']);assert.ok(plan.backupDirectory);
+ const headers={Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'};
+ let idle=false;
+ for(let attempt=0;attempt<120;attempt++){
+  const status=await(await fetch('http://127.0.0.1:19388/status',{headers,signal:AbortSignal.timeout(10000)})).json();assert.equal(status.paused,true);assert.equal(status.pendingEvents,0);
+  if(!status.busy){idle=true;break;}await new Promise(resolve=>setTimeout(resolve,1000));
+ }
+ assert.ok(idle,'原同步操作仍运行，未新建恢复计划');
+ const response=await fetch('http://127.0.0.1:19388/submissionJournalRecoverLocal',{method:'POST',headers,body:JSON.stringify({id:checkpoint.recoveryPlanId,keys:['submissionTimeline'],confirmation:'恢复所选本机资料'}),signal:AbortSignal.timeout(120000)}),result=await response.json();
+ console.log(JSON.stringify({httpStatus:response.status,ok:result.ok,status:result.status,remaining:result.remaining,backupSaved:result.backupSaved,error:result.error,pending:result.pending,planIdentityPreserved:true}));
+ assert.equal(response.status,200);assert.equal(result.ok,true);assert.equal(result.remaining,0);
+}finally{store.close();}

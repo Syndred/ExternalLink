@@ -1,0 +1,20 @@
+{"httpStatus":400,"ok":false,"error":"请先暂停并等待所有后台操作结束","planIdentityPreserved":true}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+400 !== 200
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/continue-original-history-plan-2026-10-08.mjs:19:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 400,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

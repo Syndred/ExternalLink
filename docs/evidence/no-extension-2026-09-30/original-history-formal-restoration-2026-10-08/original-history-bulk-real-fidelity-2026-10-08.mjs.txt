@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+import {originalTimelineWithDateParser} from '../../tests/helpers/original-library-catalog.mjs';
+import {recoveryDocument} from '../../core/local-recovery.mjs';
+const folder=join(homedir(),'.externallink-backups','original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521');
+const source=JSON.parse(await readFile(join(folder,'snapshot.json'),'utf8')),checkpoint=JSON.parse(await readFile(join(folder,'formal-recovery-checkpoint-2026-10-08.json'),'utf8')),hash=value=>createHash('sha256').update(batchJson(value)).digest('hex');
+const reference=originalTimelineWithDateParser(globalThis.ExtLinkSubmissionTimeline.parseTime),start=performance.now(),old=reference.mergeTimelines(checkpoint.before.documents.submissionTimeline,source.documents.submissionTimeline),oldMs=performance.now()-start;
+const nextStart=performance.now(),result=recoveryDocument(checkpoint.before.documents,'submissionTimeline',source.documents.submissionTimeline),newMs=performance.now()-nextStart;
+assert.equal(hash(result),hash(old));assert.equal(hash(result),hash(checkpoint.expectedTimeline));assert.equal(Object.values(result).flat().length,470);
+console.log(JSON.stringify({ok:true,kind:'actual_original_full_timeline_matches_frozen_merge_with_established_date_parser',events:470,originalMissingEvents:8,allIdsFieldsAndGroupOrderExact:true,sourceAndCurrentNotMutated:true,nodeOnlyTimingsNotWorkerCpuEvidence:{frozenMs:Math.round(oldMs),optimizedMs:Math.round(newMs)}}));

@@ -1,0 +1,24 @@
+✔ unscoped JSON uses its original SQLite identity and rejects foreign endpoints or workspaces without exposing credentials (131.9446ms)
+✔ same-workspace original companion restores unscoped legacy favorites and history while keeping both backup files unchanged (209.1088ms)
+✔ genuine standalone legacy JSON remains explicitly unscoped and restores without inventing a workspace (129.394ms)
+✔ JSON cannot contradict companion identity or bypass a conflicting second SQLite, stale database scope or nonempty WAL (173.9932ms)
+✔ companion deletion or identity changes after preview stop recovery before writing and retain the original plan (186.0416ms)
+✔ source changes during cloud comparison stop before the first restore write while retaining the verified local backup (79.9516ms)
+✔ explicitly keeping a cloud version records an exclusion instead of claiming that document was restored (135.8181ms)
+✔ local recovery accepts original state keys, omits credentials and batch state, and preserves original receipt, timeline and media history (1.2084ms)
+✔ catalogue exposes only summaries, captures the original cache before cloud refresh and rejects foreign sources (66.7005ms)
+✔ lost cloud reply and SQLite restart continue the exact recovery plan after verified backup, without replaying writes or releasing submission (142.3103ms)
+✔ source changes, reviewed remote changes, invalid selection and concurrent activity reject before any restore write (106.7725ms)
+✔ paused original recovery joins an existing sync writer and continues the same saved plan without duplicate writes (96.5785ms)
+✔ waiting for original restore sync still rejects a new workspace before continuing the retained mutation (88.244ms)
+✔ bulk timeline append retains original intermediate pruning, duplicate IDs across groups and final pending normalization (4.2985ms)
+✔ bulk timeline matches frozen original append and merge across deterministic mixed historical groups (1720.3619ms)
+✔ complete historical import keeps every original item and matches the frozen report rather than shrinking the batch (935.9187ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2923.6638

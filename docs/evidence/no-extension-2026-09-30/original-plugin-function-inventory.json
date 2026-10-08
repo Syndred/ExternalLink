@@ -3028,5 +3028,27 @@
     "originalMissingTimelineEventsVerifiedInOwnedFixture": 8,
     "formalHistoryRecoveryStillPending": true,
     "privateOriginalSourceNotCommitted": true
+  },
+  "originalFormalHistoryRestorationCheckpoint": {
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-history-formal-restoration-2026-10-08.json",
+    "sourcePublished": true,
+    "nativeServicesUpdated": true,
+    "workerVersion": "0d333b03-353f-4c62-95b4-bc6bd155041c",
+    "repositoryTests": {
+      "tests": 965,
+      "pass": 965,
+      "fail": 0,
+      "skip": 0
+    },
+    "originalHistoricalCombinationsFormallyRestored": 8815,
+    "missingOriginalTimelineEventsFormallyRestored": 8,
+    "storedTimelineEvents": 470,
+    "actualOriginalTimelineDialogsChecked": 8,
+    "currentDeviceTasksUnchanged": 778,
+    "locatedSourceHistoricalBatchAndTimelineRestored": true,
+    "allOtherOriginalSourcesVerified": false,
+    "favoritesRecoveryComplete": false,
+    "otherDevicesVerified": false,
+    "migrationComplete": false
   }
 }

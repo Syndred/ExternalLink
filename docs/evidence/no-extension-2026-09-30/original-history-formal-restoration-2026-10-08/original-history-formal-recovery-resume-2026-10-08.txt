@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+true !== false
+
+    at idle (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/original-history-formal-recovery-2026-10-08.mjs:38:186)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/original-history-formal-recovery-2026-10-08.mjs:40:2 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

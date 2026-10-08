@@ -334,11 +334,38 @@
 
   function appendMany(timeline, events) {
     let next = normalizeTimeline(timeline);
+    const dirty = new Set(Object.keys(next));
+    const ids = new Map();
+    const countId = (event, delta) => {
+      const id = text(event.id), count = (ids.get(id) || 0) + delta;
+      if (count) ids.set(id, count); else ids.delete(id);
+    };
+    for (const group of Object.values(next)) for (const event of group) countId(event, 1);
+    // The original append flow normalizes before each event, and twice before
+    // an insertion. Only groups changed by the preceding pass or insertion can
+    // change again. Keep those passes and their pruning order without cloning
+    // every other group's complete history for every incoming event.
+    const normalizeDirty = () => {
+      for (const key of [...dirty]) {
+        const previous = next[key] || [];
+        const normalized = normalizeTimeline({ [key]: previous })[key] || [];
+        for (const event of previous) countId(event, -1);
+        for (const event of normalized) countId(event, 1);
+        if (normalized.length) next[key] = normalized; else delete next[key];
+        if (normalized.length === previous.length) dirty.delete(key);
+      }
+    };
     let added = 0;
-    for (const event of events || []) {
-      const result = appendWithResult(next, event);
-      next = result.timeline;
-      if (result.added) added += 1;
+    for (const rawEvent of events || []) {
+      normalizeDirty();
+      const event = normalizeEvent(rawEvent);
+      if (ids.has(event.id)) continue;
+      normalizeDirty();
+      const key = timelineKey(event.destinationKey, event.profileId);
+      next[key] = [...(next[key] || []), event].sort(compareEvents);
+      countId(event, 1);
+      dirty.add(key);
+      added += 1;
     }
     return { timeline: next, added };
   }

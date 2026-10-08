@@ -93,8 +93,13 @@ export function recoverLocalDocuments(runtime,input){
  const operation=performRecovery(runtime,input);runtime.localRecoveryOperation=operation;return operation.finally(()=>{if(runtime.localRecoveryOperation===operation)runtime.localRecoveryOperation=null;});
 }
 async function performRecovery(runtime,input){
- if(input.confirmation!=='恢复所选本机资料')throw Error('请输入恢复所选本机资料确认文字');ensureIdle(runtime);
+ if(input.confirmation!=='恢复所选本机资料')throw Error('请输入恢复所选本机资料确认文字');
  const scope=workbenchScope(runtime.store.get('pair')),plan=runtime.store.get('localRecoveryPlan:'+input.id);if(!plan||plan.scope!==scope)throw Error('本机恢复预览不存在或工作区已变化');
+ // A retained restore may already be syncing in the paused timer. Keep the
+ // original operation owned until that writer finishes, then recheck scope
+ // and every idle guard before continuing the same immutable plan.
+ if(plan.applicationPlanId&&runtime.store.get('paused')===true&&runtime.job){await runtime.job;sameScope(runtime,scope);}
+ ensureIdle(runtime);
  if(plan.status==='preview'){
   const source=runtime.store.get('localRecoverySource:'+plan.sourceId);if(!source||source.scope!==scope)throw Error('本机来源不存在，请重新预览');const latest=await readLocalRecoverySource(runtime,source.path);sameScope(runtime,scope);if(latest.sha256!==plan.sourceSha256||plan.sourceIdentitySha256&&latest.identitySha256!==plan.sourceIdentitySha256)throw Error('本机来源已经变化，请重新预览');
   if(pendingApplication(runtime).length)throw Error('请先同步或解决已有本机资料冲突');

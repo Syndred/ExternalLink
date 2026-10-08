@@ -104,3 +104,26 @@ test('source changes, reviewed remote changes, invalid selection and concurrent 
  const originalRequest=f.runtime.cloud.request;let release;f.runtime.cloud.request=async(...args)=>{if(args[0]==='snapshot')await new Promise(resolve=>release=resolve);return originalRequest(...args);};const original=recoverLocalDocuments(f.runtime,{id:preview.id,confirmation});for(let i=0;i<100&&!release;i++)await new Promise(resolve=>setTimeout(resolve,5));assert.ok(release);assert.throws(()=>recoverLocalDocuments(f.runtime,{id:preview.id,confirmation}),/已有本机恢复/);f.runtime.store.set('pair',{endpoint:'https://cloud.example',workspaceId:'other'});release();await assert.rejects(original,/工作区已切换/);assert.equal(f.writes.length,0);assert.equal(f.runtime.store.get('localRecoveryPlan:'+preview.id).status,'preview');
  }finally{await f.close();}
 });
+
+test('paused original recovery joins an existing sync writer and continues the same saved plan without duplicate writes',async()=>{
+ const f=await fixture();try{
+  const preview=await prepare(f),request=f.runtime.cloud.request;let failOnce=true;
+  f.runtime.cloud.request=async(...args)=>{if(args[0]==='library'&&failOnce){failOnce=false;throw Error('Cloud HTTP 503');}return request(...args);};
+  const first=await recoverLocalDocuments(f.runtime,{id:preview.id,keys:['siteAnnotations'],confirmation});assert.equal(first.remaining,1);
+  const plan=f.runtime.store.get('localRecoveryPlan:'+preview.id),ids=f.runtime.store.get('applicationPlan:'+plan.applicationPlanId).items.map(item=>item.id);let release,finished=false;
+  f.runtime.job=new Promise(resolve=>release=()=>{f.runtime.job=null;resolve();});
+  const resumed=recoverLocalDocuments(f.runtime,{id:preview.id,keys:['siteAnnotations'],confirmation}).then(result=>{finished=true;return result;});
+  await Promise.resolve();assert.equal(finished,false);assert.equal(f.writes.length,0);assert.throws(()=>recoverLocalDocuments(f.runtime,{id:preview.id,confirmation}),/已有本机恢复/);
+  release();const result=await resumed;assert.equal(result.remaining,0);assert.equal(result.status,'completed');assert.deepEqual(f.writes,ids);assert.equal(f.saved.documents.siteAnnotations['target.example'].library.favorite,true);
+  assert.equal(f.runtime.store.get('localRecoveryPlan:'+preview.id).backupDirectory,plan.backupDirectory);assert.equal(f.runtime.store.get('paused'),true);assert.equal(f.runtime.store.get('acceptanceBatch').cursor,13);assert.equal(f.runtime.store.get('task:unknown').attemptBoundary,'original-boundary');assert.equal(f.runtime.store.pendingCount(),0);
+ }finally{await f.close();}
+});
+
+test('waiting for original restore sync still rejects a new workspace before continuing the retained mutation',async()=>{
+ const f=await fixture();try{
+  const preview=await prepare(f),request=f.runtime.cloud.request;f.runtime.cloud.request=async(...args)=>{if(args[0]==='library')throw Error('Cloud HTTP 503');return request(...args);};
+  assert.equal((await recoverLocalDocuments(f.runtime,{id:preview.id,keys:['siteAnnotations'],confirmation})).remaining,1);
+  let release;f.runtime.job=new Promise(resolve=>release=()=>{f.runtime.job=null;resolve();});const resumed=recoverLocalDocuments(f.runtime,{id:preview.id,confirmation});
+  f.runtime.store.set('pair',{endpoint:'https://cloud.example',workspaceId:'other'});release();await assert.rejects(resumed,/工作区已切换/);assert.equal(f.writes.length,0);assert.equal(f.runtime.store.get('localRecoveryPlan:'+preview.id).status,'queued');assert.equal(f.runtime.store.get('task:unknown').attemptBoundary,'original-boundary');
+ }finally{await f.close();}
+});

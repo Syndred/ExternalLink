@@ -9,9 +9,14 @@ const hash=value=>createHash('sha256').update(batchJson(value)).digest('hex');
 const identity=task=>task?Object.fromEntries(['url','key','destinationKey','profileId'].map(key=>[key,task[key]])):null;
 export async function compareOriginalAutoVisitScope(snapshot,onProfile=()=>{}){
  const before=hash(snapshot),docs=snapshot.documents,queue=originalLibraryGlobals.ExtLinkQueue,reports=[];
- const profiles=Object.entries(docs.siteProfiles||{}).filter(([,profile])=>!profile.archived&&originalLibraryGlobals.ExtLinkProfiles.profileConfigured(profile));
+ const profiles=Object.entries(docs.siteProfiles||{}).filter(([,profile])=>!profile.archived&&originalLibraryGlobals.ExtLinkProfiles.profileConfigured(profile)),defaultQueue=await originalLibraryBatchQueue(snapshot);
  for(const [profileId] of profiles){
-  const original=await originalLibraryBatchQueue(snapshot,{profileIds:[profileId]}),matchVisit=createAutoVisitMatcher(snapshot,profileId),mismatches=[],currentGateReasons={};let cases=0,originalMatched=0,nativeMatched=0,originalExcluded=0,currentGateExclusions=0;
+  const explicitSnapshot={...snapshot,documents:{...docs,selectedSiteIds:[profileId],activeSiteId:profileId}};
+  // The previous audit explicitly selected one product only in the frozen
+  // loader. Align that choice on both sides and add a distinct untouched,
+  // stored-selection case; do not hide selection differences as exclusions.
+  for(const selection of [{kind:'explicit_product',snapshot:explicitSnapshot,queue:await originalLibraryBatchQueue(explicitSnapshot)},{kind:'original_stored_selection',snapshot,queue:defaultQueue}]){
+  const original=selection.queue,matchVisit=createAutoVisitMatcher(selection.snapshot,profileId),mismatches=[],currentGateReasons={};let cases=0,originalMatched=0,nativeMatched=0,originalExcluded=0,currentGateExclusions=0;
   // Every frozen compiled route and a later form path, including routes excluded
   // by the original queue. Current stricter executor gates are reported separately.
   for(const compiledUrl of originalBuiltinUrls){
@@ -29,7 +34,8 @@ export async function compareOriginalAutoVisitScope(snapshot,onProfile=()=>{}){
     if(!isDeepStrictEqual(identity(actual),identity(expected)))mismatches.push({identitySha256:hash([profileId,url]),expectedSha256:hash(identity(expected)),actualSha256:hash(identity(actual)),currentGateReason:reason});
    }
   }
-  const report={profileSha256:hash(profileId),cases,originalMatched,originalExcluded,currentGateExclusions,currentGateReasons,nativeMatched,mismatchCount:mismatches.length,mismatches};reports.push(report);await onProfile(report);
+  const report={selection:selection.kind,profileSha256:hash(profileId),cases,originalMatched,originalExcluded,currentGateExclusions,currentGateReasons,nativeMatched,mismatchCount:mismatches.length,mismatches};reports.push(report);await onProfile(report);
+  }
  }
- return{sourceUnchanged:hash(snapshot)===before,profiles:reports.length,compiledRoutes:originalBuiltinUrls.length,cases:reports.reduce((n,row)=>n+row.cases,0),mismatchCount:reports.reduce((n,row)=>n+row.mismatchCount,0),currentGateExclusions:reports.reduce((n,row)=>n+row.currentGateExclusions,0),reports};
+ return{sourceUnchanged:hash(snapshot)===before,profiles:profiles.length,selectionCases:reports.length,compiledRoutes:originalBuiltinUrls.length,cases:reports.reduce((n,row)=>n+row.cases,0),mismatchCount:reports.reduce((n,row)=>n+row.mismatchCount,0),currentGateExclusions:reports.reduce((n,row)=>n+row.currentGateExclusions,0),reports};
 }

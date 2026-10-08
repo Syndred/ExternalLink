@@ -44,6 +44,20 @@ export function overlayApplicationSettings(runtime,snapshot){
  }
  return result;
 }
+// Product selection is an immediate local preference, not an unconfirmed
+// product payload. Apply only its validated selection keys to visit context.
+export function overlayVisitPreferences(runtime,snapshot){
+ const result=overlayApplicationSettings(runtime,snapshot);
+ result.documents=visitPreferenceDocuments(runtime,result.documents);return result;
+}
+export function visitPreferenceDocuments(runtime,documents){
+ const keys=['autoFillOnVisit','activeSiteId','selectedSiteIds'];let result=documents;
+ for(const item of pendingApplication(runtime))if(keys.includes(item.key)){
+  if(result===documents)result={...documents};
+  try{const change=libraryMutation(result,item.operation);for(const [key,data]of Object.entries(change.updates||{[change.key]:change.data}))if(keys.includes(key))result[key]=data;}catch{}
+ }
+ return result;
+}
 export async function enqueueLibraryMutation(runtime,input){
  if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('applicationSnapshot');if(saved?.scope!==scope)throw Error('请先读取本工作区资料');

@@ -27,6 +27,15 @@ test('the frozen auto-visit request actually reaches fill-only on a built-in for
  assert.equal(reference.documents.submissionQueueIndex,reference.pending.tasks.findIndex(task=>task.id===expected.id));
 });
 
+test('automatic visit keeps the original batch product selection, empty-selection fallback and stale selection handling',async()=>{
+ const url='https://betalist.com/actual-form';
+ for(const [activeSiteId,selection] of [['p',undefined],['q',undefined],['q',[]],['p',[]],['p',['q']],['q',['p']],['p',['p','q']],['q',['p','q']],['p',['q','p','q']],['p',['missing']],['p',['missing','q']]]){
+  const saved=snapshot();saved.documents.activeSiteId=activeSiteId;if(selection===undefined)delete saved.documents.selectedSiteIds;else saved.documents.selectedSiteIds=selection;
+  const reference=await originalAutoVisitRequest(saved,{url}),expected=originalLibraryGlobals.ExtLinkQueue.matchSubmissionTarget(url,reference.pending.tasks,activeSiteId);
+  assert.equal(reference.fills.length,expected?1:0);assert.deepEqual(identity(autoVisitTarget(saved,activeSiteId,url)),identity(expected),JSON.stringify({activeSiteId,selection}));
+ }
+});
+
 test('one scan reuses its immutable candidate snapshot and the next scan reads new candidates and gates',async()=>{
  const saved=snapshot(),original=await originalLibraryBatchQueue(saved),before=structuredClone(saved),matcher=createAutoVisitMatcher(saved,'p');
  for(const task of original.tasks)assert.deepEqual(identity(matcher(new URL('/actual-form',task.url).href)),identity(originalLibraryGlobals.ExtLinkQueue.matchSubmissionTarget(new URL('/actual-form',task.url).href,original.tasks,'p')));
@@ -69,7 +78,7 @@ test('the original request keeps active-tab profile URL parked-task payment and 
 test('native compiled auto-visit fills actual browser fields without changing the library and recovers the same task after a lost reply',{timeout:65000},()=>{
  const result=spawnSync(process.execPath,['executor/test/original-builtin-auto-visit.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:60000,maxBuffer:1024*1024});
  assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const evidence=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(evidence.ok,true);
- for(const key of ['ordinaryProviderUrlsInterceptedByFixture','noCompiledUrlAddedToTableOrUserList','actualFourFieldsReadBack','originalDestinationAndQueuePosition','blacklistDrDaDeletedCurrentPathAndHostReceiptGates','remoteLoginTaskPreserved','lostReplyAndSqliteRestart','originalTaskIdProfileAndRevisionRetained','duplicateRegistrationPrevented','favoritesAndPausedFixedBatchUnchanged'])assert.equal(evidence[key],true);
+ for(const key of ['ordinaryProviderUrlsInterceptedByFixture','noCompiledUrlAddedToTableOrUserList','actualFourFieldsReadBack','originalDestinationAndQueuePosition','blacklistDrDaDeletedCurrentPathAndHostReceiptGates','unselectedProductNotFilledOrRegistered','pendingBatchChoiceAppliedBeforeCloudSync','pendingProductPayloadExcluded','visitQueueKeepsAllSelectedProducts','deselectionDuringLeaseStopsBeforeFieldWrites','reselectionContinuesSameTask','remoteLoginTaskPreserved','lostReplyAndSqliteRestart','originalTaskIdProfileAndRevisionRetained','duplicateRegistrationPrevented','favoritesAndPausedFixedBatchUnchanged'])assert.equal(evidence[key],true);
  assert.equal(evidence.registrations,3);for(const key of ['posts','externalRequests','productionWrites','realModelCalls','realSubmissions'])assert.equal(evidence[key],0);
 });
 

@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 188
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-navigation-queue.mjs:38:115
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 188,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

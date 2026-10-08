@@ -2937,5 +2937,36 @@
     "realSubmissions": 0,
     "migrationComplete": false,
     "evidence": "original-batch-settings-2026-10-08.json"
+  },
+  "originalNavigationQueueCheckpoint": {
+    "initialFeatureCommit": "ccee7e6",
+    "summaryCorrectionCommit": "d374f13634577a04dd271d7331192713c3beb5cc",
+    "completeCompiledAndUserAndTableRange": true,
+    "originalCursorGetAndAdvanceCompared": true,
+    "pendingLocalViewAndQuickOpen": true,
+    "actualServicesUiAndOwnedChrome": true,
+    "originalGetSummaryProfileFieldsRestored": true,
+    "legacyAdvanceFullConfigsAndCurrentDestinationConfigRetained": true,
+    "originalCachedGroups": 2975,
+    "originalCachedJobs": 8909,
+    "beforeRawGroupBytes": 325937318,
+    "compactGetResponseBytes": 8620534,
+    "liveSources": 6,
+    "liveUnscopedSelectionCases": 12,
+    "groupJobAndOriginalConfigFieldComparisons": 6753400,
+    "mismatchCount": 0,
+    "knownAddedConfigFields": [
+      "mediaDisabled"
+    ],
+    "repositoryTestsPassed": 936,
+    "newTestsSince929": 7,
+    "originalServicesUpdatedAndReadOnlyChecked": true,
+    "cloudDocuments": 19,
+    "currentDeviceTaskInventory": 778,
+    "businessUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "migrationComplete": false,
+    "evidence": "original-navigation-queue-2026-10-08.json"
   }
 }

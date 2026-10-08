@@ -1,0 +1,1 @@
+{"ok":true,"kind":"manual_confirmation_deployment_after_readonly","currentDeviceAllCloudDocumentsAndInventoryUnchanged":true,"documents":19,"taskCount":778,"authenticatedReceiptRouteMissingTaskRejected":403,"liveManualConfirmationPerformed":false,"productionWrites":0,"realModelCalls":0,"realSubmissions":0}

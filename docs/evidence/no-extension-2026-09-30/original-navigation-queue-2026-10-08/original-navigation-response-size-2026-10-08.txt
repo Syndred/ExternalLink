@@ -1,0 +1,1 @@
+{"ok":true,"kind":"original_cached_navigation_response_size_readonly","cachedDocuments":19,"groups":2975,"jobs":8909,"rawGroupsJsonBytes":325937318,"originalGetSummaryJsonBytes":2852744,"nativeGetCurrentlyReturnsRawGroups":true,"originalGetSummaryFieldsMissingInCurrentAdapter":["profileIds","profileTotal","profiles"],"productionWrites":0,"realModels":0,"realSubmissions":0}

@@ -1,0 +1,55 @@
+✔ unopened batch resumes with the same identity after the native browser connection is restored (6.8779ms)
+✔ cloud media catalogue consumes all pages, identifies unresolved active references and refuses repeated cursors (1.1147ms)
+✔ edited comment versions survive reload, retain nine versions and isolate products, articles and cloud scopes (2.6582ms)
+✔ batch open freezes a library subset, deduplicates, retains failures and does not invoke a submission engine (102.0484ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (18.7812ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.9641ms)
+✔ later ordinary notes fall back to the original record publication state (3.0789ms)
+✔ record display uses the latest matching original row rather than insertion order (2.6532ms)
+✔ all original display aliases read the same original submission and timeline evidence (20.4356ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (2.3427ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.7174ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (3.6016ms)
+✖ saved queue cursor and explicit URL retain the exact frozen original alias route (98.5109ms)
+✔ automatic visit queue alignment resolves the original concrete alias to its merged destination (1.928ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (4.8616ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (3.8934ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1970.4111ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (34.11ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (18.4663ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (277.0111ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (36.4122ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (9.7704ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (17.1079ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (227.6499ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (9.0395ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2466.6785
+
+✖ failing tests:
+
+test at tests\executor-original-library-records.test.mjs:46:1
+✖ saved queue cursor and explicit URL retain the exact frozen original alias route (98.5109ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'tipseason.com/submit'
+  - 'tipseason.com'
+                  ^
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-library-records.test.mjs:47:1051)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'tipseason.com/submit',
+    expected: 'tipseason.com',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

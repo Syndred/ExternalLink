@@ -1,0 +1,33 @@
+✔ unopened batch resumes with the same identity after the native browser connection is restored (5.8097ms)
+✔ cloud media catalogue consumes all pages, identifies unresolved active references and refuses repeated cursors (1.1015ms)
+✔ edited comment versions survive reload, retain nine versions and isolate products, articles and cloud scopes (2.8899ms)
+✔ batch open freezes a library subset, deduplicates, retains failures and does not invoke a submission engine (111.4466ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (28.1632ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (3.5231ms)
+✔ later ordinary notes fall back to the original record publication state (3.4154ms)
+✔ record display uses the latest matching original row rather than insertion order (2.0813ms)
+✔ all original display aliases read the same original submission and timeline evidence (17.3406ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (1.6061ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.5037ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (2.7639ms)
+✔ saved queue cursor and explicit URL retain the exact frozen original alias route (93.2905ms)
+✔ automatic visit queue alignment resolves the original concrete alias within the complete original source range (23.5351ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (5.0338ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (3.6729ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1963.0852ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (30.9164ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (18.9653ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (301.7299ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (36.9021ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (8.6389ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (23.8426ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (253.9897ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (9.6179ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2490.6017

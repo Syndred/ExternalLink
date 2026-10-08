@@ -1,0 +1,15 @@
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (31.35ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (18.2588ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (252.0685ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (37.0758ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (13.6036ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (148.8579ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (2330.0704ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3144.0146

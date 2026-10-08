@@ -1,0 +1,489 @@
+{
+  "date": "2026-10-08",
+  "kind": "complete_original_navigation_range_pending_local_browsing_and_original_summary_verification",
+  "initialFeatureCommit": "ccee7e6",
+  "summaryCorrectionCommit": "d374f13634577a04dd271d7331192713c3beb5cc",
+  "originalReference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "pulledLatestCodeBeforeCommits": true,
+  "migrationComplete": false,
+  "fixes": [
+    "Navigation merges compiled original URLs with user URLs and the table; complete group order and original cursor are preserved.",
+    "Navigation and quick-open read scoped locally saved pending application data; remote documents are not rewritten.",
+    "Current executor submission checks remain separate from browsing; gated jobs have plain Chinese explanations.",
+    "Getter restores original summary profileIds/profileTotal/profiles; native next/previous explicitly request compact lists. Current destination full config and the legacy full advance response remain available."
+  ],
+  "initialFixtureCorrections": [
+    "First pending-target tests used an unsupported urlList settings operation; corrected to the real create operation before the actual before-fix failures were recorded.",
+    "The native fixture initially reused the prior category scope when asking for an unscoped result; corrected to reset category/group explicitly.",
+    "Early tests assumed merged alias keys and table-only navigation counts; replaced with independent frozen original get/advance comparisons.",
+    "New mediaDisabled config is a known added field; all original config keys and values are compared and the added field is separately declared."
+  ],
+  "actualFixture": {
+    "ok": true,
+    "kind": "actual_services_original_navigation_and_pending_quick_open_fixture",
+    "completeOriginalRangeBothServices": true,
+    "originalDestinations": 188,
+    "scopedCategoryBothServices": true,
+    "actualUiNextAndPrevious": true,
+    "actualUiPendingBlacklistExplanation": true,
+    "pendingNewTargetVisible": true,
+    "actualChromeOpenedPendingTarget": true,
+    "ownedTargetGetRequests": 1,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "originalFixedBatchUnchanged": true,
+    "registeredTasks": 0,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "repositoryTests": {
+    "first": 935,
+    "final": 936,
+    "pass": 936,
+    "fail": 0,
+    "skipped": 0,
+    "newTestsSince929": 7
+  },
+  "navigationAudit": {
+    "sources": 6,
+    "unscopedSelectionCases": 12,
+    "comparisons": 6753400,
+    "mismatchCount": 0,
+    "allOriginalJobAndConfigKeysCompared": true,
+    "additionalConfigFieldAllowance": [
+      "mediaDisabled"
+    ],
+    "groupFields": [
+      "id",
+      "key",
+      "destinationKey",
+      "url",
+      "domain",
+      "platformType",
+      "source",
+      "note",
+      "quality",
+      "status",
+      "index"
+    ],
+    "metadataFields": [
+      "gatedByBlacklist",
+      "gatedByDomainAge",
+      "gatedByQuality",
+      "fromTable",
+      "fromPlugin",
+      "beforeFilter",
+      "excluded",
+      "total",
+      "destinationTotal",
+      "category",
+      "group",
+      "selectedProfileTotal",
+      "successfulSkipped"
+    ],
+    "reports": [
+      {
+        "scopeCases": 2,
+        "comparisons": 1179486,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 8,
+            "originalGroups": 3009,
+            "nativeGroups": 3009,
+            "originalJobs": 23845,
+            "currentEligible": 23402,
+            "comparisons": 843842,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 23845
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 3,
+            "originalGroups": 2975,
+            "nativeGroups": 2975,
+            "originalJobs": 8909,
+            "currentEligible": 8741,
+            "comparisons": 335644,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 8909
+          }
+        ]
+      },
+      {
+        "scopeCases": 2,
+        "comparisons": 870984,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 7,
+            "originalGroups": 2989,
+            "nativeGroups": 2989,
+            "originalJobs": 20741,
+            "currentEligible": 20729,
+            "comparisons": 738086,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 20741
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 1,
+            "originalGroups": 2953,
+            "nativeGroups": 2953,
+            "originalJobs": 2953,
+            "currentEligible": 2949,
+            "comparisons": 132898,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 2953
+          }
+        ]
+      },
+      {
+        "scopeCases": 2,
+        "comparisons": 1164472,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 8,
+            "originalGroups": 2971,
+            "nativeGroups": 2971,
+            "originalJobs": 23542,
+            "currentEligible": 23398,
+            "comparisons": 833122,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 23542
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 3,
+            "originalGroups": 2937,
+            "nativeGroups": 2937,
+            "originalJobs": 8795,
+            "currentEligible": 8740,
+            "comparisons": 331350,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 8795
+          }
+        ]
+      },
+      {
+        "scopeCases": 2,
+        "comparisons": 1179486,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 8,
+            "originalGroups": 3009,
+            "nativeGroups": 3009,
+            "originalJobs": 23845,
+            "currentEligible": 23402,
+            "comparisons": 843842,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 23845
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 3,
+            "originalGroups": 2975,
+            "nativeGroups": 2975,
+            "originalJobs": 8909,
+            "currentEligible": 8741,
+            "comparisons": 335644,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 8909
+          }
+        ]
+      },
+      {
+        "scopeCases": 2,
+        "comparisons": 1179486,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 8,
+            "originalGroups": 3009,
+            "nativeGroups": 3009,
+            "originalJobs": 23845,
+            "currentEligible": 23402,
+            "comparisons": 843842,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 23845
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 3,
+            "originalGroups": 2975,
+            "nativeGroups": 2975,
+            "originalJobs": 8909,
+            "currentEligible": 8741,
+            "comparisons": 335644,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 8909
+          }
+        ]
+      },
+      {
+        "scopeCases": 2,
+        "comparisons": 1179486,
+        "mismatchCount": 0,
+        "sourceUnchanged": true,
+        "selections": [
+          {
+            "selection": "all_configured_products",
+            "profiles": 8,
+            "originalGroups": 3009,
+            "nativeGroups": 3009,
+            "originalJobs": 23845,
+            "currentEligible": 23402,
+            "comparisons": 843842,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 23845
+          },
+          {
+            "selection": "original_selected_products",
+            "profiles": 3,
+            "originalGroups": 2975,
+            "nativeGroups": 2975,
+            "originalJobs": 8909,
+            "currentEligible": 8741,
+            "comparisons": 335644,
+            "mismatches": [],
+            "metadataDifferences": [],
+            "additionalMediaDisabledConfigurations": 8909
+          }
+        ]
+      }
+    ],
+    "originalLocalStateAndBackupBytesUnchanged": true,
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "limitations": [
+      "This audit covers default all-configured and originally selected product ranges. It does not establish every navigation exception, every original function, or latest original browser/other-device history.",
+      "Current submission eligibility is an added view computed from existing executor guards and is not normalized into original metadata parity.",
+      "The separate previous batch audit covered 156 scoped task projections; it must not be presented as 156 navigation configurations audited here."
+    ]
+  },
+  "summaryResponseSize": {
+    "beforeRawGroupsOnly": {
+      "ok": true,
+      "kind": "original_cached_navigation_response_size_readonly",
+      "cachedDocuments": 19,
+      "groups": 2975,
+      "jobs": 8909,
+      "rawGroupsJsonBytes": 325937318,
+      "originalGetSummaryJsonBytes": 2852744,
+      "nativeGetCurrentlyReturnsRawGroups": true,
+      "originalGetSummaryFieldsMissingInCurrentAdapter": [
+        "profileIds",
+        "profileTotal",
+        "profiles"
+      ],
+      "productionWrites": 0,
+      "realModels": 0,
+      "realSubmissions": 0
+    },
+    "afterFullAdapterResponse": {
+      "ok": true,
+      "kind": "original_cached_navigation_summary_adapter_readonly",
+      "cachedDocuments": 19,
+      "groups": 2975,
+      "jobs": 8909,
+      "getResponseJsonBytes": 8620534,
+      "compactAdvanceResponseJsonBytes": 8618734,
+      "originalSummaryProfileFieldsRestored": true,
+      "currentDestinationConfigurationsRetained": true,
+      "globalConfigurationsNotRepeated": true,
+      "originalLocalStateUnchanged": true,
+      "productionWrites": 0,
+      "realModels": 0,
+      "realSubmissions": 0
+    },
+    "measurement": "Read-only original cached 19-document snapshot; isolated in-memory adapter and no original navigation cursor write. Before number measures raw groups only; after number measures the full compact response.",
+    "initialMigrationMistake": "First navigation release returned full group configs from the getter, duplicating embedded media and omitting original summary profile fields. Detected on original-sized data and corrected in the final feature before declaring the checkpoint complete."
+  },
+  "originalBothServices": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "cloudReadback": {
+    "ok": true,
+    "kind": "manual_confirmation_deployment_after_readonly",
+    "currentDeviceAllCloudDocumentsAndInventoryUnchanged": true,
+    "documents": 19,
+    "taskCount": 778,
+    "authenticatedReceiptRouteMissingTaskRejected": 403,
+    "liveManualConfirmationPerformed": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "serviceReloadedWithProcessPauseAndDiskGuards": true,
+  "workerChangedOrDeployed": false,
+  "originalChromeLaunched": false,
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "remaining": [
+    "latest original browser data and previous favorites",
+    "complete old history and other devices",
+    "all original execution and special publishing branches",
+    "remaining settings and dynamic controls and media branches",
+    "built-in route visit auto-fill call path and remaining navigation failure and recovery branches"
+  ],
+  "outputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-before-2026-10-08.txt",
+      "capturedOutputSha256": "80a4a3ce4b5be7837292557206cd847ce97ce5266d7191d7f3191c06f7fe3c34",
+      "gitLfBlobSha256": "41cd9618a7b424cbcc6f93f0a7330003d6de607178db0fc577e4bbf95725d25b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-before-corrected-fixture-2026-10-08.txt",
+      "capturedOutputSha256": "4772c29861b1431b7f6b5ad7949444fbbe742b508bb6c521e262d65f81b4a0b5",
+      "gitLfBlobSha256": "b5ed5b2ffa68462f5b06aa751fda225989de16f2f9babda3134a303f2017bf07"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-after-first-2026-10-08.txt",
+      "capturedOutputSha256": "8812fa7f2d66922615297a74e78146e55567d8145a7f90c29997296fa300605a",
+      "gitLfBlobSha256": "83d4f0c2fe7ec578de6b0563ca108347a9ee99e2dd09e1d15109d5021b68fc7b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-after-second-2026-10-08.txt",
+      "capturedOutputSha256": "4da88b4dcbc6b63d772d98446cb10538ae7a052894b9bdbf5d48a8e63280cf80",
+      "gitLfBlobSha256": "1cfe3bf242d1a560d70e2e536727ad8b0747fa436c4842558798ad848f94f62c"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-after-third-2026-10-08.txt",
+      "capturedOutputSha256": "5ab2e4cad009961da24fe88abf100ad5a17d9c91581ee37a0604a9f79d5be3c8",
+      "gitLfBlobSha256": "5bdb97ce9179f9330b4d953b88f037f84c55dba179398ff90e890107b2ddd9e9"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-native-first-2026-10-08.txt",
+      "capturedOutputSha256": "f5926d7a21a7e834aa82d1d52d64a601d9f3d5926912db799de65f5a622b08e5",
+      "gitLfBlobSha256": "cd8a6718378fb7e00b1696ae85e32593c48c126d6a376f1f9569b88a86a99a29"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-native-second-2026-10-08.txt",
+      "capturedOutputSha256": "0a261835c7a06608c77d26e3042cd26fc40af4694b27441fd729ccb2c06bbfd2",
+      "gitLfBlobSha256": "dfb4a5a4096a377ab3dc8185732f0cf8d25e04827b5e77386bba9c2971e31fc7"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-queue-current-first-2026-10-08.txt",
+      "capturedOutputSha256": "d2432077b9dfb96ed54a74f4b6a4751e4a9fa14b0b2920c5645588029efb02dc",
+      "gitLfBlobSha256": "82a396abfc809b0657ce458ae57ccb138fa04a63eccf8d3e44f0d839bd7ea61a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-repository-first-2026-10-08.txt",
+      "capturedOutputSha256": "6c70b2433ea4d275d2438f7839c16335730b86d7209bd8d256fa5aafe08d9bcc",
+      "gitLfBlobSha256": "04921c9df74347fd31bd8266d089b1efea19f857a9813059515aba6b761c13d2"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-native-before-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfBlobSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-service-reload-2026-10-08.txt",
+      "capturedOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-native-after-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfBlobSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-cloud-after-2026-10-08.txt",
+      "capturedOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitLfBlobSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-response-size-2026-10-08.txt",
+      "capturedOutputSha256": "1fa4fbdcd9967a6411d323664501990e30c7933e850fab2bea89a86342f46939",
+      "gitLfBlobSha256": "762f4df992750b16270ea52ad9cedf4c2981e93ccd23d7e0620fd8abefbab6a4"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-response-after-2026-10-08.txt",
+      "capturedOutputSha256": "66bc42bb659c181114eef67b6b51fe0731a06dd380a1a0479d81cab9cef91faf",
+      "gitLfBlobSha256": "c40fe362d007e55d4a66ee2ba9dc919ec2b10162ab11dd8395233ab2f0adb4f2"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-summary-focused-first-2026-10-08.txt",
+      "capturedOutputSha256": "5a43faea9b822497f48a79843b393c75aed371af40e63295b5852137d500b728",
+      "gitLfBlobSha256": "72dbcb112faf67fda5002abe234ff5cb64a20b4aa5132c3f74f4fd6053981fb4"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-repository-final-2026-10-08.txt",
+      "capturedOutputSha256": "5c8e3b6dfca81c5f461057438dc0aeebd516de5e7ea0d3661ee6d4bc1b647f2d",
+      "gitLfBlobSha256": "c41d82bf0fcb31d2cdbd14603bccf04ed98723dc81bf7e0f426215f02bfda241"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-summary-service-reload-2026-10-08.txt",
+      "capturedOutputSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-summary-native-after-2026-10-08.txt",
+      "capturedOutputSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfBlobSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-navigation-queue-2026-10-08/original-navigation-summary-cloud-after-2026-10-08.txt",
+      "capturedOutputSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitLfBlobSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486"
+    }
+  ]
+}

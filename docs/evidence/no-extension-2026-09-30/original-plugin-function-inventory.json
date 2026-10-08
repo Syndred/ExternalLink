@@ -2968,5 +2968,30 @@
     "realSubmissions": 0,
     "migrationComplete": false,
     "evidence": "original-navigation-queue-2026-10-08.json"
+  },
+  "originalCompiledAutoVisitAndLocalBrowsingCheckpoint": {
+    "autoVisitFeatureCommit": "827a199560a527a029b05127388d21c201cf575c",
+    "localBrowsingFeatureCommit": "e7a617a009922042c5183af75d5b8f00eea942a4",
+    "compiledRoutes": 185,
+    "sources": 6,
+    "productScopeCases": 47,
+    "visitUrlCases": 17390,
+    "mismatchCount": 0,
+    "additionalHostReceiptExclusionCases": 42,
+    "actualNativeBrowserFourFieldsAndFrozenTaskRecovery": true,
+    "actualOfflineQueueBothServicesUiAndPendingTargetOpen": true,
+    "freshCloudAndScopedLocalBrowseFallback": true,
+    "cloudProvenanceAndConnectionGuards": true,
+    "generalBrowserRegressionAddedToRepositorySuite": true,
+    "repositoryTestsPassed": 948,
+    "addedSince936": 12,
+    "originalServicesUpdatedAndReadOnlyChecked": true,
+    "cloudDocuments": 19,
+    "currentDeviceTaskInventory": 778,
+    "businessUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "migrationComplete": false,
+    "evidence": "original-auto-visit-range-2026-10-08.json"
   }
 }

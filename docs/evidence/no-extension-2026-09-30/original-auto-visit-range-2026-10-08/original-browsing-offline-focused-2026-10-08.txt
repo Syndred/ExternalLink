@@ -1,0 +1,45 @@
+✔ offline original navigation and advances use saved local data and locally saved new targets without remote writes (121.3923ms)
+✖ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (9.7515ms)
+✔ browsing cannot fall back across workspaces or a connection change and cannot create a job without a saved snapshot (7.0245ms)
+✔ online navigation uses fresh remote data and persists it for the next offline browse without invoking registration (22.8635ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (46.7436ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (23.1619ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (290.9558ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (38.8916ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (12.9745ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (141.7556ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (2399.6768ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (24.8483ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (247.3677ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (12.043ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3303.2709
+
+✖ failing tests:
+
+test at tests\executor-original-browsing-offline.test.mjs:23:1
+✖ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (9.7515ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   'https://first.fixture.invalid/form'
+  - ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:29:53)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'https://first.fixture.invalid/form' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

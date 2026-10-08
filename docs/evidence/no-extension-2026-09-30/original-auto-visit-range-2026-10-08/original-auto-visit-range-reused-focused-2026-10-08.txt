@@ -1,0 +1,25 @@
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (17.5397ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (5.1628ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (2.1414ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (7.3006ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (1.4202ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (14.1711ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (1.4565ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (56.644ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (2.075ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (45.493ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (3.9862ms)
+✔ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (1187.4077ms)
+✔ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (14.3922ms)
+✔ one scan reuses its immutable candidate snapshot and the next scan reads new candidates and gates (154.5715ms)
+✔ original visit exclusions still apply to built-in URLs and current host receipts and DR DA gates also stop them (54.7022ms)
+✔ the original request keeps active-tab profile URL parked-task payment and existing-product guards before calling fill (86.0903ms)
+✔ native compiled auto-visit fills actual browser fields without changing the library and recovers the same task after a lost reply (2284.3239ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4105.378

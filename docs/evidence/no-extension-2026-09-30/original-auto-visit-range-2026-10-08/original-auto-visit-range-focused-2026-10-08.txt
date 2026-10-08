@@ -1,0 +1,23 @@
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (20.5374ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (4.3341ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (1.9606ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (6.7278ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (1.739ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (12.7685ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (1.6236ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (48.1177ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (1.931ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (45.3558ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (3.6592ms)
+✔ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (1087.6366ms)
+✔ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (10.9001ms)
+✔ original visit exclusions still apply to built-in URLs and current host receipts and DR DA gates also stop them (53.8269ms)
+✔ the original request keeps active-tab profile URL parked-task payment and existing-product guards before calling fill (79.4093ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1545.4293

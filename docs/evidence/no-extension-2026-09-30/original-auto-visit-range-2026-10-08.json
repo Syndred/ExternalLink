@@ -1,0 +1,994 @@
+{
+  "date": "2026-10-08",
+  "kind": "original_compiled_auto_visit_matching_and_local_browsing_fidelity",
+  "originalReference": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "autoVisitFeatureCommit": "827a199560a527a029b05127388d21c201cf575c",
+  "localBrowsingFeatureCommit": "e7a617a009922042c5183af75d5b8f00eea942a4",
+  "pulledLatestBeforeCommits": true,
+  "migrationComplete": false,
+  "fixes": [
+    "Use the frozen original complete candidate order for compiled URLs and later form paths, then retain current executor gates.",
+    "Reuse immutable candidates within one browser scan; actual filling reads fresh cloud data and creates a new lookup.",
+    "Keep original navigation and batch opening available from scoped saved local data when cloud reads fail; display a Chinese local-data message.",
+    "Reject connection changes and malformed or mismatched cloud provenance before replacing local browsing data."
+  ],
+  "originalRequestReference": {
+    "actualFrozenFunctions": [
+      "loadPendingSubmissionTasks",
+      "handleRequestAutoFill",
+      "isSidepanelSender",
+      "isParkedUnattendedTarget"
+    ],
+    "fillCallbackRecordedOnly": true,
+    "notOriginalBrowserAcceptance": true,
+    "nativeBrowserFieldsVerifiedSeparately": true
+  },
+  "compiledBrowserFixture": {
+    "ok": true,
+    "kind": "actual_native_compiled_auto_visit_with_owned_browser_responses",
+    "ordinaryProviderUrlsInterceptedByFixture": true,
+    "noCompiledUrlAddedToTableOrUserList": true,
+    "actualFourFieldsReadBack": true,
+    "originalDestinationAndQueuePosition": true,
+    "blacklistDrDaDeletedCurrentPathAndHostReceiptGates": true,
+    "remoteLoginTaskPreserved": true,
+    "lostReplyAndSqliteRestart": true,
+    "originalTaskIdProfileAndRevisionRetained": true,
+    "duplicateRegistrationPrevented": true,
+    "favoritesAndPausedFixedBatchUnchanged": true,
+    "fixtureGets": 4,
+    "registrations": 3,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "generalBrowserRegression": {
+    "ok": true,
+    "kind": "isolated_original_auto_visit_browser",
+    "alreadyConnectedPreferenceChange": true,
+    "unregisteredLibraryTarget": true,
+    "liveLibraryAddition": true,
+    "dynamicFormMount": true,
+    "iframePrepared": true,
+    "differentProductGuard": true,
+    "articleExcluded": true,
+    "unknownAttemptPreserved": true,
+    "lostRegistrationReplyAndSqliteRestart": true,
+    "originalTaskAndProfileRetained": true,
+    "originalQueuePosition": true,
+    "cancelledOriginalPageResumesOnReenable": true,
+    "stageUrlKeepsLibraryDestination": true,
+    "remoteLoginGatePreserved": true,
+    "boundTaskSameHostUnknownPreserved": true,
+    "disabledDuringLeaseStopsFill": true,
+    "scopeChangeAndClosedPanelStopFill": true,
+    "posts": 0,
+    "externalRequests": 0,
+    "fixedBatchPaused": true
+  },
+  "offlineServicesAndUiFixture": {
+    "ok": true,
+    "kind": "actual_services_original_navigation_and_pending_quick_open_fixture",
+    "completeOriginalRangeBothServices": true,
+    "originalDestinations": 188,
+    "scopedCategoryBothServices": true,
+    "actualUiNextAndPrevious": true,
+    "actualUiPendingBlacklistExplanation": true,
+    "pendingNewTargetVisible": true,
+    "actualChromeOpenedPendingTarget": true,
+    "offlineQueueAndAdvanceBothServices": true,
+    "actualUiOfflineChineseExplanation": true,
+    "offlineChromeOpenedPendingTarget": true,
+    "ownedTargetGetRequests": 1,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "originalFixedBatchUnchanged": true,
+    "registeredTasks": 0,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "repositoryTests": {
+    "beforeScanReuse": 941,
+    "afterScanReuse": 942,
+    "afterGeneralBrowserRegression": 943,
+    "offlineFirstFullPass": 943,
+    "offlineFirstFullFail": 4,
+    "final": 948,
+    "pass": 948,
+    "fail": 0,
+    "skipped": 0,
+    "addedSince936": 12
+  },
+  "readonlyCompiledScopeAudit": {
+    "ok": true,
+    "kind": "actual_current_and_original_backup_compiled_auto_visit_range_readonly",
+    "reports": [
+      {
+        "source": "current_authenticated_cloud",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "compiledRoutes": 185,
+        "cases": 2960,
+        "mismatchCount": 0,
+        "currentGateExclusions": 8,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "dd532702861a8e441f34e662e980ce25c6d720db47a88126b85d2eba7295458b",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 7,
+        "compiledRoutes": 185,
+        "cases": 2590,
+        "mismatchCount": 0,
+        "currentGateExclusions": 4,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 368,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 370,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 370,
+            "originalExcluded": 0,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 368,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "0bd9b96df3f70f34db6ca33fb94b4f1c725f2a5dc7eb512796bde3dfa7fce417",
+        "scopeVerification": "workspace_only",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "compiledRoutes": 185,
+        "cases": 2960,
+        "mismatchCount": 0,
+        "currentGateExclusions": 6,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 356,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 358,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 360,
+            "originalExcluded": 10,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 360,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "cd3939017c1c2c1774dce7fab543e8dc408e2a0891064587f9effd2ed542b54d",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "compiledRoutes": 185,
+        "cases": 2960,
+        "mismatchCount": 0,
+        "currentGateExclusions": 8,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "67f8827d2d0f67920e3df91e6fa53c3a7ba203630ccacbc54005171442f8de1c",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "compiledRoutes": 185,
+        "cases": 2960,
+        "mismatchCount": 0,
+        "currentGateExclusions": 8,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      },
+      {
+        "sourceSha256": "9764aa85594520477081c01a14acda9f5691dadcc7269a648e6dd814b5092212",
+        "scopeVerification": "full",
+        "sourceUnchanged": true,
+        "profiles": 8,
+        "compiledRoutes": 185,
+        "cases": 2960,
+        "mismatchCount": 0,
+        "currentGateExclusions": 8,
+        "reports": [
+          {
+            "profileSha256": "8da80612fd0b7464ae917aa1462c0fe05d2df348c0b8350cda9371083799df70",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "c1fefbd34e425d92717b3427a551f44811869665e71b7e6d6292c11062dd84bd",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 4,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 4
+            },
+            "nativeMatched": 348,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "6a4903db99c524224cb942cb8f12d14e4e0aee0a697807864fbcdf79e596a856",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "8ccacd1e9d31cdbdf3345b0acc617e25af683258fb2e9a400171b37857450f80",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "437201b2dbe5f348ec9a0a0ed9dd6e2712d4bc42daebb41eebebc186835e635b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "ce49a6edc7ee905c6210de98976648c6c08e8d632f38ec672879e3747cb91eff",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "fd74d044c7fd8ed7e1077944bdd7b8ee1162ebbbc5d393c2a5eaa7287b11a67b",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 2,
+            "currentGateReasons": {
+              "该产品在此站已有成功提交记录": 2
+            },
+            "nativeMatched": 350,
+            "mismatchCount": 0,
+            "mismatches": []
+          },
+          {
+            "profileSha256": "d5842ccefdc1867363edd824d671f3891fd4bb887e1b55e9052db5ea0472fdcf",
+            "cases": 370,
+            "originalMatched": 352,
+            "originalExcluded": 18,
+            "currentGateExclusions": 0,
+            "currentGateReasons": {},
+            "nativeMatched": 352,
+            "mismatchCount": 0,
+            "mismatches": []
+          }
+        ]
+      }
+    ],
+    "totalCases": 17390,
+    "profiles": 47,
+    "mismatchCount": 0,
+    "currentGateExclusions": 42,
+    "currentExecutorGatesReportedSeparately": true,
+    "allCloudDocumentHashesAndRevisionsUnchanged": true,
+    "originalLocalStateAndBackupBytesUnchanged": true,
+    "originalChromeLaunched": false,
+    "productionWrites": 0,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "currentGateExclusionsAreCasesNotUniqueSites": true,
+  "earlyOutputsRetained": [
+    "Two pre-fix matching failures.",
+    "First read-only audit deliberately stopped to replace repeated candidate construction; no final result claimed.",
+    "General browser fixture checked prepared state too early after a fixed delay; changed to wait for actual terminal status.",
+    "Initial offline fixture used an absent Store.delete method, then corrected before four pre-fix failures were recorded.",
+    "Mock page lacked isClosed; corrected without reducing assertions.",
+    "Four old cloud mocks lacked revisions; made them valid cloud responses and added malformed/provenance rejection verification."
+  ],
+  "nativeBefore": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "nativeAfter": {
+    "ok": true,
+    "kind": "actual_original_native_state_readonly",
+    "results": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "paused": true,
+        "busy": false,
+        "pendingQueues": 0,
+        "products": 9,
+        "library": 2948,
+        "combinations": 897
+      }
+    ],
+    "originalBusinessMatchesHistoricBaseline": true,
+    "credentialsDraftHistoryAndPendingQueuesUnchanged": true,
+    "fixedBatch": {
+      "status": "paused",
+      "cursor": 13,
+      "count": 30,
+      "cursorIsReceiptCount": false
+    },
+    "allCloudDocumentHashesRechecked": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "cloudAfter": {
+    "ok": true,
+    "kind": "manual_confirmation_deployment_after_readonly",
+    "currentDeviceAllCloudDocumentsAndInventoryUnchanged": true,
+    "documents": 19,
+    "taskCount": 778,
+    "authenticatedReceiptRouteMissingTaskRejected": 403,
+    "liveManualConfirmationPerformed": false,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "nativeServicesUpdatedTo": "e7a617a009922042c5183af75d5b8f00eea942a4",
+  "workerChangedOrDeployed": false,
+  "originalChromeLaunched": false,
+  "productionBusinessWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "unproven": [
+    "All remaining original execution and special-publishing branches.",
+    "Every original navigation exception, recovery and dynamic setting branch.",
+    "Latest original Chrome data and prior favorites.",
+    "Complete old history and other-device parity."
+  ],
+  "outputs": [
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-audit-2026-10-08.txt",
+      "bytes": 0,
+      "capturedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitLfSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-audit-reused-scan-2026-10-08.txt",
+      "bytes": 18264,
+      "capturedSha256": "fe83d6a78c68fb37ed5e1a1382dd4ac6dfed1acea262eb3b230a0e0758fe524a",
+      "gitLfSha256": "7daffb71503d05f6d4ab4ca34466c6443eeba8e88c7842fe811e9f3a1d20be93"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-before-2026-10-08.txt",
+      "bytes": 2770,
+      "capturedSha256": "7379446aa3f603471b46ed67a8378b3d22b16d2ce59049f249b32bc6641638c6",
+      "gitLfSha256": "2db06f6f0f0c24809a4e2a94626e4eba868cadfc4d60551f9c3137147866c728"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-browser-2026-10-08.txt",
+      "bytes": 630,
+      "capturedSha256": "872b2fb2a2571bcb3ca542efba73bfb860cd2c489e6c2421a1d7a362ba217f0c",
+      "gitLfSha256": "b166387b722aa275601960d436c99a8b4035c2178854228d1ae5219b4b027562"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-cloud-after-2026-10-08.txt",
+      "bytes": 309,
+      "capturedSha256": "b80e7b29171fdff8ed30ed8115b760db6cd4559724b18ddbd52e7b67b16e7c7b",
+      "gitLfSha256": "b4ee826967c100a4ed633ba8631cf06e5c93d7eb226dc04b6003e3d613f18486"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-complete-repository-final-2026-10-08.txt",
+      "bytes": 113814,
+      "capturedSha256": "58e809b2c6eb3c2d354d006ee32e7cc0fbdaae401bdd9a707dd79a7d98a5bfab",
+      "gitLfSha256": "d8028b54e0fa4d413efeffc9e0b01a62a57eaf9c6203f2c86df498d37c395344"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-existing-browser-2026-10-08.txt",
+      "bytes": 491,
+      "capturedSha256": "294b48691ce7885eadcae9b01a7dc821fd2cb4fffd9851d51de171e130337d75",
+      "gitLfSha256": "d6637e456f233bcccb9eb9bd518eb2eb0efcccd6f383ef70a197711534b1c7f4"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-existing-browser-final-2026-10-08.txt",
+      "bytes": 690,
+      "capturedSha256": "86046450522c892c7fac4cc73128c10a4cb49451b7e7573f7f6b2ae7371dbaeb",
+      "gitLfSha256": "b4052a36ffb5e3800a661cb15b2892c43b2e50a73ab76c11f3bca92d8da75e5a"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-final-focused-2026-10-08.txt",
+      "bytes": 2763,
+      "capturedSha256": "7f7c2f44f029ae68c8e8e79414b33b4bba5ed172479e9b5601508d0e75f30d06",
+      "gitLfSha256": "0db33937283795d5d8032ab3f059c01b023000306bbed841d112964a015fa05e"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-focused-2026-10-08.txt",
+      "bytes": 2185,
+      "capturedSha256": "89319b14436ad2a18bfa085af04e1dd2d76f07f38b7c25009976306718d65535",
+      "gitLfSha256": "09985cd825a7053b0f045ff0a40de1364d69e1ca6a1bdec006e534ba44aa2c36"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-native-after-2026-10-08.txt",
+      "bytes": 616,
+      "capturedSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-native-before-2026-10-08.txt",
+      "bytes": 616,
+      "capturedSha256": "3cff99ec7474f1018166771d8ca8f0c430c483fe4d97737ca6f3bd6a546d7593",
+      "gitLfSha256": "38c2b674cefd66c819808874d5e0ed98a15fd1c4c4b007dfd62c5393e5e7cf02"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-repository-final-2026-10-08.txt",
+      "bytes": 113547,
+      "capturedSha256": "f1ec2d30128888a9a1b00bab7685acbe7045225ff297be1651da57af35560517",
+      "gitLfSha256": "1074f56b3c85c945db8c9574c15c52556da4269c31bf9055fefc8ec2f1ee3902"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-reused-focused-2026-10-08.txt",
+      "bytes": 2448,
+      "capturedSha256": "c881e7af864fd05287a3ed4a79d35a0d7deda1bd61e84ec16bbc7ceb605ad2a7",
+      "gitLfSha256": "54ef1311866e106a8256474d8c25a49fddc6531cd23b322d5d77f66c72a888de"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-reused-repository-final-2026-10-08.txt",
+      "bytes": 113689,
+      "capturedSha256": "0d3154f5d2820dc01384b004133ac602848edf159504be7a8272a26ab80a0393",
+      "gitLfSha256": "3f7fce19c41cd52794b8d4a73c50115a762e7e7a46f2e1e9ec6cd8687bcbcd8f"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-auto-visit-range-services-updated-2026-10-08.txt",
+      "bytes": 453,
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-actual-ui-2026-10-08.txt",
+      "bytes": 675,
+      "capturedSha256": "6ee6c2c6fb06c05ff01e9ff28713ac89276775a3142405cb807452a71d87250f",
+      "gitLfSha256": "a2bd41db9bfc841cf8d2f9e6251b6afc7fcd4cfb7964f3050eab3d74069e8cda"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-before-2026-10-08.txt",
+      "bytes": 3882,
+      "capturedSha256": "1dbafd5ad1b52e2a5040a48e6a768b018c39fd5653b6b849a8149f0cc24ea7d3",
+      "gitLfSha256": "d2d2a09b6db6755e1785c2124eaa7d09f2b1237234abdffed0a4aa52db902ff8"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-before-corrected-fixture-2026-10-08.txt",
+      "bytes": 3810,
+      "capturedSha256": "e061f6c8f3da2bdd5a2045064bd1540d1f50d796a2072f55f9572da5ffa78e8d",
+      "gitLfSha256": "f8fa56f629cbf3b4f503fae15cef90716e6ae15beccdab5604c8865f6159e52f"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-complete-repository-final-2026-10-08.txt",
+      "bytes": 114517,
+      "capturedSha256": "8da24d0ddc8aefa3bc4084e82c4e23f5b199ee32dc4e35e1e9a484c171e01f68",
+      "gitLfSha256": "feaf6a3f7a56aef83827b8adeed0dafcc177ce98e30a7cba752ce147814c9cbe"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-fidelity-focused-2026-10-08.txt",
+      "bytes": 2690,
+      "capturedSha256": "9a8a6aa506725fd8ca1e9f71c3a2f94600c03ad35d1afdfa5ba364d72803cff9",
+      "gitLfSha256": "9e887c59e98c964134478b2ad989066687775162ddb40b6f8d99e6924b79baa2"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-final-focused-2026-10-08.txt",
+      "bytes": 1976,
+      "capturedSha256": "d389a8db581fa37b1855daaf0a428b5e92fc0887a7eb26ed13a65dc28c6229eb",
+      "gitLfSha256": "9b13ba34c53e59c071f85bc9870d1bd7c2af9f9897636fe5daded2b9a7f65899"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-focused-2026-10-08.txt",
+      "bytes": 2869,
+      "capturedSha256": "f0479a9c444c14dab32d99a0efaa5622ff3420ad118e74afb87c8c1b864a1794",
+      "gitLfSha256": "4363dd8b4ccc48c905bd1f1611fe5f5a433dbe382f94214f24f2200871e80124"
+    },
+    {
+      "file": "original-auto-visit-range-2026-10-08/original-browsing-offline-repository-final-2026-10-08.txt",
+      "bytes": 118667,
+      "capturedSha256": "b4fc243905cfc63e344b080b47a34123cf76f644a87cb40cb8022e3d3c3d1674",
+      "gitLfSha256": "b6aa6cc23958daea6ff69a674ec2759e088a2a8fa8bbc4aeaa6db020c2d9191c"
+    }
+  ]
+}

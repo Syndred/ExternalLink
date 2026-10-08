@@ -1,0 +1,30 @@
+✔ unopened batch resumes with the same identity after the native browser connection is restored (6.3239ms)
+✔ cloud media catalogue consumes all pages, identifies unresolved active references and refuses repeated cursors (1.0325ms)
+✔ edited comment versions survive reload, retain nine versions and isolate products, articles and cloud scopes (2.9118ms)
+✔ batch open freezes a library subset, deduplicates, retains failures and does not invoke a submission engine (113.5805ms)
+✔ offline original navigation and advances use saved local data and locally saved new targets without remote writes (106.5193ms)
+✔ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (6.8621ms)
+✔ browsing cannot fall back across workspaces or a connection change and cannot create a job without a saved snapshot (5.0999ms)
+✔ online navigation uses fresh remote data and persists it for the next offline browse without invoking registration (21.8614ms)
+✔ malformed cloud reads and mismatched workspace or device provenance cannot overwrite saved browsing data or its cursor (2.5178ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (17.9903ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.8545ms)
+✔ later ordinary notes fall back to the original record publication state (3.0249ms)
+✔ record display uses the latest matching original row rather than insertion order (2.4501ms)
+✔ all original display aliases read the same original submission and timeline evidence (16.1114ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (1.5679ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.4618ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (2.6779ms)
+✔ saved queue cursor and explicit URL retain the exact frozen original alias route (95.2081ms)
+✔ automatic visit queue alignment resolves the original concrete alias within the complete original source range (21.4471ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (6.4659ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (4.5405ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1983.676ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2485.0778

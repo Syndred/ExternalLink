@@ -1,0 +1,65 @@
+✖ offline original navigation and advances use saved local data and locally saved new targets without remote writes (45.5384ms)
+✖ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (5.1941ms)
+✖ browsing cannot fall back across workspaces or a connection change and cannot create a job without a saved snapshot (18.656ms)
+✖ online navigation uses fresh remote data and persists it for the next offline browse without invoking registration (15.5775ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 400.5862
+
+✖ failing tests:
+
+test at tests\executor-original-browsing-offline.test.mjs:13:1
+✖ offline original navigation and advances use saved local data and locally saved new targets without remote writes (45.5384ms)
+  Error: Fixture cloud offline
+      at Object.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:11:406)
+      at submissionQueue (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/submission-queue.mjs:16:64)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:16:115)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests\executor-original-browsing-offline.test.mjs:23:1
+✖ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (5.1941ms)
+  Error: Fixture cloud offline
+      at Object.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:11:406)
+      at quickOpenLibrary (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/quick-open.mjs:14:112)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:27:137)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests\executor-original-browsing-offline.test.mjs:33:1
+✖ browsing cannot fall back across workspaces or a connection change and cannot create a job without a saved snapshot (18.656ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:40:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-browsing-offline.test.mjs:46:1
+✖ online navigation uses fresh remote data and persists it for the next offline browse without invoking registration (15.5775ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'cloud'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browsing-offline.test.mjs:50:57)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'cloud',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,62 @@
+✖ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (15.6762ms)
+✖ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (13.2796ms)
+✔ original visit exclusions still apply to built-in URLs and current host receipts and DR DA gates also stop them (39.3432ms)
+✔ the original request keeps active-tab profile URL parked-task payment and existing-product guards before calling fill (77.5561ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 449.5384
+
+✖ failing tests:
+
+test at tests\executor-original-auto-visit-range.test.mjs:10:1
+✖ built-in visit matching follows the frozen original candidate order and destination identity on every original route and form-stage URL (15.6762ms)
+  AssertionError [ERR_ASSERTION]: http://aitoolslink.com/
+  + actual - expected
+  
+  + null
+  - {
+  -   destinationKey: 'aitoolslink.com',
+  -   key: 'aitoolslink.com',
+  -   profileId: 'p',
+  -   url: 'http://aitoolslink.com/'
+  - }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-auto-visit-range.test.mjs:15:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: { url: 'http://aitoolslink.com/', key: 'aitoolslink.com', destinationKey: 'aitoolslink.com', profileId: 'p' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-auto-visit-range.test.mjs:21:1
+✖ the frozen auto-visit request actually reaches fill-only on a built-in form and the native matcher retains the same original target (13.2796ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + null
+  - {
+  -   destinationKey: 'betalist.com',
+  -   key: 'betalist.com',
+  -   profileId: 'p',
+  -   url: 'http://betalist.com/'
+  - }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-auto-visit-range.test.mjs:24:135)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: { url: 'http://betalist.com/', key: 'betalist.com', destinationKey: 'betalist.com', profileId: 'p' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'preparing'
+- 'prepared'
+         ^
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/auto-visit.mjs:19:1026 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'preparing',
+  expected: 'prepared',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

@@ -14,7 +14,7 @@ import {pendingFillLearning} from './fill-learning.mjs';
 import {pendingMediaUploads} from './media-uploads.mjs';
 import {backupWorkspace} from './migration-backup.mjs';
 const sourceNames=new Set(['snapshot.json','recovered-documents.json','outbox.sqlite','before.sqlite','before-executor-activation.sqlite']);
-const rootFor=runtime=>runtime.backupRoot||join(homedir(),'.externallink-backups');
+const rootFor=runtime=>runtime.backupRoot||process.env.EXTERNALLINK_BACKUP_ROOT||join(homedir(),'.externallink-backups');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function hashFile(file){const hash=createHash('sha256');for await(const bytes of createReadStream(file))hash.update(bytes);return hash.digest('hex');}
 const sameScope=(runtime,scope)=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，恢复停止，原计划保留');};

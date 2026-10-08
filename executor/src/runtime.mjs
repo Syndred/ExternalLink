@@ -86,6 +86,7 @@ import {handleTaskPageMessage} from './task-page-controls.mjs';
 import {submissionQueue,removeFromSubmissionQueue} from './submission-queue.mjs';
 import {sidepanelOpened,sidepanelClosed,sidepanelDetect,sidepanelFill} from './single-page.mjs';
 import {localRecoverySources,previewLocalRecovery,recoverLocalDocuments} from './local-recovery.mjs';
+import {localRunHistorySources,previewLocalRunHistory} from './run-history-sources.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {captureFillLearning,flushFillLearning,pendingFillLearning} from './fill-learning.mjs';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
@@ -1378,6 +1379,8 @@ export class Runtime {
   async control(action, input) {
     if(['previewRunHistory','importRunHistory','runHistoryUploadStart','runHistoryUploadPart','runHistoryUploadComplete'].includes(action))return runHistory(this,action,input);
     if(['runExportSources','exportBatchReport','exportAutomationRun'].includes(action))return runExports(this,action,input);
+    if(action==='localRunHistorySources')return localRunHistorySources(this);
+    if(action==='previewLocalRunHistory')return previewLocalRunHistory(this,input);
     if(action==='localRecoverySources')return localRecoverySources(this);
     if(action==='previewLocalRecovery')return previewLocalRecovery(this,input);
     if(action==='submissionJournalRecoverLocal')return recoverLocalDocuments(this,input);

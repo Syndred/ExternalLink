@@ -26,7 +26,11 @@ function normalize(raw){
  return history;
 }
 
-function preparePreview(store,scope,input,verifiedFileSha256){
+export function inspectRunHistory(raw){
+ const history=normalize(raw);
+ return{originalBatchId:history.activeBatchRun?.runId||null,combinations:history.activeBatchRun?.tasks.length||0,runs:history.automationRunLedger?.order.length||0,events:Object.values(history.automationRunLedger?.runs||{}).reduce((sum,run)=>sum+run.events.length,0)};
+}
+export function prepareRunHistoryPreview(store,scope,input,verifiedFileSha256){
   const raw=JSON.parse(input.content.replace(/^\uFEFF/,''));if(raw.scope&&raw.scope!==scope)throw Error('记录来自其他工作区');
   const history=normalize(raw),sha256=verifiedFileSha256||digest(input.content),historyHash=digest(JSON.stringify(history)),previewId=digest(scope+'|'+historyHash),preview={id:previewId,scope,sha256,historyHash,history,name:String(input.name||'原执行历史.json').slice(0,200),at:new Date().toISOString()};
   const existing=store.get('originalRunHistory:'+previewId);store.set('runHistoryPreview:'+previewId,preview);
@@ -36,7 +40,7 @@ export function runHistory(runtime,action,input={}){
  const store=runtime.store,pair=store.get('pair');if(!pair?.endpoint)throw Error('请先连接原工作区');const scope=workbenchScope(pair);
  if(action==='previewRunHistory'){
   if(typeof input.content!=='string'||Buffer.byteLength(input.content)>8*1024*1024)throw Error('较大执行历史请使用分段文件恢复入口');
-  return preparePreview(store,scope,input);
+  return prepareRunHistoryPreview(store,scope,input);
  }
  if(action==='runHistoryUploadStart'){
   if(!/^[a-f0-9]{64}$/.test(input.sha256)||!Number.isSafeInteger(input.bytes)||input.bytes<1||input.bytes>maxFileBytes)throw Error('执行历史文件需为不超过256 MiB的JSON文件');
@@ -59,7 +63,7 @@ export function runHistory(runtime,action,input={}){
   }
   const parts=[];for(let index=0;index<upload.count;index++){const part=store.get('runHistoryPart:'+upload.id+':'+index);if(!part)throw Error('原历史分段未齐，请重新选择原文件继续');const bytes=Buffer.from(part.data,'base64');if(digest(bytes)!==part.sha256)throw Error('已保存原历史分段校验失败');parts.push(bytes);}
   const bytes=Buffer.concat(parts);if(bytes.length!==upload.bytes||digest(bytes)!==upload.sha256)throw Error('原执行历史完整文件校验失败');const content=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
-  return preparePreview(store,scope,{content,name:upload.name},upload.sha256);
+  return prepareRunHistoryPreview(store,scope,{content,name:upload.name},upload.sha256);
  }
  if(action!=='importRunHistory')throw Error('未知执行历史恢复操作');
  if(typeof input.previewId!=='string'||!/^[a-f0-9]{64}$/.test(input.previewId))throw Error('请先预览原执行历史');const preview=store.get('runHistoryPreview:'+input.previewId);

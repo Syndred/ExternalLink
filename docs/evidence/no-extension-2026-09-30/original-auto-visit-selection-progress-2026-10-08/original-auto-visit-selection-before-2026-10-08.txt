@@ -1,0 +1,35 @@
+✖ automatic visit keeps the original batch product selection, empty-selection fallback and stale selection handling (51.7866ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 348.0036
+
+✖ failing tests:
+
+test at tests\executor-original-auto-visit-range.test.mjs:30:1
+✖ automatic visit keeps the original batch product selection, empty-selection fallback and stale selection handling (51.7866ms)
+  AssertionError [ERR_ASSERTION]: {"activeSiteId":"p","selection":["q"]}
+  + actual - expected
+  
+  + {
+  +   destinationKey: 'betalist.com',
+  +   key: 'betalist.com',
+  +   profileId: 'p',
+  +   url: 'http://betalist.com/'
+  + }
+  - null
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-auto-visit-range.test.mjs:35:60)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { url: 'http://betalist.com/', key: 'betalist.com', destinationKey: 'betalist.com', profileId: 'p' },
+    expected: null,
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

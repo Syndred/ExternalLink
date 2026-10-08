@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-08",
+  "capturedAtUtc": "2026-10-08T01:01:21.662496+00:00",
+  "kind": "progress_checkpoint_before_unpublished_selection_fix",
+  "migrationComplete": false,
+  "pulledLatest": true,
+  "headBeforeProgressCommit": "59112a9f60c22225fc6841f796c3d650556fbbbf",
+  "originMainBeforeProgressCommit": "59112a9f60c22225fc6841f796c3d650556fbbbf",
+  "sourceChangesPublished": false,
+  "originalServicesReloadedThisCheckpoint": false,
+  "workerDeployedThisCheckpoint": false,
+  "originalChromeLaunched": false,
+  "realSubmissions": 0,
+  "productionBusinessWrites": 0,
+  "realModelCalls": 0,
+  "focusedTests": {
+    "tests": 22,
+    "pass": 22,
+    "fail": 0,
+    "skip": 0
+  },
+  "repositoryTests": {
+    "tests": 952,
+    "pass": 950,
+    "fail": 2,
+    "skip": 0,
+    "exitCode": 1,
+    "failures": [
+      {
+        "test": "tests/executor-auto-fill-messages.test.mjs",
+        "reason": "page.waitForFunction Timeout 30000ms; cause not resolved"
+      },
+      {
+        "test": "tests/executor-original-library-records.test.mjs",
+        "reason": "VM fixture missing visitSelectedProfileIds; ReferenceError"
+      }
+    ]
+  },
+  "runningAudit": {
+    "sessionId": 26428,
+    "terminal": false,
+    "completedSourcesAtCapture": [
+      {
+        "sourceNumber": 1,
+        "sourceCases": 5920,
+        "mismatchCount": 0
+      },
+      {
+        "sourceNumber": 2,
+        "sourceCases": 5180,
+        "mismatchCount": 0
+      }
+    ],
+    "completedSourceCases": 11100,
+    "notFinalResult": true
+  },
+  "unpublishedSourceHashes": [
+    {
+      "path": "executor/src/application-mutations.mjs",
+      "sha256": "f2d9d5897a34dd9bf1b619e748c3ef787c88cf51db0600a6a6ad00b08356ceec"
+    },
+    {
+      "path": "executor/src/browser-assistant.mjs",
+      "sha256": "70c3adc84b111e9f80190625a8023d7ca297cd24e044d73bca274b9d652366db"
+    },
+    {
+      "path": "executor/test/original-builtin-auto-visit.mjs",
+      "sha256": "1effc021f468b2946e51b5dd884de54cfcc00798e0567eb45ec445ed82df936d"
+    },
+    {
+      "path": "executor/test/original-navigation-queue.mjs",
+      "sha256": "75109682796bb14f85ac5d78e37251755a7c8e402743af94ea8682c04f1c4304"
+    },
+    {
+      "path": "executor/web/application.js",
+      "sha256": "b3e5651ffc82cac033a3e44162c985eb515255df9d125c091441f7989cf87632"
+    },
+    {
+      "path": "tests/executor-original-auto-visit-range.test.mjs",
+      "sha256": "5ec3ea720417b67d12cc1d0d92c5712ddb1a2c9e1df381d29b54a72a56a3ebb9"
+    },
+    {
+      "path": "tests/executor-original-navigation-queue.test.mjs",
+      "sha256": "59ee1a2e5e5f10ef93739574c3cbda38ed7b3b8e03b46f12543e01fbd1f47ebd"
+    },
+    {
+      "path": "tests/executor-original-visit-selection.test.mjs",
+      "sha256": "520ca3ecdaa94b396e787bef41fab2aedf221a3485df94ee1a035661b2f1dd56"
+    },
+    {
+      "path": "tests/helpers/original-auto-visit-projection.mjs",
+      "sha256": "3106bfbf80c52f473ba0c244e0c1dd9c618dc04dabc3bfddd4e81cc30734771b"
+    }
+  ],
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-audit-2026-10-08.txt",
+      "bytes": 2936,
+      "capturedSha256": "2673bc2c7f37bef8eebda22a628cfd3573e154db8120ca238ce7ed160d1960cd",
+      "gitLfSha256": "9f7f009e02a487ee2bf4a3a4dcd7d06b9b6cc65c027c282d265cc6236f148652",
+      "partialRunningSnapshot": true
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-before-2026-10-08.txt",
+      "bytes": 1282,
+      "capturedSha256": "da52e1790d741d5d7379705b04206f8900f5c25af0fb96341ed306e7a6c9b7f6",
+      "gitLfSha256": "eadda03c684700d68fb34f17be39086963a8dddcb1b6f1f922360260f254561e",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-browser-2026-10-08.txt",
+      "bytes": 783,
+      "capturedSha256": "41eadb49b89e167f2499a7a0de138262e64c519cbb5222244ab67818b93fdf66",
+      "gitLfSha256": "5d353ba31b9db8deb6fc8ed51b99e045c35346fda7e07167cb23bcf96b1eb35d",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-browser-complete-2026-10-08.txt",
+      "bytes": 891,
+      "capturedSha256": "fcf92c5e8e15b3d2c5d8354635f66f8f308ceee9cde15d61e6a778318b4c4018",
+      "gitLfSha256": "8d19bfa9f3e40c92225a091d93de7d18bd364b2c3a50200b6981d3cb5b755532",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-browser-final-2026-10-08.txt",
+      "bytes": 457,
+      "capturedSha256": "37131b9a2f45b43873945ad73e8bfcdfeb7bea1f09249165fbd8850f3bfdfb46",
+      "gitLfSha256": "f1ddd4d1800725be92241b9054fb23d0ec65e07de3eebb56fe1d72cc094de6dd",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-complete-focused-2026-10-08.txt",
+      "bytes": 3118,
+      "capturedSha256": "62b6a7ccadfda02a14243075fa6c36306227e335ba4d066d4afd9244ef232119",
+      "gitLfSha256": "7fd175412096f6bc802f2c67e07810c4e613e371073d81ae8f9c1c6f7539e9db",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-final-focused-2026-10-08.txt",
+      "bytes": 3118,
+      "capturedSha256": "77139b23e45663b7d743d903eb1c7d9ca7959383f5812eefc2edf4a911266b91",
+      "gitLfSha256": "7609bef538dfd6f664b534858f1d6ad512670c35dc5fa7f1894e69f591c390f2",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-focused-2026-10-08.txt",
+      "bytes": 2734,
+      "capturedSha256": "761ad153098b4a17ab386fe560288e9128e71b7b7832f326a09508008060b3bd",
+      "gitLfSha256": "af66efa378140ad7eac0a388b119856582135d4fc727a248295328c2ca199ef1",
+      "partialRunningSnapshot": false
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-auto-visit-selection-progress-2026-10-08/original-auto-visit-selection-repository-final-2026-10-08.txt",
+      "bytes": 117910,
+      "capturedSha256": "e3ca288d063051c65c33097b8475117d60c7f1a37bd2b228e64a62868988ecac",
+      "gitLfSha256": "e37cd9456e00389fd0ffd05380d27f17c7beef75db6cb95e087cd8964d7cd3dc",
+      "partialRunningSnapshot": false
+    }
+  ],
+  "remaining": [
+    "all original execution and special publishing branches",
+    "navigation errors and recovery",
+    "settings and dynamic controls and media branches",
+    "latest original browser data",
+    "prior favorites",
+    "full history and other devices"
+  ],
+  "runtimeBaseline": "Previous published release e7a617a, last checkpoint 948 tests passing. Original production and cloud state were not reverified this checkpoint."
+}

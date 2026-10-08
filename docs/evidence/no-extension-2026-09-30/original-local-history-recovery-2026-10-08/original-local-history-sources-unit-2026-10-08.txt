@@ -1,0 +1,13 @@
+✔ scoped saved original history is discovered and imports exact original facts once without executable tasks (12.477ms)
+✔ discovery ignores unrelated workspaces and unscoped exports while reporting invalid scoped history (10.792ms)
+✔ a changed saved file cannot silently replace the chosen original history and refreshed choice uses its new hash (8.1842ms)
+✔ saved history selections cannot cross a workspace or escape the configured backup root (6.2107ms)
+✔ a saved original history larger than the small upload limit previews directly without replacing the existing file route (151.3893ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 256.4797

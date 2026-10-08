@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-08",
+  "kind": "unpublished_local_original_history_recovery_progress_checkpoint",
+  "pulledLatestBeforeProgressCommit": true,
+  "repositoryBaseCommit": "8fa18c30a8092da564fe62278fc0288d46d9dec8",
+  "runningNativeFeatureCommit": "292c2de1e957e922cb5d983c4ed287715c0ecd3c",
+  "sourcePublishedThisCheckpoint": false,
+  "nativeServicesReloadedThisCheckpoint": false,
+  "workerDeployedThisCheckpoint": false,
+  "migrationComplete": false,
+  "repositoryTests": {
+    "tests": 960,
+    "pass": 960,
+    "fail": 0,
+    "skip": 0
+  },
+  "focusedTests": {
+    "tests": 20,
+    "pass": 20,
+    "fail": 0
+  },
+  "existingBackupTests": {
+    "tests": 22,
+    "pass": 22,
+    "fail": 0
+  },
+  "actualOriginalDataInOwnedFixture": {
+    "ok": true,
+    "kind": "owned_native_services_and_actual_ui_local_history_recovery",
+    "source": "actual_original_private_backup_with_owned_fixture_scope",
+    "originalHistoricalCombinations": 8815,
+    "restoredOriginalTimelineEvents": 8,
+    "totalRestoredTimelineEvents": 470,
+    "actualNativeHistorySourcePicker": true,
+    "noManualFileUpload": true,
+    "originalBatchAndLedgerExact": true,
+    "repeatImportDeduplicated": true,
+    "fullOriginalReportExported": true,
+    "actualUiTimelineOnlyRecovery": true,
+    "allOriginalEventIdsAndFieldsRetained": true,
+    "otherDocumentsRetained": true,
+    "privateBackupSaved": true,
+    "restartKeepsSameHistoryAndTimeline": true,
+    "existingTaskAndPausedBatchRetained": true,
+    "sourceFileBytesUnchanged": true,
+    "ownedFixtureTimelineWrites": 1,
+    "externalRequests": 0,
+    "productionBusinessWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "formalOriginalHistoryStillPending": {
+    "timelineEvents": 8,
+    "historicalCombinations": 8815
+  },
+  "productionStateUnchangedDuringActualFixture": true,
+  "cloudReadOnlyRecheckThisCheckpoint": false,
+  "sourceDraftFiles": [
+    "executor/src/run-history.mjs",
+    "executor/src/run-history-sources.mjs",
+    "executor/src/runtime.mjs",
+    "executor/src/server.mjs",
+    "executor/src/workbench-server.mjs",
+    "executor/src/local-recovery.mjs",
+    "executor/web/application.js",
+    "executor/test/original-local-history-recovery.mjs",
+    "tests/executor-local-run-history-sources.test.mjs",
+    "tests/executor-local-history-recovery-ui.test.mjs"
+  ],
+  "remaining": [
+    "正式恢复8条旧时间线和8815组合旧批次",
+    "历史收藏来源",
+    "其他设备资料",
+    "全部剩余原执行及特殊发布分支",
+    "导航异常与恢复",
+    "设置及动态控件",
+    "剩余媒体分支"
+  ],
+  "earlierFixtureFailuresRetained": [
+    "重复导入后结果按钮重复：界面复用结果工具栏修复",
+    "测试将完整Markdown导出误作JSON：按实际格式和完整条目验证",
+    "测试在错误页面寻找时间线恢复入口：改用设置与备份实际入口",
+    "合成事件归一化增加空字段：逐项核对来源已提供字段；真实旧资料仍完整保持"
+  ],
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-actual-2026-10-08.txt",
+      "bytes": 793,
+      "capturedSha256": "d58644d97f183ec9b2ed764eee779e8e110410206ded0996cbe1811d8cd29d0e",
+      "gitLfSha256": "5b9facdc8a0664787ca0e03ebd4453f2ee6b6627f391a100aa3dfd7dbff122ab"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-existing-backup-2026-10-08.txt",
+      "bytes": 3080,
+      "capturedSha256": "f54a99d796200dea236144d4e38477514b60a2abec1eb367ce618b1d37e422ee",
+      "gitLfSha256": "f7fa7304f82c0b4e2c40225b2a8805d2d2245e847b09258f7fa589d30d31f2fa"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-existing-exports-ui-2026-10-08.txt",
+      "bytes": 689,
+      "capturedSha256": "9d2abf93e99644c627ece0e4b69aa20c198c6e24b957f31eff6d36bf13dc4f98",
+      "gitLfSha256": "07a5b4feefe01c125674de484c88ab08fc53ad6e722e74a78dc0affc6b2d73fb"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-focused-2026-10-08.txt",
+      "bytes": 2654,
+      "capturedSha256": "5b73d8321544b376913375d64709a7db91a228d9946c08d8b39b1a3ad07b08b5",
+      "gitLfSha256": "bdaa5b2fca86c75f8caffae8340d5a47644b2ff05dd70fcac54fcbeb3002df9f"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-repository-2026-10-08.txt",
+      "bytes": 116031,
+      "capturedSha256": "1480976016cda7e83d622518ad504e385f274e96ea705b541cff08a7d8343777",
+      "gitLfSha256": "ca865a9aecc6ee633c0ce1ececf8df9c021c517d151d31a7424983544ae1e974"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-ui-2026-10-08.txt",
+      "bytes": 834,
+      "capturedSha256": "6a56bf702e04a0a9f8ae6aa9043bec034e2683c4db6fb3895ccc6789164f6cbe",
+      "gitLfSha256": "c102cc064b1ed53813a5a2ab6b633ce7958640e544abc0aeeffe9a3de4376205"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-ui-complete-2026-10-08.txt",
+      "bytes": 501,
+      "capturedSha256": "bd5bf7b9bb1947de412913f48cbc645290e4217c89fe551b1a93d2fed361a56a",
+      "gitLfSha256": "91094379b923ce5b7e0fc5e15639d549131dfe701a770e20e00ac82eb77a12fa"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-ui-fields-2026-10-08.txt",
+      "bytes": 760,
+      "capturedSha256": "4275c0d663861fd88a548de8cc19fa14c348ffaff7d925d22bfdb432086ee2c3",
+      "gitLfSha256": "7123df9477fb692b99224ed064377f283895550b8299cb5a203c2f1cfcd6a340"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-ui-final-2026-10-08.txt",
+      "bytes": 721,
+      "capturedSha256": "3fef96b5f50d2e84f29e6395b590b5acf350b6527e1b1bc4e4bb7973ec9258a7",
+      "gitLfSha256": "2ccad131cd6363d5fad3a4469ed0a0ef07012f215695a21c640886b012353bc9"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-recovery-ui-repeat-2026-10-08.txt",
+      "bytes": 311,
+      "capturedSha256": "9dee08ca3f8a101ffd3fdeb1dfb2fe6712fbb4d75d6fd1e1730f34b157ff71d0",
+      "gitLfSha256": "6ca05635b7241f5fce8a2a5b9b7f70b687b25ad971a01e8afdc4245eb9103300"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08/original-local-history-sources-unit-2026-10-08.txt",
+      "bytes": 728,
+      "capturedSha256": "f5224c9382e45d1b656b300259b64f1552edd832d811eb8e3936f30f4bd90917",
+      "gitLfSha256": "34c00a58da0da7de7feb8be7ed39bef00bb0a191917ac88b18e89f8aaabce7aa"
+    }
+  ],
+  "note": "真实原资料仅复制到自有夹具工作区验证；470和8815不是正式恢复或投稿成果。私有资料及凭据未进入Git。"
+}

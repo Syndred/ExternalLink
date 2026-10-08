@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Error: strict mode violation: getByRole('button', { name: '查看原批次报告', exact: true }) resolved to 2 elements:
+    1) <button class="" type="button">查看原批次报告</button> aka getByRole('button', { name: '查看原批次报告' }).first()
+    2) <button class="" type="button">查看原批次报告</button> aka getByRole('button', { name: '查看原批次报告' }).nth(1)
+
+Call log:
+  - waiting for getByRole('button', { name: '查看原批次报告', exact: true })
+
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-local-history-recovery.mjs:51:61 {
+  log: [
+    "  - waiting for getByRole('button', { name: '查看原批次报告', exact: true })"
+  ]
+}
+
+Node.js v24.21.0

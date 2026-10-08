@@ -1,0 +1,28 @@
+✔ native services and UI restore saved original history and timeline without starting tasks and retain them after restart (3456.4552ms)
+✔ scoped saved original history is discovered and imports exact original facts once without executable tasks (14.6605ms)
+✔ discovery ignores unrelated workspaces and unscoped exports while reporting invalid scoped history (16.7111ms)
+✔ a changed saved file cannot silently replace the chosen original history and refreshed choice uses its new hash (12.5682ms)
+✔ saved history selections cannot cross a workspace or escape the configured backup root (8.738ms)
+✔ a saved original history larger than the small upload limit previews directly without replacing the existing file route (180.6075ms)
+✔ report and ledger modules are the exact pre-refactor sources, packed reports retain original classification (8.7247ms)
+✔ native fixed denominator retains unknown attempts, failures, skips, remaining and receipt-less finished tasks (3.9448ms)
+✔ full persisted event export exceeds viewer pages and original ledger cap without mixing other tasks or scopes (38.9595ms)
+✔ original ledger export follows its first original ID rather than sorting timestamps or rewriting payload (1.8467ms)
+✔ frozen acceptance keeps missing and unregistered combinations and original identifiers without registering replacements (1.4291ms)
+✔ exports reject changed denominators, crossed task identity, foreign workspace and absent records (1.6578ms)
+✔ malformed historical source remains visible with reason and does not prevent valid originals exporting (1.2578ms)
+✔ SQLite reopen and read-only exporting preserve outbox and exact task/event identities (77.0099ms)
+✔ original history file preview and idempotent restoration retain original IDs without activating tasks or storing unrelated credentials (2.8954ms)
+✔ history restoration rejects missing event IDs, credential-bearing ledger, prototype fields, ordinary backups and changed scope (1.1141ms)
+✔ history restoration rolls back failed persistence and keeps changed versions as separate original sources (1.6988ms)
+✔ original restored history survives disk reopen and repeats through the same preview and source IDs (66.3426ms)
+✔ large history upload resumes exact saved chunks after reopen, verifies full file and retains original payload and hash (565.5388ms)
+✔ history chunks reject altered content, unsafe ranges, scope changes and a corrupted final file without restoring partial history (1.5864ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3528.533

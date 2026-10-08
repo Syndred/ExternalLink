@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '0646056ca469c9f1839d94ad158e8c847f5e37672c691d985fb41e62fe0933e0'
+- 'd204a3894784225a88c7807ecfb5b29a668659c918bd084809153a168fafa6cb'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-local-history-recovery.mjs:55:206 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '0646056ca469c9f1839d94ad158e8c847f5e37672c691d985fb41e62fe0933e0',
+  expected: 'd204a3894784225a88c7807ecfb5b29a668659c918bd084809153a168fafa6cb',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

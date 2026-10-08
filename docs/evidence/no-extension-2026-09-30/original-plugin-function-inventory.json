@@ -3013,5 +3013,20 @@
     "productionOriginalHistoryRestored": false,
     "favoritesAndOtherDevicesVerified": false,
     "migrationComplete": false
+  },
+  "originalLocalHistoryRecoveryDraftCheckpoint": {
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-local-history-recovery-2026-10-08.json",
+    "sourcePublished": false,
+    "migrationComplete": false,
+    "repositoryTests": {
+      "tests": 960,
+      "pass": 960,
+      "fail": 0,
+      "skip": 0
+    },
+    "originalHistoricalCombinationsVerifiedInOwnedFixture": 8815,
+    "originalMissingTimelineEventsVerifiedInOwnedFixture": 8,
+    "formalHistoryRecoveryStillPending": true,
+    "privateOriginalSourceNotCommitted": true
   }
 }

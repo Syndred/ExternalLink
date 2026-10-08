@@ -1,0 +1,30 @@
+✔ original local documents recover through real HTTP, device authentication, D1 CAS and independent readback with a dropped write response (4139.5242ms)
+✔ unscoped JSON uses its original SQLite identity and rejects foreign endpoints or workspaces without exposing credentials (187.7122ms)
+✔ same-workspace original companion restores unscoped legacy favorites and history while keeping both backup files unchanged (354.0826ms)
+✔ genuine standalone legacy JSON remains explicitly unscoped and restores without inventing a workspace (222.2916ms)
+✔ JSON cannot contradict companion identity or bypass a conflicting second SQLite, stale database scope or nonempty WAL (324.0627ms)
+✔ companion deletion or identity changes after preview stop recovery before writing and retain the original plan (323.1952ms)
+✔ source changes during cloud comparison stop before the first restore write while retaining the verified local backup (139.7739ms)
+✔ explicitly keeping a cloud version records an exclusion instead of claiming that document was restored (241.5338ms)
+✔ local recovery accepts original state keys, omits credentials and batch state, and preserves original receipt, timeline and media history (2.0644ms)
+✔ catalogue exposes only summaries, captures the original cache before cloud refresh and rejects foreign sources (115.7971ms)
+✔ lost cloud reply and SQLite restart continue the exact recovery plan after verified backup, without replaying writes or releasing submission (248.7728ms)
+✔ source changes, reviewed remote changes, invalid selection and concurrent activity reject before any restore write (176.778ms)
+✔ table-only original sources restore product seeds and original current/batch defaults without changing the source (4.7031ms)
+✔ old profile aliases restore original product fields, choices, strong receipts, monitoring and original catalog history (19.2297ms)
+✔ original source validation rejects malformed table profile seeds rather than accepting an empty replacement (0.4566ms)
+✔ source alias collisions retain strong original receipts and all immutable media versions; conflicting versions stop recovery (1.6531ms)
+✔ unchanged original profile identities still normalize stale current and repeated batch selections (0.7284ms)
+✔ restored original product assignments select the canonical profile and keep source preferences recoverable (0.6734ms)
+✔ legacy table and annotation seeds retain canonical history without creating an old-profile success or receipt (1.3883ms)
+✔ reviewed profile sources couple old identities and history, preserve raw local cache, and resume exact SQLite ids after a lost reply (286.544ms)
+✔ keeping a concurrent cloud product cancels its coupled old-profile history without writing detached identities (225.6197ms)
+✔ failure to persist a coupled profile recovery child rolls back the parent and all mutations before network writes (148.1021ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4303.5734

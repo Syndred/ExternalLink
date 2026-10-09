@@ -1,0 +1,10 @@
+{"scenario":"gate-return","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+✔ single-page original form stage and validation continuation preserve attempts, receipts and gate pages (17430.3725ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18002.0476

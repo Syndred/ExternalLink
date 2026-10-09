@@ -1,0 +1,25 @@
+✖ single-page known form stage refills the original form instead of parking the next step as an unknown receipt (16069.6849ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16629.9178
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:44:1
+✖ single-page known form stage refills the original form instead of parking the next step as an unknown receipt (16069.6849ms)
+  AssertionError [ERR_ASSERTION]: An explicit next form stage must use the original bounded refill path before becoming a manual gate
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:52:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'submitted_unconfirmed',
+    expected: 'submitted_unconfirmed',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }

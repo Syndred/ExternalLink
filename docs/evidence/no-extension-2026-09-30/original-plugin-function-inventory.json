@@ -3424,13 +3424,38 @@
     "migrationComplete": false
   },
   "originalSinglePageGateQueueAudit": {
-    "scope": "initial single-page gates versus gates encountered during post-stage or validation refill",
-    "original": "Initial runSidepanelFill gate returns advance:false. Gates returned by submitUntilAccepted after stage or validation refill preserve the original conditional next-station behavior.",
-    "status": "reference_verified_native_stage_refill_gap_observed_probe_assertion_pending",
-    "runtimeDefectProven": false,
-    "runtimeObservation": "Actual isolated browser returned stageAdvanced:true but saved submitted_unconfirmed; the current probe incorrectly expected validationFailed:true and needs correction before final regression proof.",
-    "referenceGateCombinations": 9,
-    "checkpointEvidence": "original-single-page-gates-checkpoint-2026-10-09.json",
+    "status": "initial_gate_retention_and_post_refill_gate_continuation_verified",
+    "sourceCommit": "0417174318863d41bae0f6e8ef066675a79a9378",
+    "evidence": "original-form-continuation-2026-10-09.json",
+    "runtimeDefectProven": true,
+    "actualSinglePageScenarios": 14,
+    "actualBatchProducts": 2,
+    "originalGateCombinations": 9,
+    "fullSuitePassed": 1035,
+    "migrationComplete": false
+  },
+  "originalBoundedFormContinuationAudit": {
+    "status": "original_stage_and_validation_limits_with_durable_attempt_history_verified",
+    "sourceCommit": "0417174318863d41bae0f6e8ef066675a79a9378",
+    "evidence": "original-form-continuation-2026-10-09.json",
+    "stageLimit": 6,
+    "validationLimit": 2,
+    "unknownSubmissionNeverRetried": true,
+    "migrationComplete": false
+  },
+  "originalExistingReceiptQueueAudit": {
+    "scope": "previously saved receipt is confirmed before a selected single-page submission",
+    "original": "tryAutoSubmitFilledForm returns existingSubmission with saved receipt, cloud proof and advance; handleFillResult closes the owned page and opens the next target",
+    "nativeObservation": "sidepanelFill submit:true throws the existing-receipt message and leaves its owned page without queue continuation",
+    "status": "original_and_native_difference_verified_pending_fix",
+    "runtimeDefectProven": true,
+    "realSubmissionCount": 0
+  },
+  "largeNativeBackupHistoryIndexAudit": {
+    "status": "all_old_task_and_run_ids_present_older_value_differences_require_review",
+    "evidence": "original-form-continuation-2026-10-09.json",
+    "sources": 8,
+    "fourSourcesHaveAll778TasksAnd42RunsIdentical": true,
     "migrationComplete": false
   }
 }

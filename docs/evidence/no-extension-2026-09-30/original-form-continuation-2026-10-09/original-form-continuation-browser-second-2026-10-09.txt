@@ -1,0 +1,19 @@
+{"scenario":"gate","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"success","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"success-prior-identity","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"validation","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"validation-limit","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"unknown","clicks":1,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"open-failure","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"user-page","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"changed-selection","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"stopped","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+✔ single-page original form stage and validation continuation preserve attempts, receipts and gate pages (182958.6882ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 183556.2057

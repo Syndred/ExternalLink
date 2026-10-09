@@ -1,0 +1,23 @@
+✔ ordinary form continuation matches frozen original stage and validation retry limits (7436.8326ms)
+✔ unknown, contradictory, receipt and blocked results never resolve a click into another attempt (2.9447ms)
+✔ late page, task, profile, consent, evidence, workspace and stop changes preserve the newer task before refill (6.5873ms)
+✔ prior stage identity is scoped to its original form invocation, target and frozen product (924.1205ms)
+✔ sync failure after a proven rejection retains durable attempt history and does not refill (1.1135ms)
+✔ original single-page initial gates retain the page while post-stage and retry gates preserve their distinct next-station behavior (24.0257ms)
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (26.8777ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (2.7405ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (2.9848ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (3.3537ms)
+✔ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (47.1388ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (23.1171ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (18.1051ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (12.9645ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (21.4415ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8678.9359

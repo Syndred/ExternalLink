@@ -1,0 +1,1052 @@
+{
+  "kind": "original_bounded_form_refill_and_single_page_gate_queue",
+  "sourceCommit": "0417174318863d41bae0f6e8ef066675a79a9378",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "priorPublishedCommit": "742de7c5a722d648ca5e2deab323097ac72017f1",
+  "originalFunctionsExecuted": [
+    "runSidepanelFill",
+    "submitUntilAccepted",
+    "handleFillResult",
+    "cycleSubmission"
+  ],
+  "verification": {
+    "fullSuitePassed": 1035,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "relatedTestsPassed": 15,
+    "originalGateCombinations": 9,
+    "originalStageLimit": 6,
+    "originalValidationLimit": 2,
+    "actualIsolatedChromeScenarios": [
+      "initial gate retains page",
+      "post-stage gate opens next with original page retained",
+      "return to retained gate page then confirm its receipt",
+      "stage fill then receipt",
+      "stage retains original product identity from earlier fields",
+      "validation refill then receipt",
+      "controlled AI validation refill then receipt",
+      "network evidence kept separately across attempts",
+      "validation limit retains page",
+      "unknown result does not retry",
+      "open failure retries without duplicate pages",
+      "user page remains",
+      "changed panel selection remains",
+      "stop remains"
+    ],
+    "nativeBatchProducts": 2,
+    "authenticatedD1EmptyRestorePreservesAttemptsAndReceipts": true,
+    "actualUiWithControlledBackend": true,
+    "lateAttemptGuardCases": 15,
+    "receiptAndGateQueueLateGuards": 20
+  },
+  "intermediateFailures": [
+    {
+      "kind": "initial_probe_expected_validation",
+      "detail": "The actual engine returned stageAdvanced; corrected the assertion and reproduced native unknown-result parking."
+    },
+    {
+      "kind": "refill_adapter_missing_frame_url",
+      "detail": "Runtime frame candidates lacked the URL captured by the existing visit-fill adapter; now capture it on attachment."
+    },
+    {
+      "kind": "success_fixture_utility_form",
+      "detail": "A taxonomy-only fixture is excluded by original form intent rules; preserved that gate case and added explicit product-title/category stage cases for success."
+    },
+    {
+      "kind": "first_full_suite",
+      "passed": 1033,
+      "failed": 1,
+      "detail": "Durable store omits undefined properties; expected attempt-history proof now uses the same JSON representation. Real identity/evidence changes still reject."
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "single_page_receipt_published_service_process_identity",
+    "sourceCommit": "0417174318863d41bae0f6e8ef066675a79a9378",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 22692,
+        "StartedAt": "2026-10-09T18:17:24.2135420+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 14996,
+        "StartedAt": "2026-10-09T18:17:24.8402850+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "uiSmoke": {
+    "ok": true,
+    "kind": "original_form_continuation_live_ui_and_authenticated_state_smoke",
+    "sourceCommit": "0417174318863d41bae0f6e8ef066675a79a9378",
+    "servedUiMatchesFileAndCommit": true,
+    "originalReceiptUiServed": true,
+    "originalGateUiServed": true,
+    "authenticatedStateRoute": true,
+    "uiSha256": "3a75c77115419860852e16621b6f99b2b529cf559b4d1f87148340f05ede0b51",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextAudit": {
+    "scope": "previously saved receipt is confirmed before a selected single-page submission",
+    "original": "tryAutoSubmitFilledForm returns existingSubmission with saved receipt, cloud proof and advance; handleFillResult closes the owned page and opens the next target",
+    "nativeObservation": "sidepanelFill submit:true throws the existing-receipt message and leaves its owned page without queue continuation",
+    "status": "original_and_native_difference_verified_pending_fix",
+    "runtimeDefectProven": true,
+    "realSubmissionCount": 0
+  },
+  "largeNativeBackupReadonlyAudit": {
+    "ok": true,
+    "kind": "readonly_large_native_backup_history_index",
+    "sources": [
+      {
+        "identicalTasks": 162,
+        "changedTasks": 589,
+        "identicalRuns": 15,
+        "changedRuns": 0,
+        "changedTopLevelFields": {
+          "targetId": 2,
+          "browserInstance": 2,
+          "reason": 3,
+          "screenshot": 2,
+          "artifactRef": 588,
+          "artifactSha256": 588,
+          "profileSnapshot": 2,
+          "profileRevision": 2,
+          "consentHistory": 2,
+          "actualSubmission": 1,
+          "fill": 1,
+          "validation": 1,
+          "recoveryCheckpoint": 1,
+          "acceptanceId": 3,
+          "publicPage": 2,
+          "normalPreparationFailure": 1,
+          "tabClosedAt": 2,
+          "closedTargetIds": 1,
+          "closeReason": 1,
+          "recoveryHistory": 1,
+          "aiTakeover": 1,
+          "authAttempts": 1,
+          "normalPreparation": 1,
+          "actualPreparation": 1,
+          "usedMedia": 1,
+          "version": 2,
+          "controllerId": 2,
+          "controller": 2,
+          "workbenchHandoff": 2
+        },
+        "changeKinds": {
+          "targetId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "browserInstance": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "reason": {
+            "added": 0,
+            "removed": 0,
+            "modified": 3
+          },
+          "screenshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactRef": {
+            "added": 586,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactSha256": {
+            "added": 581,
+            "removed": 0,
+            "modified": 7
+          },
+          "profileSnapshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "profileRevision": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "consentHistory": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "actualSubmission": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "fill": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "validation": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "recoveryCheckpoint": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "acceptanceId": {
+            "added": 3,
+            "removed": 0,
+            "modified": 0
+          },
+          "publicPage": {
+            "added": 1,
+            "removed": 0,
+            "modified": 1
+          },
+          "normalPreparationFailure": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "tabClosedAt": {
+            "added": 1,
+            "removed": 1,
+            "modified": 0
+          },
+          "closedTargetIds": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "closeReason": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "recoveryHistory": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "aiTakeover": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "authAttempts": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "normalPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "actualPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "usedMedia": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "version": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "controllerId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "controller": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "workbenchHandoff": {
+            "added": 2,
+            "removed": 0,
+            "modified": 0
+          }
+        },
+        "directory": "2026-09-29-before-d1",
+        "name": "outbox.sqlite",
+        "bytes": 406298624,
+        "tasks": 751,
+        "runs": 15,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 162,
+        "changedTasks": 589,
+        "identicalRuns": 15,
+        "changedRuns": 0,
+        "changedTopLevelFields": {
+          "targetId": 2,
+          "browserInstance": 2,
+          "reason": 3,
+          "screenshot": 2,
+          "artifactRef": 588,
+          "artifactSha256": 588,
+          "profileSnapshot": 2,
+          "profileRevision": 2,
+          "consentHistory": 2,
+          "actualSubmission": 1,
+          "fill": 1,
+          "validation": 1,
+          "recoveryCheckpoint": 1,
+          "acceptanceId": 3,
+          "publicPage": 2,
+          "normalPreparationFailure": 1,
+          "tabClosedAt": 2,
+          "closedTargetIds": 1,
+          "closeReason": 1,
+          "recoveryHistory": 1,
+          "aiTakeover": 1,
+          "authAttempts": 1,
+          "normalPreparation": 1,
+          "actualPreparation": 1,
+          "usedMedia": 1,
+          "version": 2,
+          "controllerId": 2,
+          "controller": 2,
+          "workbenchHandoff": 2
+        },
+        "changeKinds": {
+          "targetId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "browserInstance": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "reason": {
+            "added": 0,
+            "removed": 0,
+            "modified": 3
+          },
+          "screenshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactRef": {
+            "added": 586,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactSha256": {
+            "added": 581,
+            "removed": 0,
+            "modified": 7
+          },
+          "profileSnapshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "profileRevision": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "consentHistory": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "actualSubmission": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "fill": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "validation": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "recoveryCheckpoint": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "acceptanceId": {
+            "added": 3,
+            "removed": 0,
+            "modified": 0
+          },
+          "publicPage": {
+            "added": 1,
+            "removed": 0,
+            "modified": 1
+          },
+          "normalPreparationFailure": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "tabClosedAt": {
+            "added": 1,
+            "removed": 1,
+            "modified": 0
+          },
+          "closedTargetIds": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "closeReason": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "recoveryHistory": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "aiTakeover": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "authAttempts": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "normalPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "actualPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "usedMedia": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "version": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "controllerId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "controller": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "workbenchHandoff": {
+            "added": 2,
+            "removed": 0,
+            "modified": 0
+          }
+        },
+        "directory": "2026-09-29-before-d1",
+        "name": "before-executor-activation.sqlite",
+        "bytes": 406298624,
+        "tasks": 751,
+        "runs": 15,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 778,
+        "changedTasks": 0,
+        "identicalRuns": 42,
+        "changedRuns": 0,
+        "changedTopLevelFields": {},
+        "changeKinds": {},
+        "directory": "before-formal-original-history-2026-10-08",
+        "name": "outbox.sqlite",
+        "bytes": 406302720,
+        "tasks": 778,
+        "runs": 42,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 778,
+        "changedTasks": 0,
+        "identicalRuns": 42,
+        "changedRuns": 0,
+        "changedTopLevelFields": {},
+        "changeKinds": {},
+        "directory": "before-local-recovery-2026-10-08T01-46-11-985Z-a38abbe4-cb95-4cc9-8283-f83e0e1706ed",
+        "name": "outbox.sqlite",
+        "bytes": 406302720,
+        "tasks": 778,
+        "runs": 42,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 777,
+        "changedTasks": 1,
+        "identicalRuns": 42,
+        "changedRuns": 0,
+        "changedTopLevelFields": {
+          "consentHistory": 1,
+          "targetId": 1,
+          "browserInstance": 1,
+          "publicPage": 1,
+          "screenshot": 1,
+          "artifactRef": 1,
+          "artifactSha256": 1,
+          "recoveryHistory": 1,
+          "aiTakeover": 1,
+          "normalPreparation": 1,
+          "actualPreparation": 1,
+          "usedMedia": 1
+        },
+        "changeKinds": {
+          "consentHistory": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "targetId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "browserInstance": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "publicPage": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "screenshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "artifactRef": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "artifactSha256": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "recoveryHistory": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "aiTakeover": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "normalPreparation": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "actualPreparation": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "usedMedia": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          }
+        },
+        "directory": "gmail-migration-2026-09-30T08-14-33-366Z",
+        "name": "outbox.sqlite",
+        "bytes": 406302720,
+        "tasks": 778,
+        "runs": 42,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 778,
+        "changedTasks": 0,
+        "identicalRuns": 42,
+        "changedRuns": 0,
+        "changedTopLevelFields": {},
+        "changeKinds": {},
+        "directory": "migration-parity-2026-09-30",
+        "name": "before.sqlite",
+        "bytes": 406302720,
+        "tasks": 778,
+        "runs": 42,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 778,
+        "changedTasks": 0,
+        "identicalRuns": 42,
+        "changedRuns": 0,
+        "changedTopLevelFields": {},
+        "changeKinds": {},
+        "directory": "monitor-parity-2026-09-30",
+        "name": "outbox.sqlite",
+        "bytes": 406302720,
+        "tasks": 778,
+        "runs": 42,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      },
+      {
+        "identicalTasks": 748,
+        "changedTasks": 3,
+        "identicalRuns": 15,
+        "changedRuns": 0,
+        "changedTopLevelFields": {
+          "targetId": 2,
+          "browserInstance": 2,
+          "reason": 1,
+          "screenshot": 2,
+          "artifactRef": 2,
+          "artifactSha256": 2,
+          "profileSnapshot": 2,
+          "profileRevision": 2,
+          "consentHistory": 2,
+          "actualSubmission": 1,
+          "fill": 1,
+          "validation": 1,
+          "recoveryCheckpoint": 1,
+          "acceptanceId": 3,
+          "publicPage": 2,
+          "normalPreparationFailure": 1,
+          "tabClosedAt": 2,
+          "closedTargetIds": 1,
+          "closeReason": 1,
+          "recoveryHistory": 1,
+          "aiTakeover": 1,
+          "authAttempts": 1,
+          "normalPreparation": 1,
+          "actualPreparation": 1,
+          "usedMedia": 1
+        },
+        "changeKinds": {
+          "targetId": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "browserInstance": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "reason": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "screenshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactRef": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "artifactSha256": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "profileSnapshot": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "profileRevision": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "consentHistory": {
+            "added": 0,
+            "removed": 0,
+            "modified": 2
+          },
+          "actualSubmission": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "fill": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "validation": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "recoveryCheckpoint": {
+            "added": 0,
+            "removed": 0,
+            "modified": 1
+          },
+          "acceptanceId": {
+            "added": 3,
+            "removed": 0,
+            "modified": 0
+          },
+          "publicPage": {
+            "added": 1,
+            "removed": 0,
+            "modified": 1
+          },
+          "normalPreparationFailure": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "tabClosedAt": {
+            "added": 1,
+            "removed": 1,
+            "modified": 0
+          },
+          "closedTargetIds": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "closeReason": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "recoveryHistory": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "aiTakeover": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "authAttempts": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "normalPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "actualPreparation": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          },
+          "usedMedia": {
+            "added": 1,
+            "removed": 0,
+            "modified": 0
+          }
+        },
+        "directory": "no-extension-2026-09-30T05-12-20-552Z",
+        "name": "outbox.sqlite",
+        "bytes": 406302720,
+        "tasks": 751,
+        "runs": 15,
+        "taskIdsAbsentFromCurrentLocal": 0,
+        "runIdsAbsentFromCurrentLocal": 0
+      }
+    ],
+    "sourceWrites": 0,
+    "productionWrites": 0,
+    "absenceIsNotProofOfCloudLoss": true
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionTestWrites": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-form-continuation-2026-10-09/large-backup-history-classified-2026-10-09.txt",
+      "capturedSha256": "c54311aa28c85dfbda89f0d5c4190efb48f42132dc13c53da50349124a063b0e",
+      "gitBlobSha256": "ea327ab66ab125ae23d9cc60cdb9f2c694b11918ceb3825315932dfeb9e21ec1"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/large-backup-history-content-2026-10-09.txt",
+      "capturedSha256": "716e2b3786e721561a03b22761b4cae28def1a3ae54024bccd58cda493cc6361",
+      "gitBlobSha256": "6b8d4bffcecbba6b4c07ce9c1c077bf7a73ba572db0d64759eaecbc518f0b00e"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/large-backup-history-index-2026-10-09.txt",
+      "capturedSha256": "67d4c1b31f82f61d602c0a39f55e3289723a13254ffbce96eeb5570d95d87af2",
+      "gitBlobSha256": "271fbb0089642e3f8fcbeea0dacec63100e58b813e5af2cabba3928dc192a6d1"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-existing-receipt-probe-2026-10-09.txt",
+      "capturedSha256": "1bd98cf97d53f66e1930a9e8aefa30a028da3ddaf1ca49a51a6725d32ac422ca",
+      "gitBlobSha256": "7c2f681883dc7c8dd8a3cd199ad7937b1d5850265457997414a29c4dfa3f00f5"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-existing-receipt-probe-submit-2026-10-09.txt",
+      "capturedSha256": "64eab681c67461e21589213acc0b019a0e343505bd550e3a0b1e69a06a0d8d8c",
+      "gitBlobSha256": "7e70d3bf2a99fd7c773e27876a1f86a2d174fc758a867ab9e0e1b9ae1d16694f"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-existing-receipt-reference-2026-10-09.txt",
+      "capturedSha256": "362375ae14c221e0afb69cc3107ecaea2bee569be47986fc2106d2e31df568a6",
+      "gitBlobSha256": "c09511cb491f0a9331d4312939d24c0738f80933815eb68969bd7248aeea5fa1"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-batch-2026-10-09.txt",
+      "capturedSha256": "7d147990e132cb0864cde898e8bcbb78cad002d710770655dfeb2ef0b616f34a",
+      "gitBlobSha256": "8c9e9ad51911040fe86e1c1ffd9dc7abc02a83c05aa200c349139a0a25e198c3"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-browser-2026-10-09.txt",
+      "capturedSha256": "57b6522c1018db8d8ac7aab2ae89171f045d0f5478f42e29b69cd59d2f019898",
+      "gitBlobSha256": "afa2b193d85b2bfdd0eb1307e66a3deefe1959b93da7ed900e315d1af3ac2d29"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-browser-second-2026-10-09.txt",
+      "capturedSha256": "ab7434c6a07ea59aec1a2cb75d95fefd1183d59d40b4f1e513fe3443c05bf116",
+      "gitBlobSha256": "c615256dd9d1cc21fcffe3637c01e986d73864809be1fdfc2209801cb409a2fe"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-focused-2026-10-09.txt",
+      "capturedSha256": "3e5152c9dc0f58ed346859ee8e75481910a4cf05c84065c2b8b9c0eac093c3a1",
+      "gitBlobSha256": "5a7fa95e39a0f302104d94bdc23ba8b1c05ff69b7de087ef2ab7af441967e5da"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-focused-final-2026-10-09.txt",
+      "capturedSha256": "2430cd55e3e4cf1787f7647e285e69db0b1af30e4e38cdc2e959cd33a1f907d2",
+      "gitBlobSha256": "9ae6455bff3fe04000c6bd91679a3da7e32686aff615a2df6bcc9246f72b845a"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-focused-second-2026-10-09.txt",
+      "capturedSha256": "12b5a0d09b71f408ab3941b4f942ce12fd070b1a6a1d02f59647c0e50921e152",
+      "gitBlobSha256": "0c6df17a19d14f1bcc8a502b1fd4c1d80ae606f558f812f49e7cf32daa80c64a"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-full-final-2026-10-09.txt",
+      "capturedSha256": "0df9235e648719e2a871380b5e211b5e1a8c6f086751fe602e6a048cc73c016f",
+      "gitBlobSha256": "0904c39fad702401305376be0bea4ae606134d2893f9e217a8407c6ca8bb9a34"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-full-first-2026-10-09.txt",
+      "capturedSha256": "728e05b5f9d945241831d49717fa5d477a59cdf1d96b02c5db0d2d0d5a715584",
+      "gitBlobSha256": "2f9ee77772216f06b44b57080cc65b9d6352e6d0913948c7c3b99ca43bd98647"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-full-release-2026-10-09.txt",
+      "capturedSha256": "889b0abfb13cccb6349fc44ef2791fd8bb3721f0c491c766e91e54d5a42fe991",
+      "gitBlobSha256": "3ed4b8befeef65ffb1dedb512604ad3bf68e930b07b7eccb8d5060704adf5e8c"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-gate-return-2026-10-09.txt",
+      "capturedSha256": "8b3073f156b89de6336a22ce701849ede8d2c4a4e69a87c5726496dfa8dcbaa1",
+      "gitBlobSha256": "7134da5814c684a9a5eedac53efe3c8b6e24c593ea9d88abe4a7790e139a9657"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-initial-2026-10-09.txt",
+      "capturedSha256": "d7840f3e000925fb0d6d14200791f220c463b6ab36add6d9ed873494a6e274df",
+      "gitBlobSha256": "89073b9b04dbfa892344560d18ddbe8e7a84981c26b6955e1b2d08b8606b839c"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-network-evidence-2026-10-09.txt",
+      "capturedSha256": "0f6b352157fb190c67692619b8942584d8b6d0d8550868358da1d0caa1496a2b",
+      "gitBlobSha256": "fe0060aeabbc8126e79f10bf57ae4a39574f0a94b6def009cd99d69e80c7912f"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-repository-release-2026-10-09.txt",
+      "capturedSha256": "1f870b9a59980c5deb5a645ffe3772c7f847739d746c9f39b4a92c22fad5c719",
+      "gitBlobSha256": "ed7755fbc83ac4024da1a011832e6adeb490d44c52d53a1ef1f5aabf984f6010"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-service-process-2026-10-09.txt",
+      "capturedSha256": "c1b3017b5291438b2466a695a1024ffa44f4432dcf38cf7e0ad58fc5a8f5df7c",
+      "gitBlobSha256": "557642fbc483b68041a64e17a9f7a5f6ee544aec0519b45b4053103b7fb4d712"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-ui-2026-10-09.txt",
+      "capturedSha256": "5f5a2db099647ac93aef18c662c706d658c0e43cb6a654cd33c7013a6297f709",
+      "gitBlobSha256": "f7e48ec3ed01888fc15d9f0ab83a7636a2afa9b9d0f97b06a6e56bfdf11ac446"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-ui-final-2026-10-09.txt",
+      "capturedSha256": "abb65654f060bb97e3c9c106c63ef19c4a7adb8c3378f6c6d24b958fa0f1e442",
+      "gitBlobSha256": "6fbfe53e488e440dec5b3d9806f9f85d22f4e522323aaf92de2e261deb9cee5b"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "8ad598b20ed33af85ec497b384b711126de251412fefedbc1eca60a84d069a39",
+      "gitBlobSha256": "dc106a3b570070fa5407bc493720bfd72b6a37ee53d6c379a1366342cf59472d"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-continuation-validation-ai-2026-10-09.txt",
+      "capturedSha256": "26ab5b255d6e6c5cdb20523fd6f89d98ab2f714427e20aa7691e132c17c99023",
+      "gitBlobSha256": "e2e99e0863a3bcf5c8d5ad4f656b6c9fa4289ef09f16893957a343ef6e5e43c2"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-success-diagnosis-2026-10-09.txt",
+      "capturedSha256": "550ddbad8e3591ab6ef8ef4c1061999cca3e02960d0111ea8428a12032f61ba9",
+      "gitBlobSha256": "8d1fdae5d1d924d124f2fd0149d01989a0a12a546b43c63e42ae2378894fde9e"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-form-validation-first-2026-10-09.txt",
+      "capturedSha256": "79853c30215dc04b2d78b1c717cea80ccfa25e2207e8413b3041ffd3e45ae3c6",
+      "gitBlobSha256": "dedfb6fd1696d6bf87381f8baa0d5b46d1dcbf0367c76b3e0a2971f47967542a"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-single-page-stage-before-2026-10-09.txt",
+      "capturedSha256": "49611976758a5a37a0141349be3c4b5bfd32bdc5c5b88ba66a7eb1c1e4f3401e",
+      "gitBlobSha256": "b7013986bf5079ea9dd3f2d607fdf92621d8566434e426943fd5949bed085b53"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-single-page-stage-first-2026-10-09.txt",
+      "capturedSha256": "e62279af621dc093b3c2f7cebd8568a2d8ef0cbef590405ea69d6743e9c86b50",
+      "gitBlobSha256": "8c1269e8e35bdc10b4b5dcf6fe9795ccea61423013d49c11367fcdfc849bab1f"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-single-page-stage-second-2026-10-09.txt",
+      "capturedSha256": "8dff516098b3de8888d2e6872a1ac594866021567f99213519bda1f521e6843f",
+      "gitBlobSha256": "5333f6494569d1af2f6a684af86f55e93fe0d1b1766c1bfb63dbff15d191a58d"
+    },
+    {
+      "path": "original-form-continuation-2026-10-09/original-single-page-stage-success-2026-10-09.txt",
+      "capturedSha256": "df08abfa35d5d5bf4ec27358409695169d73ddd744c0ae342c68bc0970c2dfac",
+      "gitBlobSha256": "ceea1e7aa2badbe5fcb887d526ea43a7973970766247607c25b652aaf3d5d91f"
+    }
+  ]
+}

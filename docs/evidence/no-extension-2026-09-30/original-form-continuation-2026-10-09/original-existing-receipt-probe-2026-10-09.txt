@@ -1,0 +1,10 @@
+{"ok":true,"kind":"native_existing_receipt_diagnostic","originalFunctionsVerifiedSeparately":true,"nativeOutcome":"该产品同站已有收件，请先核验","ownedPageRetained":true,"nextPageOpened":false,"fieldsUnchanged":true,"realSubmissions":0,"realModels":0,"migrationComplete":false}
+✔ diagnose native single-page selection when a previous receipt arrives before filling (463.4763ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1175.8311

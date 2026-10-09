@@ -4995,5 +4995,40 @@
     "productionCodeChanged": false,
     "newFullRunClaimed": false,
     "overallMigrationComplete": false
+  },
+  "originalCommentCandidateActionsUiCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-comment-candidate-actions-2026-10-10/ui-proof.json",
+    "focusedTests": 14,
+    "focusedPassed": 14,
+    "proof": {
+      "ok": true,
+      "threeActualUiCandidatesFilled": true,
+      "actualEngineReadback": true,
+      "sameOriginalTaskKept": true,
+      "editedDraftsMatchFrozenOriginal": true,
+      "controlledClipboardTextsMatched": true,
+      "controlledClipboardFailureKeepsDraft": true,
+      "realOsClipboardTested": false,
+      "completeOriginalSelectionHandlerCompared": true,
+      "originalSelectionIndex": 2,
+      "originalSwitchSnapshots": 2,
+      "currentExplicitSelectionIndexRestored": false,
+      "currentAutomaticSwitchSnapshotsMatched": false,
+      "lateAttemptBoundaryRejected": true,
+      "sqliteReopenKeepsDraftsAndSelectedText": true,
+      "actualUiReloadKeepsEdits": true,
+      "originalBusinessUnchanged": true,
+      "posts": 0,
+      "realSubmissions": 0,
+      "realModelCalls": 0,
+      "productionWrites": 0,
+      "originalChromeUntouched": true
+    },
+    "remaining": [
+      "original selected candidate index and automatic before-switch snapshots are not restored by current simultaneous-card UI",
+      "OS clipboard has not been tested; clipboard dependency was isolated"
+    ],
+    "overallMigrationComplete": false
   }
 }

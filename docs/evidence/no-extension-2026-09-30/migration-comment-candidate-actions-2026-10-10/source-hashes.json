@@ -1,0 +1,8 @@
+{
+  "executor/test/original-comment-candidate-actions.mjs": "618d85038e6440c6c0d8d7dfb48e01aea2e107e237a3c1eede8352c784b1347f",
+  "tests/executor-original-comment-candidate-actions.test.mjs": "1c9cd933ab4ff5def081eb117d9f0cf916eb8e212a1cd0a41fcc486d444da0ad",
+  "tests/helpers/original-comment-restore.mjs": "7397c02f3725f5222730f9f8588bff6476f9b67a802f8084183510b67aa5f1e5",
+  "executor/web/comment-studio.js": "1da3ca2aa6c6b4037e76caf3d504f8da499676e06717d7cef1a9f47322f0bc45",
+  "executor/src/comment-history.mjs": "d7279195eefebd50f2305e8a38e74f0bf81dc80b0ecb448e9bae0266257c4b24",
+  "executor/src/workbench-features.mjs": "b83adf061dc0b5023703e6e44691ce969f37f622f7578f862c72b424d19661fe"
+}

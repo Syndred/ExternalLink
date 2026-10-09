@@ -1,0 +1,19 @@
+✖ fixed and independent manual skips preserve original pages through handoff and close final destinations (686.9647ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1102.9128
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:42:1
+✖ fixed and independent manual skips preserve original pages through handoff and close final destinations (686.9647ms)
+  Error: 原目标页已关闭；需要独立站方核验，不能新开表单重投
+      at Runtime.findPage (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/runtime.mjs:1382:11)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:58:112)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

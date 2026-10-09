@@ -1,0 +1,244 @@
+{
+  "kind": "original_fixed_and_independent_manual_skip",
+  "sourceCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+  "oldNativeSourceCommit": "bfa80b9ed5f547d83779b6aa96dcde8bf107a994",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "oldSourceFailures": {
+    "fixed": "No same-destination page handoff marker after manual skip.",
+    "independentRun": "Final destination page remained open after manual skip.",
+    "method": "Actual committed runtime and manual-controls modules loaded separately against identical isolated Chrome and authenticated D1 fixtures."
+  },
+  "changes": [
+    "Fixed acceptance manual skip retains the original destination tab for the next frozen product",
+    "Independent run manual skip closes the completed automatic destination and continues the original run",
+    "Durable request, disposition and original scope progress are saved with the task transition",
+    "Retry and SQLite restart preserve the original request and disposition rather than generating another skip",
+    "Automatic continuation applies only to the saved original request and is revoked by a later explicit pause",
+    "Shared cleanup rechecks current task after awaits and preserves late attempts, receipts, changed targets or switched scopes"
+  ],
+  "verification": {
+    "fullSuitePassed": 1021,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "focusedPassed": 34,
+    "actualBrowserTestsPassed": 3,
+    "newScopeBrowserScenarios": 8,
+    "newScopeScenarioMatrix": {
+      "scope": [
+        "fixed acceptance",
+        "independent run"
+      ],
+      "mode": [
+        "running",
+        "paused",
+        "committed skip with unavailable response and readback until retry",
+        "unknown submission retained"
+      ]
+    },
+    "sqliteReopenCases": 2,
+    "lateCleanupChangeCases": 4,
+    "priorWorkbenchManualSkipAndReceiptHandoffRegressionsPassed": true,
+    "authenticatedD1WriteAndReadback": true
+  },
+  "fixedAcceptancePolicyScope": "The next fixed task executes with its original fill-only fixture setting, fills the next frozen product on the transferred original target, and follows the existing fixed-range screenshot/checkpoint cleanup policy. This fixture does not assert that fixed-range prepared pages remain open.",
+  "intermediateFailures": [
+    {
+      "file": "original-manual-skip-scopes-first-2026-10-09.txt",
+      "classification": "fixture expected a page already closed by existing fixed-range cleanup",
+      "reason": "Final fixture asserts original target and persisted actual fields, then verifies original close record."
+    },
+    {
+      "file": "original-manual-skip-scopes-focused-first-2026-10-09.txt",
+      "classification": "new cleanup guard rejected absent optional values after JSON persistence",
+      "reason": "Current-task comparison now uses the runtime plain serialization convention; late real task changes remain rejected."
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "manual_skip_scopes_published_service_process_identity",
+    "sourceCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 14936,
+        "StartedAt": "2026-10-09T16:44:59.2403190+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 14428,
+        "StartedAt": "2026-10-09T16:44:59.8761590+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "unchangedUiSmoke": {
+    "ok": true,
+    "kind": "manual_card_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+    "servedUiMatchesFileAndCommit": true,
+    "originalManualCardControlsServed": true,
+    "uiSha256": "6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextCallgraphAudit": {
+    "status": "requires_actual_runtime_verification",
+    "scope": "successful manual confirmation in independent run and single-page tasks",
+    "observation": "synchronizeNow receipt cleanup selects acceptance/workbench tasks, while confirmManualSubmission calls finishWorkbenchTask. Independent-run final page cleanup is not proven by workbench receipt tests.",
+    "runtimeDefectProven": false
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-before-2026-10-09.txt",
+      "capturedSha256": "b25358c85658266a4b610025f5e52969aa2b7d69492766f52b4664f4d0a18652",
+      "gitBlobSha256": "570781747d84835d1f08ed9cfd15d0c2c8e5fe10c6761085d365ecd32792ce98"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-browser-final-2026-10-09.txt",
+      "capturedSha256": "e8998a624b71494c13dc7937f72ac41872f3d0e39748c309f591408cd98e2978",
+      "gitBlobSha256": "6dd41206a3c5eb8d967763d6b4cfd15c7b677f6477f1e49662e6bd131ef725bc"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-first-2026-10-09.txt",
+      "capturedSha256": "b659f02108bda8c6b5cac7ee52345a3409a01a21e16233dad692d4b16e089e13",
+      "gitBlobSha256": "3494368ab7a4d1a74dbfe98140aaf1d78f0d5e6618894c136ce711e5f0a0e071"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-fixed-baseline-2026-10-09.txt",
+      "capturedSha256": "38bb8c7e775a8749f06e705dd16184ca8988b2016baa7eb89eccf25cd13ba0cf",
+      "gitBlobSha256": "9ded5169182e0da6da8f7a18b21bbecd3d667862611c6d03233590700d0720e3"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-focused-final-2026-10-09.txt",
+      "capturedSha256": "079c0bcbd615dd0f438a1ddfbdb3dce499f1ea2b6c8c617488211692939c9c29",
+      "gitBlobSha256": "8ab0bb3c072e5e22be08316ea58cde465e50e217c52ae2bd48ae389d98cf2149"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-focused-first-2026-10-09.txt",
+      "capturedSha256": "7c04861f2d3c719483f860333bda7bef51fbd0b6710b3ed4dcb11af0b92144bc",
+      "gitBlobSha256": "78882ec86ba52cb89f0bac7df48064e2ae775c86df81bb2c50eb5fbf4b531142"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-focused-second-2026-10-09.txt",
+      "capturedSha256": "fd665d6a608c57b2215698af484a7611771f04fb532c90bde99f81a804b20234",
+      "gitBlobSha256": "96d201b84ef25ee4f9b1541c8b138100b77515fd998802e5e1528e4adfd41746"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-repository-2026-10-09.txt",
+      "capturedSha256": "8aadc71f8b8f83a4f499a13acedd992a7bc3b9811f978207092687f28dfccd9e",
+      "gitBlobSha256": "7c92bea7956dfad7fb7682e8b8bbafe753e4c0f96697d8eca8b52f035b31705d"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-run-baseline-2026-10-09.txt",
+      "capturedSha256": "e08b949580acf45d7870eb5c59e636784c96fe0861d893f348594b385e4f973c",
+      "gitBlobSha256": "cc54de8672401a35720e7b7148698a28c8d71e466387f057dff2516d42cddbca"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-second-2026-10-09.txt",
+      "capturedSha256": "51414104e2ad881efbe8ec10ba870b0790ae0ac6628bd65cd932d1b4a093e919",
+      "gitBlobSha256": "5b37490dc44587fd9780fe3afe3874f68b0fdddea143e8f2bc9ea3f5d9900f10"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-service-process-2026-10-09.txt",
+      "capturedSha256": "51be551c2eeab352cacc3346878ef201ef43e00bd51577b8644264893bdcaa47",
+      "gitBlobSha256": "26183101c175c27be95bbac66f19360b30366b466457d4fea634ba0c38f06893"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-manual-skip-scopes-2026-10-09/original-manual-skip-scopes-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "7c7f375eb223edb6bed9572d8ca357d0c1bd532fd3cd38f7e042405779bce8cd",
+      "gitBlobSha256": "9fde7f1b00e147f6a0afb03c9897f2fb881787f4ee84e7a533eaef2f89a939e2"
+    }
+  ]
+}

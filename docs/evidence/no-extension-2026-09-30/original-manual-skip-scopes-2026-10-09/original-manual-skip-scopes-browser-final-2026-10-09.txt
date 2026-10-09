@@ -1,0 +1,11 @@
+✔ fixed and independent manual skips preserve original pages through handoff and close final destinations (5023.4874ms)
+✔ manual skip retains the original destination tab for the next product and closes only the last task (3614.0655ms)
+✔ manual success retains its receipt and original tab for the next frozen product after reply loss and paused recovery (3844.4616ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12891.6253

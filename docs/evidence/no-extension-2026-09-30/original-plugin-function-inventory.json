@@ -1389,7 +1389,9 @@
       "verification": "并发所选任务单独跳过、原请求失败重试、末项保留、未知回执／人工页保护经回归及认证D1验证；实际原页面跳过回读失败后禁用继续，原请求重试只写一次。真实业务跳过未执行",
       "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json",
       "sameDestinationGroupEvidence": "original-manual-skip-group-2026-10-09.json",
-      "sameDestinationGroupVerification": "工作台批次人工跳过后的同站原页接续与末页关闭已对照；固定验收及独立run路径另待实际核对。"
+      "sameDestinationGroupVerification": "工作台批次人工跳过后的同站原页接续与末页关闭已对照；固定验收及独立run路径另待实际核对。",
+      "fixedAndIndependentScopeEvidence": "original-manual-skip-scopes-2026-10-09.json",
+      "fixedAndIndependentScopeVerification": "固定验收同站接续、独立运行末页关闭、暂停、未知尝试保护、丢回复重试和SQLite重开已核对；全量1021项通过。"
     },
     {
       "action": "manualSubmissionClicked",
@@ -3381,12 +3383,30 @@
     "migrationComplete": false
   },
   "originalManualSkipRemainingScopeAudit": {
-    "status": "required",
+    "status": "fixed_and_independent_scope_verified",
+    "sourceCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+    "evidence": "original-manual-skip-scopes-2026-10-09.json",
     "scope": [
       "manual skip in fixed acceptance path",
       "manual skip in independent run path"
     ],
-    "finding": "The non-workbench manualSkip branch has no direct same-tab handoff or last-tab cleanup call. Actual browser equivalence must be checked separately.",
+    "migrationComplete": false
+  },
+  "originalManualSkipScopesCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+    "evidence": "original-manual-skip-scopes-2026-10-09.json",
+    "fixedAndIndependentActualBrowserScenarios": 8,
+    "originalRequestRetryAndSqliteRecoveryVerified": true,
+    "laterUserPausePreventsAutomaticResume": true,
+    "fullSuitePassed": 1021,
+    "nativeServicesAndProtectedDataReadbackPassed": true,
+    "migrationComplete": false
+  },
+  "originalIndependentReceiptCompletionAudit": {
+    "status": "requires_actual_runtime_verification",
+    "scope": "successful manual confirmation in independent run and single-page tasks",
+    "observation": "synchronizeNow receipt cleanup selects acceptance/workbench tasks, while confirmManualSubmission calls finishWorkbenchTask. Independent-run final page cleanup is not proven by workbench receipt tests.",
     "runtimeDefectProven": false
   }
 }

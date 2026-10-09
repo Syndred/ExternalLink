@@ -1,0 +1,42 @@
+✔ user pause returns while both original workers drain and resume preserves their original pages, range and claims (14.3333ms)
+✔ the last claimed unattended task resumes without new task budget or deadline; new work remains denied (5.4976ms)
+✔ expired paused task is parked with original budget while expired run, changed scope and stopped state cannot resume (8.3414ms)
+✔ skipping the second concurrent worker cancels only it and advances its destination without pausing the first (48.2604ms)
+✔ a failed skip keeps its destination and last batch pointer reserved; retry reuses one durable request (2.2797ms)
+✔ selected skip preserves unknown receipt boundaries and manual targets while cleaning only its own automatic page (7.8671ms)
+✔ unattended stop parks every actual in-flight original worker and retains pending combinations and pages (2.2003ms)
+✔ repeated pause retains the same explicitly selected run and never enables unrelated historical work (1.5787ms)
+✔ fixed batch resume restores only its frozen batch and refuses changed execution identity (1.4401ms)
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (8.2536ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (4.591ms)
+✔ standalone skip retry survives SQLite reopen with one original disposition and a later pause revokes automatic resume (215.3576ms)
+✔ standalone skip cleanup cannot close a page when a late attempt, receipt, target or scope changes while locating it (7.4699ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (3.6524ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (3.112ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (2.3672ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (0.7468ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (6.0265ms)
+✔ manual skip source proof, failed event and changed original page cannot silently transfer another task (37.4596ms)
+✔ verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation (145.2518ms)
+✔ changed local or cloud receipt, actual fields and verification status cannot release a receipt page to a new product (21.7838ms)
+✔ a pending manual proof and exhausted or paused group keep its page without consuming another product budget (2.4082ms)
+✔ lost receipt-page transfer leaves the durable assignment and a closed original page becomes a manual task without replacement (8.3549ms)
+✔ unavailable reason and current-product-only skip match the actual original functions (32.0051ms)
+✔ late skip cannot overwrite changed product, scope, task or unrelated batch progress (4.6022ms)
+✔ same frozen group takes exact original page after cloud source read and lease then reloads it (6.3893ms)
+✔ source or next unknown, controller, identity, scope, host and concurrent changes prevent page transfer (22.975ms)
+✔ SQLite atomic page transfer survives reopen and rolls back source, destination, outbox and checkpoint together (73.8299ms)
+✔ lost transfer acknowledgment reuses durable assignment; navigation failure and missing page never create substitute tabs (10.9279ms)
+✔ navigation boundary pauses and changed source page use goto only under original document ownership (10.056ms)
+✔ fixed acceptance and standalone run retain original group order and denominator without wrapping (8.2453ms)
+✔ a newly received next product stays untouched while the next pending product receives the original page (4.5045ms)
+✔ recovered assignment revalidates cloud source and refuses a newer unknown source without opening another page (3.6895ms)
+✔ late cloud lease reply cannot overwrite a newly protected local task or switched workspace (1.4391ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 771.4153

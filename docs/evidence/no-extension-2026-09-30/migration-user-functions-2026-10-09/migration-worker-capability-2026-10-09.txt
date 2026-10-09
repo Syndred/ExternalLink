@@ -1,0 +1,1 @@
+{"ok":true,"kind":"published_refill_worker_invalid_proof_rejected","newWorkerOperationRecognized":true,"missingClickAndReceiptProofRejected":true,"allCloudDocumentsAndRevisionsUnchanged":true,"productionBusinessWrites":0,"realSubmissions":0,"realModels":0}

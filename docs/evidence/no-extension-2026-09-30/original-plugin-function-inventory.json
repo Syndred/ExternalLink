@@ -3483,7 +3483,7 @@
     "migrationComplete": false
   },
   "originalExistingReceiptRefillCheckpoint": {
-    "status": "ordinary_fill_only_verified_manual_click_receipt_observer_pending",
+    "status": "ordinary_fill_only_verified_manual_observer_published_in_followup_checkpoint",
     "sourceCommit": "6cd1fe71d7c1e368c8eee0d9f05ae6501d26a340",
     "sourcePublished": true,
     "nativeServicesUpdated": true,
@@ -3495,7 +3495,33 @@
     "newSubmissionTasks": 0,
     "realSubmissions": 0,
     "realModels": 0,
-    "remainingManualReceiptObserver": "not_connected; frozen original arms a baseline watch, native original watch requires an unsubmitted task",
+    "formerRemainingManualReceiptObserver": "not_connected at 6cd1fe7; superseded by originalRefillManualWatchDelivery",
+    "migrationComplete": false,
+    "manualReceiptObserverVerified": true,
+    "manualReceiptObserverEvidence": "migration-user-functions-2026-10-09/summary.json"
+  },
+  "originalRefillManualWatchDelivery": {
+    "date": "2026-10-09",
+    "status": "published_with_original_markers_legacy_receipts_and_pending_sync_protection",
+    "sourceCommit": "2516d23e0e28c01f41581573d50db55f106c1611",
+    "workerVersion": "e0fb4ddf-55c0-4a32-a2b9-90d0d8535210",
+    "evidence": "migration-user-functions-2026-10-09/summary.json",
+    "isolatedBrowserScenarios": 12,
+    "fullRegression": {
+      "tests": 1049,
+      "pass": 1049,
+      "fail": 0,
+      "skipped": 0,
+      "log": "migration-final-full-repaired-2026-10-09.txt"
+    },
+    "controlledUiPages": 6,
+    "productionVisibleProducts": 8,
+    "productionActivity": 786,
+    "productionUntouchedCombinationsExcluded": 111,
+    "archivedPlaceholderSourceRetained": true,
+    "protectedOriginalBusinessUnchanged": true,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
     "migrationComplete": false
   }
 }

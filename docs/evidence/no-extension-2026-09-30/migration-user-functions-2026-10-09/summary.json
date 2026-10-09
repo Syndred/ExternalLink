@@ -200,8 +200,8 @@
     }
   ],
   "fullRegressionPending": false,
-  "workerPublished": false,
-  "nativeServicesUpdated": false,
+  "workerPublished": true,
+  "nativeServicesUpdated": true,
   "migrationComplete": false,
   "remaining": [
     "original_dynamic_controls_and_special_launch_full_acceptance",
@@ -224,5 +224,102 @@
     "reason": "Exact pre-refactor ledger hash test did not allow the environment-only self/globalThis binding. Function body hash and both host exports now verified.",
     "log": "migration-final-full-2026-10-09.txt"
   },
-  "originalLedgerFunctionBodyHashAndBothHostExportsVerified": true
+  "originalLedgerFunctionBodyHashAndBothHostExportsVerified": true,
+  "workerVersion": "e0fb4ddf-55c0-4a32-a2b9-90d0d8535210",
+  "sourceCommit": "2516d23e0e28c01f41581573d50db55f106c1611",
+  "workerBeforeNative": true,
+  "protectedAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "productionAfter": {
+    "ok": true,
+    "kind": "readonly_user_visible_migration_audit",
+    "reports": [
+      {
+        "port": 19388,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      },
+      {
+        "port": 19389,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      }
+    ],
+    "originalTasksRunsBatchesPendingAndCredentialsUnchanged": true,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "libraryAfter": {
+    "ok": true,
+    "kind": "actual_deployed_original_library_model_readonly",
+    "reports": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      }
+    ],
+    "originalTasksRunsFixedBatchPendingAndCredentialsUnchanged": true,
+    "productionWrites": 0,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "workerCapability": {
+    "ok": true,
+    "kind": "published_refill_worker_invalid_proof_rejected",
+    "newWorkerOperationRecognized": true,
+    "missingClickAndReceiptProofRejected": true,
+    "allCloudDocumentsAndRevisionsUnchanged": true,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "originalProtectedBusinessHashUnchanged": true
 }

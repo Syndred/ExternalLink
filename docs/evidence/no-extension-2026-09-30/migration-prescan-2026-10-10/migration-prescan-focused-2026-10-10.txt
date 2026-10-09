@@ -1,0 +1,14 @@
+✔ original readonly page prescan appears through actual workbench detection with link, indexability and comment budget states (1326.581ms)
+✔ single-page interface follows the confirmed original queue page and profile without selecting another user page (31518.3108ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (5.6631ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (4.0455ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.9229ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.8871ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31588.5483

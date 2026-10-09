@@ -4704,5 +4704,17 @@
     "productionCodeChanged": false,
     "newRealSubmissions": 0,
     "migrationComplete": false
+  },
+  "originalPrescanAndBackgroundActionCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-prescan-2026-10-10/summary.json",
+    "backgroundActionCorrespondence": "migration-background-actions-2026-10-10/action-correspondence.json",
+    "backgroundActionsMapped": 62,
+    "backgroundMappingIsNotRuntimeCompletionProof": true,
+    "actualOriginalReadonlyPrescanUiRestored": true,
+    "fullSuitePassed": 1094,
+    "nativeRelease": "pending",
+    "newRealSubmissions": 0,
+    "migrationComplete": false
   }
 }

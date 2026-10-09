@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-10",
+  "pulledLatest": true,
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "gap": "original prescan existed in engine but was absent from native detection response and UI",
+  "gapReproducedBeforeFix": true,
+  "originalCompletePrescanFunctionUnchanged": true,
+  "actualUiAndNativeRuntimeDetectionVerified": true,
+  "originalPropertiesReturned": 20,
+  "linkAttributesIndexabilityAndCommentBudgetStatesVerified": true,
+  "readonlyDetectionNotDurableBusinessMutation": true,
+  "focusedTests": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullTests": {
+    "status": "passed",
+    "passed": 1094,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 472196.0462
+  },
+  "release": {
+    "status": "pending_native_service_reload",
+    "workerChanges": false
+  },
+  "backgroundActionsMapped": 62,
+  "backgroundMappingIsNotCompletionProof": true,
+  "overallMigrationComplete": false,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0,
+  "originalChromeStartedOrClosed": false,
+  "remaining": [
+    "62 action-specific execution evidence reviews",
+    "remaining original dynamic and cross-entry branch reviews",
+    "Gmail provider authorization pending human Google confirmation"
+  ],
+  "protectedStateBeforeReleaseVerified": true,
+  "protectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d"
+}

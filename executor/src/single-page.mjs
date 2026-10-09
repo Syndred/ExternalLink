@@ -60,7 +60,7 @@ export async function preparedTask(runtime,input,snapshot){
 }
 export async function sidepanelDetect(runtime,input){
  const assertCurrent=captureSinglePageContext(runtime,input);const page=await selectedPage(runtime,input),snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived)throw Error('请选择在用产品');
- const frames=[];for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;let engine;try{engine=await attachEngine(runtime.context,frame);assertCurrent();frames.push({url:frame.url(),...await engine.call({action:'detectPage',config:configFor(snapshot,profile,frame.url())})});assertCurrent();}finally{await engine?.detach();}}
+ const frames=[];for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;let engine;try{engine=await attachEngine(runtime.context,frame);assertCurrent();const url=frame.url(),detection=await engine.call({action:'detectPage',config:configFor(snapshot,profile,url)});assertCurrent();const prescan=await engine.call({action:'prescanPage'});assertCurrent();if(frame.url()!==url||!await engine.isCurrentDocument())throw Error('检测网页已跳转，请重新选择原网页');frames.push({url,...detection,prescan});}finally{await engine?.detach();}}
  return{ok:true,frames,url:page.url(),profileId:profile.id};
 }
 export async function sidepanelFill(runtime,input){

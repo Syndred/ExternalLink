@@ -1,0 +1,24 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Native attachment must retain real background visibility and focus
++ actual - expected
+
+  {
++   focused: true,
++   visible: true
+-   focused: false,
+-   visible: false
+  }
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-background-quick-open.mjs:51:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: { focused: true, visible: true },
+  expected: { focused: false, visible: false },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

@@ -1061,9 +1061,9 @@
       "id": "btnQuickOpenBatch",
       "label": "打开下一批",
       "mapping": "外链库 / 批量打开网站",
-      "verification": "原浏览器连接恢复与1/1打开已验证；本次补回数量、间隔和移除选项跨窗口／批次保持，以及100毫秒步进。实际界面通过；后台打开与自动填写组合仍待专项核验",
+      "verification": "原选择与选项保持已核验；本次原生Chrome后台打开保留前台，未选页不自动填写；切页取消、切回恢复及原生面板明确选择通过。多窗口与已建页但导航失败的结果语义仍需核对",
       "status": "mapped_requires_full_acceptance",
-      "evidence": "original-quick-open-controls-2026-10-09.json"
+      "evidence": "original-background-quick-open-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -1428,7 +1428,9 @@
     {
       "action": "quickOpenLibraryUrls",
       "mapping": "quickOpenLibrary",
-      "status": "mapped_requires_full_acceptance"
+      "status": "mapped_requires_full_acceptance",
+      "verification": "实际原生Chrome与冻结原函数后台创建规则对照通过；打开结果与多窗口的剩余边界见证据",
+      "evidence": "original-background-quick-open-2026-10-09.json"
     },
     {
       "action": "refreshSubmissionLedger",
@@ -1451,7 +1453,8 @@
       "action": "requestAutoFill",
       "mapping": "requestAutoFill 原生接口／工作台转发／共享引擎交互消息 → 原访问扫描、队列匹配及 fillAssistantTask",
       "status": "implemented_requires_full_acceptance",
-      "verification": "实际选择／共享消息／同网址重载及必填未完成回归通过；原函数8种夹具分支保留只填写且无自动推进，模型语义不确定不分类整站。普通访问入口实际隔离Chrome10种情形覆盖原字段理解／两轮视觉／最终AI修正及迟到收件未知保护，模型与云任务为夹具；设备路由已部署，真实模型成功、手动单页／特殊发布及完整原浏览器资料仍未证明"
+      "verification": "实际选择／共享消息／同网址重载及必填未完成回归通过；原函数8种夹具分支保留只填写且无自动推进，模型语义不确定不分类整站。普通访问入口实际隔离Chrome10种情形覆盖原字段理解／两轮视觉／最终AI修正及迟到收件未知保护，模型与云任务为夹具；设备路由已部署，真实模型成功、手动单页／特殊发布及完整原浏览器资料仍未证明；2026-10-09实际原生Chrome补回活动页限制、延迟前切页取消及恢复，后台页不登记，原生面板明确选择保持",
+      "backgroundActivityEvidence": "original-background-quick-open-2026-10-09.json"
     },
     {
       "action": "resume",
@@ -3163,8 +3166,20 @@
     "workerRedeployed": false,
     "migrationComplete": false,
     "remaining": [
-      "background_open_autofill_interaction"
+      "multiple_native_browser_windows",
+      "tab_created_but_navigation_failed_result_parity"
     ],
     "evidence": "original-quick-open-controls-2026-10-09.json"
+  },
+  "originalBackgroundQuickOpenCheckpoint": {
+    "sourceCommit": "4f0b76e67aa0194282a36912ada20936c8bffea5",
+    "realNativeFocus": true,
+    "backgroundTargetCreation": true,
+    "activeVisitOnly": true,
+    "cancelAndRecover": true,
+    "explicitNativeSelection": true,
+    "fullSuitePassed": 979,
+    "migrationComplete": false,
+    "evidence": "original-background-quick-open-2026-10-09.json"
   }
 }

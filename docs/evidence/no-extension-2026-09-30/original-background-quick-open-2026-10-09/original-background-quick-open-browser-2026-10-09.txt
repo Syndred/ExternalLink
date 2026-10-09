@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ ''
+- 'Original Product'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-background-quick-open.mjs:74:156 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: 'Original Product',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

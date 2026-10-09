@@ -1,0 +1,1 @@
+{"ok":true,"frozenBaseline":"bd916b2944a577b160a6afcb8a7d73d263044c0c","backgroundActiveFalse":true,"inactiveRequestIgnored":true,"switchedBeforeTimerIgnored":true,"activeRequestFilled":true,"realBrowserCallbacksControlled":true}

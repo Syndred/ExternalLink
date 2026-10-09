@@ -1,0 +1,24 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Quick-open must leave the original foreground tab active
++ actual - expected
+
+  {
++   focused: false,
++   visible: false
+-   focused: true,
+-   visible: true
+  }
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-background-quick-open.mjs:56:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: { focused: false, visible: false },
+  expected: { focused: true, visible: true },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

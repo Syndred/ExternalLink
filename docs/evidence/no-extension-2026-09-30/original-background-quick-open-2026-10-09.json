@@ -1,0 +1,252 @@
+{
+  "kind": "original_background_quick_open_and_active_visit_fidelity",
+  "sourceCommit": "4f0b76e67aa0194282a36912ada20936c8bffea5",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "actualNativeChrome": {
+    "ok": true,
+    "kind": "original_background_quick_open_native_chrome",
+    "realRuntimeConnection": true,
+    "results": [
+      {
+        "mode": "background-batch-with-auto-fill-enabled",
+        "frozenTabsActiveFalse": true,
+        "foregroundRetained": true,
+        "noRegistrationOrFill": true,
+        "backgroundContentRequestIgnored": true
+      },
+      {
+        "mode": "activate-one-background-page",
+        "originalActiveVisitMatches": true,
+        "selectedPageFilledOnly": true
+      },
+      {
+        "mode": "switch-before-delayed-fill-and-return",
+        "cancelledBeforeRegistration": true,
+        "originalCancelledRecordRecovered": true
+      },
+      {
+        "mode": "switch-during-cloud-confirmation",
+        "stoppedBeforeRegistration": true
+      },
+      {
+        "mode": "explicit-native-panel-background-selection",
+        "intentionalSelectedPageFills": true
+      }
+    ],
+    "registrations": 3,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "frozenOriginal": {
+    "ok": true,
+    "frozenBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "backgroundActiveFalse": true,
+    "inactiveRequestIgnored": true,
+    "switchedBeforeTimerIgnored": true,
+    "activeRequestFilled": true,
+    "realBrowserCallbacksControlled": true
+  },
+  "fullSuite": {
+    "passed": 979,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 163113.4507,
+    "fileConcurrency": 4
+  },
+  "firstFullSuite": {
+    "passed": 977,
+    "failed": 2,
+    "durationMs": 118148.4792,
+    "failures": [
+      "Existing auto-fill message child exceeded unchanged 45000 ms timeout",
+      "New native fixture did not observe its control page within short polling window"
+    ]
+  },
+  "failedCaseRecheck": {
+    "passed": 2,
+    "durationMs": 10792.8884,
+    "childTimeoutUnchanged": true
+  },
+  "fixtureCorrection": "Wait for actual page event while creating control target; explicit native panel verification requests a scan after opening the panel. These fixture failures are retained.",
+  "originalDifferenceFailures": [
+    "Native attachment emulated focus on background tabs",
+    "Original foreground lost focus during old context.newPage quick-open",
+    "Old assistant registered two unselected background targets while zero was expected"
+  ],
+  "services": {
+    "ok": true,
+    "kind": "background_open_published_service_process_identity",
+    "sourceCommit": "4f0b76e67aa0194282a36912ada20936c8bffea5",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 15408,
+        "StartedAt": "2026-10-09T13:55:12.3051590+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 6064,
+        "StartedAt": "2026-10-09T13:55:13.1366370+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e"
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "migrationComplete": false,
+  "remainingQuickOpenChecks": [
+    "multiple_native_browser_windows",
+    "tab_created_but_navigation_failed_result_parity"
+  ],
+  "limits": [
+    "Frozen extension callbacks are controlled; no original Chrome extension was opened.",
+    "Fresh owned native Chrome uses actual Runtime.connect and shared filling engine; cloud run replies are controlled.",
+    "Three isolated fill-only task registrations are not real submissions. No production task or model call was made.",
+    "No changes to cloud Worker; original native services only are reloaded."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-connection-before-2026-10-09.txt",
+      "capturedSha256": "edec2884bec9f9506c30fa5647a70f5cf5f73785c1b344049930cc667eed30ca",
+      "gitBlobSha256": "a9f982f521d43cd6f421ef845a7ed950f0e640f215da5dbc0255c3be62ab798d"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-opening-before-2026-10-09.txt",
+      "capturedSha256": "addedfb1b1f8a77c656db7b4f9c477879afee83a15224469656abb5ec580e250",
+      "gitBlobSha256": "60c131865eaf657957ecd2658477e32debfb28af038ea465ea3e084a19d78ab7"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-autofill-before-2026-10-09.txt",
+      "capturedSha256": "dbce0696d0386550138e4578390843cae59aa63de13b640d392289fa31ba7328",
+      "gitBlobSha256": "5478e61aaa93d6669301ed9af8d9aebaaace5f9ea10d0bb6ffb4ac74e53950e0"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-browser-2026-10-09.txt",
+      "capturedSha256": "fa536353334e42f4cf43ef98b4260a47e7bf560cdc875e7b18584836e55595c1",
+      "gitBlobSha256": "1be0137812ef3812b2d5e23d51ed52aed97d57a0ae5dc576a249c52c8043a520"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-browser-final-2026-10-09.txt",
+      "capturedSha256": "f6d7a2763aa4af2192f5ada4010a83d16f3af5854fa5c12c8711f65a058b4659",
+      "gitBlobSha256": "5a1b6a4e6919e0bf0d3cee127d424e5dbc801c7ce36fd0fde1ff43e2e2e01e51"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-focused-2026-10-09.txt",
+      "capturedSha256": "85e41fa0e194f982e1b17e0d699b9ead64cd90db45057914d8f106249ce41a33",
+      "gitBlobSha256": "8fbbe8dbd7a8217e8a506ae2e668f927b594da05ad983930e2935981d7265aeb"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-reference-2026-10-09.txt",
+      "capturedSha256": "426d9189c13cc05dbbde283244fe4d304c62ff13bbb9d9ed15fff8ddbaeb73e7",
+      "gitBlobSha256": "ec8ff9f761cf238dcc134d364d85cf540aced343fae79adcf624bad80e8c5398"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-repository-2026-10-09.txt",
+      "capturedSha256": "750694fef3a0333adbdc8c7c7d26855f7ca4bb673f7b88c31edd7ac8a4156b5c",
+      "gitBlobSha256": "8a0ef36b2f0a618a153229176b014a1c68787e3f239c5cc2df766d396af74ef2"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-timeout-recheck-2026-10-09.txt",
+      "capturedSha256": "22a5c24954bfecfd8ace4801de4316a3d7f80cbe6ed6990feaf6ee11ce1cd124",
+      "gitBlobSha256": "d2e09d63efd6cbaa97517cd6ce9dd04722ef84c253a49d8bdad75b89e05e6e5b"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-repository-final-2026-10-09.txt",
+      "capturedSha256": "b7abbb9903243360e5d0752ef209c44a49e97018be3f2f31c8e67e0ef64568da",
+      "gitBlobSha256": "39e53647b31f1b6ca6b3c95f962c1c2eb4a93206a7a8a8bbd4052a215e0fe036"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-background-quick-open-2026-10-09/original-background-quick-open-service-process-2026-10-09.txt",
+      "capturedSha256": "2a71703314431bb43460b682f69bceeeb260d797f44c3d890930c459e28554ab",
+      "gitBlobSha256": "9f8da37083cab1b195b0f37d6b0e9878be60c37750768fdf0e5a28ace850438c"
+    }
+  ]
+}

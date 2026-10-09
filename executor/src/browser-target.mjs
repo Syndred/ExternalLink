@@ -21,13 +21,22 @@ export function isStaleTargetError(error){return staleTargetError(error);}
 // target, not completion of its network navigation. Chrome owns the loading
 // page even when its renderer attaches later or the destination fails to load.
 export async function createBackgroundTarget(context,url){
+ return createBrowserTarget(context,url,true);
+}
+
+export async function createForegroundTarget(context,url,assertCurrent=()=>{}){
+ return createBrowserTarget(context,url,false,assertCurrent);
+}
+
+async function createBrowserTarget(context,url,background,assertCurrent=()=>{}){
  const browser=context.browser();
  if(!browser)throw Error('浏览器连接已断开');
  const existing=context.pages()[0],seed=existing||await context.newPage(),info=await getTargetInfo(context,seed);
  if(!info)throw Error('浏览器页签已变化，请重新打开');
  const session=await browser.newBrowserCDPSession();
  try{
-  const {targetId}=await session.send('Target.createTarget',{url,background:true,...(info.browserContextId?{browserContextId:info.browserContextId}:{})});
+  assertCurrent();
+  const {targetId}=await session.send('Target.createTarget',{url,background,...(info.browserContextId?{browserContextId:info.browserContextId}:{})});
   if(!existing)await seed.close().catch(()=>{});
   return targetId;
  }finally{await session.detach().catch(()=>{});}

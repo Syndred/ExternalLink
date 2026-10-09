@@ -13,7 +13,7 @@ controls.add('/saveAssistantSettings');controls.add('/requestAutoFill');
 controls.add('/clearSiteAnnotation');controls.add('/getBatchLog');
 for(const route of ['/runExportSources','/exportBatchReport','/exportAutomationRun'])controls.add(route);
 for(const route of ['/localRunHistorySources','/previewLocalRunHistory','/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'])controls.add(route);
-for(const route of ['/manualSkip','/manualSubmit','/previewManualConfirmation','/confirmSubmissionSuccess','/stop'])controls.add(route);
+for(const route of ['/openManualTaskPage','/manualSkip','/manualSubmit','/previewManualConfirmation','/confirmSubmissionSuccess','/stop'])controls.add(route);
 for(const route of ['/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'])controls.add(route);
 for(const route of ['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'])controls.add(route);
 for(const route of ['/localRecoverySources','/previewLocalRecovery','/submissionJournalRecoverLocal'])controls.add(route);

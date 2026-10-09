@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import {openManualTaskPage} from './manual-task-page.mjs';
 import {originalCommentRequest} from './comment-cache.mjs';
 import {startLinkMonitor,dismissMonitorAlert} from './link-monitor.mjs';
 import {startPublicLibrarySync} from './public-library-sync.mjs';
@@ -1395,6 +1396,7 @@ export class Runtime {
     if(action==='getSubmissionQueue')return submissionQueue(this,input);
     if(action==='advanceSubmission')return submissionQueue(this,input,true);
     if(action==='removeFromSubmissionQueue')return removeFromSubmissionQueue(this,input);
+    if(action==='openManualTaskPage')return openManualTaskPage(this,input);
     if(action==='manualSkip')return manualSkip(this,input);
     if(action==='manualSubmit')return manualSubmit(this,input);
     if(action==='previewManualConfirmation')return previewManualConfirmation(this,input);

@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
+import {join,resolve,sep} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {createHash} from 'node:crypto';
+import {DatabaseSync} from 'node:sqlite';
+import {chromium} from 'playwright';
+import {Store} from '../src/store.mjs';
+import {connectionIdentity} from '../src/workbench-connections.mjs';
+import {workbenchScope} from '../src/workbench-sync.mjs';
+import {D1Store} from '../../cloud/worker/src/d1-store.mjs';
+import {d1Executor} from '../../cloud/worker/src/d1-executor.mjs';
+
+const home=await mkdtemp(join(tmpdir(),'el-cloud-sync-upload-')),sqlite=new DatabaseSync(':memory:');
+for(const file of ['0001_d1_storage.sql','0002_d1_executor.sql'])sqlite.exec(readFileSync(new URL('../../cloud/worker/migrations/'+file,import.meta.url),'utf8'));
+const db={prepare(sql){let args=[];return{bind(...values){args=values;return this;},first:async()=>sqlite.prepare(sql).get(...args)||null,all:async()=>({results:sqlite.prepare(sql).all(...args)}),run:async()=>{const stmt=sqlite.prepare(sql);return stmt.columns().length?{results:stmt.all(...args),meta:{changes:0}}:{results:[],meta:{changes:stmt.run(...args).changes}};}};},async batch(statements){sqlite.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+const objects=new Map(),bucket={head:async key=>objects.has(key)?{customMetadata:objects.get(key).meta?.customMetadata}:null,put:async(key,value,meta)=>objects.set(key,{bytes:new Uint8Array(value),meta}),get:async key=>{const object=objects.get(key);return object?{arrayBuffer:async()=>object.bytes.slice().buffer,httpMetadata:object.meta?.httpMetadata}:null;}};
+const env={LEDGER_DB:db,MEDIA_BUCKET:bucket,APP_ACCESS_TOKEN:'fixture-admin'},calls=[];
+let backend,web,browser,store,blockedToken=null;
+const cloud=http.createServer(async(req,res)=>{
+ try{
+  const url=new URL(req.url,'http://127.0.0.1'),body=[];for await(const chunk of req)body.push(chunk);
+  calls.push({method:req.method,path:url.pathname,workspace:url.searchParams.get('workspace')||'default'});
+  if(req.headers.authorization==='Bearer '+blockedToken){res.writeHead(401,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:'fixture credential unavailable'}));return;}
+  const response=await d1Executor(new Request('https://fixture.example'+url.pathname+url.search,{method:req.method,headers:{Authorization:req.headers.authorization||'','Content-Type':'application/json'},...(req.method==='POST'?{body:Buffer.concat(body)}:{})}),env,url.searchParams.get('workspace')||'default');
+  res.writeHead(response.status,{'Content-Type':'application/json'});res.end(await response.text());
+ }catch(error){res.writeHead(500,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}
+});
+await new Promise(done=>cloud.listen(0,'127.0.0.1',done));const endpoint='http://127.0.0.1:'+cloud.address().port;
+const cloudCall=async(workspace,route,token,body)=>{const r=await fetch(endpoint+'/v2/executor/'+route+'?workspace='+workspace,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});return{status:r.status,data:await r.json()};};
+async function start(name){
+ const child=spawn(process.execPath,[resolve(import.meta.dirname,'../src/'+name)],{windowsHide:true,env:{...process.env,EXTERNALLINK_HOME:home,EXTERNALLINK_PORT:'0',EXTERNALLINK_WEB_PORT:'0'},stdio:['ignore','pipe','pipe']});let errors='';child.stderr.on('data',part=>errors+=part);child.stdout.resume();const service={child};if(name==='server.mjs')backend=service;else web=service;
+ for(let n=0;n<100;n++){if(child.exitCode!==null)throw Error('fixture service exited: '+errors);try{const file=JSON.parse(await readFile(join(home,name==='server.mjs'?'server.json':'workbench.json'),'utf8'));if(file.pid===child.pid){service.endpoint=file.endpoint;return service;}}catch{}await new Promise(done=>setTimeout(done,50));}throw Error('fixture service startup exceeded observation budget');
+}
+async function stop(service){if(service?.child.exitCode===null){const stopped=once(service.child,'exit');service.child.kill();await stopped;}}
+const local=async(origin,path,body,id)=>{const r=await fetch(origin+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer fixture-local','Content-Type':'application/json',...(id?{'X-Workbench-Connection':id}:{})},...(body?{body:JSON.stringify(body)}:{})});return{status:r.status,data:await r.json()};};
+const docs={siteProfiles:{p:{id:'p',name:'原产品',fields:{Name:'原产品',Url:'https://product.example'}}},activeSiteId:'p',selectedSiteIds:['p'],cfgName:'云端联系人',urlList:'https://target.example/form',siteAnnotations:{},submissionTimeline:{},submissionRecords:{},linkMonitorSchedule:{enabled:false,minutes:1440}};
+const business=s=>JSON.stringify([s.valuesByInsertion('task:'),s.get('acceptanceBatch'),s.get('workbenchBatch:original'),s.pending(),s.logs({scope:workbenchScope(s.get('pair'))})]);
+try{
+ const ledger=new D1Store(db,bucket,'default');for(const [key,data]of Object.entries(docs))await ledger.putDocument(key,data,0);
+ const enrollment=await cloudCall('default','devices','fixture-admin',{});assert.equal(enrollment.status,200);const a={endpoint,storageBackend:'d1',...enrollment.data},pair={...a,localToken:'fixture-local'},scope=workbenchScope(pair);
+ const registered=await cloudCall('default','runs',a.deviceToken,{run:{id:'original-run',profileId:'p',profileRevision:1,createdAt:'2026-10-07T00:00:00Z',mode:'single_page_preparation',authorization:'fill_only',feeLimit:0,tasks:[{id:'original-task',url:'https://target.example/form',destinationKey:'target.example/form'}]}});assert.equal(registered.status,200);
+ const originalTask={...registered.data.tasks[0],status:'submitted_unconfirmed',attemptBoundary:'original-boundary',reason:'原结果未知',profileSnapshot:docs.siteProfiles.p},fixed={id:'original-fixed',status:'paused',cursor:13,count:30};
+ store=new Store(join(home,'outbox.sqlite'));const initial=(await cloudCall('default','snapshot',a.deviceToken)).data;initial.documents.cfgName='原本机联系人';initial.documents.cfgEmail='only-local@example.com';
+ store.set('pair',pair);store.set('paused',true);store.set('applicationSnapshot',{scope,snapshot:initial});store.set('run:original-run',registered.data.run);store.set('task:original-task',originalTask);store.set('acceptanceBatch',fixed);store.set('workbenchBatch:original',{id:'original',status:'paused',cursor:13,usedTasks:13,usedAiActions:4,config:{fillOnly:true,concurrency:3},items:[{taskId:'original-task',identity:'target.example/form::p'}]});
+ store.set('appMutation:original-conflict',{id:'original-conflict',scope,at:'2026-10-07T00:00:00Z',key:'cfgName',baseRevision:0,baseData:'原本机联系人',status:'conflict',error:'原资料冲突保留',operation:{id:'original-conflict',type:'settings',key:'cfgName',value:'本机待上传联系人'}});
+ const learning={id:'original-learning',scope,status:'pending',profileId:'p',identity:{name:'原产品',url:'https://product.example'},url:'https://target.example/form',mappings:{},schema:{original:true}};store.set('fillLearning:original-learning',learning);const expected=business(store);store.close();store=null;
+ backend=await start('server.mjs');web=await start('workbench-server.mjs');
+ for(const origin of [backend.endpoint,web.endpoint]){assert.equal((await local(origin,'/commitCloudPull',{confirmed:true,previewId:'absent'})).status,400);assert.equal((await local(origin,'/cloudSyncPull',{discardLocalChanges:true})).status,400);const status=await local(origin,'/cloudSyncStatus',{});assert.equal(status.data.status,'conflict');assert.ok(status.data.localOnlyKeys.includes('cfgEmail'));}
+
+ const fixtureInfo={home,web:web.endpoint,backend:backend.endpoint,cloud:endpoint};
+ await import('node:fs').then(fs=>fs.writeFileSync(new URL('./migration-reset-ui-fixture-info-2026-10-09.json',import.meta.url),JSON.stringify(fixtureInfo,null,2)));
+ console.log(JSON.stringify(fixtureInfo));
+ await new Promise(resolve=>{process.on('SIGTERM',resolve);process.on('SIGINT',resolve);setTimeout(resolve,1800000);});
+}finally{store?.close();await stop(web);await stop(backend);await new Promise(done=>cloud.close(done));sqlite.close();}

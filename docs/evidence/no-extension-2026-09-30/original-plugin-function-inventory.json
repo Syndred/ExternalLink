@@ -1656,10 +1656,7 @@
   "note": "原9个待办已有普通流程及隔离验证；静态入口映射不能替代全量验收，原设置与动态操作、特殊发布和完整历史资料等功能族仍需验收。",
   "unverifiedFamilies": [
     "special_launch_flows",
-    "dynamic_controls",
-    "historical_local_favorites",
-    "old_device_media_associations",
-    "original_large_backup_history"
+    "dynamic_controls"
   ],
   "autoVisitCheckpoint": {
     "originalPreference": "autoFillOnVisit",
@@ -3618,6 +3615,56 @@
     "bothCloudDomainsAccepted": false,
     "overallMigrationComplete": false,
     "evidence": "migration-rdap-2026-10-09/summary.json",
-    "remaining": "bai.tools actual registry rate limit; four navigation branches; first migration/reset isolated UI; remaining cross-entry audit"
+    "remaining": "bai.tools actual registry rate limit; remaining special launch and dynamic cross-entry audit"
+  },
+  "originalFirstMigrationResetNavigationCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "4d9fc4ea208c840928e1807da3b0afef850b4ee5",
+    "pulledLatest": true,
+    "fullTests": 1060,
+    "fullPassed": 1060,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "focusedFamilyPassed": 30,
+    "sixPageUiRegressionPassed": true,
+    "resetDialogRejectsInvalidInputVisibly": true,
+    "resetBackendBusyPreservesInput": true,
+    "actualIsolatedResetBackupVerified": true,
+    "actualIsolatedReconnectionVerified": true,
+    "actualIsolatedFirstMigrationVerified": true,
+    "pendingEditImportGuardKept": true,
+    "actualFourNavigationEntriesVerified": true,
+    "manualScopeRegressionRows": 7,
+    "manualScopeExcludesReceiptWithOldManualStatus": true,
+    "originalCloudRunsAndTasksPreserved": true,
+    "batchPreviewPersistedAndNotStarted": true,
+    "native19389ServesExactUpdatedScript": true,
+    "nativeRuntimeCodeChanged": false,
+    "nativeReloadRequired": false,
+    "workerChanged": false,
+    "protectedProductionDataUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "models": 0,
+    "overallMigrationComplete": false,
+    "evidence": "migration-reset-manual-2026-10-09/summary.json"
+  },
+  "historicalUnverifiedFamiliesBeforeCurrentSourceAudit": [
+    "special_launch_flows",
+    "dynamic_controls",
+    "historical_local_favorites",
+    "old_device_media_associations",
+    "original_large_backup_history"
+  ],
+  "currentSourceRecoveryAudit": {
+    "availableOriginalLedgerPreserved": true,
+    "knownMissingOriginalFavorites": 0,
+    "originalMediaFieldAssociationsPreserved": 108,
+    "originalHistoricalCombinationsRestored": 8815,
+    "evidence": [
+      "migration-mark-all-2026-10-09/original-ledger-recheck-2026-10-09.json",
+      "original-history-formal-restoration-2026-10-08.json"
+    ],
+    "unknownOtherDeviceSourcesAreNotKnownLossOrBlockingRequirement": true
   }
 }

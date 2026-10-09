@@ -1,0 +1,12 @@
+Browser tab: 1, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:52168/".
+1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/
+	2 container detail
+		3 button Description: 关闭详情, ID: close-detail
+		4 container detail-content
+			5 heading 导入原插件备份, Value: 2
+				6 text 导入原插件备份
+			7 text 先检查合并范围，再确认导入。已有收件证据保留；同一产品的非空资料按原备份规则合并。大备份分段保存到本机，中断后重新选择原文件可继续。媒体路径不会变成实际文件，请保留原素材。
+			8 button 原插件备份文件
+			9 text 请先同步或解决待处理的本机编辑，再导入备份
+
+The focused UI element is 8 button 原插件备份文件

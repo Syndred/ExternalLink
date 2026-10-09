@@ -1,0 +1,12 @@
+Browser tab: 1, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:52168/".
+1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/
+	2 container detail
+		3 button Description: 关闭详情, ID: close-detail
+		4 container detail-content
+			5 heading 本机工作区已清空, Value: 2
+				6 text 本机工作区已清空
+			7 text 备份完整性：ok
+			8 text 恢复备份保存在：C:\Users\Administrator\.externallink-backups\workspace-reset-2026-10-09T12-57-54-832Z-7f78b91c-2b21-4b0b-bae2-47c44ebf57bd
+			9 button 重新连接云端
+
+The focused UI element is 1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/

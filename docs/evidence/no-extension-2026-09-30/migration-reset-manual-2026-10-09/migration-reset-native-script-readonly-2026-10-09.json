@@ -1,0 +1,11 @@
+{
+  "nativeWorkbenchPort": 19389,
+  "status": 200,
+  "sourceAndServedBytesMatch": true,
+  "applicationSha256": "db3e85aa882c4d7becd4c5943b090f40e59daf4e1e3d780ce7640e381d2d2188",
+  "containsManualTaskScope": true,
+  "containsResetDialogError": true,
+  "nativeRestartRequired": false,
+  "reason": "workbench server reads application.js from disk for each request",
+  "productionWrites": 0
+}

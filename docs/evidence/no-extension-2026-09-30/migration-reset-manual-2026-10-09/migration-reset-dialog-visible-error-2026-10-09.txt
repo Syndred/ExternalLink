@@ -1,0 +1,15 @@
+Browser tab: 1, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:52168/".
+1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/
+	2 container detail
+		3 button Description: 关闭详情, ID: close-detail
+		4 container detail-content
+			5 heading 清空本机工作区, Value: 2
+				6 text 清空本机工作区
+			7 text 先创建本机完整备份，再清空本机资料缓存、连接和任务队列。云端账本、浏览器登录和素材文件保留。完成后需要重新连接云端。
+			8 container
+				9 text 输入“清空本机工作区”确认
+				10 text field (settable) 清空本机工作区确认文字
+			11 button 确认备份并清空本机
+			12 text 请输入清空本机工作区确认
+
+The focused UI element is 1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/

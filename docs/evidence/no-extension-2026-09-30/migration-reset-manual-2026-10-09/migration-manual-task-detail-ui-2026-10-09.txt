@@ -1,0 +1,16 @@
+Browser tab: 1, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:52168/".
+1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/
+	2 container detail
+		3 button Description: 关闭详情, ID: close-detail
+		4 container detail-content
+			5 heading 原产品 · https://target.example/form, Value: 2
+				6 text 原产品 · https://target.example/form
+			7 text 需要人工处理 未投稿
+			8 text 单页填写，尚未授权投稿
+			9 button 检测原页
+			10 button 准备原任务
+			11 button 打开待办页面
+			12 button 人工确认成功
+			13 button 跳过本次处理
+
+The focused UI element is 3 button Description: 关闭详情, ID: close-detail

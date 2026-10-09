@@ -1,0 +1,38 @@
+✔ same-device credential update preserves frozen tasks, pending events, logs, original scope and private backup (125.9403ms)
+✔ switch and restore retain each connection exact task IDs, pending event order, logs, original policy and credential vault (195.3817ms)
+✔ same workspace different device and endpoint have separate saved task and outbox ownership (128.8292ms)
+✔ commit response loss recovers original receipt across SQLite restart without another cloud call or backup (142.6583ms)
+✔ transaction failure leaves active and archived records intact and same preview retry makes a new private backup (130.9375ms)
+✔ post-commit initialization failure truthfully reports saved connection and retries original lifecycle only (184.5687ms)
+✔ an older unchanged-key receipt cannot clear a newer failed lifecycle or restart an already running background (248.3265ms)
+✔ changed local task, event, cached document, old identity or expired preview prevents replacement (147.5487ms)
+✔ remote revision changes and target identity mismatch reject before backup; stable revision key order is accepted (170.5961ms)
+✔ saved history is available offline, read-only and paginated without missing or duplicating original IDs (578.8731ms)
+✔ invalid enrollment, busy operations and local changes during target readback retain original identity (124.1926ms)
+✔ connection hold permits original-device restoration and pending synchronization while preventing automatic execution recovery (192.55ms)
+✔ original Neon device can update its key, switch to D1 and restore original legacy scope without losing task ownership (330.0197ms)
+✔ workspace clear backs up all saved connection records and receipts before clearing active and archived data (195.5225ms)
+✔ original-format backup merges restore table seeds, stable profile identities and source history while keeping current rows and receipts (11.8145ms)
+✔ backup preview and actual per-key import restore the same seeded products and canonical history after a lost reply (46.4487ms)
+✔ table-only backups expose recovered source products and import both seeds without counting legacy flags as receipts (13.7647ms)
+✔ keeping a concurrent cloud product excludes related backup history while independent settings still merge (19.4003ms)
+✔ ordinary new backup products also couple their current and batch selections when cloud conflict keeps them excluded (17.3839ms)
+✔ local conflict choice applies the original frozen import changes while retaining newer cloud products, receipts, rows and media (24.3641ms)
+✔ SQLite reopen restores a missing original import child and its dependency without duplicating a committed request (199.0116ms)
+✔ queued import dependency metadata repairs a saved child before direct cloud conflict resolution (13.2569ms)
+✔ failure to persist an import child rolls back its parent and every mutation before a cloud request (5.2516ms)
+✔ parallel confirmations share one original import and expose its running state until the same operation finishes (22.9683ms)
+✔ prepared import requests reject unsafe fields and invalid product maps without changing records (0.6276ms)
+✔ separate backup imports retain sparse original task receipts exactly and accept only publication additions (17.6797ms)
+✔ prepared imports reject absent whole-field content rather than writing undefined documents (0.4135ms)
+✔ continuing an original queued import waits for its background flush and keeps the same mutations (14.8924ms)
+✔ first connection verifies enrollment, rejects expired nonce and preserves an existing device (71.476ms)
+✔ local clear creates an intact private SQLite recovery backup before removing state and pending events (86.7633ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3538.3876

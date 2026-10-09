@@ -1,0 +1,73 @@
+Browser tab: 1, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:52168/".
+1 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:52168/
+	2 container
+		3 link Description: ExternalLink 外链助手, Value: 127.0.0.1:52168/#products
+		4 container 工作区
+			5 button 我的网站
+			6 button 外链库
+			7 button 提交总览
+			8 button 运行任务
+			9 button AI 评论
+			10 button 设置与备份
+		11 button Gmail 只读连接, ID: gmail-settings
+		12 text 产品资料、投稿和回执
+		13 text 保存在同一份账本
+	14 container
+		15 text EXTERNALLINK
+		16 heading 运行任务, Value: 1, ID: heading
+			17 text 运行任务
+		18 button 刷新云端, ID: refresh
+	19 text 本机资料缓存 · 2026/10/9 20:59:27 · 1 个在用网站 · 2 个外链目标 · 待同步 0 · 本机编辑待同步 0 · 媒体待同步 0 · 填表学习待同步 0
+	20 container content
+		21 button 导出本轮报告
+		22 button 导出执行记录
+		23 button 恢复原执行历史
+		24 pop up button (collapsed, settable) Description: 任务范围, Value: 待人工处理, Secondary Actions: Expand
+			25 menu
+				26 本次固定验收
+				27 所有历史任务
+				28 (selected) 待人工处理
+		29 button 当前网页填写
+		30 button 停止本次执行
+		31 text 执行器已暂停 · 空闲 · 待同步 0
+		32 button 查看执行日志
+		33 button 暂停执行
+		34 button 同步与核验
+		35 search text field (settable) 搜索
+		36 pop up button (collapsed, settable) Description: 筛选产品, Value: 全部产品, Secondary Actions: Expand
+			37 menu
+				38 (selected) 全部产品
+				39 原产品
+		40 table
+			41 row
+				42 cell
+					43 text 产品
+				44 cell
+					45 text 目标站
+				46 cell
+					47 text 执行
+				48 cell
+					49 text 收件
+				50 cell
+					51 text 同步
+				52 cell
+					53 text 详情
+			54 row
+				55 cell
+					56 text 原产品
+				57 cell
+					58 text https://target.example/form
+				59 cell
+					60 text 需要人工处理
+					61 text 单页填写，尚未授权投稿
+				62 cell
+					63 text 未投稿
+				64 cell
+					65 text 已同步
+				66 cell
+					67 button 查看
+		68 text 1 项 · 1 / 1
+		69 button 上一页
+		70 button 下一页
+
+The focused UI element is 8 button 运行任务

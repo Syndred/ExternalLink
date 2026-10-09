@@ -1,0 +1,24 @@
+{
+  "actualNativeServicesAndAuthenticatedIsolatedD1": true,
+  "actualInAppNavigationEntries": [
+    "运行任务",
+    "外链库",
+    "批量提交",
+    "任务范围：待人工处理"
+  ],
+  "manualTaskId": "original-task",
+  "manualTaskDetailOpened": true,
+  "previewId": "4cc87ac6-3f15-4df5-897c-d5969f947f71",
+  "previewUrls": [
+    "https://target.example/form",
+    "https://migration.example/form"
+  ],
+  "fillOnly": true,
+  "previewNotStarted": true,
+  "cloudRunsAndOriginalTaskPreserved": true,
+  "paused": true,
+  "pending": 0,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "models": 0
+}

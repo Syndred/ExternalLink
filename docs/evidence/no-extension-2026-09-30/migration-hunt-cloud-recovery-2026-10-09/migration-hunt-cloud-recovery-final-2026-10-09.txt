@@ -1,0 +1,15 @@
+{"scenario":"hunt-new-draft","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-lost-reply","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-cloud-outage","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-unknown","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-changed-checklist","controlledCreateClicks":0,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-pause-boundary","controlledCreateClicks":0,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+✔ actual Product Hunt draft creation persists original boundaries evidence and authenticated cloud recovery without repeat creation (24097.5705ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24664.3483

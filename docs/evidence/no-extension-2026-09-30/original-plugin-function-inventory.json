@@ -1564,9 +1564,11 @@
     "deployed": true,
     "specificUiVerified": true,
     "mediaFileInputsVerified": true,
-    "mediaUploadVerified": false,
+    "mediaUploadVerified": true,
     "realSiteReceipt": false,
-    "evidence": "product-hunt-learning-2026-10-05.json"
+    "evidence": "product-hunt-learning-2026-10-05.json",
+    "authenticatedReceiptRecoveryEvidence": "migration-hunt-cloud-recovery-2026-10-09/summary.json",
+    "mediaUploadVerificationScope": "isolated actual file inputs and exact bytes; no real-site upload"
   },
   "fillLearningCheckpoint": {
     "originalHelpers": [
@@ -3539,6 +3541,20 @@
     "originalTokenAndLifetimeRetained": true,
     "externalFormSourceRechecked": true,
     "protectedOriginalBusinessUnchanged": true,
+    "migrationComplete": false
+  },
+  "originalProductHuntAuthenticatedReceiptRecovery": {
+    "status": "actual_draft_boundary_receipt_and_unknown_outcome_recovery_verified",
+    "evidence": "migration-hunt-cloud-recovery-2026-10-09/summary.json",
+    "scenarios": 6,
+    "originalTaskRunTargetAndPageRetained": true,
+    "actualFieldsAndScreenshots": true,
+    "authenticatedReceiptAndTimelineReadback": true,
+    "lostReplyAndCloudOutageRecovered": true,
+    "unknownAndPausedBoundaryPreventRepeat": true,
+    "nineStageMediaSeparateRun": true,
+    "productSourceChanged": false,
+    "realSiteReceipt": false,
     "migrationComplete": false
   }
 }

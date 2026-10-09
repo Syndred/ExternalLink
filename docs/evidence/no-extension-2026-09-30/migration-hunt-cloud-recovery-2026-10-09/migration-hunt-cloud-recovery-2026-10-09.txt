@@ -1,0 +1,25 @@
+✖ actual Product Hunt draft creation persists original boundaries evidence and authenticated cloud recovery without repeat creation (604.4688ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1189.7276
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:535:1
+✖ actual Product Hunt draft creation persists original boundaries evidence and authenticated cloud recovery without repeat creation (604.4688ms)
+  Error: 回执范围或证据不完整
+      at Cloud.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/cloud.mjs:32:64)
+      at async f.cloud.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:549:249)
+      at async Runtime.synchronizeNow (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/runtime.mjs:472:11)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:551:647)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 403,
+    cloudFailure: true,
+    cloudQuota: false
+  }

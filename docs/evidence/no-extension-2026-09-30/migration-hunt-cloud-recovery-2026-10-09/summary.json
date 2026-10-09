@@ -1,0 +1,183 @@
+{
+  "kind": "original_product_hunt_authenticated_receipt_recovery",
+  "date": "2026-10-09",
+  "sourceBaseline": "4004e13",
+  "remotePulled": true,
+  "publishedProductSource": "568f1bfc483ecca403c7cb109f5004d67b5dd015",
+  "productionSourceChanged": false,
+  "workerOrServicesRedeployed": false,
+  "isolatedAuthenticatedD1": true,
+  "actualNativeRuntime": true,
+  "actualFilledFieldReports": true,
+  "scenarios": [
+    {
+      "scenario": "hunt-new-draft",
+      "controlledCreateClicks": 1,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": true,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    },
+    {
+      "scenario": "hunt-lost-reply",
+      "controlledCreateClicks": 1,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": true,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    },
+    {
+      "scenario": "hunt-cloud-outage",
+      "controlledCreateClicks": 1,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": true,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    },
+    {
+      "scenario": "hunt-unknown",
+      "controlledCreateClicks": 1,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": false,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    },
+    {
+      "scenario": "hunt-changed-checklist",
+      "controlledCreateClicks": 0,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": false,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    },
+    {
+      "scenario": "hunt-pause-boundary",
+      "controlledCreateClicks": 0,
+      "boundaryIndependentlyRead": true,
+      "receiptCloudVerified": false,
+      "emptyRestore": true,
+      "noRepeat": true,
+      "realSubmissions": 0,
+      "realModels": 0
+    }
+  ],
+  "nineStageSeparateRun": {
+    "ok": true,
+    "kind": "synthetic_producthunt_launch",
+    "originalStages": 9,
+    "sidepanelOriginalTask": true,
+    "frozenProfileAcrossCloudChanges": true,
+    "previousPagePreserved": true,
+    "actualFieldsVerified": true,
+    "cloudMediaBridge": true,
+    "actualFileInputs": true,
+    "logoFiles": 1,
+    "galleryFiles": 2,
+    "fileBytesVerified": true,
+    "defaultWaitsForConfirmation": true,
+    "legalGatePreserved": true,
+    "originalConsentBinding": true,
+    "durableBoundaryBeforeTrustedClick": true,
+    "freshButtonPosition": true,
+    "oneTrustedCreateClick": true,
+    "newDraftEvidence": true,
+    "noRepeat": true,
+    "networkPosts": 0,
+    "interceptedRequests": 1
+  },
+  "family": {
+    "tests": 15,
+    "pass": 15,
+    "fail": 0
+  },
+  "lastProductFullRegression": {
+    "tests": 1051,
+    "pass": 1051,
+    "newAddedTestNotIncluded": true
+  },
+  "protection": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "visible": {
+    "ok": true,
+    "kind": "readonly_user_visible_migration_audit",
+    "reports": [
+      {
+        "port": 19388,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      },
+      {
+        "port": 19389,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      }
+    ],
+    "originalTasksRunsBatchesPendingAndCredentialsUnchanged": true,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "logs": [
+    "migration-hunt-cloud-recovery-2026-10-09.txt",
+    "migration-hunt-cloud-recovery-prepared-2026-10-09.txt",
+    "migration-hunt-cloud-recovery-final-2026-10-09.txt",
+    "migration-hunt-nine-stage-final-2026-10-09.txt",
+    "migration-hunt-family-final-2026-10-09.txt",
+    "migration-hunt-protection-2026-10-09.txt",
+    "migration-hunt-visible-2026-10-09.txt"
+  ],
+  "realSubmissions": 0,
+  "realModels": 0,
+  "migrationComplete": false
+}

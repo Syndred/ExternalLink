@@ -1569,6 +1569,10 @@
         {
           "path": "tests/submify-import.test.mjs",
           "sha256": "96457e6748fb0512b7af3948c59f00a5010e7b97c7c7ac40ed1a1d1dfee66121"
+        },
+        {
+          "path": "tests/executor-original-public-library-ui.test.mjs",
+          "sha256": "7b19dc4e79e05629f534018fe047cc5d52d05b7221f3dcd6fea0ba4bc5203d7e"
         }
       ],
       "requiredEvidenceReview": "核对分页、失败、不完整快照、重复同步及新增站点默认状态。",

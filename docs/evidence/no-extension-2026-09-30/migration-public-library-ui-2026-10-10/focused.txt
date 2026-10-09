@@ -1,0 +1,24 @@
+✔ monitor matches real destination hosts, excluding query strings, suffix domains, scripts and commented markup (1.8722ms)
+✔ monitor preserves receipt evidence, upgrades only checked links, records loss and creates one actionable alert (34.7298ms)
+✔ original manual monitoring stays silent while scheduled link loss persists desktop delivery evidence and respects opt-out (14.0444ms)
+✔ unknown monitor results and stale proof cannot create an upgraded receipt (1.2359ms)
+✔ lost monitor result response resumes the original mutation plan without re-fetching or duplicate events (8.4795ms)
+✔ scheduled monitoring respects disabled settings, original five-minute startup and durable resume state (4.0284ms)
+✔ public library imports all source IDs, preserves originals, and applies gates before making new rows available (4.5687ms)
+✔ partial public library pages fail before any mutation; unknown write response resumes frozen source IDs (4.933ms)
+✔ monitor reads a real local HTTP response and follows redirects with zero POST requests (32.6165ms)
+✔ native notification commands keep text literal and hidden; failure is recorded without losing the persistent alert (3.4435ms)
+✔ Windows desktop delivery requires the native BalloonTipShown event; a zero exit alone cannot prove display (8.8802ms)
+✔ public aliases sharing an entrance preserve all source IDs across source-owned refreshes (1.0247ms)
+✔ repair a previously confirmed import using its frozen IDs without rewriting human fields or repeating import (8.4515ms)
+✔ actual public-library UI rejects incomplete pages and resumes frozen original source IDs after disk restart and reply loss (1593.3102ms)
+Submify incremental import tests passed
+✔ tests\submify-import.test.mjs (48.6646ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1655.6265

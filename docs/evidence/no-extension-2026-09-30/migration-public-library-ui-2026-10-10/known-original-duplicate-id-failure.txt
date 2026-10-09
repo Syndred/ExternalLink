@@ -1,0 +1,13 @@
+evalmachine.<anonymous>:160
+      throw new Error(
+            ^
+
+Error: 云端回读核验未通过：总数 50/50，缺少 1 条 Submify 记录
+    at evalmachine.<anonymous>:160:13
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:541:9)
+    at async syncSubmifyLibrary (evalmachine.<anonymous>:178:12)
+    at async originalSubmifySync (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/helpers/original-submify-sync.mjs:3:955)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-public-library-ui.mjs:24:17
+
+Node.js v24.21.0

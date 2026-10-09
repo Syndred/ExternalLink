@@ -1,0 +1,14 @@
+evalmachine.<anonymous>:41
+    const key = siteKeyForUrl(added.entry.link);
+                ^
+
+ReferenceError: siteKeyForUrl is not defined
+    at applySubmifySafetyGates (evalmachine.<anonymous>:41:17)
+    at evalmachine.<anonymous>:82:19
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:541:9)
+    at async syncSubmifyLibrary (evalmachine.<anonymous>:125:12)
+    at async originalSubmifySync (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/helpers/original-submify-sync.mjs:3:955)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-public-library-ui.mjs:24:17
+
+Node.js v24.21.0

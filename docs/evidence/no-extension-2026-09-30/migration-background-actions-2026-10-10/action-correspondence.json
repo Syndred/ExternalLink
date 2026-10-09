@@ -1045,6 +1045,10 @@
         {
           "path": "tests/executor-original-timeline-types.test.mjs",
           "sha256": "440a10485751eb89f9036ba5cd590682ad925e75cf3cd334f7a3a5da7a24ed80"
+        },
+        {
+          "path": "tests/executor-original-timeline-history-conflicts.test.mjs",
+          "sha256": "b96f9d1f3f5cc88c0c46a7d13679016d11e570ab1728d75ab7a34922121b6acb"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",
@@ -1080,6 +1084,10 @@
         {
           "path": "tests/executor-original-timeline-types.test.mjs",
           "sha256": "440a10485751eb89f9036ba5cd590682ad925e75cf3cd334f7a3a5da7a24ed80"
+        },
+        {
+          "path": "tests/executor-original-timeline-history-conflicts.test.mjs",
+          "sha256": "b96f9d1f3f5cc88c0c46a7d13679016d11e570ab1728d75ab7a34922121b6acb"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",
@@ -1115,6 +1123,10 @@
         {
           "path": "tests/executor-original-timeline-types.test.mjs",
           "sha256": "440a10485751eb89f9036ba5cd590682ad925e75cf3cd334f7a3a5da7a24ed80"
+        },
+        {
+          "path": "tests/executor-original-timeline-history-conflicts.test.mjs",
+          "sha256": "b96f9d1f3f5cc88c0c46a7d13679016d11e570ab1728d75ab7a34922121b6acb"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",

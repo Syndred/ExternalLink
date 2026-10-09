@@ -1,0 +1,20 @@
+✔ actual timeline deletion preserves original receipts after cancellation failure committed reply loss and disk reopen (2539.4213ms)
+✔ frozen original timeline editor defaults and blank date fallback execute independently (1.6511ms)
+✔ frozen original save and cancel handlers clear only the submitted editor revision (4.0016ms)
+✔ actual timeline editor retains original reset, blank time, cancellation and pending draft behavior (1817.7117ms)
+✔ actual historical timeline options and conflict choices retain old edits associated receipts and reviewed versions (3136.0616ms)
+✔ actual original timeline types and product moves match complete frozen mutations and survive disk reopen (7373.4494ms)
+✔ timeline add and edit match frozen original product moves, common events, evidence gates and publication rank (1667.058ms)
+✔ frozen original removal preserves all old receipts and a migrated event remains editable (91.6074ms)
+✔ frozen original destination changes and a common event moved to a product preserve original receipt identities (48.4476ms)
+✔ a timeline alone cannot confirm a receipt upgrade; a confirmed original new ledger needs no timestamp-only replay (0.8429ms)
+✔ offline product move retains linked documents and frozen task state across restart and lost reply (73.1438ms)
+✔ a concurrent ledger change stops the entire timeline edit and requires reviewing its exact associated versions (3.8229ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7496.2768

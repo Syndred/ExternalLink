@@ -1,0 +1,28 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalUnknownTypeAndDeletedProductEditorValuesCompared": true,
+  "completeOriginalHistoricalUpdateOracle": true,
+  "representativeHistoricalTypes": [
+    "legacy_import",
+    "provider_custom_status"
+  ],
+  "actualNativeConflictProjection": true,
+  "actualUiConflictChoices": [
+    "local",
+    "cloud"
+  ],
+  "oldReviewedChoicesRejected": 2,
+  "actualUiCloudRefreshAndRetry": true,
+  "localChoiceWrites": 1,
+  "cloudChoiceWrites": 0,
+  "sameConflictIdAfterDiskReopen": true,
+  "concurrentReceiptsAndOriginalIntentKept": true,
+  "finalDiskAndUiReadback": true,
+  "focusedPassed": 12,
+  "focusedFailed": 0,
+  "focusedSkipped": 0,
+  "productionCodeChanged": false,
+  "newFullRunClaimed": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false
+}

@@ -1,0 +1,1 @@
+{"kind":"owned_navigation_failure_open_record_difference","originalOpened":1,"originalFailed":0,"nativeOpened":0,"nativeFailed":1,"targetIdentityRetained":true,"createdTabStillPresent":true,"fixtureNetworkFailure":true,"productionWrites":0,"errorPageNotInspected":true}

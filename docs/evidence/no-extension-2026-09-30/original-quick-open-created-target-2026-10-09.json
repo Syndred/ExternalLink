@@ -1,0 +1,258 @@
+{
+  "kind": "original_quick_open_creation_ack_and_windows",
+  "sourceCommit": "fe6dc012ac763e0273182ca8e012ed4f88b47e4c",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "beforeNavigationDifference": {
+    "kind": "owned_navigation_failure_open_record_difference",
+    "originalOpened": 1,
+    "originalFailed": 0,
+    "nativeOpened": 0,
+    "nativeFailed": 1,
+    "targetIdentityRetained": true,
+    "createdTabStillPresent": true,
+    "fixtureNetworkFailure": true,
+    "productionWrites": 0,
+    "errorPageNotInspected": true
+  },
+  "headedWindows": {
+    "ok": true,
+    "kind": "owned_native_two_window_background_open",
+    "headed": true,
+    "distinctWindows": true,
+    "opensInLastActiveWindow": true,
+    "returnsToFirstWindow": true,
+    "secondActive": true,
+    "openedInactive": true,
+    "firstActive": true,
+    "returnedInactive": true,
+    "productionWrites": 0
+  },
+  "headlessWindowsLimitation": {
+    "ok": false,
+    "kind": "owned_native_two_window_background_open",
+    "distinctWindows": true,
+    "opensInLastActiveWindow": true,
+    "returnsToFirstWindow": false,
+    "secondActive": true,
+    "openedInactive": true,
+    "firstActive": true,
+    "returnedInactive": true,
+    "productionWrites": 0
+  },
+  "actualNativeChrome": {
+    "ok": true,
+    "kind": "original_background_quick_open_native_chrome",
+    "realRuntimeConnection": true,
+    "results": [
+      {
+        "mode": "background-batch-with-auto-fill-enabled",
+        "frozenTabsActiveFalse": true,
+        "foregroundRetained": true,
+        "noRegistrationOrFill": true,
+        "backgroundContentRequestIgnored": true
+      },
+      {
+        "mode": "activate-one-background-page",
+        "originalActiveVisitMatches": true,
+        "selectedPageFilledOnly": true
+      },
+      {
+        "mode": "switch-before-delayed-fill-and-return",
+        "cancelledBeforeRegistration": true,
+        "originalCancelledRecordRecovered": true
+      },
+      {
+        "mode": "switch-during-cloud-confirmation",
+        "stoppedBeforeRegistration": true
+      },
+      {
+        "mode": "explicit-native-panel-background-selection",
+        "intentionalSelectedPageFills": true
+      },
+      {
+        "mode": "created-tab-navigation-failure",
+        "originalOpenCountRetained": true,
+        "networkFailureObserved": true,
+        "errorPageNotInspected": true
+      },
+      {
+        "mode": "created-tab-slow-navigation",
+        "batchCompletesBeforeNetworkResponse": true
+      }
+    ],
+    "registrations": 3,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "fullSuite": {
+    "passed": 979,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 134879.1146,
+    "fileConcurrency": 4
+  },
+  "focusedTestsPassed": 31,
+  "services": {
+    "ok": true,
+    "kind": "background_open_published_service_process_identity",
+    "sourceCommit": "fe6dc012ac763e0273182ca8e012ed4f88b47e4c",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 15184,
+        "StartedAt": "2026-10-09T14:06:51.5804300+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 21476,
+        "StartedAt": "2026-10-09T14:06:52.4333040+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e"
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "migrationComplete": false,
+  "limits": [
+    "Opened means tab creation acknowledged, as in the original plugin; it is not a successful page load or submission.",
+    "Owned Windows headed Chrome verified both directions across two windows. Headless Chrome did not model returning to the first window, so that result is not counted as passing.",
+    "Initial navigation uses an owned local HTTP fixture with host resolver mapping; real server connection failure and withheld response were observed.",
+    "Original native Chrome was not opened or closed; model calls and real submissions remain zero.",
+    "Mac acceptance remains deferred to the user device as previously agreed."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-navigation-failure-probe-2026-10-09.txt",
+      "capturedSha256": "a2144a27018812e41e1380e71f6321dcc0adb0688f0ac99d3fff52ee94761ae0",
+      "gitBlobSha256": "f157c8bf5aa81ab79ecb53e53d6b7628fb91b0ddc883fa67b5ff2ab0102b164d"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-background-two-window-probe-2026-10-09.txt",
+      "capturedSha256": "d49a40a6bfed5321d19d410ecad88f3a72aca81e7d4d2a3fe233849b5cf3d3f6",
+      "gitBlobSha256": "4e9a25fb6c14ea5c60eb9b3b7024e9015dcd11d161caffc9f955e0e43ba8ff7c"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-background-two-window-headed-probe-2026-10-09.txt",
+      "capturedSha256": "4284351851dd181836e86ea1e03294e575c5281a3a57d8283d51d282afe6ba1d",
+      "gitBlobSha256": "9b2e3f975e1ea4ee47491e30c97542852ed5e454feffb98ba0ca18e37205d2d0"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-created-target-two-window-probe-2026-10-09.txt",
+      "capturedSha256": "4284351851dd181836e86ea1e03294e575c5281a3a57d8283d51d282afe6ba1d",
+      "gitBlobSha256": "9b2e3f975e1ea4ee47491e30c97542852ed5e454feffb98ba0ca18e37205d2d0"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-created-target-two-window-probe-2026-10-09.mjs.txt",
+      "capturedSha256": "cd3fb13aafc61d9f32b6d49b02e14aaadd4d6270bf1c1eb0cc5ddc7e0fc718b1",
+      "gitBlobSha256": "5fa03fdac3ba9d333b81483b3bb47deeea5178185446ac416b262a291c5b3452"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-browser-final-2026-10-09.txt",
+      "capturedSha256": "f196fd12d152c439059fbc73e59313f57ac0fcde428ffc1222eac1f0f0964a1a",
+      "gitBlobSha256": "df00c5df37d4d504fb150bca840d38ca918fa8ccdc1466ac95a3baa06680d4dd"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-focused-2026-10-09.txt",
+      "capturedSha256": "0b38997f035daad6d8bf19d7e07d421ba63faa3b99b486f58595e02d5453cf08",
+      "gitBlobSha256": "3d70492655b6d652bb9a33ee0038a3a86479708a7794aaac914aaffc6b005084"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-repository-final-2026-10-09.txt",
+      "capturedSha256": "a26599d16a381cb134b1b30a04a5db83760fbe6f79767f30d5eef9fa74dcdeae",
+      "gitBlobSha256": "1daa3ee83edb41d6defaebbb0b69e7d8208f43cc60eb8c04700d562269b89897"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-quick-open-created-target-2026-10-09/original-quick-open-created-target-service-process-2026-10-09.txt",
+      "capturedSha256": "182ef71e450bb16af66814ca6c6d8faea0b5cf1ad82c295fa579c9f253e7f9f4",
+      "gitBlobSha256": "036346f7257df42879438f32dc7c16b3d331c2487385f677d4b7f6cf852283f6"
+    }
+  ]
+}

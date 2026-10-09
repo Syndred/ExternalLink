@@ -1,0 +1,25 @@
+import {chromium} from 'playwright';
+import {createBackgroundTarget,getTargetInfo} from '../src/browser-target.mjs';
+import {spawn} from 'node:child_process';
+import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve,sep} from 'node:path';
+import {once} from 'node:events';
+import assert from 'node:assert/strict';
+import {browserLaunch} from '../src/workbench-platform.mjs';
+async function createBackgroundPage(context){const targetId=await createBackgroundTarget(context,'about:blank');for(let n=0;n<200;n++){for(const page of context.pages())if((await getTargetInfo(context,page))?.targetId===targetId)return{page,targetId};await new Promise(done=>setTimeout(done,25));}throw Error('Owned target not observed');}
+const home=await mkdtemp(join(tmpdir(),'el-owned-focus-'));
+const child=spawn(browserLaunch(process.platform,'about:blank').command,['--user-data-dir='+home,...(process.argv.includes('--headed')?[]:['--headless=new']),'--no-first-run','--no-default-browser-check','--disable-extensions','--disable-background-networking','--remote-debugging-port=0','about:blank'],{stdio:'ignore',windowsHide:true});let browser;
+try{
+ let endpoint;for(let n=0;n<100;n++){try{endpoint='http://127.0.0.1:'+(await readFile(join(home,'DevToolsActivePort'),'utf8')).trim().split('\n')[0];break;}catch{await new Promise(r=>setTimeout(r,50));}}
+ browser=await chromium.connectOverCDP(endpoint,{noDefaults:true});const context=browser.contexts()[0];await context.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<title>Owned focus probe</title><h1>Owned page</h1>'}));
+ const first=context.pages()[0];await first.goto('https://focus.fixture.invalid/first');await first.bringToFront();const browserSession=await browser.newBrowserCDPSession();
+ const [otherWindow]=await Promise.all([context.waitForEvent('page'),browserSession.send('Target.createTarget',{url:'about:blank',newWindow:true})]);await otherWindow.goto('https://focus.fixture.invalid/second-window');await otherWindow.bringToFront();
+ const firstInfo=await getTargetInfo(context,first),otherInfo=await getTargetInfo(context,otherWindow),firstWindow=(await browserSession.send('Browser.getWindowForTarget',{targetId:firstInfo.targetId})).windowId,secondWindow=(await browserSession.send('Browser.getWindowForTarget',{targetId:otherInfo.targetId})).windowId;assert.notEqual(firstWindow,secondWindow);
+ const opened=await createBackgroundPage(context);await opened.page.goto('https://focus.fixture.invalid/opened-in-second');const openedWindow=(await browserSession.send('Browser.getWindowForTarget',{targetId:opened.targetId})).windowId;
+ const secondActive=await otherWindow.evaluate(()=>document.hasFocus()),openedInactive=await opened.page.evaluate(()=>!document.hasFocus());
+ await first.bringToFront();const returned=await createBackgroundPage(context);await returned.page.goto('https://focus.fixture.invalid/opened-in-first');const returnedWindow=(await browserSession.send('Browser.getWindowForTarget',{targetId:returned.targetId})).windowId;
+ const firstActive=await first.evaluate(()=>document.hasFocus()),returnedInactive=await returned.page.evaluate(()=>!document.hasFocus());
+ console.log(JSON.stringify({ok:openedWindow===secondWindow&&returnedWindow===firstWindow&&secondActive&&openedInactive&&firstActive&&returnedInactive,kind:'owned_native_two_window_background_open',headed:process.argv.includes('--headed'),distinctWindows:firstWindow!==secondWindow,opensInLastActiveWindow:openedWindow===secondWindow,returnsToFirstWindow:returnedWindow===firstWindow,secondActive,openedInactive,firstActive,returnedInactive,productionWrites:0}));
+ await browserSession.send('Browser.close');
+}finally{await browser?.close().catch(()=>{});if(child.exitCode===null){const stopped=once(child,'exit');child.kill();await stopped;}assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-owned-focus-'));await rm(home,{recursive:true,force:true,maxRetries:5});}

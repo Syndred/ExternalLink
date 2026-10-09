@@ -1,0 +1,1 @@
+{"ok":false,"kind":"owned_native_two_window_background_open","distinctWindows":true,"opensInLastActiveWindow":true,"returnsToFirstWindow":false,"secondActive":true,"openedInactive":true,"firstActive":true,"returnedInactive":true,"productionWrites":0}

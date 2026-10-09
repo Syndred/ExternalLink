@@ -1061,9 +1061,9 @@
       "id": "btnQuickOpenBatch",
       "label": "打开下一批",
       "mapping": "外链库 / 批量打开网站",
-      "verification": "原选择与选项保持已核验；本次原生Chrome后台打开保留前台，未选页不自动填写；切页取消、切回恢复及原生面板明确选择通过。多窗口与已建页但导航失败的结果语义仍需核对",
+      "verification": "原选择、选项保持、后台打开、活动页填写、切页取消与恢复已核验；Windows有界面双窗口通过。打开数量按页签创建确认计数，网络失败不改成创建失败，慢加载不阻塞批次；真实创建失败仍保留",
       "status": "mapped_requires_full_acceptance",
-      "evidence": "original-background-quick-open-2026-10-09.json"
+      "evidence": "original-quick-open-created-target-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -1429,8 +1429,8 @@
       "action": "quickOpenLibraryUrls",
       "mapping": "quickOpenLibrary",
       "status": "mapped_requires_full_acceptance",
-      "verification": "实际原生Chrome与冻结原函数后台创建规则对照通过；打开结果与多窗口的剩余边界见证据",
-      "evidence": "original-background-quick-open-2026-10-09.json"
+      "verification": "后台直接创建目标网址并保留原创建确认语义；隔离真实网络失败与慢响应、创建失败回归及Windows有界面双窗口通过",
+      "evidence": "original-quick-open-created-target-2026-10-09.json"
     },
     {
       "action": "refreshSubmissionLedger",
@@ -3165,10 +3165,7 @@
     "originalServicesUnchanged": true,
     "workerRedeployed": false,
     "migrationComplete": false,
-    "remaining": [
-      "multiple_native_browser_windows",
-      "tab_created_but_navigation_failed_result_parity"
-    ],
+    "remaining": [],
     "evidence": "original-quick-open-controls-2026-10-09.json"
   },
   "originalBackgroundQuickOpenCheckpoint": {
@@ -3181,5 +3178,16 @@
     "fullSuitePassed": 979,
     "migrationComplete": false,
     "evidence": "original-background-quick-open-2026-10-09.json"
+  },
+  "originalQuickOpenCreatedTargetCheckpoint": {
+    "sourceCommit": "fe6dc012ac763e0273182ca8e012ed4f88b47e4c",
+    "creationAckMatchesOriginal": true,
+    "actualNetworkFailureKeptOpened": true,
+    "slowNavigationDoesNotDelayBatch": true,
+    "headedWindowsVerified": true,
+    "headlessMultiWindowDifferencePreserved": true,
+    "fullSuitePassed": 979,
+    "migrationComplete": false,
+    "evidence": "original-quick-open-created-target-2026-10-09.json"
   }
 }

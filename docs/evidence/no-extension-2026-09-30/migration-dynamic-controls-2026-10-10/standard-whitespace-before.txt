@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Original input siteTitle
++ actual - expected
+
++ '  Edited title  '
+- 'Edited title'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-profile-inputs.mjs:6:861 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '  Edited title  ',
+  expected: 'Edited title',
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

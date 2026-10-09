@@ -1,0 +1,22 @@
+✔ an editor adopts only its own uploaded kind and preserves unrelated profile content and append-only versions (9.9392ms)
+✔ an editor never adopts simultaneous product text, other product content, or another kind of media as its own refresh (0.5118ms)
+✔ disable and restore can advance an editor while changed old version history or missing identity cannot (0.3538ms)
+✔ fourth screenshot refresh keeps the three preceding slots and does not admit another slot change (0.7056ms)
+✔ profile save returns its confirmed original revision and profile for the editor and original executor-connected settings (5.4791ms)
+✔ offline profile save returns the durable overlaid draft and current revision while retaining pending sync (1.024ms)
+✔ stale editor revision is rejected as a conflict before enqueuing or accessing cloud and does not overwrite the refreshed profile (0.9726ms)
+✔ workspace switch during save cannot return another workspace profile or revision as this editor acknowledgement (1.0124ms)
+✔ actual dynamic original fields preserve custom whitespace, empty values, scalar conversion and notes while restoring original featured-image fallback (1734.2887ms)
+✔ actual original standard fields trim surrounding whitespace before save and reopen as the complete original profile editor (1568.8147ms)
+✔ thirty original product inputs save and reopen as the complete original editor while preserving receipts and media history (1431.7159ms)
+✔ actual original upload without public URL preserves the uploaded placeholder and featured-image fallback through save and SQLite reopen (1758.5674ms)
+✔ actual original logo selection and clearing remain staged until profile save, preserve public URL and reopen with unchanged bytes (1633.4795ms)
+✔ original inline logo accepts the exact two MiB boundary and rejects oversized or forged image bytes without changing history (255.5932ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4808.5705

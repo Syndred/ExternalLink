@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Original featured-image fallback
++ actual - expected
+
++ undefined
+- 'https://media.fixture.invalid/logo.png'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-profile-inputs.mjs:8:2120 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: 'https://media.fixture.invalid/logo.png',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

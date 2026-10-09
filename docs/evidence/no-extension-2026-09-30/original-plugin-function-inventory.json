@@ -4649,5 +4649,37 @@
     "remaining": [
       "remaining original dynamic cross-entry and special-launch completion audit"
     ]
+  },
+  "originalDynamicControlCorrespondenceCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "884d97a",
+    "originalJsFilesScanned": 22,
+    "dynamicDeclarations": 28,
+    "iconFactoryCallSites": 4,
+    "explicitSourceLocationsMapped": 32,
+    "countsAreSourceLocationsNotAcceptedFeatureCounts": true,
+    "fixedOriginalStandardWhitespace": true,
+    "fixedOriginalFeaturedImageFallback": true,
+    "fixedOriginalUploadedLogoPlaceholder": true,
+    "originalCustomFieldAndNoteFunctionsExecuted": true,
+    "actualCustomFieldCategoriesVerified": 6,
+    "focusedPassed": 14,
+    "fullPassed": 1090,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "nativeServicesGuardedlyReloaded": true,
+    "nativeActualDomAndCommittedSourceVerified": true,
+    "workerChanged": false,
+    "productionBusinessAndPrivateSourcesKept": true,
+    "gmailStatus": "needs_authorization",
+    "gmailMessagesKept": 758,
+    "gmailHumanConfirmationPending": true,
+    "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+    "correspondence": "migration-dynamic-controls-2026-10-10/dynamic-correspondence.json",
+    "overallMigrationComplete": false,
+    "remaining": [
+      "branch-by-branch evidence audit for all original controls and special-launch cross-entry behaviors",
+      "Gmail reauthorization and fresh provider readback require Google human confirmation"
+    ]
   }
 }

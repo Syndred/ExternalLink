@@ -1,0 +1,15 @@
+{
+  "kind": "current_local_gmail_state_readonly_not_provider_refresh",
+  "readAt": "2026-10-09T17:50:51.848Z",
+  "status": "needs_authorization",
+  "messageCount": 758,
+  "lastSyncedAt": "2026-10-07T07:44:17.749Z",
+  "lastSyncMode": "history",
+  "lastImportedCount": 0,
+  "associatedCount": 3,
+  "hasSyncError": true,
+  "hasInitialSync": false,
+  "productionWrites": 0,
+  "providerRequests": 0,
+  "originalChromeStartedOrClosed": false
+}

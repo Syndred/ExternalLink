@@ -47,7 +47,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteName",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -61,7 +65,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteHomeUrl",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -89,7 +97,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteTitle",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -103,7 +115,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteEmail",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -117,7 +133,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteLogoUrl",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -159,7 +179,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteShortDesc",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -173,7 +197,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteMediumDesc",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -187,7 +215,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteLongDesc",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -201,7 +233,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteNote",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -257,7 +293,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteTags",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -271,7 +311,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#siteFeatures",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -299,7 +343,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#sitePricing",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -313,7 +361,11 @@
       "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/settings.html#sitePricingType",
-      "currentSource": "executor/web/application.js::showProduct/addProductTools"
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "standardWhitespaceFollowup": {
+        "evidence": "migration-dynamic-controls-2026-10-10/summary.json",
+        "completeOriginalFunctionAndActualBrowserSaveReopenVerified": true
+      }
     },
     {
       "source": "extension/settings.html",
@@ -1188,5 +1240,7 @@
       "currentSource": "executor/web/application.js::showBatch"
     }
   ],
-  "stagedInputFollowupSourceCommit": "584800b"
+  "stagedInputFollowupSourceCommit": "584800b",
+  "dynamicProfileSaveFollowupSourceCommit": "884d97a",
+  "dynamicProfileSaveFollowupEvidence": "migration-dynamic-controls-2026-10-10/summary.json"
 }

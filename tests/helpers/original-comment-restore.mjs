@@ -31,3 +31,12 @@ export function originalSnapshotRestoreTransition(current,history,index){
  vm.runInContext(functions,context);context.restoreCommentHistory(index);
  return JSON.parse(JSON.stringify({history:context.commentHistory,active:{drafts:context.commentDrafts,selected:context.selectedCommentDraft,text:nodes.spCommentText.value,tone:nodes.commentTone.value}}));
 }
+
+export async function originalGeneratedCommentCandidates(response){
+ const match=source.match(/^  async function generateCommentCandidates\([^]*?^  \}/m);
+ if(!match)throw Error('Original generation handler missing');
+ const nodes={btnRegenComment:{disabled:false,textContent:'生成 3 条'},commentTone:{value:'professional'},spCommentText:{value:''}},messages=[],requests=[];
+ const context=vm.createContext({Date,Math,$:id=>nodes[id],commentAvailability:{available:true},activeTabId:7,currentPageUrl:'https://article.example/post',activeSiteId:'p',siteProfiles:{p:{id:'p'}},P:{profileConfigured:()=>true,buildAgentConfigFromProfile:()=>({projectKey:'p'})},commentDrafts:[],selectedCommentDraft:-1,commentHistory:[],pagePrescan:{},isCurrentFillContext:()=>true,refreshCommentFieldInfo:async()=>({title:'Original article',text:'Original article content '.repeat(12)}),getCommentGenerationMaxChars:()=>700,chrome:{runtime:{sendMessage:async message=>{requests.push(message);return structuredClone(response);}}},renderCommentDrafts(){},renderCommentHistory(){},updateCommentCharCount(){},setWorkflowStep(){},setAutoFillStatus(){},showToast:(message,error)=>messages.push({message,error:!!error})});
+ vm.runInContext(functions+'\n'+match[0],context);await vm.runInContext('generateCommentCandidates()',context);
+ return JSON.parse(JSON.stringify({drafts:context.commentDrafts,selected:context.selectedCommentDraft,text:nodes.spCommentText.value,requests,messages,button:nodes.btnRegenComment}));
+}

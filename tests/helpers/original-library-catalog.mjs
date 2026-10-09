@@ -10,6 +10,13 @@ const referenceDate=new Proxy(Date,{construct(_target,args){return Reflect.const
 const libraryReference=vm.createContext({self:{},URL,structuredClone,Date:referenceDate});
 for(const name of ['profiles','queue','submission-timeline','opportunity-score','library-classifier','library-groups'])vm.runInContext(execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/lib/'+name+'.js'],{encoding:'utf8',maxBuffer:4*1024*1024}),libraryReference);
 export const originalLibraryGlobals=libraryReference.self;
+const originalSettings=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/settings.js'],{encoding:'utf8',maxBuffer:4*1024*1024});
+export function originalLibraryGroupButtons(item){
+ const start=originalSettings.indexOf('  function createLibraryGroupPanel('),end=originalSettings.indexOf('  function renderTimelinePanel(',start);if(start<0||end<=start)throw Error('Frozen original group controls missing');
+ const element=()=>({children:[],attributes:{},append(...nodes){this.children.push(...nodes);},setAttribute(key,value){this.attributes[key]=value;},addEventListener(){}}),context=vm.createContext({document:{createElement:element},LibraryGroups:originalLibraryGlobals.ExtLinkLibraryGroups,annotationStatuses:value=>originalLibraryGlobals.ExtLinkQueue.normalizeAnnotationStatuses(value),item});
+ const panel=vm.runInContext(originalSettings.slice(start,end)+'\ncreateLibraryGroupPanel(item)',context);
+ return panel.children.at(-1).children.map((button,index)=>({id:originalLibraryGlobals.ExtLinkLibraryGroups.GROUPS[index][0],label:button.textContent,disabled:button.disabled===true,checked:button.attributes['aria-pressed']==='true',reason:button.title||''}));
+}
 export function originalTimelineWithDateParser(parse){
  const DateWithParser=new Proxy(referenceDate,{get(target,key){return key==='parse'?parse:Reflect.get(target,key);}}),context=vm.createContext({self:{},URL,Date:DateWithParser});
  vm.runInContext(execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/lib/submission-timeline.js'],{encoding:'utf8',maxBuffer:4*1024*1024}),context);

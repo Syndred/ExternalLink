@@ -1,0 +1,169 @@
+{
+  "summary": {
+    "ok": true,
+    "profiles": 8,
+    "matched": 8,
+    "originalCompleteFunctionExecuted": true,
+    "productionWrites": 0
+  },
+  "rows": [
+    {
+      "profileId": "GraffitiName",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://GraffitiName-logo-0.png",
+        "screenshots": [
+          "cloud-media://GraffitiName-screenshot-0.png",
+          "cloud-media://GraffitiName-screenshot-1.png",
+          "cloud-media://GraffitiName-screenshot-2.png",
+          "cloud-media://GraffitiName-screenshot-3.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://GraffitiName-logo-0.png",
+        "screenshots": [
+          "cloud-media://GraffitiName-screenshot-0.png",
+          "cloud-media://GraffitiName-screenshot-1.png",
+          "cloud-media://GraffitiName-screenshot-2.png",
+          "cloud-media://GraffitiName-screenshot-3.png"
+        ]
+      }
+    },
+    {
+      "profileId": "JevPlay",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://JevPlay-logo-0.png",
+        "screenshots": [
+          "cloud-media://JevPlay-screenshot-0.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://JevPlay-logo-0.png",
+        "screenshots": [
+          "cloud-media://JevPlay-screenshot-0.png"
+        ]
+      }
+    },
+    {
+      "profileId": "OldPhotoLive",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://OldPhotoLive-logo-0.png",
+        "screenshots": [
+          "cloud-media://OldPhotoLive-screenshot-0.png",
+          "cloud-media://OldPhotoLive-screenshot-1.png",
+          "cloud-media://OldPhotoLive-screenshot-2.png",
+          "cloud-media://OldPhotoLive-screenshot-3.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://OldPhotoLive-logo-0.png",
+        "screenshots": [
+          "cloud-media://OldPhotoLive-screenshot-0.png",
+          "cloud-media://OldPhotoLive-screenshot-1.png",
+          "cloud-media://OldPhotoLive-screenshot-2.png",
+          "cloud-media://OldPhotoLive-screenshot-3.png"
+        ]
+      }
+    },
+    {
+      "profileId": "RainbowPetAI",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://RainbowPetAI-logo-0.png",
+        "screenshots": [
+          "cloud-media://RainbowPetAI-screenshot-0.png",
+          "cloud-media://RainbowPetAI-screenshot-1.png",
+          "cloud-media://RainbowPetAI-screenshot-2.png",
+          "cloud-media://RainbowPetAI-screenshot-3.jpg",
+          "cloud-media://RainbowPetAI-screenshot-4.jpg",
+          "cloud-media://RainbowPetAI-screenshot-5.jpg"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://RainbowPetAI-logo-0.png",
+        "screenshots": [
+          "cloud-media://RainbowPetAI-screenshot-0.png",
+          "cloud-media://RainbowPetAI-screenshot-1.png",
+          "cloud-media://RainbowPetAI-screenshot-2.png",
+          "cloud-media://RainbowPetAI-screenshot-3.jpg",
+          "cloud-media://RainbowPetAI-screenshot-4.jpg",
+          "cloud-media://RainbowPetAI-screenshot-5.jpg"
+        ]
+      }
+    },
+    {
+      "profileId": "RspAi",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://RspAi-logo-0.png",
+        "screenshots": [
+          "cloud-media://RspAi-screenshot-0.png",
+          "cloud-media://RspAi-screenshot-1.png",
+          "cloud-media://RspAi-screenshot-2.png",
+          "cloud-media://RspAi-screenshot-3.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://RspAi-logo-0.png",
+        "screenshots": [
+          "cloud-media://RspAi-screenshot-0.png",
+          "cloud-media://RspAi-screenshot-1.png",
+          "cloud-media://RspAi-screenshot-2.png",
+          "cloud-media://RspAi-screenshot-3.png"
+        ]
+      }
+    },
+    {
+      "profileId": "TextComparison",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://TextComparison-logo-0.png",
+        "screenshots": [
+          "cloud-media://TextComparison-screenshot-0.png",
+          "cloud-media://TextComparison-screenshot-1.png",
+          "cloud-media://TextComparison-screenshot-2.png",
+          "cloud-media://TextComparison-screenshot-3.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://TextComparison-logo-0.png",
+        "screenshots": [
+          "cloud-media://TextComparison-screenshot-0.png",
+          "cloud-media://TextComparison-screenshot-1.png",
+          "cloud-media://TextComparison-screenshot-2.png",
+          "cloud-media://TextComparison-screenshot-3.png"
+        ]
+      }
+    },
+    {
+      "profileId": "VideoToArticleAI",
+      "matched": true,
+      "expected": {},
+      "actual": {}
+    },
+    {
+      "profileId": "site-mu4wlxu0",
+      "matched": true,
+      "expected": {
+        "logo": "cloud-media://aispeaklearn-logo-512-20260923.png",
+        "screenshots": [
+          "cloud-media://aispeaklearn-en-home-20260923.png",
+          "cloud-media://aispeaklearn-en-scenarios-20260923.png",
+          "cloud-media://aispeaklearn-en-characters-20260923.png",
+          "cloud-media://aispeaklearn-en-cafe-20260923.png"
+        ]
+      },
+      "actual": {
+        "logo": "cloud-media://aispeaklearn-logo-512-20260923.png",
+        "screenshots": [
+          "cloud-media://aispeaklearn-en-home-20260923.png",
+          "cloud-media://aispeaklearn-en-scenarios-20260923.png",
+          "cloud-media://aispeaklearn-en-characters-20260923.png",
+          "cloud-media://aispeaklearn-en-cafe-20260923.png"
+        ]
+      }
+    }
+  ]
+}

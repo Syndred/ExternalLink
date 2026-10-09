@@ -1557,7 +1557,7 @@
       "editorEvidence": "original-timeline-editor-2026-10-09.json"
     }
   ],
-  "updatedAt": "2026-10-07",
+  "updatedAt": "2026-10-10",
   "completion": "not_complete",
   "specialLaunchCheckpoint": {
     "platform": "Product Hunt",
@@ -3904,5 +3904,37 @@
     "overallMigrationComplete": false,
     "evidence": "migration-original-media-restore-2026-10-10/summary.json",
     "remaining": "other original dynamic cross-entry controls and actual frozen media fallback across execution paths; single unindexed current file kept without invented ownership; Mac real-device acceptance deferred"
+  },
+  "originalMediaExecutionAndRefillCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "ddc5ffa1ed02e3770caaca70945e712c5c042f91",
+    "testCommit": "b7a023c",
+    "workerVersion": "cf9c2758-8af9-4830-8569-6ced60ab6694",
+    "evidence": "migration-media-execution-2026-10-10/summary.json",
+    "pulledLatest": true,
+    "fullPassed": 1078,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "relatedTestsPassed": 19,
+    "originalEffectiveProfileConfigsMatched": 8,
+    "authenticatedIsolatedRegisteredAndRestoredTasks": 8,
+    "selectedOriginalFilesShaVerified": 35,
+    "actualOldReceiptRefillFilenameOrderMatched": true,
+    "legacyFifthAndSixthScreenshotRecoverySupported": true,
+    "frozenTaskIdentitySelectionAndShaGuardsRetained": true,
+    "original18OtherCloudDocumentsAndRevisionsKept": true,
+    "privateOriginalSourceFilesVerified": 6,
+    "originalFixedBatchPausedCursor": 13,
+    "originalFixedBatchCount": 30,
+    "scheduledMonitorPausedCursor": 54,
+    "scheduledMonitorCount": 89,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "models": 0,
+    "originalChromeStartedOrClosed": false,
+    "overallMigrationComplete": false,
+    "remaining": "81 original input rows need explicit current entry/operation/persistence/evidence join; other dynamic cross-entry branches require proof; unindexed file kept without invented ownership; Mac real-device acceptance deferred"
   }
 }

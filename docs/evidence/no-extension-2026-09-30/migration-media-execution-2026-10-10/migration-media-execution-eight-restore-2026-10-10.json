@@ -1,0 +1,128 @@
+{
+  "summary": {
+    "ok": true,
+    "originalProfiles": 8,
+    "registered": 8,
+    "emptyNativeRestoreRuns": 8,
+    "emptyNativeRestoreTasks": 8,
+    "selectedOriginalFilesShaVerified": 35,
+    "authenticatedIsolatedD1": true,
+    "actualOriginalProfilesAnd50Assets": true,
+    "productionWrites": 0,
+    "models": 0,
+    "realSubmissions": 0
+  },
+  "rows": [
+    {
+      "profileId": "GraffitiName",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://GraffitiName-logo-0.png",
+        "screenshots": [
+          "cloud-media://GraffitiName-screenshot-0.png",
+          "cloud-media://GraffitiName-screenshot-1.png",
+          "cloud-media://GraffitiName-screenshot-2.png",
+          "cloud-media://GraffitiName-screenshot-3.png"
+        ]
+      },
+      "mediaCount": 5
+    },
+    {
+      "profileId": "JevPlay",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://JevPlay-logo-0.png",
+        "screenshots": [
+          "cloud-media://JevPlay-screenshot-0.png"
+        ]
+      },
+      "mediaCount": 2
+    },
+    {
+      "profileId": "OldPhotoLive",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://OldPhotoLive-logo-0.png",
+        "screenshots": [
+          "cloud-media://OldPhotoLive-screenshot-0.png",
+          "cloud-media://OldPhotoLive-screenshot-1.png",
+          "cloud-media://OldPhotoLive-screenshot-2.png",
+          "cloud-media://OldPhotoLive-screenshot-3.png"
+        ]
+      },
+      "mediaCount": 5
+    },
+    {
+      "profileId": "RainbowPetAI",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://RainbowPetAI-logo-0.png",
+        "screenshots": [
+          "cloud-media://RainbowPetAI-screenshot-0.png",
+          "cloud-media://RainbowPetAI-screenshot-1.png",
+          "cloud-media://RainbowPetAI-screenshot-2.png",
+          "cloud-media://RainbowPetAI-screenshot-3.jpg",
+          "cloud-media://RainbowPetAI-screenshot-4.jpg",
+          "cloud-media://RainbowPetAI-screenshot-5.jpg"
+        ]
+      },
+      "mediaCount": 7
+    },
+    {
+      "profileId": "RspAi",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://RspAi-logo-0.png",
+        "screenshots": [
+          "cloud-media://RspAi-screenshot-0.png",
+          "cloud-media://RspAi-screenshot-1.png",
+          "cloud-media://RspAi-screenshot-2.png",
+          "cloud-media://RspAi-screenshot-3.png"
+        ]
+      },
+      "mediaCount": 5
+    },
+    {
+      "profileId": "TextComparison",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {
+        "logo": "cloud-media://TextComparison-logo-0.png",
+        "screenshots": [
+          "cloud-media://TextComparison-screenshot-0.png",
+          "cloud-media://TextComparison-screenshot-1.png",
+          "cloud-media://TextComparison-screenshot-2.png",
+          "cloud-media://TextComparison-screenshot-3.png"
+        ]
+      },
+      "mediaCount": 5
+    },
+    {
+      "profileId": "VideoToArticleAI",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {},
+      "mediaCount": 0
+    },
+    {
+      "profileId": "site-mu4wlxu0",
+      "status": 200,
+      "ok": true,
+      "error": "",
+      "originalDefaults": {},
+      "mediaCount": 6
+    }
+  ]
+}

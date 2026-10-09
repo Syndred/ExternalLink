@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Original filename order must select a-logo.png; actual downloads ["first-r2-key","screen"]
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-refill-media-order.mjs:11:70 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

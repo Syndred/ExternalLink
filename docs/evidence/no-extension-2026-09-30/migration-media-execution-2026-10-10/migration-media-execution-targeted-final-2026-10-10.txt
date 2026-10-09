@@ -1,0 +1,38 @@
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (51.9015ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (8.9424ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1440.6552ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1042.206ms)
+✔ actual existing-receipt refill chooses the original filename order across R2 pages without changing receipts or creating tasks (1119.325ms)
+✔ cloud fallback logo and screenshots match the first pre-refactor fill helper without modifying original profile or public image fields (26.0521ms)
+✔ explicit selected cloud versions and disabled slots retain their selection while cloud defaults cannot use other products or non-images (0.6494ms)
+✔ D1 catalogue pagination keeps the original list order and refuses repeated cursors (0.5964ms)
+✔ original catalogue failure and bounded timeout preserve public and embedded fields without suppressing explicit cloud selections (14.8938ms)
+✔ original native work consumes frozen cloud defaults even when current cloud catalogue and public-only original fields differ (8.7221ms)
+✔ old native catalogues recover only their own proved image versions and are never rewritten or replaced by the current catalogue (0.4501ms)
+✔ actual isolated automatic and manual single-page fields upload original frozen cloud defaults with exact file SHA and no model or submission (1424.4253ms)
+✔ actual original mapper keeps embedded logo priority with a frozen cloud fallback in both automatic and manual entry points (1308.7913ms)
+✔ frozen task media survives offline operation and rejects a changed local backup (10.9386ms)
+✖ original fifth and sixth screenshots materialize with frozen identity and checksum enforcement (2.9615ms)
+✔ native cloud attachment independently rejects changed bytes and assets outside the original task manifest (5.6384ms)
+✔ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (27.5497ms)
+✔ device uploads preserve all four screenshot slot indices in catalogue and frozen original defaults (2.4158ms)
+✔ complete paginated native and task catalogues retain the original filename order rather than R2 key order (1.128ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4266.2199
+
+✖ failing tests:
+
+test at tests\executor-task-media.test.mjs:11:1
+✖ original fifth and sixth screenshots materialize with frozen identity and checksum enforcement (2.9615ms)
+  Error: 素材不属于原任务当前选定的产品资料
+      at originalTaskMediaEvidence (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media-evidence.mjs:35:113)
+      at materializeTaskMedia (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media.mjs:39:28)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-task-media.test.mjs:16:69)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

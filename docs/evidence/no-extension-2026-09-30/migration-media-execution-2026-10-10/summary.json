@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-10",
+  "sourceCommit": "ddc5ffa1ed02e3770caaca70945e712c5c042f91",
+  "pulledLatest": true,
+  "originalEntry": "sidepanel fill and fetchSubmissionMedia / resolveFileMedia",
+  "currentEntry": "current page refill and restored task media",
+  "originalEffectiveConfigs": {
+    "ok": true,
+    "profiles": 8,
+    "matched": 8,
+    "originalCompleteFunctionExecuted": true,
+    "productionWrites": 0
+  },
+  "isolatedAuthenticatedRestoration": {
+    "ok": true,
+    "originalProfiles": 8,
+    "registered": 8,
+    "emptyNativeRestoreRuns": 8,
+    "emptyNativeRestoreTasks": 8,
+    "selectedOriginalFilesShaVerified": 35,
+    "authenticatedIsolatedD1": true,
+    "actualOriginalProfilesAnd50Assets": true,
+    "productionWrites": 0,
+    "models": 0,
+    "realSubmissions": 0
+  },
+  "relatedTests": {
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0
+  },
+  "earlyFull": {
+    "passed": 1076,
+    "failed": 1,
+    "skipped": 0,
+    "final": false,
+    "reason": "source changed during run; original submission document check failed"
+  },
+  "originalSubmissionStandaloneRecheck": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "finalFull": {
+    "status": "passed",
+    "passed": 1078,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 465751.0402,
+    "log": "migration-media-execution-full-settled-2026-10-10.txt"
+  },
+  "published": true,
+  "overallMigrationComplete": false,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0,
+  "remaining": "81 original input rows need explicit current entry/operation/persistence/evidence join; other dynamic cross-entry branches require proof; unindexed file kept without invented ownership; Mac real-device acceptance deferred",
+  "queueUiTestCommit": "b7a023c",
+  "firstFrozenFull": {
+    "passed": 1077,
+    "failed": 1,
+    "skipped": 0,
+    "final": false,
+    "reason": "queue UI assertion read before asynchronous refresh"
+  },
+  "queueUiRecheck": {
+    "passed": 1,
+    "failed": 0,
+    "originalConditionCases": 18
+  },
+  "workerVersion": "cf9c2758-8af9-4830-8569-6ced60ab6694",
+  "nativeServicesGuardedlyReloaded": true,
+  "protection": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "productionSmoke": {
+    "ok": true,
+    "actualOriginalNativeUiCodeMatches": true,
+    "uiSha256": "dc4337e7c1b71d4f11a9048eb3487df9430cbd2967d55576965c1faeb4b38a2d",
+    "cloudAnonymousSnapshotStatus": 401,
+    "workerVersion": "cf9c2758-8af9-4830-8569-6ced60ab6694",
+    "models": 0,
+    "realSubmissions": 0
+  }
+}

@@ -1,0 +1,17 @@
+✔ full visual actions and final classification match original source selectors and coordinates (2.4118ms)
+✔ complete original visual loop and native full loop keep judge screenshot action judge order and eight rounds (19.5926ms)
+✔ an actual submission followed by unproven model success becomes unknown rather than a second post (1.9011ms)
+✔ hard proof records a real receipt and keeps the original submission baseline and cumulative usage (2.6532ms)
+✔ late model control or unknown attempts and sync failures cannot mutate the original task or retry actions (2.93ms)
+✔ SQLite restart retains visual submission history and spent usage while a durable unknown cannot be adopted (69.5705ms)
+✔ original full post-action readiness waits for two stable snapshots without acting and preserves timeout and pause (2.4454ms)
+✔ actual isolated original submission keeps full preparation fallback navigation evidence and unknown guards (46098.6465ms)
+✔ original full DOM submit rechecks the frozen product and changed required fields after authorization before any boundary (2.7807ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46320.1737

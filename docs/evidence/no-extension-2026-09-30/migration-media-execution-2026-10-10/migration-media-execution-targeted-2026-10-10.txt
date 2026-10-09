@@ -1,0 +1,24 @@
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (51.1003ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (9.5658ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1459.5875ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1043.2381ms)
+✔ actual existing-receipt refill chooses the original filename order across R2 pages without changing receipts or creating tasks (1166.7423ms)
+✔ cloud fallback logo and screenshots match the first pre-refactor fill helper without modifying original profile or public image fields (26.3383ms)
+✔ explicit selected cloud versions and disabled slots retain their selection while cloud defaults cannot use other products or non-images (0.5343ms)
+✔ D1 catalogue pagination keeps the original list order and refuses repeated cursors (0.5926ms)
+✔ original catalogue failure and bounded timeout preserve public and embedded fields without suppressing explicit cloud selections (12.8789ms)
+✔ original native work consumes frozen cloud defaults even when current cloud catalogue and public-only original fields differ (9.3014ms)
+✔ old native catalogues recover only their own proved image versions and are never rewritten or replaced by the current catalogue (0.4821ms)
+✔ actual isolated automatic and manual single-page fields upload original frozen cloud defaults with exact file SHA and no model or submission (1424.1339ms)
+✔ actual original mapper keeps embedded logo priority with a frozen cloud fallback in both automatic and manual entry points (1343.5856ms)
+✔ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (27.2063ms)
+✔ device uploads preserve all four screenshot slot indices in catalogue and frozen original defaults (2.4346ms)
+✔ complete paginated native and task catalogues retain the original filename order rather than R2 key order (1.0916ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4369.2871

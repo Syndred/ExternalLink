@@ -1,0 +1,9 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media.mjs:10
+  if(!/^(?:logo|featured|screenshot[1-4])$/.test(kind))throw Error('素材类别无效');
+                                                             ^
+
+Error: 素材类别无效
+    at materializeTaskMedia (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media.mjs:10:62)
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/audit-eight-original-media-registration-2026-10-10.mjs:11:487
+
+Node.js v24.21.0

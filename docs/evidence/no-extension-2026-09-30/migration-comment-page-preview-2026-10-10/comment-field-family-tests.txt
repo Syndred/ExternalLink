@@ -1,0 +1,16 @@
+✔ long candidate edits preserve original snapshots metadata selected index and raw text after actual UI and SQLite reopening (1557.9378ms)
+✔ actual main candidate buttons fill long original text and reject page overflow before lease or field mutation (1945.7256ms)
+✔ actual iframe candidate buttons fill long original text and reject page overflow before lease or field mutation (2036.1316ms)
+✔ single-page native control fills 24002-character comments and rejects actual maxlength before original registration (3354.1285ms)
+✔ original field ranking positive maxima absent maxima zero and prescan fallback match the complete frozen field selector and limit guard (19.8887ms)
+✔ actual sparse-wp comment field readback preserves long text and blocks overflow before mutation (1859.8324ms)
+✔ actual sparse-wp-iframe comment field readback preserves long text and blocks overflow before mutation (1958.1086ms)
+✔ actual article comment field readback preserves long text and blocks overflow before mutation (8698.967ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21486.8488

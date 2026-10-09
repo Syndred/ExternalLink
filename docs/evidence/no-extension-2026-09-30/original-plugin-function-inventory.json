@@ -1486,13 +1486,14 @@
     {
       "action": "generateCommentDrafts",
       "mapping": "commentDrafts / 原任务 bridge / 浏览器助手；原30分钟60项缓存及显式刷新",
-      "verification": "固定原代码70组请求对照，实际后台／Chrome候选刷新、失败保留和编辑历史恢复；D1与Neon隔离鉴权接口通过，真实Neon及全部旧历史待验收",
+      "verification": "固定原代码70组请求对照，实际后台／Chrome候选刷新、失败保留和编辑历史恢复；D1与Neon隔离鉴权接口通过，最新原账本及原历史已取得保存；当前页签生成和持久化另见页面预览检查点；真实Neon与其他入口独立验收",
       "status": "implemented_requires_full_acceptance"
     },
     {
       "action": "generateCommentPreview",
-      "mapping": "AI 评论生成三候选",
-      "status": "implemented_requires_full_acceptance"
+      "mapping": "原短快照或快照失败 → 已选页面共享内容预览一条兜底；模型拒绝保留原标题兜底",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "完整冻结原生成函数、实际界面、原任务评论填写与SQLite重开；migration-comment-page-preview-2026-10-10/ui-proof.json"
     },
     {
       "action": "getActiveFillConfig",
@@ -3257,7 +3258,11 @@
       "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/sidepanel.html#commentTone",
-      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage"
+      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage",
+      "currentEvidence": [
+        "migration-comment-state-ui-2026-10-10/summary.json",
+        "migration-comment-page-preview-2026-10-10/ui-proof.json"
+      ]
     },
     {
       "source": "extension/sidepanel.html",
@@ -3268,10 +3273,15 @@
       "operation": "编辑候选，保存编辑后的草稿／恢复上一版；填入原网页评论区并核验，提交另行确认",
       "persistence": "本机评论草稿版本；单页手输文本是面板状态；任务持久actualPreparation/actualSubmission",
       "evidence": "original-comment-restore-2026-10-09.json",
-      "verificationScope": "候选编辑与保存恢复已有实际浏览器/SQLite证据；单页直接手输的独立保存时机需结合原输入分支再核验",
+      "verificationScope": "候选编辑、单页手输快照的显式保存／打字不写入、恢复前保留、八版上限及SQLite重开已有实际界面证据；单页简化表单字数限制和逐字回读继续独立核验",
       "status": "mapped_evidence_linked_requires_full_acceptance",
       "originalEntry": "extension/sidepanel.html#spCommentText",
-      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage"
+      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage",
+      "historicalVerificationScope": "候选编辑与保存恢复已有实际浏览器/SQLite证据；单页直接手输的独立保存时机需结合原输入分支再核验",
+      "currentEvidence": [
+        "migration-comment-state-ui-2026-10-10/summary.json",
+        "migration-comment-page-preview-2026-10-10/ui-proof.json"
+      ]
     },
     {
       "source": "extension/sidepanel.html",
@@ -5562,7 +5572,7 @@
   },
   "originalCommentPagePreviewGapAudit": {
     "date": "2026-10-10",
-    "status": "confirmed_unresolved_page_preview_entry_difference",
+    "status": "historical_gap_resolved_by_current_checkpoint",
     "evidence": "migration-comment-generation-limit-2026-10-10/page-preview-gap.json",
     "reproduction": "node executor/test/audit-original-comment-page-preview-gap.mjs",
     "originalEntry": "extension/sidepanel.js::generateCommentCandidates → generateCommentPreview",
@@ -5575,7 +5585,13 @@
     "realModelCalls": 0,
     "realSubmissions": 0,
     "productionWrites": 0,
-    "overallMigrationComplete": false
+    "overallMigrationComplete": false,
+    "historicalStatus": "confirmed_unresolved_page_preview_entry_difference",
+    "gapResolvedBy": "originalCommentPagePreviewCheckpoint",
+    "historicalProof": true,
+    "reproductionSourceCommit": "d52bbae0f684fd3a5ffeafee265df682ce67f9db",
+    "reproductionValidForCurrentSource": false,
+    "currentRegression": "node --test tests/executor-original-comment-page-preview.test.mjs"
   },
   "originalCommentGenerationCandidateLimitCheckpoint": {
     "date": "2026-10-10",
@@ -5677,7 +5693,6 @@
     "realModelCalls": 0,
     "originalChromeUntouched": true,
     "remaining": [
-      "Original page snapshot below 120 characters or blocked snapshot must recover through the page preview entry; two controlled actual browser differences remain unresolved.",
       "OS clipboard dependency acceptance remains separate.",
       "All remaining original entry branches require their own operation and persistence evidence."
     ],
@@ -5685,6 +5700,173 @@
     "pagePreviewGapConfirmedUnresolved": true,
     "allOriginalCommentBranchesComplete": false,
     "overallMigrationComplete": false,
-    "evidence": "migration-comment-generation-limit-2026-10-10/summary.json"
+    "evidence": "migration-comment-generation-limit-2026-10-10/summary.json",
+    "historicalRemaining": [
+      "Original page snapshot below 120 characters or blocked snapshot must recover through the page preview entry; two controlled actual browser differences remain unresolved.",
+      "OS clipboard dependency acceptance remains separate.",
+      "All remaining original entry branches require their own operation and persistence evidence."
+    ],
+    "pagePreviewResolvedBy": "originalCommentPagePreviewCheckpoint"
+  },
+  "originalCommentPagePreviewCheckpoint": {
+    "date": "2026-10-10",
+    "status": "released_native_original_page_comment_preview_and_target_binding",
+    "originalEntry": "extension/sidepanel.js::generateCommentCandidates → generateCommentPreview",
+    "currentEntry": "AI 评论 → 选择已打开的文章页 → 生成 3 条评论／填入原任务评论区",
+    "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "evidence": "migration-comment-page-preview-2026-10-10/summary.json",
+    "actualUiProof": {
+      "ok": true,
+      "completeOriginalGenerationHandlerExecuted": true,
+      "actualUiAndNativePagePreview": true,
+      "actualRuntimeControlDispatch": true,
+      "cases": [
+        {
+          "kind": "short",
+          "targetExplicitlySelected": true,
+          "originalAndCurrentCandidates": 1,
+          "metadataAndTextMatched": true,
+          "actualLocalModelTextUsed": false,
+          "controlledModels": 0
+        },
+        {
+          "kind": "blocked",
+          "targetExplicitlySelected": true,
+          "originalAndCurrentCandidates": 1,
+          "metadataAndTextMatched": true,
+          "actualLocalModelTextUsed": true,
+          "controlledModels": 1
+        },
+        {
+          "kind": "long",
+          "targetExplicitlySelected": true,
+          "originalAndCurrentCandidates": 3,
+          "metadataAndTextMatched": true,
+          "actualLocalModelTextUsed": true,
+          "controlledModels": 1
+        }
+      ],
+      "shortTitlePreviewWithoutModel": true,
+      "blockedSnapshotUsesActualArticle": true,
+      "longSnapshotGeneratesOriginalThree": true,
+      "rejectedPageModelTitleFallback": true,
+      "explicitDuplicateTargetPreserved": true,
+      "selectedSourceRejectsOtherTaskBeforeFill": true,
+      "selectedSourceMatchesOneOfTwoOriginalTasks": true,
+      "actualCommentFieldAndSqliteTaskReadback": true,
+      "unrelatedMatchingFieldCannotCertifyComment": true,
+      "seededFixtureTasks": 2,
+      "tasksCreatedByProduct": 0,
+      "ambiguousDuplicateRejected": true,
+      "sqliteReopenAndUiReload": true,
+      "sameUrlReloadRejectsOldModel": true,
+      "deviceSwitchRejectsLocalPreview": true,
+      "deviceSwitchDuringDocumentReadRejected": true,
+      "emptyPagePreviewDoesNotCreateLoadableDraft": true,
+      "disabledPreferenceStopsGeneration": true,
+      "originalBusinessUnchanged": true,
+      "snapshotFaults": 3,
+      "productionWrites": 0,
+      "realSubmissions": 0,
+      "realModelCalls": 0,
+      "originalChromeUntouched": true,
+      "allOriginalCommentBranchesComplete": false,
+      "overallMigrationComplete": false
+    },
+    "commentFieldFamilyRegression": {
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "forms": [
+        "standard-wp",
+        "standard-wp-iframe",
+        "sparse-wp",
+        "sparse-wp-iframe",
+        "article"
+      ],
+      "actualPageLengthLimitMatched": true,
+      "exactCommentValueReadback": true,
+      "unrelatedMatchingValueCannotCertifyComment": true
+    },
+    "originalLatestLedgerAlreadySaved": true,
+    "requiresAnotherBackup": false,
+    "remaining": [
+      "OS clipboard acceptance",
+      "Other original entry branches and full function migration matrix",
+      "Single-page comment entry still uses generic snapshot/report: sparse-form length and exact readback require separate operation evidence"
+    ],
+    "overallMigrationComplete": false,
+    "sourceCommit": "7c112e571f0f8afc7e2ba003258703000ce6fbe0",
+    "fullRegression": {
+      "tests": 1160,
+      "pass": 1160,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 443748.3581
+    },
+    "sourceHashesUnchangedDuringFinalRun": true,
+    "committedAllTwelveSourcesMatch": true,
+    "nativeReadback": {
+      "ok": true,
+      "sourceCommit": "7c112e571f0f8afc7e2ba003258703000ce6fbe0",
+      "committedSourcesMatch": true,
+      "hashes": {
+        "executor/web/application.js": "64a8fd6721cbe33caf019b696b08210f2665ef5744d147b76abf0d9b74ec9b75",
+        "executor/src/comment-history.mjs": "b25ccc58dcf25a8a933103a9a4023eb71957e88a224421cfa6b4332bf7300db5",
+        "executor/src/workbench-features.mjs": "d4ad0bdd716f84c1d8f0fc056a780a99744a5e18a7c9ee6501439aec8065c3d9",
+        "executor/src/single-page.mjs": "af225bee974fc52a55c6367b0c7329ca31387233510f220f5a8f63ac49dde3d8",
+        "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+        "executor/web/application.css": "03022e8ddfbcefaea409b545cb0da424c34fe4f46beb72efdb5d20f36173a996",
+        "executor/web/comment-studio.js": "ddeb34e9b50bf00a2da4640ca1b5628efeb5299c7fd59b77565dd0f6218e67d0"
+      },
+      "nativeMainUiScriptMatches": true,
+      "originalCommentRowsUnchanged": true,
+      "originalCommentRowsSha256": "b9473fd2cab9df2efcbb249a32a42d6f73c63f57aca016077a00b18ae786469a",
+      "nativeHistoryStylesMatch": true,
+      "nativeHistoryScriptMatches": true,
+      "actualNativeReadback": true,
+      "paused": true,
+      "busy": false,
+      "pendingEdits": 0,
+      "fixedCursor": 13,
+      "fixedCount": 30,
+      "businessWrites": 0,
+      "originalChromeUntouched": true,
+      "historyNotWrittenToProduction": true
+    },
+    "productionReadback": {
+      "ok": true,
+      "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+      "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+      "monitorStatus": "paused",
+      "monitorCount": 89,
+      "monitorCursor": 54,
+      "monitorCounts": {
+        "live": 3,
+        "missing": 48,
+        "unreachable": 3,
+        "uncheckable": 0,
+        "excluded": 0
+      },
+      "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+      "monitorResultsRevisionBefore": 258,
+      "monitorResultsRevisionAfter": 312,
+      "monitorResultsExactlyMatchOriginalJobCandidates": true,
+      "originalReceiptsAndTimelineKept": true,
+      "timelineEvents": 470,
+      "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+      "privateOriginalSourceFilesVerified": 6,
+      "oldFormalRecoveryCheckpointNotOverwritten": true,
+      "newPrivateTransitionSaved": true,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "newSubmissions": 0
+    }
   }
 }

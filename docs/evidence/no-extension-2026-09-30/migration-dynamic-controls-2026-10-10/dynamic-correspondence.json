@@ -535,6 +535,8 @@
       "persistence": "originalCommentState当前草稿／八版历史／旧九版留档及原任务selectedComment",
       "currentSource": "executor/web/comment-studio.js::renderCommentStudio",
       "tests": [
+        "tests/executor-original-comment-page-preview.test.mjs",
+        "tests/executor-original-comment-target-binding.test.mjs",
         "tests/executor-original-comment-generation-ui.test.mjs",
         "tests/executor-original-comment-history-rules.test.mjs",
         "tests/executor-original-comment-state.test.mjs",
@@ -544,7 +546,7 @@
         "tests/executor-original-comment-restore.test.mjs",
         "tests/executor-original-comment-drafts.test.mjs"
       ],
-      "scope": "完整原选择函数对应实际选择编号、两次切换前快照、空候选跳过、失败保存与SQLite重开；有效生成候选三条已对照完整原生成函数并保存重开；原短快照页面预览另有已确认未修复差异；复制仅隔离依赖调用，其他分支仍须总审计",
+      "scope": "完整原选择函数对应实际选择编号、两次切换前快照、空候选跳过、失败保存与SQLite重开；有效生成候选三条已对照完整原生成函数并保存重开；原短快照、读取失败和模型拒绝预览已用完整原生成函数对照；选定页签、原任务填写、真实评论字段回读及SQLite重开已验证；复制仅隔离依赖调用，其他分支仍须总审计",
       "completion": "requires_branch_evidence_audit"
     },
     {

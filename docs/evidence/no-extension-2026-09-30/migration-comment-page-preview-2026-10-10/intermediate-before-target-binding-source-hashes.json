@@ -1,0 +1,8 @@
+{
+  "executor/src/original-comment-page.mjs": "da30f89606da964fe08e954821ffa8fd9f93ee5a812cbe7c361d469c8ec2be97",
+  "executor/src/workbench-features.mjs": "0ce4239e4cd481135947d584e3997230e5fe6b32841fb7e6196376ccb517f832",
+  "executor/web/comment-studio.js": "b8b100632fe0aab3730931e7f9e0ab8863c734ad8c0e01851d2473561db0797b",
+  "executor/test/original-comment-page-preview.mjs": "494abcc82aa6cdbf20110280a59f101633c71de002314db176b30d0e1e2e7fd0",
+  "tests/helpers/original-comment-restore.mjs": "2f0815644ed6d3fd35f9ccf5cdb4745bcb6bdd54709800761a659730ece0583c",
+  "tests/executor-original-comment-page-preview.test.mjs": "3b5cf2b816dcbb306d49fe659006df6120446db3723e8aacf35279812a9944d0"
+}

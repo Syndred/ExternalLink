@@ -1,0 +1,21 @@
+{
+  "terminal": true,
+  "exitCode": 1,
+  "tests": 1153,
+  "pass": 1152,
+  "fail": 1,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 444298.9342,
+  "failure": "executor-original-library-pin.test.mjs: expected 11 controlled writes, got 10",
+  "validReleaseEvidence": false,
+  "commentPagePreviewRootTestPassed": true,
+  "commentTargetBindingNotYetImplemented": true,
+  "parallelScreenshotTimeout": {
+    "command": "node executor/test/original-comment-page-preview.mjs --evidence-dir docs/evidence/no-extension-2026-09-30/migration-comment-page-preview-2026-10-10",
+    "error": "page.waitForResponse: Timeout 30000ms exceeded",
+    "source": "original-comment-page-preview.mjs:43:53",
+    "diagnosticFollowupPassed": true,
+    "causeConfirmed": false
+  }
+}

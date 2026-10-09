@@ -1,0 +1,14 @@
+{
+  "kind": "selected_source_target_ownership_boundary",
+  "command": "node --test tests/executor-original-comment-target-binding.test.mjs",
+  "cases": 4,
+  "pass": 2,
+  "fail": 2,
+  "mismatchedSourceTargetReachedOriginalTaskLookup": true,
+  "missingTaskTargetReachedOriginalTaskLookup": true,
+  "fixturePageLookupWasSentinelOnly": true,
+  "actualPageFieldsTouched": 0,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "realModelCalls": 0
+}

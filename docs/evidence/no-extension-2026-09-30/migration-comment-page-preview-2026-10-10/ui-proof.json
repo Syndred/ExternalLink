@@ -1,0 +1,58 @@
+{
+  "ok": true,
+  "completeOriginalGenerationHandlerExecuted": true,
+  "actualUiAndNativePagePreview": true,
+  "actualRuntimeControlDispatch": true,
+  "cases": [
+    {
+      "kind": "short",
+      "targetExplicitlySelected": true,
+      "originalAndCurrentCandidates": 1,
+      "metadataAndTextMatched": true,
+      "actualLocalModelTextUsed": false,
+      "controlledModels": 0
+    },
+    {
+      "kind": "blocked",
+      "targetExplicitlySelected": true,
+      "originalAndCurrentCandidates": 1,
+      "metadataAndTextMatched": true,
+      "actualLocalModelTextUsed": true,
+      "controlledModels": 1
+    },
+    {
+      "kind": "long",
+      "targetExplicitlySelected": true,
+      "originalAndCurrentCandidates": 3,
+      "metadataAndTextMatched": true,
+      "actualLocalModelTextUsed": true,
+      "controlledModels": 1
+    }
+  ],
+  "shortTitlePreviewWithoutModel": true,
+  "blockedSnapshotUsesActualArticle": true,
+  "longSnapshotGeneratesOriginalThree": true,
+  "rejectedPageModelTitleFallback": true,
+  "explicitDuplicateTargetPreserved": true,
+  "selectedSourceRejectsOtherTaskBeforeFill": true,
+  "selectedSourceMatchesOneOfTwoOriginalTasks": true,
+  "actualCommentFieldAndSqliteTaskReadback": true,
+  "unrelatedMatchingFieldCannotCertifyComment": true,
+  "seededFixtureTasks": 2,
+  "tasksCreatedByProduct": 0,
+  "ambiguousDuplicateRejected": true,
+  "sqliteReopenAndUiReload": true,
+  "sameUrlReloadRejectsOldModel": true,
+  "deviceSwitchRejectsLocalPreview": true,
+  "deviceSwitchDuringDocumentReadRejected": true,
+  "emptyPagePreviewDoesNotCreateLoadableDraft": true,
+  "disabledPreferenceStopsGeneration": true,
+  "originalBusinessUnchanged": true,
+  "snapshotFaults": 3,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "originalChromeUntouched": true,
+  "allOriginalCommentBranchesComplete": false,
+  "overallMigrationComplete": false
+}

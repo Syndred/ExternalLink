@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "7c112e571f0f8afc7e2ba003258703000ce6fbe0",
+  "fullRegression": {
+    "tests": 1160,
+    "pass": 1160,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 443748.3581
+  },
+  "actualTerminalExitCode": 0,
+  "frozenSources": 12,
+  "stagedSourcesMatch": true,
+  "sourceHashesUnchangedDuringFinalRun": true,
+  "sourcePushed": true,
+  "overallMigrationComplete": false
+}

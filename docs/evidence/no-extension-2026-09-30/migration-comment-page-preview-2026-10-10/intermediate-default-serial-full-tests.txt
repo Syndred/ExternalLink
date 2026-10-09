@@ -1,0 +1,249 @@
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'Insufficient Balance'
+}
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'rate limit exceeded'
+}
+AI provider failure response tests passed
+✔ tests\ai-provider-errors.test.mjs (152.3466ms)
+AllToolsDirectory direct-submit tests passed
+✔ tests\alltoolsdirectory-direct-submit.test.mjs (69.2483ms)
+batch resume persistence regression passed
+✔ tests\audit-batch-resume.test.mjs (73.0221ms)
+Content audit findings regression tests passed
+✔ tests\audit-content-findings.test.mjs (107.3542ms)
+scheduler failure recovery regression passed
+✔ tests\audit-scheduler-error.test.mjs (71.3851ms)
+cloud sync race audit tests passed
+✔ tests\audit-sync-races.test.mjs (113.5577ms)
+Settings conflict recovery action flow passed
+✔ tests\audit-ui-conflict-flow.test.mjs (68.5798ms)
+UI settings/sidepanel audit tests passed
+✔ tests\audit-ui-settings.test.mjs (70.5706ms)
+auto-fill default opt-in regressions passed
+✔ tests\auto-fill-default.test.mjs (73.2768ms)
+automation integration tests passed
+✔ tests\automation-integration.test.mjs (80.9096ms)
+automation ledger tests passed
+✔ tests\automation-ledger.test.mjs (151.1126ms)
+backup workflow tests passed
+✔ tests\backup-workflow.test.mjs (70.3812ms)
+batch controls tests passed
+✔ tests\batch-controls.test.mjs (109.0681ms)
+batch report tests passed
+✔ tests\batch-report.test.mjs (68.8319ms)
+✔ tests\cloud-submission-media.test.mjs (68.676ms)
+cloud sync status tests passed
+✔ tests\cloud-sync-status.test.mjs (71.9086ms)
+cloud sync workflow tests passed
+✔ tests\cloud-sync-workflow.test.mjs (70.0211ms)
+cloud worker core tests passed
+✔ tests\cloud-worker-core.test.mjs (77.3349ms)
+✔ 10015 expanded product submission outranks logged in account menu forum markers (1.7307ms)
+✔ The directory rule does not turn login, other pages or unrelated forums into submissions (2.7631ms)
+✔ The final explicit product receipt is pending moderation despite optional paid priority review (1.6431ms)
+✔ Preview, pricing and a mismatched directory source cannot count as product acceptance (3.4512ms)
+Content comment detector tests passed
+✔ tests\content-comment-detection.test.mjs (76.2522ms)
+✔ 10015 external chips supply actual tag values and satisfy picker requiredness (2.2908ms)
+✔ Search text with no committed chips stays empty (2.0221ms)
+✔ Unrelated sites never inherit the 10015 tag wrapper rule (1.1971ms)
+✔ A neighboring tagline counter cannot truncate a description with its own 1500 character limit (2.7666ms)
+✔ An owned inline counter still supplies its field limit (2.2008ms)
+✔ Thousands separators in description, instruction and FAQ counters never become a one-character limit (22.0725ms)
+✔ An explicit character range with a thousands separator supplies both bounds (1.4256ms)
+✔ Only an actual response already supplied by the human on AIoftheday resolves this gate (3.0664ms)
+content media and custom select routing tests passed
+✔ tests\content-media-select-routing.test.mjs (88.4182ms)
+✔ WordPress and plain text search inputs stay outside all automatic fill/report scopes (1.0705ms)
+Content submission detection tests passed
+✔ tests\content-submission-detection.test.mjs (101.1506ms)
+✔ A disabled submit prevents readiness without inventing missing required fields (2.7954ms)
+✔ An enabled submit and complete fields are ready (2.1533ms)
+✔ A genuinely missing required input remains a field error (1.2723ms)
+context menu tests passed
+✔ tests\context-menu.test.mjs (65.565ms)
+✔ authenticated single-page preparation follows original receipt evidence and preserves imported history (63.8885ms)
+✔ large library transfers resume original verified parts, require the same device and preserve CAS and receipts (859.1567ms)
+✔ device media catalogue is read-only and scoped to its enrolled workspace (12.943ms)
+✔ authenticated timeline product moves save the original ledger and both schemas together, duplicate append is stable and deletion preserves receipts (91.855ms)
+✔ D1 device automatic classification atomically preserves manual verdicts and fences both deletion and annotation versions (27.9773ms)
+✔ D1 freezes only selected original task attachments, retains disabled screenshot slots and rejects missing, foreign and corrupt media (24.5103ms)
+✔ original D1 images without custom metadata freeze selected bytes without editing the old object or history (9.3557ms)
+✔ device local recovery archives source and previous versions before CAS, preserves receipts, and rejects foreign keys and stale revisions (20.0137ms)
+✔ single-page preparation registers an unlisted page without releasing it for submission and validates original profile and mode (29.7009ms)
+✔ D1 executor preserves ownership, atomic run creation, lease fences, immutable receipts and paginated recovery (157.3926ms)
+✔ device workbench restores library preferences, timeline editing, settings and authenticated AI without exposing admin routes (40.5709ms)
+✔ device field learning writes original product memory and answer-free destination schema under D1 revision checks (10.8472ms)
+✔ D1 favorite allocation rejects a concurrent product change even when its annotation revision has not changed (5.3703ms)
+✔ device snapshot streams exact large Unicode documents and immutable revisions without parsing objects (77.7852ms)
+✔ linked timeline documents roll back together on a concurrent receipt change after immutable objects are prepared (6.0083ms)
+✔ a later SQL failure rolls back all linked document pointers and history while preserving old immutable objects (3.6965ms)
+✔ documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history (458.1589ms)
+✔ an interrupted large-object write cannot advance its D1 pointer and resumes the same content without duplicated parts (212.0839ms)
+✔ large documents live outside D1, CAS prevents another browser overwriting changes and retains history (38.0364ms)
+✔ indexed journal pages never load evidence objects; detail is scoped and verified (7.549ms)
+✔ recovery archive retries are idempotent and corrupt or missing evidence fails closed (2.7046ms)
+✔ D1 API requires scoped credentials and works without a Neon connection (26.7294ms)
+✔ production Worker routes D1 requests without DATABASE_URL and separates two clients by workspace (9.8029ms)
+short description and sentence count routing passed
+✔ tests\description-routing.test.mjs (72.0393ms)
+destination memory tests passed
+✔ tests\destination-memory.test.mjs (77.3145ms)
+✔ fixed batch retains failures and verification-only entries, uses all products and never releases unrelated pending tasks (4.2551ms)
+✔ fixed blocker cleanup persists recovery evidence before closing only registered task pages (18.145ms)
+✔ unknown submission retains its original page even when cleanup is requested (0.3432ms)
+✔ dead-end cleanup closes original standalone run pages after a durable checkpoint and protects late evidence and shared pages (55.8486ms)
+✔ original run receipt cleanup rechecks receipt, fields, verification, ownership and run membership after page awaits (80.4859ms)
+✔ freeze covers every actual product, deduplicates same-host paths and preserves unknown original tasks (5.1553ms)
+✔ insufficient scope fails visibly rather than shrinking the fixed denominator or omitting products (1.6925ms)
+✔ fixed registration preserves denominator and task IDs across repeated calls without starting browser work (7.364ms)
+✔ lost registration reply recovers exact full run profile media and receipt without replacing or replaying IDs (2.3751ms)
+✔ old registered index summary is repaired from full original run and keeps newer local unknown attempt (1.4442ms)
+✔ a stronger original cloud submission boundary is never hidden by a local pending task during registration repair (1.759ms)
+✔ wrong original run task profile or incomplete media cannot turn uncertain registration into a replacement (5.309ms)
+✔ Neon object key reordering retains original profile identity while device changes reject stale readbacks (2.6574ms)
+✔ uncertain registration persists intent and refuses to replay or replace its task (3.5726ms)
+✔ authenticated D1 extraction, generation and article fallback use the original service without changing business documents (56.0279ms)
+✔ device AI reports the original balance and transient provider errors as classified 503 responses (7.1923ms)
+✔ wrong workspace, admin token and revoked devices cannot invoke the model or read article pages (3.8683ms)
+✔ original form planning, visual planning, judging and field validation use authenticated device routes and original handlers (9.9751ms)
+✔ all restored form AI routes reject wrong scopes and revoked devices before models, and preserve provider error classification (14.4158ms)
+✔ AIoftheday uses the current full description and five distinct features within its published limits (1.9253ms)
+✔ Site specific summaries cannot be applied to a different product or missing source copy (0.3899ms)
+✔ new products use their own descriptions taglines and features and never inherit JevPlay claims (0.4415ms)
+✔ missing facts remain missing and source-specific selections outrank generic values without invented categories pricing or technology (1.179ms)
+✔ an application without a verified mailbox cannot display unowned legacy associations as received replies (8.4603ms)
+✔ archived products cannot enter new execution scope (0.7142ms)
+✔ media disable and version restore preserve old assets and stop fallback to retired fields (2.5016ms)
+✔ create and archive products preserve historical records and reject reused identities (0.8378ms)
+✔ matrix uses host and product identity and keeps receipt, review, publication and sync independent (15.8226ms)
+✔ task list omits detailed inputs, history and any incidental credentials (0.3675ms)
+✔ workspace switch during read stops writes and cannot relabel the old snapshot as the new workspace (7.9236ms)
+✔ workspace switch after one restore write keeps its unknown acknowledgement and does not send a following document (15.8037ms)
+✔ offline library edit persists before network access and uncertain cloud response is read back without replay (3.8346ms)
+✔ conflict resolution keeps both versions and requires the exact reviewed remote revision (3.1814ms)
+✔ product edits survive offline restart and uncertain profile write is verified without repeating (3.3654ms)
+✔ concurrent remote library edits are preserved and the local pending edit remains recoverable (2.0009ms)
+✔ paused background retries an isolated pending media upload without releasing submission tasks (2.8364ms)
+✔ real connection loss and SQLite reopen preserve local edits, pause and unknown boundaries without replaying writes (161.8352ms)
+{"kind":"actual_assistant_retry_native_routes","services":2,"unauthorized401":true,"oldConnection409":true,"originalRecordGuard400":true,"originalUnknownAndFixedRangePreserved":true,"productionWrites":0,"models":0,"realSubmissions":0}
+✔ both actual native services route assistant retries through original guards without changing unknown tasks or permitting unauthorized calls (1146.2227ms)
+✔ unified tools preserve selected product and original task identity without providing global resume or credentials (3.0612ms)
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (17988.2539ms)
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (25.6889ms)
+✔ preparation permits observed fill and forward steps, rejects final submission, hidden and arbitrary selectors (1.8292ms)
+✔ observed free entry links and duplicated Next captions may advance but paid or final forms remain blocked (2.0514ms)
+✔ file upload uses an observed hidden file input and a product media kind without opening a native picker (0.28ms)
+✔ observed custom dropdown buttons may open their listbox without authorizing arbitrary buttons (0.224ms)
+✔ read-only verification may confirm a prepared form after the AI budget is exhausted without more model calls (3.1901ms)
+✔ background AI caps actions, changes strategy after two stale observations and returns control to same task (12.4851ms)
+✔ unknown submission outcomes are verification only and never start AI preparation (1.217ms)
+✔ a restarted takeover retains the original budget and cannot reset model or action limits (1.4463ms)
+✔ AI failure and interruption persist reason and release control without replacing the page (3.8587ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (11.7964ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (5.3954ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (18.2936ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (2.4731ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (23.4988ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (3.0905ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (46.2496ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (8.1391ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (41.852ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (9.5137ms)
+✔ original-format backup merge retains strong receipts, existing targets and media history; excludes pairing credentials (5.2123ms)
+✔ backup preview writes nothing; lost cloud responses resume the exact durable mutations without discarding untouched data (33.9487ms)
+✔ backup preview revision drift is rejected before any import write (4.146ms)
+✔ an original queued backup plan without fragment metadata still resumes its original full-backup mutations (9.5034ms)
+✔ backup import stores only each key fragment and preserves the complete original merge across all original documents (24.4229ms)
+✔ backup import explicitly records excluded keys when conflict resolution keeps cloud content (8.0982ms)
+✔ chunked local backup staging resumes a stable source, validates full Unicode content and previews without cloud writes (2098.5978ms)
+✔ domain prefetch checks every frozen domain in chunks and stores unknown as unknown (16.5031ms)
+✔ backup roundtrip preserves duplicate entrance rows and rows without a URL; immutable asset conflicts fail clearly (1.4291ms)
+✔ an interrupted authentication preserves its original attempt instead of leaving an unrecorded in-progress state (3.2419ms)
+✔ basic Google login uses a unique visible entry and its same-site confirmation (2.9409ms)
+✔ Google account choice matches the verified email and blocks human checks and extra access (0.8029ms)
+✔ callback proof and action history prevent repeated authentication attempts (0.2619ms)
+✔ offline authentication is narrowly owned and never permits a product submission boundary (0.6093ms)
+{"scenario":"form","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"comment","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"old-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"unknown-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"model","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"selection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"connection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"external","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"external-unknown","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+✔ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (15641.6807ms)
+{"scenario":"new","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-baseline","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-reply","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"cloud-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"record-race","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"closed-after-evidence","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restart-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"untrusted","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"wrong-product","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"scope-change","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"expired","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"iframe","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"reload-before-click","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"automatic-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"late-iframe","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"iframe-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-origin-path","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-watch-bindings","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"legacy-watch-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restored-watching","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+✔ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (34305.0746ms)
+{"scenario":"prepared-reload","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-automatic-reload","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-late-iframe","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-same-origin-path","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-lost-watch-bindings","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-wrong-origin","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":false}
+✔ prepared original task manual observers rebind new documents and late frames without new tasks or submission permission (17901.6732ms)
+{"scenario":"normal","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"missing-timeline","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"lost-repair-reply","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"cloud-pending","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"record-changed","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"profile-changed","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"stopped","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"shared-page","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"unknown-attempt","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"user-page","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"close-failure","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"open-failure","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"remaining-product","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"last","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"host-alias","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"late-selection","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"late-connection","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"repair-record-race","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"restart-open","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"ph-fill-only","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"ph-fill-only-cloud-pending","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"ph-submit","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"ph-fill-only-user-page","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+✔ single-page existing receipts verify original history and continue without new tasks, fields or submissions (20932.6169ms)
+{"scenario":"initial","clicks":0,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"gate","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"gate-return","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"success","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"network-evidence","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"success-prior-identity","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"validation","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"validation-ai","clicks":2,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"validation-limit","clicks":2,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"unknown","clicks":1,"controlledModels":0,"realSubmissions":0,"realModels":0}
+{"scenario":"open-failure","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}
+{"scenario":"user-page","clicks":1,"controlledModels":1,"realSubmissions":0,"realModels":0}

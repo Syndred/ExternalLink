@@ -1,0 +1,10 @@
+{
+  "command": "node --test tests/*.test.mjs",
+  "status": "intentionally_interrupted_before_completion",
+  "reason": "Windows default serial execution; restarting with established four-test-file concurrency",
+  "actualTerminalResult": "owned runner tree stopped with taskkill after exact process command and parent verification",
+  "validReleaseEvidence": false,
+  "sourceHashesUnchanged": true,
+  "originalChromeUntouched": true,
+  "actualTerminalExitCode": 1
+}

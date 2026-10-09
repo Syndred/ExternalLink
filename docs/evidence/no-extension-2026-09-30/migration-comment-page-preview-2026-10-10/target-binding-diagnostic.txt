@@ -1,0 +1,185 @@
+TRACE route /connection  
+TRACE complete /connection
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/short 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/blocked 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/long 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/long 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/long 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/long 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/blocked 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/blocked 
+TRACE complete /captureOriginalCommentState
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/short 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /connection  
+TRACE complete /connection
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/long 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/long 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/long 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/long 
+TRACE route error 文章页面已切换，旧评论结果已放弃
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/long 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/empty 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/empty 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/empty 
+TRACE route error AI 评论生成失败，请确认文章正文足够长
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /originalCommentState https://preview.fixture.invalid/empty 
+TRACE complete /originalCommentState
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/short 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /connection  
+TRACE complete /connection
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/short 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /connection  
+TRACE complete /connection
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /browserLibraryPages  
+TRACE complete /browserLibraryPages
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /commentDrafts https://preview.fixture.invalid/short 
+TRACE complete /commentDrafts
+TRACE route /captureOriginalCommentState https://preview.fixture.invalid/short 
+TRACE complete /captureOriginalCommentState
+TRACE route /originalCommentState https://preview.fixture.invalid/short 
+TRACE complete /originalCommentState
+TRACE route /appData  
+TRACE complete /appData
+TRACE route /appData  
+TRACE complete /appData
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForResponse: Timeout 30000ms exceeded while waiting for event "response"
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test-output\debug-comment-page-preview-binding-2026-10-10.mjs:59:298 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0

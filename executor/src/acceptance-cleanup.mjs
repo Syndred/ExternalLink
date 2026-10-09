@@ -2,13 +2,14 @@ import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto'
 import {retainBatchManualPage} from './workbench-batch-policy.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {isDeepStrictEqual} from 'node:util';
-import {retainOriginalUnavailablePage} from './original-agent-unavailable.mjs';
+import {retainOriginalUnavailablePage,retainOriginalReceiptPage} from './original-agent-unavailable.mjs';
 export async function closeAcceptanceTask(runtime,task){
  const deadEnd=task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end';
  const unavailable=task.status==='skip'&&task.originalAgentSkip&&task.attentionType==='agent_unavailable';
  if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable)||!task.targetId||task.tabClosedAt)return;
  if(['waiting_navigation','ready','rejudging','readiness_timeout','original_page_missing'].includes(task.aiTakeover?.originalVisual?.pendingRejudge?.status))return;
  if(task.originalGroupAdvance?.status==='transferred'||unavailable&&retainOriginalUnavailablePage(runtime,task))return;
+ if(task.receipt&&await retainOriginalReceiptPage(runtime,task))return;
  if(task.originalGroupPage?.status==='navigation_failed'||task.originalGroupPage?.status==='original_page_missing')return;
  if(retainBatchManualPage(runtime,task))return;
  const pausedBatch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(pausedBatch?.status==='paused'&&pausedBatch.pauseReasonCode==='user_pause'&&pausedBatch.pausedTaskIds?.includes(task.id))return;
@@ -36,7 +37,7 @@ export async function closeAcceptanceTask(runtime,task){
   const info=await getTargetInfo(runtime.context,page);
   check();
   if(!owned.has(info?.targetId)&&info?.openerId!==task.targetId)continue;
-  if(runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===info.targetId&&other.browserInstance===task.browserInstance&&!other.tabClosedAt&&(!['skip','err','excluded'].includes(other.status)||other.attemptBoundary||other.receipt)))throw Error('原页仍被其他任务关联，保留页签');
+  if(runtime.store.values('task:').some(other=>other.id!==task.id&&other.originalGroupAdvance?.status!=='transferred'&&other.targetId===info.targetId&&other.browserInstance===task.browserInstance&&!other.tabClosedAt&&(!['skip','err','excluded'].includes(other.status)||other.attemptBoundary||other.receipt)))throw Error('原页仍被其他任务关联，保留页签');
   await page.close();closed.push(info.targetId);
  }
  check();

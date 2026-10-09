@@ -22,7 +22,9 @@ export function recoveryStage(task){
 function productFields(task){
   const excluded=/^(?:q|s|search|query|keyword|captcha|csrf|nonce|token)$/i;
   const signal=/(?:name|title|tool|product|website|url|description|tagline|category|email|logo|image|feature|pricing|company|social|twitter|linkedin|founder|developer)/i;
-  return (task.actualSubmission?.fields||[]).filter(field=>!excluded.test(String(field.name||'').trim())&&signal.test(`${field.name||''} ${field.label||''}`));
+  const saved=task.actualSubmission?.fields;
+  const fields=Array.isArray(saved)?saved:saved&&typeof saved==='object'?Object.entries(saved).filter(([,value])=>value===null||['string','number','boolean'].includes(typeof value)).map(([name,value])=>({name,value})):[];
+  return fields.filter(field=>field&&typeof field==='object'&&!excluded.test(String(field.name||'').trim())&&signal.test(`${field.name||''} ${field.label||''}`));
 }
 
 export function recoveryCheckpoint(task,page,screenshot,closedAt){

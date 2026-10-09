@@ -10,6 +10,8 @@ import {AgentBrowserAdapter} from '../executor/src/agent-browser-adapter.mjs';
 import {profiles,plain} from '../executor/src/shared.mjs';
 import {materializeTaskMedia,materializeTaskUpload} from '../executor/src/task-media.mjs';
 import {imageFormatFixtures} from '../executor/test/image-format-fixtures.mjs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function fixture(profile){
  const home=await mkdtemp(join(tmpdir(),'el-embedded-task-')),store=new Store(':memory:'),task={id:'original-task',runId:'original-run',profileId:profile.id,profileSnapshot:structuredClone(profile),status:'filling',version:1,controller:'executor'};
@@ -17,6 +19,17 @@ async function fixture(profile){
  return{home,store,task,runtime,events,config:plain(profiles.buildAgentConfigFromProfile(profile)),async close(){store.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-embedded-task-'));await rm(home,{recursive:true,force:true});}};
 }
 const originalProfile=image=>({id:'p',name:'Original product',url:'https://product.example',logoUrl:'https://product.example/public-logo.svg',logoDataUrl:image.dataUrl,fields:{Name:'Original product',Url:'https://product.example',LOGO:'https://product.example/public-logo.svg'}});
+
+test('native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots',async()=>{
+ for(const kind of ['featured','screenshot1','screenshot2','screenshot3','screenshot4'])for(const image of imageFormatFixtures){
+  const field=kind==='featured'?'Featured image':'Screenshot '+kind.slice(10),profile={...originalProfile(imageFormatFixtures[0]),fields:{...Object.fromEntries([1,2,3,4].map(index=>['Screenshot '+index,imageFormatFixtures[index%2].dataUrl])),[field]:image.dataUrl}},f=await fixture(profile);
+  try{
+   const file=await materializeTaskMedia(f.runtime,f.task,f.config,kind);assert.deepEqual(await readFile(file),image.bytes);const media=f.task.usedMedia.find(row=>row.kind===kind);assert.equal(media.source,'embedded');assert.equal(media.ref,image.dataUrl);assert.equal(media.sha256,sha(image.bytes));assert.equal(media.mime,image.mime);
+   const before=structuredClone(f.task.usedMedia),changed=structuredClone(f.config),replacement=imageFormatFixtures.find(row=>row.dataUrl!==image.dataUrl).dataUrl;if(kind==='featured')changed.featuredImage=replacement;else changed.screenshots[Number(kind.slice(10))-1]=replacement;
+   await assert.rejects(materializeTaskMedia(f.runtime,f.task,changed,kind),/原任务冻结/);await assert.rejects(materializeTaskMedia(f.runtime,f.task,{...f.config,mediaDisabled:{[kind]:true}},kind),/停用/);assert.deepEqual(f.task.usedMedia,before);assert.deepEqual(f.task.profileSnapshot,profile);assert.equal(f.task.attemptBoundary,undefined);
+  }finally{await f.close();}
+ }
+});
 
 test('native upload uses the original embedded logo bytes MIME and checksum offline, and clearing current data does not replace an old task image',async()=>{
  for(const image of imageFormatFixtures){const f=await fixture(originalProfile(image)),originalFetch=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Offline: no remote substitution');};try{
@@ -52,4 +65,8 @@ test('native upload records the transformed file separately from the immutable o
 
 test('the native CLI rechecks the original target after asynchronous image conversion and never uploads into a changed tab',async()=>{
  let checks=0,commands=0;const adapter={async assertTarget(){checks++;if(checks===2)throw Error('接管原页身份变化');},async upload(kind,selector){assert.equal(kind,'logo');assert.equal(selector,'#logo');return 'original-file.png';},async command(){commands++;}};await assert.rejects(AgentBrowserAdapter.prototype.act.call(adapter,{type:'upload',selector:'#logo',mediaKind:'logo'}),/原页身份变化/);assert.equal(checks,2);assert.equal(commands,0);
+});
+
+test('actual native inline covers and four screenshot slots upload in main frames and iframes with original and PNG formats',()=>{
+ const result=spawnSync(process.execPath,['executor/test/original-embedded-native-upload.mjs','--inline-kinds'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:300000,maxBuffer:2*1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const evidence=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(evidence.ok,true);assert.equal(evidence.cases.length,40);assert.deepEqual([...new Set(evidence.cases.map(row=>row.kind))],['featured','screenshot1','screenshot2','screenshot3','screenshot4']);assert.ok(evidence.cases.every(row=>row.sameTarget&&row.oldEmbeddedTaskFrozen&&row.uploadActions===2));for(const key of ['realModelCalls','posts','externalRequests','productionWrites'])assert.equal(evidence[key],0);
 });

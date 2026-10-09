@@ -14,6 +14,11 @@ export async function materializeTaskMedia(runtime,task,config,kind,{useEmbedded
   if(embedded&&task.profileSnapshot&&profiles.buildAgentConfigFromProfile(task.profileSnapshot).logoDataUrl!==embedded)throw Error('内置图片不属于原任务冻结的产品资料');
   const ref=embedded||(kind==='logo'?config.logoUrl:kind==='featured'?config.featuredImage:config.screenshots?.[index-1]);
   if(!ref)throw Error('该产品缺少已配置的 '+kind+' 素材');
+  const inline=String(ref).startsWith('data:');
+  if(inline&&task.profileSnapshot){
+    const original=profiles.buildAgentConfigFromProfile(task.profileSnapshot),expected=kind==='logo'?(embedded?original.logoDataUrl:original.logoUrl):kind==='featured'?original.featuredImage:original.screenshots?.[index-1];
+    if(expected!==ref)throw Error('内置图片不属于原任务冻结的产品资料');
+  }
   const frozen=task.acceptanceId?runtime.store.get('acceptance:'+task.acceptanceId):null;
   const asset=frozen?.combinations.find(c=>c.profileId===task.profileId)?.mediaManifest.find(a=>a.kind===kind&&a.ref===ref&&a.ok);
   if(asset&&!ref.startsWith('cloud-media://')){
@@ -26,8 +31,8 @@ export async function materializeTaskMedia(runtime,task,config,kind,{useEmbedded
     return file;
   }
   let bytes,mime,originalEvidence;
-  if(embedded){
-    bytes=Buffer.from(decodeImageAsset(embedded));mime=embedded.slice(5,embedded.indexOf(';'));
+  if(inline){
+    bytes=Buffer.from(decodeImageAsset(ref));mime=ref.slice(5,ref.indexOf(';'));
   }else if(ref.startsWith('cloud-media://')){
     const original=runtime.store.get('run:'+task.runId)?.mediaManifest?.find(asset=>asset.asset_id===ref.slice(14));
     originalEvidence=await originalTaskMediaEvidence(runtime,task,ref);
@@ -52,7 +57,7 @@ export async function materializeTaskMedia(runtime,task,config,kind,{useEmbedded
   const folder=join(runtime.home,'task-media');await mkdir(folder,{recursive:true});
   const file=join(folder,sha256+'.'+(mime==='image/jpeg'?'jpg':mime==='image/svg+xml'?'svg':mime.split('/')[1].replace(/[^a-z0-9]/gi,'')));
   await writeFile(file,bytes);
-  runtime.update(task,{usedMedia:[...(task.usedMedia||[]).filter(m=>m.kind!==kind),{kind,ref,sha256,bytes:bytes.length,mime,at:new Date().toISOString(),...(embedded?{source:'embedded'}:originalEvidence?{source:originalEvidence.source,sourceScopeSha256:originalEvidence.sourceScopeSha256,recoveredOriginalChecksum:originalEvidence.recoveredOriginalChecksum}:{})}]},'media_materialized');
+  runtime.update(task,{usedMedia:[...(task.usedMedia||[]).filter(m=>m.kind!==kind),{kind,ref,sha256,bytes:bytes.length,mime,at:new Date().toISOString(),...(inline?{source:'embedded'}:originalEvidence?{source:originalEvidence.source,sourceScopeSha256:originalEvidence.sourceScopeSha256,recoveredOriginalChecksum:originalEvidence.recoveredOriginalChecksum}:{})}]},'media_materialized');
   return file;
 }
 

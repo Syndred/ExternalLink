@@ -1,0 +1,208 @@
+{
+  "kind": "original_dynamic_pin_control_parity",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+  "oldNativeSourceCommit": "d8dec0e6a3ec7258cc1b7721b56f66ebd9cbc5ae",
+  "originalSourceEntry": "extension/settings.js renderLibrary dynamic pin -> background.js pinLibraryUrl",
+  "fixes": [
+    "Expose original queue pin from library row and details",
+    "Keep supplied URL spelling for a newly pinned entry",
+    "Distinguish queue action from supplemental pinned display preference"
+  ],
+  "oldSourceDifferencesReproduced": 2,
+  "actualBrowser": {
+    "ok": true,
+    "kind": "original_pin_control_ui",
+    "existingDuplicatesMatchOriginal": true,
+    "newEntryMatchesOriginal": true,
+    "originalQueueOrderVisible": true,
+    "offlineRestartAndLostReply": true,
+    "preferencesAndReceiptsKept": true,
+    "cloudRepliesControlled": true,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0
+  },
+  "focusedTestsPassed": 30,
+  "fullSuite": {
+    "passed": 986,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 109983.0458,
+    "fileConcurrency": 4
+  },
+  "services": {
+    "ok": true,
+    "kind": "pin_control_published_service_process_identity",
+    "sourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18708,
+        "StartedAt": "2026-10-09T14:35:27.6820290+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 6800,
+        "StartedAt": "2026-10-09T14:35:28.3206950+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": true,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "pin_control_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "servedUiMatchesFileAndCommit": true,
+    "originalPinAndDisplayPreferenceDistinguished": true,
+    "uiSha256": "8b3bf8d4db5deee1146b2fe3c137a174463b01b288d5386e3a4ec2dd3a876fb8",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "protectedBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "migrationComplete": false,
+  "limits": [
+    "Browser acceptance uses an isolated local HTTP fixture and controlled cloud replies; no real targets were pinned.",
+    "Original imported catalog row order remains unchanged; original navigation group order was independently compared after pinning.",
+    "Initial fixture runs lacked mutation identity and assumed saved aliases replaced imported display rows. Those fixture failures are retained; corrected tests then reproduced both failures against the previous native source.",
+    "Historical favorites, other-device media and remaining original dynamic/execution branches remain unverified."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-before-2026-10-09.txt",
+      "capturedSha256": "3ce48296162530c5215ea3f04c779bc83def20948713299f40a2985343398e7c",
+      "gitBlobSha256": "717c01ad5bf86fce6dabfaf689062c775873a39199189e3cb81264741997f590"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-focused-2026-10-09.txt",
+      "capturedSha256": "c4697d33f9ce6db4ba06f88053c1f6fd4180d24b53d5c9187876676ce7c4a467",
+      "gitBlobSha256": "eb24f2f7be6af70b4ac38497ec5f968cabdf68f98f3a1a586692c60dc8a9c609"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-focused-final-2026-10-09.txt",
+      "capturedSha256": "196c74fd6fc676bc023058b2f47d899d1e0cf8371c49bf0be0b81496a36ed841",
+      "gitBlobSha256": "e4241beb18d061a45fd79ae14f5b6050d3825bf57fa1a604ed672140367efa44"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-old-source-2026-10-09.txt",
+      "capturedSha256": "4566ccf737ecb914f5c36b5a6d8a6d4cbc2eef95b0d6308c50940f36fbca74a6",
+      "gitBlobSha256": "4566ccf737ecb914f5c36b5a6d8a6d4cbc2eef95b0d6308c50940f36fbca74a6"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-regression-2026-10-09.txt",
+      "capturedSha256": "fc415cfc0f5ee2da21a7da12a4cd19fe750b970b04db0158cb5f35d038d038ed",
+      "gitBlobSha256": "217fa78e58f09c31f4133f6eb03abd76fa47b63c836705460281cf63c8a198e7"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-repository-2026-10-09.txt",
+      "capturedSha256": "81a0e9ae153901e0b065f4b09e766c4421948a542fd5c838a4cbf2c2c6da534e",
+      "gitBlobSha256": "ba614b7d76047058ba2364e2a9c14e80ed997f0e47d799c87eb5ab44fc63e1e5"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-browser-2026-10-09.txt",
+      "capturedSha256": "1c525d9cf49cdbedf17f05be810b769cd4e07b1c22568cf14a18ceb2cc206681",
+      "gitBlobSha256": "3831fb4e235ffde0ee57c09cd6e9aaf0e6ec51e7895027dd0c36820f26dafe48"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-worker-deploy-2026-10-09.txt",
+      "capturedSha256": "be84569f4155d19583da1d5bed63000f887cb96e1163201d7112ededc5ee80c5",
+      "gitBlobSha256": "357dec979c70b93454a379a51468bf1b602d60d1a562535f64b5f69e924b739f"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-service-process-2026-10-09.txt",
+      "capturedSha256": "dc84aa0fd20607d2afa27b53fb7364869820ec7df89b1634b3e9f02546fd7369",
+      "gitBlobSha256": "8dbb897af12117b45095566ea4307976d34d4c5f1f71c0ed9e544a19646aba3d"
+    },
+    {
+      "path": "original-pin-control-2026-10-09/original-pin-control-live-ui-2026-10-09.txt",
+      "capturedSha256": "4de567757847cf760bfae97c10ee7675007f5922a5684549eaca9142c77a2529",
+      "gitBlobSha256": "b9160ce4fb96f0881718dff99baadaaeb8a39141fe51be379d50aea64d13a025"
+    }
+  ]
+}

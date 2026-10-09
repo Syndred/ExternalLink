@@ -1,0 +1,1 @@
+{"ok":true,"kind":"pin_control_live_ui_and_cloud_access_smoke","frontendSourceCommit":"de34aa03958c032e3a042d472ca1d79d9c13a26d","servedUiMatchesFileAndCommit":true,"originalPinAndDisplayPreferenceDistinguished":true,"uiSha256":"8b3bf8d4db5deee1146b2fe3c137a174463b01b288d5386e3a4ec2dd3a876fb8","anonymousCloudSnapshotStatus":401,"productionWrites":0}

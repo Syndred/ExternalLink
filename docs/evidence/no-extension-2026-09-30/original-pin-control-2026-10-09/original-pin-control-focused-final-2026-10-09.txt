@@ -1,0 +1,10 @@
+✔ pin preserves the original supplied URL spelling for a new queue entry (6.1284ms)
+✔ actual library pin control changes the original queue and survives offline restart without changing preferences (1438.5395ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1669.4284

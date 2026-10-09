@@ -1,0 +1,1 @@
+{"ok":true,"kind":"original_pin_control_ui","existingDuplicatesMatchOriginal":true,"newEntryMatchesOriginal":true,"originalQueueOrderVisible":true,"offlineRestartAndLostReply":true,"preferencesAndReceiptsKept":true,"cloudRepliesControlled":true,"realSubmissions":0,"realModelCalls":0,"productionWrites":0}

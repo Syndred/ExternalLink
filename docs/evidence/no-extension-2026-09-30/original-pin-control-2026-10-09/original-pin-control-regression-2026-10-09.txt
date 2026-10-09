@@ -1,0 +1,38 @@
+✔ browser-page platform metadata cannot inject additional URL-list entries or rewrite a saved original type (3.4873ms)
+✔ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (2647.2779ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (22.9246ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (19.2534ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (7.976ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (8.36ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (12.3631ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (17.3662ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (33.8407ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (7.4718ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (80.166ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (2.9417ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (2.843ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.4234ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (10.4523ms)
+✔ manual multi-mark uses original primary priority and host alias while retaining knowledge, preferences and receipts (4.1764ms)
+✔ original blank mark note retains the old note and original host alias is required before a lost reply is confirmed (0.4197ms)
+✔ favorite and enabled preferences share the original host alias until a route has explicit groups (0.7868ms)
+✔ original group and product preference lists normalize duplicates without discarding other annotation data (0.3702ms)
+✔ archiving and restoring an original mark persist a full offline plan and resume original ids after SQLite reopen and lost replies (119.2676ms)
+✔ discarding a concurrent archive mark also cancels its dependent queue exclusion, retaining both records (2.8589ms)
+✔ local persistence failure rolls back the original mark and its queue list before cloud access (1.2449ms)
+✔ library progress filters match original multi-product flags instead of only current status (13.7877ms)
+✔ library station status filtering uses the original multi-marker normalization and empty-list precedence (9.6311ms)
+✔ library original quality, position and domain sorts are not overridden by pinned preferences (10.6754ms)
+✔ library search matches original language, status/group labels, event notes, profile names and surrounding spaces (6.9109ms)
+✔ library model retains original positions, source fields and names of products with no submission (3.3063ms)
+✔ added favorite, enabled, fee, DR and product-assignment filters still compose with original filters (3.5116ms)
+✔ pin preserves the original supplied URL spelling for a new queue entry (6.094ms)
+✔ actual library pin control changes the original queue and survives offline restart without changing preferences (1629.3091ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2738.7849

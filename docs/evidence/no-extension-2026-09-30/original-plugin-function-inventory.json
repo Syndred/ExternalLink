@@ -1417,8 +1417,10 @@
     },
     {
       "action": "pinLibraryUrl",
-      "mapping": "libraryMutation pin",
-      "status": "implemented_requires_full_acceptance"
+      "mapping": "外链库行／详情的队列置顶 -> libraryMutation pin",
+      "status": "implemented_requires_full_acceptance",
+      "verification": "补回原动态按钮；整份原函数结果、原始URL写法、实际界面、队列顺序及离线重启丢回复通过。排序偏好单独标注；未改正式库。",
+      "evidence": "original-pin-control-2026-10-09.json"
     },
     {
       "action": "prescanPage",
@@ -3203,5 +3205,19 @@
     "productionLibraryMutation": false,
     "migrationComplete": false,
     "evidence": "original-browser-add-behavior-2026-10-09.json"
+  },
+  "originalPinControlCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "originalDynamicButtonRestored": true,
+    "originalWholeDocumentsCompared": true,
+    "originalUrlSpellingPreserved": true,
+    "catalogOrderAndQueueGroupsCompared": true,
+    "actualIsolatedBrowserVerified": true,
+    "offlineRestartAndLostReplyVerified": true,
+    "fullSuitePassed": 986,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7",
+    "evidence": "original-pin-control-2026-10-09.json",
+    "migrationComplete": false
   }
 }

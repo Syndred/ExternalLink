@@ -1,0 +1,200 @@
+{
+  "kind": "original_manual_task_page_controls",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "eed0d650165265c9460c69d461db4b7e126561d1",
+  "oldNativeSourceCommit": "a80c5dcbb44751ea7c9c765af207e62b6aa2c472",
+  "originalFunctionExecuted": "extension/sidepanel.js renderManualTasks; original click handlers executed in isolated VM",
+  "oldNativeDefectReproduced": "Stopped task details lack the original open-tab button; old committed application.js timed out waiting for that button in the same actual two-service fixture.",
+  "behavior": [
+    "Focus the existing native tab without resuming a task",
+    "Stopped tasks can still view the original tab",
+    "Tasks without a tab open an active HTTP(S) page without rebinding the task",
+    "Closed or changed original targets fail without creating replacement pages",
+    "Created target acknowledgement does not wait for page navigation",
+    "Task, run, scope and browser identities rechecked at action time"
+  ],
+  "verification": {
+    "fullSuitePassed": 1007,
+    "failed": 0,
+    "skipped": 0,
+    "concurrency": 4,
+    "focusedPassed": 6,
+    "frozenOriginalHandlersExecuted": true,
+    "nativeChromeFocusVerified": true,
+    "actualAuthenticatedTwoServices": true,
+    "unauthorizedEndpointChecks": true,
+    "authenticatedIsolatedD1": true,
+    "originalTaskDataAndAttemptPreserved": true,
+    "pausedStoppedAndFixedBatchPreserved": true,
+    "noNewCloudWritesDuringViewing": true
+  },
+  "intermediateFailures": [
+    {
+      "file": "original-manual-task-page-first-2026-10-09.txt",
+      "classification": "fixture failure",
+      "reason": "Three fixture tasks initially shared one localhost destination; the real cloud registration correctly rejected the duplicate site scope."
+    },
+    {
+      "file": "original-manual-task-page-second-2026-10-09.txt",
+      "classification": "fixture observation failure",
+      "reason": "A slow target was created before its renderer attached; verification was corrected to inspect native Target.getTargets before releasing its response."
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "manual_task_page_published_service_process_identity",
+    "sourceCommit": "eed0d650165265c9460c69d461db4b7e126561d1",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 23440,
+        "StartedAt": "2026-10-09T15:52:33.7607970+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 22480,
+        "StartedAt": "2026-10-09T15:52:34.3957810+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "manual_task_page_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "eed0d650165265c9460c69d461db4b7e126561d1",
+    "servedUiMatchesFileAndCommit": true,
+    "originalTaskPageButtonsServed": true,
+    "uiSha256": "36c4f98cb62ce5ca2042994d7b6624a09acd14f963f62d9293c060f9f4fa5673",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionTestWrites": 0,
+  "originalChromeStartedOrStopped": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-before-ui-2026-10-09.txt",
+      "capturedSha256": "f75a3068c7cb97bc350c4544985757b0df92d72f1130705735d0bb9cfac81164",
+      "gitBlobSha256": "973312798394559b70b94d62b1c475327551e0cec0c34e7ca337dcddc0b028ef"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-final-2026-10-09.txt",
+      "capturedSha256": "18200df8640b5bce93f4543c2517bb13cab740e21d445b0d927c57491fbd6260",
+      "gitBlobSha256": "2274ef5ed1aa4e9eb55c39115e690092616c5dba930d61fe859e985fdd67fcc7"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-first-2026-10-09.txt",
+      "capturedSha256": "52843473f7cbc17d02f9dfc041bf74e6f133b76deec233a667f4117e24024ad0",
+      "gitBlobSha256": "bd733e4ebbce7ac01e7e977d4c50578ae976a9614da5c902c7003b61432c63eb"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-production-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-production-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-repository-2026-10-09.txt",
+      "capturedSha256": "4523a8366c812d0c939a2505ea58030c07a84abc0ef0549ee4f69f84e9aeaadf",
+      "gitBlobSha256": "0de366327bdf5d4d837909a47d165a80f73ccf166ceae539142db8c67d3ed648"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-second-2026-10-09.txt",
+      "capturedSha256": "d48143dbad2c689dc0f4ad2ac2c20974d49e9ed5b127f49ef68dc60862bdca1e",
+      "gitBlobSha256": "29c0a2c8dd61b0fc50be43f34c3c88dee69052e4b8373de07d3b33edeed9c313"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-service-process-2026-10-09.txt",
+      "capturedSha256": "0853759199e85123d3abc4eb595feaf87ffa0b3a7dc4a3f8637b2f1bcc834cc8",
+      "gitBlobSha256": "3281624fdb29819c93c5d5c174b37256595a67d050ccdaff8b45b2bb3fc57e37"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-manual-task-page-2026-10-09/original-manual-task-page-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "a7fdceed9b6af9b9ead906ce696cf9fdf949a1f4e7dc307c5537989feca88fc3",
+      "gitBlobSha256": "b2806130042a475d38ab46bdbb08cd82b2e93e936ab6b2f39496a17017f4cb5a"
+    }
+  ]
+}

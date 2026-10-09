@@ -1,0 +1,56 @@
+✔ frozen original opens existing and stopped tabs without resume; missing tab opens an ordinary URL only (3.6914ms)
+✔ native viewing preserves unknown receipt, stopped state, transferred page and all task data (2.7557ms)
+✔ stale task, scope, browser and closed targets cannot fall back to creating a page (3.0957ms)
+✔ invalid or protected pending URLs fail before browser connection (1.7623ms)
+✖ actual workbench task buttons focus or open native Chrome without changing original task or execution state (2425.0266ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2528.2118
+
+✖ failing tests:
+
+test at tests\executor-original-manual-task-page.test.mjs:33:1
+✖ actual workbench task buttons focus or open native Chrome without changing original task or execution state (2425.0266ms)
+  AssertionError [ERR_ASSERTION]: 
+  node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 3
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-manual-task-page.mjs:47:186 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-task-page.test.mjs:35:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,52 @@
+✔ frozen original opens existing and stopped tabs without resume; missing tab opens an ordinary URL only (3.3178ms)
+✔ native viewing preserves unknown receipt, stopped state, transferred page and all task data (2.478ms)
+✔ stale task, scope, browser and closed targets cannot fall back to creating a page (3.1225ms)
+✔ invalid or protected pending URLs fail before browser connection (1.6067ms)
+✖ actual workbench task buttons focus or open native Chrome without changing original task or execution state (935.7318ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1028.9233
+
+✖ failing tests:
+
+test at tests\executor-original-manual-task-page.test.mjs:33:1
+✖ actual workbench task buttons focus or open native Chrome without changing original task or execution state (935.7318ms)
+  AssertionError [ERR_ASSERTION]: 
+  file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/cloud.mjs:32
+      if (!response.ok || data.ok === false) throw Object.assign(new Error(data.error || `云端 HTTP ${response.status}`), {
+                                                                 ^
+  
+  Error: 当前范围含已提交、重复或排除目标
+      at Cloud.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/cloud.mjs:32:64)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-manual-task-page.mjs:37:412 {
+    status: 409,
+    cloudFailure: true,
+    cloudQuota: false
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-task-page.test.mjs:35:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

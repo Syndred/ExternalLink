@@ -3308,5 +3308,16 @@
     "otherDeviceMediaAssociationsRecovered": false,
     "cloudWrites": 0,
     "migrationComplete": false
+  },
+  "originalManualTaskBrowsingCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "eed0d650165265c9460c69d461db4b7e126561d1",
+    "evidence": "original-manual-task-page-2026-10-09.json",
+    "originalViewTabAndOpenTodoRestored": true,
+    "actualTwoServicesAndNativeChromeVerified": true,
+    "originalTaskAndExecutionStatePreserved": true,
+    "fullSuitePassed": 1007,
+    "allManualCardBranchesVerified": false,
+    "migrationComplete": false
   }
 }

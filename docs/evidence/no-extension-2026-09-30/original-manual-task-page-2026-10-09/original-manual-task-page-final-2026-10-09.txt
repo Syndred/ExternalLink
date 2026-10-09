@@ -1,0 +1,14 @@
+✔ native Chrome preserves original background opening and active-page auto-fill including cancellation and recovery (9073.739ms)
+✔ frozen original opens existing and stopped tabs without resume; missing tab opens an ordinary URL only (3.899ms)
+✔ native viewing preserves unknown receipt, stopped state, transferred page and all task data (2.663ms)
+✔ stale task, scope, browser and closed targets cannot fall back to creating a page (3.4404ms)
+✔ invalid or protected pending URLs fail before browser connection (1.9391ms)
+✔ actual workbench task buttons focus or open native Chrome without changing original task or execution state (2654.7475ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9135.2782

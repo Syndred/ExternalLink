@@ -1,0 +1,1 @@
+{"ok":true,"kind":"manual_task_page_live_ui_and_cloud_access_smoke","frontendSourceCommit":"eed0d650165265c9460c69d461db4b7e126561d1","servedUiMatchesFileAndCommit":true,"originalTaskPageButtonsServed":true,"uiSha256":"36c4f98cb62ce5ca2042994d7b6624a09acd14f963f62d9293c060f9f4fa5673","anonymousCloudSnapshotStatus":401,"productionWrites":0}

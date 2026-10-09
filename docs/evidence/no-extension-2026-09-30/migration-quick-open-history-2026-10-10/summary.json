@@ -23,9 +23,63 @@
     "skipped": 0,
     "durationMs": 478934.3823
   },
-  "nativeReleasePending": true,
+  "nativeReleasePending": false,
   "workerChanged": false,
   "originalBrowserChanged": false,
   "productionWrites": 0,
-  "overallMigrationComplete": false
+  "overallMigrationComplete": false,
+  "sourceCommit": "4cf3475ff21a3ade633cf4ac720ba42f5221ea7e",
+  "nativeServicePorts": [
+    19388,
+    19389
+  ],
+  "actualNativeAppDataReadback": {
+    "ok": true,
+    "sourceCommit": "4cf3475ff21a3ade633cf4ac720ba42f5221ea7e",
+    "committedBackendSourceMatches": true,
+    "backendSha256": "a74bea06d0c9f1aef7d7cbb51c7a9b41487eec6091b1fb13ffdab76f16f4f4a2",
+    "actualNativeAppDataReadback": true,
+    "quickOpenJobCount": 1,
+    "quickOpenOrderMatchesDiskInsertion": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "fixedCursor": 13,
+    "fixedCount": 30,
+    "businessWrites": 0,
+    "originalBrowserChanged": false
+  },
+  "productionProtection": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  }
 }

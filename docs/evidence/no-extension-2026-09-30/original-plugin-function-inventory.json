@@ -4763,7 +4763,10 @@
     "actualUiBugReproducedAndRepaired": true,
     "fiveOriginalJobsKept": true,
     "fullPassed": 1108,
-    "nativeReleasePending": true,
-    "overallMigrationComplete": false
+    "nativeReleasePending": false,
+    "overallMigrationComplete": false,
+    "sourceCommit": "4cf3475ff21a3ade633cf4ac720ba42f5221ea7e",
+    "originalServicesUpdated": true,
+    "productionProtectionPassed": true
   }
 }

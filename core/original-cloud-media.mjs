@@ -35,7 +35,7 @@ export async function resolveOriginalCloudMediaDefaults(profile,list,{timeoutMs=
  let timer,timedOut=false;
  try{
   const assets=await Promise.race([Promise.resolve().then(list),new Promise((_,reject)=>{timer=setTimeout(()=>{timedOut=true;reject(Error('云端媒体清单超时'));},timeoutMs);})]);
-  return{originalMediaDefaults:originalCloudMediaDefaults(profile,assets)};
+  return{originalMediaDefaults:originalCloudMediaDefaults(profile,sortOriginalMediaCatalogue([...assets]))};
  }catch{
   return{originalMediaDefaults:{},originalMediaLookupWarning:timedOut?'云端媒体清单超过4秒，保留原资料图片':'云端媒体清单暂不可用，保留原资料图片'};
  }finally{clearTimeout(timer);}

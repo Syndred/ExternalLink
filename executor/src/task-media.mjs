@@ -7,9 +7,10 @@ import {profiles} from './shared.mjs';
 
 export async function materializeTaskMedia(runtime,task,config,kind,{useEmbeddedLogo=true}={}) {
   if(kind==='screenshot')kind='screenshot1';
-  if(!/^(?:logo|featured|screenshot[1-4])$/.test(kind))throw Error('素材类别无效');
+  if(!/^(?:logo|featured|screenshot[1-9]\d*)$/.test(kind))throw Error('素材类别无效');
   if(config.mediaDisabled?.[kind])throw Error('该产品已停用 '+kind+' 素材');
   const index=Number(kind.replace('screenshot',''))||1;
+  if(!Number.isSafeInteger(index))throw Error('素材类别无效');
   const embedded=kind==='logo'&&useEmbeddedLogo?config.logoDataUrl:'';
   if(embedded&&task.profileSnapshot&&profiles.buildAgentConfigFromProfile(task.profileSnapshot).logoDataUrl!==embedded)throw Error('内置图片不属于原任务冻结的产品资料');
   const ref=embedded||(kind==='logo'?config.logoUrl:kind==='featured'?config.featuredImage:config.screenshots?.[index-1]);

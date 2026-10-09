@@ -1,0 +1,68 @@
+✔ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (394.5037ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (16.2962ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (13.3435ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (7.004ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (6.9644ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (9.5386ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (12.3351ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (33.8187ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (6.1924ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (165.9232ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (2.5879ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (3.6397ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.7763ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (15.0455ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (36.0361ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (20.5918ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (287.4887ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (36.6205ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (9.0792ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (166.1038ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (10796.6564ms)
+✖ actual original queue removal resumes the same durable plan after committed reply loss and SQLite restart (1547.5658ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (18.0473ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (230.4729ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (11.4161ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11708.0385
+
+✖ failing tests:
+
+test at tests\executor-original-queue-removal.test.mjs:2:1
+✖ actual original queue removal resumes the same durable plan after committed reply loss and SQLite restart (1547.5658ms)
+  AssertionError [ERR_ASSERTION]: evalmachine.<anonymous>:129
+    return markSubmissionSite({ url: msg.url, status: "deleted", note: msg.note || "" });
+    ^
+  
+  ReferenceError: markSubmissionSite is not defined
+      at removeFromSubmissionQueue (evalmachine.<anonymous>:129:3)
+      at evalmachine.<anonymous>:131:1
+      at Script.runInContext (node:vm:149:12)
+      at Object.runInContext (node:vm:301:6)
+      at originalLibraryAction (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/helpers/original-library-catalog.mjs:71:24)
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-queue-removal.mjs:10:23
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-queue-removal.test.mjs:2:329)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

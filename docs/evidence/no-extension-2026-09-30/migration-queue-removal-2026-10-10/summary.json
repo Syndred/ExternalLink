@@ -1,0 +1,23 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "completeOriginalRemovalFunctionsExecuted": [
+    "removeFromSubmissionQueue",
+    "markSubmissionSite",
+    "writeSubmissionSiteAnnotation"
+  ],
+  "originalStorageAndSerializationControlled": true,
+  "actualUiAndNativeRuntime": true,
+  "committedReplyLossAndSQLiteReopenVerified": true,
+  "exactOriginalPlanIdsKept": true,
+  "focusedPassed": 25,
+  "focusedFailed": 0,
+  "focusedSkipped": 0,
+  "actualUiAliasCount": 1,
+  "existingRuleAliasCount": 10,
+  "previousProductionFullPassed": 1096,
+  "newFullRunClaimed": false,
+  "productionCodeChanged": false,
+  "originalBrowserChanged": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false
+}

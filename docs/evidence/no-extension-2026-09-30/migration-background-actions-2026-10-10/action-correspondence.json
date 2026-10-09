@@ -663,6 +663,18 @@
         {
           "path": "tests/executor-original-product-navigation.test.mjs",
           "sha256": "d7cc2cd9b6acbd06eb41fae688f5704e528949773273d50677fb0383115eb4cd"
+        },
+        {
+          "path": "tests/executor-original-queue-removal.test.mjs",
+          "sha256": "b0cbbe3079ff3686431fb53a58d3f5ad4855a20484e506c0879ff879164f614c"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        },
+        {
+          "path": "tests/executor-submission-queue.test.mjs",
+          "sha256": "49e5e4b89434e79f4fb0b901bdc70b97bad50de53858a646334ff695c69c6f2a"
         }
       ],
       "requiredEvidenceReview": "核对原产品、既有回执、未知尝试、跳站与游标恢复分支。",
@@ -811,6 +823,18 @@
         {
           "path": "tests/executor-original-product-navigation.test.mjs",
           "sha256": "d7cc2cd9b6acbd06eb41fae688f5704e528949773273d50677fb0383115eb4cd"
+        },
+        {
+          "path": "tests/executor-original-queue-removal.test.mjs",
+          "sha256": "b0cbbe3079ff3686431fb53a58d3f5ad4855a20484e506c0879ff879164f614c"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        },
+        {
+          "path": "tests/executor-submission-queue.test.mjs",
+          "sha256": "49e5e4b89434e79f4fb0b901bdc70b97bad50de53858a646334ff695c69c6f2a"
         }
       ],
       "requiredEvidenceReview": "核对原产品、既有回执、未知尝试、跳站与游标恢复分支。",
@@ -1711,6 +1735,18 @@
         {
           "path": "tests/executor-original-product-navigation.test.mjs",
           "sha256": "d7cc2cd9b6acbd06eb41fae688f5704e528949773273d50677fb0383115eb4cd"
+        },
+        {
+          "path": "tests/executor-original-queue-removal.test.mjs",
+          "sha256": "b0cbbe3079ff3686431fb53a58d3f5ad4855a20484e506c0879ff879164f614c"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        },
+        {
+          "path": "tests/executor-submission-queue.test.mjs",
+          "sha256": "49e5e4b89434e79f4fb0b901bdc70b97bad50de53858a646334ff695c69c6f2a"
         }
       ],
       "requiredEvidenceReview": "核对原产品、既有回执、未知尝试、跳站与游标恢复分支。",

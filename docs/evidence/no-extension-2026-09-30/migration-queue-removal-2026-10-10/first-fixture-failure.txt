@@ -1,0 +1,39 @@
+✖ actual original queue removal resumes the same durable plan after committed reply loss and SQLite restart (538.5169ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 593.3986
+
+✖ failing tests:
+
+test at tests\executor-original-queue-removal.test.mjs:2:1
+✖ actual original queue removal resumes the same durable plan after committed reply loss and SQLite restart (538.5169ms)
+  AssertionError [ERR_ASSERTION]: file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-queue-removal.mjs:4
+  let store=new Store(file),writes=0,lost=true,externalRequests=0;const errors=[],runtime=new Runtime(store,home);runtime.cloud={async request(route,input){if(route==='snapshot')return structuredClone(snapshot);if(route==='runs?view=inventory')return{tasks:[],runs:[]};assert.equal(route,'library');const change=applicationMutation(documents,input.operation);assert.equal(input.revision,snapshot.revisions[change.key]||0);documents[change.key]=change.data;snapshot.revisions[change.key]=(snapshot.revisions[change.key]||0)+1;writes++;if(lost){lost=false;throw Error('Committed original removal reply lost');}return{ok:true};}};
+                                                                                                                               ^
+  
+  TypeError: Cannot set property cloud of #<Runtime> which has only a getter
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-queue-removal.mjs:4:126
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-queue-removal.test.mjs:2:329)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

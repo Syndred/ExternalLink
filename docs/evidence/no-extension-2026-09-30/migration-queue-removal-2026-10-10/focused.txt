@@ -1,0 +1,33 @@
+✔ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (382.1837ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (17.7201ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (12.7702ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (6.6283ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (7.1951ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (10.498ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (12.5944ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (37.6638ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (8.5169ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (149.6748ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (1.9144ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (2.3787ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.6494ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (11.8896ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (44.6596ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (22.9414ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (274.836ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (35.8326ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (11.3043ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (166.8326ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (10859.6234ms)
+✔ actual original queue removal resumes the same durable plan after committed reply loss and SQLite restart (1560.7107ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (25.5171ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (232.2191ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (9.4924ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11767.9428

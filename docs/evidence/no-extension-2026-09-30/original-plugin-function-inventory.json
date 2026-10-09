@@ -3334,10 +3334,24 @@
     "migrationComplete": false
   },
   "originalManualConfirmationGroupAudit": {
-    "status": "runtime verification required",
-    "original": "confirmSubmissionSuccess calls advanceDestinationGroup for its active tab",
-    "native": "confirmManualSubmission calls finishWorkbenchTask and tick; original group handoff equivalence still needs runtime inspection",
-    "testGap": "Existing frozen manual confirmation test supplies an empty activeTabs map.",
-    "runtimeDefectProven": false
+    "status": "runtime_difference_reproduced_fix_in_progress",
+    "original": "Success advances the next product on the same destination tab; last product closes the tab.",
+    "oldNativeBaseline": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+    "runtimeDefectProven": true,
+    "published": false,
+    "latestOpenFailure": "Last-product manual success did not close the page in the newly added isolated browser scenario. Root cause pending.",
+    "fullSuiteGreen": false,
+    "evidence": "original-receipt-group-progress-2026-10-09.json",
+    "migrationComplete": false
+  },
+  "originalReceiptGroupProgressCheckpoint": {
+    "date": "2026-10-09",
+    "publishedHead": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+    "status": "in_progress_not_released",
+    "evidence": "original-receipt-group-progress-2026-10-09.json",
+    "fullSuitePassed": 1014,
+    "fullSuiteFailed": 2,
+    "latestAddedScenarioPassed": false,
+    "migrationComplete": false
   }
 }

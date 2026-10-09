@@ -1,0 +1,11 @@
+✔ manual success retains its receipt and original tab for the next frozen product after reply loss and paused recovery (2638.4151ms)
+✔ actual visual native workers persist boundaries before posting and restore both frozen products and receipts through authenticated D1 (4941.6358ms)
+✔ actual native workers synchronize the original receipt and reuse its tab for the next product as in the original plugin (1002.8579ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8964.5077

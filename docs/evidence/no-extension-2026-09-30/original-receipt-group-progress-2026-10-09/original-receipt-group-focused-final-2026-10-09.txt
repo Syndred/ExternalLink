@@ -1,0 +1,23 @@
+✔ verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation (98.0596ms)
+✔ changed local or cloud receipt, actual fields and verification status cannot release a receipt page to a new product (31.4712ms)
+✔ a pending manual proof and exhausted or paused group keep its page without consuming another product budget (2.1133ms)
+✔ lost receipt-page transfer leaves the durable assignment and a closed original page becomes a manual task without replacement (6.7357ms)
+✔ unavailable reason and current-product-only skip match the actual original functions (26.7925ms)
+✔ late skip cannot overwrite changed product, scope, task or unrelated batch progress (3.4443ms)
+✔ same frozen group takes exact original page after cloud source read and lease then reloads it (5.3886ms)
+✔ source or next unknown, controller, identity, scope, host and concurrent changes prevent page transfer (21.4853ms)
+✔ SQLite atomic page transfer survives reopen and rolls back source, destination, outbox and checkpoint together (81.652ms)
+✔ lost transfer acknowledgment reuses durable assignment; navigation failure and missing page never create substitute tabs (9.4921ms)
+✔ navigation boundary pauses and changed source page use goto only under original document ownership (7.8717ms)
+✔ fixed acceptance and standalone run retain original group order and denominator without wrapping (7.5195ms)
+✔ a newly received next product stays untouched while the next pending product receives the original page (3.0595ms)
+✔ recovered assignment revalidates cloud source and refuses a newer unknown source without opening another page (3.588ms)
+✔ late cloud lease reply cannot overwrite a newly protected local task or switched workspace (1.3986ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 637.1685

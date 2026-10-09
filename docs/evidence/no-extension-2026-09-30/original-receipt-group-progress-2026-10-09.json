@@ -1,0 +1,114 @@
+{
+  "kind": "unfinished_original_receipt_group_progress",
+  "date": "2026-10-09",
+  "publishedHead": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "status": "in_progress_not_released",
+  "migrationComplete": false,
+  "progressOnlyPush": true,
+  "originalBehavior": "Confirmed success advances to the next product in the destination group using the same tab; without a next product the original closes the page. Pause and exhausted budget retain the page.",
+  "oldNativeBaseline": {
+    "commit": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+    "expectedFailures": 2,
+    "scope": "actual committed native modules under isolated manual and automatic receipt fixtures"
+  },
+  "verification": {
+    "focusedPassed": 15,
+    "browserPassedBeforeLastProductAdded": 3,
+    "lastFullSuite": {
+      "total": 1016,
+      "passed": 1014,
+      "failed": 2,
+      "finalGreen": false
+    },
+    "fullSuiteFailures": [
+      {
+        "case": "intercepted receipt fixture expected immediate first-tab closure",
+        "status": "fixture updated to original same-tab behavior; focused rerun passed; full suite not rerun"
+      },
+      {
+        "case": "external-form untrusted-redirect manual watch not armed within 5000ms",
+        "status": "unchanged direct rerun passed; not claimed repaired"
+      }
+    ],
+    "latestAddedScenario": {
+      "case": "manual confirmation of the last product should close its page",
+      "passed": false,
+      "observation": "page.isClosed() was false after confirmation",
+      "rootCause": "not yet determined"
+    }
+  },
+  "unpublishedLocalFiles": [
+    {
+      "path": "executor/src/acceptance-cleanup.mjs",
+      "sha256": "17e28d89b658418105367c97c72c1ee4859bcc21c07844dd2e8bc9d8c82055d0"
+    },
+    {
+      "path": "executor/src/original-agent-unavailable.mjs",
+      "sha256": "846d40465e1144a345343307ddf90483e20896e42b9beca275e046dde15667b7"
+    },
+    {
+      "path": "tests/executor-batch-cloud-recovery.test.mjs",
+      "sha256": "8789a34084996a0b966f28e592945a813ee596d55c1078b9a68b7fbfdb876db8"
+    },
+    {
+      "path": "tests/executor-original-agent-unavailable.test.mjs",
+      "sha256": "993d2f8c99cc3fb8e3e993fa83fd2dc33bc1685c93aa42270fa4d928f5e21ebf"
+    },
+    {
+      "path": "tests/helpers/native-receipt-group-baseline.mjs",
+      "sha256": "62b036937c09791959ca91d3b611d685e5944aac50f8f841e6cabed2ee93b8d7"
+    },
+    {
+      "path": "tests/helpers/original-group-advance.mjs",
+      "sha256": "ed28dfcf1ba7a4f077611a27afac02d91cb10d1e201a7890593e7ba0443362eb"
+    }
+  ],
+  "remaining": [
+    "Resolve last-product page cleanup and rerun affected tests and full suite",
+    "Publish and verify receipt handoff only after passing checks",
+    "Audit remaining original dynamic controls and special publication flows",
+    "Locate historical favorites, other-device profile/media associations and remaining large-backup sources",
+    "Mac physical-device acceptance deferred"
+  ],
+  "deploymentThisCheckpoint": false,
+  "realSubmissionsThisCheckpoint": 0,
+  "realModelCallsThisCheckpoint": 0,
+  "rawEvidence": [
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-native-baseline-2026-10-09.txt",
+      "capturedSha256": "4759081ee8f287bdff880fff4d1daf31203f2106ac93916a293f94dc0a9410ca",
+      "gitBlobSha256": "40ce73f93c7bf7595ae6ddb17dea2dfe12b4603ed94f098f73e221addb1663f0"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-focused-final-2026-10-09.txt",
+      "capturedSha256": "5412e68a58a2d82963841cd550b97b4b47732a0bff1a255ba7734cb538324ded",
+      "gitBlobSha256": "df4ab5a7092923ca643ef9cc621bee72b6f5d2b99fbbd1f126fc7464103e8329"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-browser-verified-2026-10-09.txt",
+      "capturedSha256": "a3129ef1bb3a83150214b6766b78098661d708222ed1ca45ac2c3c25ce77a8c0",
+      "gitBlobSha256": "b6e37118ae3a44d863d98da088a953e022807d17baf342eab9c1879f9a24df31"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-repository-2026-10-09.txt",
+      "capturedSha256": "ab318327ec9002a70e49b7e88c7722357fa437cca206cc5a1074b90c30cf2767",
+      "gitBlobSha256": "0fd492187ba1f6256d75920e56129f76f0d039fc9106fb0b77fa45bceaf04cbd"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-receipt-harness-final-2026-10-09.txt",
+      "capturedSha256": "23652bb57dbef9f6843d20b4b57c02abb4280e8cc9af92e007c2528503a534c7",
+      "gitBlobSha256": "8198403a7eb8d155366ffe33acb25e2b7e105173e6c843acb5e3b61928e01268"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-external-watch-recheck-2026-10-09.txt",
+      "capturedSha256": "cf615d4ba7b21ebb7c9c79d802cf2a645f6ff52e7374c10753dc79b454b10813",
+      "gitBlobSha256": "0dda06173c648e6769d7d336ef07340e96d8cb94d5c2be1adc9df253cf93cc73"
+    },
+    {
+      "path": "original-receipt-group-progress-2026-10-09/original-receipt-group-manual-final-2026-10-09.txt",
+      "capturedSha256": "b20e1a54bafd2ee96996126cadcba830b3171c6d3998524b580e684a43a82dd3",
+      "gitBlobSha256": "bbb98b220b9f8c3f05f686e1a009211969798234612105831590da3f6e1f2cc9"
+    }
+  ]
+}

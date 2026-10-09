@@ -1,0 +1,9 @@
+✔ actual intercepted browser receipts preserve submitted moderation and published proof through authenticated D1 and empty restore (1753.3523ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2135.4539

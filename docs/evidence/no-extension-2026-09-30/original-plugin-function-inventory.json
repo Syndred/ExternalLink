@@ -3319,5 +3319,25 @@
     "fullSuitePassed": 1007,
     "allManualCardBranchesVerified": false,
     "migrationComplete": false
+  },
+  "originalManualCardBranchesCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "7041238bc25c6ed8130861a1a4fb306c497ca747",
+    "evidence": "original-manual-card-2026-10-09.json",
+    "readyCreationAndManualConfirmationSeparated": true,
+    "originalContinueFocusOrderRestored": true,
+    "originalVisibleBranchCases": 7,
+    "actualChromeUiBranchCases": 5,
+    "fullSuitePassed": 1011,
+    "originalServicesUnchanged": true,
+    "allManualCardBranchesVerified": false,
+    "migrationComplete": false
+  },
+  "originalManualConfirmationGroupAudit": {
+    "status": "runtime verification required",
+    "original": "confirmSubmissionSuccess calls advanceDestinationGroup for its active tab",
+    "native": "confirmManualSubmission calls finishWorkbenchTask and tick; original group handoff equivalence still needs runtime inspection",
+    "testGap": "Existing frozen manual confirmation test supplies an empty activeTabs map.",
+    "runtimeDefectProven": false
   }
 }

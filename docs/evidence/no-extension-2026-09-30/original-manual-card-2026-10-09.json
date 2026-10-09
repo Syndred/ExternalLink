@@ -1,0 +1,216 @@
+{
+  "kind": "original_manual_task_card_branches",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "7041238bc25c6ed8130861a1a4fb306c497ca747",
+  "oldNativeSourceCommit": "07cc8172b37f82298ee450d1d17d414c7502fefd",
+  "originalFunctionExecuted": "renderManualTasks including only buttons actually appended to the original task card",
+  "changes": [
+    "Product Hunt ready task displays explicit create-draft entry",
+    "Ready-to-create task does not show manual success confirmation",
+    "Unknown creation result keeps human verification available",
+    "Existing pending manual receipt keeps its synchronization entry",
+    "Authorized continuation focuses the original page before dispatching the original task",
+    "Failure to open the original page leaves continuation undispatched"
+  ],
+  "verification": {
+    "fullSuitePassed": 1011,
+    "failed": 0,
+    "skipped": 0,
+    "focusedPassed": 9,
+    "originalVisibleBranchCases": 7,
+    "actualChromeUiBranchCases": 5,
+    "sixPageUiRegressionPassed": true,
+    "originalTaskPageTwoServiceRegressionPassed": true
+  },
+  "evidenceScope": "Original and native card functions executed independently; actual isolated Chrome UI uses controlled service replies. The focused suite also runs the existing authenticated two-service/native-Chrome task page fixture. No real Product Hunt draft was created.",
+  "baseline": "With the corrected original visible-button oracle, committed 07cc817 fails the ready-card and focus-before-continuation requirements. Original failed output retained.",
+  "intermediateFailures": [
+    {
+      "files": [
+        "original-manual-card-before-2026-10-09.txt",
+        "original-manual-card-after-2026-10-09.txt"
+      ],
+      "classification": "preliminary oracle failure",
+      "reason": "The original helper counted a constructed but unattached confirmation button. It now traverses the actual card tree; old-code baseline was rerun separately."
+    },
+    {
+      "file": "original-manual-card-ui-final-2026-10-09.txt",
+      "classification": "fixture observation race",
+      "reason": "Button count was read before async task details rendered. The final test waits for the task page control first."
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "manual_card_original_services_unchanged",
+    "uiSourceCommit": "7041238bc25c6ed8130861a1a4fb306c497ca747",
+    "backendSourceCommit": "eed0d650165265c9460c69d461db4b7e126561d1",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 23440,
+        "StartedAt": "2026-10-09T15:52:33.7607970+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 22480,
+        "StartedAt": "2026-10-09T15:52:34.3957810+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "restarted": false,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "manual_card_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "7041238bc25c6ed8130861a1a4fb306c497ca747",
+    "servedUiMatchesFileAndCommit": true,
+    "originalManualCardControlsServed": true,
+    "uiSha256": "6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextCallgraphAudit": {
+    "status": "runtime verification required",
+    "original": "confirmSubmissionSuccess calls advanceDestinationGroup for its active tab",
+    "native": "confirmManualSubmission calls finishWorkbenchTask and tick; original group handoff equivalence still needs runtime inspection",
+    "testGap": "Existing frozen manual confirmation test supplies an empty activeTabs map.",
+    "runtimeDefectProven": false
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionTestWrites": 0,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-after-2026-10-09.txt",
+      "capturedSha256": "73e9bbadc2adcfb581c7d9a4d20670922a748e850080e1d64d511245d2242ae5",
+      "gitBlobSha256": "dc4616a44522535ffa89a4e7ecc04a68d62c830f699ca0d023eb53b06fb041a0"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-baseline-2026-10-09.txt",
+      "capturedSha256": "b9450f7053c575f1bf65d7a1d6d0b7afaa4d357973cf982afb1f7d35aa63b634",
+      "gitBlobSha256": "80311d5b6e65c0a3a913ff10c596164250357beb8af12a200c26e189b51f2653"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-before-2026-10-09.txt",
+      "capturedSha256": "2a6a4d28bad5ed07c2015c1d4e98d86dbce71a9a5ed892ed8e25b598518ec756",
+      "gitBlobSha256": "c17b1ddd725b1da4f98ae6cc433ed06e0217ccdb612fe0cf0035239fd0432959"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-focused-2026-10-09.txt",
+      "capturedSha256": "73c5c0346936678cd77d4179b05315ccda2fba9a0434e803769c65be82ba3570",
+      "gitBlobSha256": "d8753be59f7b7a6d799b41e147a6111defedc8b0b17d9952bc9166e0528e8285"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-production-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-production-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-repository-2026-10-09.txt",
+      "capturedSha256": "05495e73cbd5daca7e7806ba685f1f4836660f9a1030a405b2460bf16e371c07",
+      "gitBlobSha256": "1dd06846433d8a2c1de0c0d128f4686c7a5531a8b6863ccdb90ca0f4abb213a3"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-service-process-2026-10-09.txt",
+      "capturedSha256": "cac91c20efd3787e2a3e8a52054755779d74a01e40f90a013a259f54bfb88746",
+      "gitBlobSha256": "4e64224a2591e88bf95292a74530b4b987cd73735b49211a58b62bc24d2ac5a0"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-ui-2026-10-09.txt",
+      "capturedSha256": "c8af2c8b748d6ebeb7f0a3715f262672667d61475f0ae88713cfc174ae4317d2",
+      "gitBlobSha256": "41908d0d1e9e450251041a7e0359ef8248bca4cd760ebb801cc4b290a661d8fd"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-ui-final-2026-10-09.txt",
+      "capturedSha256": "dbbf3ca751c4076e9ca5efeb8b7746d4d1c61b951b402c7d9fb174b1bc261186",
+      "gitBlobSha256": "d36d7f92c87193f66ab3f6e0a2fba9c3ae2a56db4813d864d9e144c5e03de560"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "cdcd4aef1ba01a9bf9c85c06303ed79a6a67b750792e04603071bcd59f6bba3e",
+      "gitBlobSha256": "d765482def596d698d68655fbde14af0b584c2ca696e675686edcdcf8be077b7"
+    },
+    {
+      "path": "original-manual-card-2026-10-09/original-manual-card-ui-verified-2026-10-09.txt",
+      "capturedSha256": "d7c529e27b000eeb33d50794d57a758120ccab95ab703408d895374add06afea",
+      "gitBlobSha256": "e05adc95ea4d3e4f2f4ff6948c29bf0d50131637ba2d472e7581fe8ab8a3a810"
+    }
+  ]
+}

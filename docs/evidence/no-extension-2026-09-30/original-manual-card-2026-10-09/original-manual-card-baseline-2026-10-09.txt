@@ -1,0 +1,67 @@
+✖ native manual card matches original creation, confirmation, stopped and no-tab branches (2.7687ms)
+✖ creation and ordinary continuation focus the original page before dispatch, with unchanged task identity (1.4377ms)
+✖ closed page cannot continue and unchecked consent cannot focus the page (0.7717ms)
+✔ pending manual receipt synchronization remains accessible despite stale creation metadata (0.5247ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 103.4247
+
+✖ failing tests:
+
+test at tests\executor-original-manual-card.test.mjs:19:1
+✖ native manual card matches original creation, confirmation, stopped and no-tab branches (2.7687ms)
+  AssertionError [ERR_ASSERTION]: ready
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-card.test.mjs:24:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-manual-card.test.mjs:29:1
+✖ creation and ordinary continuation focus the original page before dispatch, with unchanged task identity (1.4377ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  -   '/openManualTaskPage',
+      '/manualSubmit',
+      'close'
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-card.test.mjs:33:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '/manualSubmit', 'close' ],
+    expected: [ '/openManualTaskPage', '/manualSubmit', 'close' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-manual-card.test.mjs:38:1
+✖ closed page cannot continue and unchecked consent cannot focus the page (0.7717ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-card.test.mjs:39:118)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /原页签已关闭/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

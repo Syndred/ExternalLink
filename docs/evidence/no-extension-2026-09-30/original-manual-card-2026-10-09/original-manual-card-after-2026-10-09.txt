@@ -1,0 +1,31 @@
+✖ native manual card matches original creation, confirmation, stopped and no-tab branches (2.5739ms)
+✔ creation and ordinary continuation focus the original page before dispatch, with unchanged task identity (1.6772ms)
+✔ closed page cannot continue and unchecked consent cannot focus the page (1.2262ms)
+✔ pending manual receipt synchronization remains accessible despite stale creation metadata (0.4961ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84.1274
+
+✖ failing tests:
+
+test at tests\executor-original-manual-card.test.mjs:18:1
+✖ native manual card matches original creation, confirmation, stopped and no-tab branches (2.5739ms)
+  AssertionError [ERR_ASSERTION]: ready
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-manual-card.test.mjs:23:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

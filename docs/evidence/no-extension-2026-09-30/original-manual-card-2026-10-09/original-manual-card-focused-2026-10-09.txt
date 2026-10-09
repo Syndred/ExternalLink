@@ -1,0 +1,17 @@
+✔ native manual card matches original creation, confirmation, stopped and no-tab branches (7.6998ms)
+✔ creation and ordinary continuation focus the original page before dispatch, with unchanged task identity (1.7518ms)
+✔ closed page cannot continue and unchecked consent cannot focus the page (1.4515ms)
+✔ pending manual receipt synchronization remains accessible despite stale creation metadata (0.5492ms)
+✔ frozen original opens existing and stopped tabs without resume; missing tab opens an ordinary URL only (3.9195ms)
+✔ native viewing preserves unknown receipt, stopped state, transferred page and all task data (2.8034ms)
+✔ stale task, scope, browser and closed targets cannot fall back to creating a page (3.333ms)
+✔ invalid or protected pending URLs fail before browser connection (1.8843ms)
+✔ actual workbench task buttons focus or open native Chrome without changing original task or execution state (2474.0479ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2586.2731

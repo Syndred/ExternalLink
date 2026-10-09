@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-10",
+  "pulledLatest": true,
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "productionCodeChanged": false,
+  "completeOriginalPanelAndThreeModulesExecuted": true,
+  "actualBrowserGroupStates": [
+    "automatic",
+    "paid",
+    "broken",
+    "skip",
+    "deleted",
+    "disabled",
+    "explicit-empty",
+    "explicit-both"
+  ],
+  "bothOriginalGroupsCompared": true,
+  "disabledCheckedStateCorrectedToOriginalInPreviouslyUnregisteredFixture": true,
+  "favoritePatchDoesNotFreezeInferredGroups": true,
+  "actualAddRemoveSaveAndReopenVerified": true,
+  "sqliteReopenAndSameOfflinePlanCloudRecoveryVerified": true,
+  "groupSelectionsAndOriginalReceiptsPreserved": true,
+  "focusedTests": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullSuiteRerunThisFollowup": false,
+  "priorFullSuiteReference": "../migration-dynamic-controls-2026-10-10/summary.json",
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "models": 0,
+  "originalChromeStartedOrClosed": false,
+  "overallMigrationComplete": false,
+  "limitations": [
+    "Actual UI and SQLite operations use an isolated service and controlled cloud transport; they are not new production cloud mutations.",
+    "This checkpoint covers the group panel and the listed library preference workflows, not every original feature."
+  ],
+  "protectedStateReadbackVerified": true,
+  "protectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d"
+}

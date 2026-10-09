@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Disabled targets retain visible explicit groups
+
+false !== true
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/library-state.mjs:64:30 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

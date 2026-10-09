@@ -323,9 +323,10 @@
       "persistence": "siteAnnotations.library.groups",
       "currentSource": "executor/web/application.js::showLibraryEdit",
       "tests": [
+        "tests/executor-original-library-group-panel.test.mjs",
         "tests/executor-original-library-state.test.mjs"
       ],
-      "scope": "已有自动及显式分组、禁用、离线证据",
+      "scope": "直接对照原完整面板及三模块：两分组八状态、增删／收藏／启用、保存重开及SQLite原编号离线恢复；不扩展为其他入口完成证明",
       "completion": "requires_branch_evidence_audit"
     },
     {

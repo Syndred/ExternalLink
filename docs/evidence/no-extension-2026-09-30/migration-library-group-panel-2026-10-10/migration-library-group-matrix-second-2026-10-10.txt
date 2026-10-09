@@ -1,0 +1,2 @@
+Original inferred and explicit groups, favorite-only patches, disabled group retention, mark primary/host aliases, archive and restore queue keys, durable offline plan, and receipts passed; real submissions 0
+{"ok":true,"completeOriginalPanelAndModulesExecuted":true,"groupCases":8,"originalReceiptsPreserved":true,"offlinePlanTypes":["mark","set_deleted"],"paused":true,"realSubmissions":0,"productionWrites":0}

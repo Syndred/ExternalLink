@@ -1,0 +1,17 @@
+✔ actual library group controls match complete original panel in eight states and save, reopen and recover the same offline SQLite plan (2975.1073ms)
+✔ all original destination condition controls save and reload their exact marks without changing receipts or the paused range (5902.885ms)
+✔ manual multi-mark uses original primary priority and host alias while retaining knowledge, preferences and receipts (3.0974ms)
+✔ original blank mark note retains the old note and original host alias is required before a lost reply is confirmed (0.3381ms)
+✔ favorite and enabled preferences share the original host alias until a route has explicit groups (0.7384ms)
+✔ original group and product preference lists normalize duplicates without discarding other annotation data (0.3173ms)
+✔ archiving and restoring an original mark persist a full offline plan and resume original ids after SQLite reopen and lost replies (131.7527ms)
+✔ discarding a concurrent archive mark also cancels its dependent queue exclusion, retaining both records (2.4365ms)
+✔ local persistence failure rolls back the original mark and its queue list before cloud access (1.1778ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5972.6498

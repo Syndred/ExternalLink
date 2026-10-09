@@ -4693,5 +4693,16 @@
     "newRealSubmissions": 0,
     "productionWrites": 0,
     "migrationComplete": false
+  },
+  "originalLibraryGroupPanelCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-library-group-panel-2026-10-10/summary.json",
+    "completeOriginalPanelAndModulesExecuted": true,
+    "actualBrowserGroupStates": 8,
+    "actualSaveReopenAndSqliteOfflineRecovery": true,
+    "focusedTestsPassed": 9,
+    "productionCodeChanged": false,
+    "newRealSubmissions": 0,
+    "migrationComplete": false
   }
 }

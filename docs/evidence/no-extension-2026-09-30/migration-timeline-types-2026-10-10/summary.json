@@ -1,0 +1,22 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalTypeOptionsReadFromFrozenSource": true,
+  "standardTypes": 8,
+  "addedVariants": 9,
+  "profileMoveActions": 18,
+  "existingTypeChanges": 8,
+  "actualUiSaveActions": 35,
+  "completeOriginalAddAndUpdateOracle": true,
+  "generatedReferenceIdOnlyControlled": true,
+  "archivedProductAndCommonDestinationMoves": true,
+  "finalDiskAndUiReadback": true,
+  "unrelatedReceiptAndProductsKept": true,
+  "focusedPassed": 11,
+  "focusedFailed": 0,
+  "focusedSkipped": 0,
+  "unknownHistoryTypesAndDeletedProfilesUiVerified": false,
+  "productionCodeChanged": false,
+  "newFullRunClaimed": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false
+}

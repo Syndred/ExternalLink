@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Error: strict mode violation: locator('.timeline-event').filter({ hasText: '原人工记录 submitted' }).getByRole('button', { name: '编辑动态', exact: true }) resolved to 2 elements:
+    1) <button class="" type="button">编辑动态</button> aka getByRole('button', { name: '编辑动态' }).nth(2)
+    2) <button class="" type="button">编辑动态</button> aka getByRole('button', { name: '编辑动态' }).nth(3)
+
+Call log:
+  - waiting for locator('.timeline-event').filter({ hasText: '原人工记录 submitted' }).getByRole('button', { name: '编辑动态', exact: true })
+
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-timeline-types.mjs:35:132 {
+  log: [
+    "  - waiting for locator('.timeline-event').filter({ hasText: '原人工记录 submitted' }).getByRole('button', { name: '编辑动态', exact: true })"
+  ]
+}
+
+Node.js v24.21.0

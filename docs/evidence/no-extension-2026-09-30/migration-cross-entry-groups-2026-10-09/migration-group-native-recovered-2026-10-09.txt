@@ -1,0 +1,74 @@
+- dialog:
+  - button "关闭详情": 关闭
+  - heading "target.example" [level=2]
+  - link "https://target.example/form":
+    - /url: https://target.example/form
+  - heading "提交条件" [level=3]
+  - paragraph: 可同时记录多个条件，按外链站保存，切换产品仍保留。已归档会排除原投稿队列，取消归档后恢复；条件不代表投稿成功。
+  - checkbox "可以提交"
+  - text: 可以提交
+  - checkbox "需要付费" [checked]
+  - text: 需要付费
+  - checkbox "网址失效"
+  - text: 网址失效
+  - checkbox "暂不提交"
+  - text: 暂不提交
+  - checkbox "需要邮箱或手机验证码"
+  - text: 需要邮箱或手机验证码
+  - checkbox "需要完成验证码"
+  - text: 需要完成验证码
+  - checkbox "需要登录"
+  - text: 需要登录
+  - checkbox "需要人工处理"
+  - text: 需要人工处理
+  - checkbox "已归档"
+  - text: 已归档
+  - generic: 备注
+  - textbox "站点备注": 原分组条件
+  - button "保存提交条件"
+  - heading "收藏、启用与分组" [level=3]
+  - checkbox "收藏此网站" [checked]
+  - text: 收藏此网站
+  - checkbox "启用此网站" [checked]
+  - text: 启用此网站
+  - checkbox "置顶排序时优先显示"
+  - text: 置顶排序时优先显示
+  - checkbox "高质量优先" [checked]
+  - text: 高质量优先
+  - generic "已标记为付费，不能加入免费可提交分组":
+    - checkbox "免费可提交" [disabled]
+    - text: 免费可提交
+  - paragraph: 队列置顶：将网址移到自定义队列最前，保留收藏、分组和提交记录。列表仍按所选方式排序；上面的选项用于“置顶优先”显示。
+  - button "队列置顶"
+  - paragraph: 适用产品：不勾选表示所有产品都可使用这个外链。
+  - checkbox "适用于 原产品"
+  - text: 适用于 原产品
+  - button "保存收藏与分组"
+  - heading "外链网站资料" [level=3]
+  - generic: 网站名称
+  - textbox "外链 网站名称"
+  - generic: 网站分类
+  - textbox "外链 网站分类"
+  - generic: 分类标签
+  - textbox "外链 分类标签"
+  - generic: 域名评分（DR）
+  - textbox "外链 域名评分（DR）"
+  - generic: 域名权重（DA）
+  - textbox "外链 域名权重（DA）"
+  - generic: 投稿费用
+  - textbox "外链 投稿费用"
+  - generic: 网站语言
+  - textbox "外链 网站语言"
+  - generic: 费用类型
+  - combobox "外链 费用类型":
+    - option "免费"
+    - option "免费增值"
+    - option "付费"
+    - option "费用待核验" [selected]
+  - generic: 备注
+  - textbox "外链 备注"
+  - button "保存外链资料"
+  - button "查看记录时间线"
+  - button "清除网站标记"
+  - status: 提交条件已存本机，等待同步
+  - generic "查看导入时的原始资料"

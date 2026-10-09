@@ -1,0 +1,28 @@
+✔ native dead-end outcomes match original markTaskNeedsManual and markTaskBlocked functions (60.6157ms)
+✔ dead-end cancels only pending products in the frozen destination and retains denominator, budgets and durable checkpoints (12.1923ms)
+✔ duplicate dead-end observation keeps first cancellation history and does not count failures again (4.0401ms)
+✔ an explicit fresh retry is counted even when the previous dead-end history remains on the original task (6.0451ms)
+✔ unknown attempts, receipts, active tasks and foreign controllers are never cancelled (15.6442ms)
+✔ cloud lease and independent task readback precede cancellation; unrelated group completion remains saved (4.8907ms)
+✔ cloud unknown or missing sibling and local changes during lease preserve every terminal state (13.9302ms)
+✔ a reused sibling in another batch or altered immutable identity stops cancellation (6.257ms)
+✔ atomic cancellation rolls back tasks, outbox, audit, checkpoint and global pause and survives reopening (91.101ms)
+✔ fixed acceptance cancellation keeps its frozen denominator and current cursor and rejects tampered scope (4.3365ms)
+✔ standalone run cancellation excludes other destinations and rejects a sibling reassigned to another run (4.2186ms)
+✔ native manual fallback and human attention follow the first pre-refactor source including precedence and explicit preferred status (127.2699ms)
+✔ original CAPTCHA auto-skip stays disabled by the original public batch controls, including unattended and supplied true (50.7775ms)
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (49.7536ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (6.895ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (4.8676ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (7.647ms)
+✔ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (98.3949ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (47.1476ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (37.8925ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 962.0937

@@ -1,0 +1,208 @@
+{"scenario":"native-login","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (1004.4295ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1575.5369
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:587:1
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (1004.4295ms)
+  AssertionError [ERR_ASSERTION]: native-captcha frozen original annotation result
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      'gate.example': {
+        auto: false,
+  +     domain: 'gate.example',
+        formKnowledge: {
+  +       mappings: {
+  +         name: {
+  +           hint: 'product name name text',
+  +           label: 'Product name',
+  +           profileKey: 'Name',
+  +           shared: true
+  +         },
+  +         url: {
+  +           hint: 'website url url',
+  +           label: 'Website',
+  +           profileKey: 'Url',
+  +           shared: true
+  +         }
+  +       },
+          schema: {
+  +         fields: [
+  +           {
+  +             id: '',
+  +             label: 'Product name',
+  +             name: 'name',
+  +             options: [],
+  +             required: true,
+  +             selector: '[data-extlink-selector="extlink-2"]',
+  +             type: 'input'
+  +           },
+  +           {
+  +             id: '',
+  +             label: 'Website',
+  +             name: 'url',
+  +             options: [],
+  +             required: true,
+  +             selector: '[data-extlink-selector="extlink-3"]',
+  +             type: 'url'
+  +           }
+  +         ],
+  +         forms: [
+  +           {
+  +             method: 'get'
+  +           }
+  +         ],
+  -         fields: [],
+  -         forms: [],
+            url: 'https://gate.example/form'
+          },
+  +       stages: [
+  +         {
+  +           fields: [
+  +             {
+  +               id: '',
+  +               label: 'Product name',
+  +               name: 'name',
+  +               options: [],
+  +               required: true,
+  +               selector: '[data-extlink-selector="extlink-2"]',
+  +               type: 'input'
+  +             },
+  +             {
+  +               id: '',
+  +               label: 'Website',
+  +               name: 'url',
+  +               options: [],
+  +               required: true,
+  +               selector: '[data-extlink-selector="extlink-3"]',
+  +               type: 'url'
+  +             }
+  +           ],
+  +           forms: [
+  +             {
+  +               method: 'get'
+  +             }
+  +           ],
+  +           url: 'https://gate.example/form'
+  +         }
+  +       ],
+  +       version: 1
+        },
+        lastAutomaticObservation: {
+          note: '验证码已出现 — 页签留下，请完成后继续',
+          status: 'needs_captcha',
+          statuses: [
+  ...
+        ],
+  +     url: 'https://gate.example/form'
+      },
+      'gate.example/form': {
+        auto: false,
+  +     domain: 'gate.example',
+        formKnowledge: {
+  +       mappings: {
+  +         name: {
+  +           hint: 'product name name text',
+  +           label: 'Product name',
+  +           profileKey: 'Name',
+  +           shared: true
+  +         },
+  +         url: {
+  +           hint: 'website url url',
+  +           label: 'Website',
+  +           profileKey: 'Url',
+  +           shared: true
+  +         }
+  +       },
+          schema: {
+  +         fields: [
+  +           {
+  +             id: '',
+  +             label: 'Product name',
+  +             name: 'name',
+  +             options: [],
+  +             required: true,
+  +             selector: '[data-extlink-selector="extlink-2"]',
+  +             type: 'input'
+  +           },
+  +           {
+  +             id: '',
+  +             label: 'Website',
+  +             name: 'url',
+  +             options: [],
+  +             required: true,
+  +             selector: '[data-extlink-selector="extlink-3"]',
+  +             type: 'url'
+  +           }
+  +         ],
+  +         forms: [
+  +           {
+  +             method: 'get'
+  +           }
+  +         ],
+  -         fields: [],
+  -         forms: [],
+            url: 'https://gate.example/form'
+          },
+  +       stages: [
+  +         {
+  +           fields: [
+  +             {
+  +               id: '',
+  +               label: 'Product name',
+  +               name: 'name',
+  +               options: [],
+  +               required: true,
+  +               selector: '[data-extlink-selector="extlink-2"]',
+  +               type: 'input'
+  +             },
+  +             {
+  +               id: '',
+  +               label: 'Website',
+  +               name: 'url',
+  +               options: [],
+  +               required: true,
+  +               selector: '[data-extlink-selector="extlink-3"]',
+  +               type: 'url'
+  +             }
+  +           ],
+  +           forms: [
+  +             {
+  +               method: 'get'
+  +             }
+  +           ],
+  +           url: 'https://gate.example/form'
+  +         }
+  +       ],
+  +       version: 1
+        },
+        lastAutomaticObservation: {
+          note: '验证码已出现 — 页签留下，请完成后继续',
+          status: 'needs_captcha',
+          statuses: [
+  ...
+        ],
+  +     url: 'https://gate.example/form'
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:609:435)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { 'gate.example/form': { status: 'can_submit', statuses: [Array], auto: false, note: 'Original manual verdict', library: [Object], formKnowledge: [Object], lastAutomaticObservation: [Object], url: 'https://gate.example/form', domain: 'gate.example' }, 'gate.example': { status: 'can_submit', statuses: [Array], auto: false, note: 'Original manual verdict', library: [Object], formKnowledge: [Object], lastAutomaticObservation: [Object], url: 'https://gate.example/form', domain: 'gate.example' } },
+    expected: { 'gate.example/form': { status: 'can_submit', statuses: [Array], auto: false, note: 'Original manual verdict', library: [Object], formKnowledge: [Object], lastAutomaticObservation: [Object] }, 'gate.example': { status: 'can_submit', statuses: [Array], auto: false, note: 'Original manual verdict', library: [Object], formKnowledge: [Object], lastAutomaticObservation: [Object] } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

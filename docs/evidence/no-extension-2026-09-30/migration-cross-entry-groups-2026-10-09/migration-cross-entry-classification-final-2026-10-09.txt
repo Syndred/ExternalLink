@@ -1,0 +1,36 @@
+{"scenario":"native-login","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-captcha","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-after-captcha","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":1,"unknownAttemptPreserved":true,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-payment","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-login","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-otp","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (17431.1661ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18012.464
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:587:1
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (17431.1661ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'payment'
+  - 'manual'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:612:488)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'payment',
+    expected: 'manual',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

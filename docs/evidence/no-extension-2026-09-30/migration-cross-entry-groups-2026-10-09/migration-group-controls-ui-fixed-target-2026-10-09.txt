@@ -1,0 +1,17 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('tbody tr').filter({ has: getByRole('link', { name: 'https://site0.example/submit', exact: true }) }).getByRole('button', { name: '编辑', exact: true })
+
+    at editGroupTarget (C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\application-ui.mjs:94:353)
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\application-ui.mjs:96:283 {
+  log: [
+    "  - waiting for locator('tbody tr').filter({ has: getByRole('link', { name: 'https://site0.example/submit', exact: true }) }).getByRole('button', { name: '编辑', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0

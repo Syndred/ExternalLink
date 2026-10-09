@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"mode":{"statuses":["broken"]},"control":{"id":"high_quality","label":"高质量优先","disabled":true,"checked":false,"reason":"该站点当前标记为无法提交、跳过或已删除"},"statuses":["broken"]}
+
+true !== false
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/application-ui.mjs:97:217 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

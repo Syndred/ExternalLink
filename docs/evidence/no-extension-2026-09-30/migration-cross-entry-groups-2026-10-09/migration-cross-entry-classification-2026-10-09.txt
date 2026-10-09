@@ -1,0 +1,21 @@
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (268.6419ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 845.5574
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:587:1
+✖ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (268.6419ms)
+  Error: 表单记忆网址无效
+      at destinationFormSchema (file:///C:/Users/Administrator/Desktop/project/ExternalLink/core/form-knowledge.mjs:21:78)
+      at applyDestinationFormKnowledge (file:///C:/Users/Administrator/Desktop/project/ExternalLink/core/form-knowledge.mjs:33:68)
+      at Runtime.work (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/runtime.mjs:680:100)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:607:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

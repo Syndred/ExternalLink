@@ -1,0 +1,17 @@
+{"scenario":"native-login","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-captcha","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-after-captcha","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":1,"unknownAttemptPreserved":true,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"native-payment","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-login","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-otp","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-payment","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-legal","actualNativeDomAndAuthenticatedD1":true,"frozenOriginalAnnotationMatched":true,"lostReplyCommittedOnce":true,"manualVerdictAndPreferencesKept":true,"controlledSubmitClicks":0,"emptyRestore":true,"realSubmissions":0,"realModels":0}
+✔ actual native and Product Hunt gate pages preserve original manual marks through authenticated lost replies and empty restore (17629.5438ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18233.502

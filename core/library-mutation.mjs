@@ -162,7 +162,7 @@ export function libraryMutation(documents,operation,options={}){
   if(!Array.isArray(statuses)||statuses.some(s=>!['can_submit','paid','broken','skip','needs_otp','needs_captcha','needs_login','needs_manual','deleted'].includes(s)))fail('无效站点标记');
   const annotations=structuredClone(documents.siteAnnotations||{}),previous=annotations[destinationKey]||globalThis.ExtLinkQueue.findDestinationAnnotation(annotations,destinationKey,new URL(operation.url).hostname.replace(/^www\./,''))||{};
   const queue=globalThis.ExtLinkQueue,domain=queue.extractDomain(operation.url),normalized=queue.normalizeAnnotationStatuses(statuses);
-  annotations[destinationKey]={...previous,url:operation.url,domain,status:queue.primaryAnnotationStatus(normalized),statuses:normalized,note:String(operation.note||previous.note||'').slice(0,10000),updatedAt:at,auto:false,source:'application_manual',mutationId:id};annotations[domain]=structuredClone(annotations[destinationKey]);
+  annotations[destinationKey]={...previous,url:operation.url,domain,status:queue.primaryAnnotationStatus(normalized),statuses:normalized,note:String(operation.note||previous.note||'').slice(0,10000),submittedProjects:Array.isArray(previous.submittedProjects)?[...previous.submittedProjects]:[],updatedAt:at,auto:false,source:'application_manual',mutationId:id};annotations[domain]=structuredClone(annotations[destinationKey]);
   return{key:'siteAnnotations',data:annotations};
  }
  if(operation.type==='automatic_mark'){

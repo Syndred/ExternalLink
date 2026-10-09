@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "completeOriginalGenerationHandlerExecuted": true,
+  "overDeliveryAndBlankCandidatesMatchOriginal": true,
+  "threeGeneratedCandidatesSavedAndReloaded": true,
+  "genericFiveCandidateApiPreserved": true,
+  "sqliteReopenKeepsGeneratedCandidateLimit": true,
+  "originalChromeUntouched": true,
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "firstFailedGenerationIsNotALoadableDraft": true,
+  "productionAiAndHistory": true,
+  "effectiveOriginalPreferences": true,
+  "candidateMetadataSaveRestore": true,
+  "oneCandidateFallback": true,
+  "inFlightEditsRetainedInHistory": true,
+  "productAndArticleChangesDiscardOldResults": true,
+  "navigationDisposesOldStudio": true,
+  "failurePreservesDraftAndRetry": true,
+  "originalReceiptAndPausedBatchPreserved": true,
+  "newRealSubmissions": 0
+}

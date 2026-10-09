@@ -1,0 +1,43 @@
+{
+  "kind": "original_page_preview_fallback_gap_audit",
+  "status": "confirmed_unresolved_page_preview_entry_difference",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "completeOriginalGenerationHandlerExecuted": true,
+  "currentApplicationAiExecuted": true,
+  "actualOwnBrowserArticleAndSharedPreviewEngine": true,
+  "cases": [
+    {
+      "kind": "short-actual-snapshot",
+      "actualLocalSnapshotChars": 37,
+      "originalCompleteHandlerPreviewActions": [
+        "generateCommentPreview"
+      ],
+      "originalGeneratedCandidates": 1,
+      "originalFallbackAngle": "页面兜底",
+      "localControlledModelCalls": 0,
+      "currentCloudPageTextChars": 0,
+      "currentGenerationError": "Controlled remote article fetch rejected",
+      "currentDraftsSaved": 0,
+      "remoteFetchFailureControlled": true
+    },
+    {
+      "kind": "blocked-snapshot-long-local-article",
+      "actualLocalSnapshotChars": 726,
+      "originalCompleteHandlerPreviewActions": [
+        "generateCommentPreview"
+      ],
+      "originalGeneratedCandidates": 1,
+      "originalFallbackAngle": "页面兜底",
+      "localControlledModelCalls": 1,
+      "currentCloudPageTextChars": 0,
+      "currentGenerationError": "Controlled remote article fetch rejected",
+      "currentDraftsSaved": 0,
+      "remoteFetchFailureControlled": true
+    }
+  ],
+  "productionWrites": 0,
+  "realModelCalls": 0,
+  "realSubmissions": 0,
+  "originalChromeUntouched": true,
+  "overallMigrationComplete": false
+}

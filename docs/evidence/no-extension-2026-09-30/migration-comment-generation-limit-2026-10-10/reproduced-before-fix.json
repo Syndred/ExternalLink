@@ -1,0 +1,11 @@
+{
+  "kind": "actual_ui_vs_complete_original_generation_handler",
+  "actualGeneratedCandidates": 5,
+  "originalGeneratedCandidates": 3,
+  "modelResponseValidCandidates": 5,
+  "emptyAndNullCandidatesIncluded": true,
+  "command": "node executor/test/comment-drafts.mjs",
+  "observedAssertion": "5 !== 3",
+  "productionWrites": 0,
+  "realModelCalls": 0
+}

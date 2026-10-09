@@ -1,0 +1,9 @@
+{
+  "command": "node --test --test-concurrency=4 tests/executor-original-comment-generation-ui.test.mjs tests/executor-original-comment-drafts.test.mjs tests/executor-original-comment-cache.test.mjs tests/executor-original-comment-selection.test.mjs tests/executor-original-comment-restore.test.mjs tests/executor-original-comment-state.test.mjs tests/executor-original-comment-history-rules.test.mjs tests/executor-original-long-comment.test.mjs",
+  "tests": 55,
+  "pass": 55,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 11753.3742
+}

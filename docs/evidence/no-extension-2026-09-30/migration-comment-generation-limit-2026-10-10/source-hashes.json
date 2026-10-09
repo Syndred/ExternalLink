@@ -1,0 +1,6 @@
+{
+  "executor/web/comment-studio.js": "dc40bc1a6177b7a56a1c139434221a62ad77671b1c79b57f55f263822021682e",
+  "executor/test/comment-drafts.mjs": "2493b5a09cccc5d631418ebc8db62032293ccd46ecdf78700198b52f8629dab9",
+  "tests/helpers/original-comment-restore.mjs": "91eeb72d33607beb1ddaeac5529c71b76a33efc9e716838078c25fe8fb1bb52e",
+  "tests/executor-original-comment-generation-ui.test.mjs": "45a9d0ad72faa66c9155e91f09fd4eaafe79bb5e67be2669e1930faf5d1d1283"
+}

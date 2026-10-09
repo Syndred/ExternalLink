@@ -1,0 +1,11 @@
+{
+  "kind": "source_branch_followup_not_runtime_acceptance",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalGenerationFunctionFound": true,
+  "originalShortSnapshotUsesPagePreview": true,
+  "currentApplicationAiUsesCloudComment": true,
+  "currentApplicationAiCallsPagePreview": false,
+  "existingSingleCandidateFixtureOnlyReturnsOneModelCandidate": true,
+  "requiresActualShortSnapshotPageFallbackAudit": true,
+  "overallMigrationComplete": false
+}

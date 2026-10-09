@@ -5308,5 +5308,111 @@
       "release checks and native readback with original ledger preservation"
     ],
     "evidence": "migration-original-comment-state-2026-10-10/summary.json"
+  },
+  "originalCommentStateNativeApiCheckpoint": {
+    "date": "2026-10-10",
+    "status": "native_control_and_proxy_released_ui_integration_pending",
+    "sourceCommit": "8a50b1ba2c42bf80d241b51c0a7c986fcf6b6e19",
+    "routes": [
+      "originalCommentState",
+      "captureOriginalCommentState",
+      "restoreOriginalCommentState"
+    ],
+    "actualIsolatedHttpTransitions": {
+      "ok": true,
+      "kind": "isolated_original_comment_state_native_and_proxy_http",
+      "services": [
+        {
+          "kind": "native_server",
+          "actualHttp": true,
+          "currentAndEightSnapshotsSeparated": true,
+          "restoredSnapshotRemoved": true,
+          "sameContentHistoryUnchanged": true,
+          "longRawInputPreserved": true,
+          "nineLegacyVersionsArchived": true,
+          "invalidSnapshotNoMutation": true,
+          "unauthenticatedRejected": true,
+          "staleConnectionRejectedBeforeMutation": true
+        },
+        {
+          "kind": "workbench_proxy",
+          "actualHttp": true,
+          "currentAndEightSnapshotsSeparated": true,
+          "restoredSnapshotRemoved": true,
+          "sameContentHistoryUnchanged": true,
+          "longRawInputPreserved": true,
+          "nineLegacyVersionsArchived": true,
+          "invalidSnapshotNoMutation": true,
+          "unauthenticatedRejected": true,
+          "staleConnectionRejectedBeforeMutation": true
+        }
+      ],
+      "legacyRowsUntouched": true,
+      "pausedFixedBatchUnchanged": true,
+      "tasksCreated": 0,
+      "productionWrites": 0,
+      "realSubmissions": 0,
+      "originalChromeUntouched": true,
+      "uiIntegrationComplete": false
+    },
+    "focusedRegression": {
+      "tests": 35,
+      "pass": 35,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 4232.3198
+    },
+    "nativeReadback": {
+      "ok": true,
+      "sourceCommit": "8a50b1ba2c42bf80d241b51c0a7c986fcf6b6e19",
+      "committedSourceHashes": {
+        "executor/src/runtime.mjs": "d995aedfc91625209a25c1f3a06d1bbf7f4a6dd1ff7672d2ba4839e420759d6d",
+        "executor/src/server.mjs": "4235f5cf0a50d6c42a5c0d2b595c584470625415eab2651ac0760c2b97d4c508",
+        "executor/src/workbench-server.mjs": "e3381d52235ecbf5116549250bc2508589510b8c301368e70445abde9ba4297d",
+        "executor/src/original-comment-state.mjs": "4356bdf1ae9fe584de125a3449cd94815c523f5118ced298668d11ca7bd9bfa3"
+      },
+      "actualNativeAndProxyRead": true,
+      "commentRowsBeforeAfterUnchanged": {
+        "legacy": "f2511273b8130b524a44f9d38a680ea8ac9e9f9d6779157e96129e672e0111fe",
+        "canonical": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "productionCommentWrites": 0,
+      "paused": true,
+      "busy": false,
+      "pendingEdits": 0,
+      "fixedCursor": 13,
+      "fixedCount": 30,
+      "uiIntegrationComplete": false,
+      "originalChromeUntouched": true
+    },
+    "productionProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "original18OtherCloudDocumentsAndRevisionsKept": true,
+    "currentUiDifferencesStillUnresolved": [
+      {
+        "rule": "eight_snapshot_limit",
+        "original": 8,
+        "current": 9
+      },
+      {
+        "rule": "remove_selected_snapshot_when_current_content_differs",
+        "originalSelectedIdKept": false,
+        "currentSelectedIdKept": true
+      },
+      {
+        "rule": "same_content_restore_does_not_change_history",
+        "originalHistoryChanged": false,
+        "currentHistoryChanged": true
+      }
+    ],
+    "nativeServicesUpdated": [
+      19388,
+      19389
+    ],
+    "workerRedeployed": false,
+    "productionCommentWrites": 0,
+    "uiIntegrationComplete": false,
+    "overallMigrationComplete": false,
+    "evidence": "migration-comment-state-api-2026-10-10/summary.json"
   }
 }

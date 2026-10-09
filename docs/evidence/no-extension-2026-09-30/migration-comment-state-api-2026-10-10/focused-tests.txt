@@ -1,0 +1,43 @@
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1550.3414ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1373.0146ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.7924ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1214.0379ms)
+✔ actual comment candidate selection preserves every original before-switch snapshot and restores selected index after SQLite reopen (1782.7637ms)
+✔ empty selected comment switches without creating the snapshot that the original handler skips (1847.2914ms)
+✔ actual isolated native server and workbench proxy enforce original history transitions and authorization (1096.0697ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / changed (5.2605ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / same (1.9061ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / empty (1.6958ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / whitespace (1.5888ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / selection_metadata_only (1.7101ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / tone_changed (2.0638ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / changed (1.3819ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / same (1.7221ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / empty (1.8844ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / whitespace (2.0555ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / selection_metadata_only (1.9635ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / tone_changed (1.8364ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / changed (2.0364ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / same (1.5361ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / empty (1.8558ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / whitespace (1.7062ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / selection_metadata_only (1.8054ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / tone_changed (1.7303ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / changed (1.645ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / same (1.2217ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / empty (1.0941ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / whitespace (1.4922ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / selection_metadata_only (1.4469ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / tone_changed (1.4865ms)
+✔ captures retain eight snapshots separately from active text and original comparison ignores candidate selection metadata (2.3308ms)
+✔ raw empty text falls back only to the restored selected candidate (0.5433ms)
+✔ invalid or missing snapshot and failed state write leave legacy and canonical histories untouched (1.8864ms)
+✔ canonical state preserves all nine archived legacy versions and scopes through SQLite reopen (71.3851ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4232.3198

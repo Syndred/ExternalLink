@@ -17,22 +17,18 @@ export async function getTargetInfo(context,page){
 
 export function isStaleTargetError(error){return staleTargetError(error);}
 
-// chrome.tabs.create({ active: false }) in the original quick-open action.
-// Create a blank target first so Playwright can attach before navigation and
-// keep request interception, page identity and navigation errors observable.
-export async function createBackgroundPage(context){
+// Match chrome.tabs.create({url, active:false}): creation acknowledges the
+// target, not completion of its network navigation. Chrome owns the loading
+// page even when its renderer attaches later or the destination fails to load.
+export async function createBackgroundTarget(context,url){
  const browser=context.browser();
  if(!browser)throw Error('浏览器连接已断开');
- // An empty context has no current tab to preserve; establish its identity.
  const existing=context.pages()[0],seed=existing||await context.newPage(),info=await getTargetInfo(context,seed);
  if(!info)throw Error('浏览器页签已变化，请重新打开');
  const session=await browser.newBrowserCDPSession();
  try{
-  const {targetId}=await session.send('Target.createTarget',{url:'about:blank',background:true,...(info.browserContextId?{browserContextId:info.browserContextId}:{})});
-  for(let n=0;n<200;n++){
-   for(const page of context.pages())if(page!==seed&&(await getTargetInfo(context,page))?.targetId===targetId){if(!existing)await seed.close();return{page,targetId};}
-   await new Promise(resolve=>setTimeout(resolve,25));
-  }
-  throw Object.assign(Error('后台页签已创建，暂未连接；请核对该页签后再操作'),{targetId});
+  const {targetId}=await session.send('Target.createTarget',{url,background:true,...(info.browserContextId?{browserContextId:info.browserContextId}:{})});
+  if(!existing)await seed.close().catch(()=>{});
+  return targetId;
  }finally{await session.detach().catch(()=>{});}
 }

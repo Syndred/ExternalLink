@@ -1,0 +1,28 @@
+✔ library import deduplicates identities without discarding table metadata or changing the source (2.0244ms)
+✔ site marking preserves submission history and remains distinct from receipt evidence (0.764ms)
+✔ actual target-create UI validates nine invalid inputs and preserves nine fields through offline disk reopen and committed reply loss (2369.5978ms)
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (16.8998ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.2984ms)
+✔ later ordinary notes fall back to the original record publication state (2.4835ms)
+✔ record display uses the latest matching original row rather than insertion order (2.5987ms)
+✔ all original display aliases read the same original submission and timeline evidence (13.9655ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (1.5539ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.4436ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (2.59ms)
+✔ saved queue cursor and explicit URL retain the exact frozen original alias route (81.9893ms)
+✔ automatic visit queue alignment resolves the original concrete alias within the complete original source range (14.0788ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (4.402ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (2.951ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1963.0575ms)
+✔ UI upload readback confirms committed pin preference mark and setting changes without replay (18.1923ms)
+✔ unmatched committed application edits stay conflicted without overwriting newer cloud data (2.7513ms)
+✔ an unattempted offline edit is never acknowledged merely because remote data matches its intent (0.8546ms)
+✔ application acknowledgement rejects a workspace switch during readback and keeps the original edit (1.9386ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2441.3765

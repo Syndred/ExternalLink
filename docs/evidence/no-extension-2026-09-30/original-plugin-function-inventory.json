@@ -4781,5 +4781,18 @@
     "sourceCommit": "ace9819efe8053af556b8876ecf1be044a9cfb55",
     "originalServicesUpdated": true,
     "productionProtectionPassed": true
+  },
+  "currentTargetCreateUiCompatibilityCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-library-create-ui-2026-10-10/summary.json",
+    "currentNineFieldFormIsAdditionalEntry": true,
+    "completeOriginalCatalogAndQueueReadersExecuted": true,
+    "actualUiSaveAndDiskReopen": true,
+    "nineInvalidOrDuplicateInputsRejected": true,
+    "lostReplyRecoveredWithoutDuplicate": true,
+    "focusedPassed": 20,
+    "productionCodeChanged": false,
+    "newFullRunClaimed": false,
+    "overallMigrationComplete": false
   }
 }

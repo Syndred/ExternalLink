@@ -1,0 +1,738 @@
+{
+  "kind": "existing_receipt_single_page_queue_continuation",
+  "sourceCommit": "27efad865779ad470042c687a6b77b104dc52bae",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "previousRelease": "891302a0881f2e5b92d006cb0a0f8a001b3a83eb",
+  "originalFunctionsExecuted": [
+    "tryAutoSubmitFilledForm",
+    "handleFillResult",
+    "cycleSubmission",
+    "buildSubmissionTimelineEventForRecord",
+    "submissionTimelineContainsRecord"
+  ],
+  "verification": {
+    "fullSuitePassed": 1039,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "actualIsolatedChromeScenarios": [
+      "normal",
+      "missing-timeline",
+      "lost-repair-reply",
+      "cloud-pending",
+      "record-changed",
+      "profile-changed",
+      "stopped",
+      "shared-page",
+      "unknown-attempt",
+      "user-page",
+      "close-failure",
+      "open-failure",
+      "remaining-product",
+      "last",
+      "host-alias",
+      "late-selection",
+      "late-connection",
+      "repair-record-race",
+      "restart-open"
+    ],
+    "actualUiWithControlledBackend": true,
+    "authenticatedD1Verified": true,
+    "authenticatedPostgreSQLVerified": true,
+    "originalLedgerValuesAndRevisionsPreserved": true,
+    "missingTimelineRepairIsIdempotent": true,
+    "newTasks": 0,
+    "newSubmissions": 0,
+    "modelCalls": 0
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "existing_receipt_published_service_process_identity",
+    "sourceCommit": "27efad865779ad470042c687a6b77b104dc52bae",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 4540,
+        "StartedAt": "2026-10-09T18:33:20.8409430+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 23424,
+        "StartedAt": "2026-10-09T18:33:21.4650140+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": true,
+    "workerVersion": "3e5862b9-4c40-46e6-817b-558abfe9db4e"
+  },
+  "uiSmoke": {
+    "ok": true,
+    "kind": "existing_receipt_live_ui_and_authenticated_state_smoke",
+    "sourceCommit": "27efad865779ad470042c687a6b77b104dc52bae",
+    "servedUiMatchesFileAndCommit": true,
+    "originalReceiptUiServed": true,
+    "originalGateUiServed": true,
+    "existingReceiptUiServed": true,
+    "authenticatedStateRoute": true,
+    "uiSha256": "d7f554b3c9fdf3156366bc79aa18a868a274b0d4d7189fd25a6aabb5bc72b5eb",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "largeBackupProvenanceAudit": {
+    "ok": true,
+    "kind": "readonly_original_nonempty_history_provenance",
+    "sources": [
+      {
+        "directory": "2026-09-29-before-d1",
+        "changedTasks": 9,
+        "fields": {
+          "targetId": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "browserInstance": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "reason": {
+            "changedNonemptyOriginalValues": 3,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 3
+          },
+          "screenshot": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "artifactRef": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "artifactSha256": {
+            "changedNonemptyOriginalValues": 7,
+            "preservedUnderSameFieldInCurrentHistory": 6,
+            "notFoundInCurrentTask": 1
+          },
+          "profileSnapshot": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "profileRevision": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 2,
+            "notFoundInCurrentTask": 0
+          },
+          "consentHistory": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "actualSubmission": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 0
+          },
+          "fill": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "validation": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "recoveryCheckpoint": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "publicPage": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "tabClosedAt": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "version": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "controllerId": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 2,
+            "notFoundInCurrentTask": 0
+          },
+          "controller": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          }
+        }
+      },
+      {
+        "directory": "gmail-migration-2026-09-30T08-14-33-366Z",
+        "changedTasks": 1,
+        "fields": {
+          "consentHistory": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "targetId": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 0
+          },
+          "browserInstance": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "publicPage": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "screenshot": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "artifactRef": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "artifactSha256": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "recoveryHistory": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "aiTakeover": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "normalPreparation": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "actualPreparation": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "usedMedia": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          }
+        }
+      },
+      {
+        "directory": "no-extension-2026-09-30T05-12-20-552Z",
+        "changedTasks": 2,
+        "fields": {
+          "targetId": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "browserInstance": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "reason": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "screenshot": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "artifactRef": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "artifactSha256": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 1
+          },
+          "profileSnapshot": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "profileRevision": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 2,
+            "notFoundInCurrentTask": 0
+          },
+          "consentHistory": {
+            "changedNonemptyOriginalValues": 2,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 2
+          },
+          "actualSubmission": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 1,
+            "notFoundInCurrentTask": 0
+          },
+          "fill": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "validation": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "recoveryCheckpoint": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "publicPage": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          },
+          "tabClosedAt": {
+            "changedNonemptyOriginalValues": 1,
+            "preservedUnderSameFieldInCurrentHistory": 0,
+            "notFoundInCurrentTask": 1
+          }
+        }
+      }
+    ],
+    "scope": "exact original nonempty values compared against current task and its nested history; cloud archives and old local audit events remain to inspect",
+    "originalBackupsPreserved": true,
+    "productionWrites": 0,
+    "sourceWrites": 0
+  },
+  "originalPendingEventCloudProofs": {
+    "ok": true,
+    "kind": "readonly_original_pending_event_cloud_proofs",
+    "originalEvents": 5412,
+    "currentDeviceCloudEvents": 6333,
+    "proofPages": 32,
+    "originalIdsWithExactJsonChecksum": 5412,
+    "originalIdsWithDifferentChecksum": 0,
+    "originalIdsNotInCurrentDeviceEventIndex": 0,
+    "cloudRecoveryArchives": 115,
+    "interpretation": "An absent current-device index entry does not establish absence from recovery archives or another device. Archives require separate readback.",
+    "productionWrites": 0,
+    "sourceWrites": 0
+  },
+  "originalFieldEventProvenance": {
+    "ok": true,
+    "kind": "readonly_old_field_values_joined_to_original_cloud_verified_events",
+    "cloudEventChecksumProofCount": 5412,
+    "sources": [
+      {
+        "directory": "2026-09-29-before-d1",
+        "fields": {
+          "targetId": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "reason": {
+            "oldValuesNotInCurrentTask": 3,
+            "foundInExactlyVerifiedCloudEvent": 3,
+            "stillRequiresArchiveReview": 0
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "profileSnapshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "fill": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "validation": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "recoveryCheckpoint": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "tabClosedAt": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "version": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 2,
+            "stillRequiresArchiveReview": 0
+          },
+          "controller": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 2,
+            "stillRequiresArchiveReview": 0
+          }
+        }
+      },
+      {
+        "directory": "gmail-migration-2026-09-30T08-14-33-366Z",
+        "fields": {
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "recoveryHistory": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "aiTakeover": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "normalPreparation": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "actualPreparation": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "usedMedia": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          }
+        }
+      },
+      {
+        "directory": "no-extension-2026-09-30T05-12-20-552Z",
+        "fields": {
+          "targetId": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "reason": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "profileSnapshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 2,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 1
+          },
+          "fill": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "validation": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "recoveryCheckpoint": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 1,
+            "stillRequiresArchiveReview": 0
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          },
+          "tabClosedAt": {
+            "oldValuesNotInCurrentTask": 1,
+            "foundInExactlyVerifiedCloudEvent": 0,
+            "stillRequiresArchiveReview": 1
+          }
+        }
+      }
+    ],
+    "productionWrites": 0,
+    "sourceWrites": 0
+  },
+  "intermediateFailures": [
+    "Initial fixture used URL instead of normalized destination in persisted receipt key; fixed fixture to original identity contract.",
+    "Initial equality assertions compared VM objects across realms; compare actual stored JSON values.",
+    "Initial repair generated different event IDs in local and backend evaluation; now uses the original durable mutation ID. Lost-reply test verifies no duplicate event."
+  ],
+  "productionTestWrites": 0,
+  "realModelCalls": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": true,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-browser-final-2026-10-09.txt",
+      "capturedSha256": "b488eadb707c40c7647a1e8833c041e213850bf7b02f7ae78b651caef7bad65f",
+      "gitBlobSha256": "29ec029eb78c469d71d04ffc1fc0fae0ed334e2f9a5f41fce84f320d498bd1cf"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-browser-first-2026-10-09.txt",
+      "capturedSha256": "a66fc2737b0e5bda3da9e614d460b74e10400a87c7fcc62e0585f943648ad37f",
+      "gitBlobSha256": "a40576e61731e5de52b6953556df38575239c5dfe829aa5b5ab42a649a95445a"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-browser-second-2026-10-09.txt",
+      "capturedSha256": "f0552fd374f2847f8f41de1eae73406f2d2d94eaf06d415868e88ff2d101ae4a",
+      "gitBlobSha256": "11e3e32f3a3820c830426812dc5a24cc333c2ecd029bdd6b66559669fbae67f5"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-core-backends-2026-10-09.txt",
+      "capturedSha256": "66f79cffdc7f439cac72fb59497d5814f56cada69c7196615e43595f10ae262b",
+      "gitBlobSha256": "468cd7128e048f728ae9f2a84cb01b9b8f4b8635c9a5af7788c3169cbd99f33d"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-focused-2026-10-09.txt",
+      "capturedSha256": "cc23465481782011ad176f23843c5924c65b21d0383f4c064ad124b8b2b6b581",
+      "gitBlobSha256": "bcdb884e19d229fcdb0e9e5e1892df3eb6f5552fe946d13d474083dc79a1bb28"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-full-2026-10-09.txt",
+      "capturedSha256": "3ac3be8fd62e6e5f2fcc3c5ea696de8f6e728a9434c2baac6bf1de439ce23ca1",
+      "gitBlobSha256": "2048e4813256eb65d5bf03f4793ca6e1e8f6649239599df3bd41eb026f29282f"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-normal-2026-10-09.txt",
+      "capturedSha256": "2d880ec5c7cbb2625219d27ea1c11fe3b589ee80eb6c40c8d04b9e71e13fee7d",
+      "gitBlobSha256": "adca7f779b2246de30e3cfb35c47563567e43ad21cf15bf1a255941518365985"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-normal-second-2026-10-09.txt",
+      "capturedSha256": "a75c74741fc3d44db26ae50914039a929626aa7f3b15abf3a12ac7d07b011ccb",
+      "gitBlobSha256": "2d07073d82738fd2beab688f570fa03a135160a3f33e49a033d12fdee05b2462"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-service-process-2026-10-09.txt",
+      "capturedSha256": "c382fcc1f859fadfea7923e00ce6462e8e945c3dec8d4fe95f07c72f4ded8fcc",
+      "gitBlobSha256": "5015ec9cb096a160269590bc183ee404aab69b47a1acc74d1215b1c37d29aa8c"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "cf722473c97c4eaa6b766ecb0bd24b138ed481cfc69bd5cf27d15622aaeb2385",
+      "gitBlobSha256": "6cc9935790a18fef7393c24855f1c8dcf4abcc7edbe92cfae14401a609b37aca"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-worker-build-2026-10-09.txt",
+      "capturedSha256": "599f858a550be3500cab39501c676b29b09d5489932215b3db65cfcba8f9b18c",
+      "gitBlobSha256": "bdb3cf54cf6c8918a6f46bbefc8ac4da5cc5fd6cdc908373e613b735ee70f065"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/existing-receipt-worker-deploy-2026-10-09.txt",
+      "capturedSha256": "e27a149a29a0f6db1c74a66f19a2c391a89d2a5be1e80da532d5dbbbd053558f",
+      "gitBlobSha256": "5c958cf6b1cf7caab9d2be6dc96a2d627fd0091eda46f6c555bdad22d82acd17"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/large-backup-event-cloud-proofs-2026-10-09.txt",
+      "capturedSha256": "e5b725e1adada0fa05ebeab40fa762264138a6a590428cc6aa8499490bcd7fb3",
+      "gitBlobSha256": "6bf7c9f3d28af33c19dadd215115745ef8f56a272f652bdad08c0ed713125039"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/large-backup-field-event-provenance-2026-10-09.txt",
+      "capturedSha256": "6cce28aa6eeb88584484c9bce18c2555be9252e1102debfc32bf3000e6cb8071",
+      "gitBlobSha256": "37c377b98b1604c5ab8fde18db06b7919beb28a0b3138020124dd03f15fa79c4"
+    },
+    {
+      "path": "existing-receipt-continuation-2026-10-09/large-backup-history-provenance-2026-10-09.txt",
+      "capturedSha256": "a56acd997b9aa6fb0ce36d6db82d3183d14e048b96aa87eae0a641e19572e0ca",
+      "gitBlobSha256": "08059a885ff46b7798a7916049786e582c6a637874ad5f9c6e57949ccb263694"
+    }
+  ]
+}

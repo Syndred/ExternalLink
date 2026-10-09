@@ -1,0 +1,28 @@
+{"scenario":"normal","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"missing-timeline","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"lost-repair-reply","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"cloud-pending","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"record-changed","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"profile-changed","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"stopped","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"shared-page","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"unknown-attempt","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"user-page","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"close-failure","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"open-failure","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"remaining-product","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"last","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"host-alias","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"late-selection","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"late-connection","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"repair-record-race","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+{"scenario":"restart-open","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+✔ single-page existing receipts verify original history and continue without new tasks, fields or submissions (11560.8966ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12131.3967

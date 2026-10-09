@@ -1,0 +1,22 @@
+✖ single-page existing receipts verify original history and continue without new tasks, fields or submissions (521.8242ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1101.9321
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:46:1
+✖ single-page existing receipts verify original history and continue without new tasks, fields or submissions (521.8242ms)
+  Error: 同站原收件身份不唯一或不完整，请核验原记录
+      at existingSinglePageReceipt (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/existing-single-page-receipt.mjs:10:74)
+      at prepareExistingSinglePageReceipt (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page-receipt-queue.mjs:23:57)
+      at previousReceipt (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:69:88)
+      at sidepanelFill (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:70:104)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:57:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

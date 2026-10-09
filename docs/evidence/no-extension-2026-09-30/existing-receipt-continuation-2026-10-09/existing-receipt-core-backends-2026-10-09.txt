@@ -1,0 +1,11 @@
+✔ authenticated PostgreSQL repairs only the old receipt timeline and rejects stale associated revisions (1267.1056ms)
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (6.8309ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (7.6757ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1393.4619

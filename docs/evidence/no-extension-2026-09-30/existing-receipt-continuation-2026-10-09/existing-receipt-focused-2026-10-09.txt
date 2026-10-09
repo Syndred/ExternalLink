@@ -1,0 +1,13 @@
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (6.3096ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (6.1307ms)
+✔ single-page interface follows the confirmed original queue page and profile without selecting another user page (23634.1148ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (12.0247ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (28.4931ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23706.5338

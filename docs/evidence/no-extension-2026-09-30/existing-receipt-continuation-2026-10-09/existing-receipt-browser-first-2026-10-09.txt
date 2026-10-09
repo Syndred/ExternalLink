@@ -1,0 +1,29 @@
+{"scenario":"normal","oldReceiptPreserved":true,"newTasks":0,"submissions":0,"models":0}
+✖ single-page existing receipts verify original history and continue without new tasks, fields or submissions (1264.5205ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1839.2678
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:46:1
+✖ single-page existing receipts verify original history and continue without new tasks, fields or submissions (1264.5205ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:57:274)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

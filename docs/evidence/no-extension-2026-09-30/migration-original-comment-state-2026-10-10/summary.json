@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-10",
+  "status": "storage_transition_implemented_not_integrated_or_released",
+  "module": "executor/src/original-comment-state.mjs",
+  "completeFrozenRestoreCases": 24,
+  "storageAndExistingRegressionPassed": 34,
+  "failed": 0,
+  "skipped": 0,
+  "legacyNineVersionsRetained": true,
+  "legacyRowUntouched": true,
+  "currentAndEightSnapshotsSeparated": true,
+  "sameContentHistoryUnchanged": true,
+  "failedWriteNoPartialChange": true,
+  "sqliteReopenAndWorkspaceIsolation": true,
+  "sourceHashes": {
+    "executor/src/original-comment-state.mjs": "4356bdf1ae9fe584de125a3449cd94815c523f5118ced298668d11ca7bd9bfa3",
+    "tests/executor-original-comment-state.test.mjs": "fadd81e16b608146b61902968ea67bd140a9c0c692586403a1e3e5cc76ecf362",
+    "tests/helpers/original-comment-restore.mjs": "89ffb8b72f7cc414061edd27c5cf65d68adc88115b3c7c0396999d7445d670c6"
+  },
+  "currentUiStillHasThreeDifferences": {
+    "kind": "actual_ui_original_history_rule_differential_audit",
+    "status": "migration_incomplete",
+    "tenActualUiCandidateSwitches": true,
+    "newestEightSnapshotsExactlyMatch": true,
+    "originalCompleteFunctionsExecuted": true,
+    "actualSpecificRowRestoredTextMatches": true,
+    "currentEditsPreservedBeforeRestore": true,
+    "sqliteReopenKeepsObservedHistory": true,
+    "gaps": [
+      {
+        "rule": "eight_snapshot_limit",
+        "original": 8,
+        "current": 9
+      },
+      {
+        "rule": "remove_selected_snapshot_when_current_content_differs",
+        "originalSelectedIdKept": false,
+        "currentSelectedIdKept": true
+      },
+      {
+        "rule": "same_content_restore_does_not_change_history",
+        "originalHistoryChanged": false,
+        "currentHistoryChanged": true
+      }
+    ],
+    "overallMigrationComplete": false,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "productionProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "productionCodeChanged": false,
+  "nativeServicesRestarted": false,
+  "workerRedeployed": false,
+  "uiIntegrationComplete": false,
+  "acceptancePassed": false,
+  "overallMigrationComplete": false,
+  "nextRequirements": [
+    "native control and proxy routes",
+    "AI comment studio current and history operations",
+    "single-page raw comment history operations",
+    "real UI frozen-function differential and failure/late-result guards",
+    "release checks and native readback with original ledger preservation"
+  ]
+}

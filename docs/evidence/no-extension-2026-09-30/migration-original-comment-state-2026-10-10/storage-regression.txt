@@ -1,0 +1,42 @@
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1332.3101ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1310.5723ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.5388ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1282.5806ms)
+✔ actual comment candidate selection preserves every original before-switch snapshot and restores selected index after SQLite reopen (1579.6781ms)
+✔ empty selected comment switches without creating the snapshot that the original handler skips (1787.6722ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / changed (4.2813ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / same (1.2744ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / empty (1.0685ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / whitespace (1.0521ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / selection_metadata_only (1.2666ms)
+✔ original restoration transition matches complete frozen function: 1 stored versions / tone_changed (1.7484ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / changed (1.2565ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / same (1.3781ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / empty (1.3422ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / whitespace (1.4789ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / selection_metadata_only (1.7358ms)
+✔ original restoration transition matches complete frozen function: 7 stored versions / tone_changed (1.6737ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / changed (2.2512ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / same (1.4966ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / empty (1.2685ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / whitespace (1.189ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / selection_metadata_only (1.2224ms)
+✔ original restoration transition matches complete frozen function: 8 stored versions / tone_changed (1.1855ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / changed (1.1577ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / same (1.1602ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / empty (1.0717ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / whitespace (1.2148ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / selection_metadata_only (1.3282ms)
+✔ original restoration transition matches complete frozen function: 9 stored versions / tone_changed (1.2274ms)
+✔ captures retain eight snapshots separately from active text and original comparison ignores candidate selection metadata (2.302ms)
+✔ raw empty text falls back only to the restored selected candidate (0.5839ms)
+✔ invalid or missing snapshot and failed state write leave legacy and canonical histories untouched (1.68ms)
+✔ canonical state preserves all nine archived legacy versions and scopes through SQLite reopen (64.6149ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4016.86

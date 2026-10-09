@@ -25,3 +25,9 @@ export function originalCommentHistoryRules(drafts,steps,{restoreVersions,restor
  if(restoreVersions){context.commentHistory=structuredClone(restoreVersions);context.restoreCommentHistory(restoreIndex);}
  return JSON.parse(JSON.stringify({current,selected:context.selectedCommentDraft,text:nodes.spCommentText.value,drafts:context.commentDrafts,history:context.commentHistory}));
 }
+
+export function originalSnapshotRestoreTransition(current,history,index){
+ const nodes={spCommentText:{value:current.text||''},commentTone:{value:current.tone||'helpful'}},context=vm.createContext({Date,Math,$:id=>nodes[id],commentDrafts:structuredClone(current.drafts),selectedCommentDraft:current.selected??-1,commentHistory:structuredClone(history),updateCommentCharCount(){},renderCommentDrafts(){},renderCommentHistory(){},showToast(){}});
+ vm.runInContext(functions,context);context.restoreCommentHistory(index);
+ return JSON.parse(JSON.stringify({history:context.commentHistory,active:{drafts:context.commentDrafts,selected:context.selectedCommentDraft,text:nodes.spCommentText.value,tone:nodes.commentTone.value}}));
+}

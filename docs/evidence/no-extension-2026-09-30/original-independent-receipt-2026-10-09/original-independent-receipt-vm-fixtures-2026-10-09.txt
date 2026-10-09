@@ -1,0 +1,15 @@
+✔ task gate observations preserve original preferences, queue and receipts before and after a submission boundary (25.0902ms)
+✔ uncertain payment semantic review, known receipts, validation-only errors and ready-to-create results do not classify a site (2.7457ms)
+✔ native gate cold start loads the original cloud documents before observing and refuses changed connections (3.0363ms)
+✔ task gate context changes stop before mutation and late page changes cannot write task observation metadata (2.9945ms)
+✔ original native work method invokes observations at explicit form and post-submit gates while retaining unknown boundaries (45.3897ms)
+✔ Linkrena post-submit login detection retains the exact original destination and callback conditions (21.6286ms)
+✔ both native AI entry points retain terminal reasons and never overwrite late unknown or foreign task state during cleanup (17.9591ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 447.1639

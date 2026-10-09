@@ -1,0 +1,42 @@
+✔ fixed blocker cleanup persists recovery evidence before closing only registered task pages (10.3409ms)
+✔ unknown submission retains its original page even when cleanup is requested (0.2007ms)
+✔ dead-end cleanup closes original standalone run pages after a durable checkpoint and protects late evidence and shared pages (18.8541ms)
+✔ original run receipt cleanup rechecks receipt, fields, verification, ownership and run membership after page awaits (28.6147ms)
+✔ authenticated Neon manual confirmation retains original data and restores the complete task and manual timeline: complete (1406.8691ms)
+✔ authenticated Neon manual confirmation retains original data and restores the complete task and manual timeline: before_write (1015.0315ms)
+✔ authenticated Neon manual confirmation retains original data and restores the complete task and manual timeline: after_write (1006.8819ms)
+✔ manual confirmation retains original nonce, run and parked-status requirements and default evidence (40.683ms)
+✔ unknown attempt, actual fields and pending receipt survive failed sync and SQLite restart; retry creates no second receipt (105.4577ms)
+✔ late cloud, task, product, device and controller changes cannot create or overwrite manual receipts (22.8391ms)
+✔ active workers, existing receipts and cloud duplicates refuse manual confirmation before receipt creation (2.7468ms)
+✔ manual public results retain publication metadata and the page bridge cannot request or confirm success (2.6576ms)
+✔ authenticated native services and actual workbench save original manual confirmation through D1 (2063.5043ms)
+✔ empty native stores recover pending original confirmation including legacy markers, without replacing human evidence (6.1389ms)
+✔ manual recovery rejects changed proof, actual fields or scope atomically and never adopts an arbitrary legacy local receipt (7.6355ms)
+✔ device and backend switches during original cloud restore abandon all late tasks and confirmation credentials (1.5106ms)
+✔ actual authenticated D1 workbench resumes a pending confirmation from an empty store: after (17860.6733ms)
+✔ actual authenticated D1 workbench resumes a pending confirmation from an empty store: before (17774.7679ms)
+✔ manual skip source proof, failed event and changed original page cannot silently transfer another task (42.1114ms)
+✔ verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation (121.6709ms)
+✔ changed local or cloud receipt, actual fields and verification status cannot release a receipt page to a new product (21.624ms)
+✔ a pending manual proof and exhausted or paused group keep its page without consuming another product budget (2.3511ms)
+✔ lost receipt-page transfer leaves the durable assignment and a closed original page becomes a manual task without replacement (7.8843ms)
+✔ unavailable reason and current-product-only skip match the actual original functions (29.9033ms)
+✔ late skip cannot overwrite changed product, scope, task or unrelated batch progress (4.0823ms)
+✔ same frozen group takes exact original page after cloud source read and lease then reloads it (5.7595ms)
+✔ source or next unknown, controller, identity, scope, host and concurrent changes prevent page transfer (26.539ms)
+✔ SQLite atomic page transfer survives reopen and rolls back source, destination, outbox and checkpoint together (75.4953ms)
+✔ lost transfer acknowledgment reuses durable assignment; navigation failure and missing page never create substitute tabs (10.9223ms)
+✔ navigation boundary pauses and changed source page use goto only under original document ownership (8.7395ms)
+✔ fixed acceptance and standalone run retain original group order and denominator without wrapping (10.3985ms)
+✔ a newly received next product stays untouched while the next pending product receives the original page (3.4556ms)
+✔ recovered assignment revalidates cloud source and refuses a newer unknown source without opening another page (4.617ms)
+✔ late cloud lease reply cannot overwrite a newly protected local task or switched workspace (1.5589ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38289.6361

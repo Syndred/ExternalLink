@@ -1278,7 +1278,9 @@
       "verification": "889项全量通过，原成功函数4种分支及21种迟到保护；实际两本机服务、工作台和认证D1覆盖账本已写但回复丢失后的原确认重试。认证PostgreSQL与云端恢复、SQLite重启保留原资料和尝试。生产人工确认未执行；空库恢复覆盖写账本前失败及写入后丢回复，恢复原确认凭证及说明；旧版确认仅沿认证完整云端任务恢复。898项全量通过，生产人工确认未执行",
       "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-recovery-2026-10-08.json",
       "sameDestinationGroupEvidence": "original-receipt-group-release-2026-10-09.json",
-      "sameDestinationGroupVerification": "原成功函数实际对照；同站接续、暂停、预算用完、回执丢回复、末页关闭及对象／空字段收尾通过；最终1016项回归通过，真实投稿0。"
+      "sameDestinationGroupVerification": "原成功函数实际对照；同站接续、暂停、预算用完、回执丢回复、末页关闭及对象／空字段收尾通过；最终1016项回归通过，真实投稿0。",
+      "independentReceiptCompletionEvidence": "original-independent-receipt-2026-10-09.json",
+      "independentReceiptCompletionVerification": "独立运行人工与自动收件的原页清理、截图失败重试、停止和原页缺失保护，以及实际单页填写的用户页面保留通过；1023项全量通过。"
     },
     {
       "action": "contentReady",
@@ -3404,9 +3406,19 @@
     "migrationComplete": false
   },
   "originalIndependentReceiptCompletionAudit": {
+    "status": "owned_independent_receipt_cleanup_and_user_single_page_preservation_verified",
+    "sourceCommit": "0be094a9b50faae77e502601c56ad02237bc6e92",
+    "evidence": "original-independent-receipt-2026-10-09.json",
+    "runtimeDefectProven": true,
+    "actualBrowserScenarios": 7,
+    "fullSuitePassed": 1023,
+    "migrationComplete": false
+  },
+  "originalSinglePageReceiptQueueAudit": {
     "status": "requires_actual_runtime_verification",
-    "scope": "successful manual confirmation in independent run and single-page tasks",
-    "observation": "synchronizeNow receipt cleanup selects acceptance/workbench tasks, while confirmManualSubmission calls finishWorkbenchTask. Independent-run final page cleanup is not proven by workbench receipt tests.",
+    "scope": "single-page cloud receipt acknowledgement and automatic submission queue continuation",
+    "original": "sidepanel cloudReceiptConfirmed handler validates owned tab, selected product and URL; handleFillResult advances then acknowledges pending cloud tab.",
+    "native": "manual-watch checks and persists receipts; direct equivalent to the owned sidepanel queue-completion callback has not been verified.",
     "runtimeDefectProven": false
   }
 }

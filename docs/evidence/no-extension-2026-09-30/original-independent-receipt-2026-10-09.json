@@ -1,0 +1,237 @@
+{
+  "kind": "original_independent_receipt_page_completion",
+  "sourceCommit": "0be094a9b50faae77e502601c56ad02237bc6e92",
+  "oldNativeSourceCommit": "85b629774f4c500348bc3d94acab5ca3f5f29ece",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionsExecuted": [
+    "confirmSubmissionSuccess with active and absent original tab entry",
+    "advanceDestinationGroup with no pending sibling"
+  ],
+  "oldSourceFailure": "Committed original runtime and acceptance-cleanup modules reproduce an owned standalone page remaining open after confirmed receipt.",
+  "intermediateFailures": [
+    {
+      "log": "original-independent-receipt-repository-2026-10-09.txt",
+      "passed": 1021,
+      "failed": 2,
+      "cause": "VM fixtures omitted the newly imported originalRunReceiptTask helper; the actual helper is now injected and all seven tests in that file pass."
+    }
+  ],
+  "changes": [
+    "Route independently verified finished standalone tasks through owned-page cleanup",
+    "Capture missing original-page screenshot and persist recovery checkpoint before closing",
+    "Preserve manually selected single-page ownership and page history",
+    "Keep page on capture failure and retry same receipt without duplicate confirmation",
+    "Recheck receipt, actual fields, confirmation, cloud verification, ownership and immutable run membership after awaited page operations"
+  ],
+  "verification": {
+    "fullSuitePassed": 1023,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "focusedPassed": 34,
+    "actualIsolatedChromeScenarios": [
+      "manual confirmation closes owned original run page",
+      "lost receipt response keeps page until original confirmation retry",
+      "screenshot failure keeps page until retry with unchanged receipt",
+      "stopped execution keeps page",
+      "missing original page produces cleanup failure without replacement",
+      "actual single-page fill and manual confirmation preserve user-selected page",
+      "actual native automatic receipt closes original owned run page"
+    ],
+    "authenticatedD1ReceiptAndTaskReadback": true,
+    "negativeCleanupCases": [
+      "changed receipt",
+      "changed actual fields",
+      "changed verification",
+      "changed manual confirmation",
+      "changed page ownership",
+      "changed run membership",
+      "shared manual task page"
+    ]
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "independent_receipt_published_service_process_identity",
+    "sourceCommit": "0be094a9b50faae77e502601c56ad02237bc6e92",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 23460,
+        "StartedAt": "2026-10-09T17:00:56.0399660+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 18356,
+        "StartedAt": "2026-10-09T17:00:56.6794950+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "unchangedUiSmoke": {
+    "ok": true,
+    "kind": "manual_card_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "0be094a9b50faae77e502601c56ad02237bc6e92",
+    "servedUiMatchesFileAndCommit": true,
+    "originalManualCardControlsServed": true,
+    "uiSha256": "6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextCallgraphAudit": {
+    "status": "requires_actual_runtime_verification",
+    "scope": "single-page cloud receipt acknowledgement and automatic submission queue continuation",
+    "original": "sidepanel cloudReceiptConfirmed handler validates owned tab, selected product and URL; handleFillResult advances then acknowledges pending cloud tab.",
+    "native": "manual-watch checks and persists receipts; direct equivalent to the owned sidepanel queue-completion callback has not been verified.",
+    "runtimeDefectProven": false
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "isolatedControlledPostCount": 1,
+  "productionTestWrites": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-before-2026-10-09.txt",
+      "capturedSha256": "7fef95112e2c1114d1cfad2e1e91897729ddfa9a483122caa20e0e3992e9de36",
+      "gitBlobSha256": "e553e524997a74c52b961dcd4a12badecad2efe10a37d2af498d338a32877bc8"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-browser-final-2026-10-09.txt",
+      "capturedSha256": "490456d24335c9e9e4664e57b3a898513c70515d690eb9c24d02091321a37bbb",
+      "gitBlobSha256": "aacc6d2774c35d134aac308a1ca4d8e9b8a0417dd40bda767e15c8b4b005d1ef"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-committed-baseline-2026-10-09.txt",
+      "capturedSha256": "6c132b0938a7ec5d9e602b845351fedecb095923dcbcccd7e17cd17314ccb946",
+      "gitBlobSha256": "539deacc2f42049682d216dab526571ea8cab510fa4020fcf6b9d219757595f2"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-first-2026-10-09.txt",
+      "capturedSha256": "f91912f1aa2af11bf8e6b143d8b5f9807715e78ab26e7440f296a0bc17d79ca7",
+      "gitBlobSha256": "f9cc364fe7589bd6f8517f9987724d0566628821cdb45917f14733ceab54c672"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-focused-2026-10-09.txt",
+      "capturedSha256": "c5ffb91d5399036edde3845b8813601dcc53f0631362b74c6ef70a69cfc5c329",
+      "gitBlobSha256": "29eef37aba21b5ac126d8174556babe0eeeca4d153215d417677dce9643fbdbb"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-release-preflight-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-repository-2026-10-09.txt",
+      "capturedSha256": "8449c1031804be3c16136f168c18eb61370924181bf1852ef399018b7625d141",
+      "gitBlobSha256": "b32b1e303821acfcee83c012c060b2846b793559877a4410d1a25c8bf23f1990"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-repository-final-2026-10-09.txt",
+      "capturedSha256": "fc2124c771ddce08eb48ed1190310a31c4237c458fbffef503e029218197fbc9",
+      "gitBlobSha256": "5dc658424635490c96a3262e077996125d6bf0a8f5ba52dfdbb6c273988db7d1"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-service-process-2026-10-09.txt",
+      "capturedSha256": "6415fe18addb8b55bedc08c4c35ea6a28ff0d6fa5841932403236c8aa3be5daa",
+      "gitBlobSha256": "e533701a46c7d41644f356702e63c9dcfab26e1dbb3b00eae4b625322bd23be7"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "fc4a630202cd532bd0a3a0abde545389a08d07765d2eeda62da6d957b16a1e72",
+      "gitBlobSha256": "1294c6e4968bf89ec32492d0d1973109a83c2d2fb75978551749b59728336d4d"
+    },
+    {
+      "path": "original-independent-receipt-2026-10-09/original-independent-receipt-vm-fixtures-2026-10-09.txt",
+      "capturedSha256": "f3242ad489666ff546b24a27a49b1ca5cdab36e7e601a3bf768c10be075687a3",
+      "gitBlobSha256": "724c0d72ab37735ce593b7d140af89f5247928b5589a78311df7a7d3da5f629e"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+$ErrorActionPreference = 'Stop'
+$taskOldProof = Get-Content -LiteralPath 'executor/test-output/original-browser-add-platform-service-process-2026-10-09.txt' -Raw | ConvertFrom-Json
+foreach ($taskPath in @('executor/src/server.mjs','executor/src/workbench-server.mjs','executor/src/browser-library.mjs','executor/src/engine.mjs','executor/src/submission-queue.mjs','core/library-mutation.mjs')) {
+  & git diff --exit-code 'a4cf87db83aa77fa5e69a0ff85af49d68c6656ba' -- $taskPath
+  if ($LASTEXITCODE -ne 0) { throw '后台源码存在额外改动，不能宣称无需重启' }
+}
+$taskProof = foreach ($taskOld in $taskOldProof.services) {
+  $taskIds = @((Get-NetTCPConnection -LocalPort $taskOld.Port -State Listen).OwningProcess | Select-Object -Unique)
+  if ($taskIds.Count -ne 1 -or $taskIds[0] -ne $taskOld.Pid) { throw '原服务进程已变化' }
+  $taskProcess = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $taskIds[0])
+  $taskExpected = (Join-Path (Get-Location).Path ('executor/src/' + $taskOld.File)).Replace('\','/')
+  if ($taskProcess.Name -ne 'node.exe' -or $taskProcess.CommandLine.Replace('\','/').IndexOf($taskExpected,[StringComparison]::OrdinalIgnoreCase) -lt 0 -or ([datetimeoffset]$taskProcess.CreationDate).UtcTicks -ne ([datetimeoffset]$taskOld.StartedAt).UtcTicks) { throw '服务身份不符' }
+  [PSCustomObject]@{Port=$taskOld.Port;File=$taskOld.File;Pid=$taskIds[0];StartedAt=$taskOld.StartedAt;OriginalProcessKept=$true}
+}
+[PSCustomObject]@{ok=$true;kind='frontend_update_original_services_unchanged';sourceCommit=(git rev-parse HEAD);backendSourceUnchanged=$true;services=@($taskProof);servicesRestarted=$false;workerRedeployed=$false;workerVersion='ee8c4225-b153-4de4-8f36-ca7a7062382e'} | ConvertTo-Json -Depth 4 -Compress

@@ -1,0 +1,287 @@
+{
+  "kind": "original_quick_open_selection_and_options",
+  "sourceCommit": "109ab108326ac8eb8877bede9925609cc9e81721",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalBehavior": "The filtered selection button toggles only filtered entries, retaining hidden selections. Quick-open inputs stay in the original page and retain their values across batches; interval step is 100 ms.",
+  "correctedControls": [
+    "btnQuickOpenSelectFiltered",
+    "quickOpenBatchSize",
+    "quickOpenInterval",
+    "quickOpenRemoveOpened"
+  ],
+  "actualUi": {
+    "ok": true,
+    "kind": "original_quick_open_controls_ui",
+    "filteredToggleMatchesFrozenOriginal": true,
+    "hiddenSelectionsRetained": true,
+    "originalDefaults": true,
+    "originalIntervalStep": true,
+    "dialogOptionsRetained": true,
+    "optionsSurviveCompletion": true,
+    "removeOpenedFalseRetainsSelection": true,
+    "removeOpenedTrueRemovesSelection": true,
+    "cloudAndJobResponsesControlled": true,
+    "sourceDocumentsUnchanged": true,
+    "realSiteTabsOpened": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0
+  },
+  "originalInputs": {
+    "ok": true,
+    "kind": "frozen_original_quick_open_controls",
+    "baseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "controls": {
+      "quickOpenBatchSize": {
+        "type": "number",
+        "id": "quickOpenBatchSize",
+        "min": "1",
+        "max": "20",
+        "value": "5"
+      },
+      "quickOpenInterval": {
+        "type": "number",
+        "id": "quickOpenInterval",
+        "min": "100",
+        "max": "5000",
+        "step": "100",
+        "value": "800"
+      },
+      "quickOpenRemoveOpened": {
+        "type": "checkbox",
+        "id": "quickOpenRemoveOpened",
+        "checked": null
+      }
+    }
+  },
+  "sixPageUi": {
+    "ok": true,
+    "kind": "synthetic_ui_regression",
+    "pages": 6,
+    "indexNowSettingSaveAndReadback": true,
+    "indexNowUnsavedRefreshPreserved": true,
+    "indexNowChineseTaskStatus": true,
+    "domainCacheControls": true,
+    "domainCacheCounts": true,
+    "domainConflictExclusions": true,
+    "domainOriginalJobResume": true,
+    "activityOnly": true,
+    "archivedVisibility": true,
+    "chineseLibraryLabels": true,
+    "verticalAlignment": true,
+    "libraryFilters": true,
+    "targetCreate": true,
+    "multiProductBatchPreview": true,
+    "originalIndependentCategoryStart": true,
+    "originalIndependentGroupStart": true,
+    "displayFiltersDoNotShrinkOriginalBatch": true,
+    "completeLargeScopePagination": true,
+    "originalBatchFillOnlyAndUnattendedControls": true,
+    "originalBatchPreferenceSave": true,
+    "originalConcurrencySaveAndReadback": true,
+    "profileExtractionDraft": true,
+    "profileSave": true,
+    "aiCommentCandidates": true,
+    "originalBackupImport": true,
+    "linkMonitorUi": true,
+    "monitorAlerts": true,
+    "browserAssistantSettings": true,
+    "originalProductChineseLanguagePreserved": true,
+    "originalFieldNotesEditAndBlankPreserved": true,
+    "originalNumericFieldsEditable": true,
+    "originalManualLinkLimitPreserved": true,
+    "originalIndependentPromoUrlSaved": true,
+    "originalDragOrderAndReadback": true,
+    "originalNewProductAppendAndPromotion": true,
+    "originalGifSvgUploadAndPreview": true,
+    "originalEmbeddedClearStagedAndSaved": true,
+    "originalFourScreenshotLinesAndAliases": true,
+    "originalMissingProfileControlsVisible": true,
+    "originalGenerationCarriesFieldNotes": true,
+    "originalEmptyGeneratedListsPreserveExisting": true,
+    "originalGenerationStagedUntilSave": true,
+    "originalPublicLogoUrlPreservedAndEdited": true,
+    "originalLogoLimitBeforeUpload": true,
+    "originalChineseCommentHistoryPreserved": true,
+    "originalAutoVisitFlagSaveAndReadback": true,
+    "originalAutoVisitUnsavedRefresh": true,
+    "originalPageRetry": true,
+    "batchLogViewer": true,
+    "originalDisplayedLogCopyAndFailurePreserved": true,
+    "clearAnnotationConfirmed": true,
+    "manualContinueConfirmed": true,
+    "originalTaskSkip": true,
+    "explicitStop": true,
+    "originalPausedBatchResume": true,
+    "failedSkipNotReportedAsComplete": true,
+    "originalSkipRetryAfterTaskBecomesSkipped": true,
+    "stoppedBatchRequiresExplicitRestart": true,
+    "groupedSiteQueue": true,
+    "queueNavigation": true,
+    "queueRemoval": true,
+    "singlePageSelection": true,
+    "singlePageFillOnly": true,
+    "panelClose": true,
+    "localRecoverySelection": true,
+    "localRecoveryResume": true,
+    "productHuntManualConsent": true,
+    "productHuntPreparationDefault": true,
+    "productHuntSelectionClearsConsent": true
+  },
+  "fullSuite": {
+    "passed": 978,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 134122.7407
+  },
+  "initialFullSuite": {
+    "passed": 977,
+    "failed": 1,
+    "failure": "executor-auto-fill-messages child exceeded its existing 45000 ms timeout; not counted as passing"
+  },
+  "failedCaseRecheck": {
+    "passed": 2,
+    "durationMs": 9760.7585,
+    "timeoutUnchanged": true
+  },
+  "services": {
+    "ok": true,
+    "kind": "frontend_update_original_services_unchanged",
+    "sourceCommit": "109ab108326ac8eb8877bede9925609cc9e81721",
+    "backendSourceUnchanged": true,
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 24000,
+        "StartedAt": "2026-10-09T13:21:24.894292+08:00",
+        "OriginalProcessKept": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 18836,
+        "StartedAt": "2026-10-09T13:21:25.963277+08:00",
+        "OriginalProcessKept": true
+      }
+    ],
+    "servicesRestarted": false,
+    "workerRedeployed": false,
+    "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "live_quick_open_controls_source",
+    "committedSourceMatches": true,
+    "sha256": "291d7b1006a6dd6ad7b74694bb4bc61aea898fd6a0833b3337ad33435675c9e4",
+    "originalControlsPresent": true,
+    "productionUiActions": 0
+  },
+  "protectedState": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "verificationScriptCorrection": "Initial process check compared an ISO string to a DateTime converted by PowerShell. UTC ticks, process IDs and exact paths were then checked successfully; no services were restarted.",
+  "migrationComplete": false,
+  "remainingQuickOpenCheck": "Background tab focus and simultaneous auto-fill behavior still need a dedicated integration audit.",
+  "limits": [
+    "Selection handler is executed from the frozen original sidepanel source; the native interface runs in isolated Chrome.",
+    "Cloud and quick-open job responses in the UI fixture are controlled. This proves selection and option behavior, not new real-site receipts.",
+    "Only frontend and regression sources changed. Original Chrome, native service processes and cloud Worker were not restarted or redeployed."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-toggle-before-2026-10-09.txt",
+      "capturedSha256": "bd519c6050f9c0e3d7941efc181c76a24225f0fd916a485bae50b57b4e9683f4",
+      "gitBlobSha256": "9e1bcd088f7e87010aa798885dd94a95a7f6a6ea669eb32a4053e797410222f1"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-options-before-2026-10-09.txt",
+      "capturedSha256": "9c043890ff2a58a026347972bd3abb852bc54ab722717e5acfac8bc84d7a9b22",
+      "gitBlobSha256": "b5e3382f53998be4be57f3fc658b6119dc41c51051d78b9c4242949fb0c31bd2"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-browser-final-2026-10-09.txt",
+      "capturedSha256": "61406e866252d61a15126d68e17294202a072237b8dce7a58e438cc37d1be69e",
+      "gitBlobSha256": "3f734d588286b5375de5f1e6fa9dfe7c7590e4115d9d7cbd0b9af33fe488f33b"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-reference-2026-10-09.txt",
+      "capturedSha256": "ca7ec4567e5afe85563b242ef3370f107d11390bb6897b50a5dddef60eb1e0f4",
+      "gitBlobSha256": "3a693c191001b0a656566ddd5668f021f94fbb1f833dfe53a47dc5b89074820c"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-focused-2026-10-09.txt",
+      "capturedSha256": "77ee7a6d7140a9881529377ecd0d8cae7808da806c0a885964658b172151385d",
+      "gitBlobSha256": "9db78c445f4a7a347dc79ae4342b3140d1d2eeb6849476694e61f8b8f4ad3dda"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-application-ui-2026-10-09.txt",
+      "capturedSha256": "c8af2c8b748d6ebeb7f0a3715f262672667d61475f0ae88713cfc174ae4317d2",
+      "gitBlobSha256": "41908d0d1e9e450251041a7e0359ef8248bca4cd760ebb801cc4b290a661d8fd"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-timeout-recheck-2026-10-09.txt",
+      "capturedSha256": "b12fa270a90a27794d81e64c58175aae192c8dc9a2ab016dd4ac9b96abd4812f",
+      "gitBlobSha256": "93b10002c072071c97bc11c1c0411f8837443024a929852ce0e65fd4f8b8b43d"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-repository-2026-10-09.txt",
+      "capturedSha256": "91e8203d68201ee6ab86841cfae2e0b75ce811507cd2a91453534749f7dbbffd",
+      "gitBlobSha256": "38e35415d48bfe696ef4cbabdb175419074fbf96dc5a95e044999a02ee9d5495"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-repository-final-2026-10-09.txt",
+      "capturedSha256": "e85d1e9f3c8bf08217b2dcbea3c15c778aa5878e4042fdf420d1de83e7853a1a",
+      "gitBlobSha256": "267d0d91ff43c6361c69c88af121d38740b2bb17c75086493c35f95d360c23aa"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-service-process-2026-10-09.txt",
+      "capturedSha256": "e966016beb9aff7e73dfc830f5c62da93db3dfeec95e28f96761ead5b9f3a4d0",
+      "gitBlobSha256": "da948c045d423c855012f95221937ba3e594f223f56e731f2a5eef7f7ac5b5f5"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-live-ui-2026-10-09.txt",
+      "capturedSha256": "d09c2863eb52143b63d393a1e4f540dc6a531f4ae887724e5564b6260ac4e27a",
+      "gitBlobSha256": "d09c2863eb52143b63d393a1e4f540dc6a531f4ae887724e5564b6260ac4e27a"
+    },
+    {
+      "path": "original-quick-open-controls-2026-10-09/original-quick-open-controls-service-proof-2026-10-09.ps1.txt",
+      "capturedSha256": "105407a0e2572a94706acc43f732e4fdf59318b11db20c7eddb8bdf757a00e6e",
+      "gitBlobSha256": "9c85e10c780083ae9f46229b87faa74f6fed599119b9c1fc795a2a3c94f75bee"
+    }
+  ]
+}

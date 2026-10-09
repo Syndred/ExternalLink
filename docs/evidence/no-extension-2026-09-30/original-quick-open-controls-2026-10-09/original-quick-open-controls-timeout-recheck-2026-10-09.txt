@@ -1,0 +1,10 @@
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (9674.7012ms)
+✔ actual quick-open UI toggles the original filtered selection and retains options across dialogs and batches (1935.2155ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9760.7585

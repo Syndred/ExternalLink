@@ -1,0 +1,20 @@
+✔ unopened batch resumes with the same identity after the native browser connection is restored (13.1305ms)
+✔ cloud media catalogue consumes all pages, identifies unresolved active references and refuses repeated cursors (3.3491ms)
+✔ edited comment versions survive reload, retain nine versions and isolate products, articles and cloud scopes (4.4791ms)
+✔ batch open freezes a library subset, deduplicates, retains failures and does not invoke a submission engine (114.2627ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (52.3661ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (36.3875ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (528.4413ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (78.417ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (23.2746ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (295.4807ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (11520.7768ms)
+✔ actual quick-open UI toggles the original filtered selection and retains options across dialogs and batches (1767.1391ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13030.6191

@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Original live controls retain settings when revisiting
+
+'5' !== '2'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-quick-open-controls.mjs:19:314 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '5',
+  expected: '2',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

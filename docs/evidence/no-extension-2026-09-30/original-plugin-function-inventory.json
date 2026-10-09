@@ -1051,17 +1051,19 @@
       "source": "extension/sidepanel.html",
       "id": "btnQuickOpenSelectFiltered",
       "label": "选择当前筛选",
-      "mapping": "外链库 / 选择当前筛选",
-      "verification": "界面回归",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "外链库 / 选择或取消当前筛选",
+      "verification": "冻结原版处理器与实际隔离界面对照：再次点击只取消当前筛选，隐藏选择保留；原真实网页没有打开",
+      "status": "mapped_requires_full_acceptance",
+      "evidence": "original-quick-open-controls-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "btnQuickOpenBatch",
       "label": "打开下一批",
       "mapping": "外链库 / 批量打开网站",
-      "verification": "真实原生浏览器连接恢复，同一原任务1/1打开，失败证据保留，未填表未投稿",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "原浏览器连接恢复与1/1打开已验证；本次补回数量、间隔和移除选项跨窗口／批次保持，以及100毫秒步进。实际界面通过；后台打开与自动填写组合仍待专项核验",
+      "status": "mapped_requires_full_acceptance",
+      "evidence": "original-quick-open-controls-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -2542,19 +2544,28 @@
       "source": "extension/sidepanel.html",
       "id": "quickOpenBatchSize",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "外链库 / 批量打开网站 / 每批打开数量",
+      "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
+      "evidence": "original-quick-open-controls-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "quickOpenInterval",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "外链库 / 批量打开网站 / 打开间隔（毫秒）",
+      "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
+      "evidence": "original-quick-open-controls-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "quickOpenRemoveOpened",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "外链库 / 批量打开网站 / 打开后从临时选择中移除",
+      "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
+      "evidence": "original-quick-open-controls-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -3140,5 +3151,20 @@
     "productionAddOperations": 0,
     "migrationComplete": false,
     "evidence": "original-browser-add-platform-2026-10-09.json"
+  },
+  "originalQuickOpenControlsCheckpoint": {
+    "sourceCommit": "109ab108326ac8eb8877bede9925609cc9e81721",
+    "filteredToggleAndHiddenSelections": true,
+    "optionsSurviveDialogAndBatch": true,
+    "originalIntervalStep": 100,
+    "fullSuitePassed": 978,
+    "firstFullSuiteTimeoutPreserved": true,
+    "originalServicesUnchanged": true,
+    "workerRedeployed": false,
+    "migrationComplete": false,
+    "remaining": [
+      "background_open_autofill_interaction"
+    ],
+    "evidence": "original-quick-open-controls-2026-10-09.json"
   }
 }

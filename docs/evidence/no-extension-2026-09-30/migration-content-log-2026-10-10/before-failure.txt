@@ -1,0 +1,28 @@
+✖ native content log and export retain original event severity class domain and task context after SQLite reopen (86.1752ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 441.399
+
+✖ failing tests:
+
+test at tests\executor-original-content-log.test.mjs:5:1
+✖ native content log and export retain original event severity class domain and task context after SQLite reopen (86.1752ms)
+  AssertionError [ERR_ASSERTION]: level 0
+  
+  'err' !== 'error'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-content-log.test.mjs:8:297)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'err',
+    expected: 'error',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -8,7 +8,7 @@ const stamp=value=>Number.isFinite(Date.parse(value))?Date.parse(value):0;
 const safeName=value=>String(value).replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,160)||'原批次';
 const sourceId=(kind,id)=>kind+':'+id;
 const taskKeys=['id','runId','profileId','profileRevision','url','destinationKey','status','siteStatus','reason','createdAt','updatedAt','preparedAt','finishedAt','attentionType','controller','attemptBoundary','receipt','cloudVerified','syncStatus','reviewStatus','artifactRef','screenshot','actualPreparation','actualSubmission','indexNowNotification','mediaManifest','profileMediaSnapshot'];
-const eventKeys=['id','at','taskId','runId','profileId','url','type','status','action','target','result','reason','message','errorCode','artifactRef','evidenceType','before','after','attempt','seq'];
+const eventKeys=['id','at','taskId','runId','profileId','url','type','status','action','target','result','reason','message','level','cls','event','domain','taskIndex','errorCode','artifactRef','evidenceType','before','after','attempt','seq'];
 
 function allowed(value,scope){return (!value?.scope||value.scope===scope)&&(!value?.workspaceId||value.workspaceId===scope.slice(scope.lastIndexOf('|')+1));}
 function pairScope(runtime){const pair=runtime.store.get('pair');if(!pair?.endpoint)throw Error('请先连接原工作区，再导出其记录');return workbenchScope(pair);}

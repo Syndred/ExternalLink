@@ -31,7 +31,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -66,7 +66,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -146,7 +146,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -200,7 +200,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         },
         {
           "path": "executor/src/media-library.mjs",
@@ -239,7 +239,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         },
         {
           "path": "executor/src/media-library.mjs",
@@ -278,7 +278,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         },
         {
           "path": "executor/src/media-library.mjs",
@@ -356,7 +356,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/browser-assistant.mjs",
-          "sha256": "27fbd6717fabc11c1c4529a197eaba7813f95a048f34ca07347053a0f77b970b"
+          "sha256": "98308a2833f6bfe243a65ff243d4d7efccfae05e435b8d7079d1cf776d8e8a0c"
         },
         {
           "path": "executor/src/single-page.mjs",
@@ -547,7 +547,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -582,7 +582,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -609,7 +609,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/browser-assistant.mjs",
-          "sha256": "27fbd6717fabc11c1c4529a197eaba7813f95a048f34ca07347053a0f77b970b"
+          "sha256": "98308a2833f6bfe243a65ff243d4d7efccfae05e435b8d7079d1cf776d8e8a0c"
         },
         {
           "path": "executor/src/single-page.mjs",
@@ -1735,7 +1735,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -1762,7 +1762,7 @@
       "originalDispatchBranchSha256": "1921b1448f55bbe84d5a5b02e219d5d9937e8c3881c8c3b52ae905d9ffcaba9f",
       "originalDispatchBranch": "case \"getBatchLog\":\n      chrome.storage.local\n        .get(BATCH_LOG_STORAGE_KEY)\n        .then((stored) => sendResponse({ ok: true, log: stored[BATCH_LOG_STORAGE_KEY] || null }))\n        .catch((err) => sendResponse({ ok: false, error: err.message }));\n      return true;",
       "currentEntry": "运行任务 → 查看执行日志；网页引擎记录日志",
-      "persistence": "按工作区隔离的 SQLite 日志与原任务关联",
+      "persistence": "按工作区隔离的 SQLite 日志、原事件上下文与执行记录导出",
       "currentSourceFiles": [
         {
           "path": "executor/src/store.mjs",
@@ -1770,16 +1770,36 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
+        },
+        {
+          "path": "executor/src/browser-assistant.mjs",
+          "sha256": "98308a2833f6bfe243a65ff243d4d7efccfae05e435b8d7079d1cf776d8e8a0c"
+        },
+        {
+          "path": "executor/src/form-engine-log.mjs",
+          "sha256": "20360d800d95f9769654d88e3362e5a4adec439841d22c5932630ee18e982976"
+        },
+        {
+          "path": "executor/src/run-exports.mjs",
+          "sha256": "b229a7caa79faa9446b8119f602fbaebaa657032e5da49bdb8ffcaf23498bc75"
         }
       ],
       "candidateTestSources": [
         {
           "path": "tests/executor-library-log.test.mjs",
           "sha256": "672a59b0eadcfdbd0331b53a98c9409c9b03728d375d240464fb8e096259c161"
+        },
+        {
+          "path": "tests/executor-original-content-log.test.mjs",
+          "sha256": "174fa368a13f81c93b011fd029497739af49419421b51f3e16f799d34f443b49"
+        },
+        {
+          "path": "tests/executor-run-exports.test.mjs",
+          "sha256": "b08d0d0f4ab145b21981fdf15339de8c493343f3b1050f6816178ffabf094e42"
         }
       ],
-      "requiredEvidenceReview": "核对读写、截断、分页、错误与工作区隔离；日志存在不等同任务成功。",
+      "requiredEvidenceReview": "已核对任务桥接写入、原函数五种类别、上下文、导出及 SQLite 重开；分页另有执行测试。助手桥接独立执行与全部截断边界仍需审查；不补造旧日志字段。",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {
@@ -1801,7 +1821,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -1840,7 +1860,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -1879,7 +1899,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -1918,7 +1938,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -1953,7 +1973,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -2027,7 +2047,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -2062,7 +2082,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -2097,7 +2117,7 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
         }
       ],
       "candidateTestSources": [
@@ -2198,7 +2218,7 @@
       "originalDispatchBranchSha256": "2da5b2a53cc99cebb0b9f4c1b7fa44ff9390b56d2db08f9f00a3c3796b75f8c8",
       "originalDispatchBranch": "case \"log\":\n      if (sender.tab?.id) {\n        const entry = state.activeTabs.get(sender.tab.id);\n        const task = entry ? state.tasks.find((item) => item.index === entry.taskIndex) : null;\n        log(msg.msg, msg.cls, {\n          event: msg.event || \"content_step\",\n          taskIndex: task?.index,\n          taskId: task?.id,\n          domain: task?.domain || (sender.tab.url ? self.ExtLinkQueue.extractDomain(sender.tab.url) : \"\"),\n          profileId: task?.profileId,\n        });\n      }\n      break;",
       "currentEntry": "运行任务 → 查看执行日志；网页引擎记录日志",
-      "persistence": "按工作区隔离的 SQLite 日志与原任务关联",
+      "persistence": "按工作区隔离的 SQLite 日志、原事件上下文与执行记录导出",
       "currentSourceFiles": [
         {
           "path": "executor/src/store.mjs",
@@ -2206,16 +2226,36 @@
         },
         {
           "path": "executor/src/runtime.mjs",
-          "sha256": "bc314f5685341cbbab6f2a1809422623f6741ead5f1d9d2b969dbe5d2711e169"
+          "sha256": "7094ed2cba2c1c7a72139e5908f81c20aef8c812ae1a9170bdea2cf3eadec548"
+        },
+        {
+          "path": "executor/src/browser-assistant.mjs",
+          "sha256": "98308a2833f6bfe243a65ff243d4d7efccfae05e435b8d7079d1cf776d8e8a0c"
+        },
+        {
+          "path": "executor/src/form-engine-log.mjs",
+          "sha256": "20360d800d95f9769654d88e3362e5a4adec439841d22c5932630ee18e982976"
+        },
+        {
+          "path": "executor/src/run-exports.mjs",
+          "sha256": "b229a7caa79faa9446b8119f602fbaebaa657032e5da49bdb8ffcaf23498bc75"
         }
       ],
       "candidateTestSources": [
         {
           "path": "tests/executor-library-log.test.mjs",
           "sha256": "672a59b0eadcfdbd0331b53a98c9409c9b03728d375d240464fb8e096259c161"
+        },
+        {
+          "path": "tests/executor-original-content-log.test.mjs",
+          "sha256": "174fa368a13f81c93b011fd029497739af49419421b51f3e16f799d34f443b49"
+        },
+        {
+          "path": "tests/executor-run-exports.test.mjs",
+          "sha256": "b08d0d0f4ab145b21981fdf15339de8c493343f3b1050f6816178ffabf094e42"
         }
       ],
-      "requiredEvidenceReview": "核对读写、截断、分页、错误与工作区隔离；日志存在不等同任务成功。",
+      "requiredEvidenceReview": "已核对任务桥接写入、原函数五种类别、上下文、导出及 SQLite 重开；分页另有执行测试。助手桥接独立执行与全部截断边界仍需审查；不补造旧日志字段。",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {

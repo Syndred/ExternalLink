@@ -1,4 +1,5 @@
 import {singlePageReceiptState} from './single-page-receipt-queue.mjs';
+import {formEngineLogEntry} from './form-engine-log.mjs';
 import {continueOriginalForm,originalFormPriorStageFields} from './original-form-continuation.mjs';
 import { chromium } from 'playwright';
 import {openManualTaskPage} from './manual-task-page.mjs';
@@ -1966,7 +1967,7 @@ export class Runtime {
       const current=this.store.get('task:'+task.id);if(!current||current.targetId!==task.targetId||current.browserInstance!==task.browserInstance||current.profileId!==task.profileId||current.runId!==task.runId||current.profileRevision!==task.profileRevision||['ai','supervisor'].includes(current.controller))return{ok:false,error:'原字段学习任务已变化'};
       return captureFillLearning(this,{profileId:task.profileId,profile:task.profileSnapshot,taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,profileRevision:task.profileRevision},message);
     }
-    if(message.action==='log'){this.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:task.runId,taskId:task.id,profileId:task.profileId,url:task.url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
+    if(message.action==='log'){this.store.appendLog(formEngineLogEntry(task,message,{domain:task.domain||queue.extractDomain(task.url)}));return{ok:true};}
     if(message.action==='generateCommentDrafts')return originalCommentRequest(this,{pageUrl:message.pageUrl,pageTitle:message.pageTitle,pageText:message.pageText,count:message.count,maxChars:message.maxChars,allowLink:message.allowLink,config:message.config,language:message.language,tone:message.config?.blogRules?.tone,refresh:message.refresh},payload=>this.batchModelRequest(task,'ai/comment',payload));
     if (message.action === 'fetchCloudSubmissionMedia') return await originalTaskMediaEvidence(this,task,message.ref)||this.cloud.request('media', { taskId: task.id, action:message.action,ref:message.ref });
     if(message.action==='fetchSubmissionMedia'){

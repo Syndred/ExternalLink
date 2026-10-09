@@ -1,0 +1,20 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalCompleteLogFunctionOracle": true,
+  "actualNativeTaskBridge": true,
+  "actualGetBatchLog": true,
+  "actualAutomationExport": true,
+  "sqliteReopened": true,
+  "originalClassesCompared": 5,
+  "focusedPassed": 17,
+  "fullPassed": 1096,
+  "fullFailed": 0,
+  "fullSkipped": 0,
+  "fullDurationMs": 474407.1881,
+  "sharedAssistantNormalizer": true,
+  "assistantIndependentExecutionVerified": false,
+  "historicalMissingContextInvented": false,
+  "productionSubmissionWrites": 0,
+  "originalBrowserChanged": false,
+  "overallMigrationComplete": false
+}

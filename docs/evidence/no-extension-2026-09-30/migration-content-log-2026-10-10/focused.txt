@@ -1,0 +1,25 @@
+✔ clear annotation matches original aliases, preserves learned form knowledge, leaves unrelated metadata and receipt intact (2.3037ms)
+✔ actual transitions retain paged logs after outbox acknowledgement and isolate workspace and run filters (12.4244ms)
+✔ native content log and export retain original event severity class domain and task context after SQLite reopen (88.3388ms)
+✔ report and ledger retain exact pre-refactor logic with the ledger host binding, packed reports retain original classification (6.4078ms)
+✔ native fixed denominator retains unknown attempts, failures, skips, remaining and receipt-less finished tasks (3.035ms)
+✔ full persisted event export exceeds viewer pages and original ledger cap without mixing other tasks or scopes (31.3328ms)
+✔ original ledger export follows its first original ID rather than sorting timestamps or rewriting payload (1.3916ms)
+✔ frozen acceptance keeps missing and unregistered combinations and original identifiers without registering replacements (1.3587ms)
+✔ exports reject changed denominators, crossed task identity, foreign workspace and absent records (1.3881ms)
+✔ malformed historical source remains visible with reason and does not prevent valid originals exporting (1.083ms)
+✔ SQLite reopen and read-only exporting preserve outbox and exact task/event identities (73.7197ms)
+✔ original history file preview and idempotent restoration retain original IDs without activating tasks or storing unrelated credentials (2.9905ms)
+✔ history restoration rejects missing event IDs, credential-bearing ledger, prototype fields, ordinary backups and changed scope (1.6054ms)
+✔ history restoration rolls back failed persistence and keeps changed versions as separate original sources (1.5855ms)
+✔ original restored history survives disk reopen and repeats through the same preview and source IDs (65.1776ms)
+✔ large history upload resumes exact saved chunks after reopen, verifies full file and retains original payload and hash (570.4213ms)
+✔ history chunks reject altered content, unsafe ranges, scope changes and a corrupted final file without restoring partial history (1.3853ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 852.8114

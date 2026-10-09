@@ -1,4 +1,5 @@
 import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
+import {formEngineLogEntry} from './form-engine-log.mjs';
 import {originalCommentRequest} from './comment-cache.mjs';
 import '../../core/target-filters.js';
 import {attachEngine} from './engine.mjs';import {getTargetInfo} from './browser-target.mjs';
@@ -136,7 +137,7 @@ export async function checkBrowserAssistant(runtime,request){
      if(message.action==='contentReady')return{ok:true};
      if(message.action==='requestAutoFill')return requestAutoFill(runtime,{...message,targetId:info.targetId,profileId,url:page.url()},{scope,profileId,targetId:info.targetId,page,frame,url,engine:item.engine,browserInstance:item.browserInstance});
      if(message.action==='saveFillLearnings'){if(message.pageUrl!==url)return{ok:false,error:'助手原页面已变化'};return captureFillLearning(runtime,{profileId,profile:original?.profileSnapshot||docs.siteProfiles[profileId],taskId:original?.id,targetId:info.targetId,browserInstance:runtime.host.startedAt,profileRevision:original?.profileRevision},message);}
-     if(message.action==='log'){runtime.store.appendLog({at:new Date().toISOString(),type:'form_engine',runId:original?.runId,taskId:original?.id,profileId,url,message:String(message.msg||'').slice(0,4000),level:['warn','err','ok'].includes(message.cls)?message.cls:'info'});return{ok:true};}
+     if(message.action==='log'){runtime.store.appendLog(formEngineLogEntry(original,message,{profileId,url,domain:original?.domain||queue.extractDomain(url)}));return{ok:true};}
      if(['manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)){if(message.action!=='manualSubmissionWatchRequest'&&message.frameUrl!==url)return{ok:false};const clicked=message.action==='manualSubmissionClicked'&&runtime.store.values('manualWatch:').find(w=>w.scope===scope&&w.status==='watching'&&w.token===message.token&&w.targetId===info.targetId&&w.browserInstance===runtime.host?.startedAt),watched=clicked&&runtime.store.get('task:'+clicked.taskId),owner=watched?.profileId===profileId?watched:original;if(!owner)return{ok:false};return runtime.dispatchControl('manualWatchMessage',{...message,taskId:owner.id,targetId:info.targetId,pageUrl:page.url(),frameUrl:url,documentId:message.executorDocumentId});}
      if(message.action==='generateCommentDrafts')return originalCommentRequest(runtime,{...message,config},payload=>runtime.cloud.request('ai/comment',payload));
      if(original&&['fetchSubmissionMedia','fetchCloudSubmissionMedia'].includes(message.action))return runtime.bridge(original,message);return{ok:false,error:'上传素材需要已登记的原任务'};

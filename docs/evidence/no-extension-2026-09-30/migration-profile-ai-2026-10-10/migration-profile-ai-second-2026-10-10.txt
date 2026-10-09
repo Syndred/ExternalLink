@@ -1,0 +1,150 @@
+✖ actual original profile extraction and generation preview, save, fail and retain late user edits through native model routes and SQLite reopening (8025.2748ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8082.7919
+
+✖ failing tests:
+
+test at tests\executor-original-profile-ai-workflow.test.mjs:2:1
+✖ actual original profile extraction and generation preview, save, fail and retain late user edits through native model routes and SQLite reopening (8025.2748ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  locator.click: Timeout 7000ms exceeded.
+  Call log:
+  [2m  - waiting for getByRole('button', { name: '编辑当前网站', exact: true })[22m
+  [2m    - locator resolved to <button class="" type="button">编辑当前网站</button>[22m
+  [2m  - attempting click action[22m
+  [2m    2 × waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m    - retrying click action[22m
+  [2m    - waiting 20ms[22m
+  [2m    - waiting for element to be visible, enabled and stable[22m
+  [2m    - element is visible, enabled and stable[22m
+  [2m    - scrolling into view if needed[22m
+  [2m    - done scrolling[22m
+  [2m    - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m  2 × retrying click action[22m
+  [2m      - waiting 100ms[22m
+  [2m      - waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m  3 × retrying click action[22m
+  [2m      - waiting 500ms[22m
+  [2m      - waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m    - retrying click action[22m
+  [2m      - waiting 500ms[22m
+  [2m      - waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m    - retrying click action[22m
+  [2m      - waiting 500ms[22m
+  [2m      - waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m    - retrying click action[22m
+  [2m      - waiting 500ms[22m
+  [2m      - waiting for element to be visible, enabled and stable[22m
+  [2m      - element is visible, enabled and stable[22m
+  [2m      - scrolling into view if needed[22m
+  [2m      - done scrolling[22m
+  [2m      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events[22m
+  [2m  - retrying click action[22m
+  [2m    - waiting 500ms[22m
+  
+      at open (C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-profile-ai-workflow.mjs:12:69)
+      at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-profile-ai-workflow.mjs:16:635 {
+    log: [
+      "  - waiting for getByRole('button', { name: '编辑当前网站', exact: true })",
+      '    - locator resolved to <button class="" type="button">编辑当前网站</button>',
+      '  - attempting click action',
+      '    2 × waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '    - retrying click action',
+      '    - waiting 20ms',
+      '    - waiting for element to be visible, enabled and stable',
+      '    - element is visible, enabled and stable',
+      '    - scrolling into view if needed',
+      '    - done scrolling',
+      '    - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '  2 × retrying click action',
+      '      - waiting 100ms',
+      '      - waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '  3 × retrying click action',
+      '      - waiting 500ms',
+      '      - waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '    - retrying click action',
+      '      - waiting 500ms',
+      '      - waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <span>产品名称</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '    - retrying click action',
+      '      - waiting 500ms',
+      '      - waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '    - retrying click action',
+      '      - waiting 500ms',
+      '      - waiting for element to be visible, enabled and stable',
+      '      - element is visible, enabled and stable',
+      '      - scrolling into view if needed',
+      '      - done scrolling',
+      '      - <h2>Original product</h2> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+      '  - retrying click action',
+      '    - waiting 500ms'
+    ],
+    name: 'TimeoutError'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-profile-ai-workflow.test.mjs:2:375)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

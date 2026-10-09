@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-10",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "pulledLatest": true,
+  "productionCodeChanged": false,
+  "originalActions": [
+    "cloudAiExtractSite",
+    "cloudAiGenerateSite"
+  ],
+  "currentActions": [
+    "extractProfile",
+    "generateProfile"
+  ],
+  "actualUiNativeModelRouteAndProfileSaveVerified": true,
+  "completeOriginalProfileMergeModuleExecuted": true,
+  "extractionDiscardDoesNotSave": true,
+  "bothActionsExplicitSaveAndCloudReadback": true,
+  "failedRequestsKeepOriginalAndTypedDraft": true,
+  "typingDuringModelWaitKept": true,
+  "busyEditorCannotClose": true,
+  "reloadedEditorLateResponseIgnored": true,
+  "invalidUrlsDoNotCallModel": true,
+  "sqliteReopenVerified": true,
+  "focusedTests": {
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "controlledModelRequests": 7,
+  "isolatedProfileWrites": 3,
+  "realModelCalls": 0,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "fullSuiteRerunThisFollowup": false,
+  "priorProductionFullSuiteReference": "../migration-prescan-2026-10-10/summary.json",
+  "nativeDeploymentRequired": false,
+  "protectedStateReadbackVerified": true,
+  "protectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "overallMigrationComplete": false,
+  "limitations": [
+    "Model provider responses and cloud transport are controlled; this is not a fresh production model-provider acceptance.",
+    "Complete frozen merge module is executed for reference; this does not execute every frozen UI event handler.",
+    "This checkpoint proves listed profile workflows, not all original features."
+  ],
+  "failedFixtureAssumptionsRetained": true
+}

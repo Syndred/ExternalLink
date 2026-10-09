@@ -84,6 +84,8 @@
         }
       ],
       "requiredEvidenceReview": "核对关闭、重开、切页、预扫描及全部填写模式，不能仅以界面可见证明执行。",
+      "sampledExecutionEvidence": "migration-prescan-2026-10-10/summary.json",
+      "executionEvidenceLimit": "Actual readonly UI/native original prescan restored and released; overall action-family coverage still requires review.",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {
@@ -1516,15 +1518,17 @@
           "sha256": "9ed859ef3837b83f42d99f2ed945533fc14467f38e112181b7ef92697cdfb994"
         },
         {
-          "path": "tests/executor-original-staged-logo.test.mjs",
-          "sha256": "33d4a4f4156aaffb6a1205165eb1b231460b12c7b0971b46d3a2aeda7897e0bd"
+          "path": "tests/executor-original-ai-draft.test.mjs",
+          "sha256": "50b96047efc22df4644214c4ecf0e36f6dc58367c5621cca6170e2e05086dcfd"
         },
         {
-          "path": "tests/executor-assistant-tools.test.mjs",
-          "sha256": "7ead9b68bb88cdca22ab7e8c6a9e57b380f3828b7781cb58f65e99bf8008f053"
+          "path": "tests/executor-original-profile-ai-workflow.test.mjs",
+          "sha256": "3dc346229f0da8c71980e8455822bc931d5c1536f4d0e4e7a8546be79f46e5ba"
         }
       ],
       "requiredEvidenceReview": "核对两个模型动作的真实请求、预览、失败、保留已有字段与显式保存；基础字段测试不单独证明模型动作。",
+      "sampledExecutionEvidence": "migration-profile-ai-2026-10-10/summary.json",
+      "executionEvidenceLimit": "Actual UI/native request/save/reopen verified with controlled model and cloud responses; production provider acceptance not refreshed.",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {
@@ -1551,15 +1555,17 @@
           "sha256": "9ed859ef3837b83f42d99f2ed945533fc14467f38e112181b7ef92697cdfb994"
         },
         {
-          "path": "tests/executor-original-staged-logo.test.mjs",
-          "sha256": "33d4a4f4156aaffb6a1205165eb1b231460b12c7b0971b46d3a2aeda7897e0bd"
+          "path": "tests/executor-original-ai-draft.test.mjs",
+          "sha256": "50b96047efc22df4644214c4ecf0e36f6dc58367c5621cca6170e2e05086dcfd"
         },
         {
-          "path": "tests/executor-assistant-tools.test.mjs",
-          "sha256": "7ead9b68bb88cdca22ab7e8c6a9e57b380f3828b7781cb58f65e99bf8008f053"
+          "path": "tests/executor-original-profile-ai-workflow.test.mjs",
+          "sha256": "3dc346229f0da8c71980e8455822bc931d5c1536f4d0e4e7a8546be79f46e5ba"
         }
       ],
       "requiredEvidenceReview": "核对两个模型动作的真实请求、预览、失败、保留已有字段与显式保存；基础字段测试不单独证明模型动作。",
+      "sampledExecutionEvidence": "migration-profile-ai-2026-10-10/summary.json",
+      "executionEvidenceLimit": "Actual UI/native request/save/reopen verified with controlled model and cloud responses; production provider acceptance not refreshed.",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {

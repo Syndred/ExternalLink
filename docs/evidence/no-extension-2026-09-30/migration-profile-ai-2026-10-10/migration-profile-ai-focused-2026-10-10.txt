@@ -1,0 +1,16 @@
+✔ AI draft uses the original merge rules while preserving its product identity and empty original lists (2.359ms)
+✔ typing while AI is pending preserves changed fields, notes, rules, zero and explicit empty values (0.3783ms)
+✔ a changed list and homepage during AI remain current while unchanged generated content is adopted (0.3045ms)
+✔ new user input keys added while AI is pending remain in the draft without changing the submitted data (0.2445ms)
+✔ actual original profile extraction and generation preview, save, fail and retain late user edits through native model routes and SQLite reopening (2110.9841ms)
+✔ actual dynamic original fields preserve custom whitespace, empty values, scalar conversion and notes while restoring original featured-image fallback (1604.2312ms)
+✔ actual original standard fields trim surrounding whitespace before save and reopen as the complete original profile editor (1396.024ms)
+✔ thirty original product inputs save and reopen as the complete original editor while preserving receipts and media history (1351.6987ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4421.9516

@@ -4717,5 +4717,20 @@
     "newRealSubmissions": 0,
     "migrationComplete": false,
     "sourceCommit": "d81a94e"
+  },
+  "originalProfileAiWorkflowCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-profile-ai-2026-10-10/summary.json",
+    "originalActions": [
+      "cloudAiExtractSite",
+      "cloudAiGenerateSite"
+    ],
+    "actualUiNativeModelRouteAndProfileSaveVerified": true,
+    "sqliteReopenVerified": true,
+    "focusedTestsPassed": 8,
+    "controlledModelRequests": 7,
+    "realModelCalls": 0,
+    "productionCodeChanged": false,
+    "migrationComplete": false
   }
 }

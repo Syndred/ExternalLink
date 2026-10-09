@@ -1,0 +1,47 @@
+✖ actual original profile extraction and generation preview, save, fail and retain late user edits through native model routes and SQLite reopening (8387.0616ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8441.399
+
+✖ failing tests:
+
+test at tests\executor-original-profile-ai-workflow.test.mjs:2:1
+✖ actual original profile extraction and generation preview, save, fail and retain late user edits through native model routes and SQLite reopening (8387.0616ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  locator.waitFor: Timeout 7000ms exceeded.
+  Call log:
+  [2m  - waiting for getByText('Controlled profile model failure', { exact: true }) to be visible[22m
+  
+      at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-profile-ai-workflow.mjs:19:298 {
+    log: [
+      "  - waiting for getByText('Controlled profile model failure', { exact: true }) to be visible"
+    ],
+    name: 'TimeoutError'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-profile-ai-workflow.test.mjs:2:375)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

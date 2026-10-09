@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {applicationMutation} from '../core/application-mutation.mjs';
+test('actual original logo selection and clearing remain staged until profile save, preserve public URL and reopen with unchanged bytes',{timeout:45000},()=>{
+ const result=spawnSync(process.execPath,['executor/test/original-staged-logo.mjs'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:40000,maxBuffer:1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const proof=JSON.parse(result.stdout.trim().split('\n').at(-1));for(const key of ['ok','stagingAndClearingDoNotWrite','originalCompleteSaveFunctionExecuted','inlineLogoAndPublicUrlMatchOriginal','sqliteReopenVerified','originalReceiptsMediaHistoryAndPausedBatchKept'])assert.equal(proof[key],true);assert.equal(proof.writes,1);assert.equal(proof.productionWrites,0);
+});
+test('original inline logo accepts the exact two MiB boundary and rejects oversized or forged image bytes without changing history',()=>{
+ const prefix='<svg xmlns="http://www.w3.org/2000/svg">',suffix='</svg>',bytes=Buffer.from(prefix+' '.repeat(2*1024*1024-prefix.length-suffix.length)+suffix),dataUrl='data:image/svg+xml;base64,'+bytes.toString('base64'),documents={siteProfiles:{p:{id:'p',fields:{LOGO:'https://fixture.invalid/logo.png'},mediaVersions:[{assetId:'old',ref:'cloud-media://old'}]}},submissionRecords:{keep:{status:'success'}}},before=structuredClone(documents),operation=logoDataUrl=>({type:'profile',profileId:'p',profile:{id:'p',logoDataUrl}});
+ const saved=applicationMutation(documents,operation(dataUrl));assert.equal(saved.data.p.logoDataUrl,dataUrl);assert.deepEqual(saved.data.p.mediaVersions,documents.siteProfiles.p.mediaVersions);assert.deepEqual(documents,before);
+ assert.throws(()=>applicationMutation(documents,operation('data:image/svg+xml;base64,'+Buffer.from(prefix+' '.repeat(2*1024*1024-prefix.length-suffix.length+1)+suffix).toString('base64'))),/2 MB/);assert.throws(()=>applicationMutation(documents,operation('data:image/png;base64,'+Buffer.from('not a png').toString('base64'))),/格式与声明不匹配/);assert.deepEqual(documents,before);
+});

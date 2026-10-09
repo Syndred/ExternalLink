@@ -62,7 +62,7 @@ const server = http.createServer(async (req, res) => {
   if (!['/pair','/setupInfo','/setup'].includes(route) && !match(req.headers.authorization, `Bearer ${pair?.localToken}`)) return send(res, { ok: false, error: '尚未配对或本机凭据失效' }, 401);
   try {
     const bodyParts=[];let bodyBytes=0;
-    for await (const chunk of req) { bodyBytes+=chunk.length;if(bodyBytes>(['/mediaUpload','/previewBackup','/previewRunHistory','/libraryMutation'].includes(route)?9:1)*1024*1024)throw new Error('请求过大');bodyParts.push(chunk); }
+    for await (const chunk of req) { bodyBytes+=chunk.length;if(bodyBytes>(['/profile','/mediaUpload','/previewBackup','/previewRunHistory','/libraryMutation'].includes(route)?9:1)*1024*1024)throw new Error('请求过大');bodyParts.push(chunk); }
     const text=Buffer.concat(bodyParts).toString('utf8');
     const input = text ? JSON.parse(text) : {};
     if(route==='/setupInfo'&&req.method==='GET'){if(!localSetupOrigin)throw Error('请使用本机连接页面');send(res,await setupInfo(runtime));return;}

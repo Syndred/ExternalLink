@@ -1,0 +1,10 @@
+{"ok":true,"kind":"native_product_hunt_existing_receipt_fill_only_diagnostic","nativeOutcome":"该产品同站已有收件，请先核验","originalReferenceReturnsVerifiedOldReceipt":true,"nativeEquivalentVerified":false,"submissions":0,"models":0}
+✔ diagnose native Product Hunt fill-only when an original receipt already exists (469.0559ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1073.1505

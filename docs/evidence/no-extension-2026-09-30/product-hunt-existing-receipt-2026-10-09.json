@@ -1,0 +1,778 @@
+{
+  "kind": "original_product_hunt_existing_receipt_fill_only",
+  "sourceCommit": "efcf5dac59935d8f7a8b2d27e5ea7e1d72314027",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionsExecuted": [
+    "runSidepanelFill",
+    "handleFillResult",
+    "closeVerifiedOwnedTab",
+    "cycleSubmission",
+    "cloudReceiptConfirmed handler"
+  ],
+  "verification": {
+    "fullSuitePassed": 1040,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "existingReceiptBrowserScenarios": 23,
+    "productHuntBrowserScenarios": [
+      "fill-only with immediate cloud proof closes owned page without next page",
+      "fill-only with delayed cloud proof uses original notification continuation",
+      "submit intent continues after existing receipt proof",
+      "fill-only on user page preserves page"
+    ],
+    "originalCloudAndFillOnlyCombinations": 4,
+    "actualUiWithControlledBackend": true,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "intermediateFindings": [
+    "The frozen sidepanel close guard does not require advance. Immediate Product Hunt fill-only confirmation closes an owned page without opening the next; the first incorrect expectation was rejected and corrected.",
+    "Product Hunt success fixture must provide the original host-scoped destination key, as native success records do."
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "existing_receipt_published_service_process_identity",
+    "sourceCommit": "efcf5dac59935d8f7a8b2d27e5ea7e1d72314027",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 12972,
+        "StartedAt": "2026-10-09T18:48:22.3028880+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 5212,
+        "StartedAt": "2026-10-09T18:48:22.9498860+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "3e5862b9-4c40-46e6-817b-558abfe9db4e"
+  },
+  "uiSmoke": {
+    "ok": true,
+    "kind": "product_hunt_existing_receipt_live_ui_and_authenticated_state_smoke",
+    "sourceCommit": "efcf5dac59935d8f7a8b2d27e5ea7e1d72314027",
+    "servedUiMatchesFileAndCommit": true,
+    "originalReceiptUiServed": true,
+    "originalGateUiServed": true,
+    "existingReceiptUiServed": true,
+    "verifiedOnlyUiServed": true,
+    "authenticatedStateRoute": true,
+    "uiSha256": "0e400883e5168b52d48f57b3bb11a394b44fd83903c49530e3cc77e87b15dd51",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "historySubsetAudit": {
+    "ok": true,
+    "kind": "readonly_original_task_and_run_history_subsets",
+    "sources": [
+      {
+        "directory": "2026-09-29-before-d1",
+        "fields": {
+          "targetId": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "browserInstance": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "reason": {
+            "originalNonemptyChanged": 3,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 3
+          },
+          "screenshot": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          },
+          "artifactRef": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "artifactSha256": {
+            "originalNonemptyChanged": 7,
+            "exactInCurrentTaskOrRun": 6,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "profileSnapshot": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          },
+          "profileRevision": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 2,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "consentHistory": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 2,
+            "requiresEventOrArchive": 0
+          },
+          "actualSubmission": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "fill": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "validation": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "recoveryCheckpoint": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "publicPage": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "tabClosedAt": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "version": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          },
+          "controllerId": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 2,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "controller": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          }
+        }
+      },
+      {
+        "directory": "gmail-migration-2026-09-30T08-14-33-366Z",
+        "fields": {
+          "consentHistory": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 1,
+            "requiresEventOrArchive": 0
+          },
+          "targetId": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "browserInstance": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "publicPage": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "screenshot": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "artifactRef": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "artifactSha256": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "recoveryHistory": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 1,
+            "requiresEventOrArchive": 0
+          },
+          "aiTakeover": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "normalPreparation": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "actualPreparation": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "usedMedia": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          }
+        }
+      },
+      {
+        "directory": "no-extension-2026-09-30T05-12-20-552Z",
+        "fields": {
+          "targetId": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "browserInstance": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "reason": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "screenshot": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          },
+          "artifactRef": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "artifactSha256": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "profileSnapshot": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 2
+          },
+          "profileRevision": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 2,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "consentHistory": {
+            "originalNonemptyChanged": 2,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 2,
+            "requiresEventOrArchive": 0
+          },
+          "actualSubmission": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 1,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 0
+          },
+          "fill": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "validation": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "recoveryCheckpoint": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "publicPage": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          },
+          "tabClosedAt": {
+            "originalNonemptyChanged": 1,
+            "exactInCurrentTaskOrRun": 0,
+            "allOriginalValuesRetainedInLargerObject": 0,
+            "requiresEventOrArchive": 1
+          }
+        }
+      }
+    ],
+    "comparison": "Object properties may be added; original array items must remain in order. Exact and additive-subset findings are reported separately.",
+    "productionWrites": 0,
+    "sourceWrites": 0
+  },
+  "targetedCloudFieldAudit": {
+    "ok": true,
+    "kind": "readonly_targeted_original_field_cloud_event_provenance",
+    "originalTasks": 1,
+    "eventReads": 107,
+    "eventsVerified": 107,
+    "jsonBytesRead": 5299633,
+    "errors": [],
+    "sources": [
+      {
+        "directory": "2026-09-29-before-d1",
+        "fields": {
+          "targetId": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "reason": {
+            "oldValuesNotInCurrentTask": 3,
+            "originalVerifiedEvent": 3,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "profileSnapshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "fill": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "validation": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "recoveryCheckpoint": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "tabClosedAt": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 1
+          },
+          "version": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 2,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "controller": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 2,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          }
+        }
+      },
+      {
+        "directory": "gmail-migration-2026-09-30T08-14-33-366Z",
+        "fields": {
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "recoveryHistory": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "aiTakeover": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "normalPreparation": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "actualPreparation": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "usedMedia": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          }
+        }
+      },
+      {
+        "directory": "no-extension-2026-09-30T05-12-20-552Z",
+        "fields": {
+          "targetId": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "browserInstance": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "reason": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "screenshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactRef": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "artifactSha256": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "profileSnapshot": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "consentHistory": {
+            "oldValuesNotInCurrentTask": 2,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "fill": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "validation": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "recoveryCheckpoint": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 1,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "publicPage": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 1,
+            "requiresArchiveOrAdditiveHistoryReview": 0
+          },
+          "tabClosedAt": {
+            "oldValuesNotInCurrentTask": 1,
+            "originalVerifiedEvent": 0,
+            "newerCloudVerifiedEvent": 0,
+            "requiresArchiveOrAdditiveHistoryReview": 1
+          }
+        }
+      }
+    ],
+    "productionWrites": 0,
+    "sourceWrites": 0
+  },
+  "productionTestWrites": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/large-backup-history-subsets-2026-10-09.txt",
+      "capturedSha256": "82597483c803525b1af0655a49c0ff1c5764f29d8522a3640805dc0e0a64bb61",
+      "gitBlobSha256": "ffecc3f07d1d8ff1c3b0a536b26e630004eee9978690ebb709bb26941e5d4360"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/large-backup-targeted-cloud-fields-2026-10-09.txt",
+      "capturedSha256": "2d61d01b63bfce5c55384fd0ee7bb2b54b2d4bf3e6dcbd5e37d5eb9dbcab42ee",
+      "gitBlobSha256": "ed619a821af2b9d06a029250bf14ee45ff05dfdcda39733ea3df09d72f02e7d6"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/original-product-hunt-existing-receipt-2026-10-09.txt",
+      "capturedSha256": "567f4f5b689a577314a6d32056df0b5c8a9347074ada2f90c983f0f7c4df7a9e",
+      "gitBlobSha256": "c13d58af4b8df717784b68d33c015b9cbace351bef88740a94713eb51dc6009a"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-before-2026-10-09.txt",
+      "capturedSha256": "10188f1164668757758b8487f8f9fe0674533d0d9799b0aa05f0e43adae4a4c3",
+      "gitBlobSha256": "d4f5f533e4617e163062334dd612f0b2bb36371e911c9ea3b3582a5e7a70af71"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-browser-2026-10-09.txt",
+      "capturedSha256": "65ed4e3eec135c032ecfddb5b36a918b16cd9245083db6b853281a9e88db8429",
+      "gitBlobSha256": "9cf76b82d819a5610d0c9d5ef2919199d85d7f2a4108e867021df7506f149f59"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-browser-final-2026-10-09.txt",
+      "capturedSha256": "5e2318973249276d3218be7859d890f4c196e1446adde56fb60754aa4bb8b7de",
+      "gitBlobSha256": "5e0a0438a16c753c91f177309054d917fe71dbceb121a502894d31b361bb5f7b"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-focused-2026-10-09.txt",
+      "capturedSha256": "76cd9f73c7250d0b3a37e811bbe12ff9f3da58671da51d15c6b25d71ac7c7922",
+      "gitBlobSha256": "89eebec57f174f9cbb981c0e83d97b0f2f3e73c81baaa8714f5b89d1878d686c"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-focused-final-2026-10-09.txt",
+      "capturedSha256": "bf511c365dc604124f25791eb76c6af1812d8345aaa1b1b10e433d0c6cb33b8f",
+      "gitBlobSha256": "32a3f0b0a28ad89dfe762ad821dac0fce67f117897032a285118b9ad51796818"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-focused-second-2026-10-09.txt",
+      "capturedSha256": "5269291b9d5b1abb1944e4d877928556e0e0aab92cd8483ecdcc7abf5ab93bd7",
+      "gitBlobSha256": "4f1650096e484e6749a5dfc6a349e23dd89fa3234c5fbdac6654c0163a416253"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-full-2026-10-09.txt",
+      "capturedSha256": "b3d28c429535ea4478d2bdbb1578eae336c0d9c5da22a73081730c6d2badd836",
+      "gitBlobSha256": "d286c02ad7aedfc48007de8523bfb696f7b594e69c0b301021a2a6f35453cda6"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-service-process-2026-10-09.txt",
+      "capturedSha256": "9ff186c57652525c8487983b307aadae098c550fd1934db47794b553fc68fac4",
+      "gitBlobSha256": "f8e49a8b444c96666cfccc47a81084a4e42845d170d767ce7ca920966822f605"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-ui-2026-10-09.txt",
+      "capturedSha256": "6af698c68452a60b43c2625fc83f6f19a5486ec86aa42b0217c351b4e429b2ea",
+      "gitBlobSha256": "06e6e8fa4e23a09e728d3f8be328033f834658a87ed43c5df374fdfb15d39a9b"
+    },
+    {
+      "path": "product-hunt-existing-receipt-2026-10-09/product-hunt-existing-receipt-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "58a76d87d1049735c7672cad9d9f99160b85f67f150a0100ed43781b409d52e7",
+      "gitBlobSha256": "a3be1d142e6f5059b111c1a6a20b8698fafb5829e9fcf1f0c354f0945fde8f48"
+    }
+  ]
+}

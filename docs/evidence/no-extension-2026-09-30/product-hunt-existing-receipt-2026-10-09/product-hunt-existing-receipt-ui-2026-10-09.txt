@@ -1,0 +1,11 @@
+✔ single-page interface follows the confirmed original queue page and profile without selecting another user page (25440.1682ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (9.0408ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (19.9551ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25499.622

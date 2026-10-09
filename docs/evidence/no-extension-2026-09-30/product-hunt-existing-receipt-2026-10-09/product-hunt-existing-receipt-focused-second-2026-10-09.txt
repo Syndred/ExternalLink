@@ -1,0 +1,34 @@
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (5.7969ms)
+✖ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (9.2349ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (5.5805ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 289.8309
+
+✖ failing tests:
+
+test at tests\executor-existing-single-page-receipt.test.mjs:21:1
+✖ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (9.2349ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'close'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-existing-single-page-receipt.test.mjs:24:417)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'close' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

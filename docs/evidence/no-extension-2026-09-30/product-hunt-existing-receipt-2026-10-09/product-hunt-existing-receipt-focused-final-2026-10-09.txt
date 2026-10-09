@@ -1,0 +1,11 @@
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (6.0248ms)
+✔ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (8.8642ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (5.9288ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 293.0762

@@ -1,0 +1,22 @@
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (6.791ms)
+✖ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (2.6285ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (6.1458ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 291.3267
+
+✖ failing tests:
+
+test at tests\executor-existing-single-page-receipt.test.mjs:21:1
+✖ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (2.6285ms)
+  ReferenceError: updateProductHuntFillButton is not defined
+      at Object.handleFillResult (evalmachine.<anonymous>:72:9)
+      at originalSinglePageReceipt (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/helpers/original-single-page-receipt.mjs:17:146)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-existing-single-page-receipt.test.mjs:24:359)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

@@ -3454,10 +3454,14 @@
       "PostgreSQL"
     ],
     "fullSuitePassed": 1039,
-    "migrationComplete": false
+    "migrationComplete": false,
+    "productHuntFillOnlyEvidence": "product-hunt-existing-receipt-2026-10-09.json",
+    "productHuntFillOnlyVerified": true,
+    "latestBrowserScenarios": 23,
+    "latestFullSuitePassed": 1040
   },
   "largeNativeBackupHistoryIndexAudit": {
-    "status": "nonempty_old_values_compared_cloud_archive_provenance_pending",
+    "status": "changed_business_values_located_in_verified_history_old_close_timestamp_retained_in_local_backups",
     "evidence": "original-form-continuation-2026-10-09.json",
     "sources": 8,
     "fourSourcesHaveAll778TasksAnd42RunsIdentical": true,
@@ -3465,6 +3469,17 @@
     "provenanceEvidence": "existing-receipt-continuation-2026-10-09.json",
     "sourceWrites": 0,
     "productionWrites": 0,
-    "original5412PendingEventsExactCloudChecksums": true
+    "original5412PendingEventsExactCloudChecksums": true,
+    "latestProvenanceEvidence": "product-hunt-existing-receipt-2026-10-09.json",
+    "targetedCloudEventsRead": 107
+  },
+  "originalProductHuntExistingReceiptCheckpoint": {
+    "status": "frozen_immediate_and_delayed_receipt_behaviors_verified",
+    "sourceCommit": "efcf5dac59935d8f7a8b2d27e5ea7e1d72314027",
+    "evidence": "product-hunt-existing-receipt-2026-10-09.json",
+    "originalFunctionCases": 4,
+    "nativeBrowserCases": 4,
+    "fullSuitePassed": 1040,
+    "migrationComplete": false
   }
 }

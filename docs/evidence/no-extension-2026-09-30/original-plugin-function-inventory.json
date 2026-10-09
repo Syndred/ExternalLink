@@ -3415,10 +3415,18 @@
     "migrationComplete": false
   },
   "originalSinglePageReceiptQueueAudit": {
+    "status": "owned_receipt_queue_and_interface_verified",
+    "sourceCommit": "d349cd030c85d4c3f52cc9eebd83f8255adaf6e9",
+    "evidence": "original-single-page-receipt-2026-10-09.json",
+    "runtimeDefectProven": true,
+    "actualBrowserScenarios": 14,
+    "fullSuitePassed": 1027,
+    "migrationComplete": false
+  },
+  "originalSinglePageGateQueueAudit": {
+    "scope": "single-page form gates keeping the current owned page while opening the next station",
+    "original": "handleFillResult needs_manual/captcha/blocked branch calls cycleSubmission(1, keepCurrent:true) when advance is not false and context owns the current page",
     "status": "requires_actual_runtime_verification",
-    "scope": "single-page cloud receipt acknowledgement and automatic submission queue continuation",
-    "original": "sidepanel cloudReceiptConfirmed handler validates owned tab, selected product and URL; handleFillResult advances then acknowledges pending cloud tab.",
-    "native": "manual-watch checks and persists receipts; direct equivalent to the owned sidepanel queue-completion callback has not been verified.",
     "runtimeDefectProven": false
   }
 }

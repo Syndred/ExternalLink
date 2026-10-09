@@ -1,0 +1,45 @@
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (8.9756ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (2.036ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (34.9573ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (24.7994ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (251.66ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (33.0581ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (12.2347ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (144.3913ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (10577.368ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (4.3026ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.2646ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.3855ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.4263ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (11.4534ms)
+✖ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (3.2903ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (17.1141ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (212.5036ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (8.9001ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11433.6728
+
+✖ failing tests:
+
+test at tests\executor-single-page-receipt-queue.test.mjs:15:1
+✖ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (3.2903ms)
+  AssertionError [ERR_ASSERTION]: receipt
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-single-page-receipt-queue.test.mjs:22:108)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

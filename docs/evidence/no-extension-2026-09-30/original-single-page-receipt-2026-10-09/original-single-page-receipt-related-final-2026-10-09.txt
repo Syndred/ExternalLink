@@ -1,0 +1,22 @@
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (5.6064ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (1.8056ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (3.3631ms)
+✔ original-external-form-source  actual isolated browser matches original attribution (1589.2473ms)
+✔ original-external-form-source --existing-source actual isolated browser matches original attribution (1437.2579ms)
+✔ original-external-form-source --cross-origin actual isolated browser matches original attribution (1494.0877ms)
+✔ original-external-form-source --untrusted-redirect actual isolated browser matches original attribution (1404.8012ms)
+✔ original-external-form-source --d1 actual isolated browser matches original attribution (2621.9687ms)
+✔ original-external-form-source --d1-lost-reply actual isolated browser matches original attribution (2849.2523ms)
+✔ original-external-form-source --d1 --google actual isolated browser matches original attribution (3078.2811ms)
+✔ original-external-form-source --stale-route actual isolated browser matches original attribution (1471.9115ms)
+✔ original-external-form-popup  actual isolated browser matches original attribution (929.9099ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (8.3331ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (14.3229ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16993.6974

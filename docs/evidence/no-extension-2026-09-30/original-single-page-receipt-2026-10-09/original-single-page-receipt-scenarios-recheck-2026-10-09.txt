@@ -1,0 +1,9 @@
+✔ single-page verified cloud receipts close selected queue-owned pages and recover original continuation without duplicate tabs (9773.2242ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10336.501

@@ -1,0 +1,10 @@
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (7.7252ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (9.4466ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 297.7934

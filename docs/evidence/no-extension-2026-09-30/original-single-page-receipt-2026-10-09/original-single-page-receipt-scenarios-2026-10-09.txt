@@ -1,0 +1,35 @@
+✖ single-page verified cloud receipts close selected queue-owned pages and recover original continuation without duplicate tabs (8758.0335ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39416.6625
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:43:1
+✖ single-page verified cloud receipts close selected queue-owned pages and recover original continuation without duplicate tabs (8758.0335ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(urls.includes(route.request().url()))
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:49:51
+      at RouteHandler._handleInternal (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60186:11)
+      at RouteHandler._handleImpl (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60153:29)
+      at C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60147:59
+      at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:65:14)
+      at _Zone.run (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:10364:40)
+      at RouteHandler.handle (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60147:38)
+      at _BrowserContext._onRoute (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:62390:46)
+      at Proxy.<anonymous> (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:62250:63)
+      at Proxy._callHandler (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:10962:33) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

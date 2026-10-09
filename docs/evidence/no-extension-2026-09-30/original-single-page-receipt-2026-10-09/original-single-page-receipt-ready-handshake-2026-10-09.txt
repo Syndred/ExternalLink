@@ -1,0 +1,28 @@
+✖ single-page verified cloud receipts close the selected queue-owned page and open the next original destination (736.9198ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1282.6909
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:43:1
+✖ single-page verified cloud receipts close the selected queue-owned page and open the next original destination (736.9198ms)
+  AssertionError [ERR_ASSERTION]: Original owned single-page receipt must close before advancing
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:51:338)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

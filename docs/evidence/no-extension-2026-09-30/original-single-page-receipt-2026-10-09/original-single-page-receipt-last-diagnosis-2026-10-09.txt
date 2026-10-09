@@ -1,0 +1,30 @@
+✖ single-page verified cloud receipts close selected queue-owned pages and recover original continuation without duplicate tabs (809.0519ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1523.0544
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:43:1
+✖ single-page verified cloud receipts close selected queue-owned pages and recover original continuation without duplicate tabs (809.0519ms)
+  AssertionError [ERR_ASSERTION]: last: unexpected fixture navigation http://aitoolslink.com/
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:49:113
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Promise.all (index 1)
+      at async RouteHandler._handleInternal (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60184:27)
+      at async RouteHandler._handleImpl (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60153:18)
+      at async RouteHandler.handle (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:60147:16)
+      at async _BrowserContext._onRoute (C:\Users\Administrator\Desktop\project\ExternalLink\executor\node_modules\playwright-core\lib\coreBundle.js:62390:27) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }

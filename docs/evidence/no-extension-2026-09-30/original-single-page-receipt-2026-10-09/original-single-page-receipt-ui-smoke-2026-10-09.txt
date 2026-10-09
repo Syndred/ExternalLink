@@ -1,0 +1,1 @@
+{"ok":true,"kind":"single_page_receipt_live_ui_and_authenticated_state_smoke","sourceCommit":"d349cd030c85d4c3f52cc9eebd83f8255adaf6e9","servedUiMatchesFileAndCommit":true,"originalReceiptUiServed":true,"authenticatedStateRoute":true,"uiSha256":"6f3dc457dbb82f4bcedb309cc7cb81107baff94b576546daa30e179de8e80c15","anonymousCloudSnapshotStatus":401,"productionWrites":0}

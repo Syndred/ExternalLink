@@ -1,0 +1,316 @@
+{
+  "kind": "original_single_page_verified_receipt_queue",
+  "sourceCommit": "d349cd030c85d4c3f52cc9eebd83f8255adaf6e9",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "priorPublishedCommit": "cb1f519cb5298baf06908f15a5ba3c1923135f11",
+  "originalFunctionsExecuted": [
+    "cloudReceiptConfirmed listener",
+    "captureFillContext",
+    "handleFillResult",
+    "closeVerifiedOwnedTab",
+    "cycleSubmission"
+  ],
+  "defectsObserved": [
+    "Asynchronous manual-watch ready notification could be rejected after task changes, leaving no frame baseline",
+    "Verified single-page receipt did not close its owned queue page or open the next station"
+  ],
+  "verification": {
+    "fullSuitePassed": 1027,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "relatedTestsPassed": 14,
+    "actualIsolatedChromeScenarios": [
+      "normal",
+      "legacy-owned-page after queue refresh",
+      "remaining product keeps original next-station cursor",
+      "user-page",
+      "changed-selection",
+      "changed-profile",
+      "changed-url",
+      "closed-panel",
+      "stopped",
+      "lost-reply",
+      "unverified-sync beyond checking timeout",
+      "close-failure",
+      "open-failure",
+      "last"
+    ],
+    "authenticatedD1": true,
+    "lateGuardCases": [
+      "receipt",
+      "actual fields",
+      "verification",
+      "controller",
+      "panel",
+      "workspace",
+      "stop",
+      "ownership",
+      "shared page",
+      "queue"
+    ],
+    "actualUiWithControlledBackend": true,
+    "uiNextPageMissingDoesNotChooseUserPage": true
+  },
+  "intermediateFailures": [
+    {
+      "kind": "watch_baseline_missing",
+      "scope": "Actual selected queue page before synchronous watch handshake"
+    },
+    {
+      "kind": "queue_not_advanced",
+      "scope": "Cloud proof succeeded after readiness correction; owned-page completion was missing"
+    },
+    {
+      "kind": "fixture_remaining_builtin_routes",
+      "scope": "Deleted entries remain in original browsing groups; final last-station fixture uses historical success records to remove completed groups"
+    },
+    {
+      "kind": "mock_missing_isClosed",
+      "scope": "Negative CDP fixture lacked page.isClosed; fixed to reach awaited identity guard"
+    },
+    {
+      "kind": "first_full_suite",
+      "passed": 1023,
+      "failed": 4,
+      "causes": [
+        "Guard incorrectly required an explicit legacy controller field on valid single-page tasks; actual controllerId and page ownership are now checked",
+        "Three local-only external form fixtures expected confirmed without cloud proof; they now assert waiting while authenticated D1 cases still require confirmation"
+      ]
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "single_page_receipt_published_service_process_identity",
+    "sourceCommit": "d349cd030c85d4c3f52cc9eebd83f8255adaf6e9",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 17628,
+        "StartedAt": "2026-10-09T17:27:32.3866220+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 19908,
+        "StartedAt": "2026-10-09T17:27:33.0280360+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "uiSmoke": {
+    "ok": true,
+    "kind": "single_page_receipt_live_ui_and_authenticated_state_smoke",
+    "sourceCommit": "d349cd030c85d4c3f52cc9eebd83f8255adaf6e9",
+    "servedUiMatchesFileAndCommit": true,
+    "originalReceiptUiServed": true,
+    "authenticatedStateRoute": true,
+    "uiSha256": "6f3dc457dbb82f4bcedb309cc7cb81107baff94b576546daa30e179de8e80c15",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextAudit": {
+    "scope": "single-page form gates keeping the current owned page while opening the next station",
+    "original": "handleFillResult needs_manual/captcha/blocked branch calls cycleSubmission(1, keepCurrent:true) when advance is not false and context owns the current page",
+    "status": "requires_actual_runtime_verification",
+    "runtimeDefectProven": false
+  },
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionTestWrites": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-before-2026-10-09.txt",
+      "capturedSha256": "bf148eea0f05ec1485ff6beec5b2f1743c539e46b54c40f7e794189a7debda7e",
+      "gitBlobSha256": "5d8b1bcf701f43516f69e535abac4f1e168ad8b0b95b79260112d888019c7e05"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-cursor-and-legacy-2026-10-09.txt",
+      "capturedSha256": "cb1e3ece1bd2e5aca76c4843aed72ac0f3345f10b13f56fdeac2f5372be81c54",
+      "gitBlobSha256": "1f5eb673809c68a223cfa572aeb32987e4eb69020dd0b10a26aca646d2b70936"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-first-2026-10-09.txt",
+      "capturedSha256": "b4fc65b989d1c31a840dad44c4bc1ccec84de89e12c51f654267559c8d7d1740",
+      "gitBlobSha256": "12b0cd0043fb6d8d3c13f82884224c6a03a3201f5871f45f8275f9f9368f5ba4"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-focused-2026-10-09.txt",
+      "capturedSha256": "9e7875be6e7f40aab55a78eedd4d0e0ac4cb133394a118f0506da078434aa41f",
+      "gitBlobSha256": "e7f39545daf6add453338a94e7a6198eb7a6b8b2c03a0f1147cef1dd5df3b381"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-guards-final-2026-10-09.txt",
+      "capturedSha256": "d4512a42018670a4e89fd88b39f0fca1ce526ce332f7fede6d1bfde69d2c4046",
+      "gitBlobSha256": "baf9423aea16350afa30e9d6ddb49ed773db4f76cd1f37307cbf96fa0451d161"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-last-diagnosis-2026-10-09.txt",
+      "capturedSha256": "a8af802e7f836f1c5bc1719a43ceb600c2249e303f2769602d18e570e3011c74",
+      "gitBlobSha256": "5f754e597fb67ae4664be139b01e5a1060dcaaf5d294adc4d1ca2499fa1e8629"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-pending-cloud-2026-10-09.txt",
+      "capturedSha256": "7e3d98d27a23eab444eaee7e9d579ee0842e438b83d339b50b2d72a06cc23ffb",
+      "gitBlobSha256": "c7b8ccea9a8fe61694c071c0e8eaeb629a9ffa4f1c06f776445ca4d3132dccf8"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-ready-handshake-2026-10-09.txt",
+      "capturedSha256": "c14e6b589a30b9cf486bdcc51e8117303dfac970dcac3284a53686087e026a70",
+      "gitBlobSha256": "63c2aab3e1ec1a56c08b00e1d98a12284d3df4bb30d24af73d4ac03718929be1"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-related-final-2026-10-09.txt",
+      "capturedSha256": "edd48b08ecf9815c26f5474fe3574bfcf382f5cdcaf30b8eebbd690c1e4c3340",
+      "gitBlobSha256": "f5872d9965003cff9567ec5b1e5ad2ed2af92686474822adfa4618325544e653"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-repository-2026-10-09.txt",
+      "capturedSha256": "51db299d8873edfea5da9369c42c2b9411fb72f8ad22d0bc7324a8a95f4080b7",
+      "gitBlobSha256": "233de93dbeece96f22832c5fb61e921c36f11b9db72bb6788c5ab8198b2d3418"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-repository-final-2026-10-09.txt",
+      "capturedSha256": "468486b5ada576ea7ebc013f8636a8c5bd08732da7557e3b0c986602e6d9cc54",
+      "gitBlobSha256": "0879f85a6141560bae4d468edd627e54911241155178d8029586bcf927628d72"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-repository-release-2026-10-09.txt",
+      "capturedSha256": "58102131c5eb09fdd9e8f3a69172ecd1522f9705ec6825dcfe0103f5ebd8e4f7",
+      "gitBlobSha256": "8414771d8013121afae92d23cc0de8f82d4382dd40987cbff4c2e83dd21af912"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-scenarios-2026-10-09.txt",
+      "capturedSha256": "7a0593ecabd3e4f488d5cd667e9cee724f4155fd20cba8607b3cac108c6a4d9a",
+      "gitBlobSha256": "efd86a52fec14a74399ac75da1ae2c4c6243ae2f8f4f926a913f7b6eb102fe98"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-scenarios-final-2026-10-09.txt",
+      "capturedSha256": "6a0fdbd4f6d2bfeb6867b6e4d35da7e5a4a26770e8ab289c0fcb8d993a3c1dcb",
+      "gitBlobSha256": "dd12bb94e267512056e07923bd4594b8e15cf85546f4dd74383c57f396ffbfe3"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-scenarios-recheck-2026-10-09.txt",
+      "capturedSha256": "1fc169b0c42bae906e4df3f1bf80fecb7f9eabb330f89ab62585d4dc4d749233",
+      "gitBlobSha256": "708f4c377d65e70a1bb532ff596bbe2290d79ab3cf6a54aaaf40f20d5936e88c"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-service-process-2026-10-09.txt",
+      "capturedSha256": "16e75ddcceaa3033d7c2154eb2ba22ac04b02396b4200d68a1b177104c3d3700",
+      "gitBlobSha256": "5fabe2d04add7a4e623149407d59aa3632a6c8062c43c5730b6b4e346daccd3c"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-ui-2026-10-09.txt",
+      "capturedSha256": "9e9f98be0baf18d0fb8380c9e0a5bb692b7e7a3df184b45b1abd5a8f4eccdd2d",
+      "gitBlobSha256": "aae34523c472b3d6c42904e90a959d803b63ee899241fe168099fbb391b55aa2"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-ui-final-2026-10-09.txt",
+      "capturedSha256": "ca3745f94385e8f2417329090d3562657f424d8385342132ff35a22a7cd7d8a2",
+      "gitBlobSha256": "154fe785f085e8eabf212d0f9e378d6994fa2da4bc346d9a61da8463c6c836a0"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "6928e73a3c37d2fbf97e393eb612220b00fe4d5efc955d57afac899f8bcf1590",
+      "gitBlobSha256": "29f7f0222eff7d61d77b8dcb0a794ac805a0dade242f1cd0296ed520296be694"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-watch-diagnosis-2026-10-09.txt",
+      "capturedSha256": "44efdf81bed443243c2cb6c0e9d6bd565ee0b3c42c26b7fb78891732ae4f3432",
+      "gitBlobSha256": "d11311392fd0f79b7237d1b68ca1cb8a58aace581062c1fcb447363c74b76c72"
+    },
+    {
+      "path": "original-single-page-receipt-2026-10-09/original-single-page-receipt-watch-state-2026-10-09.txt",
+      "capturedSha256": "c069b2ef5b3e6c8958c678672794074e7390ae394085779df69cd24a8dae205e",
+      "gitBlobSha256": "8556c55c0336530c7fd99f71d811a5520b6a3632da333a7b575b50e45c7a7c9e"
+    }
+  ]
+}

@@ -8,7 +8,12 @@ export async function d1Api(request,env,authorised,auxiliary){
   const workspace=url.searchParams.get('workspace')||'default';
   if(workspace!==(env.ALLOWED_WORKSPACE_ID||'default'))return json({ok:false,error:'工作区未授权'},403);
   const recovery=path.startsWith('/recovery/');
-  const allowed=recovery?!!env.D1_RECOVERY_TOKEN&&await secureEqual(parseBearerToken(request.headers.get('Authorization'))||'',env.D1_RECOVERY_TOKEN):await authorised(request,env);
+  const supplied=parseBearerToken(request.headers.get('Authorization'))||'';
+  const originalMediaAudit=path==='/recovery/original-media-catalogue';
+  const allowed=recovery?(
+    (!!env.D1_RECOVERY_TOKEN&&await secureEqual(supplied,env.D1_RECOVERY_TOKEN))||
+    (originalMediaAudit&&!!env.ORIGINAL_MEDIA_AUDIT_TOKEN&&await secureEqual(supplied,env.ORIGINAL_MEDIA_AUDIT_TOKEN))
+  ):await authorised(request,env);
   if(!allowed)return json({ok:false,error:'未授权'},401);
   if(!env.LEDGER_DB)return json({ok:false,error:'D1 尚未配置'},503);
   const store=new D1Store(env.LEDGER_DB,env.MEDIA_BUCKET,workspace);

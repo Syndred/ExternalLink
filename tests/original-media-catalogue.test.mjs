@@ -40,3 +40,18 @@ test('deployed Worker routing keeps v1 media on D1 but routes the protected reco
   assert.equal((await call('v2/recovery/original-media-catalogue','ordinary-device')).status,401);
   const response=await call('v2/recovery/original-media-catalogue','recovery-only');assert.equal(response.status,503);assert.equal((await response.json()).source,'original-neon-media-index');assert.equal(listings,1);
 });
+
+test('a dedicated original-index audit credential works without enabling any recovery write or other recovery read',async()=>{
+ const env={ALLOWED_WORKSPACE_ID:'default',ORIGINAL_MEDIA_AUDIT_TOKEN:'read-only-audit',LEDGER_DB:{},MEDIA_BUCKET:{}};let calls=0;
+ const call=(path,method='GET',token='read-only-audit')=>d1Api(new Request('https://example.test/v2/recovery/'+path+'?workspace=default',{method,headers:{Authorization:'Bearer '+token}}),env,async()=>false,async()=>{calls++;return new Response('{"ok":true}');});
+ assert.equal((await call('original-media-catalogue')).status,200);assert.equal(calls,1);
+ assert.equal((await call('original-media-catalogue','POST')).status,405);
+ for(const [path,method]of [['document','POST'],['task','POST'],['archive','POST'],['proof','GET'],['status','GET']])assert.equal((await call(path,method)).status,401);
+ assert.equal((await call('original-media-catalogue','GET','ordinary-device')).status,401);assert.equal(calls,1);
+});
+
+test('dedicated media-audit credentials reach the old source through the complete Worker router without a recovery secret',async()=>{
+ const env={STATE_BACKEND:'d1',ORIGINAL_MEDIA_AUDIT_TOKEN:'read-only-audit',LEDGER_DB:{},MEDIA_BUCKET:{}};
+ const response=await worker.fetch(new Request('https://example.test/v2/recovery/original-media-catalogue',{headers:{Authorization:'Bearer read-only-audit'}}),env);
+ assert.equal(response.status,503);assert.equal((await response.json()).code,'ORIGINAL_MEDIA_SOURCE_UNAVAILABLE');
+});

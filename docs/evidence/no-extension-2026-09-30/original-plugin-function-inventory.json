@@ -4681,5 +4681,17 @@
       "branch-by-branch evidence audit for all original controls and special-launch cross-entry behaviors",
       "Gmail reauthorization and fresh provider readback require Google human confirmation"
     ]
+  },
+  "manualFieldIconBranchCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-manual-icon-branches-2026-10-10/summary.json",
+    "completeOriginalClickHandlerCompared": true,
+    "originalHelperDependenciesStubbed": true,
+    "actualBrowserPositiveBranches": 4,
+    "actualBrowserNegativeBranches": 3,
+    "focusedTestsPassed": 7,
+    "newRealSubmissions": 0,
+    "productionWrites": 0,
+    "migrationComplete": false
   }
 }

@@ -1,0 +1,9 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-manual-icon-branches.mjs:23
+ await page.waitForFunction(()=>document.querySelectorAll('.extlink-manual-icon').length===3,null,{timeout:7000}).catch(async error=>{throw Error(JSON.stringify({error:runtime.browserAssistantError,icons:await page.locator('.extlink-manual-icon').count(),frames:runtime.browserAssistantFrames?.size})+' '+error.message);});
+                                                                                                                                            ^
+
+Error: {"error":"","icons":0,"frames":1} page.waitForFunction: Timeout 7000ms exceeded.
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-manual-icon-branches.mjs:23:141
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-manual-icon-branches.mjs:23:2
+
+Node.js v24.21.0

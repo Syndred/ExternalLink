@@ -101,9 +101,10 @@
       "currentSource": "core/form-engine.js::syncManualIcons; executor/src/browser-assistant.mjs",
       "tests": [
         "tests/executor-original-manual-icon-lifecycle.test.mjs",
+        "tests/executor-original-manual-icon-branches.test.mjs",
         "tests/fill-learning.test.mjs"
       ],
-      "scope": "直接验证按钮数量3→4→3→0→3、关闭及重启无重复、点击填入与产品学习；选择框、文件及评论按钮仍须独立核验",
+      "scope": "已直接验证生命周期、产品学习及选择框／内嵌图片／未匹配字段／评论的四类点击和三类缺失状态；远程媒体、特殊站点及并发分支须结合独立证据审计",
       "completion": "requires_branch_evidence_audit"
     },
     {

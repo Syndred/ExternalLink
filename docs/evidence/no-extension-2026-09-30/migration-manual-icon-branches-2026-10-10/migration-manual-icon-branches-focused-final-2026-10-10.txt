@@ -1,0 +1,15 @@
+✔ actual manual select, embedded image, unknown field and article comment buttons match the complete original click handler (2840.0232ms)
+✔ actual manual field icons match the complete original lifecycle after field addition, removal, disabling and reenabling without duplicate icons (4132.911ms)
+✔ destination memory retains field semantics across products and strips answers, URL tokens and selected choices (7.8846ms)
+✔ field learning cannot replace existing answers, remember credentials or accept invalid profile identity (0.8375ms)
+✔ offline field learning survives SQLite reopening and lost write acknowledgement resumes the same plan without replay (109.7885ms)
+✔ renamed products preserve pending original answers and record the excluded profile while sharing semantics (2.4308ms)
+✔ workspace switch while flushing cannot write learning or relabel the old cached snapshot (0.9048ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4199.9103

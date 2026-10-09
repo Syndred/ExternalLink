@@ -11,6 +11,20 @@ import {queue,timeline} from '../executor/src/shared.mjs';
 const source=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/background.js'],{encoding:'utf8',maxBuffer:4*1024*1024}),extract=name=>{const code=source.match(new RegExp('^(?:async )?function '+name+'\\([^]*?^}','m'))?.[0];assert.ok(code,name);return code;};
 const record=structuredClone(queue.buildSuccessRecord({destinationUrl:'https://bai.tools/submit',profileId:'p',submittedAt:'2026-01-01T00:00:00Z',evidence:'Original old receipt'})),key=queue.submissionRecordKey(record.destinationKey,'p');
 
+test('frozen ordinary and comment fill-only paths fill even with an existing receipt and never request submission',async()=>{
+ for(const mode of ['form','comment']){
+  const calls=[],profile={id:'p',fields:{Name:'Original',Url:'https://product.example'}},context=vm.createContext({self,state:{activeTabs:new Map()},chrome:{storage:{local:{get:async()=>({siteProfiles:{p:profile},activeSiteId:'p'})}}},resolveTargetTabId:async()=>7,getTabUrlSafe:async()=> 'https://bai.tools/submit',sendTabMessage:async(_id,message)=>{if(message.action==='executeSubmit'){assert.equal(message.config.fillOnly,true);calls.push('comment-fill');return{ok:true,fillOnly:true};}return{platform:'directory',operable:true,commentFound:true};},sendTabMessageToFrame:async()=>({blocked:false}),isCustomLaunchUrl:()=>false,broadcastAutoFillUpdate(){},existingSubmissionRecord:async()=>{calls.push('receipt');return record;},armManualSubmissionWatch:async()=>calls.push('watch'),persistFillLearnings:async()=>[],fillFormUntilReady:async()=>{calls.push('form-fill');return{smartTotal:2,lastEmpty:{emptyCount:0,invalidCount:0,totalCount:2},validation:{submitReady:true},agentResult:{}};},submitUntilAccepted:async()=>{throw Error('unexpected submission');}});
+  vm.runInContext(extract('runSidepanelFill'),context);const result=await context.runSidepanelFill({tabId:7,profileId:'p',expectedUrl:'https://bai.tools/submit',mode,fillOnly:true,commentText:'Original comment'});
+  assert.equal(result.ok,true);assert.equal(result.fillOnly,true);assert.deepEqual(calls,mode==='comment'?['comment-fill']:['watch','form-fill']);
+ }
+});
+
+test('frozen ordinary manual watch saves the original page baseline before observing later user clicks',async()=>{
+ const writes=[],messages=[],context=vm.createContext({state:{activeTabs:new Map()},crypto:{randomUUID:()=> 'original-watch-token'},getTabUrlSafe:async()=> 'https://bai.tools/submit',sendTopTabMessage:async(_tab,message)=>message.action==='classifySubmitEvidence'?{evidence:'Original visible baseline',matched:true}:{},isStandaloneExternalFormUrl:()=>false,chrome:{storage:{local:{set:async value=>writes.push(structuredClone(value))}}},refreshContentScriptsForManualWatch:async()=>[{frameId:0}],sendManualSubmissionWatchToFrames:async(...args)=>messages.push(structuredClone(args))});
+ vm.runInContext(extract('armManualSubmissionWatch'),context);await context.armManualSubmissionWatch(7,{id:'p',name:'Original'},{targetDomain:'https://product.example'});
+ const watch=writes[0]['manualSubmissionWatch:7'];assert.equal(watch.profileId,'p');assert.equal(watch.destinationUrl,'https://bai.tools/submit');assert.equal(watch.frameBaselines[0].evidence,'Original visible baseline');assert.equal(messages[0][1].action,'watchManualSubmission');assert.equal(messages[0][1].token,watch.token);
+});
+
 test('frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission',async()=>{
  const profile={id:'p',fields:{Name:'Original',Url:'https://product.example'}},config=self.ExtLinkProfiles.buildAgentConfigFromProfile(profile,{});
  for(const synced of [false,true]){

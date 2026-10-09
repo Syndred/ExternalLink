@@ -64,7 +64,7 @@ async function showSinglePage(preferred={}){
  if(preferred.panel?.receiptCompletion?.kind==='existing')message.textContent='上一站已有收件已核验，未重复投稿，现已打开下一站。';
  const fill=button('填写所选网页',async()=>{
   const result=await request('/sidepanelFill',{...parameters(),submit,ordinaryPermissionsAuthorized:submit});
-  message.textContent=result.existingSubmission?result.reason:result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
+  message.textContent=result.existingSubmission||result.refillId?result.reason:result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
   if(result.syncError)message.textContent+=' 本机记录已保存，云端待同步：'+result.syncError;
   await load();if(result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
  },true);
@@ -77,7 +77,7 @@ async function showSinglePage(preferred={}){
  };
  const requestVisitFill=async(current)=>{if(activeSinglePagePanel!==current.id)return;await request('/requestAutoFill',{fromSidepanel:true,panelId:current.id,panelGeneration:current.generation,profileId:current.profileId,targetId:current.selectedTargetId});};
  const changed=()=>{selectionRevision++;configureSubmission();request('/sidepanelOpened',{panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value}).then(result=>requestVisitFill(result.panel)).catch(error=>message.textContent=error.message);};pageSelect.onchange=changed;productSelect.onchange=changed;mode.onchange=changed;configureSubmission();requestVisitFill(opened.panel).catch(error=>message.textContent=error.message);
- panel.replaceChildren(el('h2',{text:'当前网页填写'}),el('p',{class:'muted',text:'选择执行器浏览器中的网页及产品。填写会保存原任务编号、产品资料版本和实际字段；遇到已有投稿结果先核验。'}),fieldRow('网页',pageSelect),fieldRow('我的产品',productSelect),fieldRow('填写内容',mode),fieldRow('评论文本',comment),submissionControls,el('div',{class:'controls'},[button('检测所选网页',async()=>{const result=await request('/sidepanelDetect',parameters());report.replaceChildren(...result.frames.map(f=>el('p',{text:(f.platform||'普通网页')+' · '+f.formFieldCount+' 个可填写字段 · '+(f.commentFound?'检测到评论区':'未发现评论区')+(f.hasCaptcha?' · 需要验证码':'' )})));}),fill,button('刷新网页列表',showSinglePage)]),report,message);
+ panel.replaceChildren(el('h2',{text:'当前网页填写'}),el('p',{class:'muted',text:'选择执行器浏览器中的网页及产品。新投稿保存原任务与实际字段；已有收件的普通网页可只填写，保留旧记录，继续投稿时先核验。'}),fieldRow('网页',pageSelect),fieldRow('我的产品',productSelect),fieldRow('填写内容',mode),fieldRow('评论文本',comment),submissionControls,el('div',{class:'controls'},[button('检测所选网页',async()=>{const result=await request('/sidepanelDetect',parameters());report.replaceChildren(...result.frames.map(f=>el('p',{text:(f.platform||'普通网页')+' · '+f.formFieldCount+' 个可填写字段 · '+(f.commentFound?'检测到评论区':'未发现评论区')+(f.hasCaptcha?' · 需要验证码':'' )})));}),fill,button('刷新网页列表',showSinglePage)]),report,message);
  let pollingReceipt=false;
  singlePageReceiptPoll=setInterval(async()=>{
   if(pollingReceipt||activeSinglePagePanel!==opened.panel.id||!detail.open)return;pollingReceipt=true;

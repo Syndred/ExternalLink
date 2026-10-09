@@ -13,6 +13,7 @@ import {overlayApplicationSettings} from './application-mutations.mjs';
 import {externalFormDestination} from './external-form-source.mjs';
 import {armPreparedManualWatch} from './manual-watch.mjs';
 import {prepareExistingSinglePageReceipt} from './single-page-receipt-queue.mjs';
+import {refillExistingPage} from './single-page-refill.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function cancelVisitWork(runtime,reason){
@@ -66,11 +67,11 @@ export async function sidepanelFill(runtime,input){
  const assertCurrent=captureSinglePageContext(runtime,input),submitRequested=input.mode!=='comment'&&input.submit===true;if(runtime.singlePageFill)throw Error('请暂停并等待当前网页操作完成');runtime.singlePageFill=true;
  const engines=[];try{
   const page=await selectedPage(runtime,input),snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived||!profiles.profileConfigured(profile))throw Error('请选择已配置资料的在用产品');
-  const previousReceipt=url=>{if(!submitRequested&&(input.mode==='comment'||!isProductHuntLaunch(page.url())))throw Error('该产品同站已有收件，请先核验');return prepareExistingSinglePageReceipt(runtime,{snapshot,input,url,advanceOnVerified:submitRequested,assertCurrent:()=>{assertCurrent();if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('原收件网页已关闭或跳转');}});};
-  if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))return await previousReceipt(page.url());
+  const previousReceipt=url=>{if(!submitRequested&&(input.mode==='comment'||!isProductHuntLaunch(page.url())))return refillExistingPage(runtime,{input,snapshot,profile,page,destinationUrl:url,config:configFor(snapshot,profile,page.url()),assertBase:assertCurrent,assertSource});return prepareExistingSinglePageReceipt(runtime,{snapshot,input,url,advanceOnVerified:submitRequested,assertCurrent:()=>{assertCurrent();if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('原收件网页已关闭或跳转');}});};
   const externalSource=input.mode==='comment'?null:await externalFormDestination(runtime,page),destinationUrl=externalSource?.destinationUrl||page.url();assertCurrent();
-  if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,destinationUrl))return await previousReceipt(destinationUrl);
   const assertSource=async()=>{if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');const latest=input.mode==='comment'?null:await externalFormDestination(runtime,page);if(JSON.stringify(latest)!==JSON.stringify(externalSource))throw Error('外部表单来源已变化，停止旧网页操作');assertCurrent();};
+  if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,destinationUrl))return await previousReceipt(destinationUrl);
+  if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))return await previousReceipt(page.url());
   if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');
   let config=configFor(snapshot,profile,page.url());if(input.mode==='comment')config.commentTemplate=input.commentText;
   if(input.mode!=='comment'&&isProductHuntLaunch(page.url())){

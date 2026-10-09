@@ -61,9 +61,10 @@ async function showSinglePage(preferred={}){
  productSelect.value=preferred.profileId||profileFilter||currentProductId();if(preferred.targetId&&listing.pages.some(p=>p.targetId===preferred.targetId))pageSelect.value=preferred.targetId;const opened=preferred.panel?{panel:preferred.panel}:await request('/sidepanelOpened',{profileId:productSelect.value,targetId:pageSelect.value});clearInterval(singlePageReceiptPoll);activeSinglePagePanel=opened.panel.id;let selectionRevision=0,seenReceiptCompletion=opened.panel.receiptCompletion?.id;
  const parameters=()=>({panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value,expectedUrl:listing.pages.find(p=>p.targetId===pageSelect.value).url,mode:mode.value,commentText:comment.value,confirmProductHuntCreate});
  if(preferred.panel?.receiptCompletion?.kind==='gate')message.textContent='上一站已保留待人工处理，现已打开下一站。';
+ if(preferred.panel?.receiptCompletion?.kind==='existing')message.textContent='上一站已有收件已核验，未重复投稿，现已打开下一站。';
  const fill=button('填写所选网页',async()=>{
   const result=await request('/sidepanelFill',{...parameters(),submit,ordinaryPermissionsAuthorized:submit});
-  message.textContent=result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
+  message.textContent=result.existingSubmission?result.reason:result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
   if(result.syncError)message.textContent+=' 本机记录已保存，云端待同步：'+result.syncError;
   await load();if(result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
  },true);
@@ -82,10 +83,10 @@ async function showSinglePage(preferred={}){
   if(pollingReceipt||activeSinglePagePanel!==opened.panel.id||!detail.open)return;pollingReceipt=true;
   try{const expectedRevision=selectionRevision,state=await request('/sidepanelState',{});if(activeSinglePagePanel!==opened.panel.id||!detail.open||selectionRevision!==expectedRevision)return;
    if(state.panel?.id!==opened.panel.id||!state.panel.open){clearInterval(singlePageReceiptPoll);message.textContent='网页面板已变化，请刷新网页列表。';return;}
-   if(state.completion?.error)message.textContent=(state.completion.kind==='gate'?'原页已保留，打开下一站待处理：':'收件已保存，继续下一站待处理：')+state.completion.error;
+   if(state.completion?.error)message.textContent=(state.completion.kind==='existing'?'已有收件，队列接续待核验：':state.completion.kind==='gate'?'原页已保留，打开下一站待处理：':'收件已保存，继续下一站待处理：')+state.completion.error;
    const completed=state.panel.receiptCompletion;if(!completed||completed.id===seenReceiptCompletion)return;
    if(completed.nextPage){await showSinglePage({targetId:completed.nextPage.targetId,profileId:state.panel.profileId,panel:state.panel,isCurrent:()=>activeSinglePagePanel===opened.panel.id&&detail.open&&selectionRevision===expectedRevision});return;}
-   if(completed.queueComplete){seenReceiptCompletion=completed.id;fill.disabled=completed.kind!=='gate';message.textContent=completed.kind==='gate'?'原页已保留待人工处理，当前没有其他待投稿站点。':'收件已写入云端，完成页已关闭；所选产品的待投稿队列已完成。';}
+   if(completed.queueComplete){seenReceiptCompletion=completed.id;fill.disabled=completed.kind!=='gate';message.textContent=completed.kind==='existing'?'已有收件已核验，未重复投稿；完成页已关闭，当前待投稿队列已完成。':completed.kind==='gate'?'原页已保留待人工处理，当前没有其他待投稿站点。':'收件已写入云端，完成页已关闭；所选产品的待投稿队列已完成。';}
   }catch(error){if(activeSinglePagePanel===opened.panel.id)message.textContent='网页队列状态暂未刷新：'+error.message;}finally{pollingReceipt=false;}
  },2000);
 

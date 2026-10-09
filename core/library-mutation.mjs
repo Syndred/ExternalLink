@@ -14,6 +14,7 @@ import {validateBatchPreferenceValue,batchPreferencePatch} from './original-batc
 import {pruneDomainMetrics,domainMetricsLimit} from './domain-metrics.mjs';
 import {originalTimelineMutation,originalTimelineSatisfied} from './original-timeline-mutation.mjs';
 import {jsonValueEqual} from './json-value.mjs';
+import {repairExistingReceiptTimeline} from './existing-receipt.mjs';
 const fail=message=>{throw Object.assign(Error(message),{status:400});};
 const keyOf=url=>{let parsed;try{parsed=new URL(url);}catch{fail('无效网址');}if(!/^https?:$/.test(parsed.protocol)||parsed.username||parsed.password)fail('外链入口必须为普通 HTTP/HTTPS 网页');return globalThis.ExtLinkQueue.normalizeDestinationKey(parsed.href);};
 const catalogKeyOf=url=>{keyOf(url);return canonicalLibraryDestination(url);};
@@ -34,6 +35,7 @@ function blacklistChange(current,value){
 export function libraryMutation(documents,operation,options={}){
  const copy=value=>options.inPlace?value:structuredClone(value);
  const at=operation.at||'',id=operation.id;if(!id||!at)fail('缺少修改身份');
+ if(operation.type==='receipt_timeline_repair'){const data=repairExistingReceiptTimeline(documents,operation);return{key:'submissionTimeline',data,updates:{submissionTimeline:data,timelineSchemaVersion:globalThis.ExtLinkSubmissionTimeline.SCHEMA_VERSION},revisionKeys:['submissionTimeline','timelineSchemaVersion','submissionRecords']};}
  if(['form_learning','form_knowledge'].includes(operation.type)){keyOf(operation.url);return formKnowledgeMutation(documents,operation);}
  if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
  if(operation.type==='backup_prepared_key'){try{const data=applyPreparedBackupKey(documents,operation);validateRecoveryValue(operation.key,data);return{key:operation.key,data};}catch(error){fail(error.message);}}
@@ -185,6 +187,7 @@ export function libraryMutation(documents,operation,options={}){
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='receipt_timeline_repair'){try{return jsonValueEqual(documents.submissionTimeline,repairExistingReceiptTimeline(documents,operation))&&documents.timelineSchemaVersion===globalThis.ExtLinkSubmissionTimeline.SCHEMA_VERSION;}catch{return false;}}
  if(operation.type==='add_browser_url'){try{return Object.entries(libraryMutation(documents,operation).updates).every(([key,value])=>jsonValueEqual(documents[key],value));}catch{return false;}}
  if(['form_learning','form_knowledge'].includes(operation.type))return formKnowledgeSatisfied(documents,operation);
  if(operation.type==='recover_local')return jsonValueEqual(documents[operation.key],recoveryDocument(documents,operation.key,operation.data));

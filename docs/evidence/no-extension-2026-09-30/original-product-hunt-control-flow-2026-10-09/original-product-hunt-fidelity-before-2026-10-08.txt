@@ -1,0 +1,84 @@
+✖ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (4.0509ms)
+✖ no-progress single-page filling returns the original waiting response immediately for all panel stages (2.0762ms)
+✔ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (25.5101ms)
+✔ the complete original nine stages and progress-only budget have equal requests and delays without creation (5.9714ms)
+✖ original visual handoff normalizes stage names and only considers array prerequisites (14.8328ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 148.3913
+
+✖ failing tests:
+
+test at tests\original-product-hunt-fidelity.test.mjs:12:1
+✖ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (4.0509ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'Product Hunt 自动化暂停：Original custom panel did not advance'
+  - 'Product Hunt 自动化暂停：undefined'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:16:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Product Hunt 自动化暂停：Original custom panel did not advance',
+    expected: 'Product Hunt 自动化暂停：undefined',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:21:1
+✖ no-progress single-page filling returns the original waiting response immediately for all panel stages (2.0762ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   completedSteps: 0,
+  +   keepTab: true,
+  +   needs_manual: true,
+      ok: false,
+  +   reason: 'Product Hunt 步骤超过原安全上限',
+  +   waitingRetries: 60
+  -   reason: 'Original panel did not advance',
+  -   retryAfterMs: 800,
+  -   stage: 'entry',
+  -   waiting: true
+    }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:24:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { ok: false, needs_manual: true, keepTab: true, reason: 'Product Hunt 步骤超过原安全上限', completedSteps: 0, waitingRetries: 60 },
+    expected: { ok: false, reason: 'Original panel did not advance', stage: 'entry', waiting: true, retryAfterMs: 800 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:45:1
+✖ original visual handoff normalizes stage names and only considers array prerequisites (14.8328ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:47:38)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

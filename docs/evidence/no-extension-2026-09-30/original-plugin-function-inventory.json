@@ -3063,5 +3063,35 @@
     "favoritesRecoveryComplete": false,
     "otherDevicesVerified": false,
     "migrationComplete": false
+  },
+  "originalProductHuntControlFlowCheckpoint": {
+    "date": "2026-10-09",
+    "originalCommit": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "sourceCommit": "4868a0a3e5075cff4b483c15031703f89190c511",
+    "repositoryTests": {
+      "tests": 975,
+      "pass": 975,
+      "fail": 0,
+      "skipped": 0
+    },
+    "focusedTests": 15,
+    "frozenOriginalFunctionsExecuted": true,
+    "oldUnknownTaskOriginalRunProfileAndTargetKept": true,
+    "originalNineStagesAndMediaRegressionPassed": true,
+    "finalCreateFromPriorConsentAfterVision": false,
+    "browserCandidateExcludedFromResponse": true,
+    "sixPageUiRegressionAndEditorDraftsPassed": true,
+    "latestNativeServiceUpdatePending": true,
+    "migrationComplete": false,
+    "evidence": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09.json",
+    "originalMainNoProgressStopsImmediately": true,
+    "originalPanelNoProgressReturnsWaitingImmediately": true,
+    "originalMainOneVisualHandoff": true,
+    "originalPanelTwoVisualFallbacksWithFreshPassBudgets": true,
+    "originalStableSignatureAndStageNormalization": true,
+    "scheduledMonitorSource": "schedule",
+    "scheduledMonitorCount": 89,
+    "actualProductionSubmissionVerified": false,
+    "allRemainingOriginalFunctionsVerified": false
   }
 }

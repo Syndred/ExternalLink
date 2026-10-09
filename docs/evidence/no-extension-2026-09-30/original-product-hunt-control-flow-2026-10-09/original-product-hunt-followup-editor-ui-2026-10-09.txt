@@ -1,0 +1,1 @@
+Original logo fallback, extraction homepage fallback, complete draft controls, explicit save/reopen, AI pending edits and operation ownership, failure retry, and empty URL validation passed; real submissions 0

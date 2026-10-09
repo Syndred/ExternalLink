@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {Store} from '../src/store.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+const hash=value=>createHash('sha256').update(batchJson(value)).digest('hex'),bytesHash=value=>createHash('sha256').update(value).digest('hex');
+const folder=join(homedir(),'.externallink-backups','original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521'),baselinePath=join(folder,'product-hunt-release-state-2026-10-09.json');
+const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true});
+try{
+ const checkpoint=JSON.parse(await readFile(join(folder,'formal-recovery-checkpoint-2026-10-08.json'),'utf8')),pair=store.get('pair');assert.equal(checkpoint.status,'verified');
+ const offlineCapture=process.argv.includes('--capture-offline-before');let app;
+ if(!offlineCapture){const headers={Authorization:'Bearer '+pair.localToken,'Content-Type':'application/json'},appResponse=await fetch('http://127.0.0.1:19389/appData',{method:'POST',headers,body:'{"refresh":true}'});assert.equal(appResponse.status,200);app=await appResponse.json();assert.equal(app.ok,true);assert.equal(app.error,'');
+ const agentResponse=await fetch('http://127.0.0.1:19388/status',{headers});assert.equal(agentResponse.status,200);const agent=await agentResponse.json();assert.equal(agent.paused,true);assert.equal(agent.busy,false);assert.equal(agent.pendingEvents,0);}
+ const snapshot=store.get('applicationSnapshot').remoteSnapshot;assert.deepEqual(snapshot.revisions,checkpoint.after.revisions);assert.deepEqual(Object.fromEntries(Object.entries(snapshot.documents).map(([key,value])=>[key,hash(value)])),checkpoint.after.hashes);
+ if(app){assert.equal(app.runtime.paused,true);assert.equal(app.runtime.busy,false);assert.equal(app.runtime.pendingEvents,0);assert.equal(app.pendingEdits.length,0);}assert.equal(store.get('paused'),true);assert.equal(store.pendingCount(),0);assert.equal(store.values('originalRunHistory:').length,1);assert.equal(store.get('localRecoveryPlan:'+checkpoint.recoveryPlanId).status,'completed');
+ const protectedState=hash([store.get('pair'),store.values('task:'),store.values('run:'),store.values('acceptance:'),store.values('acceptanceExecution:'),store.get('acceptanceBatch'),store.values('workbenchBatch:'),store.values('originalRunHistory:'),store.pending(),store.db.prepare('SELECT * FROM audit_log ORDER BY seq').all(),store.values('profileDraft:'),store.values('commentDraft:')]);
+ const sourceFiles=['private-storage.json','capture-manifest.json','snapshot.json','original-run-history.json','formal-recovery-checkpoint-2026-10-08.json','formal-history-full-report-2026-10-08.md'],sourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async file=>[file,bytesHash(await readFile(join(folder,file)))])));
+ const current={protectedState,sourceHashes,cloudHashes:checkpoint.after.hashes,cloudRevisions:checkpoint.after.revisions};
+ if(process.argv.includes('--capture-before')||offlineCapture)await writeFile(baselinePath,JSON.stringify(current,null,2),'utf8');else assert.deepEqual(current,JSON.parse(await readFile(baselinePath,'utf8')));
+ assert.deepEqual(store.get('acceptanceBatch').cursor,13);assert.equal(store.get('acceptanceBatch').status,'paused');assert.equal(store.get('acceptanceBatch').count,30);
+ console.log(JSON.stringify({ok:true,kind:offlineCapture?'native_product_hunt_release_offline_disk_before':process.argv.includes('--capture-before')?'native_product_hunt_release_before':'native_product_hunt_release_after',bothServicesPausedIdle:app?true:undefined,diskPaused:true,pendingEvents:0,pendingEdits:app?0:undefined,cloudDocumentsFreshlyVerified:offlineCapture?0:19,cachedCloudHashesAndRevisionsMatchFormalRecovery:true,originalProtectedBusinessSha256:protectedState,privateOriginalSourceFilesVerified:sourceFiles.length,originalHistorySources:1,originalHistoryCombinations:8815,timelineEvents:Object.values(snapshot.documents.submissionTimeline).flat().length,products:app?.model.products.length,library:app?.model.library.length,combinations:app?.model.combinations.length,fixedBatch:{status:'paused',cursor:13,count:30},realSubmissions:0}));
+}finally{store.close();}

@@ -1,0 +1,270 @@
+{
+  "kind": "frozen_original_product_hunt_control_flow_and_owned_native_readiness",
+  "date": "2026-10-09",
+  "originalCommit": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "firstSourceCommit": "bccd31ded138b4b9f7e6ff5ea0d9254befff6e37",
+  "sourceCommit": "4868a0a3e5075cff4b483c15031703f89190c511",
+  "repositoryTests": {
+    "tests": 975,
+    "pass": 975,
+    "fail": 0,
+    "skipped": 0
+  },
+  "focusedTests": 15,
+  "ownedNativeCases": [
+    {
+      "entrypoint": "launch",
+      "stepRequests": 1,
+      "parkedOriginalTask": true
+    },
+    {
+      "entrypoint": "launch_resume",
+      "stepRequests": 1,
+      "sameOriginalTask": true
+    },
+    {
+      "entrypoint": "sidepanel",
+      "stepRequests": 1,
+      "waiting": true,
+      "retryAfterMs": 800
+    },
+    {
+      "entrypoint": "visit_auto_fill",
+      "stepRequests": 1,
+      "sameOriginalTask": true
+    },
+    {
+      "entrypoint": "launch_visual_ready",
+      "stepRequests": 3,
+      "visualCalls": 1,
+      "actualFinalReadinessCheck": true,
+      "priorConsentDidNotCreate": true,
+      "serializableWithoutBrowserInternals": true
+    },
+    {
+      "entrypoint": "sidepanel_visual_ready",
+      "stepRequests": 3,
+      "visualCalls": 1,
+      "actualFinalReadinessCheck": true,
+      "priorConsentDidNotCreate": true,
+      "serializableWithoutBrowserInternals": true
+    }
+  ],
+  "oldUnknownTaskOriginalRunProfileAndTargetKept": true,
+  "frozenOriginalFunctionsExecuted": true,
+  "originalNineStagesAndMediaRegressionPassed": true,
+  "finalCreateFromPriorConsentAfterVision": false,
+  "browserCandidateExcludedFromResponse": true,
+  "sixPageUiRegressionAndEditorDraftsPassed": true,
+  "firstServicesSourceCommit": "bccd31ded138b4b9f7e6ff5ea0d9254befff6e37",
+  "latestNativeServiceUpdatePending": true,
+  "existingScheduledMonitorLiveSnapshot": {
+    "ok": true,
+    "kind": "existing_scheduled_monitor_wait",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "status": "running",
+    "live": true,
+    "cursor": 49,
+    "count": 89,
+    "counts": {
+      "live": 3,
+      "missing": 43,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "pendingEvents": 0
+  },
+  "formalCloudHashGuardFailedBecauseScheduledMonitorResultsChanged": true,
+  "fullOct8TestHandleMissingAndNoFinalSummary": true,
+  "fullOct8PartialOutputNotCountedAsPassing": true,
+  "workerRedeployed": false,
+  "productionSubmissions": 0,
+  "realModelCalls": 0,
+  "migrationComplete": false,
+  "rawOutputs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-fidelity-before-2026-10-08.txt",
+      "bytes": 3963,
+      "capturedSha256": "80fe70a2e0fb51891900a06dadbf2acd614a621ffcc46566299b63846afe8cda",
+      "gitLfSha256": "044f79c32d57419907528dd7cbff4a10ae2690fedc334b302207a17d7df14a3a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-fidelity-after-2026-10-08.txt",
+      "bytes": 1297,
+      "capturedSha256": "3053579dd0dbf6e045aabe0b680ce09a89c1d825c6bd82437773bd90da6fb1a8",
+      "gitLfSha256": "c204f51f0a9eae90f8e7fdefab6ebefa348a8b2047b73faf4fac52e1c16c9546"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-stable-history-before-2026-10-08.txt",
+      "bytes": 1538,
+      "capturedSha256": "8bbd3b1a4e470e6adda4eedcd6c113c246619ad3da2e722e7066c9451d366d91",
+      "gitLfSha256": "17170cde512eb27756e373c14318f76ef55fa3a039b5a448beec99c59a5833af"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-fidelity-complete-focused-2026-10-08.txt",
+      "bytes": 1530,
+      "capturedSha256": "31d1fe2ac06114d3f87f984b46fe14513eb7c62bc396ae181c010dfe4233ce9d",
+      "gitLfSha256": "fb4fabbe05bdfdcdf92272428e48087c5d592e77f5fcfa81b8973e4b75b24727"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-native-no-progress-2026-10-08.txt",
+      "bytes": 1883,
+      "capturedSha256": "41c9b06ed96ba6fee70cea62da468f96e03e5401d5b49145cb1add35bdaa8e4c",
+      "gitLfSha256": "955a764619538e2a4dcab8164ee6f272cf24786a2fb1582fdedc410c82c489c6"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-native-no-progress-fixed-2026-10-08.txt",
+      "bytes": 249,
+      "capturedSha256": "06725298c960cdfba30266ec973e8f08ee43b8c10c75eb2f684d97cc408bb9f3",
+      "gitLfSha256": "19caa289c5c4d60632370fb2d263bccf0e609190496bfda2507c69cc9fe29053"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-fidelity-repository-2026-10-08.txt",
+      "bytes": 16649,
+      "capturedSha256": "3d14823172a8acc0f2892210ba31e19f022cfc43ee2fb80c0b64e01dc6af8124",
+      "gitLfSha256": "5225fe9799d015dcca02e11b47217f8ec3262f00b5eb3bd964fdb3bd839229e8"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-existing-nine-stages-2026-10-08.txt",
+      "bytes": 568,
+      "capturedSha256": "f69ee01dcf622fb8cf6aae6832dcca51fe6d5237e2bb40fad30cf818b3e8b1f8",
+      "gitLfSha256": "ba8c68c2a7b7e833d71515fac9ce9d6ae4acc340d7ca86aa7a7801f103c34894"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-existing-media-2026-10-08.txt",
+      "bytes": 1381,
+      "capturedSha256": "f0ac44c99481ddf729629a7dde622c751e336779079317a44cef320f1c6f69b5",
+      "gitLfSha256": "f66d42d3a342db346e9da671b3b8d28a0c5f86e49c5c503dfc36f1011a56be16"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-fidelity-repository-2026-10-09.txt",
+      "bytes": 114605,
+      "capturedSha256": "f488593bac8c933897c04038723449a783638c5db2835171e62fec0ac1b9aa62",
+      "gitLfSha256": "3590c2cf0e1cf026c64bef5420ef47854922e0054ad10626ae00d830d4aabddf"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-native-protocol-evidence-2026-10-09.txt",
+      "bytes": 558,
+      "capturedSha256": "701a5849264e17bab7fe224268b94d9dc5107746b26f28c39eec3c2d18d97a05",
+      "gitLfSha256": "c46b38207fd978f55d6c8b9e38ef3aec1942e1aa0d24bdc95ef4d77413a640be"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-release-before-2026-10-09.txt",
+      "bytes": 379,
+      "capturedSha256": "03b2a8419e057d4529490b078c7f355d4d85857fee244fc999356b2e71d9d0ef",
+      "gitLfSha256": "873b96a9c420f0f3fd474be47f844da6d27b61e747b975b1afc3bc5f901a7f3f"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-release-disk-before-2026-10-09.txt",
+      "bytes": 495,
+      "capturedSha256": "af3f4d98ac3bcdc708ee9e999423b540e861c51d77215b4386e24aee38569d0d",
+      "gitLfSha256": "ced025ae079375711b471e52744c9a94f5ddf5f6743d38e7dba2c7d99e7aad23"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-release-after-2026-10-09.txt",
+      "bytes": 576,
+      "capturedSha256": "2c60d3a18ae87a27e180d3a2789e870f708d30c04f1f788d948d2ed9541f0e1a",
+      "gitLfSha256": "6e7765a5d398aa543aefa8bb927cc227878e6409ba586803ea77d412adc9a40c"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-service-process-2026-10-09.txt",
+      "bytes": 451,
+      "capturedSha256": "b3de5b1ab697a10ddc5e6f91b7eeba3ed8398ec69c5b190088b71688f4b35f73",
+      "gitLfSha256": "952a3d6706cd846b5d381ecaba9305d14d39a53f3d2dd8c9ed35c136faa8bc44"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-budget-before-2026-10-09.txt",
+      "bytes": 5448,
+      "capturedSha256": "3e8236589cb0310236a84f9e5587a1f8f2eb94e863bd00fcaef552c628db9ea0",
+      "gitLfSha256": "d96d931ada671a7e25e79741f98aa610dc8851fd5b419295a9cb217d58bde61e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-budget-focused-2026-10-09.txt",
+      "bytes": 1905,
+      "capturedSha256": "1114f8d5750ab93bfd4cf90f9fe8740db83fe1ce0c0e5d823c7aa5482ec04dc2",
+      "gitLfSha256": "c88fca700964d9a920dee6b0c19e8d773dee2daf97fca2b66ec89a8a3f7c8e1b"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-ready-focused-2026-10-09.txt",
+      "bytes": 1906,
+      "capturedSha256": "4c604a98e8f7d879635ed3dbb22f32235cd41de8ae454c1a59deb2979f8cc6bd",
+      "gitLfSha256": "83db633b75ffbc12926056f5d0bf0d56359edf15c1eafeb8a394f07b71cfe2b2"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-serialization-before-2026-10-09.txt",
+      "bytes": 1587,
+      "capturedSha256": "d8d6167e35525c7d03e82b37cea7a80ec5d954978518cecbb8da2cf6ffbc6117",
+      "gitLfSha256": "81b3a6d2657ca8bd09a341a5d1c84f0a9aa7965cfbcba4901899f49a62a4a551"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-final-focused-2026-10-09.txt",
+      "bytes": 1910,
+      "capturedSha256": "b5d1ff4f26eef59ef9875d1a8e85d6f6a43496cc69ee40f0304b25ad95e84af3",
+      "gitLfSha256": "db0455a2283669df19825831240f63bc70210ef659b54f2d8fd191ba5232b2e3"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-final-repository-2026-10-09.txt",
+      "bytes": 115010,
+      "capturedSha256": "c7bc6d26ecd07b5ebf5227b70fd0c149b3a4acaef21dee3316387768da720c07",
+      "gitLfSha256": "d8bf1a5be51bfbd1ce8c833167e2484633cc7d29660808ce66e3bb78f16ed8a6"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-final-nine-stages-2026-10-09.txt",
+      "bytes": 568,
+      "capturedSha256": "f69ee01dcf622fb8cf6aae6832dcca51fe6d5237e2bb40fad30cf818b3e8b1f8",
+      "gitLfSha256": "ba8c68c2a7b7e833d71515fac9ce9d6ae4acc340d7ca86aa7a7801f103c34894"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-final-media-2026-10-09.txt",
+      "bytes": 1381,
+      "capturedSha256": "f0ac44c99481ddf729629a7dde622c751e336779079317a44cef320f1c6f69b5",
+      "gitLfSha256": "f66d42d3a342db346e9da671b3b8d28a0c5f86e49c5c503dfc36f1011a56be16"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-visual-final-native-evidence-2026-10-09.txt",
+      "bytes": 982,
+      "capturedSha256": "103136902abac750f94a3832e753d38e802b2caa2e6037e73f52791a9cbf10a2",
+      "gitLfSha256": "966309136bddfdfeb3e6660f3ae067f1d20cf3dd1c6489a52e2005ec228160ec"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-final-release-before-2026-10-09.txt",
+      "bytes": 1954,
+      "capturedSha256": "0ea431b8d52e16acc98fe0856881d345ef4daba941c0af7950d5d09c5f943ad8",
+      "gitLfSha256": "5ea821664ea441f2fa93bd947411aebf98bfe515a6955980e0d149281395acd7"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-followup-editor-ui-2026-10-09.txt",
+      "bytes": 211,
+      "capturedSha256": "74db7f8f707537d50f3d7baec535eb84d8623b2c4b77b2af7c0d70f7875c39dc",
+      "gitLfSha256": "f05dc95bb0ea18d01205e93a09d8d73228a5886e37af5023af7b4879c1020ad3"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-followup-application-ui-2026-10-09.txt",
+      "bytes": 2401,
+      "capturedSha256": "c8af2c8b748d6ebeb7f0a3715f262672667d61475f0ae88713cfc174ae4317d2",
+      "gitLfSha256": "41908d0d1e9e450251041a7e0359ef8248bca4cd760ebb801cc4b290a661d8fd"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/scheduled-monitor-live-snapshot.txt",
+      "bytes": 4989,
+      "capturedSha256": "f106581b55c45bc7da52d60df69801d863fbfa14a215072e51eee18ed62f5b9a",
+      "gitLfSha256": "f106581b55c45bc7da52d60df69801d863fbfa14a215072e51eee18ed62f5b9a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-release-readonly-2026-10-09.mjs.txt",
+      "bytes": 4360,
+      "capturedSha256": "d4f5a305837ea23b155ec9a23bd5bb86bcf4b672173a56ef2bfa74b94430d427",
+      "gitLfSha256": "d4f5a305837ea23b155ec9a23bd5bb86bcf4b672173a56ef2bfa74b94430d427"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-monitor-wait-2026-10-09.mjs.txt",
+      "bytes": 1278,
+      "capturedSha256": "fd7db082279a70a4c0f3049775de7f69f7f8a7433a4b0e629e569bc13c23709a",
+      "gitLfSha256": "fd7db082279a70a4c0f3049775de7f69f7f8a7433a4b0e629e569bc13c23709a"
+    }
+  ]
+}

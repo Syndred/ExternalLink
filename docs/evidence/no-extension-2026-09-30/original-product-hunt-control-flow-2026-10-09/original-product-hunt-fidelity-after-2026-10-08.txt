@@ -1,0 +1,18 @@
+✔ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (5.5677ms)
+✔ no-progress single-page filling returns the original waiting response immediately for all panel stages (5.8616ms)
+✔ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (28.5668ms)
+✔ the complete original nine stages and progress-only budget have equal requests and delays without creation (3.295ms)
+✔ original visual handoff normalizes stage names and only considers array prerequisites (44.117ms)
+✔ original launch stages reach the final confirmation without invoking creation until explicitly authorized (0.9568ms)
+✔ loaded custom controls use the original stable retry threshold and bounded visual handoff (0.5757ms)
+✔ human gates, pause and an unknown submission outcome never invoke a create or visual action (0.6835ms)
+✔ original waiting and step budgets remain fixed and non-final trusted advances are bounded (1.1855ms)
+✔ Product Hunt visual handoff preserves original unavailable or interrupted outcomes without another visual attempt or creation (0.923ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 178.3707

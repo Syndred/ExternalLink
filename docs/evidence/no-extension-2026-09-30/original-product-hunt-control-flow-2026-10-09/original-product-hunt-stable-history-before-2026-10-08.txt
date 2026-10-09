@@ -1,0 +1,33 @@
+✔ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (5.8191ms)
+✔ no-progress single-page filling returns the original waiting response immediately for all panel stages (6.3483ms)
+✔ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (29.0977ms)
+✔ the complete original nine stages and progress-only budget have equal requests and delays without creation (5.1602ms)
+✔ original visual handoff normalizes stage names and only considers array prerequisites (49.9758ms)
+✖ a nonwaiting progress reply does not erase the original stable custom-control history (1.4857ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 193.0258
+
+✖ failing tests:
+
+test at tests\original-product-hunt-fidelity.test.mjs:52:1
+✖ a nonwaiting progress reply does not erase the original stable custom-control history (1.4857ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  5 !== 4
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:56:60)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

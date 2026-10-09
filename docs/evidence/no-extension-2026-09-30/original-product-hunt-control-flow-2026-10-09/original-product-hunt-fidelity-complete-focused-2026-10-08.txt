@@ -1,0 +1,20 @@
+✔ native Product Hunt launch, same-task resume, panel and auto-visit preserve original no-progress boundaries (1218.4256ms)
+✔ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (5.3042ms)
+✔ no-progress single-page filling returns the original waiting response immediately for all panel stages (6.4127ms)
+✔ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (30.3493ms)
+✔ the complete original nine stages and progress-only budget have equal requests and delays without creation (4.8706ms)
+✔ original visual handoff normalizes stage names and only considers array prerequisites (46.2117ms)
+✔ a nonwaiting progress reply does not erase the original stable custom-control history (1.4808ms)
+✔ original launch stages reach the final confirmation without invoking creation until explicitly authorized (1.0902ms)
+✔ loaded custom controls use the original stable retry threshold and bounded visual handoff (0.8263ms)
+✔ human gates, pause and an unknown submission outcome never invoke a create or visual action (0.7078ms)
+✔ original waiting and step budgets remain fixed and non-final trusted advances are bounded (0.9695ms)
+✔ Product Hunt visual handoff preserves original unavailable or interrupted outcomes without another visual attempt or creation (0.4888ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1286.8513

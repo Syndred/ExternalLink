@@ -1,0 +1,179 @@
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'Insufficient Balance'
+}
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'rate limit exceeded'
+}
+AI provider failure response tests passed
+✔ tests\ai-provider-errors.test.mjs (160.6321ms)
+AllToolsDirectory direct-submit tests passed
+✔ tests\alltoolsdirectory-direct-submit.test.mjs (71.8687ms)
+batch resume persistence regression passed
+✔ tests\audit-batch-resume.test.mjs (73.3111ms)
+Content audit findings regression tests passed
+✔ tests\audit-content-findings.test.mjs (109.1975ms)
+scheduler failure recovery regression passed
+✔ tests\audit-scheduler-error.test.mjs (83.6913ms)
+cloud sync race audit tests passed
+✔ tests\audit-sync-races.test.mjs (147.5796ms)
+Settings conflict recovery action flow passed
+✔ tests\audit-ui-conflict-flow.test.mjs (99.9035ms)
+UI settings/sidepanel audit tests passed
+✔ tests\audit-ui-settings.test.mjs (100.3484ms)
+auto-fill default opt-in regressions passed
+✔ tests\auto-fill-default.test.mjs (100.4523ms)
+automation integration tests passed
+✔ tests\automation-integration.test.mjs (120.1136ms)
+automation ledger tests passed
+✔ tests\automation-ledger.test.mjs (200.9989ms)
+backup workflow tests passed
+✔ tests\backup-workflow.test.mjs (100.7041ms)
+batch controls tests passed
+✔ tests\batch-controls.test.mjs (134.0314ms)
+batch report tests passed
+✔ tests\batch-report.test.mjs (81.3741ms)
+✔ tests\cloud-submission-media.test.mjs (78.2924ms)
+cloud sync status tests passed
+✔ tests\cloud-sync-status.test.mjs (95.0124ms)
+cloud sync workflow tests passed
+✔ tests\cloud-sync-workflow.test.mjs (95.6134ms)
+cloud worker core tests passed
+✔ tests\cloud-worker-core.test.mjs (97.6949ms)
+✔ 10015 expanded product submission outranks logged in account menu forum markers (1.6622ms)
+✔ The directory rule does not turn login, other pages or unrelated forums into submissions (2.7709ms)
+✔ The final explicit product receipt is pending moderation despite optional paid priority review (2.5319ms)
+✔ Preview, pricing and a mismatched directory source cannot count as product acceptance (4.8632ms)
+Content comment detector tests passed
+✔ tests\content-comment-detection.test.mjs (102.8523ms)
+✔ 10015 external chips supply actual tag values and satisfy picker requiredness (2.845ms)
+✔ Search text with no committed chips stays empty (1.9373ms)
+✔ Unrelated sites never inherit the 10015 tag wrapper rule (1.1945ms)
+✔ A neighboring tagline counter cannot truncate a description with its own 1500 character limit (2.9108ms)
+✔ An owned inline counter still supplies its field limit (2.1832ms)
+✔ Thousands separators in description, instruction and FAQ counters never become a one-character limit (20.3537ms)
+✔ An explicit character range with a thousands separator supplies both bounds (1.2539ms)
+✔ Only an actual response already supplied by the human on AIoftheday resolves this gate (3.0472ms)
+content media and custom select routing tests passed
+✔ tests\content-media-select-routing.test.mjs (114.3418ms)
+✔ WordPress and plain text search inputs stay outside all automatic fill/report scopes (1.1681ms)
+Content submission detection tests passed
+✔ tests\content-submission-detection.test.mjs (129.1029ms)
+✔ A disabled submit prevents readiness without inventing missing required fields (7.3723ms)
+✔ An enabled submit and complete fields are ready (3.2003ms)
+✔ A genuinely missing required input remains a field error (1.2548ms)
+context menu tests passed
+✔ tests\context-menu.test.mjs (84.6909ms)
+✔ authenticated single-page preparation follows original receipt evidence and preserves imported history (151.9405ms)
+✔ large library transfers resume original verified parts, require the same device and preserve CAS and receipts (1251.9704ms)
+✔ device media catalogue is read-only and scoped to its enrolled workspace (27.1919ms)
+✔ authenticated timeline product moves save the original ledger and both schemas together, duplicate append is stable and deletion preserves receipts (29.0786ms)
+✔ D1 device automatic classification atomically preserves manual verdicts and fences both deletion and annotation versions (31.6075ms)
+✔ D1 freezes only selected original task attachments, retains disabled screenshot slots and rejects missing, foreign and corrupt media (21.6882ms)
+✔ original D1 images without custom metadata freeze selected bytes without editing the old object or history (20.767ms)
+✔ device local recovery archives source and previous versions before CAS, preserves receipts, and rejects foreign keys and stale revisions (31.3081ms)
+✔ single-page preparation registers an unlisted page without releasing it for submission and validates original profile and mode (129.9036ms)
+✔ D1 executor preserves ownership, atomic run creation, lease fences, immutable receipts and paginated recovery (158.8089ms)
+✔ device workbench restores library preferences, timeline editing, settings and authenticated AI without exposing admin routes (64.963ms)
+✔ device field learning writes original product memory and answer-free destination schema under D1 revision checks (29.6912ms)
+✔ D1 favorite allocation rejects a concurrent product change even when its annotation revision has not changed (36.0653ms)
+✔ device snapshot streams exact large Unicode documents and immutable revisions without parsing objects (94.6464ms)
+✔ linked timeline documents roll back together on a concurrent receipt change after immutable objects are prepared (14.0505ms)
+✔ a later SQL failure rolls back all linked document pointers and history while preserving old immutable objects (4.7258ms)
+✔ documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history (668.4647ms)
+✔ an interrupted large-object write cannot advance its D1 pointer and resumes the same content without duplicated parts (225.7814ms)
+✔ large documents live outside D1, CAS prevents another browser overwriting changes and retains history (22.9968ms)
+✔ indexed journal pages never load evidence objects; detail is scoped and verified (13.1087ms)
+✔ recovery archive retries are idempotent and corrupt or missing evidence fails closed (3.5234ms)
+✔ D1 API requires scoped credentials and works without a Neon connection (46.5707ms)
+✔ production Worker routes D1 requests without DATABASE_URL and separates two clients by workspace (18.7675ms)
+short description and sentence count routing passed
+✔ tests\description-routing.test.mjs (125.442ms)
+destination memory tests passed
+✔ tests\destination-memory.test.mjs (124.4631ms)
+✔ fixed batch retains failures and verification-only entries, uses all products and never releases unrelated pending tasks (4.4029ms)
+✔ fixed blocker cleanup persists recovery evidence before closing only registered task pages (60.1224ms)
+✔ unknown submission retains its original page even when cleanup is requested (1.1301ms)
+✔ dead-end cleanup closes original standalone run pages after a durable checkpoint and protects late evidence and shared pages (501.1221ms)
+✔ freeze covers every actual product, deduplicates same-host paths and preserves unknown original tasks (5.0012ms)
+✔ insufficient scope fails visibly rather than shrinking the fixed denominator or omitting products (2.1456ms)
+✔ fixed registration preserves denominator and task IDs across repeated calls without starting browser work (6.1083ms)
+✔ lost registration reply recovers exact full run profile media and receipt without replacing or replaying IDs (2.1104ms)
+✔ old registered index summary is repaired from full original run and keeps newer local unknown attempt (1.5042ms)
+✔ a stronger original cloud submission boundary is never hidden by a local pending task during registration repair (1.8464ms)
+✔ wrong original run task profile or incomplete media cannot turn uncertain registration into a replacement (4.5743ms)
+✔ Neon object key reordering retains original profile identity while device changes reject stale readbacks (2.7815ms)
+✔ uncertain registration persists intent and refuses to replay or replace its task (3.4951ms)
+✔ authenticated D1 extraction, generation and article fallback use the original service without changing business documents (71.4274ms)
+✔ device AI reports the original balance and transient provider errors as classified 503 responses (7.3982ms)
+✔ wrong workspace, admin token and revoked devices cannot invoke the model or read article pages (4.5398ms)
+✔ original form planning, visual planning, judging and field validation use authenticated device routes and original handlers (21.1467ms)
+✔ all restored form AI routes reject wrong scopes and revoked devices before models, and preserve provider error classification (27.7116ms)
+✔ AIoftheday uses the current full description and five distinct features within its published limits (3.179ms)
+✔ Site specific summaries cannot be applied to a different product or missing source copy (0.4414ms)
+✔ new products use their own descriptions taglines and features and never inherit JevPlay claims (0.4152ms)
+✔ missing facts remain missing and source-specific selections outrank generic values without invented categories pricing or technology (1.0692ms)
+✔ an application without a verified mailbox cannot display unowned legacy associations as received replies (10.9002ms)
+✔ archived products cannot enter new execution scope (0.7869ms)
+✔ media disable and version restore preserve old assets and stop fallback to retired fields (2.6517ms)
+✔ create and archive products preserve historical records and reject reused identities (0.9979ms)
+✔ matrix uses host and product identity and keeps receipt, review, publication and sync independent (17.4937ms)
+✔ task list omits detailed inputs, history and any incidental credentials (0.365ms)
+✔ workspace switch during read stops writes and cannot relabel the old snapshot as the new workspace (12.9982ms)
+✔ workspace switch after one restore write keeps its unknown acknowledgement and does not send a following document (18.3556ms)
+✔ offline library edit persists before network access and uncertain cloud response is read back without replay (3.5094ms)
+✔ conflict resolution keeps both versions and requires the exact reviewed remote revision (3.894ms)
+✔ product edits survive offline restart and uncertain profile write is verified without repeating (3.7425ms)
+✔ concurrent remote library edits are preserved and the local pending edit remains recoverable (1.9776ms)
+✔ paused background retries an isolated pending media upload without releasing submission tasks (3.0596ms)
+✔ real connection loss and SQLite reopen preserve local edits, pause and unknown boundaries without replaying writes (144.5571ms)
+✔ unified tools preserve selected product and original task identity without providing global resume or credentials (5.5345ms)
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (21459.2745ms)
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (27.4625ms)
+✔ preparation permits observed fill and forward steps, rejects final submission, hidden and arbitrary selectors (2.7075ms)
+✔ observed free entry links and duplicated Next captions may advance but paid or final forms remain blocked (3.7362ms)
+✔ file upload uses an observed hidden file input and a product media kind without opening a native picker (0.6662ms)
+✔ observed custom dropdown buttons may open their listbox without authorizing arbitrary buttons (0.2541ms)
+✔ read-only verification may confirm a prepared form after the AI budget is exhausted without more model calls (3.2278ms)
+✔ background AI caps actions, changes strategy after two stale observations and returns control to same task (10.211ms)
+✔ unknown submission outcomes are verification only and never start AI preparation (1.473ms)
+✔ a restarted takeover retains the original budget and cannot reset model or action limits (2.3564ms)
+✔ AI failure and interruption persist reason and release control without replacing the page (4.5144ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (7.2272ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (3.967ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (12.9986ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (3.084ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (36.996ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (2.2775ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (53.2569ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (9.2335ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (46.7717ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (12.249ms)
+✔ original-format backup merge retains strong receipts, existing targets and media history; excludes pairing credentials (6.5059ms)
+✔ backup preview writes nothing; lost cloud responses resume the exact durable mutations without discarding untouched data (42.201ms)
+✔ backup preview revision drift is rejected before any import write (6.1738ms)
+✔ an original queued backup plan without fragment metadata still resumes its original full-backup mutations (32.4612ms)
+✔ backup import stores only each key fragment and preserves the complete original merge across all original documents (23.1136ms)
+✔ backup import explicitly records excluded keys when conflict resolution keeps cloud content (10.8511ms)
+✔ chunked local backup staging resumes a stable source, validates full Unicode content and previews without cloud writes (2047.1802ms)
+✔ domain prefetch checks every frozen domain in chunks and stores unknown as unknown (35.8846ms)
+✔ backup roundtrip preserves duplicate entrance rows and rows without a URL; immutable asset conflicts fail clearly (1.4732ms)
+✔ an interrupted authentication preserves its original attempt instead of leaving an unrecorded in-progress state (27.3598ms)
+✔ basic Google login uses a unique visible entry and its same-site confirmation (5.4951ms)
+✔ Google account choice matches the verified email and blocks human checks and extra access (0.8637ms)
+✔ callback proof and action history prevent repeated authentication attempts (0.3872ms)
+✔ offline authentication is narrowly owned and never permits a product submission boundary (0.5581ms)
+✔ authenticated D1 lost navigation-ready reply restores the same claimed task at its original budget cap (364.5875ms)
+✔ authenticated PostgreSQL navigation-ready reply loss restores original checkpoint, claimed budget and deadline (2952.9813ms)
+✔ actual native restored navigation waits before filling; a lost original page stays manual while another destination continues (7105.2868ms)
+✔ actual native model outage skips one product then claims next budget and reloads the identical original page for its own profile (3681.2174ms)
+✔ actual native last-product outage closes only its owned page while an exhausted original task budget retains the pending group (12298.6681ms)
+✔ authenticated lost source-transfer event reply is recovered by independent readback before original page navigation (74.1437ms)
+✔ authenticated D1 dead-end cancellation survives a lost event reply and restores original products, counts and spent budgets (59.3079ms)
+✔ authenticated PostgreSQL original-page transfer survives JSONB event reply loss and restores both original task identities (1815.3444ms)
+✔ actual mapper cancels a paid destination group, closes its owned page and continues a different site without posting (1388.728ms)

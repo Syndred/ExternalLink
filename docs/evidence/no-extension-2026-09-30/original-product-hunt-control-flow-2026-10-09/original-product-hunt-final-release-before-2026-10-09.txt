@@ -1,0 +1,74 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
+    activeSiteId: 1,
+    autoSubmitDirectoryListings: 1,
+    autoSubmitStandardWpComments: 1,
+    cfgCommentTemplate: 1,
+...
+    domainMetricsCache: 2,
++   linkMonitorResults: 283,
+-   linkMonitorResults: 258,
+    selectedSiteIds: 2,
+    sheetTableData: 4,
+    siteAnnotations: 3,
+    siteProfiles: 12,
+    submissionRecords: 9,
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/original-product-hunt-release-readonly-2026-10-09.mjs:16:72
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    activeSiteId: 1,
+    autoSubmitDirectoryListings: 1,
+    autoSubmitStandardWpComments: 1,
+    cfgCommentTemplate: 1,
+    cfgEmail: 1,
+    cfgName: 1,
+    deletedSubmissionKeys: 1,
+    domainMetricsCache: 2,
+    linkMonitorResults: 283,
+    selectedSiteIds: 2,
+    sheetTableData: 4,
+    siteAnnotations: 3,
+    siteProfiles: 12,
+    submissionRecords: 9,
+    submissionSchemaVersion: 1,
+    submissionTimeline: 15,
+    targetFilters: 1,
+    timelineSchemaVersion: 1,
+    urlList: 2
+  },
+  expected: {
+    activeSiteId: 1,
+    autoSubmitDirectoryListings: 1,
+    autoSubmitStandardWpComments: 1,
+    cfgCommentTemplate: 1,
+    cfgEmail: 1,
+    cfgName: 1,
+    deletedSubmissionKeys: 1,
+    domainMetricsCache: 2,
+    linkMonitorResults: 258,
+    selectedSiteIds: 2,
+    sheetTableData: 4,
+    siteAnnotations: 3,
+    siteProfiles: 12,
+    submissionRecords: 9,
+    submissionSchemaVersion: 1,
+    submissionTimeline: 15,
+    targetFilters: 1,
+    timelineSchemaVersion: 1,
+    urlList: 2
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

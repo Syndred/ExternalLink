@@ -1,0 +1,42 @@
+✖ native Product Hunt launch, same-task resume, panel and auto-visit preserve original no-progress boundaries (1132.4706ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1188.4323
+
+✖ failing tests:
+
+test at tests\executor-original-product-hunt-no-progress.test.mjs:6:1
+✖ native Product Hunt launch, same-task resume, panel and auto-visit preserve original no-progress boundaries (1132.4706ms)
+  AssertionError [ERR_ASSERTION]: file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-product-hunt-no-progress.mjs:25
+   throw Error('Unexpected fixture cloud route '+route);
+         ^
+  
+  Error: Unexpected fixture cloud route runs
+      at Object.request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-product-hunt-no-progress.mjs:25:8)
+      at preparedTask (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:55:38)
+      at async sidepanelFill (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:69:76)
+      at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-product-hunt-no-progress.mjs:52:31
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-product-hunt-no-progress.test.mjs:8:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

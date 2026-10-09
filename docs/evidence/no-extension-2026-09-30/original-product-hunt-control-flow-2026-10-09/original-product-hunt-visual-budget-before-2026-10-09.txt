@@ -1,0 +1,116 @@
+✔ no-progress main launch stops at the same original checkpoint without consuming the loading retry budget (4.8335ms)
+✔ no-progress single-page filling returns the original waiting response immediately for all panel stages (6.775ms)
+✖ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (5.147ms)
+✖ the complete original nine stages and progress-only budget have equal requests and delays without creation (1.8949ms)
+✖ main launch exits after one original screenshot handoff instead of starting another deterministic or visual cycle (1.228ms)
+✖ single-page screenshot retries restart each original 12-step budget and return a ready visual result without another step (1.8178ms)
+✖ trusted non-final advancement belongs to the original main launch entrance (1.4617ms)
+✔ original visual handoff normalizes stage names and only considers array prerequisites (49.0007ms)
+✔ a nonwaiting progress reply does not erase the original stable custom-control history (1.36ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 4
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.5697
+
+✖ failing tests:
+
+test at tests\original-product-hunt-fidelity.test.mjs:29:1
+✖ genuine original loading replies retain the 60-wait budget and original clamped delays through both entrances (5.147ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'Product Hunt 自动化暂停：Product Hunt 步骤超过安全上限'
+  - 'Product Hunt 自动化暂停：undefined'
+                        ^
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:33:91)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Product Hunt 自动化暂停：Product Hunt 步骤超过安全上限',
+    expected: 'Product Hunt 自动化暂停：undefined',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:37:1
+✖ the complete original nine stages and progress-only budget have equal requests and delays without creation (1.8949ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'Product Hunt 自动化暂停：Product Hunt 步骤超过安全上限'
+  - 'Product Hunt 自动化暂停：undefined'
+                        ^
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:43:96)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Product Hunt 自动化暂停：Product Hunt 步骤超过安全上限',
+    expected: 'Product Hunt 自动化暂停：undefined',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:47:1
+✖ main launch exits after one original screenshot handoff instead of starting another deterministic or visual cycle (1.228ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  9 !== 3
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:50:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 9,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:53:1
+✖ single-page screenshot retries restart each original 12-step budget and return a ready visual result without another step (1.8178ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:57:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\original-product-hunt-fidelity.test.mjs:65:1
+✖ trusted non-final advancement belongs to the original main launch entrance (1.4617ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   900
+  -   800
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-product-hunt-fidelity.test.mjs:69:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 900 ],
+    expected: [ 800 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

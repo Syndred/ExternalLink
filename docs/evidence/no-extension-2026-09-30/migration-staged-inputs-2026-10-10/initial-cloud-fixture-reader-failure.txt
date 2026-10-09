@@ -1,0 +1,20 @@
+✖ authenticated d1 saves original inline logo bytes while preserving public URL, media history and other documents (22.61ms)
+✔ authenticated neon saves original inline logo bytes while preserving public URL, media history and other documents (1218.8301ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1356.701
+
+✖ failing tests:
+
+test at tests\executor-original-logo-cloud.test.mjs:2:36
+✖ authenticated d1 saves original inline logo bytes while preserving public URL, media history and other documents (22.61ms)
+  TypeError: fixture.ledger.snapshot is not a function
+      at snapshot (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-logo-cloud.test.mjs:5:267)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-logo-cloud.test.mjs:7:318)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

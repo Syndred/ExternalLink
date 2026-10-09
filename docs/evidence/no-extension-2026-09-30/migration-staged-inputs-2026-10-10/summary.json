@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-10",
+  "sourceCommit": "584800b",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "pulledLatest": true,
+  "originalStagedLogoSaveVerified": true,
+  "plainCommentWithoutCandidatesVerified": true,
+  "singlePageAndStudioHistoryShared": true,
+  "pureTextOver4000CharsRetained": true,
+  "actualNativeHttpLogoAt2MiBBoundaryVerified": true,
+  "authenticatedD1AndNeonVerified": true,
+  "sqliteReopenVerified": true,
+  "focusedTests": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "cloudTests": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullTests": {
+    "status": "passed",
+    "passed": 1087,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 468485.4452
+  },
+  "release": {
+    "sourcePushed": true,
+    "workerVersion": "4387a70b-bc0e-4fb8-aaf6-9595f28c1a0c",
+    "nativeServicesGuardedlyReloaded": true,
+    "status": "deployed_and_native_readback_verified"
+  },
+  "originalBusinessAndPrivateSourcesKeptBeforeRelease": true,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "models": 0,
+  "overallMigrationComplete": false,
+  "remaining": [
+    "full original dynamic cross-entry and special-launch completion audit"
+  ],
+  "actualNativeStagedLogoAndPlainCommentDomVerified": true,
+  "committedUiMatchesServedCode": true,
+  "protectedBusinessHash": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "originalBusinessAndPrivateSourcesKeptAfterRelease": true,
+  "unchangedOtherCloudDocuments": 18,
+  "unchangedPrivateSourceFiles": 6,
+  "fixedBatch": {
+    "paused": true,
+    "cursor": 13,
+    "count": 30
+  },
+  "monitor": {
+    "paused": true,
+    "cursor": 54,
+    "count": 89
+  },
+  "pendingEvents": 0,
+  "pendingEdits": 0,
+  "originalBrowserStartedOrClosed": false
+}

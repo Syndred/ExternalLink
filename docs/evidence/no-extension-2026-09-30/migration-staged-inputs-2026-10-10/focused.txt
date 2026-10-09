@@ -1,0 +1,15 @@
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1464.0804ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1339.8035ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.4499ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1215.7876ms)
+✔ actual executor and workbench accept a two MiB original logo via authenticated profile HTTP and retain offline bytes after SQLite reopen (1851.4948ms)
+✔ actual original logo selection and clearing remain staged until profile save, preserve public URL and reopen with unchanged bytes (1706.5358ms)
+✔ original inline logo accepts the exact two MiB boundary and rejects oversized or forged image bytes without changing history (278.0591ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4112.599

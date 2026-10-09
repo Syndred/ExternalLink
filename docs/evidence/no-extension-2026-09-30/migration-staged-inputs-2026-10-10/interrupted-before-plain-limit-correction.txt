@@ -1,0 +1,196 @@
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'Insufficient Balance'
+}
+{
+  event: 'worker_request_failed',
+  method: 'POST',
+  path: '/v1/ai/plan',
+  message: 'rate limit exceeded'
+}
+AI provider failure response tests passed
+✔ tests\ai-provider-errors.test.mjs (159.7889ms)
+AllToolsDirectory direct-submit tests passed
+✔ tests\alltoolsdirectory-direct-submit.test.mjs (66.2725ms)
+batch resume persistence regression passed
+✔ tests\audit-batch-resume.test.mjs (69.038ms)
+Content audit findings regression tests passed
+✔ tests\audit-content-findings.test.mjs (95.0168ms)
+scheduler failure recovery regression passed
+✔ tests\audit-scheduler-error.test.mjs (67.6795ms)
+cloud sync race audit tests passed
+✔ tests\audit-sync-races.test.mjs (150.6449ms)
+Settings conflict recovery action flow passed
+✔ tests\audit-ui-conflict-flow.test.mjs (65.0995ms)
+UI settings/sidepanel audit tests passed
+✔ tests\audit-ui-settings.test.mjs (83.0092ms)
+auto-fill default opt-in regressions passed
+✔ tests\auto-fill-default.test.mjs (62.1101ms)
+automation integration tests passed
+✔ tests\automation-integration.test.mjs (76.9202ms)
+automation ledger tests passed
+✔ tests\automation-ledger.test.mjs (155.6583ms)
+backup workflow tests passed
+✔ tests\backup-workflow.test.mjs (65.9377ms)
+batch controls tests passed
+✔ tests\batch-controls.test.mjs (115.5749ms)
+batch report tests passed
+✔ tests\batch-report.test.mjs (64.4223ms)
+✔ tests\cloud-submission-media.test.mjs (73.5072ms)
+cloud sync status tests passed
+✔ tests\cloud-sync-status.test.mjs (86.1354ms)
+cloud sync workflow tests passed
+✔ tests\cloud-sync-workflow.test.mjs (72.242ms)
+cloud worker core tests passed
+✔ tests\cloud-worker-core.test.mjs (86.4365ms)
+✔ 10015 expanded product submission outranks logged in account menu forum markers (1.9488ms)
+✔ The directory rule does not turn login, other pages or unrelated forums into submissions (3.0582ms)
+✔ The final explicit product receipt is pending moderation despite optional paid priority review (1.8413ms)
+✔ Preview, pricing and a mismatched directory source cannot count as product acceptance (5.4108ms)
+Content comment detector tests passed
+✔ tests\content-comment-detection.test.mjs (83.0054ms)
+✔ 10015 external chips supply actual tag values and satisfy picker requiredness (2.2795ms)
+✔ Search text with no committed chips stays empty (1.8308ms)
+✔ Unrelated sites never inherit the 10015 tag wrapper rule (1.1705ms)
+✔ A neighboring tagline counter cannot truncate a description with its own 1500 character limit (3.134ms)
+✔ An owned inline counter still supplies its field limit (1.9664ms)
+✔ Thousands separators in description, instruction and FAQ counters never become a one-character limit (23.224ms)
+✔ An explicit character range with a thousands separator supplies both bounds (1.2062ms)
+✔ Only an actual response already supplied by the human on AIoftheday resolves this gate (2.9092ms)
+content media and custom select routing tests passed
+✔ tests\content-media-select-routing.test.mjs (84.4344ms)
+✔ WordPress and plain text search inputs stay outside all automatic fill/report scopes (1.3618ms)
+Content submission detection tests passed
+✔ tests\content-submission-detection.test.mjs (110.2631ms)
+✔ A disabled submit prevents readiness without inventing missing required fields (2.7273ms)
+✔ An enabled submit and complete fields are ready (2.2299ms)
+✔ A genuinely missing required input remains a field error (1.2584ms)
+context menu tests passed
+✔ tests\context-menu.test.mjs (79.7234ms)
+✔ authenticated single-page preparation follows original receipt evidence and preserves imported history (114.5764ms)
+✔ large library transfers resume original verified parts, require the same device and preserve CAS and receipts (744.2217ms)
+✔ device media catalogue is read-only and scoped to its enrolled workspace (10.3245ms)
+✔ authenticated timeline product moves save the original ledger and both schemas together, duplicate append is stable and deletion preserves receipts (130.022ms)
+✔ D1 device automatic classification atomically preserves manual verdicts and fences both deletion and annotation versions (22.2735ms)
+✔ D1 freezes only selected original task attachments, retains disabled screenshot slots and rejects missing, foreign and corrupt media (42.8591ms)
+✔ original D1 images without custom metadata freeze selected bytes without editing the old object or history (10.3201ms)
+✔ device local recovery archives source and previous versions before CAS, preserves receipts, and rejects foreign keys and stale revisions (57.2428ms)
+✔ single-page preparation registers an unlisted page without releasing it for submission and validates original profile and mode (78.8532ms)
+✔ D1 executor preserves ownership, atomic run creation, lease fences, immutable receipts and paginated recovery (75.4399ms)
+✔ device workbench restores library preferences, timeline editing, settings and authenticated AI without exposing admin routes (51.93ms)
+✔ device field learning writes original product memory and answer-free destination schema under D1 revision checks (16.9884ms)
+✔ D1 favorite allocation rejects a concurrent product change even when its annotation revision has not changed (9.2905ms)
+✔ device snapshot streams exact large Unicode documents and immutable revisions without parsing objects (73.4274ms)
+✔ linked timeline documents roll back together on a concurrent receipt change after immutable objects are prepared (7.6137ms)
+✔ a later SQL failure rolls back all linked document pointers and history while preserving old immutable objects (4.413ms)
+✔ documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history (435.1843ms)
+✔ an interrupted large-object write cannot advance its D1 pointer and resumes the same content without duplicated parts (190.3045ms)
+✔ large documents live outside D1, CAS prevents another browser overwriting changes and retains history (23.0715ms)
+✔ indexed journal pages never load evidence objects; detail is scoped and verified (5.732ms)
+✔ recovery archive retries are idempotent and corrupt or missing evidence fails closed (2.0826ms)
+✔ D1 API requires scoped credentials and works without a Neon connection (46.7009ms)
+✔ production Worker routes D1 requests without DATABASE_URL and separates two clients by workspace (14.1345ms)
+short description and sentence count routing passed
+✔ tests\description-routing.test.mjs (78.6265ms)
+destination memory tests passed
+✔ tests\destination-memory.test.mjs (79.0813ms)
+✔ fixed batch retains failures and verification-only entries, uses all products and never releases unrelated pending tasks (4.6849ms)
+✔ fixed blocker cleanup persists recovery evidence before closing only registered task pages (27.9287ms)
+✔ unknown submission retains its original page even when cleanup is requested (0.311ms)
+✔ dead-end cleanup closes original standalone run pages after a durable checkpoint and protects late evidence and shared pages (88.7268ms)
+✔ original run receipt cleanup rechecks receipt, fields, verification, ownership and run membership after page awaits (111.7759ms)
+✔ freeze covers every actual product, deduplicates same-host paths and preserves unknown original tasks (4.5165ms)
+✔ insufficient scope fails visibly rather than shrinking the fixed denominator or omitting products (1.2508ms)
+✔ fixed registration preserves denominator and task IDs across repeated calls without starting browser work (5.8734ms)
+✔ lost registration reply recovers exact full run profile media and receipt without replacing or replaying IDs (2.3188ms)
+✔ old registered index summary is repaired from full original run and keeps newer local unknown attempt (1.5132ms)
+✔ a stronger original cloud submission boundary is never hidden by a local pending task during registration repair (1.7441ms)
+✔ wrong original run task profile or incomplete media cannot turn uncertain registration into a replacement (6.2312ms)
+✔ Neon object key reordering retains original profile identity while device changes reject stale readbacks (2.8216ms)
+✔ uncertain registration persists intent and refuses to replay or replace its task (3.0447ms)
+✔ authenticated D1 extraction, generation and article fallback use the original service without changing business documents (59.5555ms)
+✔ device AI reports the original balance and transient provider errors as classified 503 responses (8.815ms)
+✔ wrong workspace, admin token and revoked devices cannot invoke the model or read article pages (4.1475ms)
+✔ original form planning, visual planning, judging and field validation use authenticated device routes and original handlers (9.2933ms)
+✔ all restored form AI routes reject wrong scopes and revoked devices before models, and preserve provider error classification (15.9466ms)
+✔ AIoftheday uses the current full description and five distinct features within its published limits (2.8971ms)
+✔ Site specific summaries cannot be applied to a different product or missing source copy (0.4768ms)
+✔ new products use their own descriptions taglines and features and never inherit JevPlay claims (0.4002ms)
+✔ missing facts remain missing and source-specific selections outrank generic values without invented categories pricing or technology (1.1161ms)
+✔ an application without a verified mailbox cannot display unowned legacy associations as received replies (7.7004ms)
+✔ archived products cannot enter new execution scope (0.7427ms)
+✔ media disable and version restore preserve old assets and stop fallback to retired fields (2.3249ms)
+✔ create and archive products preserve historical records and reject reused identities (0.7832ms)
+✔ matrix uses host and product identity and keeps receipt, review, publication and sync independent (18.9733ms)
+✔ task list omits detailed inputs, history and any incidental credentials (0.412ms)
+✔ workspace switch during read stops writes and cannot relabel the old snapshot as the new workspace (7.4071ms)
+✔ workspace switch after one restore write keeps its unknown acknowledgement and does not send a following document (16.4827ms)
+✔ offline library edit persists before network access and uncertain cloud response is read back without replay (5.5253ms)
+✔ conflict resolution keeps both versions and requires the exact reviewed remote revision (5.8223ms)
+✔ product edits survive offline restart and uncertain profile write is verified without repeating (4.1505ms)
+✔ concurrent remote library edits are preserved and the local pending edit remains recoverable (2.2921ms)
+✔ paused background retries an isolated pending media upload without releasing submission tasks (4.8353ms)
+✔ real connection loss and SQLite reopen preserve local edits, pause and unknown boundaries without replaying writes (159.1593ms)
+{"kind":"actual_assistant_retry_native_routes","services":2,"unauthorized401":true,"oldConnection409":true,"originalRecordGuard400":true,"originalUnknownAndFixedRangePreserved":true,"productionWrites":0,"models":0,"realSubmissions":0}
+✔ both actual native services route assistant retries through original guards without changing unknown tasks or permitting unauthorized calls (1125.9313ms)
+✔ unified tools preserve selected product and original task identity without providing global resume or credentials (5.3912ms)
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (16115.3049ms)
+✔ the original automatic visit keeps manual captcha blocked and incomplete pages in fill-only mode without an automatic next tab (28.8409ms)
+✔ preparation permits observed fill and forward steps, rejects final submission, hidden and arbitrary selectors (1.8527ms)
+✔ observed free entry links and duplicated Next captions may advance but paid or final forms remain blocked (1.867ms)
+✔ file upload uses an observed hidden file input and a product media kind without opening a native picker (0.3064ms)
+✔ observed custom dropdown buttons may open their listbox without authorizing arbitrary buttons (0.2439ms)
+✔ read-only verification may confirm a prepared form after the AI budget is exhausted without more model calls (2.8445ms)
+✔ background AI caps actions, changes strategy after two stale observations and returns control to same task (7.7664ms)
+✔ unknown submission outcomes are verification only and never start AI preparation (1.2183ms)
+✔ a restarted takeover retains the original budget and cannot reset model or action limits (1.742ms)
+✔ AI failure and interruption persist reason and release control without replacing the page (1.4346ms)
+✔ the original visit opt-in is preserved by cloud keys, raw backups, fragments, merging, export and recovery (7.3295ms)
+✔ a recovered legacy opt-in is active only in the selected open panel; a new device and explicit modern disable stay off (3.806ms)
+✔ assistant preference saves offline first and a lost reply confirms the same original setting mutation (11.5061ms)
+✔ a fresh cloud disable overrides an older local visit flag and an assistant save cannot cross workspaces (2.5866ms)
+✔ visit matching preserves original destination identity and excludes prior receipts, original quality gates and a marked current form path (24.7536ms)
+✔ automatic visiting reuses the one original host task and refuses remote manual gates or an ambiguous host without registration (2.9602ms)
+✔ turning off visit filling cancels queued original page work while leaving ordinary assistant settings enabled (46.671ms)
+✔ native automatic fill messages require the current open panel product target and selection generation before any browser or cloud work (6.7641ms)
+✔ changing a panel selection cancels its delayed original request and invalidates its private document binding so selecting it again is possible (53.1282ms)
+✔ automatic work cannot use an unbound stale cancelled or replaced browser document even at the same URL (6.5555ms)
+✔ original-format backup merge retains strong receipts, existing targets and media history; excludes pairing credentials (6.9102ms)
+✔ backup preview writes nothing; lost cloud responses resume the exact durable mutations without discarding untouched data (38.2306ms)
+✔ backup preview revision drift is rejected before any import write (3.4982ms)
+✔ an original queued backup plan without fragment metadata still resumes its original full-backup mutations (8.4305ms)
+✔ backup import stores only each key fragment and preserves the complete original merge across all original documents (24.7151ms)
+✔ backup import explicitly records excluded keys when conflict resolution keeps cloud content (10.0752ms)
+✔ chunked local backup staging resumes a stable source, validates full Unicode content and previews without cloud writes (2014.9928ms)
+✔ domain prefetch checks every frozen domain in chunks and stores unknown as unknown (12.7201ms)
+✔ backup roundtrip preserves duplicate entrance rows and rows without a URL; immutable asset conflicts fail clearly (1.6725ms)
+✔ an interrupted authentication preserves its original attempt instead of leaving an unrecorded in-progress state (3.455ms)
+✔ basic Google login uses a unique visible entry and its same-site confirmation (3.0127ms)
+✔ Google account choice matches the verified email and blocks human checks and extra access (0.7973ms)
+✔ callback proof and action history prevent repeated authentication attempts (0.2869ms)
+✔ offline authentication is narrowly owned and never permits a product submission boundary (0.5601ms)
+{"scenario":"form","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"comment","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"old-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"unknown-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"model","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"selection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"connection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"external","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"external-unknown","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+✔ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (14493.0786ms)
+{"scenario":"new","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-baseline","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-reply","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"cloud-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"record-race","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"closed-after-evidence","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restart-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"untrusted","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"wrong-product","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"scope-change","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"expired","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}

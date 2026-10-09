@@ -124,14 +124,14 @@
       "id": "siteLogoFile",
       "tag": "input",
       "type": "file",
-      "mapping": "我的网站 → 资料与媒体 → 上传媒体类型=产品标志图片 → 上传新媒体版本",
-      "operation": "选择图片，保存本机字节与上传版本，独立回读；旧任务保留旧素材",
-      "persistence": "本机媒体文件/outbox；siteProfiles.mediaVersions、media.logo、fields.Cloud LOGO",
-      "evidence": "original-editor-state-2026-10-06.json",
-      "verificationScope": "原文件选择先缓存并随保存落地；现版本上传独立持久化。图片上传和旧素材保护已有证据，原草稿提交时机不据此宣称等价",
-      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "mapping": "我的网站 → 编辑当前网站 → 暂存原标志图片（保存资料后生效）",
+      "operation": "选择文件先预览并暂存；清除也暂存；保存资料后生效，旧媒体版本和历史投稿保留",
+      "persistence": "待保存：表单暂存；保存后：siteProfiles.logoDataUrl，经SQLite资料outbox和云端资料文档持久化；独立媒体版本入口继续保留",
+      "evidence": "migration-staged-inputs-2026-10-10/summary.json",
+      "verificationScope": "原版完整formToProfile、实际浏览器暂存/清除/保存/重载、2MiB真实双服务HTTP、SQLite重开及D1/Neon认证资料保存已验证",
+      "status": "original_staged_behavior_verified_requires_overall_completion_audit",
       "originalEntry": "extension/settings.html#siteLogoFile",
-      "currentSource": "executor/web/application.js::showProduct/addMediaControls"
+      "currentSource": "executor/web/application.js::addOriginalLogoControls; core/application-mutation.mjs"
     },
     {
       "source": "extension/settings.html",
@@ -979,12 +979,12 @@
       "id": "spCommentText",
       "tag": "textarea",
       "type": null,
-      "mapping": "AI 评论 → 评论候选；当前网页填写 → 单页待填写评论",
-      "operation": "编辑候选，保存编辑后的草稿／恢复上一版；填入原网页评论区并核验，提交另行确认",
-      "persistence": "本机评论草稿版本；单页手输文本是面板状态；任务持久actualPreparation/actualSubmission",
-      "evidence": "original-comment-restore-2026-10-09.json",
-      "verificationScope": "候选编辑与保存恢复已有实际浏览器/SQLite证据；单页直接手输的独立保存时机需结合原输入分支再核验",
-      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "mapping": "当前网页填写 → 单页待填写评论 → 保存当前评论快照／恢复上一版评论；AI 评论 → 手输评论（无候选也可保存）",
+      "operation": "输入仅保留临时文本；显式保存或恢复时保留原文本快照；无候选也可恢复；产品、文章和迟到请求分开处理",
+      "persistence": "按工作区、原产品编号和文章网址保存SQLite commentHistory最近9版；纯文本载荷text与空drafts均保留；不产生投稿",
+      "evidence": "migration-staged-inputs-2026-10-10/summary.json",
+      "verificationScope": "原版完整无候选快照函数、两个实际入口、跨入口回读、5000字以上原文、失败和输入/选择竞态、SQLite重开已验证",
+      "status": "original_plain_snapshot_behavior_verified_requires_overall_completion_audit",
       "originalEntry": "extension/sidepanel.html#spCommentText",
       "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage"
     },
@@ -1187,5 +1187,6 @@
       "originalEntry": "extension/sidepanel.html#cfgUnattendedManualTabs",
       "currentSource": "executor/web/application.js::showBatch"
     }
-  ]
+  ],
+  "stagedInputFollowupSourceCommit": "584800b"
 }

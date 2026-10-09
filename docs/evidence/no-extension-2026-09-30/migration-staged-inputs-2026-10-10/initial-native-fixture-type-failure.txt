@@ -1,0 +1,34 @@
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1473.9498ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.5243ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1276.4497ms)
+✖ actual executor and workbench accept a two MiB original logo via authenticated profile HTTP and retain offline bytes after SQLite reopen (1262.3338ms)
+✔ actual original logo selection and clearing remain staged until profile save, preserve public URL and reopen with unchanged bytes (1689.4706ms)
+✔ original inline logo accepts the exact two MiB boundary and rejects oversized or forged image bytes without changing history (262.0231ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2836.4892
+
+✖ failing tests:
+
+test at tests\executor-original-logo-http.test.mjs:2:1
+✖ actual executor and workbench accept a two MiB original logo via authenticated profile HTTP and retain offline bytes after SQLite reopen (1262.3338ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-logo-http.test.mjs:7:361)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

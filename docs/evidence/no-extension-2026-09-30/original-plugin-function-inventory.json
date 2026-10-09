@@ -4617,9 +4617,7 @@
     "fullStatus": "passed",
     "evidence": "migration-input-controls-2026-10-10/correspondence.json",
     "remaining": [
-      "siteLogoFile original staged upload timing versus independent native version persistence",
-      "spCommentText: no-candidate plain-text history snapshot and restore across current entries",
-      "remaining original dynamic cross-entry behavior completion audit"
+      "remaining original dynamic cross-entry and special-launch completion audit"
     ],
     "overallMigrationComplete": false,
     "fullPassed": 1080,
@@ -4631,6 +4629,25 @@
     "productionWrites": 0,
     "models": 0,
     "realSubmissions": 0,
-    "summary": "migration-input-controls-2026-10-10/summary.json"
+    "summary": "migration-input-controls-2026-10-10/summary.json",
+    "stagedInputFollowupEvidence": "migration-staged-inputs-2026-10-10/summary.json"
+  },
+  "originalStagedInputsCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "584800b",
+    "originalStagedLogoTimingVerified": true,
+    "originalNoCandidatePlainTextSnapshotVerified": true,
+    "twoCurrentCommentEntriesAndCrossEntryHistoryVerified": true,
+    "rawTextOver4000CharsRetained": true,
+    "actualNativeHttpAt2MiBBoundaryVerified": true,
+    "authenticatedD1AndNeonVerified": true,
+    "fullPassed": 1087,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "evidence": "migration-staged-inputs-2026-10-10/summary.json",
+    "overallMigrationComplete": false,
+    "remaining": [
+      "remaining original dynamic cross-entry and special-launch completion audit"
+    ]
   }
 }

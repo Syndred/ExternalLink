@@ -1,0 +1,15 @@
+✖ actual executor and workbench accept a two MiB original logo via authenticated profile HTTP and retain offline bytes after SQLite reopen (45004.9979ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45068.3433
+
+✖ failing tests:
+
+test at tests\executor-original-logo-http.test.mjs:2:1
+✖ actual executor and workbench accept a two MiB original logo via authenticated profile HTTP and retain offline bytes after SQLite reopen (45004.9979ms)
+  'test timed out after 45000ms'

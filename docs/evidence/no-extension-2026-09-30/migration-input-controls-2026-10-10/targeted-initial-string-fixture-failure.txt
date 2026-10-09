@@ -1,0 +1,58 @@
+✔ batch preview uses locally saved concurrency and gates when setting writes fail, matching the original local queue (31.2971ms)
+✔ a pending blacklist edit after preview blocks registration at batch start while preserving the original scope and frozen configuration (3.6971ms)
+✔ actual native services and UI preserve pending batch settings and block new registration after preview (2086.7884ms)
+✔ thirty original product inputs save and reopen as the complete original editor while preserving receipts and media history (1630.6052ms)
+✔ original auto-submit settings appear in application readback and persist offline without releasing execution (10.4089ms)
+✔ legacy monitor settings retain disabled state and original rounding and bounds in recovery, import, fragments and export (3.6098ms)
+✔ legacy raw backup confirmation writes the normalized monitor fragment using its original import plan (12.8882ms)
+✔ legacy disabled monitor stays disabled before saving while new canonical settings take precedence (0.8616ms)
+✔ backup import rejects non-boolean auto-submit preferences instead of silently changing the original behavior (0.3248ms)
+✖ actual original settings UI keeps missing defaults untouched and persists explicit concurrency, partial filters and blacklist changes (1453.2111ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2445.0379
+
+✖ failing tests:
+
+test at tests\executor-original-target-settings-ui.test.mjs:2:1
+✖ actual original settings UI keeps missing defaults untouched and persists explicit concurrency, partial filters and blacklist changes (1453.2111ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '2' !== 2
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/target-settings.mjs:34:109 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '2',
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-target-settings-ui.test.mjs:2:334)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

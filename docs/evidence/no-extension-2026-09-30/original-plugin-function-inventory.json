@@ -2115,514 +2115,1181 @@
       "source": "extension/settings.html",
       "id": "siteExtractUrl",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 资料与媒体 → 提取资料的网站网址",
+      "operation": "从网站提取资料；结果先入草稿，检查后保存",
+      "persistence": "编辑器临时网址；提取草稿；显式保存后siteProfiles",
+      "evidence": "original-profile-draft-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteExtractUrl",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteLanguage",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 产品资料语言",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].language",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteLanguage",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteName",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 产品名称",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].name",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteName",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteHomeUrl",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 产品官网",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].url",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteHomeUrl",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "sitePromoUrl",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 推广网址",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].promoUrl",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#sitePromoUrl",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteTitle",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 宣传标题",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Title",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteTitle",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteEmail",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 商务联系邮箱",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Business mail",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteEmail",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteLogoUrl",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 标志图片网址",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].logoUrl",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteLogoUrl",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteLogoFile",
       "tag": "input",
-      "type": "file"
+      "type": "file",
+      "mapping": "我的网站 → 资料与媒体 → 上传媒体类型=产品标志图片 → 上传新媒体版本",
+      "operation": "选择图片，保存本机字节与上传版本，独立回读；旧任务保留旧素材",
+      "persistence": "本机媒体文件/outbox；siteProfiles.mediaVersions、media.logo、fields.Cloud LOGO",
+      "evidence": "original-editor-state-2026-10-06.json",
+      "verificationScope": "原文件选择先缓存并随保存落地；现版本上传独立持久化。图片上传和旧素材保护已有证据，原草稿提交时机不据此宣称等价",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteLogoFile",
+      "currentSource": "executor/web/application.js::showProduct/addMediaControls"
     },
     {
       "source": "extension/settings.html",
       "id": "siteScreenshots",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 截图网址（每行一个，最多四张）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].media.screenshots",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteScreenshots",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteShortDesc",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 简短介绍（20-30 个英文单词）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Short description(20-30 words)",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteShortDesc",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteMediumDesc",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 简短介绍（100-150 个英文单词）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Short Discription(100-150 words)",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteMediumDesc",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteLongDesc",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 详细介绍（250-500 个英文单词）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Long description (250-500 words)",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteLongDesc",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteNote",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 补充说明",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Note",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteNote",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteAudience",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 目标用户",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].targetAudience",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteAudience",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteValueProp",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 产品价值说明",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].valueProposition",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteValueProp",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteUseCases",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 使用场景（每行一项）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].useCases",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteUseCases",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteTags",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 关键词与标签",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Tags Keywords/Hashtags",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteTags",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteFeatures",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 功能介绍",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Feature description",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteFeatures",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteSellPoints",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 产品卖点（每行一项）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].sellablePoints",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteSellPoints",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "sitePricing",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 价格说明",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.Pricing",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#sitePricing",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "sitePricingType",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 收费方式",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].fields.PRICING TYPE",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#sitePricingType",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteAvoidContent",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 避免提及的内容（每行一项）",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].avoidContent",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteAvoidContent",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteBrandKeywords",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 品牌关键词",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.brandKeywords",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteBrandKeywords",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteUrlKeywords",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 网址关键词",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.urlKeywords",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteUrlKeywords",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteNaturalExprs",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 自然表达",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.naturalExpressions",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteNaturalExprs",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteKeywordExprs",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 关键词表达",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.keywordExpressions",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteKeywordExprs",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteAvoidWords",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 避免使用的词",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.avoidWords",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteAvoidWords",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteAllowExactAnchor",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 允许精确匹配关键词",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].anchorRules.allowExactMatch",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteAllowExactAnchor",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteBlogTone",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 默认评论语气",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].blogRules.tone",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteBlogTone",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "siteMaxLinks",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 每条评论最多链接数",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].blogRules.maxLinksPerDraft",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#siteMaxLinks",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "sitePreferredAnchor",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 编辑当前网站／资料与媒体 → 默认推广链接文字",
+      "operation": "编辑后保存资料；关闭并重新打开；本机数据库关闭重开核对",
+      "persistence": "siteProfiles[原产品编号].blogRules.preferredAnchor",
+      "evidence": "migration-input-controls-2026-10-10/profile-inputs.txt",
+      "verificationScope": "本轮实际自有浏览器、原版完整formToProfile对照、30控件保存重开及SQLite重开；隔离云回复，正式写入0",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#sitePreferredAnchor",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools"
     },
     {
       "source": "extension/settings.html",
       "id": "librarySearch",
       "tag": "input",
-      "type": "search"
+      "type": "search",
+      "mapping": "外链库 → 搜索",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；query；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#librarySearch",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "libraryCategoryFilter",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 外链分类",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryCategory；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#libraryCategoryFilter",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "libraryStatusFilter",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 站点状态",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryStatus；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#libraryStatusFilter",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "libraryProgressFilter",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 提交进度",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryProgress；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#libraryProgressFilter",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "libraryQualityFilter",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 最低质量分",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryMinQuality；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#libraryQualityFilter",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "libraryGroupFilter",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 外链分组",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryGroup；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#libraryGroupFilter",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "librarySort",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 外链排序",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；librarySort；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#librarySort",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/settings.html",
       "id": "cloudWorkerEndpoint",
       "tag": "input",
-      "type": "url"
+      "type": "url",
+      "mapping": "设置与备份 → 云端连接与保存的记录／首次连接 → 设备登记文件",
+      "operation": "读取登记文件或本机已有登记，核验后确认；切换保留原记录和暂停状态",
+      "persistence": "本机pair/连接历史.endpoint；不导出凭据",
+      "evidence": "original-cloud-connections-2026-10-07.json",
+      "verificationScope": "已核对连接模块及认证隔离持久恢复；当前用登记文件承载连接信息，不是三个原文本输入框",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cloudWorkerEndpoint",
+      "currentSource": "executor/web/application.js::showConnections; executor/web/setup.js::showSetup"
     },
     {
       "source": "extension/settings.html",
       "id": "cloudAccessToken",
       "tag": "input",
-      "type": "password"
+      "type": "password",
+      "mapping": "设置与备份 → 云端连接与保存的记录／首次连接 → 设备登记文件",
+      "operation": "读取登记文件或本机已有登记，核验后确认；切换保留原记录和暂停状态",
+      "persistence": "本机pair/连接历史.设备凭据（替代原管理员令牌）；不导出凭据",
+      "evidence": "original-cloud-connections-2026-10-07.json",
+      "verificationScope": "已核对连接模块及认证隔离持久恢复；当前用登记文件承载连接信息，不是三个原文本输入框",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cloudAccessToken",
+      "currentSource": "executor/web/application.js::showConnections; executor/web/setup.js::showSetup"
     },
     {
       "source": "extension/settings.html",
       "id": "cloudWorkspaceId",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "设置与备份 → 云端连接与保存的记录／首次连接 → 设备登记文件",
+      "operation": "读取登记文件或本机已有登记，核验后确认；切换保留原记录和暂停状态",
+      "persistence": "本机pair/连接历史.workspaceId；不导出凭据",
+      "evidence": "original-cloud-connections-2026-10-07.json",
+      "verificationScope": "已核对连接模块及认证隔离持久恢复；当前用登记文件承载连接信息，不是三个原文本输入框",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cloudWorkspaceId",
+      "currentSource": "executor/web/application.js::showConnections; executor/web/setup.js::showSetup"
     },
     {
       "source": "extension/settings.html",
       "id": "linkMonitorEnabled",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "外链监测 → 启用定时外链监测",
+      "operation": "保存监测计划；后台按原计划执行",
+      "persistence": "linkMonitorSchedule.enabled（读取兼容旧linkMonitorEnabled）",
+      "evidence": "original-settings-2026-10-05.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#linkMonitorEnabled",
+      "currentSource": "executor/web/application.js::renderMonitorSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "linkMonitorMinutes",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链监测 → 外链监测间隔（分钟）",
+      "operation": "输入间隔后保存监测计划，保留原舍入和边界",
+      "persistence": "linkMonitorSchedule.minutes（读取兼容旧linkMonitorMinutes）",
+      "evidence": "original-settings-2026-10-05.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#linkMonitorMinutes",
+      "currentSource": "executor/web/application.js::renderMonitorSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "ledgerImportFile",
       "tag": "input",
-      "type": "file"
+      "type": "file",
+      "mapping": "设置与备份 → 导入原插件备份 → 备份文件",
+      "operation": "选择原账本JSON，预览合并，确认原编号与关联历史",
+      "persistence": "本机备份归档/导入计划；siteProfiles/submissionRecords及备份包含的关联文档",
+      "evidence": "original-backup-profiles-2026-10-07.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#ledgerImportFile",
+      "currentSource": "executor/web/application.js::showBackupImport"
     },
     {
       "source": "extension/settings.html",
       "id": "cfgEmail",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "设置与备份 → 默认联系邮箱",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档cfgEmail；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cfgEmail",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "cfgName",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "设置与备份 → 默认联系人姓名",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档cfgName；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cfgName",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "cfgCommentTemplate",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "设置与备份 → 默认评论模板",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档cfgCommentTemplate；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cfgCommentTemplate",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "cfgConcurrency",
       "tag": "input",
-      "type": "text"
+      "type": "text",
+      "mapping": "设置与备份 → 同时处理的外链目标数",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档cfgConcurrency；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cfgConcurrency",
+      "currentSource": "executor/web/application.js::renderSettings",
+      "newVerificationEvidence": "migration-input-controls-2026-10-10/targeted-final-10-tests.txt"
     },
     {
       "source": "extension/settings.html",
       "id": "autoFillOnVisit",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 浏览器填表助手 → 访问待提交网站时自动填写",
+      "operation": "勾选后保存浏览器助手设置；原产品选择和待同步偏好按作用域读取",
+      "persistence": "autoFillOnVisit文档；本机browserAssistantSettings",
+      "evidence": "auto-visit-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#autoFillOnVisit",
+      "currentSource": "executor/web/application.js::renderAssistantSettings; executor/src/browser-assistant.mjs::saveAssistantSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "autoSubmitDirectoryListings",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 目录站无验证码时自动提交",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档autoSubmitDirectoryListings；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#autoSubmitDirectoryListings",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "autoSubmitStandardWpComments",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 标准 WordPress 评论通过检查后自动提交",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档autoSubmitStandardWpComments；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#autoSubmitStandardWpComments",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "cfgPingIndex",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 站方收件后通知搜索引擎（IndexNow）",
+      "operation": "编辑／勾选后保存设置；执行读取已存本机待同步设置，原任务配置不被改写",
+      "persistence": "独立设置文档cfgPingIndex；本机appMutation/outbox",
+      "evidence": "original-pending-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#cfgPingIndex",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterBlacklistEnabled",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 启用域名黑名单",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.blacklistEnabled；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterBlacklistEnabled",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterMinDomainAge",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "设置与备份 → 最低域名月龄",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.minDomainAgeMonths；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterMinDomainAge",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterRequireKnownAge",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 域名年龄未知也排除",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.requireKnownDomainAge；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterRequireKnownAge",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterMinOpportunityScore",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "设置与备份 → 最低质量分",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.minOpportunityScore；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterMinOpportunityScore",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "domainBlacklistText",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "设置与备份 → 域名黑名单（每行一个）",
+      "operation": "编辑保存；沿原规则规范化域名；重新预览队列",
+      "persistence": "domainBlacklist文档；本机appMutation",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#domainBlacklistText",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterAiComments",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 博客评论使用 AI 生成",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.aiComments；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterAiComments",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterAiCommentAllowLink",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 允许 AI 评论包含推广链接",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.aiCommentAllowLink；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterAiCommentAllowLink",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/settings.html",
       "id": "filterManualFillIcons",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "设置与备份 → 显示人工填表提示",
+      "operation": "改变后保存设置，仅写改变字段；队列预览和实际填写读取有效偏好",
+      "persistence": "targetFilters.showManualFillIcons；本机待同步原编号",
+      "evidence": "original-target-settings-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/settings.html#filterManualFillIcons",
+      "currentSource": "executor/web/application.js::renderSettings"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "spSiteSelect",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "我的网站 → 当前网站；当前网页填写 → 单页填写使用的产品",
+      "operation": "选择原产品编号；当前选择与批量所选产品分别保存；单页打开继承当前产品",
+      "persistence": "activeSiteId文档；本机单页面板上下文",
+      "evidence": "original-profile-selection-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#spSiteSelect",
+      "currentSource": "executor/web/application.js::renderProducts/showSinglePage"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelineProfileSelect",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 动态所属产品",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.profileId；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelineProfileSelect",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelineEventType",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 动态类型",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.type；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelineEventType",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelineOccurredAt",
       "tag": "input",
-      "type": "datetime-local"
+      "type": "datetime-local",
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 动态时间",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.occurredAt；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelineOccurredAt",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelineNote",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 动态说明",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.note；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelineNote",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelinePublicUrl",
       "tag": "input",
-      "type": "url"
+      "type": "url",
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 公开外链网址",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.publicUrl；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelinePublicUrl",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "timelineEvidenceUrl",
       "tag": "input",
-      "type": "url"
+      "type": "url",
+      "mapping": "外链库／提交总览 → 查看时间线 → 添加／编辑动态 → 证据网址",
+      "operation": "填写后保存动态；保存失败保留草稿；成功重置仅已提交草稿",
+      "persistence": "submissionTimeline[原目标键].事件.evidenceUrl；有足够收件证明时联动submissionRecords",
+      "evidence": "original-timeline-editor-2026-10-09.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#timelineEvidenceUrl",
+      "currentSource": "executor/web/application.js::showTimelineEditor"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "commentTone",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "AI 评论 → 评论语气",
+      "operation": "选择语气生成候选；保存／恢复该产品与文章的草稿版本",
+      "persistence": "本机commentDraft版本payload.tone；任务使用产品blogRules与偏好",
+      "evidence": "original-comment-drafts-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#commentTone",
+      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "spCommentText",
       "tag": "textarea",
-      "type": null
+      "type": null,
+      "mapping": "AI 评论 → 评论候选；当前网页填写 → 单页待填写评论",
+      "operation": "编辑候选，保存编辑后的草稿／恢复上一版；填入原网页评论区并核验，提交另行确认",
+      "persistence": "本机评论草稿版本；单页手输文本是面板状态；任务持久actualPreparation/actualSubmission",
+      "evidence": "original-comment-restore-2026-10-09.json",
+      "verificationScope": "候选编辑与保存恢复已有实际浏览器/SQLite证据；单页直接手输的独立保存时机需结合原输入分支再核验",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#spCommentText",
+      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibrarySearch",
       "tag": "input",
-      "type": "search"
+      "type": "search",
+      "mapping": "外链库 → 搜索",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；query；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibrarySearch",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibraryCategory",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 外链分类",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryCategory；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibraryCategory",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibraryGroup",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 外链分组",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryGroup；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibraryGroup",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibraryAccess",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 费用类型",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryAccess；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibraryAccess",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibraryFavorite",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 收藏状态",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryFavorite；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibraryFavorite",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "sidepanelLibraryEnabled",
       "tag": "select",
-      "type": null
+      "type": null,
+      "mapping": "外链库 → 启用状态",
+      "operation": "输入或选择后重新过滤／排序；按当前筛选选择批量范围",
+      "persistence": "原/现均为页面临时筛选状态；libraryEnabled；本操作不写业务文档",
+      "evidence": "original-library-view-2026-10-06.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#sidepanelLibraryEnabled",
+      "currentSource": "executor/web/application.js::renderLibrary/filteredLibrary"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "quickOpenBatchSize",
       "tag": "input",
       "type": "number",
-      "mapping": "外链库 / 批量打开网站 / 每批打开数量",
+      "mapping": "外链库 → 批量打开网站 → 每批打开数量",
       "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
-      "evidence": "original-quick-open-controls-2026-10-09.json"
+      "evidence": "original-quick-open-controls-2026-10-09.json",
+      "operation": "修改参数后批量打开；关闭／重开窗口及完成批次保留参数",
+      "persistence": "页面批量打开参数和临时选择；不移除业务资料或收件",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#quickOpenBatchSize",
+      "currentSource": "executor/web/application.js::showQuickOpen"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "quickOpenInterval",
       "tag": "input",
       "type": "number",
-      "mapping": "外链库 / 批量打开网站 / 打开间隔（毫秒）",
+      "mapping": "外链库 → 批量打开网站 → 打开间隔（毫秒）",
       "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
-      "evidence": "original-quick-open-controls-2026-10-09.json"
+      "evidence": "original-quick-open-controls-2026-10-09.json",
+      "operation": "修改参数后批量打开；关闭／重开窗口及完成批次保留参数",
+      "persistence": "页面批量打开参数和临时选择；不移除业务资料或收件",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#quickOpenInterval",
+      "currentSource": "executor/web/application.js::showQuickOpen"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "quickOpenRemoveOpened",
       "tag": "input",
       "type": "checkbox",
-      "mapping": "外链库 / 批量打开网站 / 打开后从临时选择中移除",
+      "mapping": "外链库 → 批量打开网站 → 打开后从临时选择中移除",
       "verification": "原默认值、范围、窗口关闭和完成批次后的选项保留已核验；间隔增减100毫秒已核验",
-      "evidence": "original-quick-open-controls-2026-10-09.json"
+      "evidence": "original-quick-open-controls-2026-10-09.json",
+      "operation": "修改参数后批量打开；关闭／重开窗口及完成批次保留参数",
+      "persistence": "页面批量打开参数和临时选择；不移除业务资料或收件",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#quickOpenRemoveOpened",
+      "currentSource": "executor/web/application.js::showQuickOpen"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "cfgFillOnly",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "外链库 → 批量提交 → 本批次仅填写，完成后等待人工检查",
+      "operation": "选择后预览并确认批次；暂停／恢复保留已冻结配置",
+      "persistence": "workbenchBatch.config.fillOnly及原任务fillOnlyRun",
+      "evidence": "original-batch-controls-2026-10-07.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#cfgFillOnly",
+      "currentSource": "executor/web/application.js::showBatch"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "cfgUnattended",
       "tag": "input",
-      "type": "checkbox"
+      "type": "checkbox",
+      "mapping": "外链库 → 批量提交 → 开启无人值守",
+      "operation": "修改后顺序保存偏好；预览前等待写入；原批次保留预算与截止时间",
+      "persistence": "unattendedPreferences.enabled；workbenchBatch.config冻结配置",
+      "evidence": "original-batch-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#cfgUnattended",
+      "currentSource": "executor/web/application.js::showBatch"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "cfgUnattendedHours",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "外链库 → 批量提交 → 最长运行时长（小时）",
+      "operation": "修改后顺序保存偏好；预览前等待写入；原批次保留预算与截止时间",
+      "persistence": "unattendedPreferences.hours；workbenchBatch.config冻结配置",
+      "evidence": "original-batch-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#cfgUnattendedHours",
+      "currentSource": "executor/web/application.js::showBatch"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "cfgUnattendedTasks",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "外链库 → 批量提交 → 最多处理项目组合",
+      "operation": "修改后顺序保存偏好；预览前等待写入；原批次保留预算与截止时间",
+      "persistence": "unattendedPreferences.tasks；workbenchBatch.config冻结配置",
+      "evidence": "original-batch-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#cfgUnattendedTasks",
+      "currentSource": "executor/web/application.js::showBatch"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "cfgUnattendedManualTabs",
       "tag": "input",
-      "type": "number"
+      "type": "number",
+      "mapping": "外链库 → 批量提交 → 最多保留人工页签",
+      "operation": "修改后顺序保存偏好；预览前等待写入；原批次保留预算与截止时间",
+      "persistence": "unattendedPreferences.manualTabs；workbenchBatch.config冻结配置",
+      "evidence": "original-batch-settings-2026-10-08.json",
+      "verificationScope": "已有功能组证据；本轮源码逐项对应，不能等同全分支验收",
+      "status": "mapped_evidence_linked_requires_full_acceptance",
+      "originalEntry": "extension/sidepanel.html#cfgUnattendedManualTabs",
+      "currentSource": "executor/web/application.js::showBatch"
     }
   ],
   "originalButtonsWithoutIds": [
@@ -3936,5 +4603,34 @@
     "originalChromeStartedOrClosed": false,
     "overallMigrationComplete": false,
     "remaining": "81 original input rows need explicit current entry/operation/persistence/evidence join; other dynamic cross-entry branches require proof; unindexed file kept without invented ownership; Mac real-device acceptance deferred"
+  },
+  "originalInputControlCorrespondenceCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "b4dce74",
+    "originalRows": 84,
+    "explicitMappings": 84,
+    "operationAndPersistenceRows": 84,
+    "newActualBrowserOriginalSaveAndSqliteRows": 30,
+    "relatedTestsPassed": 69,
+    "fixedTargetedTestsPassed": 10,
+    "allInputBehaviorsAccepted": false,
+    "fullStatus": "passed",
+    "evidence": "migration-input-controls-2026-10-10/correspondence.json",
+    "remaining": [
+      "siteLogoFile original staged upload timing versus independent native version persistence",
+      "spCommentText: no-candidate plain-text history snapshot and restore across current entries",
+      "remaining original dynamic cross-entry behavior completion audit"
+    ],
+    "overallMigrationComplete": false,
+    "fullPassed": 1080,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "servicesGuardedlyReloaded": true,
+    "actualNativeSettingsDomAndSourceVerified": true,
+    "originalBusinessAndPrivateSourcesKept": true,
+    "productionWrites": 0,
+    "models": 0,
+    "realSubmissions": 0,
+    "summary": "migration-input-controls-2026-10-10/summary.json"
   }
 }

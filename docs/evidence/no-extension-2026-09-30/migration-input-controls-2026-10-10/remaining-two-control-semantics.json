@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-10",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalCompletePlainInputAndSnapshotExecuted": true,
+  "originalPlainInputWritesImmediately": false,
+  "originalPlainTextCanEnterHistorySnapshot": true,
+  "originalPlainSnapshotCandidates": 0,
+  "currentPlainSinglePageInputIsPanelState": true,
+  "currentCandidateSaveRequiresGeneratedOrLoadedCandidates": true,
+  "plainSnapshotRestoreAcrossCurrentEntriesNotProven": true,
+  "originalLogoFileStagesUntilExplicitProfileSave": true,
+  "currentNativeNewVersionUploadPersistsIndependently": true,
+  "originalStagedLogoFileParityNotProven": true,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0,
+  "overallMigrationComplete": false
+}

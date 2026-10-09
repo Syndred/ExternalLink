@@ -1,0 +1,18 @@
+✔ batch preview uses locally saved concurrency and gates when setting writes fail, matching the original local queue (31.3587ms)
+✔ a pending blacklist edit after preview blocks registration at batch start while preserving the original scope and frozen configuration (5.4515ms)
+✔ actual native services and UI preserve pending batch settings and block new registration after preview (2127.1776ms)
+✔ thirty original product inputs save and reopen as the complete original editor while preserving receipts and media history (1620.9978ms)
+✔ original auto-submit settings appear in application readback and persist offline without releasing execution (12.2792ms)
+✔ legacy monitor settings retain disabled state and original rounding and bounds in recovery, import, fragments and export (4.909ms)
+✔ legacy raw backup confirmation writes the normalized monitor fragment using its original import plan (13.6079ms)
+✔ legacy disabled monitor stays disabled before saving while new canonical settings take precedence (0.9632ms)
+✔ backup import rejects non-boolean auto-submit preferences instead of silently changing the original behavior (0.4106ms)
+✔ actual original settings UI keeps missing defaults untouched and persists explicit concurrency, partial filters and blacklist changes (1376.8392ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2491.7091

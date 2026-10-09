@@ -1,0 +1,16 @@
+{
+  "algorithm": "sha256 UTF-8 LF normalized",
+  "sources": {
+    "executor/src/comment-history.mjs": "b25ccc58dcf25a8a933103a9a4023eb71957e88a224421cfa6b4332bf7300db5",
+    "executor/src/workbench-features.mjs": "8f38254477ab1591a98c52d5e456dba4471fa5ebd48ff3b6d01a0b673b4ab8a4",
+    "executor/src/single-page.mjs": "af225bee974fc52a55c6367b0c7329ca31387233510f220f5a8f63ac49dde3d8",
+    "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+    "executor/web/application.css": "6feb48f477616d2db4a7493395a05c1db236aac01aad63688e49917493469a14",
+    "executor/web/comment-studio.js": "ab5391b3830015306b5fa9275a3726bd70b64d3eb3f44d9d38f888885ced017b",
+    "executor/test/original-long-comment-selection.mjs": "64c727905d4d5cc04edd5cbc79919d643202e7f7884a86bc9345a77df37d030a",
+    "executor/test/original-long-comment-actions.mjs": "a3e58672c8490fd05b144e8ad598322e9e38275d09b9b5633498103b7215a445",
+    "executor/test/original-long-single-page-comment.mjs": "881211d5069640d045bf4c13379ce98d5b60d528b31a3fab2a813bec914bb33b",
+    "tests/executor-original-long-comment.test.mjs": "2a6e30c7e115e4be3b7c79b3f330ffb90c7ec71e2e33768ff99a6afc1c11b5bb",
+    "tests/helpers/original-comment-limits.mjs": "db9a9553aabf0113bd3267ef4dddbf503bd7cdd72706e423af6749cbd3fefb13"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-10",
+  "sourceCommit": "5c2b2ec8be44200f39181b99c8d3e8d7778f685e",
+  "status": "released_original_long_comment_history_and_page_limits",
+  "candidateCharacters": [
+    5002,
+    12007,
+    24006
+  ],
+  "singlePageCommentCharacters": 24002,
+  "actualMainAndIframeUiFill": true,
+  "actualSinglePageNativeControl": true,
+  "singlePageLongTextUiClickClaimed": false,
+  "originalFrozenSelectionAndLimitFunctionsCompared": true,
+  "focusedPassed": 21,
+  "fullRegression": {
+    "tests": 1119,
+    "pass": 1119,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 481127.5453
+  },
+  "nativeServices": [
+    19388,
+    19389
+  ],
+  "nativeReadback": {
+    "ok": true,
+    "sourceCommit": "5c2b2ec8be44200f39181b99c8d3e8d7778f685e",
+    "committedSourcesMatch": true,
+    "hashes": {
+      "executor/src/comment-history.mjs": "b25ccc58dcf25a8a933103a9a4023eb71957e88a224421cfa6b4332bf7300db5",
+      "executor/src/workbench-features.mjs": "8f38254477ab1591a98c52d5e456dba4471fa5ebd48ff3b6d01a0b673b4ab8a4",
+      "executor/src/single-page.mjs": "af225bee974fc52a55c6367b0c7329ca31387233510f220f5a8f63ac49dde3d8",
+      "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+      "executor/web/application.css": "6feb48f477616d2db4a7493395a05c1db236aac01aad63688e49917493469a14",
+      "executor/web/comment-studio.js": "ab5391b3830015306b5fa9275a3726bd70b64d3eb3f44d9d38f888885ced017b"
+    },
+    "nativeSelectedCandidateStyleMatches": true,
+    "actualNativeReadback": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "fixedCursor": 13,
+    "fixedCount": 30,
+    "businessWrites": 0,
+    "originalChromeUntouched": true,
+    "longCommentNotWrittenToProduction": true
+  },
+  "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "original18OtherCloudDocumentsAndRevisionsKept": true,
+  "originalPrivateSourcesVerified": 6,
+  "monitor": {
+    "paused": true,
+    "cursor": 54,
+    "count": 89,
+    "existingResultsRevision": 312
+  },
+  "workerRedeployed": false,
+  "realSubmissions": 0,
+  "productionCommentWrites": 0,
+  "originalChromeUntouched": true,
+  "clipboardDependencyControlledOnly": true,
+  "utf8FixtureDecoderMatchedExistingProductionBufferDecoder": true,
+  "intermediateRunIsNotReleaseEvidence": true,
+  "overallMigrationComplete": false
+}

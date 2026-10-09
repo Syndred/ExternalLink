@@ -1,0 +1,29 @@
+✔ actual candidate card buttons copy exact controlled text, fill only the original task and preserve edits after SQLite reopen (2493.0724ms)
+✔ original disabled AI comment preference prevents model calls and leaves all draft history intact (2.641ms)
+✔ original promotion-link switch overrides request defaults and generated history records the effective preference (6.8424ms)
+✔ comment versions preserve the original copyCommentDraft metadata and accept partial candidate sets (3.6495ms)
+✔ one-candidate original fallback and original one-to-five request counts save valid candidates (2.158ms)
+✔ empty or rejected model results do not replace the previous valid draft or history (2.5001ms)
+✔ workspace switches during model generation abandon old results instead of attributing them to the new workspace (1.3294ms)
+✔ same-host article navigation or a different product refuses old comment filling before any lease or field action (1.3492ms)
+✔ article navigation while cloud snapshot is pending refuses the old draft before leasing or filling (1.011ms)
+✔ single-candidate metadata and distinct edited history survive a real SQLite close and reopen (52.8619ms)
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1786.8766ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1664.6386ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.6427ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1329.8566ms)
+✔ actual comment candidate selection preserves every original before-switch snapshot and restores selected index after SQLite reopen (1995.2917ms)
+✔ empty selected comment switches without creating the snapshot that the original handler skips (2112.1579ms)
+✔ long candidate edits preserve original snapshots metadata selected index and raw text after actual UI and SQLite reopening (2203.4804ms)
+✔ actual main candidate buttons fill long original text and reject page overflow before lease or field mutation (2370.8251ms)
+✔ actual iframe candidate buttons fill long original text and reject page overflow before lease or field mutation (1958.4163ms)
+✔ single-page native control fills 24002-character comments and rejects actual maxlength before original registration (3343.1055ms)
+✔ original field ranking positive maxima absent maxima zero and prescan fallback match the complete frozen field selector and limit guard (20.5318ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9983.221

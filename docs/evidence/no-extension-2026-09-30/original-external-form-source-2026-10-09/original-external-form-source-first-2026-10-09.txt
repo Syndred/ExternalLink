@@ -1,0 +1,10 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:25
+ const watch=await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const check=()=>{const w=store.get('manualWatch:'+task.id);if(w&&Object.keys(w.frames).length)return resolve(w);if(Date.now()>deadline)return reject(Error('Original source task manual watch was not armed'));setTimeout(check,25);};check();});
+                                                                                                                                                                                                                                      ^
+
+Error: Original source task manual watch was not armed
+    at Timeout.check [as _onTimeout] (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:25:231)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+
+Node.js v24.21.0

@@ -1,0 +1,23 @@
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (9.1096ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (6.3739ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (4.8112ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (4.7192ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (4.197ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (1.3384ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (9.1894ms)
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (4.9965ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (4.0694ms)
+✔ original-external-form-source actual isolated browser matches original attribution (1572.5732ms)
+✔ original-external-form-popup actual isolated browser matches original attribution (1005.718ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (4.1719ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.6913ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.421ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.439ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2702.5555

@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: manual watcher must use the frozen original promotion URL
++ actual - expected
+
++ 'https://product.example'
+- 'https://promotion.example/landing'
+              ^
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:32:90 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'https://product.example',
+  expected: 'https://promotion.example/landing',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

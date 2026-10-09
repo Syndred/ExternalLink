@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: standalone form must be registered under the original trusted source directory
++ actual - expected
+
++ 'https://loxr142exnq.typeform.com/to/RB6ZnEf2?typeform-source=aitools.inc'
+- 'https://aitools.inc/submit'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:21:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'https://loxr142exnq.typeform.com/to/RB6ZnEf2?typeform-source=aitools.inc',
+  expected: 'https://aitools.inc/submit',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

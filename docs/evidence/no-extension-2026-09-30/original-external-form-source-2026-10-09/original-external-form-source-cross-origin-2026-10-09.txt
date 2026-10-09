@@ -1,0 +1,10 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:35
+ await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const check=()=>{if(store.get('task:'+task.id).attemptBoundary)return resolve();if(Date.now()>deadline)return reject(Error('Trusted manual click was not recorded'));setTimeout(check,25);};check();});
+                                                                                                                                                                                          ^
+
+Error: Trusted manual click was not recorded
+    at Timeout.check [as _onTimeout] (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:35:187)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+
+Node.js v24.21.0

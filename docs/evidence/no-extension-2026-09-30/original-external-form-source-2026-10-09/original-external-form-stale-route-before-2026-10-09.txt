@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: a different SPA form cannot submit under the old source watch
++ actual - expected
+
++ '2026-10-09T07:24:09.577Z'
+- undefined
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:38:202 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '2026-10-09T07:24:09.577Z',
+  expected: undefined,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

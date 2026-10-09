@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'checking'
+- 'confirmed'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:37:414 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'checking',
+  expected: 'confirmed',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

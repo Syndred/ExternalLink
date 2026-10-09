@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: standalone form must be registered under the original trusted source directory
++ actual - expected
+
++ 'https://aiinfinity-meetpatel.notion.site/'
+- 'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:30:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'https://aiinfinity-meetpatel.notion.site/',
+  expected: 'https://aiinfinity-meetpatel.notion.site/AI-Infinity-AI-Tools-Directory-0da673c487124ea2b6f8ebe59b75a231',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

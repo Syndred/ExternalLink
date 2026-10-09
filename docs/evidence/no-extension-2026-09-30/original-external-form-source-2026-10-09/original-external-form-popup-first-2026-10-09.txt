@@ -1,0 +1,1 @@
+{"ok":true,"actualNoopenerShortLinkCaptured":true,"originalCapturedSourceMatched":true,"expiredSourceRejected":true,"changedSourceRejected":true,"closedSourceRejected":true,"browserRestartRejected":true,"unattributedFormRejected":true,"externalRequests":0,"realSubmissions":0,"realModelCalls":0}

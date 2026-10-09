@@ -1389,17 +1389,23 @@
     {
       "action": "manualSubmissionClicked",
       "mapping": "manualWatchMessage / 原任务边界和新回执核验",
-      "status": "implemented_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "externalFormVerification": "20bb2a5：原来源函数、隔离实际Chrome、认证隔离D1落库与回复丢失回读通过；单页填写独立监听、最终字段、推广网址和原页面边界已核对，未做真实投稿。",
+      "externalFormEvidence": "original-external-form-source-2026-10-09.json"
     },
     {
       "action": "manualSubmissionWatchReady",
       "mapping": "manualWatchMessage / 页面区域证据基线",
-      "status": "implemented_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "externalFormVerification": "20bb2a5：原来源函数、隔离实际Chrome、认证隔离D1落库与回复丢失回读通过；单页填写独立监听、最终字段、推广网址和原页面边界已核对，未做真实投稿。",
+      "externalFormEvidence": "original-external-form-source-2026-10-09.json"
     },
     {
       "action": "manualSubmissionWatchRequest",
       "mapping": "manualWatchMessage / 已准备原任务监听",
-      "status": "implemented_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "externalFormVerification": "20bb2a5：原来源函数、隔离实际Chrome、认证隔离D1落库与回复丢失回读通过；单页填写独立监听、最终字段、推广网址和原页面边界已核对，未做真实投稿。",
+      "externalFormEvidence": "original-external-form-source-2026-10-09.json"
     },
     {
       "action": "manualSubmit",
@@ -1495,7 +1501,9 @@
       "action": "sidepanelFill",
       "mapping": "当前网页填写 / 默认仅填表 → sidepanelFill",
       "status": "mapped_requires_full_acceptance",
-      "verification": "手动普通产品表单实际隔离Chrome11种情形覆盖原字段理解／两轮视觉／最终修正、关闭AI、未完成提交请求及迟到收件未知，模型／云任务为夹具；工作台实际渲染未完成后补齐的中文提示通过。普通自动／手动明确关口的自动观察补验保留手工标记、收藏分组，语义不确定不分类；主执行／提交后／特殊发布分类、各入口媒体优先及完整原资料仍待核验，未做真实投稿"
+      "verification": "手动普通产品表单实际隔离Chrome11种情形覆盖原字段理解／两轮视觉／最终修正、关闭AI、未完成提交请求及迟到收件未知，模型／云任务为夹具；工作台实际渲染未完成后补齐的中文提示通过。普通自动／手动明确关口的自动观察补验保留手工标记、收藏分组，语义不确定不分类；主执行／提交后／特殊发布分类、各入口媒体优先及完整原资料仍待核验，未做真实投稿",
+      "externalFormVerification": "20bb2a5：原来源函数、隔离实际Chrome、认证隔离D1落库与回复丢失回读通过；单页填写独立监听、最终字段、推广网址和原页面边界已核对，未做真实投稿。",
+      "externalFormEvidence": "original-external-form-source-2026-10-09.json"
     },
     {
       "action": "sidepanelOpened",
@@ -3265,9 +3273,30 @@
       "aitools.inc Typeform",
       "AI Infinity Google Forms with forms.gle navigation capture"
     ],
-    "status": "source audit pending native behavior verification",
-    "nativeEquivalentVerified": false,
-    "nativeRuntimeDefectProven": false,
+    "status": "isolated source attribution and authenticated receipt flow verified; broader migration remains incomplete",
+    "nativeEquivalentVerified": true,
+    "nativeRuntimeDefectProven": true,
+    "migrationComplete": false,
+    "evidence": "original-external-form-source-2026-10-09.json",
+    "sourceCommit": "20bb2a5403551b19407f2fc6cbc34fcc738a0cbb"
+  },
+  "originalExternalFormSourceCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "20bb2a5403551b19407f2fc6cbc34fcc738a0cbb",
+    "evidence": "original-external-form-source-2026-10-09.json",
+    "originalAllowlistAndSourceFunctionsExecuted": true,
+    "nativeMisattributionReproducedAndFixed": true,
+    "singlePageIndependentManualWatch": true,
+    "actualFinalFieldValuesPersisted": true,
+    "frozenPromotionUrlUsed": true,
+    "browserOwnedNoopenerShortLinkAndExpiry": true,
+    "actualIsolatedBrowserSourceVariants": 8,
+    "authenticatedIsolatedD1AndLostReply": true,
+    "sourceTestsPassed": 1002,
+    "focusedTestsPassed": 23,
+    "originalServicesGuardedReload": true,
+    "originalProtectedDataPreserved": true,
+    "realExternalSubmissions": 0,
     "migrationComplete": false
   }
 }

@@ -1,0 +1,370 @@
+{
+  "kind": "original_external_form_attribution_and_manual_receipt",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "20bb2a5403551b19407f2fc6cbc34fcc738a0cbb",
+  "oldNativeSourceCommit": "cc06cf04ebc7674da9e95e523b97da893869ef3d",
+  "originalFunctionsExecuted": [
+    "normalizeSourceHost",
+    "trustedTypeformDestination",
+    "trustedExternalFormDestination",
+    "isStandaloneExternalFormUrl",
+    "captureTrustedExternalFormOpen",
+    "trustedExternalFormSourceForTab"
+  ],
+  "oldNativeDefectReproduced": "Sidepanel form preparation registers the Typeform URL instead of the trusted source directory.",
+  "changes": [
+    "Original allowlist, referrer and browser opener source attribution",
+    "Browser-owned noopener short-link source capture with ten-minute expiry and original source-tab checks",
+    "Prepared source task identity retained, independent of the form browser target",
+    "Single-page preparation arms manual receipt observation without enabling the browser assistant",
+    "Frozen promotion URL used for click ownership",
+    "Trusted click captures final field values before navigation",
+    "Immediate receipt navigation preserves the original observed attempt",
+    "Allowed cross-origin receipt confirmation retains the source directory",
+    "Unknown redirect retains uncertainty without accepting receipt",
+    "Changed SPA form cannot claim an old watch",
+    "A locally saved receipt with an unacknowledged cloud write retries synchronization instead of treating missing cloud readback as completion"
+  ],
+  "verification": {
+    "focusedPassed": 23,
+    "fullSuitePassed": 1002,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 115773.7386,
+    "concurrency": 4,
+    "realChromeSourceFixtureVariants": 8,
+    "realChromeNoopenerPopupFixture": true,
+    "authenticatedD1Variants": 3,
+    "frozenOriginalSourceOracle": true,
+    "productionServerControlDispatcherUsed": true,
+    "independentSqliteReadback": true,
+    "existingSinglePageIframeAndContextRegression": true
+  },
+  "authenticatedD1EvidenceScope": "Real D1Store and authenticated Worker executor handlers backed by isolated SQLite/object storage over local HTTP. Browser routes are controlled fixtures. No production cloud record writes or real external submissions.",
+  "intermediateResults": [
+    {
+      "file": "original-external-form-source-first-2026-10-09.txt",
+      "classification": "fixture failure",
+      "reason": "The first browser fixture lacked runtime.dispatchControl; later fixtures execute the actual server dispatcher."
+    },
+    {
+      "file": "original-external-form-source-independent-watch-2026-10-09.txt",
+      "classification": "intermediate implementation failure",
+      "reason": "Independent watcher initially lacked its dedicated form-engine capability."
+    },
+    {
+      "file": "original-external-form-source-cross-origin-2026-10-09.txt",
+      "classification": "native behavior gap",
+      "reason": "Immediate navigation changed page URL before asynchronous original-page lookup completed, losing the trusted click."
+    },
+    {
+      "file": "original-external-form-promotion-before-2026-10-09.txt",
+      "classification": "native behavior gap",
+      "reason": "Watch used homepage instead of frozen promotion targetDomain."
+    },
+    {
+      "file": "original-external-form-d1-first-2026-10-09.txt",
+      "classification": "native integration gap",
+      "reason": "Missing click-time actualSubmission caused authenticated receipt persistence to fail."
+    },
+    {
+      "file": "original-external-form-google-d1-2026-10-09.txt",
+      "classification": "fixture expectation failure",
+      "reason": "Default browser referrer policy supplied only the origin, matching original source rules. The full-path test now declares unsafe-url on its controlled source fixture."
+    },
+    {
+      "file": "original-external-form-stale-route-before-2026-10-09.txt",
+      "classification": "stale document boundary failure",
+      "reason": "Binding replaced message frame URL with its old URL, incorrectly accepting another SPA form click."
+    }
+  ],
+  "earlierFullSuites": [
+    {
+      "passed": 998,
+      "file": "original-external-form-repository-2026-10-09.txt",
+      "scope": "Before promotion/cloud/SPA follow-up fixes"
+    },
+    {
+      "passed": 1001,
+      "file": "original-external-form-repository-final-2026-10-09.txt",
+      "scope": "Before final SPA frame-source guard"
+    }
+  ],
+  "services": {
+    "ok": true,
+    "kind": "external_form_published_service_process_identity",
+    "sourceCommit": "20bb2a5403551b19407f2fc6cbc34fcc738a0cbb",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 19672,
+        "StartedAt": "2026-10-09T15:27:23.8309750+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 13364,
+        "StartedAt": "2026-10-09T15:27:24.4810600+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "uiAndCloudSmoke": {
+    "ok": true,
+    "kind": "comment_restore_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "20bb2a5403551b19407f2fc6cbc34fcc738a0cbb",
+    "servedUiMatchesFileAndCommit": true,
+    "originalCommentRestorationServed": true,
+    "uiSha256": "47ff2aa716df47f3c4d1c4230f9b7b3dafa9ed56c98cde43a68083793eb81408",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "uiSmokeScope": "Unchanged comment UI script matches HEAD; anonymous production snapshot remains unauthorized. This is not an external-form UI acceptance claim.",
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateUnchanged": true,
+  "originalChromeStartedOrStopped": false,
+  "productionTestWrites": 0,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "migrationComplete": false,
+  "remaining": [
+    "other original dynamic controls and execution branches",
+    "remaining special launch flows",
+    "missing historical favorites sources",
+    "old-device profile and media associations",
+    "full original large-backup history coverage",
+    "deferred Mac real-device acceptance"
+  ],
+  "rawEvidence": [
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-d1-final-2026-10-09.txt",
+      "capturedSha256": "708cab174eb16cad1eb9de3b9ad11d3033c6a3f6978820205a90a76ef448bc9d",
+      "gitBlobSha256": "7a453a2e09d5822dd82b90bfed52b12e4f34d39f1a35f0e60764a398dae6e8bd"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-d1-first-2026-10-09.txt",
+      "capturedSha256": "423c5494fb4db423c0eb98598159acda506294d16a7d8a0be18fa8ea4cee77a7",
+      "gitBlobSha256": "858e7bd3b56884b6f6834054b9f4c5a729707c6d5bc8879b6994bfdc6c543abe"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-d1-lost-reply-2026-10-09.txt",
+      "capturedSha256": "3bb1b8f2feb272fe8aefd74d95e22d325418cbe3b84a76b8c37f2bdeea368717",
+      "gitBlobSha256": "221e62a729a9b15a078eefdf7d49005b2855caf35f518ccefa18df80b1d62432"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-existing-single-page-2026-10-09.txt",
+      "capturedSha256": "d68afff248679d445cd38c44edcff63e233b9b1c8e9c4545d38331a67df1acd0",
+      "gitBlobSha256": "abf218908acf1036ee73e92693241a128c267a8b935e4be9eeb212ca56feefc1"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-existing-single-page-final-2026-10-09.txt",
+      "capturedSha256": "d68afff248679d445cd38c44edcff63e233b9b1c8e9c4545d38331a67df1acd0",
+      "gitBlobSha256": "abf218908acf1036ee73e92693241a128c267a8b935e4be9eeb212ca56feefc1"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-existing-single-page-verified-2026-10-09.txt",
+      "capturedSha256": "d68afff248679d445cd38c44edcff63e233b9b1c8e9c4545d38331a67df1acd0",
+      "gitBlobSha256": "abf218908acf1036ee73e92693241a128c267a8b935e4be9eeb212ca56feefc1"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-focused-2026-10-09.txt",
+      "capturedSha256": "50e9a92ddb46a5d3fe5542e09aa58453dc5b98f451ef6f56edbd2c9360e5e821",
+      "gitBlobSha256": "e0585fcd690517e0e6c835a31795ef0525cd4d74c1e0141cd04967e06ac56f8f"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-focused-complete-2026-10-09.txt",
+      "capturedSha256": "77f662d46d0266f304b3741c3b3d33c97d140701d13a4c63c41c3defb248644e",
+      "gitBlobSha256": "1c63fa6c3bbff713377fe9212870ce62e73f0ad045153bec557ba53aada6f4cf"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-focused-dispatch-2026-10-09.txt",
+      "capturedSha256": "38bdce25e237baadafb70bd0d9573e18af0f401ca9c4c07e38d4d1c222730bf1",
+      "gitBlobSha256": "51b6b7e5f69815cd6ae320435d91ad2f4552cef33a2d7bdb6b7a392602afaf68"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-focused-final-2026-10-09.txt",
+      "capturedSha256": "68d705a964833cf92143b1f80029284e1e6a993a040daa5c84784752a896c89b",
+      "gitBlobSha256": "a8ffa2aa88335068e7a9415fcba6bb033c371b8742b9a8d0e686e93a35940fd7"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-focused-verified-2026-10-09.txt",
+      "capturedSha256": "0ea67c8e66ce5e872a52839b6b43ec2ea15b9ec138c18b2908197974c248a4f7",
+      "gitBlobSha256": "97120be66b762e9a457ecd0e0548c9d3de3efa82cefdd95ad1766fe44b4c3492"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-google-d1-2026-10-09.txt",
+      "capturedSha256": "ed1922b27247efbc316321dac3102d18cb13319f00950ffc267b16cae2a6011d",
+      "gitBlobSha256": "2a5cb64a4b910be6ef7a9b6286dbd41341ef58ef6e38d11fa03fbfafdd569405"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-google-d1-final-2026-10-09.txt",
+      "capturedSha256": "7e92c39d88a70cfb8990e2a47d70153a9736628c734736eb5537fe5197267204",
+      "gitBlobSha256": "ee0f69d32d502848822c492879dd81fd3d6c6296461ea1caf5587f42f31d2817"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-popup-first-2026-10-09.txt",
+      "capturedSha256": "f18794291715db58fec8b3ecdce660990d0027e5b954cb1d79b3e44a799ffc39",
+      "gitBlobSha256": "98e05448f9611e95802d9fe7f4dbc207af7ae9106fa4f045f5190d8888896bc4"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-promotion-before-2026-10-09.txt",
+      "capturedSha256": "bacbd786e7092f614dc8b14624c8f73b6229d10b10adeae61296075b6b169120",
+      "gitBlobSha256": "ff54e48e0da64e447240dc236c3846684ac09a2dd8d8958f7a0225c3f6fc7af9"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-repository-2026-10-09.txt",
+      "capturedSha256": "268d04b4c6a5f0de0fbe7b1ad998db1387a03baeebd5a059c7f3952ca459245f",
+      "gitBlobSha256": "dc17cc8b5c41f309d01d6d7facb382d5a1c5b3a58373249adc72bd7c69a1b33a"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-repository-final-2026-10-09.txt",
+      "capturedSha256": "213c70849e19d2a528c47496e62fa10d661b1c1cbf96ee1df3bcacd1c70957cb",
+      "gitBlobSha256": "2a45c64529579e532fbc92c16676c892e031da1a3d11ab0253eba61957dce7b1"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-repository-verified-2026-10-09.txt",
+      "capturedSha256": "531d27c67c22a00a9295851137d0421c2c7de476fe9f4ab0042b027cc6ce3c1e",
+      "gitBlobSha256": "040bb35a212ab8439505e5299f449852b94f9cde961e24e13bf74bb136ce5b4e"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-service-process-2026-10-09.txt",
+      "capturedSha256": "419f8a710f0db1edd39baab96d61a59abe2f0e2fa835d037528014e17e99a3cd",
+      "gitBlobSha256": "1dca6fbd7429020724e66f51a5410377d6692f81ca13722020b9a2180248b482"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-before-2026-10-09.txt",
+      "capturedSha256": "51b7ff6cb7965735d9b0fabb18dfb3814c4f03bd61addc928232c25311dc056e",
+      "gitBlobSha256": "bcd2c1c8d0416b79f1e9b9ec79434535c4d9b2e84bf02f2ba08f5fb37cb25c39"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-cross-origin-2026-10-09.txt",
+      "capturedSha256": "09f00866375a078220147faaf997c31a2c5ff8f9960cdb0cf3afd5ae9e3048f0",
+      "gitBlobSha256": "9399f93580d35bccb46f98f658a762e9352043959c3ccfbd39f167fa7d98579d"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-cross-origin-final-2026-10-09.txt",
+      "capturedSha256": "af3ff34420bb3f325a930196fbb2d5662c71044967cc0e713b9df1040a27f0ad",
+      "gitBlobSha256": "31d448dbe83a4ecbba024ddf8793cae82937d80e80f0d42622f1db46316b0a60"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-existing-task-2026-10-09.txt",
+      "capturedSha256": "69719513117e58ed4a84911e7ce3ce20bad2c10be4329b09a894c4468e0034f8",
+      "gitBlobSha256": "d1e6f85218519fdcb711cab7735fd91fb1d6a51c3ba7da218630228dda30f44a"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-first-2026-10-09.txt",
+      "capturedSha256": "4aea204bb4b37afb485f8286e4fc232a1da072d68a752b3af0d5f176a1964c92",
+      "gitBlobSha256": "d04f39e7de1c77ff11c3e99d17be864aeab8e6fb3c169aec6dc744eed751d556"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-independent-watch-2026-10-09.txt",
+      "capturedSha256": "2f4c4af6ff85c7549beb3a173013f8d40ec2f9268ecd6e057366c1dcd716fee8",
+      "gitBlobSha256": "308681e88b7df1109b2f4adbe62c2cff1f8058d9529674d66d94d3e1cfedd995"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-independent-watch-final-2026-10-09.txt",
+      "capturedSha256": "d9caa968c3248be97d7690f56fd4f3e05894cd19d7a7228c871dd45024fe55af",
+      "gitBlobSha256": "f7eea4c5eeb94b1888117abc38414f2599ee7e4e8b5f74c16a4fcc783f4edd35"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-source-receipt-2026-10-09.txt",
+      "capturedSha256": "f7171857422a06963d03698ea238f670d0c9b82d1dc11e56cbbead01af515ce5",
+      "gitBlobSha256": "79b4b037fb6a166ece34417b38dd2c1216a3ac6ff5e98c33a13fdae084f320e5"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-stale-route-before-2026-10-09.txt",
+      "capturedSha256": "666cabe51397fbe4de587e02ea9d4dcd2e1417a9b0467a218246b99d7cf20085",
+      "gitBlobSha256": "0ecd70a931f9515d090ac2d5cde252861172b4a01c6eed17deaed2aa3c0a52aa"
+    },
+    {
+      "path": "original-external-form-source-2026-10-09/original-external-form-ui-and-cloud-smoke-2026-10-09.txt",
+      "capturedSha256": "9a54df4b5c51e3f78c946cf29a6bf3edcc8c02abc2d143247cd45b1f523f759c",
+      "gitBlobSha256": "834b1e11320806dcea62a1163c99d7be0365bcfcbc91900031b6b2fed8c4f87b"
+    }
+  ]
+}

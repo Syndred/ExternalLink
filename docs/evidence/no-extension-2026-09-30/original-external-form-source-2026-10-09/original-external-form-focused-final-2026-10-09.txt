@@ -1,0 +1,27 @@
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (10.81ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (5.7852ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (4.521ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (4.6735ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (4.3207ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (1.3325ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (8.3629ms)
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (4.9098ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (1.2991ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (4.6338ms)
+✔ original-external-form-source  actual isolated browser matches original attribution (1444.7108ms)
+✔ original-external-form-source --existing-source actual isolated browser matches original attribution (1379.2542ms)
+✔ original-external-form-source --cross-origin actual isolated browser matches original attribution (1442.7623ms)
+✔ original-external-form-source --untrusted-redirect actual isolated browser matches original attribution (1399.0049ms)
+✔ original-external-form-popup  actual isolated browser matches original attribution (928.8147ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (6.3654ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (3.4773ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (5.3662ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (2.355ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6717.1519

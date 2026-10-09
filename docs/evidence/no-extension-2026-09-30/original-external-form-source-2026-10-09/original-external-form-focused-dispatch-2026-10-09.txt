@@ -1,0 +1,30 @@
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (6.5777ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (3.5611ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (2.9966ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (3.5708ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (3.9734ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (1.2368ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (8.6589ms)
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (5.3662ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (1.2137ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (3.1814ms)
+✔ original-external-form-source  actual isolated browser matches original attribution (1474.9843ms)
+✔ original-external-form-source --existing-source actual isolated browser matches original attribution (1400.5785ms)
+✔ original-external-form-source --cross-origin actual isolated browser matches original attribution (1466.3647ms)
+✔ original-external-form-source --untrusted-redirect actual isolated browser matches original attribution (1410.7153ms)
+✔ original-external-form-source --d1 actual isolated browser matches original attribution (2951.9817ms)
+✔ original-external-form-source --d1-lost-reply actual isolated browser matches original attribution (2978.3727ms)
+✔ original-external-form-source --d1 --google actual isolated browser matches original attribution (2812.077ms)
+✔ original-external-form-popup  actual isolated browser matches original attribution (921.1468ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (4.1056ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.1672ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.7122ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.5303ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15529.0335

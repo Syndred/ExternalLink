@@ -9,7 +9,7 @@ const equal=(a,b)=>{const x=Buffer.from(a||''),y=Buffer.from(b||'');return x.len
 const files=new Map([['/','executor/web/application.html'],['/application.js','executor/web/application.js'],['/comment-studio.js','executor/web/comment-studio.js'],['/application.css','executor/web/application.css'],['/activity-time.js','executor/web/activity-time.js'],['/setup.js','executor/web/setup.js'],['/timeline-core.js','core/submission-timeline.js'],['/profiles-core.js','core/profiles.js'],['/target-filters-core.js','core/target-filters.js'],
  ['/legacy','executor/web/index.html'],['/app.js','executor/web/app.js'],...['submission-journal.js','submission-journal.css','executor-panel.js','executor-panel.css','lib/submission-journal.js'].map(p=>['/extension/'+p,'extension/'+p])]);
 const controls=new Set(['/appData','/taskDetails','/profile','/registerAcceptance','/prepareTask','/runTask','/status','/catalog','/preview','/start','/pause','/resume','/sync','/takeover','/continueTask','/verify','/review','/openRecoveryTask','/observeTask','/closeObservation','/archiveDeferredTabs','/workbenchDocuments','/journalProgress','/journalFlush','/workbenchPending']);
-controls.add('/saveAssistantSettings');controls.add('/requestAutoFill');
+controls.add('/saveAssistantSettings');controls.add('/requestAutoFill');controls.add('/fillAssistantTask');
 controls.add('/clearSiteAnnotation');controls.add('/getBatchLog');
 for(const route of ['/runExportSources','/exportBatchReport','/exportAutomationRun'])controls.add(route);
 for(const route of ['/localRunHistorySources','/previewLocalRunHistory','/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'])controls.add(route);

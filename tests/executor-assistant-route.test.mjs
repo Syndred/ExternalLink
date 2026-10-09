@@ -1,0 +1,19 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,readFile,rm} from 'node:fs/promises';import {join,resolve,sep} from 'node:path';import {tmpdir} from 'node:os';import {spawn} from 'node:child_process';import {once} from 'node:events';import {Store} from '../executor/src/store.mjs';import {workbenchScope} from '../executor/src/workbench-sync.mjs';
+
+test('both actual native services route assistant retries through original guards without changing unknown tasks or permitting unauthorized calls',async()=>{
+ const home=await mkdtemp(join(tmpdir(),'el-assistant-route-')),services=[],pair={endpoint:'http://127.0.0.1:1',workspaceId:'fixture',storageBackend:'d1',deviceId:'fixture-device',deviceToken:'eld_fixture',localToken:'fixture-local'},task={id:'unknown',runId:'original-run',profileId:'p',url:'https://original.example/form',status:'submitted_unconfirmed',attemptBoundary:'original-boundary'},fixed={status:'paused',cursor:13,count:30};let store;
+ try{
+  store=new Store(join(home,'outbox.sqlite'));store.set('pair',pair);store.set('paused',true);store.set('task:unknown',task);store.set('acceptanceBatch',fixed);store.set('applicationSnapshot',{scope:workbenchScope(pair),snapshot:{documents:{siteProfiles:{p:{id:'p',name:'Original',fields:{Name:'Original',Url:'https://original.example'}}},selectedSiteIds:['p'],activeSiteId:'p'},revisions:{siteProfiles:1}}});store.close();store=null;
+  for(const name of ['server.mjs','workbench-server.mjs']){
+   const child=spawn(process.execPath,[resolve('executor/src/'+name)],{windowsHide:true,env:{...process.env,EXTERNALLINK_HOME:home,EXTERNALLINK_PORT:'0',EXTERNALLINK_WEB_PORT:'0'},stdio:['ignore','pipe','pipe']});let stderr='';child.stdout.resume();child.stderr.on('data',part=>stderr+=part);const service={child};services.push(service);
+   for(let n=0;n<100;n++){if(child.exitCode!==null)throw Error(stderr);try{const info=JSON.parse(await readFile(join(home,name==='server.mjs'?'server.json':'workbench.json'),'utf8'));if(info.pid===child.pid){service.endpoint=info.endpoint;break;}}catch{}await new Promise(done=>setTimeout(done,50));}assert.ok(service.endpoint,'service startup');
+  }
+  const outcomes=[];
+  for(const service of services){
+   const call=async headers=>fetch(service.endpoint+'/fillAssistantTask',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({profileId:'p',targetId:'missing',url:'https://original.example/form',fillKey:'assistantFill:unavailable'})});
+   assert.equal((await call({})).status,401);const denied=await call({Authorization:'Bearer fixture-local','X-Workbench-Connection':'wrong-connection'});assert.equal(denied.status,409);
+   const response=await call({Authorization:'Bearer fixture-local'}),body=await response.json();assert.equal(response.status,400,JSON.stringify(body));assert.equal(body.ok,false);assert.match(body.error,/原网页填写记录已变化/);outcomes.push({service:service.endpoint,guardReached:true});
+  }
+  store=new Store(join(home,'outbox.sqlite'),{readOnly:true});assert.deepEqual(store.get('task:unknown'),task);assert.deepEqual(store.get('acceptanceBatch'),fixed);assert.deepEqual(store.get('pair'),pair);assert.equal(store.pendingCount(),0);assert.equal(store.get('paused'),true);console.log(JSON.stringify({kind:'actual_assistant_retry_native_routes',services:outcomes.length,unauthorized401:true,oldConnection409:true,originalRecordGuard400:true,originalUnknownAndFixedRangePreserved:true,productionWrites:0,models:0,realSubmissions:0}));
+ }finally{store?.close();for(const service of services.reverse())if(service.child.exitCode===null){const stopped=once(service.child,'exit');service.child.kill();await stopped;}assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-assistant-route-'));await rm(home,{recursive:true,force:true});}
+});

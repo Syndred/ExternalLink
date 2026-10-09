@@ -1,0 +1,11 @@
+{
+  "kind": "known_original_comment_candidate_history_length_difference",
+  "originalCompleteSelectionHandlerRetainsChars": 5000,
+  "currentHistorySaveRejectsAboveChars": 4000,
+  "evidenceScope": "complete frozen original handlers and actual local native save function; UI replay and page maxlength acceptance remain pending",
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "overallMigrationComplete": false,
+  "requiresFix": true,
+  "actualCandidateHistorySaveRejectedChars": 5000
+}

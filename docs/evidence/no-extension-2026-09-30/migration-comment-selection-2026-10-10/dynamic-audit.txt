@@ -1,0 +1,1 @@
+{"kind":"original_dynamic_declarations_and_call_sites_not_completion_proof","scannedOriginalJavaScriptFiles":22,"sourcePoints":32,"factoryOrTemplateDeclarations":28,"iconFactoryCalls":4,"overallMigrationComplete":false}

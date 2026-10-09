@@ -1,0 +1,99 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "76b6da402f13257d061e2ed48b85789ad3f78cb9",
+  "pulledLatest": true,
+  "focusedPassed": 16,
+  "fullRegression": {
+    "tests": 1114,
+    "pass": 1114,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 479586.6935
+  },
+  "finalFunctionalSourcesUnchangedThroughoutFullRegression": true,
+  "actualUiProof": {
+    "ok": true,
+    "kind": "original_comment_selection_and_snapshots_ui",
+    "completeFrozenSelectionHandlerCompared": true,
+    "sameSelectionDoesNotWrite": true,
+    "twoBeforeSwitchSnapshotsExactlyMatch": true,
+    "originalSnapshotLabelsPreservedAndVisible": true,
+    "selectedIndexAndTextPersisted": true,
+    "failedSnapshotKeepsSelectedIndexAndEdits": true,
+    "invalidSelectionRejected": true,
+    "restoreSelectedIndexAndDrafts": true,
+    "sqliteReopenAndActualUiRestoreSelectedIndex": true,
+    "originalBusinessUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "emptyAndIdenticalCandidateProof": {
+    "ok": true,
+    "kind": "original_comment_selection_and_snapshots_ui",
+    "completeFrozenSelectionHandlerCompared": true,
+    "emptySelectedCandidateSwitchSkipsSnapshot": true,
+    "identicalCandidatesMatchOriginalSnapshotDeduplication": true,
+    "sameSelectionDoesNotWrite": true,
+    "twoBeforeSwitchSnapshotsExactlyMatch": true,
+    "originalSnapshotLabelsPreservedAndVisible": true,
+    "selectedIndexAndTextPersisted": true,
+    "failedSnapshotKeepsSelectedIndexAndEdits": true,
+    "invalidSelectionRejected": true,
+    "restoreSelectedIndexAndDrafts": true,
+    "sqliteReopenAndActualUiRestoreSelectedIndex": true,
+    "originalBusinessUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "nativeServiceReadback": {
+    "ok": true,
+    "sourceCommit": "76b6da402f13257d061e2ed48b85789ad3f78cb9",
+    "committedSourcesMatch": true,
+    "hashes": {
+      "executor/web/comment-studio.js": "b9260905bbc9c8988d0d19a8764ba2cbe6d54381594c17cf7f9d13142c0964e3",
+      "executor/src/comment-history.mjs": "6865577f2ffc68e4b72317cec74ae77967057a76a3a0b1630339f246a60eaf48"
+    },
+    "nativeUiScriptServesExactSource": true,
+    "actualNativeSelectionValidationRejectsBeforeWriting": true,
+    "nativeCommentHistoriesUnchanged": true,
+    "actualNativeAppDataReadback": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "fixedCursor": 13,
+    "fixedCount": 30,
+    "businessWrites": 0,
+    "originalChromeUntouched": true,
+    "productionCommentHistoryCreated": false
+  },
+  "nativeServicesReloaded": true,
+  "workerChanged": false,
+  "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "protectedProductionDataUnchanged": true,
+  "originalChromeUntouched": true,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "intermediateSerialRun": {
+    "completed": false,
+    "stoppedAfterSourceChange": true,
+    "countedAsReleaseEvidence": false
+  },
+  "intermediateParallelRun": {
+    "completed": true,
+    "tests": 1114,
+    "passed": 1114,
+    "sourceChangedDuringRun": true,
+    "countedAsReleaseEvidence": false
+  },
+  "remaining": [
+    "original snapshots retain 5000-character candidate edits but current history validator rejects candidate text above 4000; actual long-text UI and original page maxlength fill family require follow-up"
+  ],
+  "allOriginalCommentBranchesComplete": false,
+  "overallMigrationComplete": false
+}

@@ -5026,8 +5026,38 @@
       "originalChromeUntouched": true
     },
     "remaining": [
+      "candidate text above 4000 is rejected by current history save; follow-up required",
+      "OS clipboard dependency remains controlled evidence only"
+    ],
+    "overallMigrationComplete": false,
+    "historicalRemainingBeforeSelectionFix": [
       "original selected candidate index and automatic before-switch snapshots are not restored by current simultaneous-card UI",
       "OS clipboard has not been tested; clipboard dependency was isolated"
+    ],
+    "historicalSourceCommit": "b10bc17",
+    "selectionGapResolvedBy": "originalCommentSelectionAndSwitchSnapshotsCheckpoint"
+  },
+  "originalCommentSelectionAndSwitchSnapshotsCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "76b6da402f13257d061e2ed48b85789ad3f78cb9",
+    "status": "released_standard_candidate_selection_snapshots_restore_empty_and_duplicate_branches",
+    "evidence": "migration-comment-selection-2026-10-10/summary.json",
+    "focusedPassed": 16,
+    "fullRegression": {
+      "tests": 1114,
+      "pass": 1114,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 479586.6935
+    },
+    "nativeSourceReadback": true,
+    "originalCommentHistoriesUnchanged": true,
+    "originalLedgerAndFixedRangeUnchanged": true,
+    "completeFrozenFunctionBodiesCompared": true,
+    "allOriginalCommentBranchesComplete": false,
+    "remaining": [
+      "original snapshots retain 5000-character candidate edits but current history validator rejects candidate text above 4000; actual long-text UI and original page maxlength fill family require follow-up"
     ],
     "overallMigrationComplete": false
   }

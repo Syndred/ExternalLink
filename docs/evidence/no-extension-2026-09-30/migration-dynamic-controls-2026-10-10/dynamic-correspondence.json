@@ -530,15 +530,17 @@
       "declaration": "createElement(\"button\")",
       "kind": "button",
       "originalCompleteFunctionSha256": "8ad7096719a00e7384d264ab6fc98c7fef3084a0b1a27c90253b5b0afd37c695",
-      "entry": "AI 评论 → 候选文本／复制／填入原任务评论区",
+      "entry": "AI 评论 → 选择候选／候选文本／复制／填入原任务评论区",
       "operation": "编辑指定候选，保存、复制或填入对应原任务",
       "persistence": "commentHistory及原任务selectedComment",
       "currentSource": "executor/web/comment-studio.js::renderCommentStudio",
       "tests": [
+        "tests/executor-original-comment-selection.test.mjs",
+        "tests/executor-original-comment-candidate-actions.test.mjs",
         "tests/executor-original-comment-restore.test.mjs",
         "tests/executor-original-comment-drafts.test.mjs"
       ],
-      "scope": "已有原候选元数据、字符数、历史及任务归属证据",
+      "scope": "完整原选择函数对应实际选择编号、两次切换前快照、空候选跳过、失败保存与SQLite重开；复制仅隔离依赖调用，其他分支仍须总审计",
       "completion": "requires_branch_evidence_audit"
     },
     {

@@ -1,0 +1,11 @@
+{
+  "algorithm": "sha256 UTF-8 LF normalized",
+  "sources": {
+    "executor/web/comment-studio.js": "b9260905bbc9c8988d0d19a8764ba2cbe6d54381594c17cf7f9d13142c0964e3",
+    "executor/src/comment-history.mjs": "6865577f2ffc68e4b72317cec74ae77967057a76a3a0b1630339f246a60eaf48",
+    "executor/test/original-comment-selection.mjs": "73e2b4b88f32b0235b18dfe9eaeed86fd32a4f6c9850ee03d630749385919172",
+    "executor/test/original-comment-empty-selection.mjs": "d51b4e1616fefdf5a00764360a9a235e5febab209e52adde4dba5f413957e075",
+    "tests/executor-original-comment-selection.test.mjs": "bc2961910f7bd755a492c4d247bad6fa20f0523d9c77fb384089bf22548a9b5e",
+    "tests/helpers/original-comment-restore.mjs": "7397c02f3725f5222730f9f8588bff6476f9b67a802f8084183510b67aa5f1e5"
+  }
+}

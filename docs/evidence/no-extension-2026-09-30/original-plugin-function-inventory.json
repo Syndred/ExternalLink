@@ -752,8 +752,24 @@
       "id": "btnSaveSite",
       "label": "💾 保存当前站点资料",
       "mapping": "资料与媒体 / 保存资料",
-      "verification": "真实云端保存及界面回归",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "原完整保存函数及资料输入已有对照；图片暂存后保存和无候选纯文本历史已补齐并发布。",
+      "status": "mapped_requires_full_acceptance",
+      "verificationHistory": [
+        {
+          "verification": "真实云端保存及界面回归"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-staged-inputs-2026-10-10/summary.json",
+            "sha256": "ab289f429d3e300efc566d6437a4a4b5e10dfa3b133e742f47c31788c33aa89d"
+          }
+        ],
+        "limit": "此处更新此前图片暂存待处理的过时说明；其他资料与动态分支仍须逐项审查。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
@@ -786,7 +802,23 @@
       "label": "首次迁移到云端",
       "mapping": "首次迁移到云端 / 原备份预览合并",
       "status": "implemented_requires_full_acceptance",
-      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+      "verification": "隔离实际界面首次迁移、重连和原版本保护已通过；没有清空生产工作区。",
+      "verificationHistory": [
+        {
+          "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-reset-manual-2026-10-09/summary.json",
+            "sha256": "aeff2ba3d83e92e2ca9b37277786090a39b33cca0d164bb91a047a39d65c19e0"
+          }
+        ],
+        "limit": "首次迁移与清空是不同操作；仅复核已保存证据，未执行新生产迁移。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
@@ -802,15 +834,51 @@
       "label": "确认本机为准并上传",
       "mapping": "设置与备份 / 上传本机待同步修改",
       "status": "mapped_requires_full_acceptance",
-      "verification": "对应原待同步键上传，保持冲突与未知响应；真实验证待补"
+      "verification": "实际界面上传已覆盖队列置顶和当前页加入库的丢失回复恢复，SQLite重开后不重复写入。",
+      "verificationHistory": [
+        {
+          "verification": "对应原待同步键上传，保持冲突与未知响应；真实验证待补"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-library-pin-2026-10-10/summary.json",
+            "sha256": "e5486f742ed6a22ec0b7e567de59d3f6764e9003dc706f401f8f31bc070c4b22"
+          },
+          {
+            "path": "migration-browser-add-ui-2026-10-10/summary.json",
+            "sha256": "0d454ce2cb76b1c6fb4efc4d0ce216ab014b1d462d763177648809122ee12c2e"
+          }
+        ],
+        "limit": "上述具体修改通过，不能据此宣布所有设置、资料或冲突分支全部验收完成。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
       "id": "btnSyncSubmifyLibrary",
       "label": "同步 Submify 最新库",
       "mapping": "外链库 / 同步公共外链库",
-      "verification": "100 条来源真实独立读回",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "历史100条真实来源读取保留；近期固定51条实际界面、完整来源、SQLite重开及丢失回复恢复已通过。",
+      "status": "mapped_requires_full_acceptance",
+      "verificationHistory": [
+        {
+          "verification": "100 条来源真实独立读回"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-public-library-ui-2026-10-10/summary.json",
+            "sha256": "9fbf7a22c12b1c79603b91364a5043d266221db7dc3c1cc20a6d1bc9ab570e4b"
+          }
+        ],
+        "limit": "近期提供方与云端受控；原重复来源编号故障保留，当前51编号全部核验；未执行新生产同步。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
@@ -858,7 +926,23 @@
       "label": "🗑 清除所有数据",
       "mapping": "清空本机工作区 / 完整私有备份 / 确认文字",
       "status": "implemented_requires_full_acceptance",
-      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+      "verification": "隔离实际清空、完整私有备份与重连通过；非法确认和忙碌状态拒绝。生产资料保持。",
+      "verificationHistory": [
+        {
+          "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-reset-manual-2026-10-09/summary.json",
+            "sha256": "aeff2ba3d83e92e2ca9b37277786090a39b33cca0d164bb91a047a39d65c19e0"
+          }
+        ],
+        "limit": "不以清空生产资料作为验收要求；本轮没有再次清空。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
@@ -873,8 +957,24 @@
       "id": "btnPrefetchDomainAge",
       "label": "预取当前队列域名年龄",
       "mapping": "外链库 / 查询域名年龄",
-      "verification": "真实未知结果回读，成功 RDAP 待验收",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "已有认证服务回读证明producthunt.com及bai.tools均有权威注册日期；较早429失败仍保留。",
+      "status": "mapped_requires_full_acceptance",
+      "verificationHistory": [
+        {
+          "verification": "真实未知结果回读，成功 RDAP 待验收"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-original-media-source-2026-10-09/migration-original-media-source-rdap-recheck-2026-10-09.json",
+            "sha256": "484a134a71e19aa8fd217e8b589181e31edbbea9d0b2759336dfbbd6c460c8b1"
+          }
+        ],
+        "limit": "读取历史接受证据，未重新请求注册局；较早未知／429记录不当作当前唯一结论。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/settings.html",
@@ -882,7 +982,12 @@
       "label": "保存助手设置",
       "mapping": "浏览器助手设置 / 原任务访问填表 / 人工字段按钮",
       "status": "implemented_requires_full_acceptance",
-      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+      "verification": "助手设置及访问自动填写／人工字段按钮已有实现与分组证据，仍需逐动作核对；本项不包含清空数据。",
+      "verificationHistory": [
+        {
+          "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+        }
+      ]
     },
     {
       "source": "extension/settings.html",
@@ -890,7 +995,23 @@
       "label": "检查云端媒体",
       "mapping": "设置与备份 / 检查云端媒体",
       "status": "mapped_requires_full_acceptance",
-      "verification": "真实53个素材，6个配置引用，缺失0"
+      "verification": "原独立索引50项元数据恢复，50项原字节SHA一致，8产品实际目录和图片解码通过；另3项保持。",
+      "verificationHistory": [
+        {
+          "verification": "真实53个素材，6个配置引用，缺失0"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-original-media-restore-2026-10-10/summary.json",
+            "sha256": "7341dda76a980ee63044cf8d77f0e7f0303cfe8b5c002396b084a69611314826"
+          }
+        ],
+        "limit": "一项未索引文件归属仍未证明，另两项为旧验收文件；不能混同53项均有原归属。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/sidepanel.html",
@@ -1012,8 +1133,24 @@
       "id": "btnRefreshMedia",
       "label": "刷新",
       "mapping": "资料与媒体 / 媒体预览",
-      "verification": "云端素材回读，原设备缺失素材待验收",
-      "status": "mapped_requires_full_acceptance"
+      "verification": "原生8产品50文件刷新、排序和图片解码通过；原50项归属已恢复。",
+      "status": "mapped_requires_full_acceptance",
+      "verificationHistory": [
+        {
+          "verification": "云端素材回读，原设备缺失素材待验收"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-original-media-restore-2026-10-10/summary.json",
+            "sha256": "7341dda76a980ee63044cf8d77f0e7f0303cfe8b5c002396b084a69611314826"
+          }
+        ],
+        "limit": "目录读取不是全部任务媒体上传的完成证明；另3项保持。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/sidepanel.html",
@@ -1021,8 +1158,25 @@
       "label": "加入外链列表（置顶）",
       "mapping": "外链库 / 浏览器当前页加入库",
       "status": "implemented_requires_full_acceptance",
-      "verification": "完整对照冻结原 addToUrlList：新入口前置，已有位置与原重复行保留；原规范键和域名旧注解及删除键按原规则清除；投稿记录与其他入口保持。七类实际浏览器、真实界面新增和重复加入、双云端原子版本及断线恢复通过；正式外链库未改动",
-      "evidence": "original-browser-add-behavior-2026-10-09.json"
+      "verification": "完整原加库文档对照、实际页面选择、跳转与关闭拒绝、三文档离线保存及丢失回复恢复已通过。",
+      "evidence": "original-browser-add-behavior-2026-10-09.json",
+      "verificationHistory": [
+        {
+          "verification": "完整对照冻结原 addToUrlList：新入口前置，已有位置与原重复行保留；原规范键和域名旧注解及删除键按原规则清除；投稿记录与其他入口保持。七类实际浏览器、真实界面新增和重复加入、双云端原子版本及断线恢复通过；正式外链库未改动",
+          "evidence": "original-browser-add-behavior-2026-10-09.json"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "migration-browser-add-ui-2026-10-10/summary.json",
+            "sha256": "0d454ce2cb76b1c6fb4efc4d0ce216ab014b1d462d763177648809122ee12c2e"
+          }
+        ],
+        "limit": "实际独立浏览器及受控云端；用户原Chrome和正式外链库未操作。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/sidepanel.html",
@@ -1062,9 +1216,34 @@
       "id": "btnQuickOpenBatch",
       "label": "打开下一批",
       "mapping": "外链库 / 批量打开网站",
-      "verification": "原选择、选项保持、后台打开、活动页填写、切页取消与恢复已核验；Windows有界面双窗口通过。打开数量按页签创建确认计数，网络失败不改成创建失败，慢加载不阻塞批次；真实创建失败仍保留",
+      "verification": "历史独立有界面双窗口通过；近期实际界面固定范围、失败项保留、SQLite重开继续及多历史展示通过。",
       "status": "mapped_requires_full_acceptance",
-      "evidence": "original-quick-open-created-target-2026-10-09.json"
+      "evidence": "original-quick-open-created-target-2026-10-09.json",
+      "verificationHistory": [
+        {
+          "verification": "原选择、选项保持、后台打开、活动页填写、切页取消与恢复已核验；Windows有界面双窗口通过。打开数量按页签创建确认计数，网络失败不改成创建失败，慢加载不阻塞批次；真实创建失败仍保留",
+          "evidence": "original-quick-open-created-target-2026-10-09.json"
+        }
+      ],
+      "currentEvidenceReview": {
+        "date": "2026-10-10",
+        "evidence": [
+          {
+            "path": "original-quick-open-created-target-2026-10-09.json",
+            "sha256": "197ec29e9930bc6be0c0c7d463631ef1a465912140edf06c0888d6df5c7ce4c2"
+          },
+          {
+            "path": "migration-quick-open-history-2026-10-10/summary.json",
+            "sha256": "bd00b714f38f65e27bd43d60f13690760582a70c3ce666f343fbf53ff6299ded"
+          },
+          {
+            "path": "migration-entry-evidence-review-2026-10-10/current-native-background-proof.txt",
+            "sha256": "f196fd12d152c439059fbc73e59313f57ac0fcde428ffc1222eac1f0f0964a1a"
+          }
+        ],
+        "limit": "当前原生独立浏览器七模式复核通过；旧双窗口结果仍为历史接受证据，当前无头运行不证明用户桌面焦点。",
+        "overallMigrationComplete": false
+      }
     },
     {
       "source": "extension/sidepanel.html",
@@ -4794,5 +4973,16 @@
     "productionCodeChanged": false,
     "newFullRunClaimed": false,
     "overallMigrationComplete": false
+  },
+  "originalEntryEvidenceReconciliationCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-entry-evidence-review-2026-10-10/summary.json",
+    "reviewedEntries": 10,
+    "staleNotesCorrected": true,
+    "newRuntimeTests": 0,
+    "overallMigrationComplete": false,
+    "currentNativeBackgroundScenarios": 7,
+    "currentNativeBackgroundAllPassed": true,
+    "protectedOriginalDataKept": true
   }
 }

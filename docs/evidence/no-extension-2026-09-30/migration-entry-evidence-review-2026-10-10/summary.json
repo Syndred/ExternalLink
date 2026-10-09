@@ -1,0 +1,259 @@
+{
+  "kind": "reviewed_saved_entry_evidence_with_scoped_native_background_recheck",
+  "date": "2026-10-10",
+  "sourceCommit": "29bdf6bfe9d6ed53fa7ba3d58e2f680ac8d0299f",
+  "reviewedEntries": 10,
+  "originalButtonCount": 55,
+  "rows": [
+    {
+      "id": "btnCloudMigrate",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "首次迁移到云端 / 原备份预览合并",
+      "reviewedEvidence": [
+        {
+          "path": "migration-reset-manual-2026-10-09/summary.json",
+          "sha256": "aeff2ba3d83e92e2ca9b37277786090a39b33cca0d164bb91a047a39d65c19e0"
+        }
+      ],
+      "verification": "隔离实际界面首次迁移、重连和原版本保护已通过；没有清空生产工作区。",
+      "limit": "首次迁移与清空是不同操作；仅复核已保存证据，未执行新生产迁移。",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "id": "btnClearData",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "清空本机工作区 / 完整私有备份 / 确认文字",
+      "reviewedEvidence": [
+        {
+          "path": "migration-reset-manual-2026-10-09/summary.json",
+          "sha256": "aeff2ba3d83e92e2ca9b37277786090a39b33cca0d164bb91a047a39d65c19e0"
+        }
+      ],
+      "verification": "隔离实际清空、完整私有备份与重连通过；非法确认和忙碌状态拒绝。生产资料保持。",
+      "limit": "不以清空生产资料作为验收要求；本轮没有再次清空。",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "id": "btnSyncSubmifyLibrary",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "外链库 / 同步公共外链库",
+      "reviewedEvidence": [
+        {
+          "path": "migration-public-library-ui-2026-10-10/summary.json",
+          "sha256": "9fbf7a22c12b1c79603b91364a5043d266221db7dc3c1cc20a6d1bc9ab570e4b"
+        }
+      ],
+      "verification": "历史100条真实来源读取保留；近期固定51条实际界面、完整来源、SQLite重开及丢失回复恢复已通过。",
+      "limit": "近期提供方与云端受控；原重复来源编号故障保留，当前51编号全部核验；未执行新生产同步。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnCloudPush",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "设置与备份 / 上传本机待同步修改",
+      "reviewedEvidence": [
+        {
+          "path": "migration-library-pin-2026-10-10/summary.json",
+          "sha256": "e5486f742ed6a22ec0b7e567de59d3f6764e9003dc706f401f8f31bc070c4b22"
+        },
+        {
+          "path": "migration-browser-add-ui-2026-10-10/summary.json",
+          "sha256": "0d454ce2cb76b1c6fb4efc4d0ce216ab014b1d462d763177648809122ee12c2e"
+        }
+      ],
+      "verification": "实际界面上传已覆盖队列置顶和当前页加入库的丢失回复恢复，SQLite重开后不重复写入。",
+      "limit": "上述具体修改通过，不能据此宣布所有设置、资料或冲突分支全部验收完成。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnPrefetchDomainAge",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "外链库 / 查询域名年龄",
+      "reviewedEvidence": [
+        {
+          "path": "migration-original-media-source-2026-10-09/migration-original-media-source-rdap-recheck-2026-10-09.json",
+          "sha256": "484a134a71e19aa8fd217e8b589181e31edbbea9d0b2759336dfbbd6c460c8b1"
+        }
+      ],
+      "verification": "已有认证服务回读证明producthunt.com及bai.tools均有权威注册日期；较早429失败仍保留。",
+      "limit": "读取历史接受证据，未重新请求注册局；较早未知／429记录不当作当前唯一结论。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnRefreshMediaLibrary",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "设置与备份 / 检查云端媒体",
+      "reviewedEvidence": [
+        {
+          "path": "migration-original-media-restore-2026-10-10/summary.json",
+          "sha256": "7341dda76a980ee63044cf8d77f0e7f0303cfe8b5c002396b084a69611314826"
+        }
+      ],
+      "verification": "原独立索引50项元数据恢复，50项原字节SHA一致，8产品实际目录和图片解码通过；另3项保持。",
+      "limit": "一项未索引文件归属仍未证明，另两项为旧验收文件；不能混同53项均有原归属。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnRefreshMedia",
+      "originalSource": "extension/sidepanel.html",
+      "currentEntry": "资料与媒体 / 媒体预览",
+      "reviewedEvidence": [
+        {
+          "path": "migration-original-media-restore-2026-10-10/summary.json",
+          "sha256": "7341dda76a980ee63044cf8d77f0e7f0303cfe8b5c002396b084a69611314826"
+        }
+      ],
+      "verification": "原生8产品50文件刷新、排序和图片解码通过；原50项归属已恢复。",
+      "limit": "目录读取不是全部任务媒体上传的完成证明；另3项保持。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnAddToUrlList",
+      "originalSource": "extension/sidepanel.html",
+      "currentEntry": "外链库 / 浏览器当前页加入库",
+      "reviewedEvidence": [
+        {
+          "path": "migration-browser-add-ui-2026-10-10/summary.json",
+          "sha256": "0d454ce2cb76b1c6fb4efc4d0ce216ab014b1d462d763177648809122ee12c2e"
+        }
+      ],
+      "verification": "完整原加库文档对照、实际页面选择、跳转与关闭拒绝、三文档离线保存及丢失回复恢复已通过。",
+      "limit": "实际独立浏览器及受控云端；用户原Chrome和正式外链库未操作。",
+      "status": "implemented_requires_full_acceptance"
+    },
+    {
+      "id": "btnQuickOpenBatch",
+      "originalSource": "extension/sidepanel.html",
+      "currentEntry": "外链库 / 批量打开网站",
+      "reviewedEvidence": [
+        {
+          "path": "original-quick-open-created-target-2026-10-09.json",
+          "sha256": "197ec29e9930bc6be0c0c7d463631ef1a465912140edf06c0888d6df5c7ce4c2"
+        },
+        {
+          "path": "migration-quick-open-history-2026-10-10/summary.json",
+          "sha256": "bd00b714f38f65e27bd43d60f13690760582a70c3ce666f343fbf53ff6299ded"
+        },
+        {
+          "path": "migration-entry-evidence-review-2026-10-10/current-native-background-proof.txt",
+          "sha256": "f196fd12d152c439059fbc73e59313f57ac0fcde428ffc1222eac1f0f0964a1a"
+        }
+      ],
+      "verification": "历史独立有界面双窗口通过；近期实际界面固定范围、失败项保留、SQLite重开继续及多历史展示通过。",
+      "limit": "当前原生独立浏览器七模式复核通过；旧双窗口结果仍为历史接受证据，当前无头运行不证明用户桌面焦点。",
+      "status": "mapped_requires_full_acceptance"
+    },
+    {
+      "id": "btnSaveSite",
+      "originalSource": "extension/settings.html",
+      "currentEntry": "资料与媒体 / 保存资料",
+      "reviewedEvidence": [
+        {
+          "path": "migration-staged-inputs-2026-10-10/summary.json",
+          "sha256": "ab289f429d3e300efc566d6437a4a4b5e10dfa3b133e742f47c31788c33aa89d"
+        }
+      ],
+      "verification": "原完整保存函数及资料输入已有对照；图片暂存后保存和无候选纯文本历史已补齐并发布。",
+      "limit": "此处更新此前图片暂存待处理的过时说明；其他资料与动态分支仍须逐项审查。",
+      "status": "mapped_requires_full_acceptance"
+    }
+  ],
+  "stagedInputsEvidence": {
+    "path": "migration-staged-inputs-2026-10-10/summary.json",
+    "sha256": "ab289f429d3e300efc566d6437a4a4b5e10dfa3b133e742f47c31788c33aa89d"
+  },
+  "currentNativeBackgroundRecheck": {
+    "path": "migration-entry-evidence-review-2026-10-10/current-native-background-proof.txt",
+    "sha256": "f196fd12d152c439059fbc73e59313f57ac0fcde428ffc1222eac1f0f0964a1a",
+    "scenarios": 7,
+    "proof": {
+      "ok": true,
+      "kind": "original_background_quick_open_native_chrome",
+      "realRuntimeConnection": true,
+      "results": [
+        {
+          "mode": "background-batch-with-auto-fill-enabled",
+          "frozenTabsActiveFalse": true,
+          "foregroundRetained": true,
+          "noRegistrationOrFill": true,
+          "backgroundContentRequestIgnored": true
+        },
+        {
+          "mode": "activate-one-background-page",
+          "originalActiveVisitMatches": true,
+          "selectedPageFilledOnly": true
+        },
+        {
+          "mode": "switch-before-delayed-fill-and-return",
+          "cancelledBeforeRegistration": true,
+          "originalCancelledRecordRecovered": true
+        },
+        {
+          "mode": "switch-during-cloud-confirmation",
+          "stoppedBeforeRegistration": true
+        },
+        {
+          "mode": "explicit-native-panel-background-selection",
+          "intentionalSelectedPageFills": true
+        },
+        {
+          "mode": "created-tab-navigation-failure",
+          "originalOpenCountRetained": true,
+          "networkFailureObserved": true,
+          "errorPageNotInspected": true
+        },
+        {
+          "mode": "created-tab-slow-navigation",
+          "batchCompletesBeforeNetworkResponse": true
+        }
+      ],
+      "registrations": 3,
+      "posts": 0,
+      "externalRequests": 0,
+      "productionWrites": 0,
+      "realModelCalls": 0,
+      "originalChromeUntouched": true
+    }
+  },
+  "newRuntimeTests": 0,
+  "newFullRunClaimed": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false,
+  "limitations": [
+    "Saved evidence is reviewed with its original execution scope; this entry review does not imply a fresh provider run. A separate current native background browser check is scoped to its seven recorded modes.",
+    "Original button completion states remain unchanged; all unreviewed branches still require completion audit."
+  ],
+  "currentProductionProtection": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  }
+}

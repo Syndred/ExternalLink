@@ -4776,7 +4776,10 @@
     "fullOriginalAddDocumentsCompared": true,
     "threeDocumentReplyLossRecoveredOnce": true,
     "fullPassed": 1109,
-    "nativeReleasePending": true,
-    "overallMigrationComplete": false
+    "nativeReleasePending": false,
+    "overallMigrationComplete": false,
+    "sourceCommit": "ace9819efe8053af556b8876ecf1be044a9cfb55",
+    "originalServicesUpdated": true,
+    "productionProtectionPassed": true
   }
 }

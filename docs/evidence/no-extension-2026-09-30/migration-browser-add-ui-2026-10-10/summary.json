@@ -20,9 +20,63 @@
     "skipped": 0,
     "durationMs": 479428.4194
   },
-  "nativeReleasePending": true,
+  "nativeReleasePending": false,
   "workerChanged": false,
   "originalBrowserChanged": false,
   "productionWrites": 0,
-  "overallMigrationComplete": false
+  "overallMigrationComplete": false,
+  "sourceCommit": "ace9819efe8053af556b8876ecf1be044a9cfb55",
+  "nativeServicePorts": [
+    19388,
+    19389
+  ],
+  "nativeReadonlyStatusPassed": true,
+  "nativeReadback": {
+    "ok": true,
+    "sourceCommit": "ace9819efe8053af556b8876ecf1be044a9cfb55",
+    "committedBackendSourceMatches": true,
+    "backendSha256": "29ca36cc7818c66b51f19c90d4c8e6ccc191f75643551df7f374c56d59226d25",
+    "actualNativeAppDataReadback": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "fixedCursor": 13,
+    "fixedCount": 30,
+    "businessWrites": 0,
+    "originalBrowserChanged": false,
+    "browserAddExecutedInProduction": false
+  },
+  "productionProtection": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  }
 }

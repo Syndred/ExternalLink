@@ -1,3 +1,4 @@
+import {completeSinglePageReceiptQueue} from './single-page-receipt-queue.mjs';
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {attachEngine} from './engine.mjs';
@@ -15,7 +16,7 @@ export async function armPreparedManualWatch(runtime,task,page){
    if(!['manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)||message.frameUrl!==frameUrl||runtime.manualWatchFrames.get(task.id)!==binding)return{ok:false};
    const bound={...message,...input,pageUrl:page.url(),frameUrl,documentId:message.executorDocumentId};
    return message.action==='manualSubmissionClicked'&&runtime.dispatchControl?runtime.dispatchControl('manualWatchMessage',bound):manualWatchMessage(runtime,bound);
-  },{worldName:'ExternalLinkManualSubmissionWatch',manualWatch:true});binding.engines.push(engine);await engine.call({action:'watchManualSubmission',...issued.watch});
+  },{worldName:'ExternalLinkManualSubmissionWatch',manualWatch:true});binding.engines.push(engine);const ready=await engine.call({action:'watchManualSubmission',...issued.watch});if(!ready?.ok||!(await manualWatchMessage(runtime,{...input,action:'manualSubmissionWatchReady',token:issued.watch.token,frameUrl,documentId:engine.documentId,baseline:ready.baseline})).ok)throw Error('原网页提交监听尚未确认就绪，停止填写');
  }}catch(error){for(const engine of binding.engines)await engine.detach();if(runtime.manualWatchFrames.get(task.id)===binding)runtime.manualWatchFrames.delete(task.id);throw error;}
 }
 export async function manualWatchMessage(runtime,input){
@@ -72,13 +73,14 @@ export async function checkManualWatches(runtime){
    const frame=watch.frame.main?page.mainFrame():page.frames().find(f=>f.url()===watch.frame.url);if(!frame)throw Error('原提交区域已关闭，请人工核验');
    let engine;try{engine=await attachEngine(runtime.context,frame);const evidence=await engine.call({action:'classifySubmitEvidence',destinationUrl:watch.destinationUrl}),normalized=s=>String(s||'').replace(/\s+/g,' ').trim();
     if(evidence.matched&&normalized(evidence.evidence)&&normalized(evidence.evidence)!==normalized(watch.frame.baseline)){
-     await runtime.lease(task,{online:true});await runtime.accept(task,page,evidence);await runtime.synchronize();watch.status='confirmed';watch.confirmedAt=new Date().toISOString();
+     await runtime.lease(task,{online:true});await runtime.accept(task,page,evidence);await runtime.synchronize();if(runtime.store.get('task:'+task.id)?.cloudVerified!==true)throw Error('原回执已存本机，等待云端独立回读');watch.status='confirmed';watch.confirmedAt=new Date().toISOString();
     }
    }finally{await engine?.detach();}
    }
   }catch(error){watch.error=error.message;}
   finally{runtime.manualWatchJob=false;}
-  watch.checks++;if(watch.status==='checking'&&(watch.checks>=12||Date.now()-Date.parse(watch.clickedAt)>60000))watch.status='needs_manual';
+  watch.checks++;if(watch.status==='checking'&&!runtime.store.get('task:'+watch.taskId)?.receipt&&(watch.checks>=12||Date.now()-Date.parse(watch.clickedAt)>60000))watch.status='needs_manual';
   runtime.store.set(key(watch.taskId),watch);
  }
+ await completeSinglePageReceiptQueue(runtime);
 }

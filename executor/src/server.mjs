@@ -98,7 +98,7 @@ const server = http.createServer(async (req, res) => {
       if(route==='/previewConnection')return previewConnection(runtime,input);
       if(route==='/commitConnection')return commitConnection(runtime,input,{expectedId});
       if(['/localRecoverySources','/previewLocalRecovery','/submissionJournalRecoverLocal'].includes(route))return runtime.control(route.slice(1),input);
-      if(['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'].includes(route))return runtime.control(route.slice(1),input);
+      if(['/sidepanelState','/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'].includes(route))return runtime.control(route.slice(1),input);
       if(['/clearSiteAnnotation','/getBatchLog','/openManualTaskPage','/manualSkip','/manualSubmit','/previewManualConfirmation','/confirmSubmissionSuccess','/stop','/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'].includes(route))return runtime.control(route.slice(1),input);
       if(['/runExportSources','/exportBatchReport','/exportAutomationRun'].includes(route))return runtime.control(route.slice(1),input);
       if(['/localRunHistorySources','/previewLocalRunHistory','/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'].includes(route))return runtime.control(route.slice(1),input);

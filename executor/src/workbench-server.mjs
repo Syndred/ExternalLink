@@ -15,7 +15,7 @@ for(const route of ['/runExportSources','/exportBatchReport','/exportAutomationR
 for(const route of ['/localRunHistorySources','/previewLocalRunHistory','/previewRunHistory','/importRunHistory','/runHistoryUploadStart','/runHistoryUploadPart','/runHistoryUploadComplete'])controls.add(route);
 for(const route of ['/openManualTaskPage','/manualSkip','/manualSubmit','/previewManualConfirmation','/confirmSubmissionSuccess','/stop'])controls.add(route);
 for(const route of ['/getSubmissionQueue','/advanceSubmission','/removeFromSubmissionQueue'])controls.add(route);
-for(const route of ['/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'])controls.add(route);
+for(const route of ['/sidepanelState','/sidepanelOpened','/sidepanelClosed','/sidepanelDetect','/sidepanelFill'])controls.add(route);
 for(const route of ['/localRecoverySources','/previewLocalRecovery','/submissionJournalRecoverLocal'])controls.add(route);
 for(const route of ['/libraryMutation','/previewBatch','/startBatch','/extractProfile','/generateProfile','/commentDrafts','/detectOriginalTask','/commentHistory','/mediaLibrary','/browserLibraryPages','/addBrowserPage','/cloudSyncStatus','/cloudSyncPush','/cloudSyncPull','/previewCloudPull','/commitCloudPull','/saveCommentVersion','/quickOpenLibrary','/fillCommentDraft','/exportBackup','/previewBackup','/importBackup','/backupUploadStart','/backupUploadPart','/backupUploadComplete','/startDomainAge','/startLinkMonitor','/dismissMonitorAlert','/startPublicLibrarySync'])controls.add(route);
 controls.add('/resetWorkspace');controls.add('/resolveConflict');

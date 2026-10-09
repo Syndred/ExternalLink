@@ -10,7 +10,7 @@ function appendMediaUploadStatus(panel,task){
 }
 const consumedQuickOpen=new Set();
 const quickOpenPreferences={batchSize:'5',intervalMs:'800',removeOpened:true};
-let activeSinglePagePanel=null;
+let activeSinglePagePanel=null,singlePageReceiptPoll=null;
 let draggingProductId=null,productOrderSaving=false;
 let activeProductEditor=null;
 function canLeaveProductEditor(){
@@ -53,12 +53,12 @@ async function showLocalRecovery(){
  panel.replaceChildren(el('h2',{text:'从本机备份恢复资料'}),el('p',{text:'选择本机保留的原资料，比较后选择恢复哪些内容。选中的资料文档按来源恢复；现有收件证据、时间线及素材历史受保护，执行前先保存完整本机备份。连接凭据和投稿批次不会被旧备份替换。'}),...pending,selection,sourceInfo,compare,previewPanel,message,...listing.sources.filter(s=>s.unavailable).map(s=>el('p',{class:'muted',text:s.label+'：'+s.error})));
  if(!available.length)message.textContent='未发现可用的本机资料快照，可通过原插件备份导入入口恢复。';
 }
-async function closeSinglePagePanel(){const id=activeSinglePagePanel;activeSinglePagePanel=null;if(id)await request('/sidepanelClosed',{panelId:id});}
-async function showSinglePage(){
- await closeSinglePagePanel();const listing=await request('/browserLibraryPages',{});if(!listing.pages.length)throw Error('执行器浏览器中没有普通网页，请先打开要填写的网站');
+async function closeSinglePagePanel(){clearInterval(singlePageReceiptPoll);singlePageReceiptPoll=null;const id=activeSinglePagePanel;activeSinglePagePanel=null;if(id)await request('/sidepanelClosed',{panelId:id});}
+async function showSinglePage(preferred={}){
+ if(!preferred.panel)await closeSinglePagePanel();const listing=await request('/browserLibraryPages',{});if(preferred.panel){const current=await request('/sidepanelState',{});if(!preferred.isCurrent?.()||current.panel?.id!==preferred.panel.id||current.panel.generation!==preferred.panel.generation||current.panel.selectedTargetId!==preferred.targetId)return;}if(preferred.targetId&&!listing.pages.some(p=>p.targetId===preferred.targetId))throw Error('下一站页面已关闭，请刷新网页列表后选择；未切换到其他网页');if(!listing.pages.length)throw Error('执行器浏览器中没有普通网页，请先打开要填写的网站');
  if(!detail.open)detail.showModal();
  const panel=$('detail-content'),pageSelect=el('select',{'aria-label':'选择填写网页'},listing.pages.map(p=>el('option',{value:p.targetId,text:p.title+' · '+p.url}))),productSelect=el('select',{'aria-label':'单页填写使用的产品'},data.model.products.filter(p=>!p.archived).map(p=>el('option',{value:p.id,text:p.name}))),mode=el('select',{'aria-label':'单页填写模式'},[el('option',{value:'form',text:'产品表单'}),el('option',{value:'comment',text:'评论表单'})]),comment=el('textarea',{'aria-label':'单页待填写评论',placeholder:'填写评论时使用这里的文本'}),message=el('p',{role:'status'}),report=el('div'),submissionControls=el('div');let submit=false,confirmProductHuntCreate=false;
- productSelect.value=profileFilter||currentProductId();const opened=await request('/sidepanelOpened',{profileId:productSelect.value,targetId:pageSelect.value});activeSinglePagePanel=opened.panel.id;
+ productSelect.value=preferred.profileId||profileFilter||currentProductId();if(preferred.targetId&&listing.pages.some(p=>p.targetId===preferred.targetId))pageSelect.value=preferred.targetId;const opened=preferred.panel?{panel:preferred.panel}:await request('/sidepanelOpened',{profileId:productSelect.value,targetId:pageSelect.value});clearInterval(singlePageReceiptPoll);activeSinglePagePanel=opened.panel.id;let selectionRevision=0,seenReceiptCompletion=opened.panel.receiptCompletion?.id;
  const parameters=()=>({panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value,expectedUrl:listing.pages.find(p=>p.targetId===pageSelect.value).url,mode:mode.value,commentText:comment.value,confirmProductHuntCreate});
  const fill=button('填写所选网页',async()=>{
   const result=await request('/sidepanelFill',{...parameters(),submit,ordinaryPermissionsAuthorized:submit});
@@ -67,15 +67,27 @@ async function showSinglePage(){
   await load();if(result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
  },true);
  const configureSubmission=()=>{
-  submit=false;confirmProductHuntCreate=false;fill.textContent='填写所选网页';
+  fill.disabled=false;submit=false;confirmProductHuntCreate=false;fill.textContent='填写所选网页';
   if(mode.value==='comment'){submissionControls.replaceChildren(el('p',{class:'muted',text:'评论模式只填写评论内容，沿用原插件规则；提交由你在所选网页确认。'}));return;}
   const url=listing.pages.find(p=>p.targetId===pageSelect.value).url,productHunt=mode.value==='form'&&/(^|\.)producthunt\.com$/i.test(new URL(url).hostname);
   submissionControls.replaceChildren(checkControl(productHunt?'确认填写后创建 Product Hunt 草稿':'填写后继续普通免费投稿',false,v=>{submit=v;confirmProductHuntCreate=productHunt&&v;fill.textContent=v?productHunt?'填写并创建原草稿':'填写并继续原任务':'填写所选网页';}));
   if(productHunt)submissionControls.append(el('p',{class:'muted',text:'先逐步准备产品、图片和发布资料。勾选后仅授权创建这次产品草稿，取得新确认后保存记录。'}));
  };
  const requestVisitFill=async(current)=>{if(activeSinglePagePanel!==current.id)return;await request('/requestAutoFill',{fromSidepanel:true,panelId:current.id,panelGeneration:current.generation,profileId:current.profileId,targetId:current.selectedTargetId});};
- const changed=()=>{configureSubmission();request('/sidepanelOpened',{panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value}).then(result=>requestVisitFill(result.panel)).catch(error=>message.textContent=error.message);};pageSelect.onchange=changed;productSelect.onchange=changed;mode.onchange=changed;configureSubmission();requestVisitFill(opened.panel).catch(error=>message.textContent=error.message);
+ const changed=()=>{selectionRevision++;configureSubmission();request('/sidepanelOpened',{panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value}).then(result=>requestVisitFill(result.panel)).catch(error=>message.textContent=error.message);};pageSelect.onchange=changed;productSelect.onchange=changed;mode.onchange=changed;configureSubmission();requestVisitFill(opened.panel).catch(error=>message.textContent=error.message);
  panel.replaceChildren(el('h2',{text:'当前网页填写'}),el('p',{class:'muted',text:'选择执行器浏览器中的网页及产品。填写会保存原任务编号、产品资料版本和实际字段；遇到已有投稿结果先核验。'}),fieldRow('网页',pageSelect),fieldRow('我的产品',productSelect),fieldRow('填写内容',mode),fieldRow('评论文本',comment),submissionControls,el('div',{class:'controls'},[button('检测所选网页',async()=>{const result=await request('/sidepanelDetect',parameters());report.replaceChildren(...result.frames.map(f=>el('p',{text:(f.platform||'普通网页')+' · '+f.formFieldCount+' 个可填写字段 · '+(f.commentFound?'检测到评论区':'未发现评论区')+(f.hasCaptcha?' · 需要验证码':'' )})));}),fill,button('刷新网页列表',showSinglePage)]),report,message);
+ let pollingReceipt=false;
+ singlePageReceiptPoll=setInterval(async()=>{
+  if(pollingReceipt||activeSinglePagePanel!==opened.panel.id||!detail.open)return;pollingReceipt=true;
+  try{const expectedRevision=selectionRevision,state=await request('/sidepanelState',{});if(activeSinglePagePanel!==opened.panel.id||!detail.open||selectionRevision!==expectedRevision)return;
+   if(state.panel?.id!==opened.panel.id||!state.panel.open){clearInterval(singlePageReceiptPoll);message.textContent='网页面板已变化，请刷新网页列表。';return;}
+   if(state.completion?.error)message.textContent='收件已保存，继续下一站待处理：'+state.completion.error;
+   const completed=state.panel.receiptCompletion;if(!completed||completed.id===seenReceiptCompletion)return;
+   if(completed.nextPage){await showSinglePage({targetId:completed.nextPage.targetId,profileId:state.panel.profileId,panel:state.panel,isCurrent:()=>activeSinglePagePanel===opened.panel.id&&detail.open&&selectionRevision===expectedRevision});return;}
+   if(completed.queueComplete){seenReceiptCompletion=completed.id;fill.disabled=true;message.textContent='收件已写入云端，完成页已关闭；所选产品的待投稿队列已完成。';}
+  }catch(error){if(activeSinglePagePanel===opened.panel.id)message.textContent='收件状态暂未刷新：'+error.message;}finally{pollingReceipt=false;}
+ },2000);
+
 }
 async function showSubmissionQueue(){
  if(!detail.open)detail.showModal();const panel=$('detail-content'),selected=new Set(selectedProductIds()),choices=el('div',{class:'controls'}),current=el('div'),message=el('p',{role:'status'});let result,revision=0;

@@ -1,3 +1,4 @@
+import {singlePageReceiptState} from './single-page-receipt-queue.mjs';
 import { chromium } from 'playwright';
 import {openManualTaskPage} from './manual-task-page.mjs';
 import {originalCommentRequest} from './comment-cache.mjs';
@@ -1389,6 +1390,7 @@ export class Runtime {
     if(action==='localRecoverySources')return localRecoverySources(this);
     if(action==='previewLocalRecovery')return previewLocalRecovery(this,input);
     if(action==='submissionJournalRecoverLocal')return recoverLocalDocuments(this,input);
+    if(action==='sidepanelState')return singlePageReceiptState(this);
     if(action==='sidepanelOpened')return sidepanelOpened(this,input);
     if(action==='sidepanelClosed')return sidepanelClosed(this,input);
     if(action==='sidepanelDetect')return sidepanelDetect(this,input);

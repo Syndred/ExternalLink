@@ -1,3 +1,4 @@
+import {rememberSubmissionQueuePage} from './single-page-receipt-queue.mjs';
 import {originalNavigationQueue} from '../../core/submission-queue.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
 import {scheduler,queue} from './shared.mjs';
@@ -11,10 +12,10 @@ function navigationGroupSummary(group){
  return{id:group.id,key:group.key,destinationKey:group.destinationKey,url:group.url,domain:group.domain,platformType:group.platformType,source:group.source,note:group.note,quality:group.quality||null,status:group.status,index:group.index,profileIds:group.jobs.map(job=>job.profileId),profileTotal:group.jobs.length,profiles:group.jobs.map(job=>({profileId:job.profileId,profileName:job.profileName,status:job.status||'pending'})),jobs:group.jobs.map(({config,...job})=>({...job,url:job.destinationUrl||group.url}))};
 }
 
-export async function submissionQueue(runtime,input={},advance=false){
+export async function submissionQueue(runtime,input={},advance=false,{assertCurrent=()=>{}}={}){
  const scope=workbenchScope(runtime.store.get('pair')),saved=runtime.store.get('submissionQueue'),previous=saved?.scope===scope?saved:null;
  const options={selectedSiteIds:input.selectedSiteIds??previous?.selectedSiteIds,category:input.category??previous?.category??'',group:input.group??previous?.group??''};
- const {snapshot:raw,...browse}=await browsingSnapshot(runtime),snapshot=overlayApplication(runtime,raw);if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新查看队列');const result=originalNavigationQueue(snapshot,options),groups=result.groups;
+ const {snapshot:raw,...browse}=await browsingSnapshot(runtime),snapshot=overlayApplication(runtime,raw);assertCurrent();if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已变化，请重新查看队列');const result=originalNavigationQueue(snapshot,options),groups=result.groups;
  let index=Number.isInteger(previous?.index)?previous.index:0,key=input.currentKey||previous?.key||'';
  const matchKey=value=>groups.findIndex(group=>group.key===value),matchAlias=value=>{const exact=matchKey(value),normalized=matchKey(queue.normalizeDestinationKey(value));return exact>=0?exact:normalized>=0?normalized:groups.findIndex(group=>canonicalLibraryDestination(group.key)===canonicalLibraryDestination(value));};
  if(input.url){const matched=queue.findSubmissionIndex(input.url,groups);if(matched>=0){index=matched;key=groups[matched].key;}}
@@ -31,7 +32,7 @@ export async function submissionQueue(runtime,input={},advance=false){
   }
   selected||=await runtime.context.newPage();const info=await getTargetInfo(runtime.context,selected);if(!info)throw Error('网页编号暂不可读，请保留原页核对');
   page={targetId:info.targetId,browserInstance:runtime.host.startedAt,url:task.url};runtime.store.set('submissionQueue',{...cursor,page,opening:true});
-  try{await selected.goto(task.url,{waitUntil:'domcontentloaded',timeout:30000});await selected.bringToFront();runtime.store.set('submissionQueue',{...cursor,page,opening:false});}catch(error){runtime.store.set('submissionQueue',{...cursor,page,opening:false,error:error.message});throw error;}
+  try{await selected.goto(task.url,{waitUntil:'domcontentloaded',timeout:30000});await selected.bringToFront();runtime.store.set('submissionQueue',{...cursor,page,opening:false});rememberSubmissionQueuePage(runtime,page);}catch(error){runtime.store.set('submissionQueue',{...cursor,page,opening:false,error:error.message});throw error;}
  }else if(page)runtime.store.set('submissionQueue',{...cursor,page});
  // The original getter returns summaries. Keep the legacy advance response
  // available, while the native UI explicitly requests compact navigation.

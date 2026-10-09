@@ -1,0 +1,62 @@
+✔ comment TTL, refresh, capacity, exact URL, product and count match the frozen original background (12.5225ms)
+✔ failed refresh leaves the successful cache intact, rejected generations are not cached and caller edits do not alter it (0.8298ms)
+✔ a disabled preference prevents cached replies and effective link and language preferences reach the model (0.5434ms)
+✔ different devices, backends and workspaces cannot reuse or save an old in-flight response (1.8551ms)
+✔ the original task bridge reserves model budget only on a miss and carries refresh and language to the provider (0.9485ms)
+✔ original disabled AI comment preference prevents model calls and leaves all draft history intact (2.0863ms)
+✔ original promotion-link switch overrides request defaults and generated history records the effective preference (4.5597ms)
+✔ comment versions preserve the original copyCommentDraft metadata and accept partial candidate sets (2.4409ms)
+✔ one-candidate original fallback and original one-to-five request counts save valid candidates (1.3466ms)
+✔ empty or rejected model results do not replace the previous valid draft or history (1.5683ms)
+✔ workspace switches during model generation abandon old results instead of attributing them to the new workspace (0.8658ms)
+✔ same-host article navigation or a different product refuses old comment filling before any lease or field action (0.9008ms)
+✔ article navigation while cloud snapshot is pending refuses the old draft before leasing or filling (0.6434ms)
+✔ single-candidate metadata and distinct edited history survive a real SQLite close and reopen (48.3045ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (2.3183ms)
+✖ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (8099.5302ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8190.829
+
+✖ failing tests:
+
+test at tests\executor-original-comment-restore.test.mjs:10:1
+✖ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (8099.5302ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  locator.innerText: Timeout 7000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#status')[22m
+  
+      at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-comment-restore.mjs:24:355 {
+    log: [ "  - waiting for locator('#status')" ],
+    name: 'TimeoutError'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-comment-restore.test.mjs:11:198)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

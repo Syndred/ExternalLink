@@ -1,0 +1,24 @@
+✔ comment TTL, refresh, capacity, exact URL, product and count match the frozen original background (8.6694ms)
+✔ failed refresh leaves the successful cache intact, rejected generations are not cached and caller edits do not alter it (0.8997ms)
+✔ a disabled preference prevents cached replies and effective link and language preferences reach the model (0.5632ms)
+✔ different devices, backends and workspaces cannot reuse or save an old in-flight response (1.693ms)
+✔ the original task bridge reserves model budget only on a miss and carries refresh and language to the provider (0.8215ms)
+✔ original disabled AI comment preference prevents model calls and leaves all draft history intact (2.0596ms)
+✔ original promotion-link switch overrides request defaults and generated history records the effective preference (4.281ms)
+✔ comment versions preserve the original copyCommentDraft metadata and accept partial candidate sets (2.2888ms)
+✔ one-candidate original fallback and original one-to-five request counts save valid candidates (1.3236ms)
+✔ empty or rejected model results do not replace the previous valid draft or history (1.5539ms)
+✔ workspace switches during model generation abandon old results instead of attributing them to the new workspace (0.8252ms)
+✔ same-host article navigation or a different product refuses old comment filling before any lease or field action (0.8762ms)
+✔ article navigation while cloud snapshot is pending refuses the old draft before leasing or filling (0.6539ms)
+✔ single-candidate metadata and distinct edited history survive a real SQLite close and reopen (58.781ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (2.8692ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1229.9351ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1326.548

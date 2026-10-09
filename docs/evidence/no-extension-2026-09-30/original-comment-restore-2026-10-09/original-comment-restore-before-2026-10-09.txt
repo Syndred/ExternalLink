@@ -1,0 +1,85 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Restoring must preserve the current edited draft before replacement
++ actual - expected
+
+  [
+    {
+      anchorText: 'Original',
+      angle: '务实建议',
++     chars: 15,
+-     chars: 11,
+      placement: '末尾',
++     text: 'First candidate'
+-     text: 'Edited 中文🙂'
+    },
+    {
+      anchorText: '',
+      angle: '提问',
++     chars: 16,
+-     chars: 35,
+      placement: '正文',
++     text: 'Second candidate'
+-     text: 'Second candidate with a longer edit'
+    },
+    {
+      anchorText: '',
+      angle: '经验',
+      chars: 15,
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-comment-restore.mjs:22:172 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      text: 'First candidate',
+      angle: '务实建议',
+      anchorText: 'Original',
+      placement: '末尾',
+      chars: 15
+    },
+    {
+      text: 'Second candidate',
+      angle: '提问',
+      anchorText: '',
+      placement: '正文',
+      chars: 16
+    },
+    {
+      text: 'Third candidate',
+      angle: '经验',
+      anchorText: '',
+      placement: '正文',
+      chars: 15
+    }
+  ],
+  expected: [
+    {
+      text: 'Edited 中文🙂',
+      angle: '务实建议',
+      anchorText: 'Original',
+      placement: '末尾',
+      chars: 11
+    },
+    {
+      text: 'Second candidate with a longer edit',
+      angle: '提问',
+      anchorText: '',
+      placement: '正文',
+      chars: 35
+    },
+    {
+      text: 'Third candidate',
+      angle: '经验',
+      anchorText: '',
+      placement: '正文',
+      chars: 15
+    }
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

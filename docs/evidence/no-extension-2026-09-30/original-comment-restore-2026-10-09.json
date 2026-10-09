@@ -1,0 +1,214 @@
+{
+  "kind": "original_comment_restore_progress_checkpoint",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "d23e4a17c4958c4aed25bfd34e66319a92f44880",
+  "oldNativeSourceCommit": "c2c0a59e8684b86ef1277767b492ff42a71b2e74",
+  "originalSourceEntry": "extension/sidepanel.js: handleCommentTextInput, restoreCommentHistory, copyCommentDraft, makeCommentSnapshot, commentSnapshotKey",
+  "originalHandlersExecuted": true,
+  "oldImplementationFailures": [
+    "Latest history restore loses unsaved edits",
+    "Edited character metadata retains stale counts"
+  ],
+  "browserScenarioAssertionsVerifiedByTest": [
+    "latestRestoresSavedCandidate",
+    "unsavedEditsMatchFrozenOriginal",
+    "editedCharacterCountsPreserved",
+    "inFlightEditsBackedUp",
+    "failedBackupDoesNotReplaceDraft",
+    "productSwitchRejectsOldResult",
+    "sqliteReopenKeepsVersions",
+    "originalBusinessUnchanged"
+  ],
+  "focusedTests": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullSuite": {
+    "passed": 991,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 110488.7404,
+    "concurrency": 4
+  },
+  "initialFocusedFailure": "15 passed, 1 failed: fixture expected #status; corrected to actual #connection-status. This is not a product defect.",
+  "existingCommentUi": {
+    "passed": true,
+    "productionAiAndHistory": true,
+    "effectiveOriginalPreferences": true,
+    "candidateMetadataSaveRestore": true,
+    "oneCandidateFallback": true,
+    "inFlightEditsRetainedInHistory": true,
+    "productAndArticleChangesDiscardOldResults": true,
+    "navigationDisposesOldStudio": true,
+    "failurePreservesDraftAndRetry": true,
+    "originalReceiptAndPausedBatchPreserved": true,
+    "newRealSubmissions": 0
+  },
+  "existingCommentUiScope": "productionAiAndHistory means real production modules with a controlled model response, not a real provider model call.",
+  "liveUi": {
+    "ok": true,
+    "kind": "comment_restore_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "d23e4a17c4958c4aed25bfd34e66319a92f44880",
+    "servedUiMatchesFileAndCommit": true,
+    "originalCommentRestorationServed": true,
+    "uiSha256": "47ff2aa716df47f3c4d1c4230f9b7b3dafa9ed56c98cde43a68083793eb81408",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "comment_restore_unchanged_service_process_identity",
+    "sourceCommit": "d23e4a17c4958c4aed25bfd34e66319a92f44880",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18708,
+        "StartedAt": "2026-10-09T14:35:27.6820290+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 6800,
+        "StartedAt": "2026-10-09T14:35:28.3206950+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "backendSourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "servicesUnchanged": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateUnchanged": true,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionTestWrites": 0,
+  "remainingAudit": [
+    "trusted external-form source attribution: original behavior found; equivalent native verification not yet found; no runtime gap conclusion yet",
+    "remaining dynamic controls and execution branches",
+    "historical favorites source",
+    "other-device media associations",
+    "full original backup history coverage"
+  ],
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-before-2026-10-09.txt",
+      "capturedSha256": "0d95b635cc00a3542d9626e64ff5e76a7389e1ab380fdffaf79dd9a198fc47bd",
+      "gitBlobSha256": "1f03b43a0974cefa8279b8cca76de29b0d4a4853379f70d68c33f8472e9e1e82"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-existing-ui-2026-10-09.txt",
+      "capturedSha256": "976c461091ccad866bb14d4feabec30657dbfc01a2f2d7de23ff300490707b90",
+      "gitBlobSha256": "008f7fdbb794d8bb6c0f4dca2d0f26dbd3ce8aa67590a334f97cc713772eb1dc"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-live-ui-2026-10-09.txt",
+      "capturedSha256": "cbe8b4bc17a5dcf47d78da8d628ace2e473d5ac935d619e93b9bbf3950a25103",
+      "gitBlobSha256": "8b2306ceab31195d032d705ad8b297ea3c01544fd8302e91ba97a37acdc7a534"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-metadata-before-2026-10-09.txt",
+      "capturedSha256": "75aae3c9a101bf62edd2fc97c6de245c29b98bda4c3ef323f9b1d597e1aaba2e",
+      "gitBlobSha256": "d17f25a834a2139651220cf73e930559cda30e1f78df704f7cf6fa2fe4a9c717"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-regression-2026-10-09.txt",
+      "capturedSha256": "67df4ade74adb87a2406886a0803d358d73e4fd0e99976338b91495a49ba8155",
+      "gitBlobSha256": "c8a18c24fc7bc7777c80b6e42b2254e119617f8ba646f052aee718a741ce64d1"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-regression-final-2026-10-09.txt",
+      "capturedSha256": "99372fa00ccd91e67c82ffabd9fc672d61ccaf1698abf8fc77f9be1e777488e3",
+      "gitBlobSha256": "035954e0620f96efd501d3559695af3632aa223979773bc6235cdd130554ebd1"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-repository-2026-10-09.txt",
+      "capturedSha256": "2706f1c4adcb554b5f70c072a7e8041b5cdc2bfb5ad20eae5b2d580e16b75c98",
+      "gitBlobSha256": "e1e20c94e2d779111f1d7cbb8929e30872c369c5f17e8a6c8400bee6a06528b7"
+    },
+    {
+      "path": "original-comment-restore-2026-10-09/original-comment-restore-service-process-2026-10-09.txt",
+      "capturedSha256": "5fc0e7a91d7d037bb9aca5080be4b1169f65f1300d8314c35d8f90d4addb6181",
+      "gitBlobSha256": "191afa5600a1381e0c1b0f70465f6275cf4b084ab24cebe16fdd9cd18a97276a"
+    }
+  ]
+}

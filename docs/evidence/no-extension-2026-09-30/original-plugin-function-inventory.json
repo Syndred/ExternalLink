@@ -3239,5 +3239,35 @@
     "workerRedeployed": false,
     "evidence": "original-timeline-editor-2026-10-09.json",
     "migrationComplete": false
+  },
+  "originalCommentRestoreCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "d23e4a17c4958c4aed25bfd34e66319a92f44880",
+    "originalInputAndRestoreHandlersExecuted": true,
+    "unsavedAndInFlightEditsSavedBeforeRestore": true,
+    "editedCharacterMetadataMatchesOriginal": true,
+    "failedSavePreservesActiveDraft": true,
+    "productSwitchRejectsStaleResult": true,
+    "actualIsolatedBrowserAndSqliteReopenPassed": true,
+    "focusedTestsPassed": 16,
+    "sourceTestsPassed": 991,
+    "servedScriptMatchesCommit": true,
+    "originalServicesUnchanged": true,
+    "workerRedeployed": false,
+    "evidence": "original-comment-restore-2026-10-09.json",
+    "migrationComplete": false
+  },
+  "trustedExternalFormAttributionAudit": {
+    "date": "2026-10-09",
+    "originalSourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "originalEntry": "extension/background.js captureTrustedExternalFormOpen and trustedExternalFormDestination",
+    "originalExamples": [
+      "aitools.inc Typeform",
+      "AI Infinity Google Forms with forms.gle navigation capture"
+    ],
+    "status": "source audit pending native behavior verification",
+    "nativeEquivalentVerified": false,
+    "nativeRuntimeDefectProven": false,
+    "migrationComplete": false
   }
 }

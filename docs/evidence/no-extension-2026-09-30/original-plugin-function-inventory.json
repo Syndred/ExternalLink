@@ -5209,12 +5209,15 @@
     "productionWrites": 0,
     "realSubmissions": 0,
     "originalChromeUntouched": true,
-    "remaining": [
-      "实际UI及SQLite已确认：八版上限、恢复时移除选中快照、同内容恢复不改历史均存在差异"
-    ],
+    "remaining": [],
     "overallMigrationComplete": false,
     "evidence": "migration-comment-history-panel-2026-10-10/summary.json",
-    "remainingVerifiedBy": "originalCommentHistoryRulesDifferentialAudit"
+    "remainingVerifiedBy": "originalCommentHistoryRulesDifferentialAudit",
+    "historyRuleUiGapResolvedBy": "originalCommentStateUiCheckpoint",
+    "historicalRemainingBeforeRuleUiFix": [
+      "实际UI及SQLite已确认：八版上限、恢复时移除选中快照、同内容恢复不改历史均存在差异"
+    ],
+    "allOriginalCommentBranchesComplete": false
   },
   "originalCommentHistoryRulesDifferentialAudit": {
     "date": "2026-10-10",
@@ -5240,7 +5243,8 @@
     "actualUiTenSwitchesAndTwoSpecificRestores": true,
     "sqliteObservedDifferencesReopened": true,
     "acceptancePassed": false,
-    "overallMigrationComplete": false
+    "overallMigrationComplete": false,
+    "historyRuleUiGapResolvedBy": "originalCommentStateUiCheckpoint"
   },
   "originalCommentStateStorageImplementation": {
     "date": "2026-10-10",
@@ -5307,7 +5311,8 @@
       "real UI frozen-function differential and failure/late-result guards",
       "release checks and native readback with original ledger preservation"
     ],
-    "evidence": "migration-original-comment-state-2026-10-10/summary.json"
+    "evidence": "migration-original-comment-state-2026-10-10/summary.json",
+    "historyRuleUiGapResolvedBy": "originalCommentStateUiCheckpoint"
   },
   "originalCommentStateNativeApiCheckpoint": {
     "date": "2026-10-10",
@@ -5413,6 +5418,144 @@
     "productionCommentWrites": 0,
     "uiIntegrationComplete": false,
     "overallMigrationComplete": false,
-    "evidence": "migration-comment-state-api-2026-10-10/summary.json"
+    "evidence": "migration-comment-state-api-2026-10-10/summary.json",
+    "historyRuleUiGapResolvedBy": "originalCommentStateUiCheckpoint"
+  },
+  "originalCommentStateUiCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "47016cf528c3b0bc72cd7fccffe91eae52777186",
+    "status": "released_both_comment_interfaces_original_history_rules",
+    "currentEntries": [
+      "AI 评论 → 选择候选／保存编辑后的草稿／历史指定版本／恢复上一版",
+      "运行任务 → 当前网页填写 → 保存当前评论快照／恢复上一版评论"
+    ],
+    "originalEntries": [
+      "captureCommentState",
+      "restoreCommentHistory",
+      "renderCommentHistory",
+      "selectCommentDraft"
+    ],
+    "isolatedActualUiRules": {
+      "kind": "actual_ui_original_history_rule_differential_audit",
+      "status": "observed_rules_match",
+      "tenActualUiCandidateSwitches": true,
+      "newestEightSnapshotsExactlyMatch": true,
+      "originalCompleteFunctionsExecuted": true,
+      "actualSpecificRowRestoredTextMatches": true,
+      "currentEditsPreservedBeforeRestore": true,
+      "sqliteReopenKeepsObservedHistory": true,
+      "gaps": [],
+      "overallMigrationComplete": false,
+      "productionWrites": 0,
+      "realSubmissions": 0,
+      "realModelCalls": 0,
+      "originalChromeUntouched": true
+    },
+    "aiUiProof": {
+      "ok": true,
+      "emptyHistoryAndDisabledRestore": true,
+      "historyRawPreviewVisible": true,
+      "selectedCandidatePreviewFallback": true,
+      "candidateSetPlaceholderVisible": true,
+      "originalLabelsAndRestoreTitle": true,
+      "specificOlderHistoryUiClick": true,
+      "unsavedTextSavedBeforeRestore": true,
+      "failedSaveKeepsDraftAndHistory": true,
+      "sqliteReopenAndUiReload": true,
+      "originalBusinessUnchanged": true,
+      "productionWrites": 0,
+      "realSubmissions": 0,
+      "realModelCalls": 0,
+      "originalChromeUntouched": true
+    },
+    "singlePageUiProof": {
+      "ok": true,
+      "singlePagePlainSnapshots": true,
+      "originalEightVersionLimit": true,
+      "restoredVersionRemoved": true,
+      "sameContentKeepsHistory": true,
+      "typingDoesNotWrite": true,
+      "restoreKeepsCurrent": true,
+      "inFlightEditsNeverOverwritten": true,
+      "productSwitchRejectsOldHistory": true,
+      "sqliteReopenKeepsVersions": true,
+      "productionWrites": 0,
+      "realSubmissions": 0,
+      "models": 0
+    },
+    "generationUiProof": {
+      "passed": true,
+      "firstFailedGenerationIsNotALoadableDraft": true,
+      "productionAiAndHistory": true,
+      "effectiveOriginalPreferences": true,
+      "candidateMetadataSaveRestore": true,
+      "oneCandidateFallback": true,
+      "inFlightEditsRetainedInHistory": true,
+      "productAndArticleChangesDiscardOldResults": true,
+      "navigationDisposesOldStudio": true,
+      "failurePreservesDraftAndRetry": true,
+      "originalReceiptAndPausedBatchPreserved": true,
+      "newRealSubmissions": 0
+    },
+    "focusedRegression": {
+      "tests": 53,
+      "pass": 53,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 26710.2024
+    },
+    "fullRegression": {
+      "tests": 1151,
+      "pass": 1151,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 443134.0559
+    },
+    "finalSourceHashesUnchanged": true,
+    "nativeReadback": {
+      "ok": true,
+      "sourceCommit": "47016cf528c3b0bc72cd7fccffe91eae52777186",
+      "committedSourcesMatch": true,
+      "hashes": {
+        "executor/web/application.js": "64a8fd6721cbe33caf019b696b08210f2665ef5744d147b76abf0d9b74ec9b75",
+        "executor/src/comment-history.mjs": "b25ccc58dcf25a8a933103a9a4023eb71957e88a224421cfa6b4332bf7300db5",
+        "executor/src/workbench-features.mjs": "8f38254477ab1591a98c52d5e456dba4471fa5ebd48ff3b6d01a0b673b4ab8a4",
+        "executor/src/single-page.mjs": "af225bee974fc52a55c6367b0c7329ca31387233510f220f5a8f63ac49dde3d8",
+        "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+        "executor/web/application.css": "03022e8ddfbcefaea409b545cb0da424c34fe4f46beb72efdb5d20f36173a996",
+        "executor/web/comment-studio.js": "a0221dcae809f3132b10a2a539658f7e537d3f1f4c46bc216059227ba1cf8ff0"
+      },
+      "nativeMainUiScriptMatches": true,
+      "originalCommentRowsUnchanged": true,
+      "originalCommentRowsSha256": "b9473fd2cab9df2efcbb249a32a42d6f73c63f57aca016077a00b18ae786469a",
+      "nativeHistoryStylesMatch": true,
+      "nativeHistoryScriptMatches": true,
+      "actualNativeReadback": true,
+      "paused": true,
+      "busy": false,
+      "pendingEdits": 0,
+      "fixedCursor": 13,
+      "fixedCount": 30,
+      "businessWrites": 0,
+      "originalChromeUntouched": true,
+      "historyNotWrittenToProduction": true
+    },
+    "legacyNineVersionArchiveStorageVerified": true,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "original18OtherCloudDocumentsAndRevisionsKept": true,
+    "privateOriginalSourceFilesVerified": 6,
+    "nativeServicesRestarted": false,
+    "workerRedeployed": false,
+    "productionCommentWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true,
+    "intermediateRegressionIsNotReleaseEvidence": true,
+    "threeHistoricalRuleGapsClosed": true,
+    "allOriginalCommentBranchesComplete": false,
+    "overallMigrationComplete": false,
+    "evidence": "migration-comment-state-ui-2026-10-10/summary.json"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "tests": 1151,
+  "pass": 1151,
+  "fail": 0,
+  "skipped": 0,
+  "sourceChangedDuringRun": true,
+  "validReleaseEvidence": false,
+  "interrupted": false,
+  "reason": "empty-current initialization must not be loadable after first AI rejection; final code requires a new complete regression"
+}

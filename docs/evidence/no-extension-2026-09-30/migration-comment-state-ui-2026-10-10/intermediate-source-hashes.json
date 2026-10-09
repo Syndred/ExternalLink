@@ -1,0 +1,19 @@
+{
+  "algorithm": "sha256 UTF-8 LF normalized",
+  "hashes": {
+    "executor/test/audit-original-comment-history-rules.mjs": "3f7f66bcbdb1216f1044a25ada4cdd2bc6518769568e5c90ec127407bd0e1142",
+    "executor/test/comment-drafts.mjs": "5ba29f4e725608af115bfff95b31e8092fff3d2fc9e513a9c0e638f6e5373b85",
+    "executor/test/original-comment-candidate-actions.mjs": "5c2a0cb1ae2bf5006129b4ad389c50a5c93e3f5d3788ff6b80085b67fba717d8",
+    "executor/test/original-comment-empty-selection.mjs": "8279600216593c3edf8e9e1307d1f3324210bcfb37f9191f89f2cc3509965dd6",
+    "executor/test/original-comment-history-panel.mjs": "a6e4894a4dbdaf3167678000a6b0cef0548b0b80664926b2ffced834f5552471",
+    "executor/test/original-comment-restore.mjs": "c9e4cbcf6db1160bb895e6b03c41e7f127f1d9b7624f2b2352037b3ee1425ccc",
+    "executor/test/original-comment-selection.mjs": "4f0d24f1f5de9f2aa59c52c3b9d1cbf9b59661a8f49742c92555d15cd1a435a9",
+    "executor/test/original-long-comment-actions.mjs": "b3410baaed54468d7283a12c705c67c6a014b0d7fbe1afbd74718587ab007b7e",
+    "executor/test/original-long-comment-selection.mjs": "43f27c30cc1fd9020ab5982f16915842b9cf7caa9bb362cf19d3467839a88d40",
+    "executor/test/original-single-page-comment.mjs": "96fe5e81127bb56e05b5c89e20a29fc9b3de2a18662cbc768c330843765d880c",
+    "executor/web/application.js": "64a8fd6721cbe33caf019b696b08210f2665ef5744d147b76abf0d9b74ec9b75",
+    "executor/web/comment-studio.js": "9e506046e27bd8a32102b241ef62f4d1184f92926c3482f440d9edd3a0359b5a",
+    "tests/executor-original-comment-restore.test.mjs": "82fe88145eff9971c382d289151e4782eae1bcbbb7890961f58ed9c19564f5fb",
+    "tests/executor-original-comment-history-rules.test.mjs": "80f214f4416218a312b07f3b26f422030926ddf79d5edd0d40f024f6c5e380e0"
+  }
+}

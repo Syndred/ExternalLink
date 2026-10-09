@@ -532,9 +532,11 @@
       "originalCompleteFunctionSha256": "8ad7096719a00e7384d264ab6fc98c7fef3084a0b1a27c90253b5b0afd37c695",
       "entry": "AI 评论 → 选择候选／候选文本／复制／填入原任务评论区",
       "operation": "编辑指定候选，保存、复制或填入对应原任务",
-      "persistence": "commentHistory及原任务selectedComment",
+      "persistence": "originalCommentState当前草稿／八版历史／旧九版留档及原任务selectedComment",
       "currentSource": "executor/web/comment-studio.js::renderCommentStudio",
       "tests": [
+        "tests/executor-original-comment-history-rules.test.mjs",
+        "tests/executor-original-comment-state.test.mjs",
         "tests/executor-original-long-comment.test.mjs",
         "tests/executor-original-comment-selection.test.mjs",
         "tests/executor-original-comment-candidate-actions.test.mjs",
@@ -557,11 +559,13 @@
       "persistence": "按工作区、原产品和文章保存SQLite commentHistory",
       "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage",
       "tests": [
+        "tests/executor-original-comment-history-rules.test.mjs",
+        "tests/executor-original-comment-state.test.mjs",
         "tests/executor-original-comment-history-panel.test.mjs",
         "tests/executor-original-long-comment.test.mjs",
         "tests/executor-original-comment-restore.test.mjs"
       ],
-      "scope": "实际历史列表空态、正文／选中候选／候选集预览与指定旧版恢复已验证；八版与移除选中快照的规则仍需审计；已有无候选纯文本、跨入口、失败与重开证据；5002/12007/24006字符候选完整保存与恢复，主页面和iframe按原页面maxlength填写",
+      "scope": "完整原恢复函数24组对照；实际十次候选切换后八版上限、指定版本移除、同内容不变；两个入口及SQLite重开已验证，其他分支仍须全矩阵审计",
       "completion": "requires_branch_evidence_audit"
     },
     {

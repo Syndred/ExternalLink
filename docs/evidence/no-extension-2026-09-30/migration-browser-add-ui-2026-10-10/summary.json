@@ -1,0 +1,28 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "bugReproducedInActualUi": true,
+  "existingPageNavigationAndClosureDuringRefreshRejected": true,
+  "stalePageThreeDocumentZeroWrites": true,
+  "actualUiOfflineAddAndDiskReopen": true,
+  "threeDocumentAtomicIntent": true,
+  "lostReplyOneWrite": true,
+  "actualNewPageIsolatedEngineDetection": true,
+  "completeOriginalAddDocumentsCompared": true,
+  "originalDuplicateLinesPositionAndMetadataKept": true,
+  "receiptsAndTimelineKept": true,
+  "finalDiskAndUiReadback": true,
+  "focusedPassed": 8,
+  "fullRegression": {
+    "tests": 1109,
+    "pass": 1109,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 479428.4194
+  },
+  "nativeReleasePending": true,
+  "workerChanged": false,
+  "originalBrowserChanged": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false
+}

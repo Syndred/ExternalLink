@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Existing page navigated during cloud refresh must not clear its old URL marks
+
+200 !== 500
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-browser-add-ui.mjs:11:104
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:541:9) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 200,
+  expected: 500,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

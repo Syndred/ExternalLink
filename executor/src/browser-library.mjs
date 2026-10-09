@@ -25,6 +25,10 @@ export async function addBrowserPage(runtime,input){
   if(page.isClosed()||page.url()!==selected.url)throw Error('所选页面已关闭或已跳转，请刷新页面列表');
  }
  if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('云端连接已变化，请重新选择网页');
+ if(existing){
+  for(const candidate of runtime.context.pages()){if((await getTargetInfo(runtime.context,candidate))?.targetId===selected.targetId){page=candidate;break;}}
+ }
+ if(!page||page.isClosed()||page.url()!==selected.url)throw Error('所选页面已关闭或已跳转，请刷新页面列表');
  const result=await enqueueApplicationPlan(runtime,{operations:[{type:'add_browser_url',url:selected.url,platformType}]});
  return{...result,url:selected.url,added:!existing,prepended:!existing};
 }

@@ -4768,5 +4768,15 @@
     "sourceCommit": "4cf3475ff21a3ade633cf4ac720ba42f5221ea7e",
     "originalServicesUpdated": true,
     "productionProtectionPassed": true
+  },
+  "originalBrowserAddUiAndIdentityCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-browser-add-ui-2026-10-10/summary.json",
+    "actualUiBugReproducedAndRepaired": true,
+    "fullOriginalAddDocumentsCompared": true,
+    "threeDocumentReplyLossRecoveredOnce": true,
+    "fullPassed": 1109,
+    "nativeReleasePending": true,
+    "overallMigrationComplete": false
   }
 }

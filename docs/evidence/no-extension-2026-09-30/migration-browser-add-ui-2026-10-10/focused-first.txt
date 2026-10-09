@@ -1,0 +1,16 @@
+✔ new and existing browser additions preserve the complete frozen addToUrlList result without pinning or deduplicating existing lines (13.5774ms)
+✔ atomic browser addition survives offline SQLite reopen and a lost reply without replaying any of its three documents (77.5578ms)
+✔ concurrent changes to any browser-add document retain the complete pending operation and never clear newer marks (4.4922ms)
+✔ authenticated D1 browser add matches original documents and fences all three revisions atomically (39.5489ms)
+✔ authenticated PostgreSQL browser add matches original documents and fences all three revisions atomically (1767.9613ms)
+✔ browser-page platform metadata cannot inject additional URL-list entries or rewrite a saved original type (2.3152ms)
+✔ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (3055.9648ms)
+✔ actual browser-add UI fences navigated and closed existing pages and restores the original atomic add after disk reopen and reply loss (2508.978ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3148.9807

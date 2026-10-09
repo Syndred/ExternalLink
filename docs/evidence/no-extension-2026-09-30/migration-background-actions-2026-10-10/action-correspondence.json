@@ -778,6 +778,10 @@
         {
           "path": "executor/src/manual-controls.mjs",
           "sha256": "7569001ecdb896490441ad5f6ed311210a13639ffd042111060995cafea1697b"
+        },
+        {
+          "path": "executor/src/browser-library.mjs",
+          "sha256": "faaa0060a00d3d144935fefe60ebcdb48896643dd33c7b36d058dda1aee9ebf6"
         }
       ],
       "candidateTestSources": [
@@ -800,6 +804,18 @@
         {
           "path": "tests/executor-original-library-pin.test.mjs",
           "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
+        },
+        {
+          "path": "tests/executor-original-browser-add-ui.test.mjs",
+          "sha256": "6ce24867d695f0b9cc7f55fe1b53e737d01eb2cb3f2f2bb37d92f12cf7246577"
+        },
+        {
+          "path": "tests/executor-original-browser-add-behavior.test.mjs",
+          "sha256": "08b013ec909c0411633c22ac79515d542b6f382d6a188685815826e035eca193"
+        },
+        {
+          "path": "tests/executor-original-browser-add-platform.test.mjs",
+          "sha256": "bb80fa8c7cef988ca60c3ef2991625c3e4b6ff9007cbc62bef79856b48dc8b4e"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",

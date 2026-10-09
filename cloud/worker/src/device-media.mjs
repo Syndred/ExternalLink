@@ -14,7 +14,7 @@ export async function putDeviceMedia(bucket,workspace,input,profiles){
  if(mime!==input.mime||await sha256(bytes)!==input.sha256)fail('媒体 SHA 校验或格式不匹配',400);
  const objectKey=key(workspace,input.assetId);
  // R2 conditional write prevents even concurrent requests from overwriting a version.
- await bucket.put(objectKey,bytes,{onlyIf:{etagDoesNotMatch:'*'},httpMetadata:{contentType:mime},customMetadata:{profileId:input.profileId,kind:input.kind,sha256:input.sha256,fileName:String(input.fileName||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)}});
+ await bucket.put(objectKey,bytes,{onlyIf:{etagDoesNotMatch:'*'},httpMetadata:{contentType:mime},customMetadata:{profileId:input.profileId,kind:input.kind,mediaIndex:input.kind.startsWith('screenshot')?input.kind.slice(10):'',sha256:input.sha256,fileName:String(input.fileName||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)}});
  const asset=await readDeviceMedia(bucket,workspace,input.assetId);
  if(asset.sha256!==input.sha256||asset.profileId!==input.profileId||asset.kind!==input.kind||asset.mime!==mime)fail('媒体身份已存在且范围不同');return asset;
 }

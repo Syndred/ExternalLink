@@ -28,7 +28,7 @@ export async function d1Api(request,env,authorised,auxiliary){
     if(request.method==='GET'&&path==='/revisions')return json({ok:true,workspaceId:workspace,revisions:await store.revisions()});
     if(request.method==='GET'&&path==='/media'){
       const prefix=`workspaces/${workspace}/media/`,listing=await env.MEDIA_BUCKET.list({prefix,limit:200,cursor:url.searchParams.get('cursor')||undefined,include:['customMetadata','httpMetadata']});
-      return json({ok:true,assets:listing.objects.map(object=>({asset_id:object.key.slice(prefix.length),file_name:object.customMetadata?.fileName||object.key.slice(prefix.length),profile_id:object.customMetadata?.profileId||'',media_kind:object.customMetadata?.kind||'',content_type:object.httpMetadata?.contentType||'',byte_length:object.size,sha256:object.customMetadata?.sha256||''})),next:listing.truncated?listing.cursor:null});
+      return json({ok:true,assets:listing.objects.map(object=>({asset_id:object.key.slice(prefix.length),file_name:object.customMetadata?.fileName||object.key.slice(prefix.length),profile_id:object.customMetadata?.profileId||'',media_kind:object.customMetadata?.kind||'',media_index:object.customMetadata?.mediaIndex===undefined||object.customMetadata.mediaIndex===''?null:Number(object.customMetadata.mediaIndex),content_type:object.httpMetadata?.contentType||'',byte_length:object.size,sha256:object.customMetadata?.sha256||''})),next:listing.truncated?listing.cursor:null});
     }
     if(request.method==='GET'&&path==='/snapshot'){
       const documents={},revisions=await store.revisions();

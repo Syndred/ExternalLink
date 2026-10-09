@@ -34,6 +34,7 @@ class AiProviderRequestError extends Error {
 }
 
 function json(payload, init = {}) {
+  if(typeof init==='number')init={status:init};
   const headers = new Headers(init.headers || {});
   headers.set("Content-Type", "application/json; charset=utf-8");
   return new Response(JSON.stringify(payload), { ...init, headers });
@@ -621,12 +622,13 @@ async function router(request, env) {
     if(match&&req.method==='PUT'){
       const bytes=await req.arrayBuffer();if(!bytes.byteLength||bytes.byteLength>MAX_MEDIA_BYTES)return json({ok:false,error:'图片大小不合要求'},413);
       const type=normaliseContentType(req.headers.get('Content-Type'));verifyImageSignature(bytes,type);
+      let mediaIndex=null;try{if(match[1]==='media')mediaIndex=safeMediaIndex(req.headers.get('X-Media-Index'));}catch{return json({ok:false,error:'无效的媒体序号'},400);}
       const checksum=await sha256Hex(bytes);if(checksum!==req.headers.get('X-Asset-Sha256'))return json({ok:false,error:'图片校验失败'},400);
       const workspace=authorisedWorkspaceId(new URL(req.url).searchParams.get('workspace'),env);
       const key=match[1]==='media'?mediaObjectKey(workspace,match[2]):artifactObjectKey(workspace,match[2]);
       const old=await env.MEDIA_BUCKET.head(key);
       if(old){const previousHash=old.customMetadata?.sha256||await sha256Hex(await(await env.MEDIA_BUCKET.get(key)).arrayBuffer());if(previousHash!==checksum)return json({ok:false,error:'图片编号已有不同内容'},409);}
-      await env.MEDIA_BUCKET.put(key,bytes,{httpMetadata:{contentType:type},customMetadata:{sha256:checksum,profileId:req.headers.get('X-Profile-Id')||'',kind:req.headers.get('X-Media-Kind')||'',fileName:safeAssetName(req.headers.get('X-Asset-Name'),match[2])}});
+      await env.MEDIA_BUCKET.put(key,bytes,{httpMetadata:{...old?.httpMetadata,contentType:type},customMetadata:{...old?.customMetadata,sha256:checksum,profileId:req.headers.get('X-Profile-Id')||'',kind:req.headers.get('X-Media-Kind')||'',fileName:safeAssetName(req.headers.get('X-Asset-Name'),match[2]),...(match[1]==='media'?{mediaIndex:mediaIndex===null?'':String(mediaIndex)}:{})}});
       return json({ok:true,assetId:match[2],artifactId:match[2],ref:(match[1]==='media'?'cloud-media://':'cloud-artifact://')+match[2],byteLength:bytes.byteLength,contentType:type});
     }
     return json({ok:false,error:'接口不存在'},404);

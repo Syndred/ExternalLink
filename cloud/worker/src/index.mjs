@@ -1,4 +1,5 @@
 import {lookupDomainMetrics} from './rdap-domain-metrics.mjs';
+import {originalMediaCatalogueResponse} from './original-media-catalogue.mjs';
 import { neon } from "@neondatabase/serverless";
 import { d1Api } from "./d1-api.mjs";
 import { d1Executor } from "./d1-executor.mjs";
@@ -612,6 +613,7 @@ async function router(request, env) {
     return json({ok:false,error:'云端已迁移至 D1。已保留本机资料，请在新版外链总览恢复本机最新资料后切换同步。',code:'LOCAL_SNAPSHOT_REQUIRED'},{status:428});
   }
   if (new URL(request.url).pathname.startsWith('/v2/')) return d1Api(request,env,isAuthorised,async(path,req)=>{
+    if(path==='/recovery/original-media-catalogue')return originalMediaCatalogueResponse(()=>sqlFor(env),authorisedWorkspaceId(new URL(req.url).searchParams.get('workspace'),env));
     const ai={'/ai/comment':handleComment,'/ai/plan':handlePlan,'/ai/vision-plan':handleVisionPlan,'/ai/extract-site':handleExtractSite,'/ai/generate-site':handleGenerateSite,'/ai/judge':handleJudge,'/ai/validate-fill':handleValidateFill};
     if(ai[path])return json(await ai[path](req,env));
     if(path==='/domain/metrics')return json(await handleDomainMetrics(req));

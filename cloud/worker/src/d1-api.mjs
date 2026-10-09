@@ -13,6 +13,10 @@ export async function d1Api(request,env,authorised,auxiliary){
   if(!env.LEDGER_DB)return json({ok:false,error:'D1 尚未配置'},503);
   const store=new D1Store(env.LEDGER_DB,env.MEDIA_BUCKET,workspace);
   try{
+    if(path==='/recovery/original-media-catalogue'){
+      if(request.method!=='GET')return json({ok:false,error:'原媒体目录审计只支持读取'},405);
+      return auxiliary?await auxiliary(path,request):json({ok:false,error:'原媒体目录读取未配置'},503);
+    }
     if(path.startsWith('/ai/')||path==='/domain/metrics')return auxiliary?await auxiliary(path,request):json({ok:false,error:'AI 接口未配置'},503);
     if(path.startsWith('/executor/')||path==='/automation/events')return json({ok:false,error:'旧执行器流水尚未切换至 D1，已保留本机队列；禁止自动重投',code:'EXECUTOR_MIGRATION_PENDING'},503);
     if(request.method==='GET'&&path==='/health')return json({ok:true,workspaceId:workspace,storage:'d1+r2',revisions:await store.revisions()});

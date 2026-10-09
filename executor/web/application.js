@@ -358,10 +358,23 @@ function showTimelineEditor(row,event,profileId=''){
  if(!products.some(([id])=>id===selected))products.push([selected,event?.profileName||selected]);
  const types=['submitted','pending_moderation','published','rejected','needs_follow_up','needs_manual','link_missing','note'];if(event?.type&&!types.includes(event.type))types.push(event.type);
  const product=selectControl('动态所属产品',products,selected,()=>{}),type=selectControl('动态类型',types.map(v=>[v,text(v)]),event?.type||'submitted',()=>{}),time=el('input',{type:'datetime-local','aria-label':'动态时间',value:localDate(event?.occurredAt)}),note=el('textarea',{rows:4,'aria-label':'动态说明'}),evidence=el('input',{type:'url','aria-label':'证据网址',value:event?.evidenceUrl||''}),publicUrl=el('input',{type:'url','aria-label':'公开外链网址',value:event?.publicUrl||''}),message=el('p',{'role':'status'});note.value=event?.note||'';
- panel.replaceChildren(el('h2',{text:event?'编辑时间线动态':'添加时间线动态'}),el('p',{class:'muted',text:'可记录外链站通用动态，也可关联具体产品。仅记录笔记不会新增收件；删除动态会保留原收件账本。'}),fieldRow('动态所属产品',product),fieldRow('进度',type),fieldRow('记录时间',time),fieldRow('说明',note),fieldRow('证据网址（可选）',evidence),fieldRow('公开外链网址（可选）',publicUrl),button('保存动态',async()=>{
-  const patch={destinationKey:event?.destinationKey||row.key||globalThis.ExtLinkSubmissionTimeline.normalizeDestinationKey(row.url),destinationUrl:event?.destinationUrl||row.url,profileId:product.value,profileName:product.value==='__destination__'?'外链站':data.model.products.find(p=>p.id===product.value)?.name||event?.profileName||product.value,type:type.value,status:type.value,occurredAt:new Date(time.value).toISOString(),note:note.value.trim(),evidenceUrl:evidence.value.trim(),publicUrl:publicUrl.value.trim()};
-  const result=event?await request('/libraryMutation',{operation:{type:'timeline',action:'update',eventId:event.id,patch}}):await request('/journalProgress',{event:patch});await load(true);message.textContent=result.pending?'动态已存本机，等待同步':'动态已保存并回读云端';
- },true),message);
+ let editingEvent=event,editorRevision=0;const title=el('h2',{text:event?'编辑时间线动态':'添加时间线动态'}),current=()=>detail.open&&title.isConnected;
+ for(const input of [product,type,time,note,evidence,publicUrl])for(const name of ['input','change'])input.addEventListener(name,()=>editorRevision++);
+ const reset=()=>{editingEvent=null;product.value='__destination__';type.value='submitted';time.value=localDate();note.value='';evidence.value='';publicUrl.value='';title.textContent='添加时间线动态';cancel.hidden=true;};
+ const cancel=button('取消编辑',()=>{editorRevision++;reset();message.textContent='';});cancel.hidden=!event;
+ panel.replaceChildren(title,el('p',{class:'muted',text:'可记录外链站通用动态，也可关联具体产品。时间留空时使用当前时间。仅记录笔记不会新增收件；删除动态会保留原收件账本。'}),fieldRow('动态所属产品',product),fieldRow('进度',type),fieldRow('记录时间',time),fieldRow('说明',note),fieldRow('证据网址（可选）',evidence),fieldRow('公开外链网址（可选）',publicUrl),button('保存动态',async()=>{
+  const savedRevision=editorRevision,savedEvent=editingEvent;let result;message.textContent='';
+  try{
+   const occurred=time.value?new Date(time.value):new Date();if(!Number.isFinite(occurred.getTime()))throw Error('动态时间无效，请重新填写或留空使用当前时间');
+   const patch={destinationKey:savedEvent?.destinationKey||row.key||globalThis.ExtLinkSubmissionTimeline.normalizeDestinationKey(row.url),destinationUrl:savedEvent?.destinationUrl||row.url,profileId:product.value,profileName:product.value==='__destination__'?'外链站':data.model.products.find(p=>p.id===product.value)?.name||savedEvent?.profileName||product.value,type:type.value,status:type.value,occurredAt:occurred.toISOString(),note:note.value.trim(),evidenceUrl:evidence.value.trim(),publicUrl:publicUrl.value.trim()};
+   result=savedEvent?await request('/libraryMutation',{operation:{type:'timeline',action:'update',eventId:savedEvent.id,patch}}):await request('/journalProgress',{event:patch});
+  }catch(error){if(current())message.textContent='保存未完成：'+error.message;return;}
+  // A confirmed local save is enough to clear only the submitted draft. A
+  // later read failure must not turn the same text into a second new event.
+  if(current()&&editorRevision===savedRevision)reset();
+  let refreshError='';try{await load(true);}catch(error){refreshError=error.message;}
+  if(current())message.textContent=(result.pending?'动态已存本机，等待同步':'动态已保存并回读云端')+(editorRevision!==savedRevision?'；新修改仍在表单中，请再保存。':'')+(refreshError?'；列表刷新暂不可用：'+refreshError:'');
+ },true),cancel,message);
 }
 function showBatch({libraryScope}={}){const urls=[...selectedUrls];if(!libraryScope&&!urls.length)throw Error('请先勾选要提交的外链，或点击“选择当前筛选”');if(!detail.open)detail.showModal();const panel=$('detail-content'),profileIds=new Set(libraryScope?(data.model.profileSelection?.selectedSiteIds||[currentProductId()].filter(Boolean)):selectedProductIds()),message=el('p',{'role':'status'}),choices=el('div',{class:'check-grid'});let selectionVersion=0;
  const formData=data,saved=data.settings?.unattendedPreferences||{},preferences={enabled:saved.enabled===true,hours:saved.hours||8,tasks:saved.tasks||100,manualTabs:saved.manualTabs||20},settingsPanel=el('div'),limits=new Map();let fillOnly=false,preferenceWrites=Promise.resolve(),preferenceError='';

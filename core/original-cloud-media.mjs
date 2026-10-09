@@ -1,5 +1,11 @@
 import './profiles.js';
 
+// The original PostgreSQL catalogue orders by file_name, whereas R2 pages
+// order by object key. Sort only after all pages have been collected.
+export function sortOriginalMediaCatalogue(assets){
+ return assets.sort((a,b)=>{const left=String(a.file_name||a.asset_id||''),right=String(b.file_name||b.asset_id||'');return left<right?-1:left>right?1:0;});
+}
+
 // The original fillFormUntilReady prefers the current product's cloud logo
 // and ordered screenshots. Freeze that default once at run registration;
 // explicit selected versions and disabled slots continue to belong to the user.
@@ -48,8 +54,8 @@ export async function listOriginalD1Media(bucket,workspace){
  if(!bucket?.list)return[];
  const prefix=`workspaces/${workspace}/media/`,assets=[],seen=new Set();let cursor;
  do{const page=await bucket.list({prefix,limit:200,cursor,include:['customMetadata','httpMetadata']});
-  for(const object of page.objects||[])assets.push({asset_id:object.key.slice(prefix.length),profile_id:object.customMetadata?.profileId||'',media_kind:object.customMetadata?.kind||'',content_type:object.httpMetadata?.contentType||'',media_index:object.customMetadata?.mediaIndex});
+  for(const object of page.objects||[])assets.push({asset_id:object.key.slice(prefix.length),file_name:object.customMetadata?.fileName||object.key.slice(prefix.length),profile_id:object.customMetadata?.profileId||'',media_kind:object.customMetadata?.kind||'',content_type:object.httpMetadata?.contentType||'',media_index:object.customMetadata?.mediaIndex});
   cursor=page.truncated?page.cursor:undefined;if(cursor&&seen.has(cursor))throw Error('云端媒体分页游标重复');if(cursor)seen.add(cursor);
  }while(cursor);
- return assets;
+ return sortOriginalMediaCatalogue(assets);
 }

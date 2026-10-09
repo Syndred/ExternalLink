@@ -1,0 +1,46 @@
+{
+  "kind": "unfinished_independent_receipt_progress_checkpoint",
+  "baseCommit": "85b629774f4c500348bc3d94acab5ca3f5f29ece",
+  "publishedBackendCommit": "43e52311d1c55d7409384652f5df7ab1db8faff1",
+  "migrationComplete": false,
+  "codePublished": false,
+  "servicesReloaded": false,
+  "workerDeployed": false,
+  "verification": {
+    "focusedPassed": 34,
+    "browserTestPassed": 1,
+    "browserScenarios": 7,
+    "fullPassed": 1021,
+    "fullFailed": 2,
+    "fullSkipped": 0,
+    "failure": "Two VM-based Runtime.work tests lack originalRunReceiptTask in their execution context; fix and final full rerun remain outstanding."
+  },
+  "nextSteps": [
+    "Wire actual cleanup helper into VM fixtures, rerun affected tests and final full suite",
+    "Only after green verification publish source changes, update original services and verify protected data",
+    "Verify original single-page cloud receipt notification and automatic queue continuation with actual runtime",
+    "Continue full original feature mapping and unresolved historical favorites/media sources"
+  ],
+  "rawEvidence": [
+    {
+      "path": "original-independent-receipt-checkpoint-2026-10-09/original-independent-receipt-committed-baseline-2026-10-09.txt",
+      "capturedSha256": "6c132b0938a7ec5d9e602b845351fedecb095923dcbcccd7e17cd17314ccb946",
+      "gitBlobSha256": "539deacc2f42049682d216dab526571ea8cab510fa4020fcf6b9d219757595f2"
+    },
+    {
+      "path": "original-independent-receipt-checkpoint-2026-10-09/original-independent-receipt-focused-2026-10-09.txt",
+      "capturedSha256": "c5ffb91d5399036edde3845b8813601dcc53f0631362b74c6ef70a69cfc5c329",
+      "gitBlobSha256": "29eef37aba21b5ac126d8174556babe0eeeca4d153215d417677dce9643fbdbb"
+    },
+    {
+      "path": "original-independent-receipt-checkpoint-2026-10-09/original-independent-receipt-browser-final-2026-10-09.txt",
+      "capturedSha256": "490456d24335c9e9e4664e57b3a898513c70515d690eb9c24d02091321a37bbb",
+      "gitBlobSha256": "aacc6d2774c35d134aac308a1ca4d8e9b8a0417dd40bda767e15c8b4b005d1ef"
+    },
+    {
+      "path": "original-independent-receipt-checkpoint-2026-10-09/original-independent-receipt-repository-2026-10-09.txt",
+      "capturedSha256": "8449c1031804be3c16136f168c18eb61370924181bf1852ef399018b7625d141",
+      "gitBlobSha256": "b32b1e303821acfcee83c012c060b2846b793559877a4410d1a25c8bf23f1990"
+    }
+  ]
+}

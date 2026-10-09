@@ -8,7 +8,8 @@ export function productHuntHumanGate(result={}){
 export function productHuntVisualHandoff(result={},stable=0){const stage=String(result.stage||'').trim().toLowerCase();return stage.length>0&&stage!=='unknown'&&Array.isArray(result.missing)&&result.missing.length>0&&stable>=productHuntLimits.stableVisualRetries&&!productHuntHumanGate(result);}
 export async function runProductHuntLoop({step,checkpoint,active=()=>true,delay,advance,visual,create,confirmCreate=false,entrypoint='launch'}){
  if(!['launch','sidepanel'].includes(entrypoint))throw Error('Product Hunt 发布入口无效');
- let completed=0,waits=0,signature='',stable=0,visuals=0;
+ const runPass=async()=>{
+ let completed=0,waits=0,signature='',stable=0;
  while(completed<productHuntLimits.steps&&waits<productHuntLimits.waits){
   if(!active())return{ok:false,interrupted:true,reason:'原发布操作已暂停或页面已变化'};
   const result=await step({confirmCreate:false});if(!result||typeof result!=='object')throw Error('Product Hunt 步骤返回无效');await checkpoint(result);
@@ -21,13 +22,12 @@ export async function runProductHuntLoop({step,checkpoint,active=()=>true,delay,
   }
   if(result.error||result.status==='error')throw Error(result.error||result.reason||'Product Hunt 步骤失败');
   if(result.waiting){
-   if(result.stageCompleted&&result.stageAdvanced===false&&result.advancePoint&&advance){if(await advance(result)){waits++;await delay(900);continue;}}
+   if(entrypoint==='launch'&&result.stageCompleted&&result.stageAdvanced===false&&result.advancePoint&&advance){if(await advance(result)){waits++;await delay(900);continue;}}
    const next=[result.stage||'unknown',JSON.stringify(result.missing||result.requiredUnchecked||[]),result.reason||''].join('|');stable=next===signature?stable+1:0;signature=next;
    if(productHuntVisualHandoff(result,stable)){
-    if(visual&&visuals<productHuntLimits.visualFallbacks){visuals++;const outcome=await visual(result);if(!active())return{ok:false,interrupted:true};if(outcome?.originalAgentUnavailable||outcome?.interrupted)return outcome;if(outcome?.needs_manual||outcome?.blocked||outcome?.error)return{...outcome,keepTab:true};if(outcome?.ok){stable=0;signature='';waits++;continue;}}
-    return{...result,visualEscalation:true,needs_manual:true,keepTab:true};
+    return{...result,...(entrypoint==='sidepanel'?{platform:'product_hunt'}:{}),visualEscalation:true,keepTab:true,reason:'Product Hunt '+result.stage+' 已稳定加载但普通控件未推进，交给通用截图智能体处理自定义组件'};
    }
-   if(result.stage&&result.stage!=='unknown'&&result.missing?.length&&stable>=5)return{...result,needs_manual:true,keepTab:true,reason:'Product Hunt '+result.stage+' 仍缺少：'+result.missing.join('、')};
+   if(result.stage&&result.stage!=='unknown'&&result.missing?.length&&stable>=5)return{...result,...(entrypoint==='sidepanel'?{platform:'product_hunt'}:{}),needs_manual:true,keepTab:true,reason:'Product Hunt '+result.stage+' 仍缺少：'+result.missing.join('、')};
    waits++;const milliseconds=Number(result.retryAfterMs);await delay(Number.isFinite(milliseconds)?Math.max(150,Math.min(milliseconds,5000)):800);continue;
   }
   if(!(result.advanced||result.stageAdvanced||result.stageCompleted||result.entryOpened)){
@@ -36,5 +36,22 @@ export async function runProductHuntLoop({step,checkpoint,active=()=>true,delay,
   }
   completed++;waits=0;await delay(900);
  }
- return{ok:false,needs_manual:true,keepTab:true,reason:'Product Hunt 步骤超过原安全上限',completedSteps:completed,waitingRetries:waits};
+ if(entrypoint==='sidepanel')return{ok:false,waiting:true,keepTab:true,reason:'Product Hunt 步骤超过安全上限，页签已保留'};
+ throw Error('Product Hunt 步骤超过安全上限');
+ };
+ let result=await runPass();
+ if(!visual||!result.visualEscalation)return result;
+ // Original main launch exits after handing the same task to vision. The
+ // panel has a separate two-fallback wrapper, with a fresh pass each time.
+ if(entrypoint==='launch'){
+  const outcome=await visual(result);if(!active())return{ok:false,interrupted:true};
+  return outcome||{...result,needs_manual:true};
+ }
+ for(let fallback=0;result?.visualEscalation===true&&fallback<productHuntLimits.visualFallbacks;fallback++){
+  const outcome=await visual(result);if(!active())return{ok:false,interrupted:true};
+  if(outcome?.originalAgentUnavailable||outcome?.interrupted)return outcome;
+  if(outcome?.ready_to_create||outcome?.needs_manual||outcome?.blocked||outcome?.error)return{...outcome,platform:'product_hunt',keepTab:true};
+  result=await runPass();
+ }
+ return result;
 }

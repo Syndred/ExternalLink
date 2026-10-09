@@ -9,7 +9,9 @@ import {getTargetInfo} from '../src/browser-target.mjs';
 import {sidepanelOpened,sidepanelFill} from '../src/single-page.mjs';
 import {fillAssistantTask} from '../src/browser-assistant.mjs';
 import {workbenchScope} from '../src/workbench-sync.mjs';
-import {queue} from '../src/shared.mjs';
+import {queue,profiles} from '../src/shared.mjs';
+import {runProductHuntWorkflow} from '../src/product-hunt.mjs';
+import {attachEngine} from '../src/engine.mjs';
 
 const home=await mkdtemp(join(tmpdir(),'el-original-hunt-no-progress-'));
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']}),context=await browser.newContext(),store=new Store(join(home,'outbox.sqlite')),runtime=new Runtime(store,home);
@@ -53,5 +55,19 @@ try{
  before=stepCalls;const panel=await sidepanelFill(runtime,input);assert.equal(stepCalls-before,1);assert.equal(panel.taskId,task.id);assert.equal(panel.fill.waiting,true);assert.equal(panel.fill.retryAfterMs,800);assert.equal(panel.readyToCreate,false);assertKept();rows.push({entrypoint:'sidepanel',stepRequests:1,waiting:true,retryAfterMs:800});
  store.set('browserAssistantSettings',{scope:workbenchScope(pair),enabled:true,autoFillOnVisit:true,profileId:'p'});before=stepCalls;const assistant=await fillAssistantTask(runtime,{taskId:task.id,targetId:target.targetId,url:page.url(),panelId:opened.panel.id,panelGeneration:opened.panel.generation});assert.equal(stepCalls-before,1);assert.equal(assistant.taskId,task.id);assert.equal(assistant.readyToCreate,false);assertKept();rows.push({entrypoint:'visit_auto_fill',stepRequests:1,sameOriginalTask:true});
  assert.equal(store.get('task:'+task.id).productHunt.history.length,4);assert.equal(await page.evaluate(()=>window.created||0),0);assert.equal(posts,0);assert.equal(externalRequests,0);assert.equal(modelCalls,0);assert.equal(store.get('paused'),true);
- console.log(JSON.stringify({ok:true,kind:'owned_native_product_hunt_injected_no_progress_protocol',rows,allEntrancesAndSameTaskResume:true,originalCheckpointHistory:4,profileRunTargetAndUnknownBoundaryKept:true,posts,externalRequests,modelCalls,productionWrites:0}));
+ // Simulate the screenshot operator changing this owned DOM. The final
+ // readiness check uses the real attached engine, while no real model runs.
+ const originalSessionFor=context.newCDPSession;context.newCDPSession=sessionFor;
+ for(const entrypoint of ['launch','sidepanel']){
+  const current=store.get('task:'+task.id),identity=Object.fromEntries(['runId','profileId','targetId','profileRevision','browserInstance'].map(key=>[key,current[key]]));runtime.update(current,{productHuntCreationConsent:identity},'fixture_original_consent');
+  let visualCalls=0,requests=0;runtime.prepareWithAi=async(_page,_task,config,active,options)=>{
+   visualCalls++;assert.equal(config.productHuntPrepared,true);assert.equal(config.visualFillOnly,true);assert.equal(active(),true);
+   await page.evaluate(()=>{document.querySelector('main').innerHTML='<h1>Launch checklist</h1><div role="progressbar" aria-valuenow="100">All steps complete</div><button id="create" type="button" onclick="window.created=(window.created||0)+1">Create draft</button>';});
+   const engine=await attachEngine(context,page.mainFrame());assert.equal(await options.readyCheck(engine),true);return{ok:true,candidate:{engine,frame:page.mainFrame()}};
+  };
+  const outcome=await runProductHuntWorkflow(runtime,current,page,profiles.buildAgentConfigFromProfile(profile),{active:()=>true,entrypoint,confirmCreate:true,callEngine:async message=>{assert.equal(message.action,'runProductHuntStep');assert.equal(message.confirmCreate,false);requests++;return{stage:'images',waiting:true,missing:['Original custom component']};}});
+  assert.equal(requests,3);assert.equal(visualCalls,1);assert.equal(outcome.ready_to_create,true);assert.equal(outcome.submittedAttempt,false);assert.doesNotThrow(()=>JSON.stringify(outcome));assert.equal(Object.hasOwn(outcome,'candidate'),false);assert.equal(await page.evaluate(()=>window.created||0),0);assert.equal(store.get('task:'+task.id).attentionType,'producthunt_create_confirmation');assertKept();rows.push({entrypoint:entrypoint+'_visual_ready',stepRequests:3,visualCalls:1,actualFinalReadinessCheck:true,priorConsentDidNotCreate:true,serializableWithoutBrowserInternals:true});
+ }
+ context.newCDPSession=originalSessionFor;assert.equal(store.get('task:'+task.id).productHunt.history.length,12);
+ console.log(JSON.stringify({ok:true,kind:'owned_native_product_hunt_injected_no_progress_protocol',rows,allEntrancesAndSameTaskResume:true,originalCheckpointHistory:12,actualVisualReadinessPreservedWithoutAnotherStepOrCreate:true,profileRunTargetAndUnknownBoundaryKept:true,posts,externalRequests,modelCalls,productionWrites:0}));
 }finally{store.close();await browser.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-original-hunt-no-progress-'));await rm(home,{recursive:true,force:true});}

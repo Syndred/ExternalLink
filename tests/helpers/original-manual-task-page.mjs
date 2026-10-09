@@ -13,7 +13,8 @@ export async function originalManualTaskPage(task,{stopped=false,label,closed=fa
   showToast:(message,error)=>calls.push({kind:'toast',message,error:!!error}),syncTasksFromBackground:()=>calls.push({kind:'refresh'}),
   chrome:{tabs:{async update(id,options){if(closed)throw Error('closed');calls.push({kind:'focus',id,...options});},async create(options){calls.push({kind:'create',...options});}},runtime:{async sendMessage(input){calls.push({kind:'message',...input});}}}});
  vm.runInContext(body+'\nrenderManualTasks()',context);
- const buttons=nodes.filter(n=>n.events.click);
+ const visible=[],visit=node=>{visible.push(node);for(const child of node.children||[])visit(child);};visit(list);
+ const buttons=visible.filter(n=>n.events.click);
  if(label){const button=buttons.find(n=>n.textContent===label);if(!button)throw Error('Original button missing: '+label);await button.events.click();}
  return{labels:buttons.map(n=>n.textContent),calls:structuredClone(calls)};
 }

@@ -92,7 +92,8 @@ function showStopExecution(){if(!detail.open)detail.showModal();const panel=$('d
 function appendManualControls(panel,task){
  if(!task.runId||['ai','supervisor'].includes(task.controller))return;
  const original={taskId:task.id,expectedRunId:task.runId,...(task.targetId?{expectedTargetId:task.targetId}:{})};
- if(!task.receipt&&['needs_manual','needs_captcha','needs_login','captcha','filled','submitted_unconfirmed'].includes(task.status)||task.receipt?.confirmedBy==='manual'&&task.manualConfirmation?.status==='pending_sync'){
+ let productHuntReady=false;try{productHuntReady=!task.receipt&&!task.attemptBoundary&&task.productHunt?.readyToCreate===true&&/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname);}catch{}
+ if(!productHuntReady&&!task.receipt&&['needs_manual','needs_captcha','needs_login','captcha','filled','submitted_unconfirmed'].includes(task.status)||task.receipt?.confirmedBy==='manual'&&task.manualConfirmation?.status==='pending_sync'){
   panel.append(button(task.receipt?'继续同步人工确认':'人工确认成功',async()=>{
    const preview=await request('/previewManualConfirmation',{...original,runId:task.runId}),evidence=el('textarea',{'aria-label':'人工确认说明',placeholder:'填写你看到的站方收件、账户记录或公开链接说明'}),message=el('p',{role:'status'});let confirmed=false;
    evidence.value=preview.evidence||'';
@@ -103,9 +104,9 @@ function appendManualControls(panel,task){
  }
  if(data.executionStopped){panel.append(el('p',{class:'notice',text:'本次执行已停止，请在运行任务页明确重新开始原范围。'}));return;}
  if(!task.receipt&&!task.attemptBoundary&&['pending','needs_manual'].includes(task.status)&&task.targetId){
-  panel.append(button('人工继续原任务',()=>{
-   let authorized=false;const productHuntReady=task.productHunt?.readyToCreate===true&&/(^|\.)producthunt\.com$/i.test(new URL(task.url).hostname);
-   panel.replaceChildren(el('h2',{text:productHuntReady?'创建原 Product Hunt 草稿':'人工继续原任务'}),el('p',{text:task.url}),el('p',{text:productHuntReady?'逐步准备已经完成。继续会核对当前清单并创建这次产品草稿，保存 Product Hunt 的新确认。授权范围为创建草稿。':'在原标签页重新检查并填写，使用原任务的产品资料和素材，随后执行普通免费投稿。需要你本人验证或额外权限时再次停下。'}),checkControl(productHuntReady?'确认创建原 Product Hunt 草稿':'允许原任务继续普通免费投稿',authorized,v=>authorized=v),button(productHuntReady?'确认创建 Product Hunt 草稿':'确认继续原任务',async()=>{await request('/manualSubmit',{...original,ordinaryPermissionsAuthorized:authorized,confirmProductHuntCreate:productHuntReady&&authorized});detail.close();await load();},true));
+  panel.append(button(productHuntReady?'确认创建 Product Hunt 草稿':'人工继续原任务',()=>{
+   let authorized=false;
+   panel.replaceChildren(el('h2',{text:productHuntReady?'创建原 Product Hunt 草稿':'人工继续原任务'}),el('p',{text:task.url}),el('p',{text:productHuntReady?'逐步准备已经完成。继续会核对当前清单并创建这次产品草稿，保存 Product Hunt 的新确认。授权范围为创建草稿。':'在原标签页重新检查并填写，使用原任务的产品资料和素材，随后执行普通免费投稿。需要你本人验证或额外权限时再次停下。'}),checkControl(productHuntReady?'确认创建原 Product Hunt 草稿':'允许原任务继续普通免费投稿',authorized,v=>authorized=v),button(productHuntReady?'确认创建 Product Hunt 草稿':'确认继续原任务',async()=>{if(authorized)await request('/openManualTaskPage',{...original,expectedTargetId:task.targetId||''});await request('/manualSubmit',{...original,ordinaryPermissionsAuthorized:authorized,confirmProductHuntCreate:productHuntReady&&authorized});detail.close();await load();},true));
   }));
  }
  const pending=(data.manualSkipRequests||[]).find(item=>item.taskId===task.id);

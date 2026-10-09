@@ -1,3 +1,4 @@
+import {backgroundContext} from './helpers/background-browser-context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Store} from '../executor/src/store.mjs';
@@ -22,7 +23,7 @@ test('offline original navigation and advances use saved local data and locally 
 
 test('offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure',async()=>{
  const f=fixture(),visited=[];let connected=false;
- f.runtime.connect=async()=>{if(!connected)throw Error('Fixture browser unavailable');f.runtime.context={async newPage(){return{isClosed:()=>false,async goto(url){visited.push(url);}};},async newCDPSession(){return{async send(){return{targetInfo:{targetId:'owned-fixture-page'}};},async detach(){}};}};};
+ f.runtime.connect=async()=>{if(!connected)throw Error('Fixture browser unavailable');f.runtime.context=backgroundContext(async url=>{visited.push(url);});};
  try{
   const urls=['https://first.fixture.invalid/form'],expected=await originalLibraryQuickOpen(f.snapshot,{urls,batchSize:1}),result=await quickOpenLibrary(f.runtime,{urls,batchSize:1});await f.runtime.quickOpenJob;
   assert.equal(result.job.browseSource,'local');assert.equal(f.store.get('quickOpenJob:'+result.job.id).status,'paused');connected=true;const resumed=await quickOpenLibrary(f.runtime,{jobId:result.job.id});await f.runtime.quickOpenJob;

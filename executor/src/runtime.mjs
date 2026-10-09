@@ -209,7 +209,9 @@ export class Runtime {
     runs: this.store.values('run:'), tasks: tasks.map(task => ({ ...task, pendingEvents:pending.filter(e=>e.taskId===task.id).length, syncStatus:task.syncConflict?'conflict':pending.some(e => e.taskId === task.id) || (task.receipt && !task.cloudVerified) ? 'pending' : 'confirmed' })), pendingEvents: pending.length, workbenchPendingEvents:pendingWorkbench(this).length, cloudError:activeOfflineMode?'':this.cloudError, host: this.host ? { version: this.host.version, instance: this.host.startedAt } : null }; }
   async connect() {
     this.host = JSON.parse(await readFile(path.join(this.home, 'host.json'), 'utf8'));
-    this.browser = await chromium.connectOverCDP(this.host.endpoint, { timeout: 10000 });
+    // Keep the user's actual tab focus and browser preferences. Playwright's
+    // default focus emulation makes background tabs look active to auto-fill.
+    this.browser = await chromium.connectOverCDP(this.host.endpoint, { timeout: 10000, noDefaults: true });
     this.context = this.browser.contexts()[0];
     const observedHost=this.host;
     await appendFile(path.join(this.home,'host-events.jsonl'),JSON.stringify({at:new Date().toISOString(),type:'executor_attached',browserInstance:observedHost.startedAt,chromePid:observedHost.chromePid,serverPid:process.pid})+'\n');

@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {applicationModel} from '../../core/application-model.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
-import {getTargetInfo} from './browser-target.mjs';
+import {createBackgroundPage} from './browser-target.mjs';
 import {overlayApplication} from './application-mutations.mjs';
 import {browsingSnapshot} from './browsing-snapshot.mjs';
 export const quickOpenSummary=job=>({id:job.id,scope:job.scope,at:job.at,status:job.status,cursor:job.cursor,count:job.items.length,items:job.items,removeOpened:job.removeOpened,history:job.history||[],error:job.error,browseSource:job.browseSource,browseSavedAt:job.browseSavedAt,browseMessage:job.browseMessage});
@@ -22,7 +22,7 @@ async function run(runtime,job){try{
  if(!runtime.context)await runtime.connect();
  for(;job.cursor<job.items.length;job.cursor++){
   const item=job.items[job.cursor];item.status='opening';runtime.store.set('quickOpenJob:'+job.id,job);
-  try{const page=await runtime.context.newPage(),info=await getTargetInfo(runtime.context,page);item.targetId=info?.targetId;runtime.store.set('quickOpenJob:'+job.id,job);await page.goto(item.url,{waitUntil:'commit',timeout:15000});item.status='opened';}catch(error){item.status='failed';item.error=error.message;}
+  try{const {page,targetId}=await createBackgroundPage(runtime.context);item.targetId=targetId;runtime.store.set('quickOpenJob:'+job.id,job);await page.goto(item.url,{waitUntil:'commit',timeout:15000});item.status='opened';}catch(error){item.status='failed';item.error=error.message;if(error.targetId)item.targetId=error.targetId;}
   runtime.store.set('quickOpenJob:'+job.id,job);if(job.cursor<job.items.length-1)await new Promise(r=>setTimeout(r,job.intervalMs));
  }
  job.status='completed';

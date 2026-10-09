@@ -1,3 +1,4 @@
+import {backgroundContext} from './helpers/background-browser-context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as queues from '../core/submission-queue.mjs';
@@ -55,7 +56,7 @@ test('navigation uses pending local blacklist, contact and new-target edits whil
 
 test('quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure',async()=>{
  const store=new Store(':memory:'),saved=snapshot(),before=structuredClone(saved),pair={endpoint:'https://cloud.fixture.invalid',workspaceId:'pending-open'};store.set('pair',pair);store.set('paused',true);store.set('applicationSnapshot',{scope:workbenchScope(pair),snapshot:structuredClone(saved)});let connected=false;const visited=[];
- const runtime={store,cloud:{async request(route){if(route==='snapshot')return structuredClone(saved);assert.equal(route,'library');throw Error('Fixture writes unavailable');}},async connect(){if(!connected)throw Error('Fixture browser unavailable');runtime.context={async newPage(){return{isClosed:()=>false,async goto(url){visited.push(url);}};},async newCDPSession(){return{async send(){return{targetInfo:{targetId:'fixture-page'}};},async detach(){}};}};}};
+ const runtime={store,cloud:{async request(route){if(route==='snapshot')return structuredClone(saved);assert.equal(route,'library');throw Error('Fixture writes unavailable');}},async connect(){if(!connected)throw Error('Fixture browser unavailable');runtime.context=backgroundContext(async url=>{visited.push(url);});}};
  try{
   const url='https://new.fixture.invalid/form';await enqueueLibraryMutation(runtime,{operation:{type:'create',url,fields:{note:'AI tool directory'}}});const expected=await originalLibraryQuickOpen(overlayApplication(runtime,saved),{urls:[url],batchSize:1});
   const result=await quickOpenLibrary(runtime,{urls:[url],batchSize:1});await runtime.quickOpenJob;assert.equal(store.get('quickOpenJob:'+result.job.id).status,'paused');connected=true;await quickOpenLibrary(runtime,{jobId:result.job.id});await runtime.quickOpenJob;

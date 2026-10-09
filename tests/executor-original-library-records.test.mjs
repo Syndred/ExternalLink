@@ -1,3 +1,4 @@
+import {backgroundContext} from './helpers/background-browser-context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -58,6 +59,6 @@ test('unknown alias preference response is confirmed by the original mutation ID
 test('quick open resolves original display aliases, deduplicates and retains ordinary path scope',async()=>{
  for(const domain of ['startupstash.com','startupcollections.com','aisuperhub.io','launchpedia.co','tipseason.com','library.phygital.plus','aisotools.com','producthunt.com','aitools.neilpatel.com']){
   const home='https://'+domain,snapshot=fixture([home,home+'/submit','https://ordinary.example/one']),input={urls:[home+'/submit',home+'/another','https://ordinary.example/two','https://ordinary.example/one','javascript:void(0)'],batchSize:5,intervalMs:100},expected=await originalLibraryQuickOpen(snapshot,input),store=new Store(':memory:'),visited=[];
-  try{store.set('pair',{endpoint:'https://fixture.invalid',workspaceId:'alias-open'});store.set('paused',true);const runtime={store,cloud:{async request(route){assert.equal(route,'snapshot');return structuredClone(snapshot);}},context:{async newPage(){return{isClosed:()=>false,async goto(url){visited.push(url);}};},async newCDPSession(){return{async send(){return{targetInfo:{targetId:'original-'+visited.length}};},async detach(){}};}}};const result=await quickOpenLibrary(runtime,input);await runtime.quickOpenJob;assert.deepEqual(visited,expected,domain);assert.equal(store.get('quickOpenJob:'+result.job.id).status,'completed');assert.equal(store.get('paused'),true);assert.equal(store.pendingCount(),0);assert.equal(store.values('task:').length,0);assert.deepEqual(snapshot,fixture([home,home+'/submit','https://ordinary.example/one']));}finally{store.close();}
+  try{store.set('pair',{endpoint:'https://fixture.invalid',workspaceId:'alias-open'});store.set('paused',true);const runtime={store,cloud:{async request(route){assert.equal(route,'snapshot');return structuredClone(snapshot);}},context:backgroundContext(async url=>{visited.push(url);})};const result=await quickOpenLibrary(runtime,input);await runtime.quickOpenJob;assert.deepEqual(visited,expected,domain);assert.equal(store.get('quickOpenJob:'+result.job.id).status,'completed');assert.equal(store.get('paused'),true);assert.equal(store.pendingCount(),0);assert.equal(store.values('task:').length,0);assert.deepEqual(snapshot,fixture([home,home+'/submit','https://ordinary.example/one']));}finally{store.close();}
  }
 });

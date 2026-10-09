@@ -1,0 +1,172 @@
+{
+  "kind": "original_sidepanel_navigation_buttons_restored",
+  "sourceCommit": "b045fa4a3648c321cfd4b3b56ead3c4b06c0bf89",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunction": "extension/sidepanel.js cycleSubmission",
+  "correctedMappings": {
+    "btnPrevSite": "单站投稿队列 / 上一站",
+    "btnNextSite": "单站投稿队列 / 下一站",
+    "btnLaunchNext": "单站投稿队列 / 下一站"
+  },
+  "before": "Native UI advanced cursor with open:false; original function also navigated the tab. Inventory incorrectly mapped the controls to product editing or batch execution.",
+  "after": "Native UI advances with open:true, opens and activates the destination, reuses its unclaimed queue page.",
+  "focusedTests": 15,
+  "fullSuite": {
+    "passed": 975,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 109542.2462
+  },
+  "actualIsolatedUi": {
+    "ok": true,
+    "kind": "actual_services_original_navigation_and_pending_quick_open_fixture",
+    "completeOriginalRangeBothServices": true,
+    "originalDestinations": 188,
+    "scopedCategoryBothServices": true,
+    "actualUiNextAndPrevious": true,
+    "frozenSidepanelNavigationOpenedUrls": [
+      "http://127.0.0.1:55825/target-second",
+      "http://127.0.0.1:55825/target-first"
+    ],
+    "actualUiOpensOriginalDestinations": true,
+    "sameUnclaimedQueuePageReused": true,
+    "actualUiPendingBlacklistExplanation": true,
+    "pendingNewTargetVisible": true,
+    "actualChromeOpenedPendingTarget": true,
+    "offlineQueueAndAdvanceBothServices": true,
+    "actualUiOfflineChineseExplanation": true,
+    "actualUiSelectionRuleChineseExplanation": true,
+    "offlineChromeOpenedPendingTarget": true,
+    "ownedTargetGetRequests": 3,
+    "remoteDocumentsAndRevisionsUnchanged": true,
+    "originalFixedBatchUnchanged": true,
+    "registeredTasks": 0,
+    "posts": 0,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "realModelCalls": 0,
+    "realSubmissions": 0
+  },
+  "serviceProcess": {
+    "ok": true,
+    "kind": "final_published_native_service_process_identity",
+    "sourceCommit": "b045fa4a3648c321cfd4b3b56ead3c4b06c0bf89",
+    "repositoryHead": "b045fa4a3648c321cfd4b3b56ead3c4b06c0bf89",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 24320,
+        "StartedAt": "2026-10-09T13:11:42.2728520+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 21288,
+        "StartedAt": "2026-10-09T13:11:43.1348570+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false
+  },
+  "liveUi": {
+    "ok": true,
+    "liveApplicationEqualsCommittedSource": true,
+    "sha256": "f23dad2b53b4ffb0ac50ac1711a001b11ede9487cd6a3a0ae04599e4cad60ec1",
+    "previousAndNextOpenDestination": true,
+    "productionNavigationActions": 0
+  },
+  "afterRelease": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "limits": [
+    "Original function is executed in a VM with controlled chrome callbacks. Actual native UI and services use isolated Chrome and local fixture URLs.",
+    "No real third-party submission or real model call. Actual original browser not started or stopped.",
+    "Full original plugin migration remains incomplete; unrelated dynamic flows and unresolved historical sources remain."
+  ],
+  "migrationComplete": false,
+  "rawOutputs": [
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-before-2026-10-09.txt",
+      "sha256": "c7a97a09473069134687163981b789366347a76d241fac952248e8d23ffcff96",
+      "gitBlobSha256": "fb631091bcb8f4f5fa8933853844634809fd672882b63c0472d71157100dd430"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-focused-2026-10-09.txt",
+      "sha256": "1cbcdec81aba424160df637f1f012c73c78c7571605a6a1a69ff0b3410e38db5",
+      "gitBlobSha256": "e42e5a4fc30fd6fffd18a913f41787acf680d646ed44e9816e1eb544829346ae"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-repository-2026-10-09.txt",
+      "sha256": "4dcf9dacce58435b67a0332b7a4255902bcc9a3b8c836623a4785d2fa8417b49",
+      "gitBlobSha256": "537bd8f98f6f00e47d44bb09108565eb3d6d1496167e02f72207e6a0f973cfdc"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-browser-2026-10-09.txt",
+      "sha256": "3bc387c739c109221d68f55f82644cf392cb8d005f0a315f2805ac2a7ec40427",
+      "gitBlobSha256": "815fd0f48815949cc1df2a5d1c34a10ab26d3073deefab26da5e9d765cca6a2a"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-release-before-2026-10-09.txt",
+      "sha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-release-ready-2026-10-09.txt",
+      "sha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-reload-2026-10-09.txt",
+      "sha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-service-process-2026-10-09.txt",
+      "sha256": "e69ff89073821527c937b7c93a2c693cec717039d4731c5129d6f7c21d90e36f",
+      "gitBlobSha256": "c76074d7a2a13730f9b59726e0208d86886e8732a2a7302ef524ce5401cc22e3"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-live-ui-2026-10-09.txt",
+      "sha256": "4693cedad62ed056cc891af4f61a2ec20fab7d53bb742335bc98294c0e327704",
+      "gitBlobSha256": "4693cedad62ed056cc891af4f61a2ec20fab7d53bb742335bc98294c0e327704"
+    },
+    {
+      "path": "original-navigation-buttons-2026-10-09/original-navigation-buttons-release-after-2026-10-09.txt",
+      "sha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    }
+  ]
+}

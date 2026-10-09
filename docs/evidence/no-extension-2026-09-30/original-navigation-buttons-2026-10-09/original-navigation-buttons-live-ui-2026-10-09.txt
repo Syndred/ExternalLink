@@ -1,0 +1,1 @@
+{"ok":true,"liveApplicationEqualsCommittedSource":true,"sha256":"f23dad2b53b4ffb0ac50ac1711a001b11ede9487cd6a3a0ae04599e4cad60ec1","previousAndNextOpenDestination":true,"productionNavigationActions":0}

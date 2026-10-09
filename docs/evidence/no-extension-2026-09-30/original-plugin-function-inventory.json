@@ -903,17 +903,19 @@
       "source": "extension/sidepanel.html",
       "id": "btnPrevSite",
       "label": "◀",
-      "mapping": "资料与媒体 / 上一个产品",
-      "verification": "已实现并保护未保存编辑，界面专项核验待补",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "外链库 / 单站投稿队列 / 上一站",
+      "verification": "冻结原版 cycleSubmission 实际运行对照；原两服务及隔离 Chrome 界面验证切换并打开对应外链，复用队列页签。原产品资料切换／批次游标的错误对应已纠正。真实外站投稿未执行",
+      "status": "mapped_requires_full_acceptance",
+      "evidence": "original-navigation-buttons-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
       "id": "btnNextSite",
       "label": "▶",
-      "mapping": "资料与媒体 / 下一个产品",
-      "verification": "已实现并保护未保存编辑，界面专项核验待补",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "外链库 / 单站投稿队列 / 下一站",
+      "verification": "冻结原版 cycleSubmission 实际运行对照；原两服务及隔离 Chrome 界面验证切换并打开对应外链，复用队列页签。原产品资料切换／批次游标的错误对应已纠正。真实外站投稿未执行",
+      "status": "mapped_requires_full_acceptance",
+      "evidence": "original-navigation-buttons-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -983,9 +985,10 @@
       "source": "extension/sidepanel.html",
       "id": "btnLaunchNext",
       "label": "下一站",
-      "mapping": "运行任务 / 冻结批次游标",
-      "verification": "固定范围已对应，原人工下一站待核验",
-      "status": "mapped_requires_full_acceptance"
+      "mapping": "外链库 / 单站投稿队列 / 下一站",
+      "verification": "冻结原版 cycleSubmission 实际运行对照；原两服务及隔离 Chrome 界面验证切换并打开对应外链，复用队列页签。原产品资料切换／批次游标的错误对应已纠正。真实外站投稿未执行",
+      "status": "mapped_requires_full_acceptance",
+      "evidence": "original-navigation-buttons-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -3103,5 +3106,23 @@
     "freshCurrentDeviceTasksUnchanged": 778,
     "privateOriginalSourceFilesUnchanged": 6,
     "storedTimelineEvents": 470
+  },
+  "originalNavigationButtonsCheckpoint": {
+    "baseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+    "originalFunction": "extension/sidepanel.js cycleSubmission",
+    "correctedButtonMappings": [
+      "btnPrevSite",
+      "btnNextSite",
+      "btnLaunchNext"
+    ],
+    "actualUiOpensOriginalDestinations": true,
+    "sameUnclaimedQueuePageReused": true,
+    "focusedTestsPassed": 15,
+    "fullMigrationComplete": false,
+    "evidence": "original-navigation-buttons-2026-10-09.json",
+    "sourceCommit": "b045fa4a3648c321cfd4b3b56ead3c4b06c0bf89",
+    "originalServicesUpdated": true,
+    "fullSuitePassed": 975,
+    "liveUiEqualsCommittedSource": true
   }
 }

@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Original previous/next must open its destination, not only change text
++ actual - expected
+
++ undefined
+- 'http://127.0.0.1:51190/target-second'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-navigation-queue.mjs:49:124 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: 'http://127.0.0.1:51190/target-second',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

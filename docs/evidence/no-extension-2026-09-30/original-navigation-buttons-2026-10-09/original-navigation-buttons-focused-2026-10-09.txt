@@ -1,0 +1,23 @@
+✔ offline original navigation and advances use saved local data and locally saved new targets without remote writes (136.1359ms)
+✔ offline batch opening follows the frozen original local catalogue and keeps the same browsing job after a connection failure (10.4392ms)
+✔ browsing cannot fall back across workspaces or a connection change and cannot create a job without a saved snapshot (7.2336ms)
+✔ online navigation uses fresh remote data and persists it for the next offline browse without invoking registration (30.224ms)
+✔ malformed cloud reads and mismatched workspace or device provenance cannot overwrite saved browsing data or its cursor (4.2999ms)
+✔ navigation retains the complete frozen original source range, order, jobs and local contact configuration (49.1769ms)
+✔ original browse range preserves quality and blacklist gated destinations with explicit current eligibility (28.3581ms)
+✔ native navigation cursor matches frozen get, advance, both wraps and refresh after insertion without opening (388.853ms)
+✔ navigation uses pending local blacklist, contact and new-target edits while leaving raw remote documents unchanged (47.8982ms)
+✔ quick open accepts a locally saved pending target exactly as the frozen original catalogue and retains its job on browser failure (15.0876ms)
+✔ original getter summaries and compact UI navigation avoid repeating embedded media while legacy advance retains full configurations (202.217ms)
+✔ actual services, original navigation UI and isolated Chrome open the same locally saved pending target (11209.5569ms)
+✔ pending queue groups products by site, sorts original quality, and applies receipt, archive and removal exclusions (23.6094ms)
+✔ cursor follows the original complete queue after insertion and wraps without losing source identity (313.8675ms)
+✔ removal preserves knowledge, preferences and receipts while updating both aliases and deletion key with one durable plan (14.1639ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12358.6629

@@ -27,7 +27,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/runtime.mjs",
@@ -62,7 +62,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/runtime.mjs",
@@ -142,7 +142,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/runtime.mjs",
@@ -395,7 +395,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/application-mutations.mjs",
@@ -434,7 +434,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/application-mutations.mjs",
@@ -473,7 +473,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/application-mutations.mjs",
@@ -543,7 +543,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/runtime.mjs",
@@ -578,7 +578,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "executor/src/runtime.mjs",
@@ -691,7 +691,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-model.mjs",
@@ -859,7 +859,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-model.mjs",
@@ -937,7 +937,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-model.mjs",
@@ -1021,7 +1021,7 @@
       "candidateTestSources": [
         {
           "path": "tests/executor-original-quick-open-ui.test.mjs",
-          "sha256": "3f1513a5e0dfecad62c0b937399fb79bd7bc57b23464269b4921beff646e008b"
+          "sha256": "202630ad523e4a9f4e382b1fef9f8db5f07cfbfdab72c50057607e87e0139c5b"
         },
         {
           "path": "tests/executor-comment-quickopen.test.mjs",
@@ -1675,7 +1675,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1714,7 +1714,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1753,7 +1753,7 @@
         },
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -2412,7 +2412,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-data.mjs",
-          "sha256": "e380617e8818d6a1059a357665e153fe4c6191a56d18befb2e42ca9dfa3ea1ca"
+          "sha256": "f7ddb76c94e77ce2617261e77ee1363887da45ccee488c16fe122e0320aa3896"
         },
         {
           "path": "core/application-model.mjs",

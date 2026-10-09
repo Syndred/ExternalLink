@@ -156,7 +156,7 @@
       "entry": "外链库／查看动态 → 置顶、移除、编辑及删除",
       "operation": "工厂生成图标按钮，分别由调用者绑定操作",
       "persistence": "由调用者决定：队列或时间线文档",
-      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary/renderTimeline",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary/showTimeline",
       "tests": [
         "tests/executor-original-pin-control.test.mjs",
         "tests/executor-original-library-actions.test.mjs",
@@ -176,7 +176,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -194,7 +194,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -212,7 +212,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -230,7 +230,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -248,7 +248,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -266,7 +266,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -284,7 +284,7 @@
       "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
       "operation": "新增、编辑及取消编辑，保留原时间和证据",
       "persistence": "submissionTimeline及关联原回执",
-      "currentSource": "executor/web/application.js::showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -340,7 +340,7 @@
       "entry": "查看动态 → 编辑／删除原动态",
       "operation": "选择原事件编辑或删除，保留原回执",
       "persistence": "submissionTimeline",
-      "currentSource": "executor/web/application.js::renderTimeline/showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimeline/showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],
@@ -358,7 +358,7 @@
       "entry": "查看动态 → 编辑／删除原动态",
       "operation": "选择原事件编辑或删除，保留原回执",
       "persistence": "submissionTimeline",
-      "currentSource": "executor/web/application.js::renderTimeline/showTimelineForm",
+      "currentSource": "executor/web/application.js::showTimeline/showTimelineEditor",
       "tests": [
         "tests/executor-original-timeline-editor.test.mjs"
       ],

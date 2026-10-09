@@ -1,0 +1,35 @@
+✔ authenticated single-page preparation follows original receipt evidence and preserves imported history (44.3005ms)
+✔ large library transfers resume original verified parts, require the same device and preserve CAS and receipts (485.5736ms)
+✔ device media catalogue is read-only and scoped to its enrolled workspace (5.3707ms)
+✔ authenticated timeline product moves save the original ledger and both schemas together, duplicate append is stable and deletion preserves receipts (10.8882ms)
+✔ D1 device automatic classification atomically preserves manual verdicts and fences both deletion and annotation versions (7.7445ms)
+✔ D1 freezes only selected original task attachments, retains disabled screenshot slots and rejects missing, foreign and corrupt media (10.4288ms)
+✔ original D1 images without custom metadata freeze selected bytes without editing the old object or history (3.3925ms)
+✔ device local recovery archives source and previous versions before CAS, preserves receipts, and rejects foreign keys and stale revisions (5.548ms)
+✔ single-page preparation registers an unlisted page without releasing it for submission and validates original profile and mode (7.8687ms)
+✔ D1 executor preserves ownership, atomic run creation, lease fences, immutable receipts and paginated recovery (27.564ms)
+✔ device workbench restores library preferences, timeline editing, settings and authenticated AI without exposing admin routes (19.1465ms)
+✔ device field learning writes original product memory and answer-free destination schema under D1 revision checks (7.2721ms)
+✔ D1 favorite allocation rejects a concurrent product change even when its annotation revision has not changed (3.898ms)
+✔ device snapshot streams exact large Unicode documents and immutable revisions without parsing objects (47.1879ms)
+✔ linked timeline documents roll back together on a concurrent receipt change after immutable objects are prepared (3.476ms)
+✔ a later SQL failure rolls back all linked document pointers and history while preserving old immutable objects (2.1895ms)
+✔ documents above the old 8 MiB limit roundtrip Unicode through immutable chunks, snapshots and retained history (293.4254ms)
+✔ an interrupted large-object write cannot advance its D1 pointer and resumes the same content without duplicated parts (120.6123ms)
+✔ large documents live outside D1, CAS prevents another browser overwriting changes and retains history (17.8158ms)
+✔ indexed journal pages never load evidence objects; detail is scoped and verified (4.3849ms)
+✔ recovery archive retries are idempotent and corrupt or missing evidence fails closed (1.8552ms)
+✔ D1 API requires scoped credentials and works without a Neon connection (15.5837ms)
+✔ production Worker routes D1 requests without DATABASE_URL and separates two clients by workspace (8.7462ms)
+✔ original media audit reads exact legacy fields and original file order from an independent scoped PostgreSQL index (1254.6125ms)
+✔ original media recovery route rejects ordinary credentials, foreign workspaces and every mutation before reading any source (15.9685ms)
+✔ old database outages and missing configuration remain explicit with no fallback or connection information disclosure (1.4281ms)
+✔ deployed Worker routing keeps v1 media on D1 but routes the protected recovery read to the independent old database (2.0325ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1422.7575

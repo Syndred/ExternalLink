@@ -1,0 +1,32 @@
+{
+  "kind": "actual_authenticated_domain_metrics_readonly_after_deployment",
+  "domains": [
+    "producthunt.com",
+    "bai.tools"
+  ],
+  "result": {
+    "ok": true,
+    "results": [
+      {
+        "domain": "producthunt.com",
+        "status": "ok",
+        "createdAt": "2003-03-04T23:01:18Z",
+        "expiresAt": "2031-03-04T23:01:18Z",
+        "ageDays": 8619,
+        "ageMonths": 283
+      },
+      {
+        "domain": "bai.tools",
+        "status": "ok",
+        "createdAt": "2023-12-02T04:08:28.49Z",
+        "expiresAt": "2026-12-02T04:08:28.49Z",
+        "ageDays": 1042,
+        "ageMonths": 34
+      }
+    ]
+  },
+  "allCloudDocumentsAndRevisionsUnchanged": true,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0
+}

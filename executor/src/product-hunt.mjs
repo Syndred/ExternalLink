@@ -7,7 +7,7 @@ import {armPageCaptchaResume} from './captcha-resume.mjs';
 import {classifyOriginalTaskGate,originalHumanGateAttention} from './original-site-classification.mjs';
 const at=()=>new Date().toISOString();
 export function isProductHuntLaunch(url){try{const value=new URL(url);return/^https?:$/.test(value.protocol)&&/(^|\.)producthunt\.com$/i.test(value.hostname)&&!value.username&&!value.password;}catch{return false;}}
-export async function runProductHuntWorkflow(runtime,task,page,config,{active=()=>runtime.store.get('paused')===false,confirmCreate=false,offline=false,callEngine}={}){
+export async function runProductHuntWorkflow(runtime,task,page,config,{active=()=>runtime.store.get('paused')===false,confirmCreate=false,offline=false,callEngine,entrypoint='launch'}={}){
  const scope=workbenchScope(runtime.store.get('pair')),original={runId:task.runId,profileId:task.profileId,targetId:task.targetId,profileRevision:task.profileRevision,browserInstance:task.browserInstance};
  const ensure=(allowAttempt=false)=>{
   if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原 Product Hunt 发布已停止');
@@ -22,7 +22,7 @@ export async function runProductHuntWorkflow(runtime,task,page,config,{active=()
   const actualSubmission=stageReports?{url:page.url(),fields:Object.entries(stageReports).flatMap(([stage,report])=>(report.fields||[]).map(field=>({...field,stage}))),attachments:Object.entries(stageReports).flatMap(([stage,report])=>(report.attachments||[]).map(file=>({...file,stage})))}:undefined;
   runtime.update(task,{productHunt:{...previous,stage:result.stage||previous.stage||'unknown',readyToCreate:result.ready_to_create===true,expectedNext:result.expectedNext||result.nextStage||'',lastTransitionAt:at(),history,...(stageReports?{stageReports}:{})},...(result.actualPreparation?{actualPreparation:result.actualPreparation}:{}),...(actualSubmission?{actualSubmission}:{})},'producthunt_stage');
  };
- ensure();const result=await runProductHuntLoop({active,delay:milliseconds=>page.waitForTimeout(milliseconds),checkpoint,
+ ensure();const result=await runProductHuntLoop({entrypoint,active,delay:milliseconds=>page.waitForTimeout(milliseconds),checkpoint,
   step:async request=>{ensure();await runtime.lease(task,{online:!offline});return call({action:'runProductHuntStep',config,...request});},
   advance:async reply=>{ensure();if(!active())return false;await runtime.lease(task,{online:!offline});ensure();const action=await call({action:'inspectProductHuntAdvance',expectedStage:reply.stage}),point=action.point;if(!action.allowed||!Number.isFinite(action.viewport?.width)||!Number.isFinite(action.viewport?.height)||!Number.isFinite(point?.x)||!Number.isFinite(point?.y)||point.x<0||point.y<0||point.x>=action.viewport.width||point.y>=action.viewport.height||!active())return false;runtime.update(task,{productHunt:{...task.productHunt,lastTrustedAdvance:{at:at(),stage:reply.stage,label:action.label}}},'producthunt_advance_boundary');await page.mouse.click(point.x,point.y);return true;},
   visual:async reply=>{ensure();if(offline)return{needs_manual:true,reason:'Product Hunt 自定义控件需联网继续原截图接管'};const outcome=await runtime.prepareWithAi(page,task,{...config,productHuntPrepared:true,visualFillOnly:true},active,{normalFillDone:true,readyCheck:async engine=>{const reply=await engine.call({action:'runProductHuntStep',config,confirmCreate:false});await checkpoint(reply);return reply.ready_to_create===true;}});await outcome.candidate?.engine.detach();return outcome;},

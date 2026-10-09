@@ -1,0 +1,178 @@
+{
+  "kind": "original_ordinary_existing_receipt_fill_only",
+  "sourceCommit": "6cd1fe71d7c1e368c8eee0d9f05ae6501d26a340",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionsExecuted": [
+    "runSidepanelFill",
+    "armManualSubmissionWatch"
+  ],
+  "verification": {
+    "fullSuitePassed": 1043,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "browserScenarios": 11,
+    "focusedTests": 11,
+    "actualApplicationWithControlledBackend": true,
+    "originalTasksReceiptsAndQueuePreserved": true,
+    "newSubmissionTasks": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "scenarios": [
+    "ordinary form",
+    "comment form",
+    "original successful task kept",
+    "unknown task refused",
+    "cloud image filled",
+    "changed image version refused",
+    "controlled model fills remaining field",
+    "selection changed before model actions",
+    "connection changed before model actions",
+    "trusted external source",
+    "unknown original source task refused"
+  ],
+  "storage": {
+    "namespace": "singlePageRefill:",
+    "actualFields": "local SQLite",
+    "interruptedFields": "partialActual",
+    "oldSubmissionTaskModified": false,
+    "newCloudSubmissionRunCreated": false
+  },
+  "remaining": {
+    "completeMigration": false,
+    "manualClickReceiptObservationForRefill": "not_connected; frozen original arms a baseline watch, native original watch requires an unsubmitted task",
+    "historicalFavorites": "unresolved",
+    "otherDeviceMedia": "unresolved",
+    "otherOriginalFamilies": "continue item-by-item audit"
+  },
+  "intermediateFindings": [
+    "The original ordinary and comment paths permit fill-only even when an old receipt exists; the previous native entry rejected this before filling.",
+    "Initial comment fixture lacked the identifiers of the supported original comment form; corrected to the existing original structure.",
+    "Unknown product ids do not receive original canonical-media defaults; the media fixture now explicitly selects the profile image.",
+    "The first full suite passed 1042 before final source-attribution and interrupted-field changes; the final full suite covers the final source."
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "ordinary_existing_refill_published_service_process_identity",
+    "sourceCommit": "6cd1fe71d7c1e368c8eee0d9f05ae6501d26a340",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18948,
+        "StartedAt": "2026-10-09T19:14:25.5456510+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 21764,
+        "StartedAt": "2026-10-09T19:14:26.1884790+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "3e5862b9-4c40-46e6-817b-558abfe9db4e"
+  },
+  "uiSmoke": {
+    "ok": true,
+    "kind": "ordinary_existing_receipt_refill_live_ui_and_authenticated_state_smoke",
+    "sourceCommit": "6cd1fe71d7c1e368c8eee0d9f05ae6501d26a340",
+    "servedUiMatchesFileAndCommit": true,
+    "originalReceiptUiServed": true,
+    "originalGateUiServed": true,
+    "existingReceiptUiServed": true,
+    "verifiedOnlyUiServed": true,
+    "existingReceiptRefillUiServed": true,
+    "authenticatedStateRoute": true,
+    "uiSha256": "904a4fb866df7852a681482d5fe4298cf17cb7907d408dc822672a908bcbb290",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "logs": {
+    "directory": "ordinary-existing-receipt-refill-2026-10-09",
+    "sha256OfUtf8Lf": {
+      "ordinary-existing-fill-original-2026-10-09.txt": "a61f622da6ff395573938bc25af843f44982205776e5109b59b5c7937de29f79",
+      "ordinary-existing-fill-before-2026-10-09.txt": "973b2f42eb2652c2bf1278c8c1ac7eb2ee750ddf393607bc7ad3026d12bca533",
+      "ordinary-existing-fill-media-debug-2026-10-09.txt": "8130f3a8678ad5c13902ef4759bee69ca1146885d89ecda2e217bf0255b015ec",
+      "ordinary-existing-fill-focused-2026-10-09.txt": "c8942912bd4925a8f7cb386b871bb938e2efea3916d59217e3d4b5d5f8d96597",
+      "ordinary-existing-fill-final-browser-2026-10-09.txt": "51cbbc1a532f9d069be329aba449cc41b9c79f210d3cee0effe78a1317141127",
+      "ordinary-existing-fill-related-2026-10-09.txt": "888e27b597fef9e9b985aac1440e5906c230ebf2ced0d804d92004793029276f",
+      "ordinary-existing-fill-ui-2026-10-09.txt": "26a0c56f1c5b3c075d4198bfed878a1f35f0ae16d3a13197ce04664e3eaadc58",
+      "ordinary-existing-fill-full-2026-10-09.txt": "b4f4845927b143e4cafe776b456c7e5770edd26349e6ab21d3f57a0d4b42e3b2",
+      "ordinary-existing-fill-final-full-2026-10-09.txt": "7f4b0eecea2a6bc7b33fc600482e83b8e187a7535ed6ed7f95b3ce9e77d5b0d1",
+      "ordinary-existing-fill-protected-before-2026-10-09.txt": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938",
+      "ordinary-existing-fill-protected-after-2026-10-09.txt": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938",
+      "ordinary-existing-fill-services-2026-10-09.txt": "375ad770406a980976067efe9abd48c0f4c4fbc67b03f12927db467b1f9b907b",
+      "ordinary-existing-fill-live-ui-2026-10-09.txt": "d905fbfd4f7b964950621e46c2dacea0d5256f759e93c1b0430ac577cda1d82f",
+      "ordinary-existing-fill-reload-2026-10-09.txt": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    }
+  }
+}

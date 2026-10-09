@@ -3481,5 +3481,21 @@
     "nativeBrowserCases": 4,
     "fullSuitePassed": 1040,
     "migrationComplete": false
+  },
+  "originalExistingReceiptRefillCheckpoint": {
+    "status": "ordinary_fill_only_verified_manual_click_receipt_observer_pending",
+    "sourceCommit": "6cd1fe71d7c1e368c8eee0d9f05ae6501d26a340",
+    "sourcePublished": true,
+    "nativeServicesUpdated": true,
+    "workerRedeployed": false,
+    "evidence": "ordinary-existing-receipt-refill-2026-10-09.json",
+    "fullSuitePassed": 1043,
+    "browserScenarios": 11,
+    "oldTasksReceiptsAndQueuePreserved": true,
+    "newSubmissionTasks": 0,
+    "realSubmissions": 0,
+    "realModels": 0,
+    "remainingManualReceiptObserver": "not_connected; frozen original arms a baseline watch, native original watch requires an unsubmitted task",
+    "migrationComplete": false
   }
 }

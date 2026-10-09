@@ -1,0 +1,19 @@
+✔ frozen ordinary and comment fill-only paths fill even with an existing receipt and never request submission (3.6571ms)
+✔ frozen ordinary manual watch saves the original page baseline before observing later user clicks (1.2578ms)
+✔ frozen existing receipt submit flow advances only after exact cloud confirmation without a new submission (5.2998ms)
+✔ frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior (9.5629ms)
+✔ receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events (6.3031ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (3.9893ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.1592ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.272ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.4304ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (8.8032ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (21.1055ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 418.4445

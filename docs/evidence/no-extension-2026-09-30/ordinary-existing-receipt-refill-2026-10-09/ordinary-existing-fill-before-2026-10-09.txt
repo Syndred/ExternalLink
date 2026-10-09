@@ -1,0 +1,20 @@
+✖ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (412.8078ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1018.8187
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:46:1
+✖ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (412.8078ms)
+  Error: 该产品同站已有收件，请先核验
+      at previousReceipt (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:69:117)
+      at sidepanelFill (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/single-page.mjs:70:104)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:57:22)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

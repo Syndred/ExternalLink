@@ -1,0 +1,20 @@
+{"scenario":"form","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"comment","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"old-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"unknown-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"media-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"model","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"selection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"connection-changed","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":1,"realModels":0}
+{"scenario":"external","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"external-unknown","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+✔ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (5277.4379ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5858.0411

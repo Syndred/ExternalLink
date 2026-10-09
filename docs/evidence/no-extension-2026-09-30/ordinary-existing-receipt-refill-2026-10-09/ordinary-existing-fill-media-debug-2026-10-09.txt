@@ -1,0 +1,34 @@
+{"scenario":"form","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"comment","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"old-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+{"scenario":"unknown-task","oldReceiptAndTasksPreserved":true,"newTasks":0,"submissions":0,"controlledModels":0,"realModels":0}
+✖ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (2414.6473ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2997.2129
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:46:1
+✖ ordinary existing receipt fill-only fills current fields without changing old tasks receipts or queue (2414.6473ms)
+  AssertionError [ERR_ASSERTION]: {"id":"6130ea74-f23b-4fb4-b593-b4fc357cb677","scope":"https://fixture.example|default","at":"2026-10-09T10:59:26.524Z","profileId":"p","profileRevision":1,"profile":{"id":"p","name":"Original p","fields":{"Name":"Original p","Url":"https://product-p.example"}},"url":"https://bai.tools/submit","targetId":"53997DBC21B5D94E6239F0B18609D88F","browserInstance":"isolated-existing-refill","mode":"form","status":"needs_manual","submitted":false,"updates":[{"at":"2026-10-09T10:59:26.563Z","message":"正在按字段名称填写产品名、网址、描述等资料…"},{"at":"2026-10-09T10:59:26.612Z","message":"正在校验必填项、网址和字数…"}],"originalMediaDefaults":{},"mediaFeedback":[{"at":"2026-10-09T10:59:26.586Z","status":"failed","reason":"没有可用或符合要求的云端媒体文件"},{"at":"2026-10-09T10:59:26.606Z","status":"failed","reason":"没有可用或符合要求的云端媒体文件"}],"fill":{"smartTotal":2,"filledCount":2,"skippedFiles":[],"uploadedFiles":[],"inferredFields":[],"agentResult":{},"lastEmpty":{"ok":true,"filledCount":0,"emptyCount":1,"invalidCount":0,"totalCount":3,"allValid":false,"validationFailed":true,"skippedFiles":[],"uploadedFiles":[],"inferredFields":[],"issues":[]},"validation":{"submitReady":true,"issues":[]},"formState":{"ok":true,"filledCount":0,"emptyCount":1,"invalidCount":0,"totalCount":3,"allValid":false,"validationFailed":true,"skippedFiles":[],"uploadedFiles":[],"inferredFields":[],"issues":["还有 1 个必填栏未填","Logo: 请选择一个文件。"]}},"actual":{"fields":[{"selector":"[data-extlink-selector=\"extlink-2\"]","label":"Name","name":"name","type":"text","value":"Original p","length":10,"wordCount":2,"constraints":{"maxLength":null,"minLength":null,"maxWords":null,"minWords":null,"required":true},"issues":[],"invalid":false,"validationMessage":""},{"selector":"[data-extlink-selector=\"extlink-3\"]","label":"Website","name":"url","type":"url","value":"https://product-p.example","length":25,"wordCount":1,"constraints":{"maxLength":null,"minLength":null,"maxWords":null,"minWords":null,"required":true},"issues":[],"invalid":false,"validationMessage":""}],"issues":[],"invalidCount":0,"allValid":true},"validation":{"ok":true,"filledCount":0,"emptyCount":1,"invalidCount":0,"totalCount":3,"allValid":false,"validationFailed":true,"skippedFiles":[],"uploadedFiles":[],"inferredFields":[],"issues":["还有 1 个必填栏未填","Logo: 请选择一个文件。"]},"counts":{"ok":true,"filledCount":0,"emptyCount":1,"invalidCount":0,"totalCount":3,"allValid":false,"validationFailed":true,"skippedFiles":[],"uploadedFiles":[],"inferredFields":[],"issues":[]},"submitReady":false,"reason":"仍有必填资料未完成，请检查原网页","completedAt":"2026-10-09T10:59:26.630Z"}
+  + actual - expected
+  
+  + 'needs_manual'
+  - 'prepared'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:59:353)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'needs_manual',
+    expected: 'prepared',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

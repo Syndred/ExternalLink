@@ -37,6 +37,15 @@ export function libraryMutation(documents,operation,options={}){
  if(['form_learning','form_knowledge'].includes(operation.type)){keyOf(operation.url);return formKnowledgeMutation(documents,operation);}
  if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
  if(operation.type==='backup_prepared_key'){try{const data=applyPreparedBackupKey(documents,operation);validateRecoveryValue(operation.key,data);return{key:operation.key,data};}catch(error){fail(error.message);}}
+ if(operation.type==='add_browser_url'){
+  const key=catalogKeyOf(operation.url),url=operation.url.trim(),platform=operation.platformType??'directory';if(typeof platform!=='string'||!/^\w{1,64}$/.test(platform))fail('网页类型无效');
+  const lines=String(documents.urlList||'').split('\n').map(line=>line.trim()).filter(Boolean);
+  const exists=lines.some(line=>{try{return catalogKeyOf(line.split('|')[0].trim())===key;}catch{return false;}});
+  if(!exists)lines.unshift(url+'|'+platform);
+  const annotations=structuredClone(documents.siteAnnotations||{});delete annotations[key];delete annotations[globalThis.ExtLinkQueue.extractDomain(url)];
+  const updates={urlList:lines.join('\n'),deletedSubmissionKeys:(documents.deletedSubmissionKeys||[]).filter(value=>value!==key),siteAnnotations:annotations};
+  return{key:'urlList',data:updates.urlList,updates,revisionKeys:Object.keys(updates)};
+ }
  if(operation.type==='pin'){
   const platform=operation.platformType??'directory';if(typeof platform!=='string'||!/^\w{1,64}$/.test(platform))fail('网页类型无效');
   const key=catalogKeyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return catalogKeyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return catalogKeyOf(s.split('|')[0])!==key;}catch{return true;}});
@@ -176,6 +185,7 @@ export function libraryMutation(documents,operation,options={}){
  fail('不支持的外链库操作');
 }
 export function libraryMutationSatisfied(documents,operation){
+ if(operation.type==='add_browser_url'){try{return Object.entries(libraryMutation(documents,operation).updates).every(([key,value])=>jsonValueEqual(documents[key],value));}catch{return false;}}
  if(['form_learning','form_knowledge'].includes(operation.type))return formKnowledgeSatisfied(documents,operation);
  if(operation.type==='recover_local')return jsonValueEqual(documents[operation.key],recoveryDocument(documents,operation.key,operation.data));
  if(operation.type==='set_deleted')return(documents.deletedSubmissionKeys||[]).includes(catalogKeyOf(operation.url));

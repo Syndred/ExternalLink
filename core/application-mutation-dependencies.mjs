@@ -8,6 +8,7 @@ export function applicationMutationDependencies(operation){
  if(type==='backup_key_merge'&&!backupKeys.includes(operation.key))throw Object.assign(Error('外链库字段未授权'),{status:403});
  const dependencies=['recover_local','backup_prepared_key'].includes(type)?[operation.key]
   :type==='pin'?['urlList']
+  :type==='add_browser_url'?['urlList','deletedSubmissionKeys','siteAnnotations']
   :['clear_deleted','set_deleted'].includes(type)?['deletedSubmissionKeys']
   :type==='backup_merge'?backupKeys
   :type==='backup_key_merge'?backupKeyDependencies(operation.key)

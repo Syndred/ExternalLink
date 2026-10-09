@@ -3,7 +3,6 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {getTargetInfo} from './browser-target.mjs';
 import {applicationData} from './application-data.mjs';
 import {enqueueApplicationPlan,flushApplicationMutations,pendingApplication} from './application-mutations.mjs';
-import {queue} from './shared.mjs';
 import {canonicalLibraryDestination} from '../../core/library-records.mjs';
 export async function browserLibraryPages(runtime){if(!runtime.context)await runtime.connect();const pages=[];for(const page of runtime.context.pages()){if(!/^https?:\/\//.test(page.url())||/^http:\/\/127\.0\.0\.1:19389(?:\/|$)/.test(page.url()))continue;const info=await getTargetInfo(runtime.context,page);if(info)pages.push({targetId:info.targetId,url:page.url(),title:await page.title().catch(()=>page.url())});}return{ok:true,pages};}
 export async function addBrowserPage(runtime,input){
@@ -11,7 +10,7 @@ export async function addBrowserPage(runtime,input){
  const scope=workbenchScope(runtime.store.get('pair'));
  const listing=await browserLibraryPages(runtime),selected=listing.pages.find(p=>p.targetId===input.targetId);if(!selected||selected.url!==input.expectedUrl)throw Error('所选页面已关闭或已跳转，请刷新页面列表');
  await flushApplicationMutations(runtime);await applicationData(runtime,{refresh:true});if(pendingApplication(runtime).length)throw Error('请先处理已有待同步资料');
- const documents=runtime.store.get('applicationSnapshot').snapshot.documents,key=canonicalLibraryDestination(selected.url),annotation=queue.findDestinationAnnotation(documents.siteAnnotations||{},key,new URL(selected.url).hostname.replace(/^www\./,''))||{},statuses=queue.normalizeAnnotationStatuses(annotation);
+ const documents=runtime.store.get('applicationSnapshot').snapshot.documents,key=canonicalLibraryDestination(selected.url);
  const existing=String(documents.urlList||'').split('\n').some(line=>{try{return canonicalLibraryDestination(line.split('|')[0].trim())===key;}catch{return false;}});
  let page,platformType='directory';
  if(!existing){
@@ -26,6 +25,6 @@ export async function addBrowserPage(runtime,input){
   if(page.isClosed()||page.url()!==selected.url)throw Error('所选页面已关闭或已跳转，请刷新页面列表');
  }
  if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('云端连接已变化，请重新选择网页');
- const operations=[{type:'pin',url:selected.url,platformType},{type:'preferences',url:selected.url,preferences:{pinned:true,enabled:true}},...(statuses.includes('deleted')?[{type:'mark',url:selected.url,statuses:statuses.filter(s=>s&&s!=='deleted')}]:[]),{type:'clear_deleted',url:selected.url}];
- return enqueueApplicationPlan(runtime,{operations});
+ const result=await enqueueApplicationPlan(runtime,{operations:[{type:'add_browser_url',url:selected.url,platformType}]});
+ return{...result,url:selected.url,added:!existing,prepended:!existing};
 }

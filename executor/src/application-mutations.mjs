@@ -94,7 +94,7 @@ export async function enqueueApplicationPlan(runtime,{planId,operations,allowPen
  if(planId&&(!plan||plan.scope!==scope))throw Error('原资料变更计划不存在');
  if(!plan){const saved=runtime.store.get('applicationSnapshot'),prior=pendingApplication(runtime);if(saved?.scope!==scope||!allowPending&&prior.length)throw Error('请先回读并同步现有资料');const baseline=baseSnapshot||saved.snapshot,working=allowPending?overlayApplication(runtime,baseline):structuredClone(baseline),id=randomUUID(),started=Math.max(Date.now(),allowPending&&prior.length?Date.parse(prior.at(-1).at)+1:0),items=[];
   for(let i=0;i<operations.length;i++){const at=new Date(started+i).toISOString(),operation={...operations[i],id:randomUUID(),at},change=libraryMutation(working.documents,operation);items.push({id:operation.id,scope,at,key:change.key,...mutationIntent({documents:working.documents,revisions:baseline.revisions},operation,change,prior.some(item=>item.key===change.key)||items.some(item=>item.key===change.key),baseSnapshot||saved.remoteSnapshot),status:'pending',applicationPlanId:id});Object.assign(working.documents,change.updates||{[change.key]:change.data});}
-  const firstType=items[0]?.originalOperation?.type||items[0]?.operation.type,catalogPlan=['clear_annotation','remove_queue','pin'].includes(firstType);
+  const firstType=items[0]?.originalOperation?.type||items[0]?.operation.type,catalogPlan=['clear_annotation','remove_queue','pin','add_browser_url'].includes(firstType);
   const profileRecovery=dependencyKind==='profile_recovery';
   if(catalogPlan||profileRecovery){for(let i=1;i<items.length;i++)items[i].dependsOn=items[i-1].id;}
   else if(allowPending&&['profile_create','profile_delete','mark'].includes(firstType)&&items[1])items[1].dependsOn=items[0].id;

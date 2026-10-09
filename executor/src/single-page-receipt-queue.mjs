@@ -20,13 +20,13 @@ export function rememberSubmissionQueuePage(runtime,page){
  const owned={...page,id:randomUUID(),scope:workbenchScope(runtime.store.get('pair')),status:'owned'};
  runtime.store.set(key(page),owned);return owned;
 }
-export async function prepareExistingSinglePageReceipt(runtime,{snapshot,input,url,assertCurrent}){
+export async function prepareExistingSinglePageReceipt(runtime,{snapshot,input,url,assertCurrent,advanceOnVerified=true}){
  const panel=runtime.store.get('singlePagePanel'),state=existingSinglePageReceipt(runtime,snapshot,input.profileId,url,panel),pageKey=key({browserInstance:runtime.host?.startedAt,targetId:input.targetId});
  let owned=runtime.store.get(pageKey);if(!owned){const previous=runtime.store.get('submissionQueue');if(previous?.scope===panel.scope&&!previous.opening&&!previous.error&&previous.page?.targetId===input.targetId&&previous.page.browserInstance===runtime.host?.startedAt)owned=rememberSubmissionQueuePage(runtime,previous.page);}
  if(owned?.scope!==panel.scope||queue.normalizeUrlKey(owned.url)!==queue.normalizeUrlKey(input.expectedUrl))owned=null;
  if(owned){if(owned.completion)throw Error('原网页已有队列收尾记录，请先完成原核验');owned={...owned,existingReceipt:state,error:''};runtime.store.set(pageKey,owned);}
  const expected=structuredClone(owned),check=()=>{assertCurrent();if(owned&&!equal(runtime.store.get(pageKey),expected))throw Error('原网页队列归属已变化');};
- try{return {...await verifyExistingSinglePageReceipt(runtime,state,check),queueContinuation:!!owned};}
+ try{const result=await verifyExistingSinglePageReceipt(runtime,state,check);check();if(owned&&!advanceOnVerified)runtime.store.set(pageKey,{...owned,existingReceipt:{...state,advance:false},error:''});return {...result,queueContinuation:!!owned&&advanceOnVerified};}
  catch(error){check();if(owned)runtime.store.set(pageKey,{...owned,error:error.message});return{ok:true,existingSubmission:true,submitted:false,cloudSynced:false,queueContinuation:!!owned,reason:'已有收件，云端核验待完成：'+error.message};}
 }
 export function singlePageReceiptState(runtime){
@@ -69,8 +69,8 @@ export async function completeSinglePageReceiptQueue(runtime){
    // completed group still contains another product, advance past that group.
    const pending=await submissionQueue(runtime,{url:owned.url},false,{assertCurrent:check});expectedQueue=runtime.store.get('submissionQueue');check();
    const stillQueued=queue.findSubmissionIndex(owned.url,pending.tasks)>=0;
-   const nextIndex=pending.tasks.length?(pending.index+(kind==='gate'||stillQueued?1:0))%pending.tasks.length:0,next=pending.tasks[nextIndex]||null;
-   save({status:kind==='gate'?'retaining':'closing',completion:{id:randomUUID(),kind,taskId:task.id,profileId:task.profileId,panelId:panel.id,panelGeneration:panel.generation,receipt:structuredClone(task.receipt),taskProof:proof(task),next:next?{key:next.key,url:next.url,index:nextIndex}:null,at:new Date().toISOString()}});
+   const verifiedOnly=existing?.advance===false,nextIndex=pending.tasks.length?(pending.index+(kind==='gate'||stillQueued?1:0))%pending.tasks.length:0,next=verifiedOnly?null:pending.tasks[nextIndex]||null;
+   save({status:kind==='gate'?'retaining':'closing',completion:{id:randomUUID(),kind,verifiedOnly,taskId:task.id,profileId:task.profileId,panelId:panel.id,panelGeneration:panel.generation,receipt:structuredClone(task.receipt),taskProof:proof(task),next:next?{key:next.key,url:next.url,index:nextIndex}:null,at:new Date().toISOString()}});
   }
   const completion=owned.completion;
   if(completion.taskId!==task.id||completion.profileId!==panel.profileId||completion.panelId!==panel.id||completion.panelGeneration!==panel.generation||!equal(completion.receipt,task.receipt)||!equal(completion.taskProof,proof(task)))throw Error('原队列收尾记录与当前回执或面板不一致');
@@ -97,8 +97,8 @@ export async function completeSinglePageReceiptQueue(runtime){
    cancelVisitWork(runtime,kind==='gate'?'原补填页留待人工，切换到队列下一站':'云端收件已确认，切换到原队列下一站');
    runtime.store.set('singlePagePanel',{...panel,selectedTargetId:nextPage.targetId,generation:panel.generation+1,receiptCompletion:{id:completion.id,kind,taskId:task.id,nextPage,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
   }else{
-   cancelVisitWork(runtime,'单页收件已确认，原待投稿队列已完成');
-   runtime.store.set('singlePagePanel',{...panel,receiptCompletion:{id:completion.id,kind,taskId:task.id,queueComplete:true,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
+   cancelVisitWork(runtime,completion.verifiedOnly?'原旧收件已核验，仅关闭完成页':'单页收件已确认，原待投稿队列已完成');
+   runtime.store.set('singlePagePanel',{...panel,receiptCompletion:{id:completion.id,kind,taskId:task.id,...(completion.verifiedOnly?{verifiedOnly:true}:{queueComplete:true}),at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
   }
   save({status:'completed',error:'',completedAt:new Date().toISOString()});
  }catch(error){

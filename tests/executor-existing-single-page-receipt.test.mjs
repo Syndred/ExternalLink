@@ -18,6 +18,13 @@ test('frozen existing receipt submit flow advances only after exact cloud confir
   vm.runInContext(extract('tryAutoSubmitFilledForm'),context);const result=structuredClone(await context.tryAutoSubmitFilledForm(7,config,profile,'directory')),ui=await originalSinglePageReceipt({fillResult:result});assert.equal(result.existingSubmission,true);assert.equal(result.advance,synced);assert.equal(result.keepTab,!synced);assert.equal(pending.length,1);assert.deepEqual(ui.calls.map(c=>c.type),synced?['close','open']:[]);
  }
 });
+test('frozen Product Hunt fill-only verifies an existing receipt without immediate advance, while delayed confirmation keeps original notification behavior',async()=>{
+ for(const fillOnly of [false,true])for(const synced of [false,true]){
+  const url='https://www.producthunt.com/launch',profile={id:'p',fields:{Name:'Original',Url:'https://product.example'}},pending=[],context=vm.createContext({self,state:{activeTabs:new Map()},chrome:{storage:{local:{get:async()=>({siteProfiles:{p:profile},activeSiteId:'p'})}}},resolveTargetTabId:async()=>7,getTabUrlSafe:async()=>url,sendTabMessage:async()=>({platform:'product_hunt',operable:true}),sendTabMessageToFrame:async()=>({blocked:false}),isCustomLaunchUrl:()=>true,broadcastAutoFillUpdate:()=>{},existingSubmissionRecord:async()=>structuredClone(record),confirmSubmissionRecordInCloud:async()=>({synced}),rememberPendingSubmissionCloudTab:async(...args)=>pending.push(args)});
+  vm.runInContext(extract('runSidepanelFill'),context);const result=structuredClone(await context.runSidepanelFill({tabId:7,profileId:'p',expectedUrl:url,mode:'form',fillOnly}));assert.equal(result.existingSubmission,true);assert.equal(result.advance,!fillOnly&&synced);assert.equal(result.keepTab,!synced);assert.equal(pending.length,1);const initial=await originalSinglePageReceipt({url,fillResult:result});assert.deepEqual(initial.calls.map(c=>c.type),synced?fillOnly?['close']:['close','open']:[]);
+  if(!synced){const delayed=await originalSinglePageReceipt({url});assert.deepEqual(delayed.calls.map(c=>c.type),['close','open','ack']);}
+ }
+});
 test('receipt timeline repair matches the frozen original tuple and preserves original ledger bytes and unrelated events',()=>{
  const context=vm.createContext({self:{ExtLinkSubmissionTimeline:timeline}});vm.runInContext(extract('buildSubmissionTimelineEventForRecord')+'\n'+extract('submissionTimelineContainsRecord'),context);
  const event=existingReceiptTimelineEvent(key,record),original=structuredClone(context.buildSubmissionTimelineEventForRecord(record,record.destinationKey,record.destinationUrl,'p',key));delete event.id;delete original.id;assert.deepEqual(event,original);

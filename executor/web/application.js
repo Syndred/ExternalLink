@@ -86,6 +86,7 @@ async function showSinglePage(preferred={}){
    if(state.completion?.error)message.textContent=(state.completion.kind==='existing'?'已有收件，队列接续待核验：':state.completion.kind==='gate'?'原页已保留，打开下一站待处理：':'收件已保存，继续下一站待处理：')+state.completion.error;
    const completed=state.panel.receiptCompletion;if(!completed||completed.id===seenReceiptCompletion)return;
    if(completed.nextPage){await showSinglePage({targetId:completed.nextPage.targetId,profileId:state.panel.profileId,panel:state.panel,isCurrent:()=>activeSinglePagePanel===opened.panel.id&&detail.open&&selectionRevision===expectedRevision});return;}
+   if(completed.verifiedOnly){seenReceiptCompletion=completed.id;fill.disabled=true;message.textContent='已有收件已核验，完成页已关闭；未继续下一站。';}
    if(completed.queueComplete){seenReceiptCompletion=completed.id;fill.disabled=completed.kind!=='gate';message.textContent=completed.kind==='existing'?'已有收件已核验，未重复投稿；完成页已关闭，当前待投稿队列已完成。':completed.kind==='gate'?'原页已保留待人工处理，当前没有其他待投稿站点。':'收件已写入云端，完成页已关闭；所选产品的待投稿队列已完成。';}
   }catch(error){if(activeSinglePagePanel===opened.panel.id)message.textContent='网页队列状态暂未刷新：'+error.message;}finally{pollingReceipt=false;}
  },2000);

@@ -1,0 +1,80 @@
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (10136.8ms)
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (8.1798ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (1.5369ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (5.1015ms)
+✔ original-external-form-source  actual isolated browser matches original attribution (2118.6673ms)
+✔ original-external-form-source --existing-source actual isolated browser matches original attribution (1722.7043ms)
+✔ original-external-form-source --cross-origin actual isolated browser matches original attribution (1795.0165ms)
+✔ original-external-form-source --untrusted-redirect actual isolated browser matches original attribution (1703.3884ms)
+✔ original-external-form-source --d1 actual isolated browser matches original attribution (3267.4357ms)
+✔ original-external-form-source --d1-lost-reply actual isolated browser matches original attribution (2863.9488ms)
+✔ original-external-form-source --d1 --google actual isolated browser matches original attribution (2751.0825ms)
+✖ original-external-form-source --stale-route actual isolated browser matches original attribution (1518.7232ms)
+✔ original-external-form-popup  actual isolated browser matches original attribution (913.4276ms)
+✔ observed refill mutation matches frozen record replacement and preserves prior timeline; lost replies are idempotent (63.2207ms)
+✔ observed refill mutation rejects stale records missing clicks old evidence and unexpected navigation (1.4165ms)
+✔ observed refill at another entry on the same host retains the previous exact record and records the clicked destination (0.7021ms)
+✔ observed refill restores original verified site markers and preserves manual gates and legacy receipt addresses (1.4257ms)
+✔ frozen manual observer ignores unchanged evidence, accepts a new receipt and keeps the page (3.0178ms)
+✔ frozen original new-document registration refreshes frame baselines while keeping the original watch token and lifetime (1.6569ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (4.4235ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.2984ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.7147ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.7166ms)
+✔ original page controls exclude receipts unknown attempts other controllers closed tabs stopped execution and conflicting target tasks (7.6492ms)
+✔ stale original page callbacks reject run task document frame scope product and browser replacements before lease or mutation (7.8368ms)
+✔ a page callback without its original private binding or recognized source cannot add permission or select a task (1.5781ms)
+✔ changed frozen default image selection invalidates original page buttons before a lease or any permission event (0.9167ms)
+✔ rendered original page buttons polling navigation and failed readback retries reach native work while preserving permission and unknown boundaries (10736.1362ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 27
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18810.1552
+
+✖ failing tests:
+
+test at tests\executor-original-external-form-source.test.mjs:10:455
+✖ original-external-form-source --stale-route actual isolated browser matches original attribution (1518.7232ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: a different SPA form cannot submit under the old source watch
+  + actual - expected
+  
+  + '2026-10-09T12:05:27.105Z'
+  - undefined
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-external-form-source.mjs:38:202 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '2026-10-09T12:05:27.105Z',
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-external-form-source.test.mjs:11:141)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

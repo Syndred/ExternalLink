@@ -3523,5 +3523,22 @@
     "realSubmissions": 0,
     "realModelCalls": 0,
     "migrationComplete": false
+  },
+  "originalManualWatchDocumentLifecycleDelivery": {
+    "status": "published_native_services_updated",
+    "sourceCommit": "568f1bfc483ecca403c7cb109f5004d67b5dd015",
+    "evidence": "migration-watch-lifecycle-2026-10-09/summary.json",
+    "fullRegression": {
+      "tests": 1051,
+      "pass": 1051,
+      "fail": 0,
+      "skipped": 0
+    },
+    "refillScenarios": 20,
+    "preparedTaskScenarios": 6,
+    "originalTokenAndLifetimeRetained": true,
+    "externalFormSourceRechecked": true,
+    "protectedOriginalBusinessUnchanged": true,
+    "migrationComplete": false
   }
 }

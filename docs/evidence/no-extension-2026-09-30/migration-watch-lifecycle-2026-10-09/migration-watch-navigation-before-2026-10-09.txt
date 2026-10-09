@@ -1,0 +1,30 @@
+✖ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (1955.5332ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2527.9111
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:67:1
+✖ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (1955.5332ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'watching'
+  - 'checking'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:81:211)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'watching',
+    expected: 'checking',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

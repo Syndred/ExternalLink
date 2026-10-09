@@ -1,0 +1,49 @@
+{"scenario":"new","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-baseline","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-reply","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"cloud-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"record-race","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"closed-after-evidence","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restart-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"untrusted","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"wrong-product","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"scope-change","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"expired","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"iframe","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"reload-before-click","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"automatic-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"late-iframe","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"iframe-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-origin-path","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-watch-bindings","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"legacy-watch-reload","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restored-watching","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+✖ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (14592.8207ms)
+{"scenario":"prepared-reload","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-automatic-reload","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-late-iframe","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-same-origin-path","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-lost-watch-bindings","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":true}
+{"scenario":"prepared-wrong-origin","originalTaskAndWatchIdKept":true,"controlledPosts":1,"realSubmissions":0,"realModels":0,"confirmed":false}
+✔ prepared original task manual observers rebind new documents and late frames without new tasks or submission permission (4073.6637ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19256.0185
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:67:1
+✖ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (14592.8207ms)
+  Error: database is not open
+      at Store.close (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/store.mjs:86:21)
+      at Object.close (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:550:167)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:101:157)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'ERR_INVALID_STATE'
+  }

@@ -1,0 +1,163 @@
+{
+  "kind": "original_manual_watch_document_lifecycle_delivery",
+  "date": "2026-10-09",
+  "sourceBaseline": "494e3a3",
+  "sourceCommit": "568f1bfc483ecca403c7cb109f5004d67b5dd015",
+  "remotePulled": true,
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "status": "published_native_services_updated",
+  "fullRegression": {
+    "tests": 1051,
+    "pass": 1051,
+    "fail": 0,
+    "skipped": 0
+  },
+  "isolatedBrowser": {
+    "refillScenarios": 20,
+    "preparedTaskScenarios": 6,
+    "newTasks": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0
+  },
+  "originalTokenAndLifetimeRetained": true,
+  "newDocumentBaselineRegistered": true,
+  "lateFramesObserved": true,
+  "legacyWatchingRecordRestored": true,
+  "externalFormSourceRechecked": true,
+  "firstFailureAndIntermediateFailuresRetained": true,
+  "workerChanged": false,
+  "workerVersion": "e0fb4ddf-55c0-4a32-a2b9-90d0d8535210",
+  "originalChromeStartedOrClosed": false,
+  "protection": {
+    "before": {
+      "ok": true,
+      "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+      "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+      "monitorStatus": "paused",
+      "monitorCount": 89,
+      "monitorCursor": 54,
+      "monitorCounts": {
+        "live": 3,
+        "missing": 48,
+        "unreachable": 3,
+        "uncheckable": 0,
+        "excluded": 0
+      },
+      "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+      "monitorResultsRevisionBefore": 258,
+      "monitorResultsRevisionAfter": 312,
+      "monitorResultsExactlyMatchOriginalJobCandidates": true,
+      "originalReceiptsAndTimelineKept": true,
+      "timelineEvents": 470,
+      "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+      "privateOriginalSourceFilesVerified": 6,
+      "oldFormalRecoveryCheckpointNotOverwritten": true,
+      "newPrivateTransitionSaved": true,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "newSubmissions": 0
+    },
+    "after": {
+      "ok": true,
+      "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+      "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+      "monitorStatus": "paused",
+      "monitorCount": 89,
+      "monitorCursor": 54,
+      "monitorCounts": {
+        "live": 3,
+        "missing": 48,
+        "unreachable": 3,
+        "uncheckable": 0,
+        "excluded": 0
+      },
+      "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+      "monitorResultsRevisionBefore": 258,
+      "monitorResultsRevisionAfter": 312,
+      "monitorResultsExactlyMatchOriginalJobCandidates": true,
+      "originalReceiptsAndTimelineKept": true,
+      "timelineEvents": 470,
+      "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+      "privateOriginalSourceFilesVerified": 6,
+      "oldFormalRecoveryCheckpointNotOverwritten": true,
+      "newPrivateTransitionSaved": true,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "newSubmissions": 0
+    }
+  },
+  "deployedLibrary": {
+    "ok": true,
+    "kind": "actual_deployed_original_library_model_readonly",
+    "reports": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      }
+    ],
+    "originalTasksRunsFixedBatchPendingAndCredentialsUnchanged": true,
+    "productionWrites": 0,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "deployedVisible": {
+    "ok": true,
+    "kind": "readonly_user_visible_migration_audit",
+    "reports": [
+      {
+        "port": 19388,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      },
+      {
+        "port": 19389,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      }
+    ],
+    "originalTasksRunsBatchesPendingAndCredentialsUnchanged": true,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "logs": [
+    "migration-watch-navigation-before-2026-10-09.txt",
+    "migration-watch-lifecycle-family-2026-10-09.txt",
+    "migration-watch-lifecycle-family-verified-2026-10-09.txt",
+    "migration-watch-lifecycle-browser-final-2026-10-09.txt",
+    "migration-watch-lifecycle-browser-verified-2026-10-09.txt",
+    "migration-watch-lifecycle-full-2026-10-09.txt",
+    "migration-watch-lifecycle-protection-before-2026-10-09.txt",
+    "migration-watch-lifecycle-protection-after-2026-10-09.txt",
+    "migration-watch-lifecycle-reload-2026-10-09.txt",
+    "migration-watch-lifecycle-library-after-2026-10-09.txt",
+    "migration-watch-lifecycle-visible-after-2026-10-09.txt"
+  ],
+  "migrationComplete": false
+}

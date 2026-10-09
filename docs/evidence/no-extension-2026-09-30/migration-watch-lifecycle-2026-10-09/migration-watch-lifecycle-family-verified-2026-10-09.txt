@@ -1,0 +1,36 @@
+✔ rendered native panel and original messages retain selected frozen identity and treat unknown empty required fields as incomplete (9272.2521ms)
+✔ manual observation requires the prepared original task, token and frame baseline, and preserves an unknown click across network failure (6.2508ms)
+✔ manual watch refuses a stale ordinary destination and workspace changes during cloud readback (1.2819ms)
+✔ external form allowlist, query, path and directory canonicalization match frozen original functions (3.8298ms)
+✔ original-external-form-source  actual isolated browser matches original attribution (1872.9166ms)
+✔ original-external-form-source --existing-source actual isolated browser matches original attribution (1561.645ms)
+✔ original-external-form-source --cross-origin actual isolated browser matches original attribution (1506.5011ms)
+✔ original-external-form-source --untrusted-redirect actual isolated browser matches original attribution (1460.6043ms)
+✔ original-external-form-source --d1 actual isolated browser matches original attribution (2874.3517ms)
+✔ original-external-form-source --d1-lost-reply actual isolated browser matches original attribution (2788.842ms)
+✔ original-external-form-source --d1 --google actual isolated browser matches original attribution (2746.5145ms)
+✔ original-external-form-source --stale-route actual isolated browser matches original attribution (1483.9939ms)
+✔ original-external-form-popup  actual isolated browser matches original attribution (957.6267ms)
+✔ observed refill mutation matches frozen record replacement and preserves prior timeline; lost replies are idempotent (58.7816ms)
+✔ observed refill mutation rejects stale records missing clicks old evidence and unexpected navigation (1.4397ms)
+✔ observed refill at another entry on the same host retains the previous exact record and records the clicked destination (0.5846ms)
+✔ observed refill restores original verified site markers and preserves manual gates and legacy receipt addresses (1.6417ms)
+✔ frozen manual observer ignores unchanged evidence, accepts a new receipt and keeps the page (3.4151ms)
+✔ frozen original new-document registration refreshes frame baselines while keeping the original watch token and lifetime (1.6614ms)
+✔ captured single-page selection becomes stale on another product, another page and a repeated selection generation (4.1369ms)
+✔ single-page context rejects mismatched initial selection and cannot survive panel close, workspace switch or queue activation (2.2553ms)
+✔ manual single-page continuation cannot activate after the selected page changes during lease or cloud acknowledgement (3.9959ms)
+✔ unchanged original single-page selection permits exactly one explicitly authorized continuation (1.6508ms)
+✔ original page controls exclude receipts unknown attempts other controllers closed tabs stopped execution and conflicting target tasks (5.6113ms)
+✔ stale original page callbacks reject run task document frame scope product and browser replacements before lease or mutation (5.7398ms)
+✔ a page callback without its original private binding or recognized source cannot add permission or select a task (1.5741ms)
+✔ changed frozen default image selection invalidates original page buttons before a lease or any permission event (1.2509ms)
+✔ rendered original page buttons polling navigation and failed readback retries reach native work while preserving permission and unknown boundaries (9878.3807ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17386.3747

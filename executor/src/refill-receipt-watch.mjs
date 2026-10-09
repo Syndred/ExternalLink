@@ -6,25 +6,27 @@ import {workbenchScope} from './workbench-sync.mjs';
 import {cloudDigest,cacheCloudSnapshot} from './cloud-sync-state.mjs';
 import {enqueueApplicationPlan} from './application-mutations.mjs';
 import {observedRefillReceiptSatisfied} from '../../core/observed-refill-receipt.mjs';
+import {bindManualWatchNavigation,releaseManualWatchBinding,refreshManualWatchFrames,assertManualWatchSource} from './manual-watch-frames.mjs';
+import {profiles} from './shared.mjs';
 const key=id=>'refillWatch:'+id,now=()=>new Date().toISOString(),normal=value=>String(value||'').replace(/\s+/g,' ').trim();
 function current(runtime,watch){if(watch.scope!==workbenchScope(runtime.store.get('pair'))||watch.connection!==cloudDigest(runtime.store.get('pair')))throw Error('原提交监听连接已变化，记录保留待核验');}
 async function findPage(runtime,watch){if(runtime.host?.startedAt!==watch.browserInstance)throw Error('原浏览器已变化，保留点击与回执记录');for(const page of runtime.context?.pages()||[]){if(page.isClosed()||!/^https?:/.test(page.url()))continue;if((await getTargetInfo(runtime.context,page))?.targetId===watch.targetId)return page;}throw Error('原提交网页已关闭，保留点击与回执记录');}
 export async function armRefillReceiptWatch(runtime,{state,snapshot,page,config,assertCurrent}){
  if(runtime.store.values('refillWatch:').some(watch=>watch.scope===state.scope&&watch.targetId===state.targetId&&watch.browserInstance===state.browserInstance&&['checking','pending_sync'].includes(watch.status)))throw Error('原网页手动提交仍待核验或同步，请先完成原回执核验');
  await assertCurrent();const records=snapshot.documents.submissionRecords||{},recordKey=queue.submissionRecordKey(queue.normalizeDestinationKey(state.destinationUrl),state.profileId),matches=Object.entries(records).filter(([k,r])=>priorProductSuccess({[k]:r},state.profileId,state.destinationUrl)),previous=matches.find(([k])=>k===recordKey)||matches[0];if(!previous)throw Error('原收件记录暂不可读，停止再次填写');
- runtime.refillWatchFrames||=new Map();for(const [id,binding]of runtime.refillWatchFrames)if(binding.targetId===state.targetId){const old=runtime.store.get(key(id));if(old?.status==='watching')runtime.store.set(key(id),{...old,status:'superseded'});for(const engine of binding.engines)await engine.detach();runtime.refillWatchFrames.delete(id);}
- const watch=plain({id:state.id,scope:state.scope,connection:cloudDigest(runtime.store.get('pair')),profileId:state.profileId,profileName:state.profile.name||state.profileId,targetId:state.targetId,browserInstance:state.browserInstance,pageUrl:state.url,destinationUrl:state.destinationUrl,previousRecordKey:previous[0],previousRecord:previous[1],expectedRecords:{[previous[0]]:previous[1],[recordKey]:records[recordKey]||null},token:randomUUID(),createdAt:Date.now(),status:'watching',frames:{},checks:0});
+ runtime.refillWatchFrames||=new Map();for(const [id,binding]of runtime.refillWatchFrames)if(binding.targetId===state.targetId){const old=runtime.store.get(key(id));if(old?.status==='watching')runtime.store.set(key(id),{...old,status:'superseded'});await releaseManualWatchBinding(binding);runtime.refillWatchFrames.delete(id);}
+ const watch=plain({id:state.id,scope:state.scope,connection:cloudDigest(runtime.store.get('pair')),profileId:state.profileId,profileName:state.profile.name||state.profileId,targetId:state.targetId,browserInstance:state.browserInstance,pageUrl:state.url,destinationUrl:state.destinationUrl,targetDomain:config.targetDomain,previousRecordKey:previous[0],previousRecord:previous[1],expectedRecords:{[previous[0]]:previous[1],[recordKey]:records[recordKey]||null},token:randomUUID(),createdAt:Date.now(),status:'watching',frames:{},checks:0});
  const binding={page,targetId:state.targetId,token:watch.token,engines:[]};runtime.store.set(key(watch.id),watch);runtime.refillWatchFrames.set(watch.id,binding);
- try{for(const frame of page.frames()){
-  if(!/^https?:/.test(frame.url()))continue;await assertCurrent();const frameUrl=frame.url(),engine=await attachEngine(runtime.context,frame,message=>{
-   if(runtime.refillWatchFrames.get(watch.id)!==binding)return{ok:false};
-   if(message.action==='manualSubmissionWatchReady')return{ok:true};
-   if(message.action!=='manualSubmissionClicked'||message.frameUrl!==frameUrl)return{ok:false};
-   return observeRefillClick(runtime,{...message,watchId:watch.id,documentId:message.executorDocumentId,frameUrl});
-  },{worldName:'ExternalLinkRefillManualWatch',manualWatch:true});binding.engines.push(engine);
-  const ready=await engine.call({action:'watchManualSubmission',token:watch.token,targetDomain:config.targetDomain,destinationUrl:watch.destinationUrl});await assertCurrent();if(!ready?.ok)throw Error('原网页手动提交监听未就绪');watch.frames[engine.documentId+'::'+frameUrl]={url:frameUrl,main:frame===page.mainFrame(),baseline:normal(ready.baseline?.evidence)};runtime.store.set(key(watch.id),watch);
- }}catch(error){for(const engine of binding.engines)await engine.detach();runtime.refillWatchFrames.delete(watch.id);runtime.store.set(key(watch.id),{...watch,status:'needs_manual',error:error.message});throw error;}
+ try{await refreshRefillFrames(runtime,watch,binding,assertCurrent);bindManualWatchNavigation(runtime,binding);}catch(error){await releaseManualWatchBinding(binding);runtime.refillWatchFrames.delete(watch.id);const latest=runtime.store.get(key(watch.id));runtime.store.set(key(watch.id),{...latest,...(latest.status==='watching'?{status:'needs_manual'}:{}),error:error.message});throw error;}
  return watch;
+}
+async function refreshRefillFrames(runtime,watch,binding,assertCurrent){
+ const targetDomain=watch.targetDomain||profiles.buildAgentConfigFromProfile(runtime.store.get('singlePageRefill:'+watch.id)?.profile||{}).targetDomain;
+ await refreshManualWatchFrames(runtime,binding,{worldName:'ExternalLinkRefillManualWatch',watchMessage:{token:watch.token,targetDomain,destinationUrl:watch.destinationUrl},assertCurrent:async()=>{await assertCurrent();await assertManualWatchSource(runtime,watch,binding.page);await assertCurrent();},onMessage:(message,frame)=>{
+  const latest=runtime.store.get(key(watch.id));if(runtime.refillWatchFrames.get(watch.id)!==binding||latest?.token!==watch.token||latest.status!=='watching')return{ok:false};current(runtime,latest);
+  if(message.action==='manualSubmissionWatchReady'){runtime.store.set(key(watch.id),{...latest,frames:{...latest.frames,[message.documentId+'::'+message.frameUrl]:{url:message.frameUrl,main:frame===binding.page.mainFrame(),baseline:normal(message.baseline?.evidence)}}});return{ok:true};}
+  return observeRefillClick(runtime,{...message,watchId:watch.id});
+ }});
 }
 export function observeRefillClick(runtime,input){
  const watch=runtime.store.get(key(input.watchId));if(!watch||watch.status!=='watching'||watch.token!==input.token||Date.now()-watch.createdAt>7200000||runtime.host?.startedAt!==watch.browserInstance)return{ok:false};
@@ -44,7 +46,11 @@ async function persistReceipt(runtime,watch){
 export async function checkRefillReceiptWatches(runtime){
  if(runtime.refillReceiptBusy)return;runtime.refillReceiptBusy=true;
  try{
-  for(const [id,binding]of runtime.refillWatchFrames||[]){const watch=runtime.store.get(key(id));if(binding.page.isClosed()||watch?.status!=='watching'||watch.token!==binding.token){for(const engine of binding.engines)await engine.detach();runtime.refillWatchFrames.delete(id);}}
+  for(const [id,binding]of runtime.refillWatchFrames||[]){const watch=runtime.store.get(key(id));if(binding.page.isClosed()||watch?.status!=='watching'||watch.token!==binding.token){await releaseManualWatchBinding(binding);runtime.refillWatchFrames.delete(id);}}
+  for(const watch of runtime.store.values('refillWatch:').filter(w=>w.scope===workbenchScope(runtime.store.get('pair'))&&w.status==='watching')){
+   if(Date.now()-watch.createdAt>7200000)continue;
+   try{current(runtime,watch);const page=await findPage(runtime,watch);if(new URL(page.url()).origin!==new URL(watch.pageUrl).origin)throw Error('原网页已离开监听站点');runtime.refillWatchFrames||=new Map();let binding=runtime.refillWatchFrames.get(watch.id);if(!binding){binding={page,targetId:watch.targetId,token:watch.token,engines:[]};runtime.refillWatchFrames.set(watch.id,binding);bindManualWatchNavigation(runtime,binding);}await refreshRefillFrames(runtime,watch,binding,async()=>{const latest=runtime.store.get(key(watch.id));current(runtime,latest);if(latest.status!=='watching'||latest.token!==watch.token||page.isClosed()||new URL(page.url()).origin!==new URL(watch.pageUrl).origin)throw Error('原监听文档或点击状态已变化');});}catch(error){const latest=runtime.store.get(key(watch.id));runtime.store.set(key(watch.id),{...latest,error:error.message});}
+  }
   for(const initial of runtime.store.values('refillWatch:').filter(w=>w.scope===workbenchScope(runtime.store.get('pair'))&&['checking','pending_sync'].includes(w.status))){
    let watch=initial;
    try{

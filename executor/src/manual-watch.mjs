@@ -6,19 +6,21 @@ import {attachEngine} from './engine.mjs';
 import {profiles,plain,priorProductSuccess,queue} from './shared.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {externalFormDestination} from './external-form-source.mjs';
+import {bindManualWatchNavigation,releaseManualWatchBinding,refreshManualWatchFrames,assertManualWatchSource} from './manual-watch-frames.mjs';
 const key=id=>'manualWatch:'+id;
 export async function armPreparedManualWatch(runtime,task,page){
  const input={taskId:task.id,targetId:task.targetId,pageUrl:page.url()},issued=await manualWatchMessage(runtime,{...input,action:'manualSubmissionWatchRequest'});
  if(!issued.ok)throw Error(issued.error||'原任务提交监听未就绪');
- runtime.manualWatchFrames||=new Map();const old=runtime.manualWatchFrames.get(task.id);if(old)for(const engine of old.engines)await engine.detach();
+ runtime.manualWatchFrames||=new Map();const old=runtime.manualWatchFrames.get(task.id);if(old)await releaseManualWatchBinding(old);
  const binding={page,token:issued.watch.token,engines:[]};runtime.manualWatchFrames.set(task.id,binding);
- try{for(const frame of page.frames()){
-  if(!/^https?:\/\//.test(frame.url()))continue;const frameUrl=frame.url(),engine=await attachEngine(runtime.context,frame,async message=>{
-   if(!['manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)||message.frameUrl!==frameUrl||runtime.manualWatchFrames.get(task.id)!==binding)return{ok:false};
-   const bound={...message,...input,pageUrl:page.url(),frameUrl,documentId:message.executorDocumentId};
-   return message.action==='manualSubmissionClicked'&&runtime.dispatchControl?runtime.dispatchControl('manualWatchMessage',bound):manualWatchMessage(runtime,bound);
-  },{worldName:'ExternalLinkManualSubmissionWatch',manualWatch:true});binding.engines.push(engine);const ready=await engine.call({action:'watchManualSubmission',...issued.watch});if(!ready?.ok||!(await manualWatchMessage(runtime,{...input,action:'manualSubmissionWatchReady',token:issued.watch.token,frameUrl,documentId:engine.documentId,baseline:ready.baseline})).ok)throw Error('原网页提交监听尚未确认就绪，停止填写');
- }}catch(error){for(const engine of binding.engines)await engine.detach();if(runtime.manualWatchFrames.get(task.id)===binding)runtime.manualWatchFrames.delete(task.id);throw error;}
+ try{await refreshPreparedFrames(runtime,task,binding,issued.watch);bindManualWatchNavigation(runtime,binding);}catch(error){await releaseManualWatchBinding(binding);if(runtime.manualWatchFrames.get(task.id)===binding)runtime.manualWatchFrames.delete(task.id);throw error;}
+}
+async function refreshPreparedFrames(runtime,task,binding,watchMessage){
+ const assertCurrent=()=>{const latest=runtime.store.get('task:'+task.id),watch=runtime.store.get(key(task.id));if(binding.released||runtime.manualWatchFrames.get(task.id)!==binding||watch?.status!=='watching'||watch.token!==binding.token||watch.scope!==workbenchScope(runtime.store.get('pair'))||latest?.receipt||latest?.attemptBoundary||latest?.targetId!==task.targetId||latest?.browserInstance!==task.browserInstance||runtime.host?.startedAt!==task.browserInstance||binding.page.isClosed()||new URL(binding.page.url()).origin!==new URL(watch.pageUrl).origin)throw Error('原提交监听任务、文档或点击状态已变化');return watch;};
+ await refreshManualWatchFrames(runtime,binding,{worldName:'ExternalLinkManualSubmissionWatch',watchMessage,assertCurrent:async()=>{await assertManualWatchSource(runtime,assertCurrent(),binding.page);assertCurrent();},onMessage:message=>{
+  if(runtime.manualWatchFrames.get(task.id)!==binding)return{ok:false};const input={...message,taskId:task.id,targetId:task.targetId,pageUrl:binding.page.url()};
+  return message.action==='manualSubmissionClicked'&&runtime.dispatchControl?runtime.dispatchControl('manualWatchMessage',input):manualWatchMessage(runtime,input);
+ }});
 }
 export async function manualWatchMessage(runtime,input){
  const task=runtime.store.get('task:'+input.taskId);
@@ -61,9 +63,13 @@ export async function manualWatchMessage(runtime,input){
 }
 export async function checkManualWatches(runtime){
  await checkRefillReceiptWatches(runtime);
- for(const[id,binding]of runtime.manualWatchFrames||[]){const watch=runtime.store.get(key(id));if(binding.page.isClosed()||watch?.token!==binding.token||watch?.status!=='watching'){for(const engine of binding.engines)await engine.detach();runtime.manualWatchFrames.delete(id);}}
+ for(const[id,binding]of runtime.manualWatchFrames||[]){const watch=runtime.store.get(key(id));if(binding.page.isClosed()||watch?.token!==binding.token||watch?.status!=='watching'){await releaseManualWatchBinding(binding);runtime.manualWatchFrames.delete(id);}}
  if(runtime.job||runtime.store.get('paused')!==true)return;
  const scope=workbenchScope(runtime.store.get('pair'));
+ for(const watch of runtime.store.values('manualWatch:').filter(w=>w.scope===scope&&w.status==='watching')){
+  if(Date.now()-watch.createdAt>7200000||runtime.host?.startedAt!==watch.browserInstance||!runtime.context)continue;
+  try{const task=runtime.store.get('task:'+watch.taskId);if(!task||task.receipt||task.attemptBoundary||task.controller==='supervisor'||task.controller==='ai')continue;const page=await runtime.findPage(task);if(new URL(page.url()).origin!==new URL(watch.pageUrl).origin)throw Error('原网页已离开监听站点');runtime.manualWatchFrames||=new Map();let binding=runtime.manualWatchFrames.get(task.id);if(!binding){binding={page,token:watch.token,engines:[]};runtime.manualWatchFrames.set(task.id,binding);bindManualWatchNavigation(runtime,binding);}await refreshPreparedFrames(runtime,task,binding,{token:watch.token,targetDomain:watch.targetDomain,destinationUrl:watch.destinationUrl});}catch(error){const latest=runtime.store.get(key(watch.taskId));runtime.store.set(key(watch.taskId),{...latest,error:error.message});}
+ }
  for(const watch of runtime.store.values('manualWatch:').filter(w=>w.scope===scope&&w.status==='checking')){
   const task=runtime.store.get('task:'+watch.taskId);if(!task){watch.status='needs_manual';runtime.store.set(key(watch.taskId),watch);continue;}
   runtime.manualWatchJob=true;

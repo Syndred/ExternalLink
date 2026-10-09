@@ -50,3 +50,12 @@ test('frozen manual observer ignores unchanged evidence, accepts a new receipt a
   vm.runInContext(extract('observeManualSubmissionReceipt'),context);const result=await context.observeManualSubmissionReceipt(7,'t',0,{frameUrl:url});assert.equal(result.ok,fresh);assert.equal(records.length,fresh?1:0);assert.equal(!!stored.watch,!fresh);if(fresh)assert.equal(records[0].successProof.actionObserved,true);
  }
 });
+
+test('frozen original new-document registration refreshes frame baselines while keeping the original watch token and lifetime',async()=>{
+ const watch={token:'original-token',createdAt:123,url,profileId:'p',frameBaselines:{0:{evidence:'Old document',url}}},stored={'manualSubmissionWatch:7':structuredClone(watch)},context=vm.createContext({chrome:{storage:{local:{get:async()=>structuredClone(stored),set:async patch=>Object.assign(stored,structuredClone(patch))}}},submissionLedgerWrite:async callback=>callback()});
+ vm.runInContext(extract('registerManualSubmissionWatchFrame'),context);
+ for(const [frameId,frameUrl,evidence]of [[0,url,'New document'],[3,'https://formsubmit.co/original-fixture','New iframe']]){
+  const result=await context.registerManualSubmissionWatchFrame(7,'original-token',frameId,{frameUrl,baseline:{evidence,matched:false}});assert.equal(result.ok,true);assert.equal(stored['manualSubmissionWatch:7'].frameBaselines[frameId].evidence,evidence);
+ }
+ assert.equal(stored['manualSubmissionWatch:7'].token,watch.token);assert.equal(stored['manualSubmissionWatch:7'].createdAt,watch.createdAt);assert.equal((await context.registerManualSubmissionWatchFrame(7,'old-token',0,{baseline:{evidence:'Unrelated'}})).ok,false);assert.equal(stored['manualSubmissionWatch:7'].frameBaselines[0].evidence,'New document');
+});

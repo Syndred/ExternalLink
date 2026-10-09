@@ -70,7 +70,8 @@
     "allOriginalVisualFinalSubmissionAndReceiptsVerified": false,
     "latestOriginalBrowserDataRead": false,
     "newRealSubmissions": 0,
-    "migrationComplete": false
+    "migrationComplete": false,
+    "sameTabBehaviorSupersededBy": "original-receipt-group-release-2026-10-09.json"
   },
   "originalReceiptProofCheckpoint": {
     "date": "2026-10-08",
@@ -1275,7 +1276,9 @@
       "mapping": "工作台人工确认成功 → previewManualConfirmation / confirmSubmissionSuccess；原批次、凭证及人工证明，独立账本回读后计成功",
       "status": "implemented_requires_full_acceptance",
       "verification": "889项全量通过，原成功函数4种分支及21种迟到保护；实际两本机服务、工作台和认证D1覆盖账本已写但回复丢失后的原确认重试。认证PostgreSQL与云端恢复、SQLite重启保留原资料和尝试。生产人工确认未执行；空库恢复覆盖写账本前失败及写入后丢回复，恢复原确认凭证及说明；旧版确认仅沿认证完整云端任务恢复。898项全量通过，生产人工确认未执行",
-      "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-recovery-2026-10-08.json"
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-manual-confirmation-recovery-2026-10-08.json",
+      "sameDestinationGroupEvidence": "original-receipt-group-release-2026-10-09.json",
+      "sameDestinationGroupVerification": "原成功函数实际对照；同站接续、暂停、预算用完、回执丢回复、末页关闭及对象／空字段收尾通过；最终1016项回归通过，真实投稿0。"
     },
     {
       "action": "contentReady",
@@ -3334,14 +3337,13 @@
     "migrationComplete": false
   },
   "originalManualConfirmationGroupAudit": {
-    "status": "runtime_difference_reproduced_fix_in_progress",
-    "original": "Success advances the next product on the same destination tab; last product closes the tab.",
-    "oldNativeBaseline": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+    "status": "workbench_same_destination_receipt_handoff_verified",
+    "original": "Success advances to the next product on the same original destination tab; final product closes its page.",
+    "sourceCommit": "c3bc498ae10e8f73b2808294a687b86bd7e8089e",
+    "evidence": "original-receipt-group-release-2026-10-09.json",
     "runtimeDefectProven": true,
-    "published": false,
-    "latestOpenFailure": "Last-product manual success did not close the page in the newly added isolated browser scenario. Root cause pending.",
-    "fullSuiteGreen": false,
-    "evidence": "original-receipt-group-progress-2026-10-09.json",
+    "published": true,
+    "fullSuiteGreen": true,
     "migrationComplete": false
   },
   "originalReceiptGroupProgressCheckpoint": {
@@ -3353,5 +3355,16 @@
     "fullSuiteFailed": 2,
     "latestAddedScenarioPassed": false,
     "migrationComplete": false
+  },
+  "originalReceiptGroupReleaseCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "c3bc498ae10e8f73b2808294a687b86bd7e8089e",
+    "evidence": "original-receipt-group-release-2026-10-09.json",
+    "sameTabManualAutomaticAndVisualReceiptHandoffVerified": true,
+    "finalRecipientClosesPage": true,
+    "manualFieldMapAndEmptyFieldsCleanupVerified": true,
+    "fullSuitePassed": 1016,
+    "servicesGuardedReloadAndProtectedReadbackVerified": true,
+    "allMigrationVerified": false
   }
 }

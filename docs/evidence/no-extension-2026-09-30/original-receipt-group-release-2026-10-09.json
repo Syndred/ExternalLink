@@ -1,0 +1,199 @@
+{
+  "kind": "original_receipt_same_destination_handoff",
+  "sourceCommit": "c3bc498ae10e8f73b2808294a687b86bd7e8089e",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "oldNativeSourceCommit": "485b8ad9a83aae6c068fa077efa650e09bd3bc4d",
+  "previousFailuresAndUnfinishedProgress": "original-receipt-group-progress-2026-10-09.json",
+  "originalFunctionExecuted": [
+    "advanceDestinationGroup",
+    "confirmSubmissionSuccess"
+  ],
+  "changes": [
+    "Retain independently verified receipt page until next original product claims its frozen task budget",
+    "Transfer original target with durable source and destination events and independent cloud source validation",
+    "Preserve original receipt, fields and attempt boundary across handoff and recovery",
+    "Keep page during pending manual receipt confirmation, paused execution and exhausted task budget",
+    "Close final recipient page after verified success, without treating already transferred source as another active owner",
+    "Generate cleanup checkpoints for existing field arrays, field maps and empty manual-confirmation fields without rewriting saved evidence"
+  ],
+  "verification": {
+    "fullSuitePassed": 1016,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "fullSuiteDurationMs": 118671.9478,
+    "cleanupAndManualRegressionsPassed": 46,
+    "manualBrowserScenarios": [
+      "normal handoff and last recipient closure",
+      "lost receipt response recovery then handoff and last closure",
+      "exhausted task budget retains original page",
+      "single final product with legacy field map closes page",
+      "single final product without observed fields closes page"
+    ],
+    "actualAutomaticAndVisualWorkersVerified": true,
+    "isolatedAuthenticatedD1ReceiptAndEmptyRestoreVerified": true,
+    "receiptTamperingAndOriginalPageLossRejected": true,
+    "sqliteReopenAndFailedTransferEventVerified": true
+  },
+  "resolvedLastProductFailure": {
+    "rootCause": "recoveryCheckpoint productFields unconditionally called .filter on saved fields, while manual confirmation can store an object map or empty object.",
+    "fix": "Normalize supported field representations only for checkpoint generation; preserve original submission evidence.",
+    "originalFailureRetained": true
+  },
+  "priorSuiteFailures": {
+    "receiptFixture": "Updated fixture to exercise real page transfer and final closure instead of asserting obsolete first-page closure; final full suite passed.",
+    "externalFormWatch": "Prior readiness timeout did not reproduce on unchanged direct rerun or final full suite; no claim of a dedicated fix."
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "receipt_group_published_service_process_identity",
+    "sourceCommit": "c3bc498ae10e8f73b2808294a687b86bd7e8089e",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 21148,
+        "StartedAt": "2026-10-09T16:27:32.4308640+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 10940,
+        "StartedAt": "2026-10-09T16:27:33.0695100+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "unchangedUiSmoke": {
+    "ok": true,
+    "kind": "manual_card_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "c3bc498ae10e8f73b2808294a687b86bd7e8089e",
+    "servedUiMatchesFileAndCommit": true,
+    "originalManualCardControlsServed": true,
+    "uiSha256": "6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "scope": "Controlled isolated Chrome and authenticated isolated D1 fixtures; production service identity, served UI, and protected data readback after guarded two-service reload. No live external submission or model call.",
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-last-product-diagnosis-2026-10-09.txt",
+      "capturedSha256": "b6394c0297928b6c82429a5c350ea309e8b1d791675aa7e8c89477f1703e038a",
+      "gitBlobSha256": "9ee77a328d596c0eaed663850eaa18cb1a420c322785c739852fa9cbdb21d1b0"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-last-product-fixed-2026-10-09.txt",
+      "capturedSha256": "b30fa1f97b805c4d966f7ba5d0798cba22466dd187b40b49e8c0d4a221f48d0c",
+      "gitBlobSha256": "7e7d872ff66556d4a2429509c993641b10b32f06a40891fc8feeabcf7b3d2b72"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-cleanup-regressions-2026-10-09.txt",
+      "capturedSha256": "aa97ad55c4e4ce33bd0d93d15a0514079ca304076a64b5da99a23aedb592bd8b",
+      "gitBlobSha256": "d0d5799feb8a76eb06e530cf2a5b69232c193feaffcc477fa213abebdd9f18b8"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-repository-final-2026-10-09.txt",
+      "capturedSha256": "90f2bea18b47120a150fbb4f83e5ccb5b52b252dee49a046c8245caa5b9ccbbc",
+      "gitBlobSha256": "1167d817fab1baa5f3a97edcc6a94e608eead52b8da4cdcb73fa3c4596d91be6"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-service-process-2026-10-09.txt",
+      "capturedSha256": "6a5479f4a28eb9a5f0eed876b4d51aaca6ba87e3047be2aa7b81b2f353fbbe63",
+      "gitBlobSha256": "34ac6bbc0dae6dd404d89010e41d6b7e6cb25646ad7dcafa2ad8f60e0725f7a7"
+    },
+    {
+      "path": "original-receipt-group-release-2026-10-09/original-receipt-group-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "bd7042552e53f12bc96c5bc7d0e99d79b8692cce0218bf1ccf4003310f5dec9f",
+      "gitBlobSha256": "12cfaaf136a4d36e9d6f316fe5a182301c59999b8d85e7d293f24aa940357db9"
+    }
+  ]
+}

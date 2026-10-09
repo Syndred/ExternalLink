@@ -1,0 +1,28 @@
+✖ manual success retains its receipt and original tab for the next frozen product after reply loss and paused recovery (3292.2869ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3690.6335
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:41:1
+✖ manual success retains its receipt and original tab for the next frozen product after reply loss and paused recovery (3292.2869ms)
+  AssertionError [ERR_ASSERTION]: {"confirmed":{"ok":true,"confirmed":true,"pending":false,"taskId":"da2e503c-882c-47b8-81c7-eb4792419d07"},"cleanupFailure":{"at":"2026-10-09T08:23:50.032Z","reason":"((intermediate value) || []).filter is not a function","targetId":"6FF91004ABB764A6321CFC501E71D615"},"screenshot":"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\el-manual-receipt-group-Weh2cm\\original.png","status":"finished","manualConfirmation":{"id":"a936103e-028d-4d97-9472-cd66a4b6a0fc","at":"2026-10-09T08:23:50.018Z","status":"confirmed","scope":"c5307c5401eb8d5cf610e6ae1dc1c1996d5f0ce375037632df24f6a036363534","frozenSha256":"6d71d812405912fcc93e66a837b162de9e6ff073abbd52e460a2faf49ea4eadb","receiptSha256":"84a4cf5c157a436e504a27136c75486776c16511b364667327e4a8702b245a7e"},"browserInstance":"isolated-manual-group","paused":false,"executionStopped":null}
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:54:121)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

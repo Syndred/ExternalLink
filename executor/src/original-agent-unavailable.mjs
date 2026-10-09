@@ -25,7 +25,26 @@ const receiptFingerprint=task=>createHash('sha256').update(batchJson({receipt:ta
 function transferableSource(task,advance=task?.originalGroupAdvance){
  if(!task||task.controller!=='executor'||task.syncConflict)return false;
  if(advance?.kind==='verified_receipt')return task.status==='finished'&&task.cloudVerified===true&&!!task.receipt&&receiptFingerprint(task)===advance.receiptSha256&&(task.receipt.confirmedBy!=='manual'||task.manualConfirmation?.status==='confirmed');
+ if(advance?.kind==='manual_skip')return task.status==='skip'&&!task.receipt&&!task.attemptBoundary&&task.manualDisposition?.action==='skip_current_run'&&createHash('sha256').update(batchJson(task.manualDisposition)).digest('hex')===advance.manualSkipSha256;
  return task.status==='skip'&&!task.receipt&&!task.attemptBoundary;
+}
+
+export async function retainOriginalManualSkipPage(runtime,task){
+ if(task.status!=='skip'||task.controller!=='executor'||task.receipt||task.attemptBoundary||task.syncConflict||!task.targetId||task.tabClosedAt||task.manualDisposition?.action!=='skip_current_run')return false;
+ const group=originalGroup(runtime,task);if(!group.key)return false;
+ const scope=workbenchScope(runtime.store.get('pair')),groupSha256=digest(group),advance=task.originalGroupAdvance;
+ if(advance?.status==='transferred')return true;
+ if(advance?.kind==='manual_skip'){
+  if(advance.scope!==scope||advance.groupSha256!==groupSha256||!transferableSource(task,advance))throw stale('原人工跳过或同站接续范围已变化');
+  if(advance.status==='complete')return false;
+  if(future(runtime,task,group).some(item=>item.status==='pending'))return true;
+  runtime.update(task,{originalGroupAdvance:{...advance,status:'complete',completedAt:new Date().toISOString()}},'original_manual_skip_group_complete');return false;
+ }
+ const next=future(runtime,task,group).find(item=>item.status==='pending');if(!next)return false;
+ const before=structuredClone(runtime.store.get('task:'+task.id));let pageUrl=task.url;
+ try{const page=await runtime.findPage(task);pageUrl=page.url();}catch(error){if(!/原浏览器宿主已变化|原目标页已关闭/.test(error.message))throw error;}
+ if(scope!==workbenchScope(runtime.store.get('pair'))||!isDeepStrictEqual(runtime.store.get('task:'+task.id),before)||digest(originalGroup(runtime,task))!==groupSha256)throw stale('原人工跳过任务或同站范围已变化，未交接页签');
+ runtime.update(task,{originalGroupAdvance:{kind:'manual_skip',manualSkipSha256:createHash('sha256').update(batchJson(task.manualDisposition)).digest('hex'),scope,groupKey:group.key,groupSha256,sourceTaskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,pageUrl,status:'awaiting_next',nextTaskId:next.id,at:new Date().toISOString()}},'original_manual_skip_group_ready');return true;
 }
 
 // Original success (including manual success) advances the same browser tab.

@@ -97,12 +97,12 @@ test('a failed skip keeps its destination and last batch pointer reserved; retry
 });
 
 test('selected skip preserves unknown receipt boundaries and manual targets while cleaning only its own automatic page',async()=>{
- for(const mode of ['automatic','manual','unknown','received','lease_error']){const f=fixture();try{
+ for(const mode of ['automatic','last','manual','unknown','received','lease_error']){const f=fixture();try{
   const task=f.store.get('task:p0');task.targetId='original-target';task.status='needs_manual';
-  if(mode==='manual')task.pageOwnership='manual';if(mode==='unknown'){task.attemptBoundary='original-attempt';task.status='submitted_unconfirmed';}if(mode==='received'){task.receipt={evidence:'original-receipt'};task.status='finished';}f.store.set('task:p0',task);
+  if(mode==='last')f.store.set('task:q0',{...f.store.get('task:q0'),status:'finished',receipt:{evidence:'Previously received sibling'}});if(mode==='manual')task.pageOwnership='manual';if(mode==='unknown'){task.attemptBoundary='original-attempt';task.status='submitted_unconfirmed';}if(mode==='received'){task.receipt={evidence:'original-receipt'};task.status='finished';}f.store.set('task:p0',task);
   if(mode==='lease_error')f.runtime.lease=async()=>{throw Error('lease denied');};
   const result=await f.runtime.control('manualSkip',f.input('p0'));
-  assert.equal(result.skipped,mode!=='lease_error');assert.equal(f.store.get('paused'),false);assert.equal(f.store.get('task:p0').attemptBoundary,task.attemptBoundary);assert.deepEqual(f.store.get('task:p0').receipt,task.receipt);assert.deepEqual(f.calls.closed,mode==='automatic'?['original-target']:[]);
+  assert.equal(result.skipped,mode!=='lease_error');assert.equal(f.store.get('paused'),false);assert.equal(f.store.get('task:p0').attemptBoundary,task.attemptBoundary);assert.deepEqual(f.store.get('task:p0').receipt,task.receipt);assert.deepEqual(f.calls.closed,mode==='last'?['original-target']:[]);if(mode==='automatic')assert.equal(f.store.get('task:p0').originalGroupAdvance.status,'awaiting_next');
  }finally{f.store.close();}}
 });
 

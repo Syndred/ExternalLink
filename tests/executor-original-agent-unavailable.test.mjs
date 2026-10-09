@@ -13,7 +13,7 @@ import {workbenchScope} from '../executor/src/workbench-sync.mjs';
 import {freezeBatchConfig,initializeBatchPolicy} from '../executor/src/workbench-batch-policy.mjs';
 import {batchJson,batchScopeRows,batchManifest} from '../core/workbench-batch-recovery.mjs';
 import {freezeAcceptance} from '../executor/src/acceptance-freeze.mjs';
-import {originalAgentUnavailableError,originalUnavailableReason,skipOriginalUnavailableTask,attachOriginalGroupPage,navigateOriginalGroupPage,retainOriginalUnavailablePage,retainOriginalReceiptPage} from '../executor/src/original-agent-unavailable.mjs';
+import {originalAgentUnavailableError,originalUnavailableReason,skipOriginalUnavailableTask,attachOriginalGroupPage,navigateOriginalGroupPage,retainOriginalUnavailablePage,retainOriginalReceiptPage,retainOriginalManualSkipPage} from '../executor/src/original-agent-unavailable.mjs';
 const hash=value=>createHash('sha256').update(batchJson(value)).digest('hex');
 
 function fixture({offline=true,file=':memory:'}={}){
@@ -32,6 +32,23 @@ function fixture({offline=true,file=':memory:'}={}){
 const skip=(f,assertCurrent=async()=>{})=>skipOriginalUnavailableTask(f.runtime,{task:f.task,page:f.page,result:{originalAgentUnavailable:true,reason:'Cloud worker failed'},assertCurrent});
 
 const received=f=>{Object.assign(f.task,{status:'finished',cloudVerified:true,receipt:{evidence:'Original confirmed receipt',confirmedBy:'manual',successProof:{source:'manual',manualConfirmationId:'original-confirmation'}},manualConfirmation:{status:'confirmed'},attemptBoundary:'original-attempt',actualSubmission:{fields:{Name:'Original p0'}}});f.store.set('task:'+f.task.id,f.task);};
+test('manual skip source proof, failed event and changed original page cannot silently transfer another task',async()=>{
+ for(const mode of ['valid','lost-event','local-change','remote-change','late-receipt','page-changed','page-missing']){
+  const f=fixture({offline:false});try{
+   Object.assign(f.task,{status:'skip',manualDisposition:{action:'skip_current_run',requestId:'original-request',at:'original-time',reason:'User skipped'}});f.store.set('task:t0',f.task);assert.equal(await retainOriginalManualSkipPage(f.runtime,f.task),true);await f.runtime.cloud.flush();
+   if(mode==='local-change')f.store.set('task:t0',{...f.store.get('task:t0'),manualDisposition:{...f.task.manualDisposition,requestId:'replacement'}});
+   if(mode==='remote-change')f.remote.get('t0').manualDisposition.requestId='replacement';
+   if(mode==='late-receipt')f.remote.get('t0').receipt={evidence:'Late original receipt'};
+   if(mode==='page-changed')await f.page.goto('https://same.example/another-page');
+   if(mode==='page-missing')f.runtime.findPage=async()=>{throw Error('原目标页已关闭');};
+   const next=f.store.get('task:t1');if(['local-change','remote-change','late-receipt','page-changed'].includes(mode)){await assert.rejects(()=>attachOriginalGroupPage(f.runtime,next));assert.equal(next.targetId,undefined);assert.equal(f.page.reloads,0);continue;}
+   if(mode==='page-missing'){assert.equal(await attachOriginalGroupPage(f.runtime,next),false);assert.equal(next.status,'needs_manual');assert.equal(next.targetId,undefined);continue;}
+   if(mode==='lost-event'){const flush=f.runtime.cloud.flush;let failed=false;f.runtime.cloud.flush=async()=>{if(!failed&&f.store.get('task:t1').originalGroupPage){failed=true;throw Error('Manual skip transfer reply lost');}return flush();};await assert.rejects(()=>attachOriginalGroupPage(f.runtime,next),/reply lost/);assert.equal(failed,true);}
+   assert.equal(await attachOriginalGroupPage(f.runtime,next),true);await navigateOriginalGroupPage(f.runtime,next,f.page,{active:()=>true});assert.equal(next.targetId,'original-target');assert.equal(f.page.reloads,1);assert.equal(f.store.get('task:t0').manualDisposition.requestId,'original-request');assert.equal(f.store.get('task:t0').receipt,undefined);
+  }finally{f.store.close();}
+ }
+});
+
 test('verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation',async()=>{
  const home=mkdtempSync(join(tmpdir(),'el-receipt-handoff-')),file=join(home,'state.sqlite'),f=fixture({file,offline:false});let reopened;
  try{received(f);const proof=structuredClone(f.task.receipt),actual=structuredClone(f.task.actualSubmission);await retainOriginalReceiptPage(f.runtime,f.task);const next=f.store.get('task:t1');await attachOriginalGroupPage(f.runtime,next);assert.equal(next.targetId,'original-target');assert.deepEqual(f.store.get('task:t0').receipt,proof);assert.deepEqual(f.store.get('task:t0').actualSubmission,actual);f.store.close();reopened=new Store(file);f.runtime.store=reopened;const recovered=reopened.get('task:t1');assert.equal(await attachOriginalGroupPage(f.runtime,recovered),true);await navigateOriginalGroupPage(f.runtime,recovered,f.page,{active:()=>true});assert.equal(f.page.reloads,1);assert.deepEqual(reopened.get('task:t0').receipt,proof);assert.equal(reopened.get('task:t0').attemptBoundary,'original-attempt');}finally{reopened?.close();if(!reopened)f.store.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-receipt-handoff-'));rmSync(home,{recursive:true,force:true});}

@@ -7,6 +7,7 @@ import {assertOriginalBatch,persistBatchLifecycle} from './execution-lifecycle.m
 import {batchConfig} from './workbench-batch-policy.mjs';
 import {originalUnattended as U} from '../../core/original-batch-config.mjs';
 import {observeParkedResumePage,parkedResumeIntent} from './parked-task-resume.mjs';
+import {retainOriginalManualSkipPage} from './original-agent-unavailable.mjs';
 const at=()=>new Date().toISOString();
 export function manualTargetIds(runtime,scope,excluded){return new Set(runtime.store.values('task:').filter(other=>{const source=other.workbenchBatchId&&runtime.store.get('workbenchBatch:'+other.workbenchBatchId);return other.id!==excluded&&source&&(!source.scope||source.scope===scope)&&other.targetId&&!other.tabClosedAt&&!other.receipt&&['needs_manual','submitted_unconfirmed'].includes(other.status);}).map(other=>other.targetId));}
 function selectedTask(runtime,input){const task=runtime.store.get('task:'+input.taskId);if(!task?.runId||input.expectedRunId!==task.runId)throw Error('原任务或批次已变化，请刷新后重试');if(input.expectedTargetId!==undefined&&input.expectedTargetId!==task.targetId)throw Error('原标签页已变化，请刷新后重试');if(['supervisor','ai'].includes(task.controller))throw Error('请先等待原控制器交回任务');return task;}
@@ -50,7 +51,9 @@ async function skipWorkbenchTask(runtime,input,batch,guards={}){
    event=runtime.update(task,{...(!task.attemptBoundary&&!task.receipt?{status:'skip',siteStatus:'not_submitted',manualSubmissionConsent:null,productHuntCreationConsent:null,...(task.originalResume?{originalResume:{...task.originalResume,status:'cancelled'}}:{})}:{}),manualDisposition:{action:'skip_current_run',at:request.at,requestId:request.id,reason:String(input.reason||'用户跳过本次处理').slice(0,2000)},reason:task.attemptBoundary||task.receipt?task.reason:'用户跳过本次处理，未投稿'},'manual_skip',{['workbenchBatch:'+batch.id]:current,[key]:{...request,stage:'await_sync'}});
   }
   await runtime.synchronize();check();await flushBatchTaskEvents(runtime,task,event?.id);check();
-  if(task.targetId&&!task.tabClosedAt&&!task.receipt&&!task.attemptBoundary&&stopTabDisposition(task)==='close_automated'&&!runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===task.targetId&&stopTabDisposition(other)==='preserve_manual')){
+  let retained=false;
+  if(stopTabDisposition(task)==='close_automated'){retained=await retainOriginalManualSkipPage(runtime,task);check();if(retained){await flushBatchTaskEvents(runtime,task);check();}}
+  if(!retained&&task.targetId&&!task.tabClosedAt&&!task.receipt&&!task.attemptBoundary&&stopTabDisposition(task)==='close_automated'&&!runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===task.targetId&&stopTabDisposition(other)==='preserve_manual')){
    const page=await runtime.findPage(task);check();const time=at();runtime.update(task,{recoveryCheckpoint:recoveryCheckpoint(task,page,task.screenshot||'',time)},'manual_skip_page_checkpoint');await page.close({runBeforeUnload:false});runtime.update(task,{tabClosedAt:time,closeReason:'用户跳过本次处理，原任务与恢复点保留'},'manual_skip_page_closed');await flushBatchTaskEvents(runtime,task);check();
   }
   runtime.store.set(key,null);runtime.wakeWorkbench?.();runtime.tick();

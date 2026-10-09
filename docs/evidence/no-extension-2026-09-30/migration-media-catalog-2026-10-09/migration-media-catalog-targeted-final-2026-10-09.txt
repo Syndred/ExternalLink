@@ -1,0 +1,14 @@
+✔ unopened batch resumes with the same identity after the native browser connection is restored (6.4104ms)
+✔ cloud media catalogue consumes all pages, identifies unresolved active references and refuses repeated cursors (1.0447ms)
+✔ edited comment versions survive reload, retain nine versions and isolate products, articles and cloud scopes (1.8825ms)
+✔ batch open freezes a library subset, deduplicates, retains failures and does not invoke a submission engine (114.531ms)
+✔ product cloud catalogue keeps frozen original profile identity matching, all files, metadata and order (4.248ms)
+✔ original product media refresh reads only the paginated catalogue and cannot depend on unrelated ledger availability (0.7399ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.3767

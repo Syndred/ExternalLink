@@ -1,0 +1,14 @@
+{
+  "originalSavedCredentialReadPassed": true,
+  "requestedPath": "/v1/media",
+  "responseAssets": 53,
+  "sourceRoute": "cloud/worker/src/index.mjs:610-611",
+  "stateBackend": "d1",
+  "effectivePath": "/v2/media",
+  "independentOriginalNeonCatalogue": false,
+  "ownerMismatchesAgainstSameR2Source": 0,
+  "originalProductOwnershipProved": false,
+  "metadataRepairAuthorisedByThisComparison": false,
+  "productionWrites": 0,
+  "nextEvidenceRequired": "Independent original Neon media rows through an authenticated read-only recovery endpoint or an original indexed catalogue; preserve blank metadata until proved."
+}

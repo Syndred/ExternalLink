@@ -1,0 +1,130 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for getByRole('button', { name: '资料与媒体', exact: true }).first()
+    - locator resolved to <button class="" type="button">资料与媒体</button>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <label class="field-row">…</label> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+  - retrying click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <dialog open="" id="detail">…</dialog> intercepts pointer events
+  - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    14 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <dialog open="" id="detail">…</dialog> intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+       - waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\application-ui.mjs:121:67 {
+  log: [
+    "  - waiting for getByRole('button', { name: '资料与媒体', exact: true }).first()",
+    '    - locator resolved to <button class="" type="button">资料与媒体</button>',
+    '  - attempting click action',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - <label class="field-row">…</label> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '  - retrying click action',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - <dialog open="" id="detail">…</dialog> intercepts pointer events',
+    '  - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    14 × waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms',
+    '       - waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <dialog open="" id="detail">…</dialog> intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms',
+    '       - waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms',
+    '       - waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - <span>简短介绍（20-30 个英文单词）</span> from <dialog open="" id="detail">…</dialog> subtree intercepts pointer events',
+    '  - retrying click action',
+    '    - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0

@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+- 'a38a4ff7320a3d8764ac959b264f15e335360d7c1e23a0627dee7f366c95c58f'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/probe-media-catalog-native-archived-2026-10-09.mjs:23:697 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  expected: 'a38a4ff7320a3d8764ac959b264f15e335360d7c1e23a0627dee7f366c95c58f',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

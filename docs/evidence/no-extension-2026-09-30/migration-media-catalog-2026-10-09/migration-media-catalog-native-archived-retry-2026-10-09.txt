@@ -1,0 +1,21 @@
+{"route":"/mediaLibrary","httpStatus":502,"error":"云端连接失败 (ECONNRESET)"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+502 !== 200
+
+    at request (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/probe-media-catalog-native-archived-2026-10-09.mjs:12:283)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/probe-media-catalog-native-archived-2026-10-09.mjs:15:46 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 502,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

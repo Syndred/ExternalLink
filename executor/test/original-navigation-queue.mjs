@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
 import {createServer} from 'node:http';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
+import vm from 'node:vm';
 import {once} from 'node:events';
 import {chromium} from 'playwright';
 import {Store} from '../src/store.mjs';
@@ -36,10 +37,19 @@ try{
  store=new Store(join(home,'outbox.sqlite'));store.set('pair',{endpoint,workspaceId:'default',localToken:'fixture-local',deviceToken:'fixture-device',storageBackend:'d1'});store.set('paused',true);store.set('acceptanceBatch',fixed);store.close();store=null;
  backend=await start('server.mjs');web=await start('workbench-server.mjs');const original=await originalLibraryBatchQueue({documents,revisions});assert.ok(original.groups.length>100);
  for(const origin of [backend.endpoint,web.endpoint]){const actual=await api(origin,'/getSubmissionQueue',{category:'',group:''});assert.equal(actual.total,original.groups.length);assert.deepEqual(actual.tasks.map(group=>group.key),original.groups.map(group=>group.key));const scoped=await api(origin,'/getSubmissionQueue',{category:'AI 工具目录'});assert.equal(scoped.total,2);}
- browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const page=await browser.newPage(),errors=[];page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push(error.message));
+ const portProbe=createServer();await new Promise(done=>portProbe.listen(0,'127.0.0.1',done));const debugPort=portProbe.address().port;await new Promise(done=>portProbe.close(done));
+ browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions','--remote-debugging-port='+debugPort]});await writeFile(join(home,'host.json'),JSON.stringify({endpoint:'http://127.0.0.1:'+debugPort,startedAt:'isolated-navigation-ui'}));const page=await browser.newPage(),errors=[];page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push(error.message));
  await page.route('**/*',async route=>{if(new URL(route.request().url()).origin!==web.endpoint){externalRequests++;await route.abort();return;}await route.continue();});
  await page.goto(web.endpoint+'/#access=fixture-local');await page.getByRole('button',{name:'外链库',exact:true}).click();await page.getByRole('button',{name:'单站投稿队列',exact:true}).click();
- await page.getByText('第 1 / '+original.groups.length+' 站',{exact:false}).waitFor();await page.getByRole('button',{name:'下一站',exact:true}).click();await page.getByText('第 2 / '+original.groups.length+' 站',{exact:false}).waitFor();await page.getByRole('button',{name:'上一站',exact:true}).click();await page.getByText('第 1 / '+original.groups.length+' 站',{exact:false}).waitFor();
+ const frozen=execFileSync('git',['show','bd916b2944a577b160a6afcb8a7d73d263044c0c:extension/sidepanel.js'],{encoding:'utf8',maxBuffer:4*1024*1024}),sourceStart=frozen.indexOf('  async function cycleSubmission('),end=frozen.indexOf('\n  function captureFillContext(',sourceStart),originalOpened=[];
+ assert.ok(sourceStart>=0&&end>sourceStart);const originalContext=vm.createContext({submissionTasks:original.groups,submissionIndex:0,chrome:{storage:{local:{async set(){}}},tabs:{async update(id,input){originalOpened.push(input.url);}}},renderSubmissionNav(){},getOwnerActiveTab:async()=>({id:1}),setAutoFillStatus(){},ownedSubmissionTabs:new Map()});vm.runInContext(frozen.slice(sourceStart,end),originalContext);
+ await page.getByText('第 1 / '+original.groups.length+' 站',{exact:false}).waitFor();const openedTargets=[];
+ for(const [delta,label,index]of [[1,'下一站',2],[-1,'上一站',1]]){
+  await vm.runInContext('cycleSubmission('+delta+')',originalContext);await page.getByRole('button',{name:label,exact:true}).click();await page.getByText('第 '+index+' / '+original.groups.length+' 站',{exact:false}).waitFor();
+  const reader=new Store(join(home,'outbox.sqlite'),{readOnly:true});try{const cursor=reader.get('submissionQueue');assert.equal(cursor.page?.url,originalOpened.at(-1),'Original previous/next must open its destination, not only change text');assert.equal(cursor.opening,false);openedTargets.push(cursor.page.targetId);}finally{reader.close();}
+ }
+ assert.equal(new Set(openedTargets).size,1,'Both navigation buttons reuse the same unclaimed queue page');assert.equal(targetGets,2);
+
  await page.getByRole('button',{name:'关闭详情',exact:true}).click();await page.getByRole('button',{name:'设置与备份',exact:true}).click();await page.getByText('自动填写只使用批量勾选的产品',{exact:false}).waitFor();await page.getByLabel('域名黑名单（每行一个）',{exact:true}).fill('127.0.0.1');await page.getByRole('button',{name:'保存设置',exact:true}).click();await page.getByText('设置已存本机，等待同步',{exact:false}).waitFor();
  await page.getByRole('button',{name:'外链库',exact:true}).click();await page.getByRole('button',{name:'单站投稿队列',exact:true}).click();await page.getByText('Original：域名黑名单。可浏览核对。',{exact:true}).waitFor();
  const created=await api(web.endpoint,'/libraryMutation',{operation:{type:'create',url:added,fields:{note:'AI tool directory'}}});assert.ok(created.pending);const actual=await api(backend.endpoint,'/getSubmissionQueue',{category:''});assert.ok(actual.tasks.some(group=>group.url===added));assert.equal(actual.total,original.groups.length+1);
@@ -50,9 +60,9 @@ try{
  await runtime.context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==endpoint||!url.pathname.startsWith('/target-')){externalRequests++;await route.abort();return;}await route.continue();});
  const expected=await originalLibraryQuickOpen(overlayApplication(runtime,{documents,revisions}),{urls:[added],batchSize:1}),opened=await quickOpenLibrary(runtime,{urls:[added],batchSize:1});await runtime.quickOpenJob;
  assert.equal(opened.job.browseSource,'local');
- assert.deepEqual(store.get('quickOpenJob:'+opened.job.id).items.map(item=>item.url),expected);assert.equal(store.get('quickOpenJob:'+opened.job.id).status,'completed');assert.equal(runtime.context.pages().length,1);assert.equal(runtime.context.pages()[0].url(),added);assert.equal(targetGets,1);
+ assert.deepEqual(store.get('quickOpenJob:'+opened.job.id).items.map(item=>item.url),expected);assert.equal(store.get('quickOpenJob:'+opened.job.id).status,'completed');assert.equal(runtime.context.pages().length,1);assert.equal(runtime.context.pages()[0].url(),added);assert.equal(targetGets,3);
  assert.equal(store.values('task:').length,0);assert.equal(store.values('run:').length,0);assert.equal(store.get('paused'),true);assert.deepEqual(store.get('acceptanceBatch'),fixed);assert.equal(JSON.stringify({documents,revisions}),remoteBefore);assert.equal(calls.some(call=>call.method==='POST'&&call.path.endsWith('/runs')),false);assert.deepEqual(errors,[]);assert.equal(posts,0);assert.equal(externalRequests,0);
- console.log(JSON.stringify({ok:true,kind:'actual_services_original_navigation_and_pending_quick_open_fixture',completeOriginalRangeBothServices:true,originalDestinations:original.groups.length,scopedCategoryBothServices:true,actualUiNextAndPrevious:true,actualUiPendingBlacklistExplanation:true,pendingNewTargetVisible:true,actualChromeOpenedPendingTarget:true,offlineQueueAndAdvanceBothServices:true,actualUiOfflineChineseExplanation:true,actualUiSelectionRuleChineseExplanation:true,offlineChromeOpenedPendingTarget:true,ownedTargetGetRequests:targetGets,remoteDocumentsAndRevisionsUnchanged:true,originalFixedBatchUnchanged:true,registeredTasks:0,posts,externalRequests,productionWrites:0,realModelCalls:0,realSubmissions:0}));
+ console.log(JSON.stringify({ok:true,kind:'actual_services_original_navigation_and_pending_quick_open_fixture',completeOriginalRangeBothServices:true,originalDestinations:original.groups.length,scopedCategoryBothServices:true,actualUiNextAndPrevious:true,frozenSidepanelNavigationOpenedUrls:originalOpened,actualUiOpensOriginalDestinations:true,sameUnclaimedQueuePageReused:true,actualUiPendingBlacklistExplanation:true,pendingNewTargetVisible:true,actualChromeOpenedPendingTarget:true,offlineQueueAndAdvanceBothServices:true,actualUiOfflineChineseExplanation:true,actualUiSelectionRuleChineseExplanation:true,offlineChromeOpenedPendingTarget:true,ownedTargetGetRequests:targetGets,remoteDocumentsAndRevisionsUnchanged:true,originalFixedBatchUnchanged:true,registeredTasks:0,posts,externalRequests,productionWrites:0,realModelCalls:0,realSubmissions:0}));
 }finally{
  store?.close();await browser?.close();await stop(web);await stop(backend);await new Promise(done=>cloud.close(done));const absolute=resolve(home);assert.ok(absolute.startsWith(resolve(tmpdir())+sep)&&absolute.split(sep).at(-1).startsWith('el-original-navigation-'));await rm(absolute,{recursive:true,force:true});
 }

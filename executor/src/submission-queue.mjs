@@ -31,7 +31,7 @@ export async function submissionQueue(runtime,input={},advance=false){
   }
   selected||=await runtime.context.newPage();const info=await getTargetInfo(runtime.context,selected);if(!info)throw Error('网页编号暂不可读，请保留原页核对');
   page={targetId:info.targetId,browserInstance:runtime.host.startedAt,url:task.url};runtime.store.set('submissionQueue',{...cursor,page,opening:true});
-  try{await selected.goto(task.url,{waitUntil:'domcontentloaded',timeout:30000});runtime.store.set('submissionQueue',{...cursor,page,opening:false});}catch(error){runtime.store.set('submissionQueue',{...cursor,page,opening:false,error:error.message});throw error;}
+  try{await selected.goto(task.url,{waitUntil:'domcontentloaded',timeout:30000});await selected.bringToFront();runtime.store.set('submissionQueue',{...cursor,page,opening:false});}catch(error){runtime.store.set('submissionQueue',{...cursor,page,opening:false,error:error.message});throw error;}
  }else if(page)runtime.store.set('submissionQueue',{...cursor,page});
  // The original getter returns summaries. Keep the legacy advance response
  // available, while the native UI explicitly requests compact navigation.

@@ -1018,9 +1018,10 @@
       "source": "extension/sidepanel.html",
       "id": "btnAddToUrlList",
       "label": "加入外链列表（置顶）",
-      "mapping": "浏览器当前页加入库并置顶",
+      "mapping": "外链库 / 浏览器当前页加入库并置顶",
       "status": "implemented_requires_full_acceptance",
-      "verification": "代码及隔离验证；真实清空未执行，完整验收待补"
+      "verification": "补回原检测页面类型；七类页面实际隔离Chrome与冻结原版对照、真实界面加入评论页、认证隔离D1独立落库回读通过。已有入口类型、收藏和分组保留；正式外链库没有新增测试页面",
+      "evidence": "original-browser-add-platform-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -1207,7 +1208,9 @@
     {
       "action": "addToUrlList",
       "mapping": "addBrowserPage / 原 URL 置顶与偏好保留",
-      "status": "implemented_requires_full_acceptance"
+      "status": "implemented_requires_full_acceptance",
+      "verification": "七类原页面类型识别及云端保存已补齐；实际界面、独立原版对照、认证D1和原服务更新通过",
+      "evidence": "original-browser-add-platform-2026-10-09.json"
     },
     {
       "action": "advanceSubmission",
@@ -3124,5 +3127,18 @@
     "originalServicesUpdated": true,
     "fullSuitePassed": 975,
     "liveUiEqualsCommittedSource": true
+  },
+  "originalBrowserAddPlatformCheckpoint": {
+    "sourceCommit": "a4cf87db83aa77fa5e69a0ff85af49d68c6656ba",
+    "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e",
+    "originalDetectedPageTypesPreserved": true,
+    "actualUiWordpressAddition": true,
+    "separateDetectionWorldPreservesInteractiveEngine": true,
+    "authenticatedD1Readback": true,
+    "fullSuitePassed": 977,
+    "originalServicesUpdated": true,
+    "productionAddOperations": 0,
+    "migrationComplete": false,
+    "evidence": "original-browser-add-platform-2026-10-09.json"
   }
 }

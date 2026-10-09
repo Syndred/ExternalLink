@@ -1,0 +1,23 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: New browser URL must retain the original detected platform
++ actual - expected
+
++ 'https://add-page.fixture.invalid/0|directory\n' +
+- 'https://add-page.fixture.invalid/0|wp_comment\n' +
+    'https://existing.fixture.invalid/original|article'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-browser-add-platform.mjs:29:137 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'https://add-page.fixture.invalid/0|directory\n' +
+    'https://existing.fixture.invalid/original|article',
+  expected: 'https://add-page.fixture.invalid/0|wp_comment\n' +
+    'https://existing.fixture.invalid/original|article',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

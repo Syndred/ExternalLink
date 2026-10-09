@@ -1,0 +1,67 @@
+✔ browser-page platform metadata cannot inject additional URL-list entries or rewrite a saved original type (3.96ms)
+✖ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (2978.9262ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (31.104ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (24.9722ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (13.2386ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (12.2889ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (20.8632ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (20.2121ms)
+✔ adding an existing original alias from the browser removes its canonical archive flag and retains original URL metadata (11.0256ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (11.9444ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (87.4444ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (3.4718ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (4.4005ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.8516ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (19.3746ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3100.0926
+
+✖ failing tests:
+
+test at tests\executor-original-browser-add-platform.test.mjs:15:1
+✖ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (2978.9262ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'unknown'
+  - 'article'
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-browser-add-platform.mjs:26:156 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown',
+    expected: 'article',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-browser-add-platform.test.mjs:16:203)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

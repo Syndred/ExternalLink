@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
+import {D1Store} from '../../cloud/worker/src/d1-store.mjs';
+import {d1Executor} from '../../cloud/worker/src/d1-executor.mjs';
+function fixture(){
+ const sqlite=new DatabaseSync(':memory:');for(const f of ['0001_d1_storage.sql','0002_d1_executor.sql'])sqlite.exec(readFileSync(new URL('../../cloud/worker/migrations/'+f,import.meta.url),'utf8'));
+ const db={prepare(sql){let args=[];return{bind(...v){args=v;return this;},first:async()=>sqlite.prepare(sql).get(...args)||null,all:async()=>({results:sqlite.prepare(sql).all(...args)}),run:async()=>{const q=sqlite.prepare(sql);return q.columns().length?{results:q.all(...args),meta:{changes:0}}:{results:[],meta:{changes:q.run(...args).changes}};}};},async batch(statements){sqlite.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());sqlite.exec('COMMIT');return result;}catch(e){sqlite.exec('ROLLBACK');throw e;}}};
+ const objects=new Map(),bucket={head:async k=>objects.has(k)?{customMetadata:objects.get(k).meta?.customMetadata}:null,put:async(k,v,meta)=>objects.set(k,{bytes:new Uint8Array(v),meta}),get:async k=>{const v=objects.get(k);return v?{arrayBuffer:async()=>v.bytes.slice().buffer,httpMetadata:v.meta?.httpMetadata,customMetadata:v.meta?.customMetadata}:null;}};
+ const env={LEDGER_DB:db,MEDIA_BUCKET:bucket,APP_ACCESS_TOKEN:'admin-test'};return{sqlite,db,env,store:new D1Store(db,bucket,'default')};
+}
+const f=fixture();try{
+ const call=async(route,token,body)=>{const response=await d1Executor(new Request('https://cloud.fixture.invalid/v2/executor/'+route,{method:'POST',headers:{Authorization:'Bearer '+token},body:JSON.stringify(body)}),f.env,'default');return{status:response.status,data:await response.json()};};
+ const device=await call('devices','admin-test',{});assert.equal(device.status,200);const token=device.data.deviceToken;
+ await f.store.putDocument('urlList','https://existing.fixture.invalid/post|article',0);await f.store.putDocument('submissionRecords',{original:{status:'success',evidence:'Original receipt'}},0);const original=await f.store.document('submissionRecords');const types=['wp_comment','profile','forum','directory','submission','article','unknown'];let revision=1;
+ for(const platformType of types){const operation={type:'pin',id:'type-'+platformType,at:'2026-10-09T05:00:00Z',url:'https://'+platformType.replaceAll('_','-')+'.fixture.invalid/form',platformType},body={operation,revision};assert.equal((await call('library','wrong',body)).status,401);const saved=await call('library',token,body);assert.equal(saved.status,200,JSON.stringify(saved));const current=await f.store.document('urlList');assert.equal(current.revision,++revision);assert.equal(current.data.split('\n')[0],operation.url+'|'+platformType);assert.equal((await call('library',token,body)).status,409);assert.deepEqual(await f.store.document('urlList'),current);}
+ assert.equal((await call('library',token,{operation:{type:'pin',id:'invalid',at:'now',url:'https://bad.fixture.invalid',platformType:'wp_comment\nhttps://bad.fixture.invalid|directory'},revision})).status,400);assert.deepEqual(await f.store.document('submissionRecords'),original);assert.equal(f.sqlite.prepare('SELECT count(*) n FROM executor_runs').get().n,0);console.log(JSON.stringify({ok:true,kind:'authenticated_isolated_D1_browser_page_platforms',platforms:types,independentStoredReadback:true,staleRevisionRejected:true,anonymousRejected:true,invalidPlatformRejected:true,originalReceiptKept:true,productionWrites:0,registeredRuns:0}));
+}finally{f.sqlite.close();}

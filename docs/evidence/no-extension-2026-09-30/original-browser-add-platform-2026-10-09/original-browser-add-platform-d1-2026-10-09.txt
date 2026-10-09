@@ -1,0 +1,1 @@
+{"ok":true,"kind":"authenticated_isolated_D1_browser_page_platforms","platforms":["wp_comment","profile","forum","directory","submission","article","unknown"],"independentStoredReadback":true,"staleRevisionRejected":true,"anonymousRejected":true,"invalidPlatformRejected":true,"originalReceiptKept":true,"productionWrites":0,"registeredRuns":0}

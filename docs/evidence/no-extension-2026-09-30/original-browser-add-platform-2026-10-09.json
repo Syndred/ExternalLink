@@ -1,0 +1,234 @@
+{
+  "kind": "original_browser_add_page_platform_restoration",
+  "sourceCommit": "a4cf87db83aa77fa5e69a0ff85af49d68c6656ba",
+  "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctions": [
+    "extension/content.js detectPage",
+    "extension/background.js addToUrlList"
+  ],
+  "before": "Every new browser URL was saved as directory, discarding detected comment, profile, forum and other types.",
+  "after": "Detect the selected page with the shared engine in a separate isolated world; preserve its page type in the durable pin operation and cloud mutation. Existing URL-list metadata remains unchanged.",
+  "frozenComparisonScope": "The original content detector runs in isolated Chrome, and original addToUrlList runs with controlled storage; compare newly added URL-list bytes for seven page types. Other original annotation-deletion behavior is not claimed by this comparison.",
+  "actualBrowser": {
+    "ok": true,
+    "kind": "actual_browser_add_original_platforms",
+    "actualUiWordpressAddition": true,
+    "results": [
+      {
+        "platform": "wp_comment",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "profile",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "forum",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "directory",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "submission",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "article",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "unknown",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      }
+    ],
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "realSubmissions": 0
+  },
+  "authenticatedD1": {
+    "ok": true,
+    "kind": "authenticated_isolated_D1_browser_page_platforms",
+    "platforms": [
+      "wp_comment",
+      "profile",
+      "forum",
+      "directory",
+      "submission",
+      "article",
+      "unknown"
+    ],
+    "independentStoredReadback": true,
+    "staleRevisionRejected": true,
+    "anonymousRejected": true,
+    "invalidPlatformRejected": true,
+    "originalReceiptKept": true,
+    "productionWrites": 0,
+    "registeredRuns": 0
+  },
+  "fullSuite": {
+    "passed": 977,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 119919.8289
+  },
+  "focusedTestsPassed": 15,
+  "services": {
+    "ok": true,
+    "kind": "final_published_native_service_process_identity",
+    "sourceCommit": "a4cf87db83aa77fa5e69a0ff85af49d68c6656ba",
+    "repositoryHead": "a4cf87db83aa77fa5e69a0ff85af49d68c6656ba",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 24000,
+        "StartedAt": "2026-10-09T13:21:24.8942920+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 18836,
+        "StartedAt": "2026-10-09T13:21:25.9632770+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": true
+  },
+  "releaseAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "workerSmoke": {
+    "ok": true,
+    "anonymousSnapshotRejected": 401,
+    "workerVersion": "ee8c4225-b153-4de4-8f36-ca7a7062382e",
+    "productionWrites": 0
+  },
+  "productionSiteSubmissions": 0,
+  "realModelCalls": 0,
+  "productionBrowserAddOperations": 0,
+  "migrationComplete": false,
+  "remaining": "Remaining original dynamic flows and unresolved favorites, device media and history sources still require complete verification.",
+  "rawOutputs": [
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-before-2026-10-09.txt",
+      "capturedSha256": "30261f77f4ca849a46c2ea2249bdc98f7202eda8ea9b77fa1564bd0e20ae7e37",
+      "gitBlobSha256": "5cff51845947e54ca3340bdcb182f64b1479f7b7a92da50e9759a9af76be992d"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-focused-2026-10-09.txt",
+      "capturedSha256": "3f72a16b8e006311da50f74bdc2731f54562454660a0e2a0d55337151f33eea5",
+      "gitBlobSha256": "85fce0bacd51361cff3a71d134e7622c44bc42361031d7d0065910fe4385b9ff"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-focused-final-2026-10-09.txt",
+      "capturedSha256": "8ee4decd91b33e13350b6aa277763912f3d23bee633c2b541a6eb1521849d979",
+      "gitBlobSha256": "b4126c8f47bfebeeae0a501ad23c9824dd2ed8b7c0f9495ab7a35a33ae8544dd"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-browser-final-2026-10-09.txt",
+      "capturedSha256": "aa83362b6adfca3de0593eeaa5e2472a42dcc514f06e27129469d736917d57f4",
+      "gitBlobSha256": "a1d0b787b4386bd48d55edc63267017d24f89d34ee644138def0983e42e7adbe"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-repository-2026-10-09.txt",
+      "capturedSha256": "832f645da2d77629d0557542ae4f1e97b232ae7327ff9afa0272b74f4086c10c",
+      "gitBlobSha256": "1f04a73209b37bc742caa3f1a91d5924f6a7f98c051a885d33ebc2ef880ce94a"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-d1-2026-10-09.txt",
+      "capturedSha256": "07267cf0f813a5f1d25ba321106aa6bc8fe59c50cbd46353923019358c5a21ec",
+      "gitBlobSha256": "dd69ccc7b9b476de020fdef5f13f06ca70a4a1d8b248684326aa71fe510c14c4"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-release-ready-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-worker-deploy-2026-10-09.txt",
+      "capturedSha256": "b7083d7092f3432d88945938f2c002467faff76128e45b758749f045b41d860e",
+      "gitBlobSha256": "59bc19ce800a62cf0730964226abcc7b18fcf41fcc5d6cd6410da527be12433e"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-worker-smoke-2026-10-09.txt",
+      "capturedSha256": "26c5ce06ae6b0774fee1a09eeb0ec1d7ff4e16012a6dfb6c2381e95901983519",
+      "gitBlobSha256": "26c5ce06ae6b0774fee1a09eeb0ec1d7ff4e16012a6dfb6c2381e95901983519"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-service-process-2026-10-09.txt",
+      "capturedSha256": "dcc5984458f1f1cc03b5320d4987f4679bd695c9bbc2defe88aa3f060668a279",
+      "gitBlobSha256": "60385c7502f61de0e1fea04857455457bb5b65d08259913d4bdc327d80635f9a"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-browser-add-platform-2026-10-09/original-browser-add-platform-d1-2026-10-09.mjs.txt",
+      "capturedSha256": "5b8b1b83df960a6139469b31edb54d1c95e824ca905698a133c24769d9e30686",
+      "gitBlobSha256": "3e4b76d6ce94f6dcee92a6f9dcd0c90152ae1007c4841adec36d1b6f7023ff2d"
+    }
+  ]
+}

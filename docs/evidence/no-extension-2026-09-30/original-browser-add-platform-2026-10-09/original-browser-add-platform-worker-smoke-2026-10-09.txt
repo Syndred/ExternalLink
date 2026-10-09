@@ -1,0 +1,1 @@
+{"ok":true,"anonymousSnapshotRejected":401,"workerVersion":"ee8c4225-b153-4de4-8f36-ca7a7062382e","productionWrites":0}

@@ -1,0 +1,14 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/runtime.mjs:1048
+    if(result.originalTaskSyncFailure){await candidate?.engine.detach();throw Object.assign(Error(result.reason),{originalTaskSyncFailure:true,status:result.status,cloudNetwork:result.cloudNetwork});}
+                                                                                            ^
+
+Error: 原批次参数或预算尚未取得云端事件回读，保持原任务暂停
+    at Runtime.prepareWithAi (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/runtime.mjs:1048:93)
+    at async prepare (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-embedded-native-upload.mjs:45:40)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-embedded-native-upload.mjs:46:3 {
+  originalTaskSyncFailure: true,
+  status: undefined,
+  cloudNetwork: undefined
+}
+
+Node.js v24.21.0

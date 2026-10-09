@@ -1,0 +1,15 @@
+✔ native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots (31.5946ms)
+✔ native upload uses the original embedded logo bytes MIME and checksum offline, and clearing current data does not replace an old task image (6.3803ms)
+✔ an explicit remote-media bridge request fetches its original URL rather than returning the embedded logo (5.1945ms)
+✔ selected cloud logos override old embedded images, disabled media stays disabled, and screenshot alias keeps the original first slot (4.1626ms)
+✔ changed or malformed embedded data cannot replace the frozen image or record a successful materialization (1.2673ms)
+✔ native upload records the transformed file separately from the immutable original bytes and refuses a failed normalizer (4.0284ms)
+✔ the native CLI rechecks the original target after asynchronous image conversion and never uploads into a changed tab (0.2685ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 397.0684

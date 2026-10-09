@@ -1,0 +1,19 @@
+✖ native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots (3.7174ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 345.5881
+
+✖ failing tests:
+
+test at tests\executor-embedded-task-media.test.mjs:21:1
+✖ native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots (3.7174ms)
+  Error: 素材地址不是公开 HTTPS 图片
+      at materializeTaskMedia (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media.mjs:42:153)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-embedded-task-media.test.mjs:25:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

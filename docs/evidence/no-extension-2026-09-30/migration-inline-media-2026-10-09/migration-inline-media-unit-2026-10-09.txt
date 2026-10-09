@@ -1,0 +1,25 @@
+✖ native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots (17.7316ms)
+✔ native upload uses the original embedded logo bytes MIME and checksum offline, and clearing current data does not replace an old task image (7.3186ms)
+✔ an explicit remote-media bridge request fetches its original URL rather than returning the embedded logo (5.4844ms)
+✔ selected cloud logos override old embedded images, disabled media stays disabled, and screenshot alias keeps the original first slot (4.085ms)
+✔ changed or malformed embedded data cannot replace the frozen image or record a successful materialization (1.1986ms)
+✔ native upload records the transformed file separately from the immutable original bytes and refuses a failed normalizer (9.8455ms)
+✔ the native CLI rechecks the original target after asynchronous image conversion and never uploads into a changed tab (0.2794ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 376.1793
+
+✖ failing tests:
+
+test at tests\executor-embedded-task-media.test.mjs:21:1
+✖ native uploads keep each frozen inline cover and screenshot slot, reject replacement data, and respect disabled slots (17.7316ms)
+  Error: 该产品缺少已配置的 screenshot2 素材
+      at materializeTaskMedia (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/task-media.mjs:16:17)
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-embedded-task-media.test.mjs:25:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

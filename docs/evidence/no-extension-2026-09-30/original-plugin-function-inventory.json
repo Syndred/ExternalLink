@@ -3742,5 +3742,41 @@
     "overallMigrationComplete": false,
     "remaining": "other dynamic cross-entry controls and media precedence; bai.tools registry 429 retained; Mac real device acceptance deferred",
     "evidence": "migration-cross-entry-groups-2026-10-09/summary.json"
+  },
+  "originalInlineNativeMediaCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "06ce3f500aacab5429b036dc0b12d3497b0bee43",
+    "pulledLatest": true,
+    "fullPassed": 1065,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "actualNativeUploadCases": 40,
+    "formats": [
+      "image/gif",
+      "image/svg+xml",
+      "image/png"
+    ],
+    "kinds": [
+      "featured",
+      "screenshot1",
+      "screenshot2",
+      "screenshot3",
+      "screenshot4"
+    ],
+    "mainFrameAndIframe": true,
+    "sourceBytesAndTransformedUploadSeparatelyVerified": true,
+    "originalFrozenProfileAndTargetPreserved": true,
+    "otherLogoCannotReplaceRequestedImage": true,
+    "rejectChangedFrozenInlineData": true,
+    "disabledMediaRejected": true,
+    "nativeServicesReloaded": true,
+    "workerChanged": false,
+    "privateOriginalSourcesVerified": 6,
+    "protectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "overallMigrationComplete": false,
+    "evidence": "docs/evidence/no-extension-2026-09-30/migration-inline-media-2026-10-09"
   }
 }

@@ -156,7 +156,7 @@
       "entry": "外链库／查看动态 → 置顶、移除、编辑及删除",
       "operation": "工厂生成图标按钮，分别由调用者绑定操作",
       "persistence": "由调用者决定：队列或时间线文档",
-      "currentSource": "executor/web/application.js::pinLibraryRow/showLibraryEdit/renderTimeline",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary/renderTimeline",
       "tests": [
         "tests/executor-original-pin-control.test.mjs",
         "tests/executor-original-library-actions.test.mjs",
@@ -302,7 +302,7 @@
       "entry": "外链库 → 编辑 → 提交条件",
       "operation": "切换单个或多个站点标记，保存并回读",
       "persistence": "siteAnnotations及deletedSubmissionKeys",
-      "currentSource": "executor/web/application.js::showLibraryEdit",
+      "currentSource": "executor/web/application.js::showLibrary",
       "tests": [
         "tests/executor-original-library-mark-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs"
@@ -321,7 +321,7 @@
       "entry": "外链库 → 编辑 → 收藏与分组",
       "operation": "加入、移出分组，保留禁用／付费／删除条件",
       "persistence": "siteAnnotations.library.groups",
-      "currentSource": "executor/web/application.js::showLibraryEdit",
+      "currentSource": "executor/web/application.js::showLibrary",
       "tests": [
         "tests/executor-original-library-group-panel.test.mjs",
         "tests/executor-original-library-state.test.mjs"
@@ -376,7 +376,7 @@
       "entry": "外链库 → 队列置顶／移出自定义队列",
       "operation": "移动或移除原队列入口，保留站点偏好及回执",
       "persistence": "urlList、deletedSubmissionKeys及关联偏好",
-      "currentSource": "executor/web/application.js::pinLibraryRow/showLibraryEdit",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary",
       "tests": [
         "tests/executor-original-pin-control.test.mjs",
         "tests/executor-original-library-actions.test.mjs"
@@ -395,7 +395,7 @@
       "entry": "外链库 → 队列置顶／移出自定义队列",
       "operation": "移动或移除原队列入口，保留站点偏好及回执",
       "persistence": "urlList、deletedSubmissionKeys及关联偏好",
-      "currentSource": "executor/web/application.js::pinLibraryRow/showLibraryEdit",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary",
       "tests": [
         "tests/executor-original-pin-control.test.mjs",
         "tests/executor-original-library-actions.test.mjs"
@@ -414,8 +414,9 @@
       "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
       "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
       "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
-      "currentSource": "executor/web/application.js::renderLibrary/showLibraryEdit",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
       "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs",
         "tests/executor-original-library-batch-scope.test.mjs"
       ],
@@ -433,8 +434,9 @@
       "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
       "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
       "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
-      "currentSource": "executor/web/application.js::renderLibrary/showLibraryEdit",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
       "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs",
         "tests/executor-original-library-batch-scope.test.mjs"
       ],
@@ -452,8 +454,9 @@
       "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
       "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
       "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
-      "currentSource": "executor/web/application.js::renderLibrary/showLibraryEdit",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
       "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs",
         "tests/executor-original-library-batch-scope.test.mjs"
       ],
@@ -471,8 +474,9 @@
       "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
       "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
       "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
-      "currentSource": "executor/web/application.js::renderLibrary/showLibraryEdit",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
       "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs",
         "tests/executor-original-library-batch-scope.test.mjs"
       ],
@@ -490,8 +494,9 @@
       "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
       "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
       "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
-      "currentSource": "executor/web/application.js::renderLibrary/showLibraryEdit",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
       "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
         "tests/executor-original-library-state.test.mjs",
         "tests/executor-original-library-batch-scope.test.mjs"
       ],

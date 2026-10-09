@@ -4984,5 +4984,16 @@
     "currentNativeBackgroundScenarios": 7,
     "currentNativeBackgroundAllPassed": true,
     "protectedOriginalDataKept": true
+  },
+  "originalLibraryAssignmentUiCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-library-assignment-ui-2026-10-10/summary.json",
+    "completeOriginalPreferenceDocumentsAndQueueCompared": true,
+    "actualUiFiveFixedPreviewScopes": true,
+    "offlineSameMutationAndReplyLossRecovery": true,
+    "focusedPassed": 22,
+    "productionCodeChanged": false,
+    "newFullRunClaimed": false,
+    "overallMigrationComplete": false
   }
 }

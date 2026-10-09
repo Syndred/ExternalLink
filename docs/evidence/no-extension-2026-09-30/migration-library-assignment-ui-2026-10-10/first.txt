@@ -1,0 +1,9 @@
+✔ actual site assignment UI preserves original preference documents and five fixed preview scopes through cancel and disk reply-loss recovery (2438.7417ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2493.2048

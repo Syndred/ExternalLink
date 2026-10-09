@@ -1,0 +1,30 @@
+✔ actual site assignment UI preserves original preference documents and five fixed preview scopes through cancel and disk reply-loss recovery (2407.5077ms)
+✔ the original category and group scope functions are copied exactly from the pre-refactor baseline (1.2149ms)
+✔ category and group queues match original functions including assignment, profile order, quality and compiled defaults (50.2263ms)
+✔ explicit category editing keeps its documented addition while the unmodified original classifier reference remains independent (6.1939ms)
+✔ all original categories and groups compare ordered task identities, quality and range counts without altering source documents (232.0571ms)
+✔ original receipt aliases, explicit group removals, age blacklist and quality gates survive scoped queue selection (44.5646ms)
+✔ scoped preview freezes the original job sequence instead of expanding it into a different Cartesian scope (8.6003ms)
+✔ a complete original scoped range above five hundred keeps all identities with compact profiles and cloud recovery (224.0015ms)
+✔ unknown category, unknown group and empty original queue reject without creating or replacing any batch (2.829ms)
+✔ another pending path on the same host stays excluded with its original reference instead of adopting mismatched recovery identities (4.0416ms)
+✔ same-host duplicate previews keep unique frozen identities and stronger cloud boundaries prevent local pending task reuse (4.7337ms)
+✔ manual multi-mark uses original primary priority and host alias while retaining knowledge, preferences and receipts (3.4333ms)
+✔ original blank mark note retains the old note and original host alias is required before a lost reply is confirmed (0.3448ms)
+✔ favorite and enabled preferences share the original host alias until a route has explicit groups (0.7283ms)
+✔ original group and product preference lists normalize duplicates without discarding other annotation data (0.2915ms)
+✔ archiving and restoring an original mark persist a full offline plan and resume original ids after SQLite reopen and lost replies (120.379ms)
+✔ discarding a concurrent archive mark also cancels its dependent queue exclusion, retaining both records (2.5229ms)
+✔ local persistence failure rolls back the original mark and its queue list before cloud access (1.2738ms)
+✔ UI upload readback confirms committed pin preference mark and setting changes without replay (21.7729ms)
+✔ unmatched committed application edits stay conflicted without overwriting newer cloud data (2.8374ms)
+✔ an unattempted offline edit is never acknowledged merely because remote data matches its intent (0.939ms)
+✔ application acknowledgement rejects a workspace switch during readback and keeps the original edit (2.1276ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2468.1733

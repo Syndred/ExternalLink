@@ -4732,5 +4732,16 @@
     "realModelCalls": 0,
     "productionCodeChanged": false,
     "migrationComplete": false
+  },
+  "originalLibraryPinAndUploadReadbackCheckpoint": {
+    "evidence": "migration-library-pin-2026-10-10/summary.json",
+    "actualUiAliasCount": 10,
+    "focusedPassed": 19,
+    "fullPassed": 1105,
+    "fullFailed": 0,
+    "fullSkipped": 0,
+    "replyLostReadbackFix": true,
+    "originalDataPreserved": true,
+    "overallMigrationComplete": false
   }
 }

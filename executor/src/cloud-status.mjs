@@ -1,4 +1,4 @@
-import {pendingApplication,flushApplicationMutations,applicationMutationKeys,confirmUncertainTimelineEdits} from './application-mutations.mjs';
+import {pendingApplication,flushApplicationMutations,applicationMutationKeys,confirmUncertainApplicationEdits} from './application-mutations.mjs';
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {pendingWorkbench,journalSync,workbenchScope} from './workbench-sync.mjs';
 import {pendingFillLearning,flushFillLearning} from './fill-learning.mjs';
@@ -28,7 +28,7 @@ export function pushLocalChanges(runtime){
   if(runtime.cloudPullOperation)await runtime.cloudPullOperation;
   const status=await cloudStatus(runtime);if(!status.connected)throw Error(status.error||'云端当前不可用，未上传本机修改');
   const scope=workbenchScope(runtime.store.get('pair')),confirmedBefore=new Set(runtime.store.values('appMutation:').filter(item=>item.scope===scope&&item.status==='confirmed').map(item=>item.id)),timelineBefore=pendingWorkbench(runtime).length;
-  const acknowledged=await confirmUncertainTimelineEdits(runtime);if(acknowledged)status.revisions=normalizeCloudRevisions(acknowledged.revisions);
+  const acknowledged=await confirmUncertainApplicationEdits(runtime);if(acknowledged)status.revisions=normalizeCloudRevisions(acknowledged.revisions);
   // A refreshed display cache must not authorize replacing a newer cloud value.
   const pending=pendingApplication(runtime),first=new Map();for(const item of pending)if(!first.has(item.key))first.set(item.key,item);
   const changed=[...first].filter(([key,item])=>item.status!=='conflict'&&(!Number.isInteger(item.baseRevision)||(status.revisions[key]||0)!==item.baseRevision||Object.entries(item.relatedBaseRevisions||{}).some(([related,revision])=>(status.revisions[related]||0)!==revision))).map(([key])=>key);

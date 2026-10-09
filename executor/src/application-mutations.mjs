@@ -4,17 +4,18 @@ import {cacheCloudSnapshot} from './cloud-sync-state.mjs';
 import {applicationSettingKeys} from '../../core/application-preferences.mjs';
 export function pendingApplication(runtime){const scope=workbenchScope(runtime.store.get('pair'));return runtime.store.valuesByInsertion('appMutation:').filter(item=>item.scope===scope&&!['confirmed','discarded'].includes(item.status)).sort((a,b)=>a.at.localeCompare(b.at));}
 export const applicationMutationKeys=item=>item.writeKeys||[item.key];
-export async function confirmUncertainTimelineEdits(runtime){
+export async function confirmUncertainApplicationEdits(runtime,{timelineOnly=false}={}){
  const scope=workbenchScope(runtime.store.get('pair')),pending=pendingApplication(runtime);
- if(!pending.some(item=>item.operation.type==='timeline'&&item.status==='pending'&&item.writeAttemptedAt&&item.error))return null;
+ if(!pending.some(item=>(!timelineOnly||item.operation.type==='timeline')&&item.status==='pending'&&item.writeAttemptedAt&&item.error))return null;
  const snapshot=await runtime.cloud.request('snapshot');if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，原动态保留');
- for(const item of pending)if(item.operation.type==='timeline'&&item.status==='pending'&&item.writeAttemptedAt&&item.error&&libraryMutationSatisfied(snapshot.documents,item.operation)){
+ for(const item of pending)if((!timelineOnly||item.operation.type==='timeline')&&item.status==='pending'&&item.writeAttemptedAt&&item.error&&libraryMutationSatisfied(snapshot.documents,item.operation)){
   item.status='confirmed';item.confirmedAt=new Date().toISOString();delete item.error;runtime.store.set('appMutation:'+item.id,item);
   const next=pending.slice(pending.indexOf(item)+1).find(other=>other.key===item.key&&!['confirmed','discarded','conflict'].includes(other.status));
   if(next&&isDeepStrictEqual(next.baseData,snapshot.documents[item.key])){next.baseRevision=snapshot.revisions[item.key]||0;for(const key of Object.keys(next.relatedBaseRevisions||{}))if(isDeepStrictEqual(next.relatedBaseData?.[key],snapshot.documents[key]))next.relatedBaseRevisions[key]=snapshot.revisions[key]||0;runtime.store.set('appMutation:'+next.id,next);}
  }
  cacheCloudSnapshot(runtime,snapshot);return snapshot;
 }
+export function confirmUncertainTimelineEdits(runtime){return confirmUncertainApplicationEdits(runtime,{timelineOnly:true});}
 function mutationIntent(snapshot,operation,change,hasPrior,knownRemote){
  const localOnly=!change.updates&&operation.type!=='recover_local'&&!hasPrior&&!snapshot.revisions[change.key]&&Object.hasOwn(snapshot.documents,change.key)&&knownRemote&&!Object.hasOwn(knownRemote.documents,change.key);
  return localOnly?{operation:{type:'recover_local',key:change.key,data:change.data,id:operation.id,at:operation.at},originalOperation:operation,localOnlyBaseData:snapshot.documents[change.key],baseData:undefined,baseRevision:0}:{operation,baseData:snapshot.documents[change.key],baseRevision:snapshot.revisions[change.key]||0,...(change.revisionKeys?{writeKeys:Object.keys(change.updates),relatedBaseData:Object.fromEntries(change.revisionKeys.filter(key=>key!==change.key).map(key=>[key,snapshot.documents[key]])),relatedBaseRevisions:Object.fromEntries(change.revisionKeys.filter(key=>key!==change.key).map(key=>[key,snapshot.revisions[key]||0]))}:{})};

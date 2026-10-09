@@ -1,0 +1,27 @@
+✔ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (387.739ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (24.1277ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (28.0283ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (15.3989ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (10.5215ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (15.4253ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (27.9863ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (54.0561ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (7.27ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (82.7535ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (1.9146ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (2.5135ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (2.0937ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (13.1823ms)
+✔ actual original pin controls preserve ten alias families and recover lost replies through UI upload after disk reopen (2681.3912ms)
+✔ UI upload readback confirms committed pin preference mark and setting changes without replay (18.8609ms)
+✔ unmatched committed application edits stay conflicted without overwriting newer cloud data (2.5632ms)
+✔ an unattempted offline edit is never acknowledged merely because remote data matches its intent (0.9013ms)
+✔ application acknowledgement rejects a workspace switch during readback and keeps the original edit (2.8107ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2759.3742

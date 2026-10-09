@@ -399,7 +399,7 @@
         },
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -438,7 +438,7 @@
         },
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -477,7 +477,7 @@
         },
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -722,7 +722,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -749,6 +749,10 @@
         {
           "path": "tests/executor-original-library-state.test.mjs",
           "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-pin.test.mjs",
+          "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",
@@ -765,7 +769,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -792,6 +796,10 @@
         {
           "path": "tests/executor-original-library-state.test.mjs",
           "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-pin.test.mjs",
+          "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",
@@ -882,7 +890,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -909,6 +917,10 @@
         {
           "path": "tests/executor-original-library-state.test.mjs",
           "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-pin.test.mjs",
+          "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",
@@ -956,7 +968,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -983,6 +995,10 @@
         {
           "path": "tests/executor-original-library-state.test.mjs",
           "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-pin.test.mjs",
+          "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",
@@ -1026,7 +1042,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1065,7 +1081,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1104,7 +1120,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1143,7 +1159,7 @@
       "currentSourceFiles": [
         {
           "path": "executor/src/application-mutations.mjs",
-          "sha256": "516a63cd4a800faa185d472dc5921f8f395754df7e21ae123e71871f9d687c56"
+          "sha256": "f3bf59d65fc011b50b98567108b385c0fde7193688a6bf9ac0896f9a187157a9"
         },
         {
           "path": "core/application-mutation.mjs",
@@ -1170,6 +1186,10 @@
         {
           "path": "tests/executor-original-library-state.test.mjs",
           "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-pin.test.mjs",
+          "sha256": "b9dfbf11edf2f1ec8f4d6767c37a464005883b83fda20906fccac0ac5b2ef177"
         }
       ],
       "requiredEvidenceReview": "逐动作核对原标记、多别名、增删、排除键、分组与持久化，不混同清除与移出队列。",

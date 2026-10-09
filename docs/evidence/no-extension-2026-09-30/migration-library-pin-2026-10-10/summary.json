@@ -1,0 +1,21 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "actualUiAliasCount": 10,
+  "completeOriginalPinDocumentsCompared": true,
+  "actualTableAndEditorPinClicked": true,
+  "offlineMutationIdKeptAfterDiskReopen": true,
+  "actualUiUploadAfterCommittedReplyLoss": true,
+  "pinWritesAfterReplyLoss": 1,
+  "repeatPinWrites": 0,
+  "exactIntentReadbackRequired": true,
+  "unattemptedAndDifferentIntentNotConfirmed": true,
+  "workspaceChangeRejected": true,
+  "focusedPassed": 19,
+  "fullPassed": 1105,
+  "fullFailed": 0,
+  "fullSkipped": 0,
+  "fullDurationMs": 479935.5425,
+  "productionWorkerChanged": false,
+  "originalBrowserChanged": false,
+  "overallMigrationComplete": false
+}

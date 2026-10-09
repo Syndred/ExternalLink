@@ -4,6 +4,7 @@ import {queue,plain,selectScope,priorProductSuccess,profiles,scheduler} from './
 import {attachEngine} from './engine.mjs';
 import {saveCommentVersion,copyCommentDraft} from './comment-history.mjs';
 import {originalCommentRequest} from './comment-cache.mjs';
+import {originalPageCommentDrafts} from './original-comment-page.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {freezeBatchConfig,assertBatchPolicy,initializeBatchPolicy,refreshBatchManualCapacity,releaseBatchTask,noteBatchTaskResult,batchConfig,pauseBatchPolicy} from './workbench-batch-policy.mjs';
 import {originalUnattended} from '../../core/original-batch-config.mjs';
@@ -148,15 +149,16 @@ export async function applicationAi(runtime,action,input){
  const filters=globalThis.ExtLinkTargetFilters.normalize(snapshot.documents.targetFilters);if(!filters.aiComments)throw Error('AI 评论生成已在设置中关闭');
  const url=new URL(input.pageUrl);if(!/^https?:$/.test(url.protocol))throw Error('仅支持普通评论页面');
  const tone=input.tone||profile.blogRules?.tone||'helpful',allowLink=input.allowLink!==false&&filters.aiCommentAllowLink,config=plain(profiles.buildAgentConfigFromProfile(profile,snapshot.documents));config.blogRules={...config.blogRules,tone};
- const result=await originalCommentRequest(runtime,{pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),config,language:input.language||profile.language||'auto',count:Math.max(1,Math.min(Number(input.count)||3,5)),maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink,tone,refresh:input.refresh},payload=>runtime.cloud.request('ai/comment',payload));assertScope();
+ const requestInput={pageUrl:url.href,pageTitle:String(input.pageTitle||'').slice(0,600),pageText:String(input.pageText||'').slice(0,30000),...(input.targetId?{targetId:input.targetId}:{}),config,language:input.language||profile.language||'auto',count:Math.max(1,Math.min(Number(input.count)||3,5)),maxChars:Math.min(2000,Math.max(80,Number(input.maxChars)||700)),allowLink,tone,refresh:input.refresh},generate=payload=>originalCommentRequest(runtime,payload,data=>runtime.cloud.request('ai/comment',data));const pageResult=await originalPageCommentDrafts(runtime,requestInput,generate,assertScope);try{const result=pageResult?.result??await generate(requestInput);if(pageResult){await pageResult.assertCurrent();pageResult.assertOwner();}assertScope();
  const drafts=(Array.isArray(result?.drafts)?result.drafts:[]).map(copyCommentDraft).filter(d=>d?.text.trim()).slice(0,5);if(result?.ok===false||result?.status&&result.status!=='ok'||!drafts.length)throw Error(result?.error||result?.reason||'AI 评论生成失败，请确认文章正文足够长');
- const normalized={...result,drafts,allowLink,tone};saveCommentVersion(runtime,{...input,tone,allowLink,drafts});runtime.store.set('commentDraft:'+input.profileId+'::'+queue.normalizeDestinationKey(url.href),{...normalized,scope,profileId:input.profileId,pageUrl:url.href,at:new Date().toISOString()});return normalized;
+ const normalized={...result,drafts,allowLink,tone};saveCommentVersion(runtime,{...input,tone,allowLink,drafts});runtime.store.set('commentDraft:'+input.profileId+'::'+queue.normalizeDestinationKey(url.href),{...normalized,scope,profileId:input.profileId,pageUrl:url.href,at:new Date().toISOString()});return normalized;}finally{await pageResult?.release();}
 }
 
 export async function fillCommentDraft(runtime,input){
  const task=runtime.store.get('task:'+input.taskId);
  if(!task||task.attemptBoundary||task.receipt||!['pending','needs_manual'].includes(task.status))throw Error('只能填写尚未投稿的原任务评论');
  if(input.profileId!==undefined&&input.profileId!==task.profileId)throw Error('评论产品与原任务不一致');
+ if(input.targetId!==undefined&&input.targetId!==task.targetId)throw Error('评论网页与原任务页面不一致');
  if(runtime.job||runtime.store.get('paused')!==true)throw Error('请先暂停并等待当前动作结束');
  if(typeof input.text!=='string'||!input.text.trim())throw Error('请输入评论草稿');
  if(!runtime.context)await runtime.connect();const page=await runtime.findPage(task);
@@ -168,8 +170,8 @@ export async function fillCommentDraft(runtime,input){
  const config={...plain(profiles.buildAgentConfigFromProfile(profile,{email:preferences.cfgEmail,username:preferences.cfgName})),commentTemplate:input.text,applyCommentTemplate:true,aiComments:false,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
  for(const frame of page.frames()){
   let engine;try{engine=await attachEngine(runtime.context,frame,msg=>runtime.bridge(task,msg));const detection=await engine.call({action:'detectPage',config});if(!detection.commentFound)continue;
-   const pageSnapshot=await engine.call({action:'getPageSnapshot'}),prescan=await engine.call({action:'prescanPage'});assertArticle();assertOriginalCommentLength(input.text,pageSnapshot,prescan);await runtime.lease(task,{online:true});assertArticle();const fill=await engine.call({action:'executeSubmit',config,platformType:detection.platform==='wp_comment'?'wp_comment':'article'});if(fill?.ok===false||fill?.error)throw Error(fill.error||fill.reason||'评论填写未完成');const actual=await engine.call({action:'getFilledFieldsReport'});assertArticle();
-   if(!JSON.stringify(actual).includes(JSON.stringify(input.text).slice(1,-1)))throw Error('评论填写未通过回读核验');
+   const platformType=detection.platform==='wp_comment'?'wp_comment':'article',pageSnapshot=await engine.call({action:'getCommentFieldReport',platformType});if(pageSnapshot?.fields?.length!==1)throw Error('原页面尚未检测到真实评论字段');const prescan={};assertArticle();assertOriginalCommentLength(input.text,pageSnapshot,prescan);await runtime.lease(task,{online:true});assertArticle();const fill=await engine.call({action:'executeSubmit',config,platformType:detection.platform==='wp_comment'?'wp_comment':'article'});if(fill?.ok===false||fill?.error)throw Error(fill.error||fill.reason||'评论填写未完成');const actual=await engine.call({action:'getCommentFieldReport',platformType});assertArticle();
+   if(actual?.fields?.length!==1||actual.fields[0].value!==input.text)throw Error('评论填写未通过回读核验');
    runtime.update(task,{selectedComment:input.text,actualPreparation:actual,commentPreparation:{at:new Date().toISOString(),fill,actual},preparedAt:new Date().toISOString()},'comment_draft_filled');await runtime.synchronize();return{ok:true,filled:true,submitted:false};
   }finally{await engine?.detach();}
  }

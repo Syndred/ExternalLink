@@ -335,6 +335,10 @@
       sendResponse(collectFormValidationState());
       return true;
     }
+    if (msg.action === "getCommentFieldReport") {
+      sendResponse(collectCommentFieldReport(msg.platformType));
+      return true;
+    }
     if (msg.action === "getFilledFieldsReport") {
       sendResponse(collectFilledFieldsReport());
       return true;
@@ -6658,6 +6662,16 @@
     if (element.tagName.toLowerCase() === "select") return element.value || "";
     if (isContentEditableField(element)) return element.innerText || element.textContent || "";
     return element.value || "";
+  }
+
+  function collectCommentFieldReport(platform) {
+    const wp = platform === "wp_comment";
+    const form = wp ? findVisibleWpCommentForm() : findVisibleArticleCommentForm();
+    const field = form?.querySelector?.(wp
+      ? '#comment, textarea[name="comment"], textarea.comment, textarea[aria-label*="Comment"], textarea[placeholder*="comment" i]'
+      : 'textarea[name="comment"], textarea.comment, textarea[name="body"], textarea[placeholder*="comment" i]');
+    if (!field || !isVisibleHumanGate(field)) return { fields: [] };
+    return { fields: [{ id: field.id || "", name: field.name || "", type: "textarea", label: "comment", value: getElementFillValue(field), constraints: getFieldConstraints(field) }] };
   }
 
   function collectFilledFieldsReport() {

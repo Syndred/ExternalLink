@@ -49,7 +49,7 @@ export function libraryMutation(documents,operation,options={}){
  if(operation.type==='pin'){
   const platform=operation.platformType??'directory';if(typeof platform!=='string'||!/^\w{1,64}$/.test(platform))fail('网页类型无效');
   const key=catalogKeyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return catalogKeyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return catalogKeyOf(s.split('|')[0])!==key;}catch{return true;}});
-  return{key:'urlList',data:[matching||new URL(operation.url).href+'|'+platform,...rest].join('\n')};
+  return{key:'urlList',data:[matching||String(operation.url).trim()+'|'+platform,...rest].join('\n')};
  }
  if(operation.type==='clear_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
  if(operation.type==='set_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:[...new Set([...(documents.deletedSubmissionKeys||[]),key])]};}

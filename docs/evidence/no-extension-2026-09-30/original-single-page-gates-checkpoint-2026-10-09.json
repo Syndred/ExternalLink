@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-09",
+  "type": "progress_only",
+  "baseCommit": "34f38e149a7879de67db42082e88e66a7a80d7a4",
+  "pullResult": "Already up to date.",
+  "migrationComplete": false,
+  "publishedRuntimeCommit": "d349cd030c85d4c3f52cc9eebd83f8255adaf6e9",
+  "lastPublishedFullSuite": {
+    "passed": 1027,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "original-single-page-receipt-2026-10-09.json",
+    "rerunThisCheckpoint": false
+  },
+  "originalReference": {
+    "testsPassed": 3,
+    "gateCombinations": 9,
+    "initialGate": "advance:false; retain current page",
+    "postStageOrValidationRefillGate": "retain page and advance when original context allows"
+  },
+  "latestBrowserProbe": {
+    "passed": 0,
+    "failed": 1,
+    "observedSubmitResult": {
+      "stageAdvanced": true,
+      "submitted": false,
+      "matched": false,
+      "clickedSubmit": true
+    },
+    "observedTaskStatus": "submitted_unconfirmed",
+    "observedAttentionType": "unknown_receipt",
+    "assertionMistake": "Fixture expected validationFailed:true, but actual result was stageAdvanced:true. Correct the assertion before claiming a passing regression.",
+    "runtimeFixPublished": false
+  },
+  "pendingWork": [
+    "Correct stage versus validation probe expectations and verify both original bounded refill paths.",
+    "Verify exact post-refill gate continuation; initial gates must retain the current page.",
+    "Continue complete original feature comparison and unresolved historical favorites and other-device media sources."
+  ],
+  "unpublishedTestFiles": [
+    {
+      "path": "tests/executor-batch-cloud-recovery.test.mjs",
+      "sha256": "7c029260556a583cc5d326e4189ca222ccbb78b9419432167d5db58e7b8a41c7",
+      "published": false
+    },
+    {
+      "path": "tests/helpers/original-single-page-receipt.mjs",
+      "sha256": "42fe737968354cd88aa095bd8d6cad1339dae9f4a7ad7e1057f3483eb00cb5e6",
+      "published": false
+    },
+    {
+      "path": "tests/executor-original-single-page-gates.test.mjs",
+      "sha256": "f8ea0a07889332a522622d976f33052574e2c560de8339f681b308ea96ea20f9",
+      "published": false
+    },
+    {
+      "path": "tests/helpers/original-single-page-gates.mjs",
+      "sha256": "e6a69b028fcd7f99d196068b8af261d6269db6e48fe9b11cb3ee61cd15245ec9",
+      "published": false
+    }
+  ],
+  "logs": [
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-single-page-gates-checkpoint-2026-10-09/original-single-page-gates-reference-2026-10-09.txt",
+      "sha256": "44ecabfe7e38122c8974bc83d3b98dd55a26b4e3f58f96ef392f8810f50b699f"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-single-page-gates-checkpoint-2026-10-09/original-single-page-validation-before-2026-10-09.txt",
+      "sha256": "c52e22aac620f46cf0f450427825a049bea9136c78cb8e415435542e0c75d264"
+    }
+  ],
+  "thisCheckpoint": {
+    "productionReadback": false,
+    "serviceRestart": false,
+    "workerDeploy": false,
+    "browserOperation": false,
+    "realExternalSubmission": false,
+    "realModelCall": false
+  }
+}

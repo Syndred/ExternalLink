@@ -3424,9 +3424,13 @@
     "migrationComplete": false
   },
   "originalSinglePageGateQueueAudit": {
-    "scope": "single-page form gates keeping the current owned page while opening the next station",
-    "original": "handleFillResult needs_manual/captcha/blocked branch calls cycleSubmission(1, keepCurrent:true) when advance is not false and context owns the current page",
-    "status": "requires_actual_runtime_verification",
-    "runtimeDefectProven": false
+    "scope": "initial single-page gates versus gates encountered during post-stage or validation refill",
+    "original": "Initial runSidepanelFill gate returns advance:false. Gates returned by submitUntilAccepted after stage or validation refill preserve the original conditional next-station behavior.",
+    "status": "reference_verified_native_stage_refill_gap_observed_probe_assertion_pending",
+    "runtimeDefectProven": false,
+    "runtimeObservation": "Actual isolated browser returned stageAdvanced:true but saved submitted_unconfirmed; the current probe incorrectly expected validationFailed:true and needs correction before final regression proof.",
+    "referenceGateCombinations": 9,
+    "checkpointEvidence": "original-single-page-gates-checkpoint-2026-10-09.json",
+    "migrationComplete": false
   }
 }

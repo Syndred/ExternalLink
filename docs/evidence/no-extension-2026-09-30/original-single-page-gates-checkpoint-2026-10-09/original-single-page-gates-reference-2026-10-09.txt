@@ -1,0 +1,11 @@
+✔ original single-page initial gates retain the page while post-stage and retry gates preserve their distinct next-station behavior (21.109ms)
+✔ frozen single-page receipt notification requires original ownership, selection, active page and successful close before acknowledgement (8.0998ms)
+✔ single-page receipt continuation rejects changed identity, receipt, fields, ownership, workspace and selection after awaited page or cloud reads (10.1961ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 334.2937

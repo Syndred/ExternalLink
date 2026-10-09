@@ -16,3 +16,12 @@ export function originalCommentSelection(drafts,edits){
  for(const [index,text]of Object.entries(edits)){context.selectCommentDraft(Number(index));nodes.spCommentText.value=text;context.handleCommentTextInput();}
  return JSON.parse(JSON.stringify({selected:context.selectedCommentDraft,text:nodes.spCommentText.value,drafts:context.commentDrafts,history:context.commentHistory}));
 }
+
+export function originalCommentHistoryRules(drafts,steps,{restoreVersions,restoreIndex}={}){
+ const nodes={spCommentText:{value:drafts[0]?.text||''},commentTone:{value:'professional'}},context=vm.createContext({Date,Math,$:id=>nodes[id],commentDrafts:structuredClone(drafts),selectedCommentDraft:0,commentHistory:[],updateCommentCharCount(){},renderCommentDrafts(){},renderCommentHistory(){},showToast(){}});
+ vm.runInContext(functions,context);
+ for(const step of steps){context.selectCommentDraft(step.index);if(typeof step.text==='string'){nodes.spCommentText.value=step.text;context.handleCommentTextInput();}}
+ const current=context.makeCommentSnapshot('恢复前');
+ if(restoreVersions){context.commentHistory=structuredClone(restoreVersions);context.restoreCommentHistory(restoreIndex);}
+ return JSON.parse(JSON.stringify({current,selected:context.selectedCommentDraft,text:nodes.spCommentText.value,drafts:context.commentDrafts,history:context.commentHistory}));
+}

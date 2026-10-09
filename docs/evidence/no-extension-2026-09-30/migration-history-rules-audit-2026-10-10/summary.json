@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-10",
+  "auditSourceCommit": "4bd58b92e457744c3f1e65bd8daea9a8d929c3af",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalCompleteFunctionHashes": {
+    "captureCommentState": "a50095edf44449aa055ada3f3492f1ba48a7d9d2f6fc0bbed76b27ddf8c739d6",
+    "restoreCommentHistory": "c4345cc318c1f8073d9f31fcaa99c9b131bebbceef206ff0b6e1655329a3ee72",
+    "commentSnapshotKey": "2b6f2adeee69e536b3f2d9b70db06b7bc9026d09a010fd104a3cd3ab66916b5d",
+    "makeCommentSnapshot": "0b483118c4a4f3b246d0fbf709472bc5caa08b0c3540f33cbe953cb6eb951ea2",
+    "handleCommentTextInput": "5de6161b2a733dc686e3f08b2fea25d5bd75ecdd0469dd492d5be1984bffd222",
+    "selectCommentDraft": "90c078f7319757f7e50c3c79a722e37fcb07c00fbec3c8838921617cc8d2fccb",
+    "copyCommentDraft": "3b5ec5f256e29f57a04448a73768afe08e804d809c55a692ca3bae9eb5dc59a6"
+  },
+  "proof": {
+    "kind": "actual_ui_original_history_rule_differential_audit",
+    "status": "migration_incomplete",
+    "tenActualUiCandidateSwitches": true,
+    "newestEightSnapshotsExactlyMatch": true,
+    "originalCompleteFunctionsExecuted": true,
+    "actualSpecificRowRestoredTextMatches": true,
+    "currentEditsPreservedBeforeRestore": true,
+    "sqliteReopenKeepsObservedHistory": true,
+    "gaps": [
+      {
+        "rule": "eight_snapshot_limit",
+        "original": 8,
+        "current": 9
+      },
+      {
+        "rule": "remove_selected_snapshot_when_current_content_differs",
+        "originalSelectedIdKept": false,
+        "currentSelectedIdKept": true
+      },
+      {
+        "rule": "same_content_restore_does_not_change_history",
+        "originalHistoryChanged": false,
+        "currentHistoryChanged": true
+      }
+    ],
+    "overallMigrationComplete": false,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "productionReadback": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "productionCodeChanged": false,
+  "nativeServicesRestarted": false,
+  "workerRedeployed": false,
+  "acceptancePassed": false,
+  "overallMigrationComplete": false,
+  "nextRequiredChange": "将当前编辑与原八版快照区分；恢复使用原比较键，内容不同时保留恢复前输入并移除被选快照，相同内容不改变历史；保留既有九版存储的可恢复副本，再对照实际UI和SQLite验收"
+}

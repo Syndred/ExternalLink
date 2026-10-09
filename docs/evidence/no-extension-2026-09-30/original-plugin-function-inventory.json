@@ -5210,9 +5210,36 @@
     "realSubmissions": 0,
     "originalChromeUntouched": true,
     "remaining": [
-      "原 restoreCommentHistory 恢复时移除被选快照并保留八版的持久化规则，尚需独立逐项对照"
+      "实际UI及SQLite已确认：八版上限、恢复时移除选中快照、同内容恢复不改历史均存在差异"
     ],
     "overallMigrationComplete": false,
-    "evidence": "migration-comment-history-panel-2026-10-10/summary.json"
+    "evidence": "migration-comment-history-panel-2026-10-10/summary.json",
+    "remainingVerifiedBy": "originalCommentHistoryRulesDifferentialAudit"
+  },
+  "originalCommentHistoryRulesDifferentialAudit": {
+    "date": "2026-10-10",
+    "status": "confirmed_three_unresolved_native_persistence_differences",
+    "evidence": "migration-history-rules-audit-2026-10-10/summary.json",
+    "gaps": [
+      {
+        "rule": "eight_snapshot_limit",
+        "original": 8,
+        "current": 9
+      },
+      {
+        "rule": "remove_selected_snapshot_when_current_content_differs",
+        "originalSelectedIdKept": false,
+        "currentSelectedIdKept": true
+      },
+      {
+        "rule": "same_content_restore_does_not_change_history",
+        "originalHistoryChanged": false,
+        "currentHistoryChanged": true
+      }
+    ],
+    "actualUiTenSwitchesAndTwoSpecificRestores": true,
+    "sqliteObservedDifferencesReopened": true,
+    "acceptancePassed": false,
+    "overallMigrationComplete": false
   }
 }

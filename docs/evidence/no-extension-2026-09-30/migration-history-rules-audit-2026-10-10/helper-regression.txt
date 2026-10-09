@@ -1,0 +1,14 @@
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1421.9526ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1338.9568ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.5937ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1295.242ms)
+✔ actual comment candidate selection preserves every original before-switch snapshot and restores selected index after SQLite reopen (1713.7911ms)
+✔ empty selected comment switches without creating the snapshot that the original handler skips (1803.8087ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4136.3064

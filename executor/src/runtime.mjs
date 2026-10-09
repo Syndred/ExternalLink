@@ -73,6 +73,7 @@ import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
 import {checkpointTaskUpdate,recoverCloudBatchRecords,parkRestoredBatchTask,flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {requestExecutionPause,finalizeUserPause,resumeExecution,persistBatchLifecycle} from './execution-lifecycle.mjs';
 import {commentHistory,saveCommentVersion} from './comment-history.mjs';
+import {originalCommentState,captureOriginalCommentState,restoreOriginalCommentState} from './original-comment-state.mjs';
 import {quickOpenLibrary} from './quick-open.mjs';
 import {mediaLibrary} from './media-library.mjs';
 import {cloudStatus,pushLocalChanges} from './cloud-status.mjs';
@@ -1432,6 +1433,9 @@ export class Runtime {
     if(action==='previewCloudPull')return previewCloudPull(this,input);
     if(action==='commitCloudPull')return commitCloudPull(this,input);
     if(action==='mediaLibrary')return mediaLibrary(this,input);
+    if(action==='originalCommentState')return originalCommentState(this,input);
+    if(action==='captureOriginalCommentState')return captureOriginalCommentState(this,input);
+    if(action==='restoreOriginalCommentState')return restoreOriginalCommentState(this,input);
     if(action==='commentHistory')return commentHistory(this,input);
     if(action==='saveCommentVersion')return saveCommentVersion(this,input);
     if(action==='quickOpenLibrary')return quickOpenLibrary(this,input);

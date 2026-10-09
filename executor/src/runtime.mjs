@@ -1430,7 +1430,7 @@ export class Runtime {
     if(action==='cloudSyncPull')return pullCloudState(this,input);
     if(action==='previewCloudPull')return previewCloudPull(this,input);
     if(action==='commitCloudPull')return commitCloudPull(this,input);
-    if(action==='mediaLibrary')return mediaLibrary(this);
+    if(action==='mediaLibrary')return mediaLibrary(this,input);
     if(action==='commentHistory')return commentHistory(this,input);
     if(action==='saveCommentVersion')return saveCommentVersion(this,input);
     if(action==='quickOpenLibrary')return quickOpenLibrary(this,input);

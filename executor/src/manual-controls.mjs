@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {priorProductSuccess,plain} from './shared.mjs';
 import {recoveryCheckpoint} from './tab-cleanup.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
@@ -11,28 +12,58 @@ import {retainOriginalManualSkipPage} from './original-agent-unavailable.mjs';
 const at=()=>new Date().toISOString();
 export function manualTargetIds(runtime,scope,excluded){return new Set(runtime.store.values('task:').filter(other=>{const source=other.workbenchBatchId&&runtime.store.get('workbenchBatch:'+other.workbenchBatchId);return other.id!==excluded&&source&&(!source.scope||source.scope===scope)&&other.targetId&&!other.tabClosedAt&&!other.receipt&&['needs_manual','submitted_unconfirmed'].includes(other.status);}).map(other=>other.targetId));}
 function selectedTask(runtime,input){const task=runtime.store.get('task:'+input.taskId);if(!task?.runId||input.expectedRunId!==task.runId)throw Error('原任务或批次已变化，请刷新后重试');if(input.expectedTargetId!==undefined&&input.expectedTargetId!==task.targetId)throw Error('原标签页已变化，请刷新后重试');if(['supervisor','ai'].includes(task.controller))throw Error('请先等待原控制器交回任务');return task;}
-function finishSkippedScope(runtime,task){
- const time=at(),fixed=runtime.store.get('acceptanceBatch'),execution=fixed&&runtime.store.get('acceptanceExecution:'+fixed.id),frozen=fixed&&runtime.store.get('acceptance:'+fixed.id);
- if(fixed&&frozen){const index=frozen.combinations.findIndex(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id);if(index>=0){const identity=frozen.combinations[index].identity;fixed.attempts||={};fixed.attempts[identity]={...fixed.attempts[identity],taskId:task.id,status:task.receipt?'received':task.attemptBoundary?'verification_only':'manual_skip',reason:task.reason,completedAt:time,manualSkipped:true};if(index===fixed.cursor)fixed.cursor++;runtime.store.set('acceptanceBatch',fixed);}}
+function skippedScopeUpdates(runtime,task){
+ const updates={};const time=at(),fixed=runtime.store.get('acceptanceBatch'),execution=fixed&&runtime.store.get('acceptanceExecution:'+fixed.id),frozen=fixed&&runtime.store.get('acceptance:'+fixed.id);
+ if(fixed&&frozen){const index=frozen.combinations.findIndex(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id);if(index>=0){const identity=frozen.combinations[index].identity;fixed.attempts||={};fixed.attempts[identity]={...fixed.attempts[identity],taskId:task.id,status:task.receipt?'received':task.attemptBoundary?'verification_only':'manual_skip',reason:task.reason,completedAt:time,manualSkipped:true};if(index===fixed.cursor)fixed.cursor++;updates.acceptanceBatch=fixed;}}
  const activeId=runtime.store.get('activeWorkbenchBatch'),batch=activeId&&runtime.store.get('workbenchBatch:'+activeId);
- if(batch){const index=batch.items.findIndex(i=>i.taskId===task.id);if(index>=0){const item=batch.items[index];item.status='complete';item.result=task.receipt?'received':task.attemptBoundary?'sent_unconfirmed':'manual_skip';item.manualSkipped=true;item.reason=task.reason;item.completedAt=time;if(index===batch.cursor)batch.cursor++;runtime.store.set('workbenchBatch:'+batch.id,batch);}}
+ if(batch){const index=batch.items.findIndex(i=>i.taskId===task.id);if(index>=0){const item=batch.items[index];item.status='complete';item.result=task.receipt?'received':task.attemptBoundary?'sent_unconfirmed':'manual_skip';item.manualSkipped=true;item.reason=task.reason;item.completedAt=time;if(index===batch.cursor)batch.cursor++;updates['workbenchBatch:'+batch.id]=batch;}}
+ return updates;
 }
 export async function manualSkip(runtime,input,guards={}){
  guards.assertContext?.();await guards.assertPageDocument?.();
  const selected=selectedTask(runtime,input);if(runtime.store.get('executionStopped'))throw Error('本次执行已经停止，请明确重新开始原范围');const workbenchId=runtime.store.get('activeWorkbenchBatch'),workbench=workbenchId&&runtime.store.get('workbenchBatch:'+workbenchId);if(workbench?.items.some(item=>item.taskId===selected.id))return skipWorkbenchTask(runtime,input,workbench,guards);
- const running=runtime.store.get('paused')===false,active=runtime.store.get('singleTaskId')||runtime.activeTaskId,originalPlan=runtime.store.get('libraryPlan');
+ const scope=workbenchScope(runtime.store.get('pair')),key='manualSkipPending:'+selected.id,old=runtime.store.get(key),running=runtime.store.get('paused')===false,active=runtime.store.get('singleTaskId')||runtime.activeTaskId,originalPlan=runtime.store.get('libraryPlan');
  if(runtime.job&&active!==input.taskId)throw Error('正在处理其他任务，请先暂停');
+ if(old&&(old.scope!==scope||old.runId!==selected.runId||old.batchId))throw Error('原跳过请求属于其他范围');
+ let request=old||{id:selected.manualDisposition?.requestId||randomUUID(),scope,taskId:selected.id,runId:selected.runId,at:selected.manualDisposition?.at||at(),stage:selected.manualDisposition?.action==='skip_current_run'?'await_sync':'requested',resume:running,activeTaskId:active,libraryPlanId:originalPlan?.id||null,acceptanceId:selected.acceptanceId||null};
+ runtime.store.set(key,request);
  if(runtime.store.get('paused')!==true||runtime.job)await runtime.control('pause',{reason:'用户人工跳过当前任务'});
  if(runtime.job)await runtime.job;
- const task=selectedTask(runtime,input);await runtime.lease(task,{online:true});await guards.assertPageDocument?.();guards.assertContext?.();
- runtime.update(task,{...(!task.attemptBoundary&&!task.receipt?{status:'skip',siteStatus:'not_submitted'}:{}),manualDisposition:{action:'skip_current_run',at:at(),reason:String(input.reason||'用户跳过本次处理').slice(0,2000)},reason:task.attemptBoundary||task.receipt?task.reason:'用户跳过本次处理，未投稿'},'manual_skip');
- finishSkippedScope(runtime,task);
- let syncError='';try{await runtime.synchronize();}catch(error){syncError=error.message;}
- // A paused task stays paused. If this was the running task, the original
- // batch may continue only after the skip has been saved and read back.
- if(running&&!syncError){const id=runtime.store.get('activeWorkbenchBatch'),batch=id&&runtime.store.get('workbenchBatch:'+id),fixed=runtime.store.get('acceptanceBatch'),plan=runtime.store.get('libraryPlan');if(batch?.status==='paused'&&batch.items.some(i=>i.taskId===selected.id)){runtime.store.set('workbenchBatch:'+id,{...batch,status:'running'});runtime.store.set('paused',false);}else if(fixed?.status==='paused'&&Object.values(fixed.attempts||{}).some(a=>a.taskId===selected.id&&a.manualSkipped)){runtime.store.set('acceptanceBatch',{...fixed,status:'running'});runtime.store.set('paused',false);}else if(plan?.id===originalPlan?.id&&plan?.status==='active'&&selected.libraryPlanId===plan.id){runtime.store.set('libraryPlan',{...plan,globalPause:null});runtime.store.set('paused',false);}else if(active===selected.id&&runtime.store.get('run:'+selected.runId)){runtime.store.set('manualResumeRunId',selected.runId);runtime.store.set('paused',false);}runtime.store.set('singleTaskId',null);runtime.tick();}
+ const check=()=>{guards.assertContext?.();if(scope!==workbenchScope(runtime.store.get('pair'))||runtime.store.get('executionStopped')||runtime.store.get(key)?.id!==request.id)throw Error('工作区或原跳过请求已变化，保留当前任务');return selectedTask(runtime,input);};
+ let task=check();
+ if(!old){request={...request,pauseState:runtime.store.get('executionPaused')};runtime.store.set(key,request);}
+ if(request.stage!=='await_sync'){
+  await runtime.lease(task,{online:true});await guards.assertPageDocument?.();check();
+  if(!isDeepStrictEqual(plain(runtime.store.get('task:'+task.id)),plain(task)))throw Error('原任务在人工跳过前已变化');
+  const patch={...(!task.attemptBoundary&&!task.receipt?{status:'skip',siteStatus:'not_submitted',manualSubmissionConsent:null,productHuntCreationConsent:null,...(task.originalResume?{originalResume:{...task.originalResume,status:'cancelled'}}:{})}:{}),manualDisposition:{action:'skip_current_run',at:request.at,requestId:request.id,reason:String(input.reason||'用户跳过本次处理').slice(0,2000)},reason:task.attemptBoundary||task.receipt?task.reason:'用户跳过本次处理，未投稿'};
+  runtime.update(task,patch,'manual_skip',{...skippedScopeUpdates(runtime,{...task,...patch}),[key]:{...request,stage:'await_sync'}});
+ }
+ let syncError='';try{
+  await runtime.synchronize();check();task=runtime.store.get('task:'+task.id);
+  await settleManualSkipPage(runtime,task,check);check();await flushBatchTaskEvents(runtime,task);check();
+ }catch(error){syncError=error.message;if(scope===workbenchScope(runtime.store.get('pair'))&&runtime.store.get(key)?.id===request.id)runtime.store.set(key,{...runtime.store.get(key),error:syncError});}
+ // Retry continues the original saved request. A later explicit pause does not
+ // inherit the automatic resume permission of an earlier skip.
+ if(!syncError){
+  runtime.store.set(key,null);
+  if(request.resume&&isDeepStrictEqual(runtime.store.get('executionPaused'),request.pauseState)){
+   const fixed=runtime.store.get('acceptanceBatch'),plan=runtime.store.get('libraryPlan');
+   if(fixed?.status==='paused'&&(!request.acceptanceId||fixed.id===request.acceptanceId)&&Object.values(fixed.attempts||{}).some(a=>a.taskId===selected.id&&a.manualSkipped)){runtime.store.set('acceptanceBatch',{...fixed,status:'running'});runtime.store.set('paused',false);}
+   else if(plan?.id===request.libraryPlanId&&plan?.status==='active'&&selected.libraryPlanId===plan.id){runtime.store.set('libraryPlan',{...plan,globalPause:null});runtime.store.set('paused',false);}
+   else if(request.activeTaskId===selected.id&&runtime.store.get('run:'+selected.runId)){runtime.store.set('manualResumeRunId',selected.runId);runtime.store.set('paused',false);}
+   runtime.store.set('singleTaskId',null);runtime.tick();
+  }
+ }
  return{ok:true,taskId:task.id,skipped:true,submitted:!!task.attemptBoundary,receiptPreserved:!!task.receipt,syncError};
 }
+async function settleManualSkipPage(runtime,task,check){
+ if(!runtime.context||!task.targetId||task.tabClosedAt||task.receipt||task.attemptBoundary||stopTabDisposition(task)!=='close_automated')return;
+ const verify=()=>{check();if(!isDeepStrictEqual(plain(runtime.store.get('task:'+task.id)),plain(task)))throw Error('原跳过任务在关页前已变化，保留页面');};verify();
+ const retained=await retainOriginalManualSkipPage(runtime,task);verify();if(retained){await flushBatchTaskEvents(runtime,task);verify();return;}
+ if(runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===task.targetId&&other.browserInstance===task.browserInstance&&!other.tabClosedAt&&other.originalGroupAdvance?.status!=='transferred'&&stopTabDisposition(other)==='preserve_manual'))return;
+ const page=await runtime.findPage(task);verify();const time=at();runtime.update(task,{recoveryCheckpoint:recoveryCheckpoint(task,page,task.screenshot||'',time)},'manual_skip_page_checkpoint');verify();await page.close({runBeforeUnload:false});verify();runtime.update(task,{tabClosedAt:time,closeReason:'用户跳过本次处理，原任务与恢复点保留'},'manual_skip_page_closed');await flushBatchTaskEvents(runtime,task);verify();
+}
+
 async function skipWorkbenchTask(runtime,input,batch,guards={}){
  assertOriginalBatch(runtime,batch);const selected=selectedTask(runtime,input),scope=workbenchScope(runtime.store.get('pair')),key='manualSkipPending:'+selected.id,old=runtime.store.get(key),request=old||{id:randomUUID(),scope,batchId:batch.id,taskId:selected.id,runId:selected.runId,at:at(),stage:'requested'};
  const check=()=>{guards.assertContext?.();if(scope!==workbenchScope(runtime.store.get('pair'))||batch.id!==runtime.store.get('activeWorkbenchBatch')||runtime.store.get('executionStopped'))throw Error('工作区或原批次已变化，原跳过请求保留');return selectedTask(runtime,input);};
@@ -51,11 +82,7 @@ async function skipWorkbenchTask(runtime,input,batch,guards={}){
    event=runtime.update(task,{...(!task.attemptBoundary&&!task.receipt?{status:'skip',siteStatus:'not_submitted',manualSubmissionConsent:null,productHuntCreationConsent:null,...(task.originalResume?{originalResume:{...task.originalResume,status:'cancelled'}}:{})}:{}),manualDisposition:{action:'skip_current_run',at:request.at,requestId:request.id,reason:String(input.reason||'用户跳过本次处理').slice(0,2000)},reason:task.attemptBoundary||task.receipt?task.reason:'用户跳过本次处理，未投稿'},'manual_skip',{['workbenchBatch:'+batch.id]:current,[key]:{...request,stage:'await_sync'}});
   }
   await runtime.synchronize();check();await flushBatchTaskEvents(runtime,task,event?.id);check();
-  let retained=false;
-  if(stopTabDisposition(task)==='close_automated'){retained=await retainOriginalManualSkipPage(runtime,task);check();if(retained){await flushBatchTaskEvents(runtime,task);check();}}
-  if(!retained&&task.targetId&&!task.tabClosedAt&&!task.receipt&&!task.attemptBoundary&&stopTabDisposition(task)==='close_automated'&&!runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===task.targetId&&stopTabDisposition(other)==='preserve_manual')){
-   const page=await runtime.findPage(task);check();const time=at();runtime.update(task,{recoveryCheckpoint:recoveryCheckpoint(task,page,task.screenshot||'',time)},'manual_skip_page_checkpoint');await page.close({runBeforeUnload:false});runtime.update(task,{tabClosedAt:time,closeReason:'用户跳过本次处理，原任务与恢复点保留'},'manual_skip_page_closed');await flushBatchTaskEvents(runtime,task);check();
-  }
+  await settleManualSkipPage(runtime,task,check);check();
   runtime.store.set(key,null);runtime.wakeWorkbench?.();runtime.tick();
   return{ok:true,taskId:task.id,skipped:true,isolated:true,submitted:!!task.attemptBoundary,receiptPreserved:!!task.receipt,syncError:''};
  }catch(error){runtime.store.set(key,{...runtime.store.get(key),error:error.message});return{ok:true,taskId:task.id,skipped:!!runtime.store.get('task:'+task.id)?.manualDisposition,isolated:true,submitted:!!task.attemptBoundary,receiptPreserved:!!task.receipt,syncError:error.message};}

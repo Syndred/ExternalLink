@@ -13,7 +13,7 @@ import {D1Store} from '../cloud/worker/src/d1-store.mjs';
 import {d1Executor} from '../cloud/worker/src/d1-executor.mjs';
 import {Store} from '../executor/src/store.mjs';
 import {Runtime as CurrentRuntime} from '../executor/src/runtime.mjs';
-import {originalNativeReceiptRuntime} from './helpers/native-receipt-group-baseline.mjs';
+import {originalNativeReceiptRuntime,originalNativeSkipScopeRuntime} from './helpers/native-receipt-group-baseline.mjs';
 import {Cloud} from '../executor/src/cloud.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask} from '../executor/src/workbench-features.mjs';
 import {recoverCloudBatchRecords} from '../executor/src/workbench-batch-recovery.mjs';
@@ -23,6 +23,7 @@ import {finalizeUserPause} from '../executor/src/execution-lifecycle.mjs';
 import {parkedResumeIntent} from '../executor/src/parked-task-resume.mjs';
 import {PGlite} from '../executor/node_modules/@electric-sql/pglite/dist/index.js';
 import {executorApi} from '../cloud/worker/src/executor-api.mjs';
+import {nextAcceptanceTask,startAcceptanceBatch} from '../executor/src/acceptance-batch.mjs';
 import {freezeAcceptance} from '../executor/src/acceptance-freeze.mjs';
 import {registerAcceptance} from '../executor/src/acceptance-register.mjs';
 import {applyOriginalDestinationDisposition} from '../executor/src/original-destination-disposition.mjs';
@@ -36,7 +37,29 @@ import {queue} from '../executor/src/shared.mjs';
 import {runWorkbenchBatch} from '../executor/src/workbench-batch-scheduler.mjs';
 import {resumeExecution} from '../executor/src/execution-lifecycle.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
-const Runtime=process.env.RECEIPT_GROUP_BEFORE==='1'?await originalNativeReceiptRuntime():CurrentRuntime;
+const Runtime=process.env.MANUAL_SKIP_SCOPES_BEFORE==='1'?await originalNativeSkipScopeRuntime():process.env.RECEIPT_GROUP_BEFORE==='1'?await originalNativeReceiptRuntime():CurrentRuntime;
+
+test('fixed and independent manual skips preserve original pages through handoff and close final destinations',async()=>{
+ for(const scope of process.env.MANUAL_SKIP_SCOPE_ONLY?[process.env.MANUAL_SKIP_SCOPE_ONLY]:['fixed','run'])for(const mode of ['normal','paused','sync-failure','unknown']){
+  const urls=scope==='fixed'?['https://bai.tools/submit']:['https://bai.tools/submit','https://alieradox.com/submit'],f=await fixture({createBatch:false,urls}),home=await mkdtemp(join(tmpdir(),'el-manual-skip-scopes-'));let browser;
+  try{
+   const runtime=f.original;runtime.home=home;browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext();runtime.context=context;runtime.host={startedAt:'isolated-skip-scopes'};let posts=0;
+   await context.route('**/*',async route=>{assert.ok(['bai.tools','alieradox.com'].includes(new URL(route.request().url()).hostname));if(route.request().method()==='POST')posts++;await route.fulfill({contentType:'text/html',body:'<h1>Submit your tool</h1><form><label>Product name<input name="name" required></label><label>Website<input name="url" type="url" required></label><button>Submit tool</button></form>'});});
+   const snapshot=await f.cloud.request('snapshot');let first,next;
+   if(scope==='fixed'){freezeAcceptance(runtime.store,{id:'isolated-fixed',products:snapshot.documents.siteProfiles,profileRevision:snapshot.revisions.siteProfiles,sites:urls,count:2});await registerAcceptance(runtime,'isolated-fixed');startAcceptanceBatch(runtime,'isolated-fixed');first=await nextAcceptanceTask(runtime);}
+   else{const response=await f.cloud.request('runs',{run:{id:'isolated-run',profileId:'p',profileRevision:snapshot.revisions.siteProfiles,createdAt:new Date().toISOString(),tasks:urls.map((url,n)=>({id:'task-'+n,url,destinationKey:queue.normalizeDestinationKey(url)}))}});runtime.store.set('run:'+response.run.id,response.run);for(const task of response.tasks)runtime.store.set('task:'+task.id,{...task,profileSnapshot:snapshot.documents.siteProfiles.p,fillOnlyRun:true});runtime.store.set('paused',false);first=runtime.store.get('task:task-0');runtime.store.set('singleTaskId',first.id);}
+   await runtime.lease(first,{online:true});const page=await context.newPage();await page.goto(first.url);const targetId=(await getTargetInfo(context,page)).targetId;runtime.update(first,{status:mode==='unknown'?'submitted_unconfirmed':'needs_manual',controller:'executor',targetId,browserInstance:runtime.host.startedAt,fillOnlyRun:true,...(mode==='unknown'?{attemptBoundary:'original-unverified-attempt'}:{})},'fixture_scope_manual_page');await runtime.synchronize();
+   if(mode==='paused')await runtime.control('pause',{});const input={taskId:first.id,expectedRunId:first.runId,expectedTargetId:targetId},request=f.cloud.request.bind(f.cloud);let failed=false,blocked=mode==='sync-failure';if(blocked)f.cloud.request=async(route,data,...rest)=>{if(failed&&blocked&&route.startsWith('events/'))throw Object.assign(Error('Skip proof unavailable'),{cloudNetwork:true});const response=await request(route,data,...rest);if(route==='event'&&data.type==='manual_skip'&&!failed){failed=true;throw Object.assign(Error('Skip write reply lost'),{cloudNetwork:true});}return response;};
+   let result=await runtime.control('manualSkip',input);if(mode==='sync-failure'){assert.equal(failed,true);assert.ok(result.syncError);assert.equal(page.isClosed(),false);assert.equal(runtime.store.get('paused'),true);const disposition=structuredClone(runtime.store.get('task:'+first.id).manualDisposition);blocked=false;result=await runtime.control('manualSkip',input);assert.deepEqual(runtime.store.get('task:'+first.id).manualDisposition,disposition);}
+   assert.equal(result.skipped,true);assert.equal(result.syncError,'');assert.equal(runtime.store.get('paused'),mode==='paused');const saved=runtime.store.get('task:'+first.id);
+   if(mode==='unknown'){assert.equal(page.isClosed(),false);assert.equal(saved.attemptBoundary,'original-unverified-attempt');assert.equal(saved.originalGroupAdvance,undefined);continue;}
+   if(scope==='fixed'){assert.equal(page.isClosed(),false);assert.equal(saved.originalGroupAdvance?.status,'awaiting_next');assert.equal(runtime.store.get('acceptanceBatch').count,2);if(mode==='paused')await runtime.control('resume',{expectedBatchId:'isolated-fixed'});next=await nextAcceptanceTask(runtime);runtime.update(next,{fillOnlyRun:true},'fixture_only_fill');}
+   else{assert.equal(page.isClosed(),true);assert.ok(saved.tabClosedAt);if(mode==='paused')await runtime.control('resume',{});next=runtime.store.get('task:task-1');}
+   await runtime.work({taskId:next.id});const second=runtime.store.get('task:'+next.id),nextPage=scope==='fixed'?page:await runtime.findPage(second);assert.equal(second.status,'needs_manual');assert.ok(second.actualSubmission.fields.some(field=>field.value===(scope==='fixed'?'Original q':'Original p')));if(scope==='fixed'){assert.equal(second.targetId,targetId);assert.ok(second.tabClosedAt);}else{assert.equal(await nextPage.locator('input[name=name]').inputValue(),'Original p');assert.notEqual(second.targetId,targetId);}
+   runtime.store.set('singleTaskId',second.id);const last=await runtime.control('manualSkip',{taskId:second.id,expectedRunId:second.runId,expectedTargetId:second.targetId});assert.equal(last.syncError,'');assert.equal(nextPage.isClosed(),true);await runtime.synchronize();const remote=(await f.cloud.request('runs')).tasks;assert.ok(remote.find(task=>task.id===second.id).tabClosedAt);assert.equal(remote.find(task=>task.id===first.id).manualDisposition.action,'skip_current_run');assert.equal(posts,0);assert.equal(f.models(),0);assert.deepEqual((await originalSuccessGroup({skip:true,hasNext:false})).calls,[{type:'close',tabId:7}]);
+  }finally{await browser?.close();f.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-manual-skip-scopes-'));await rm(home,{recursive:true,force:true});}
+ }
+});
 
 test('manual skip retains the original destination tab for the next product and closes only the last task',async()=>{
  for(const mode of ['normal','paused','budget-cap','lost-event','sync-unavailable','last-product']){
@@ -305,7 +328,7 @@ test('authenticated selected skip retry retains exact request and original cloud
  }finally{f.close();}
 });
 
-async function fixture({taskLimit=3,fillOnly=true,profileIds=['p','q'],assistant,urls=Array.from({length:3},(_,n)=>'https://target'+n+'.example/form')}={}) {
+async function fixture({createBatch=true,taskLimit=3,fillOnly=true,profileIds=['p','q'],assistant,urls=Array.from({length:3},(_,n)=>'https://target'+n+'.example/form')}={}) {
   const sqlite=new DatabaseSync(':memory:');
   for(const file of ['0001_d1_storage.sql','0002_d1_executor.sql'])sqlite.exec(readFileSync(new URL('../cloud/worker/migrations/'+file,import.meta.url),'utf8'));
   const db={prepare(sql){let args=[];return{bind(...values){args=values;return this;},first:async()=>sqlite.prepare(sql).get(...args)||null,all:async()=>({results:sqlite.prepare(sql).all(...args)}),run:async()=>{const q=sqlite.prepare(sql);return q.columns().length?{results:q.all(...args),meta:{changes:0}}:{results:[],meta:{changes:q.run(...args).changes}};}};},async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
@@ -319,9 +342,9 @@ async function fixture({taskLimit=3,fillOnly=true,profileIds=['p','q'],assistant
   const enrollment=await enroll.json(),pair={endpoint:'https://fixture.example',workspaceId:'default',deviceToken:enrollment.deviceToken,storageBackend:'d1'},cloud=new Cloud(pair),locals=[];
   const runtime=()=>{const store=new Store(':memory:');locals.push(store);store.set('pair',pair);store.set('paused',true);const value=new Runtime(store,'isolated-unused');Object.defineProperty(value,'cloud',{value:cloud,configurable:true});value.tick=()=>{};return value;};
   const original=runtime();
-  const preview=await previewWorkbenchBatch(original,{profileIds,urls,config:{fillOnly}});
-  await startWorkbenchBatch(original,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});
-  return {sqlite,backend,cloud,pair,original,runtime,batchId:preview.batch.id,models:()=>models,close(){globalThis.fetch=fetchBefore;for(const store of locals)store.close();sqlite.close();}};
+  const preview=createBatch?await previewWorkbenchBatch(original,{profileIds,urls,config:{fillOnly}}):null;
+  if(preview)await startWorkbenchBatch(original,{batchId:preview.batch.id,ordinaryPermissionsAuthorized:true});
+  return {sqlite,backend,cloud,pair,original,runtime,batchId:preview?.batch.id,models:()=>models,close(){globalThis.fetch=fetchBefore;for(const store of locals)store.close();sqlite.close();}};
 }
 
 test('actual intercepted browser receipts preserve submitted moderation and published proof through authenticated D1 and empty restore',async()=>{

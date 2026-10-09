@@ -1,12 +1,15 @@
 import test from 'node:test';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import {Store} from '../executor/src/store.mjs';
 import {Runtime} from '../executor/src/runtime.mjs';
 import {startAcceptanceBatch} from '../executor/src/acceptance-batch.mjs';
 import {stopTabDisposition} from '../executor/src/manual-controls.mjs';
 
-function fixture(){
- const store=new Store(':memory:'),runtime=new Runtime(store,'unused-test-home');
+function fixture(file=':memory:'){
+ const store=new Store(file),runtime=new Runtime(store,'unused-test-home');
  const profile={id:'p',name:'Frozen Product',fields:{Name:'Frozen Product',Url:'https://product.example'}},task={id:'original',runId:'run',profileId:'p',url:'https://target.example/submit',status:'needs_manual',controller:'executor',targetId:'target',browserInstance:'original-browser',profileSnapshot:profile,profileRevision:2};
  store.set('paused',true);store.set('pair',{endpoint:'https://cloud.example',workspaceId:'test'});store.set('task:'+task.id,task);store.set('run:run',{id:'run',profile});
  const calls={ticks:0,leases:[],closed:[]};runtime.tick=()=>{calls.ticks++;};runtime.lease=async(t)=>{calls.leases.push(t.id);};
@@ -30,6 +33,25 @@ test('running skip resumes only the saved original range; failed sync and stale 
  const offline=fixture();try{fixed(offline,'running');offline.store.set('paused',false);offline.store.set('singleTaskId','original');offline.runtime.synchronize=async()=>{throw Error('Readback unavailable');};const result=await offline.runtime.control('manualSkip',offline.input);assert.match(result.syncError,/Readback/);assert.equal(offline.store.get('paused'),true);assert.equal(offline.store.pendingCount(),1);assert.equal(offline.store.get('acceptanceBatch').count,2);}finally{offline.store.close();}
  const simple=fixture();try{simple.store.set('paused',false);simple.store.set('singleTaskId','original');await simple.runtime.control('manualSkip',simple.input);assert.equal(simple.store.get('manualResumeRunId'),'run');assert.equal(simple.store.get('paused'),false);}finally{simple.store.close();}
 });
+test('standalone skip retry survives SQLite reopen with one original disposition and a later pause revokes automatic resume',async()=>{
+ for(const laterPause of [false,true]){
+  const home=mkdtempSync(join(tmpdir(),'el-skip-retry-')),file=join(home,'state.sqlite'),f=fixture(file);let reopened;
+  try{
+   f.store.set('paused',false);f.store.set('singleTaskId',f.task.id);f.runtime.synchronize=async()=>{throw Error('Original event unavailable');};const failed=await f.runtime.control('manualSkip',f.input);assert.match(failed.syncError,/unavailable/);const disposition=f.store.get('task:original').manualDisposition,request=f.store.get('manualSkipPending:original');assert.equal(request.stage,'await_sync');assert.equal(request.resume,true);assert.equal(f.store.get('paused'),true);f.store.close();reopened=new Store(file);f.runtime.store=reopened;f.runtime.synchronize=async()=>{for(const event of reopened.pending())reopened.ack(event.id);};if(laterPause)await f.runtime.control('pause',{reason:'New explicit user pause'});
+   const result=await f.runtime.control('manualSkip',f.input);assert.equal(result.syncError,'');assert.deepEqual(reopened.get('task:original').manualDisposition,disposition);assert.equal(reopened.get('manualSkipPending:original'),null);assert.equal(reopened.get('paused'),laterPause);assert.equal(reopened.logs({scope:'https://cloud.example|test'}).entries.filter(event=>event.type==='manual_skip').length,1);if(!laterPause)assert.equal(reopened.get('manualResumeRunId'),'run');
+  }finally{if(reopened)reopened.close();else f.store.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-skip-retry-'));rmSync(home,{recursive:true,force:true});}
+ }
+});
+
+test('standalone skip cleanup cannot close a page when a late attempt, receipt, target or scope changes while locating it',async()=>{
+ for(const mode of ['attempt','receipt','target','scope']){
+  const f=fixture();try{
+   f.runtime.context={pages:()=>[]};f.store.set('run:run',{id:'run',profileId:'p',profile:f.profile,tasks:['original']});f.runtime.findPage=async task=>{const current=f.store.get('task:original');if(mode==='scope')f.store.set('pair',{endpoint:'https://other.example',workspaceId:'other'});else f.store.set('task:original',{...current,...(mode==='attempt'?{attemptBoundary:'late-attempt'}:mode==='receipt'?{receipt:{evidence:'late receipt'}}:{targetId:'new-target'})});return{url:()=>task.url,close:async()=>f.calls.closed.push(task.targetId)};};
+   const result=await f.runtime.control('manualSkip',f.input);assert.ok(result.syncError);assert.deepEqual(f.calls.closed,[]);assert.equal(f.store.get('task:original').tabClosedAt,undefined);assert.equal(f.store.get('paused'),true);
+  }finally{f.store.close();}
+ }
+});
+
 test('manual continue keeps frozen profile and original tab, releases one task only after acknowledgement',async()=>{
  const f=fixture();try{await assert.rejects(f.runtime.control('manualSubmit',f.input),/确认/);await assert.rejects(f.runtime.control('manualSubmit',{...f.input,expectedTargetId:'replaced',ordinaryPermissionsAuthorized:true}),/标签页/);const result=await f.runtime.control('manualSubmit',{...f.input,ordinaryPermissionsAuthorized:true});assert.equal(result.taskId,'original');assert.deepEqual(f.store.get('task:original').profileSnapshot,f.profile);assert.equal(f.store.get('task:original').profileRevision,2);assert.equal(f.store.get('task:original').targetId,'target');assert.equal(f.store.get('singleTaskId'),'original');assert.equal(f.store.get('paused'),false);assert.equal(f.store.pendingCount(),0);assert.equal(f.calls.ticks,1);assert.equal(f.store.get('task:original').attemptBoundary,undefined);}finally{f.store.close();}
  const offline=fixture();try{offline.runtime.synchronize=async()=>{throw Error('Readback unavailable');};await assert.rejects(offline.runtime.control('manualSubmit',{...offline.input,ordinaryPermissionsAuthorized:true}),/Readback/);assert.equal(offline.store.get('paused'),true);assert.equal(offline.store.get('singleTaskId'),null);assert.equal(offline.calls.ticks,0);assert.equal(offline.store.pendingCount(),2);assert.equal(offline.store.get('task:original').manualSubmissionConsent,null);assert.equal(offline.store.get('task:original').status,'needs_manual');assert.equal(offline.store.get('task:original').fillOnlyRun,true);}finally{offline.store.close();}

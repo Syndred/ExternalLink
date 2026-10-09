@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-10",
+  "sourceCommit": "54222a3ef7b1e685d1a9c6a1bebfafce9c453d42",
+  "status": "released_history_preview_empty_state_and_specific_restore_ui",
+  "originalEntry": "extension/sidepanel.js::renderCommentHistory",
+  "originalCompleteFunctionSha256": "c179714a2c7571cc8ded1f6405843c611e5075a5587850bfb6d8c8dca2b9374e",
+  "currentEntry": "AI 评论 → 评论历史版本 → 载入指定版本",
+  "currentSource": "executor/web/comment-studio.js::showHistory",
+  "persistence": "SQLite commentHistory by workspace product article",
+  "actualUiProof": {
+    "ok": true,
+    "emptyHistoryAndDisabledRestore": true,
+    "historyRawPreviewVisible": true,
+    "selectedCandidatePreviewFallback": true,
+    "candidateSetPlaceholderVisible": true,
+    "originalLabelsAndRestoreTitle": true,
+    "specificOlderHistoryUiClick": true,
+    "unsavedTextSavedBeforeRestore": true,
+    "failedSaveKeepsDraftAndHistory": true,
+    "sqliteReopenAndUiReload": true,
+    "originalBusinessUnchanged": true,
+    "productionWrites": 0,
+    "realSubmissions": 0,
+    "realModelCalls": 0,
+    "originalChromeUntouched": true
+  },
+  "focusedRegression": {
+    "tests": 14,
+    "pass": 14,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 10167.5338
+  },
+  "fullRegressionRerun": false,
+  "previousFullRegressionIsNotEvidenceForThisUiChange": true,
+  "nativeSourceReadback": {
+    "ok": true,
+    "sourceCommit": "54222a3ef7b1e685d1a9c6a1bebfafce9c453d42",
+    "committedSourcesMatch": true,
+    "hashes": {
+      "executor/src/comment-history.mjs": "b25ccc58dcf25a8a933103a9a4023eb71957e88a224421cfa6b4332bf7300db5",
+      "executor/src/workbench-features.mjs": "8f38254477ab1591a98c52d5e456dba4471fa5ebd48ff3b6d01a0b673b4ab8a4",
+      "executor/src/single-page.mjs": "af225bee974fc52a55c6367b0c7329ca31387233510f220f5a8f63ac49dde3d8",
+      "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+      "executor/web/application.css": "03022e8ddfbcefaea409b545cb0da424c34fe4f46beb72efdb5d20f36173a996",
+      "executor/web/comment-studio.js": "788206ecb3b2d71c46e9b0859f6446f123f3486e4cce9c37066626471751fce3"
+    },
+    "nativeHistoryStylesMatch": true,
+    "nativeHistoryScriptMatches": true,
+    "actualNativeReadback": true,
+    "paused": true,
+    "busy": false,
+    "pendingEdits": 0,
+    "fixedCursor": 13,
+    "fixedCount": 30,
+    "businessWrites": 0,
+    "originalChromeUntouched": true,
+    "historyNotWrittenToProduction": true
+  },
+  "releaseWithoutServiceRestart": true,
+  "workerRedeployed": false,
+  "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+  "original18OtherCloudDocumentsAndRevisionsKept": true,
+  "fixedBatch": {
+    "paused": true,
+    "cursor": 13,
+    "count": 30
+  },
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "originalChromeUntouched": true,
+  "remaining": [
+    "原 restoreCommentHistory 恢复时移除被选快照并保留八版的持久化规则，尚需独立逐项对照"
+  ],
+  "overallMigrationComplete": false
+}

@@ -1,0 +1,22 @@
+✔ actual candidate card buttons copy exact controlled text, fill only the original task and preserve edits after SQLite reopen (2603.1261ms)
+✔ complete frozen original history renderer has empty, raw, selected candidate and candidate-set previews (17.0933ms)
+✔ actual comment history UI previews and restores a chosen older version without losing unsaved edits (2223.2141ms)
+✔ actual single page raw comment snapshots preserve current text and reject late results after typing or product changes (1908.9102ms)
+✔ actual hand typed comments with no AI candidates match original snapshots and survive restoration, failure, ownership changes and SQLite reopen (1554.4995ms)
+✔ frozen original comment input and history restore preserve edited candidates and update their character counts (1.9509ms)
+✔ actual latest-comment restoration preserves unsaved and in-flight edits, failures and original ownership through SQLite reopen (1381.6002ms)
+✔ actual comment candidate selection preserves every original before-switch snapshot and restores selected index after SQLite reopen (2266.0883ms)
+✔ empty selected comment switches without creating the snapshot that the original handler skips (1971.9795ms)
+✔ long candidate edits preserve original snapshots metadata selected index and raw text after actual UI and SQLite reopening (2517.5531ms)
+✔ actual main candidate buttons fill long original text and reject page overflow before lease or field mutation (2238.8942ms)
+✔ actual iframe candidate buttons fill long original text and reject page overflow before lease or field mutation (1962.6667ms)
+✔ single-page native control fills 24002-character comments and rejects actual maxlength before original registration (3338.7893ms)
+✔ original field ranking positive maxima absent maxima zero and prescan fallback match the complete frozen field selector and limit guard (19.3046ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10167.5338

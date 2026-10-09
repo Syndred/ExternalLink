@@ -557,10 +557,11 @@
       "persistence": "按工作区、原产品和文章保存SQLite commentHistory",
       "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage",
       "tests": [
+        "tests/executor-original-comment-history-panel.test.mjs",
         "tests/executor-original-long-comment.test.mjs",
         "tests/executor-original-comment-restore.test.mjs"
       ],
-      "scope": "已有无候选纯文本、跨入口、失败与重开证据；5002/12007/24006字符候选完整保存与恢复，主页面和iframe按原页面maxlength填写",
+      "scope": "实际历史列表空态、正文／选中候选／候选集预览与指定旧版恢复已验证；八版与移除选中快照的规则仍需审计；已有无候选纯文本、跨入口、失败与重开证据；5002/12007/24006字符候选完整保存与恢复，主页面和iframe按原页面maxlength填写",
       "completion": "requires_branch_evidence_audit"
     },
     {

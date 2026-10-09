@@ -1,0 +1,224 @@
+{
+  "kind": "original_workbench_manual_skip_same_destination_handoff",
+  "sourceCommit": "f4812c4d52e2c875617bb1e732011d1a25483803",
+  "oldNativeSourceCommit": "39d7fe440fe784bd641969932057cc2376b0854b",
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalFunctionExecuted": [
+    "handleManualSkip",
+    "advanceDestinationGroup"
+  ],
+  "changes": [
+    "Manual skip keeps original workbench destination page for next frozen product",
+    "Persist skip proof and independently read back transfer readiness before releasing destination",
+    "Reject changed local or remote manual skip proof, late receipt and changed original page",
+    "Final skipped product closes original automated page; unknown attempts, receipts and manually owned targets remain protected"
+  ],
+  "verification": {
+    "fullSuitePassed": 1018,
+    "fullSuiteFailed": 0,
+    "fullSuiteSkipped": 0,
+    "focusedPassed": 32,
+    "actualIsolatedChromeScenarios": [
+      "normal skip and final closure",
+      "paused skip then original batch resume",
+      "exhausted budget retains page",
+      "committed ready event reply lost and independently recovered",
+      "committed event plus unavailable readback retains request until retry",
+      "single final skipped product closes page"
+    ],
+    "authenticatedD1AndEmptyRestore": true,
+    "realSubmissions": 0,
+    "realModelCalls": 0
+  },
+  "intermediateFailures": [
+    {
+      "file": "original-manual-skip-group-before-2026-10-09.txt",
+      "classification": "old native product behavior reproduced",
+      "reason": "Manual skip closed first product page while original advances next product on the same tab."
+    },
+    {
+      "file": "original-manual-skip-group-focused-first-2026-10-09.txt",
+      "classification": "obsolete fixture expectation",
+      "reason": "Expected immediate close even with another product pending; updated to assert retention and added a final-product close branch."
+    },
+    {
+      "file": "original-manual-skip-group-browser-final-2026-10-09.txt",
+      "classification": "fault-injection expectation",
+      "reason": "Existing cloud flush independently confirmed committed event after lost response. Final scenarios separately verify successful independent recovery and unavailable readback until retry."
+    }
+  ],
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "services": {
+    "ok": true,
+    "kind": "manual_skip_group_published_service_process_identity",
+    "sourceCommit": "f4812c4d52e2c875617bb1e732011d1a25483803",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 21820,
+        "StartedAt": "2026-10-09T16:35:47.9865480+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 3340,
+        "StartedAt": "2026-10-09T16:35:48.6291460+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "unchangedUiSmoke": {
+    "ok": true,
+    "kind": "manual_card_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "f4812c4d52e2c875617bb1e732011d1a25483803",
+    "servedUiMatchesFileAndCommit": true,
+    "originalManualCardControlsServed": true,
+    "uiSha256": "6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "nextScopeAudit": {
+    "status": "required",
+    "scope": [
+      "manual skip in fixed acceptance path",
+      "manual skip in independent run path"
+    ],
+    "finding": "The non-workbench manualSkip branch has no direct same-tab handoff or last-tab cleanup call. Actual browser equivalence must be checked separately.",
+    "runtimeDefectProven": false
+  },
+  "originalChromeStartedOrStopped": false,
+  "workerRedeployed": false,
+  "migrationComplete": false,
+  "rawEvidence": [
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-before-2026-10-09.txt",
+      "capturedSha256": "0fceb7dcf5f947fca285c31a885923fbb3f91eca6933bf4558ec356a82de37a0",
+      "gitBlobSha256": "8acea5399486e727954ddf67d08b96051dfedb88a514e2334563bcc70350aa22"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-browser-final-2026-10-09.txt",
+      "capturedSha256": "1f93bfa168743c642fd86ab83986a19ada7cbb1dcdc4c106b6205d916753a08d",
+      "gitBlobSha256": "eff5e1a362e5210a5020b9d2a9b15120231cf77a721fdf46f11465c60c240946"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-browser-verified-2026-10-09.txt",
+      "capturedSha256": "a72e2a3a892648ef360deffcc34570cd7e9ebd5256d3f9725c72599fb3376040",
+      "gitBlobSha256": "3bf78a74f8d88c469f8440b258edaac64e328bf2d4f609dc9f5d1efe6d20b3ed"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-first-2026-10-09.txt",
+      "capturedSha256": "6e9be09715265642c147d28b84383da6ec4ab94f4b24b3095e52c7548b857f59",
+      "gitBlobSha256": "ae772221f27fd55d249d75f518ec1f4c349d86edfa2507d9de9e6ce15b5b9d9c"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-focused-final-2026-10-09.txt",
+      "capturedSha256": "135d3743975130a09f56c6ad1c339a6f5c9d6d6b334b02d9d21ce8e57c9919d6",
+      "gitBlobSha256": "5ac415b0d0bff9a030a870374cdf275cfdee25aacca23d6f831f581aa0dedced"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-focused-first-2026-10-09.txt",
+      "capturedSha256": "fecd6922eece2e81c71e896874df69a3ce5288ff24c798d0620c3eb3efe0ccda",
+      "gitBlobSha256": "c2a5c479c3e095071e2048a0426d14e8675ec409a981e5d8025824aec8e8387b"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-repository-2026-10-09.txt",
+      "capturedSha256": "377356bf45a5b6a8ea0d3caa6ae10bdfda541b42d7c5f6d63eb96fce32b97a4c",
+      "gitBlobSha256": "a4b44a786b8aaabcb21d5c8ca421ebba17695708a8c35e6391813dbbf61e1a3e"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-service-process-2026-10-09.txt",
+      "capturedSha256": "3d781ef4f1311afd64c7aeeee8a37126d27ed7f17d3b6183498e7e395fbb4ac4",
+      "gitBlobSha256": "ea80867c3dc56ac07d493a6bd77a9abc4bba289a4ad40f88c91701b07348d292"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-service-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-manual-skip-group-2026-10-09/original-manual-skip-group-ui-smoke-2026-10-09.txt",
+      "capturedSha256": "ec34bbe21dcecfaa31f305c99d1c1b5b9bccb93be1d8c02344edcc6955870d14",
+      "gitBlobSha256": "fbde93c6b0901817175189b5a34a2e4971cd2c5788b8f35647a06e4cee75585e"
+    }
+  ]
+}

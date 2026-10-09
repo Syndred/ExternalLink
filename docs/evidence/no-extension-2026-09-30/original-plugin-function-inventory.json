@@ -1387,7 +1387,9 @@
       "mapping": "原任务／原页面跳过按钮 → taskPageControl → manualSkip",
       "status": "implemented_requires_full_acceptance",
       "verification": "并发所选任务单独跳过、原请求失败重试、末项保留、未知回执／人工页保护经回归及认证D1验证；实际原页面跳过回读失败后禁用继续，原请求重试只写一次。真实业务跳过未执行",
-      "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json"
+      "evidence": "docs/evidence/no-extension-2026-09-30/original-execution-lifecycle-2026-10-07.json",
+      "sameDestinationGroupEvidence": "original-manual-skip-group-2026-10-09.json",
+      "sameDestinationGroupVerification": "工作台批次人工跳过后的同站原页接续与末页关闭已对照；固定验收及独立run路径另待实际核对。"
     },
     {
       "action": "manualSubmissionClicked",
@@ -3366,5 +3368,25 @@
     "fullSuitePassed": 1016,
     "servicesGuardedReloadAndProtectedReadbackVerified": true,
     "allMigrationVerified": false
+  },
+  "originalWorkbenchManualSkipGroupCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "f4812c4d52e2c875617bb1e732011d1a25483803",
+    "evidence": "original-manual-skip-group-2026-10-09.json",
+    "originalSkipAndAdvanceFunctionsCompared": true,
+    "actualChromeScenarios": 6,
+    "fullSuitePassed": 1018,
+    "originalServicesGuardedReloadAndProtectedReadbackPassed": true,
+    "allManualSkipScopesVerified": false,
+    "migrationComplete": false
+  },
+  "originalManualSkipRemainingScopeAudit": {
+    "status": "required",
+    "scope": [
+      "manual skip in fixed acceptance path",
+      "manual skip in independent run path"
+    ],
+    "finding": "The non-workbench manualSkip branch has no direct same-tab handoff or last-tab cleanup call. Actual browser equivalence must be checked separately.",
+    "runtimeDefectProven": false
   }
 }

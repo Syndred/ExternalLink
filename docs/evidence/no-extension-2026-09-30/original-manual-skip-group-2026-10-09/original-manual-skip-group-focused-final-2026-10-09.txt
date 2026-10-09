@@ -1,0 +1,40 @@
+✔ user pause returns while both original workers drain and resume preserves their original pages, range and claims (15.0453ms)
+✔ the last claimed unattended task resumes without new task budget or deadline; new work remains denied (5.0912ms)
+✔ expired paused task is parked with original budget while expired run, changed scope and stopped state cannot resume (8.3467ms)
+✔ skipping the second concurrent worker cancels only it and advances its destination without pausing the first (45.5121ms)
+✔ a failed skip keeps its destination and last batch pointer reserved; retry reuses one durable request (2.2391ms)
+✔ selected skip preserves unknown receipt boundaries and manual targets while cleaning only its own automatic page (7.3238ms)
+✔ unattended stop parks every actual in-flight original worker and retains pending combinations and pages (2.2977ms)
+✔ repeated pause retains the same explicitly selected run and never enables unrelated historical work (1.3072ms)
+✔ fixed batch resume restores only its frozen batch and refuses changed execution identity (1.4925ms)
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (6.7101ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (4.2503ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (3.1121ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (2.8423ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (2.7678ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (0.8537ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (5.7003ms)
+✔ manual skip source proof, failed event and changed original page cannot silently transfer another task (34.2782ms)
+✔ verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation (87.6628ms)
+✔ changed local or cloud receipt, actual fields and verification status cannot release a receipt page to a new product (19.7988ms)
+✔ a pending manual proof and exhausted or paused group keep its page without consuming another product budget (1.9773ms)
+✔ lost receipt-page transfer leaves the durable assignment and a closed original page becomes a manual task without replacement (6.9878ms)
+✔ unavailable reason and current-product-only skip match the actual original functions (28.5747ms)
+✔ late skip cannot overwrite changed product, scope, task or unrelated batch progress (3.4866ms)
+✔ same frozen group takes exact original page after cloud source read and lease then reloads it (5.6835ms)
+✔ source or next unknown, controller, identity, scope, host and concurrent changes prevent page transfer (22.4944ms)
+✔ SQLite atomic page transfer survives reopen and rolls back source, destination, outbox and checkpoint together (76.6108ms)
+✔ lost transfer acknowledgment reuses durable assignment; navigation failure and missing page never create substitute tabs (10.9761ms)
+✔ navigation boundary pauses and changed source page use goto only under original document ownership (10.7367ms)
+✔ fixed acceptance and standalone run retain original group order and denominator without wrapping (7.2345ms)
+✔ a newly received next product stays untouched while the next pending product receives the original page (3.0939ms)
+✔ recovered assignment revalidates cloud source and refuses a newer unknown source without opening another page (4.0139ms)
+✔ late cloud lease reply cannot overwrite a newly protected local task or switched workspace (1.4103ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 733.5988

@@ -1,0 +1,1 @@
+{"ok":true,"kind":"manual_card_live_ui_and_cloud_access_smoke","frontendSourceCommit":"f4812c4d52e2c875617bb1e732011d1a25483803","servedUiMatchesFileAndCommit":true,"originalManualCardControlsServed":true,"uiSha256":"6a946dd1f312bf756d2fce28c721741a3553136eaa4a5dbc95b2f2f824448b8e","anonymousCloudSnapshotStatus":401,"productionWrites":0}

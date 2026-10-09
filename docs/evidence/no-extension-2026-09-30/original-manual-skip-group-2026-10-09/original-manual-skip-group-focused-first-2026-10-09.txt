@@ -1,0 +1,62 @@
+✔ user pause returns while both original workers drain and resume preserves their original pages, range and claims (14.6227ms)
+✔ the last claimed unattended task resumes without new task budget or deadline; new work remains denied (5.4723ms)
+✔ expired paused task is parked with original budget while expired run, changed scope and stopped state cannot resume (9.3188ms)
+✔ skipping the second concurrent worker cancels only it and advances its destination without pausing the first (43.6118ms)
+✔ a failed skip keeps its destination and last batch pointer reserved; retry reuses one durable request (2.2658ms)
+✖ selected skip preserves unknown receipt boundaries and manual targets while cleaning only its own automatic page (3.1544ms)
+✔ unattended stop parks every actual in-flight original worker and retains pending combinations and pages (2.2879ms)
+✔ repeated pause retains the same explicitly selected run and never enables unrelated historical work (1.2395ms)
+✔ fixed batch resume restores only its frozen batch and refuses changed execution identity (1.4885ms)
+✔ manual skip advances the original frozen range and retains unknown attempts and receipts (6.9699ms)
+✔ running skip resumes only the saved original range; failed sync and stale identity stay paused (3.8973ms)
+✔ manual continue keeps frozen profile and original tab, releases one task only after acknowledgement (3.0266ms)
+✔ manual continue rejects archived or already received product, missing run and attempted original task (3.046ms)
+✔ stop closes automatic original tabs with durable checkpoint, preserves manual and unknown targets and disables resume (2.614ms)
+✔ stop survives sync failure and never closes a target shared with an unrelated manual task (0.8215ms)
+✔ Product Hunt creation consent requires the original ready task and never follows a replaced page or scope (5.6298ms)
+✔ verified receipt handoff preserves the proof across atomic assignment, SQLite reopen and cloud revalidation (94.0706ms)
+✔ changed local or cloud receipt, actual fields and verification status cannot release a receipt page to a new product (27.3773ms)
+✔ a pending manual proof and exhausted or paused group keep its page without consuming another product budget (1.8845ms)
+✔ lost receipt-page transfer leaves the durable assignment and a closed original page becomes a manual task without replacement (6.0955ms)
+✔ unavailable reason and current-product-only skip match the actual original functions (28.255ms)
+✔ late skip cannot overwrite changed product, scope, task or unrelated batch progress (3.3044ms)
+✔ same frozen group takes exact original page after cloud source read and lease then reloads it (5.5411ms)
+✔ source or next unknown, controller, identity, scope, host and concurrent changes prevent page transfer (23.2192ms)
+✔ SQLite atomic page transfer survives reopen and rolls back source, destination, outbox and checkpoint together (77.4496ms)
+✔ lost transfer acknowledgment reuses durable assignment; navigation failure and missing page never create substitute tabs (9.673ms)
+✔ navigation boundary pauses and changed source page use goto only under original document ownership (7.1477ms)
+✔ fixed acceptance and standalone run retain original group order and denominator without wrapping (6.2593ms)
+✔ a newly received next product stays untouched while the next pending product receives the original page (2.9527ms)
+✔ recovered assignment revalidates cloud source and refuses a newer unknown source without opening another page (3.5553ms)
+✔ late cloud lease reply cannot overwrite a newly protected local task or switched workspace (1.4576ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 30
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 708.9175
+
+✖ failing tests:
+
+test at tests\executor-execution-lifecycle.test.mjs:99:1
+✖ selected skip preserves unknown receipt boundaries and manual targets while cleaning only its own automatic page (3.1544ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   'original-target'
+  - ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-execution-lifecycle.test.mjs:105:238)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'original-target' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

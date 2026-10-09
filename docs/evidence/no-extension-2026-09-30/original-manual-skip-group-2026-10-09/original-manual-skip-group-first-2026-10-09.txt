@@ -1,0 +1,10 @@
+✔ manual skip retains the original destination tab for the next product and closes only the last task (2329.279ms)
+✔ manual success retains its receipt and original tab for the next frozen product after reply loss and paused recovery (3896.4887ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6606.2474

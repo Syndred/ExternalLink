@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-10",
+  "kind": "manual_icon_lifecycle_and_learning_isolated_browser_evidence",
+  "pulledLatest": true,
+  "productionCodeChanged": false,
+  "focusedTests": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  "originalCompleteLifecycleFunctionsExecuted": true,
+  "counts": [
+    3,
+    4,
+    3,
+    0,
+    3
+  ],
+  "originalTaskPreserved": true,
+  "realSubmissions": 0,
+  "productionWrites": 0,
+  "fullSuiteReference": "../migration-dynamic-controls-2026-10-10/summary.json",
+  "fullSuiteRerunThisFollowup": false,
+  "incomplete": [
+    "select/file/comment manual click branch independent verification"
+  ],
+  "failedExploratoryFixturesRetained": true,
+  "overallMigrationComplete": false,
+  "protectedStateReadbackVerified": true,
+  "protectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d"
+}

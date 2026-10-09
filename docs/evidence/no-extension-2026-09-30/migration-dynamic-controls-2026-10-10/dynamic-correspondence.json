@@ -98,11 +98,12 @@
       "entry": "原任务网页 → 字段旁EL按钮",
       "operation": "按当前产品填入此字段，文档或产品变化时停止旧操作",
       "persistence": "原填表字段及学习信息，不等同投稿成功",
-      "currentSource": "executor/src/browser-assistant.mjs",
+      "currentSource": "core/form-engine.js::syncManualIcons; executor/src/browser-assistant.mjs",
       "tests": [
-        "tests/executor-original-full-visit-fill.test.mjs"
+        "tests/executor-original-manual-icon-lifecycle.test.mjs",
+        "tests/fill-learning.test.mjs"
       ],
-      "scope": "已有原完整手动填写函数证据，需核对字段按钮生命周期",
+      "scope": "直接验证按钮数量3→4→3→0→3、关闭及重启无重复、点击填入与产品学习；选择框、文件及评论按钮仍须独立核验",
       "completion": "requires_branch_evidence_audit"
     },
     {

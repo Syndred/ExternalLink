@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: comment
++ actual - expected
+
++ 'First Product is a productivity tool that helps teams work more efficiently. Features include task automation, real-time collaboration, and seamless integrations with popular platforms.'
+- 'Controlled original comment'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/fill-learning.mjs:18:2323 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'First Product is a productivity tool that helps teams work more efficiently. Features include task automation, real-time collaboration, and seamless integrations with popular platforms.',
+  expected: 'Controlled original comment',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

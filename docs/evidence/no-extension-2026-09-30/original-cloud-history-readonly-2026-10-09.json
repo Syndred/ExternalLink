@@ -1,0 +1,163 @@
+{
+  "kind": "readonly_cloud_document_history_checkpoint",
+  "date": "2026-10-09",
+  "sourceCommit": "3b5a2387271261747786c5d5511fc35bd437d17f",
+  "readOnly": true,
+  "cloudWrites": 0,
+  "historyIndexUnchanged": true,
+  "historyVersions": 15,
+  "annotationVersions": 3,
+  "profileVersions": 12,
+  "shaVerifiedObjects": 15,
+  "summaries": [
+    {
+      "key": "siteAnnotations",
+      "revision": 1,
+      "updatedAt": "2026-09-29T05:48:39.699Z",
+      "sha256": "9340e398b79b246699163c27a8ebb43d2fea23ceb4cd13eeeb955bad12924dfc",
+      "entries": 2,
+      "favorites": 0,
+      "grouped": 0,
+      "disabled": 0,
+      "libraryPreferenceEntries": 0
+    },
+    {
+      "key": "siteAnnotations",
+      "revision": 2,
+      "updatedAt": "2026-09-29T12:24:12.868Z",
+      "sha256": "5cdc7e4153c58c847af3fc0ae4e1186128f14c4e274caab79d58ce552a05a77a",
+      "entries": 150,
+      "favorites": 0,
+      "grouped": 0,
+      "disabled": 0,
+      "libraryPreferenceEntries": 0
+    },
+    {
+      "key": "siteAnnotations",
+      "revision": 3,
+      "updatedAt": "2026-09-30T13:56:40.849Z",
+      "sha256": "4ea229f781b174270d8d08399046e47a236be3e0df04401bac7779a5ebbf7520",
+      "entries": 179,
+      "favorites": 0,
+      "grouped": 0,
+      "disabled": 30,
+      "libraryPreferenceEntries": 30
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 1,
+      "updatedAt": "2026-09-29T05:48:31.967Z",
+      "sha256": "572a4e27dda98a35ad759c0f79ccc60343f7c9b141b46d44e5f951f4695ea468",
+      "entries": 7,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 0
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 2,
+      "updatedAt": "2026-09-29T12:24:15.630Z",
+      "sha256": "c4772aefd46b3ab4d65c2b932f49ae724bb921971188c5c89d6715f7231ff5ae",
+      "entries": 8,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 20
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 3,
+      "updatedAt": "2026-09-30T08:31:03.794Z",
+      "sha256": "5cd9571ba850115df8421c9f7bc7c2ad3f9645c03f123f787b69a7ff940f8bd6",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 20
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 4,
+      "updatedAt": "2026-09-30T08:32:23.607Z",
+      "sha256": "3d0747f96b9a4d8d6fb8cc1d0c98779e838cfcd9f615bf2e56e1d31a63b41ca4",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 23
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 5,
+      "updatedAt": "2026-09-30T08:32:41.703Z",
+      "sha256": "3f8aec421eb5366a5a1cb2f4d1d676fc4bd7a81629d3049e9dd8588b505be8e9",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 6,
+      "updatedAt": "2026-09-30T08:33:06.721Z",
+      "sha256": "05d2d8e1ae290f846289fe4b21a9ee28e90a2fd8d0d19d215073628ba3eae7ef",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 7,
+      "updatedAt": "2026-09-30T08:33:32.442Z",
+      "sha256": "6273e61d0c2abacf68dc4ba5115938abf8ba540b5c3799fcb462ab80fb0f4577",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 8,
+      "updatedAt": "2026-09-30T08:33:56.072Z",
+      "sha256": "1b6061d66fe48f8072ef8f2cf42ecae91a291811e870d28c70909b05b6841892",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 9,
+      "updatedAt": "2026-09-30T08:34:20.441Z",
+      "sha256": "97eb5e83d75f054c1f96f097e6d98404fe1b17a4c665bd285aab147444e8e12d",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 10,
+      "updatedAt": "2026-09-30T08:34:44.592Z",
+      "sha256": "364d6e7e8b70483d296530031ba343fa16a26dd5e20b887ea3aac4968d6e1078",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 11,
+      "updatedAt": "2026-09-30T08:41:32.681Z",
+      "sha256": "c5e15c70896da0dda03a155423e474f37c5a686a011a8e28db5f9605a9c01ff7",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    },
+    {
+      "key": "siteProfiles",
+      "revision": 12,
+      "updatedAt": "2026-09-30T08:45:07.969Z",
+      "sha256": "eed33321be6f05c479770a04d303c087c299e7e00ac53a5e3e884193ba4b9ece",
+      "entries": 9,
+      "embeddedMedia": 0,
+      "cloudMediaReferences": 24
+    }
+  ],
+  "verification": "Remote D1 history index read before and after; immutable R2 objects decoded and checksum verified by D1Store.readObject. Both D1 reads reported zero written rows.",
+  "privateAuditSha256": "5b2a292e5610b3edf054c841d9bd4fa3b9aa118c250baf93e3a3bccd0f47b874",
+  "privacy": "Original document payloads and profile identifiers remain in local private backup; only counts, revisions and checksums are published.",
+  "conclusion": "No favorite or group entries found in the three available annotation revisions. This does not prove that all historical data sources have been located. Profile versions contain up to 24 cloud-media references; this is not proof that missing other-device media associations have been recovered.",
+  "migrationComplete": false,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "scope": "Progress documentation and read-only audit only; no application source change, service restart or deployment in this checkpoint."
+}

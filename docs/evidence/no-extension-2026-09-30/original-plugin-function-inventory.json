@@ -3298,5 +3298,15 @@
     "originalProtectedDataPreserved": true,
     "realExternalSubmissions": 0,
     "migrationComplete": false
+  },
+  "originalCloudHistoryReadonlyCheckpoint": {
+    "date": "2026-10-09",
+    "evidence": "original-cloud-history-readonly-2026-10-09.json",
+    "historyVersionsVerified": 15,
+    "historicalFavoritesLocated": false,
+    "historicalGroupsLocatedInAvailableVersions": false,
+    "otherDeviceMediaAssociationsRecovered": false,
+    "cloudWrites": 0,
+    "migrationComplete": false
   }
 }

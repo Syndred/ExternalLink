@@ -13,6 +13,7 @@ import {classifyOriginalFillGate} from './original-site-classification.mjs';
 import {resolveOriginalCloudMediaDefaults,applyOriginalCloudMediaDefaults} from '../../core/original-cloud-media.mjs';
 import {decodeImageAsset,validateImageBytes} from '../../core/media-assets.mjs';
 import {armRefillReceiptWatch} from './refill-receipt-watch.mjs';
+import {assertOriginalCommentLength} from '../../core/original-comment-constraints.mjs';
 
 // The original ordinary sidepanel permits filling an already submitted site.
 // Keep this preparation separate from task:/run:, so an old receipt, its task,
@@ -47,7 +48,7 @@ export async function refillExistingPage(runtime,{input,snapshot,profile,page,de
   return{ok:false,error:'本次仅填写原网页，不操作投稿任务'};
  };
  try{
-  check();if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');await checkCloud();save({});
+  check();if(input.mode==='comment'&&(typeof input.commentText!=='string'||!input.commentText.trim()))throw Error('请输入待填写的评论');await checkCloud();save({});
   const lookup=await resolveOriginalCloudMediaDefaults(profile,async()=>{const assets=[],seen=new Set();let cursor='';do{const result=await runtime.cloud.request('workspace/media'+(cursor?'?cursor='+encodeURIComponent(cursor):''));await assertCurrent();assets.push(...result.assets);cursor=result.next||'';if(cursor&&seen.has(cursor))throw Error('图片目录游标重复');seen.add(cursor);}while(cursor);catalogue.push(...assets);return assets;});await assertCurrent();config=applyOriginalCloudMediaDefaults({...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false},lookup.originalMediaDefaults);save(lookup);
   if(config.logoDataUrl)validateImageBytes(Buffer.from(decodeImageAsset(config.logoDataUrl)),config.logoDataUrl.slice(5,config.logoDataUrl.indexOf(';')));
   if(input.mode==='comment')config.commentTemplate=input.commentText;
@@ -58,7 +59,7 @@ export async function refillExistingPage(runtime,{input,snapshot,profile,page,de
   if(input.mode!=='comment'){const guard=await call({action:'inspectAutoFillGuard',targetDomain:config.targetDomain});if(guard?.blocked)throw Error(guard.reason||'网页已有其他产品内容');}
   if(input.mode!=='comment')await armRefillReceiptWatch(runtime,{state,snapshot,page,config,assertCurrent});
   let fill,actual,validation,counts,submitReady=true;
-  if(input.mode==='comment'){fill=await call({action:'executeSubmit',config,platformType:'wp_comment'});if(fill?.error||fill?.ok===false)throw Error(fill.error||'评论填写未完成');actual=await call({action:'getFilledFieldsReport'});validation=await call({action:'collectFormValidation'});}
+  if(input.mode==='comment'){const platformType=candidate.detection.platform==='wp_comment'?'wp_comment':'article',fields=await call({action:'getCommentFieldReport',platformType});if(fields?.fields?.length!==1)throw Error('未发现真实评论字段');assertOriginalCommentLength(input.commentText,fields,{});fill=await call({action:'executeSubmit',config,platformType});if(fill?.error||fill?.ok===false)throw Error(fill.error||'评论填写未完成');actual=await call({action:'getCommentFieldReport',platformType});if(actual?.fields?.length!==1||actual.fields[0].value!==input.commentText)throw Error('评论填写未通过回读核验');validation=await call({action:'collectFormValidation'});}
   else{
    fill=await fillOriginalVisitForm({config,platformType:candidate.detection.platform,allowAgent:input.useAgent!==false,cacheKey:id,io:{assertCurrent,call,
     across:async message=>{const active=[];for(const item of engines){await assertCurrent();if(Number((await item.engine.call({action:'countEmptyFields'})).totalCount)>0)active.push(item);}const results=[];for(const item of active.length?active:[candidate]){await assertCurrent();results.push(await item.engine.call(message));await assertCurrent();}return mergeOriginalFrameFill(results);},
@@ -74,7 +75,7 @@ export async function refillExistingPage(runtime,{input,snapshot,profile,page,de
   save({fill,actual,validation,counts,submitReady});await checkCloud();const reason=submitReady?'已再次填写原网页；原收件记录保持，未重复投稿':fill.agentResult?.reason||'仍有必填资料未完成，请检查原网页';save({status:submitReady?'prepared':'needs_manual',reason,completedAt:new Date().toISOString()});
   return{ok:true,refillId:id,filled:true,submitted:false,fillOnly:true,fill,actual,validation,counts,submitReady,reason};
  }catch(error){
-  const partial=[];if(!page.isClosed()&&page.url()===input.expectedUrl)for(const item of engines){try{if(!item.frame.isDetached()&&item.frame.url()===item.url&&await item.engine.isCurrentDocument())partial.push({url:item.url,actual:await item.engine.call({action:'getFilledFieldsReport'})});}catch{}}
+  const partial=[];if(!page.isClosed()&&page.url()===input.expectedUrl)for(const item of engines){try{if(!item.frame.isDetached()&&item.frame.url()===item.url&&await item.engine.isCurrentDocument())partial.push({url:item.url,actual:await item.engine.call(input.mode==='comment'?{action:'getCommentFieldReport',platformType:item.detection.platform==='wp_comment'?'wp_comment':'article'}:{action:'getFilledFieldsReport'})});}catch{}}
   save({status:'needs_manual',error:error.message,...(partial.length?{partialActual:partial}: {})});throw error;
  }finally{for(const item of engines)await item.engine.detach();}
 }

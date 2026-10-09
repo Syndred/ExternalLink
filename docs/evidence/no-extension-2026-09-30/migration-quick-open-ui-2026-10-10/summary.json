@@ -1,0 +1,33 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "actualUiStartAndResume": true,
+  "completeOriginalOpenAndSelectionHandlersCompared": true,
+  "diskReopenSameJobAndSubset": true,
+  "selectedCount": 3,
+  "firstBatchCount": 2,
+  "firstOpened": 1,
+  "firstFailed": 1,
+  "failedAndNotAttemptedSelectionsKept": true,
+  "removeOpenedFalseRetainsSelection": true,
+  "actualBackgroundTargetAttempts": 3,
+  "actualOwnedDestinationGets": 2,
+  "connectionAndTargetFailureControlled": true,
+  "uncertainOpeningNotRetried": true,
+  "finalDiskAndUiReadback": true,
+  "originalReceiptsAndPausedBatchKept": true,
+  "focusedPassed": 25,
+  "focusedFailed": 0,
+  "focusedSkipped": 0,
+  "productionCodeChanged": false,
+  "newFullRunClaimed": false,
+  "externalRequests": 0,
+  "realSubmissions": 0,
+  "realModelCalls": 0,
+  "productionWrites": 0,
+  "limitations": [
+    "Independent headless Chrome verifies target creation; actual user desktop focus and existing window reuse remain unverified.",
+    "Historical-job presentation, concurrent execution and other cross-entry branches still require review."
+  ],
+  "overallMigrationComplete": false,
+  "originalReferenceRegressionPassed": 13
+}

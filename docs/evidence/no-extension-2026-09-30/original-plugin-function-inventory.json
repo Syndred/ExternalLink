@@ -4743,5 +4743,18 @@
     "replyLostReadbackFix": true,
     "originalDataPreserved": true,
     "overallMigrationComplete": false
+  },
+  "originalQuickOpenUiAndDiskCheckpoint": {
+    "date": "2026-10-10",
+    "evidence": "migration-quick-open-ui-2026-10-10/summary.json",
+    "actualUiAndCompleteOriginalHandlers": true,
+    "frozenSubsetAndSameJobAfterDiskReopen": true,
+    "failedSelectionKept": true,
+    "removeOpenedFalseVerified": true,
+    "uncertainOpeningNotRetried": true,
+    "focusedPassed": 25,
+    "productionCodeChanged": false,
+    "newFullRunClaimed": false,
+    "overallMigrationComplete": false
   }
 }

@@ -1020,15 +1020,23 @@
       ],
       "candidateTestSources": [
         {
+          "path": "tests/executor-original-quick-open-ui.test.mjs",
+          "sha256": "3f1513a5e0dfecad62c0b937399fb79bd7bc57b23464269b4921beff646e008b"
+        },
+        {
           "path": "tests/executor-comment-quickopen.test.mjs",
           "sha256": "c5289935bb9c9a51e08e62a63184e091ba153fff7c21d43f2dc60a9181dd35d8"
         },
         {
-          "path": "tests/executor-auto-visit-preferences.test.mjs",
-          "sha256": "19f78836a9630926f6124a60cf10c9ebaf5c747f14051762ff9185187a901bec"
+          "path": "tests/executor-original-browsing-offline.test.mjs",
+          "sha256": "75fe50e0e9c825a3857e89ab3ab4c5d6384ddc42f8d44cc4d0976a469b8d503b"
+        },
+        {
+          "path": "tests/library-preferences-quick-open.test.mjs",
+          "sha256": "95c4b3ad863cba4c686b08db10ab1ab92f1690b7496b4c6f961e12636b0032e0"
         }
       ],
-      "requiredEvidenceReview": "核对选择、后台打开、窗口复用、活动页填写、失败分母和关闭；不改动原用户浏览器。",
+      "requiredEvidenceReview": "完整原打开函数和侧栏选择处理器已与实际界面、独立Chrome后台目标及SQLite重开对照；继续审查窗口复用、任务并发、历史任务展示及真实桌面焦点分支，不改动原用户浏览器。",
       "completion": "requires_action_specific_execution_evidence_review"
     },
     {

@@ -1,0 +1,22 @@
+$ErrorActionPreference = 'Stop'
+$taskWorkspace = (Resolve-Path -LiteralPath 'C:\Users\Administrator\Desktop\project\ExternalLink').Path
+$taskServices = @(@{ Port = 19388; File = 'server.mjs' }, @{ Port = 19389; File = 'workbench-server.mjs' })
+$taskVerified = @()
+foreach ($taskService in $taskServices) {
+  $taskListeners = @(Get-NetTCPConnection -LocalPort $taskService.Port -State Listen)
+  $taskProcessIds = @($taskListeners.OwningProcess | Select-Object -Unique)
+  if ($taskProcessIds.Count -ne 1) { throw '服务监听进程不唯一，未更新' }
+  $taskProcess = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $taskProcessIds[0])
+  $taskExpected = Join-Path $taskWorkspace ('executor\src\' + $taskService.File)
+  $taskPattern = '(?i)(?:^|\s)"?' + [regex]::Escape($taskExpected.Replace('\', '/')) + '"?\s*$'
+  if ($taskProcess.Name -ne 'node.exe' -or $taskProcess.CommandLine.Replace('\', '/') -notmatch $taskPattern) { throw '服务路径或进程身份不符，未更新' }
+  $taskVerified += @{ Port = $taskService.Port; ProcessId = $taskProcessIds[0]; File = $taskService.File }
+}
+& node (Join-Path $taskWorkspace 'executor\test-output\stopped-service-guard.mjs')
+if ($LASTEXITCODE -ne 0) { throw '磁盘暂停与任务保护检查未通过，未更新' }
+foreach ($taskService in $taskVerified) { Stop-Process -Id $taskService.ProcessId -ErrorAction Stop }
+& node (Join-Path $taskWorkspace 'executor\test-output\stopped-service-guard.mjs')
+if ($LASTEXITCODE -ne 0) { throw '停止后磁盘保护未通过，未启动' }
+& node (Join-Path $taskWorkspace 'executor\scripts\open-workbench.mjs') --services-only
+if ($LASTEXITCODE -ne 0) { throw '服务未就绪' }
+$taskVerified | ForEach-Object { Write-Output ('Updated original service ' + $_.Port + ' (' + $_.File + ')') }

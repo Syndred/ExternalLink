@@ -3081,7 +3081,7 @@
     "finalCreateFromPriorConsentAfterVision": false,
     "browserCandidateExcludedFromResponse": true,
     "sixPageUiRegressionAndEditorDraftsPassed": true,
-    "latestNativeServiceUpdatePending": true,
+    "latestNativeServiceUpdatePending": false,
     "migrationComplete": false,
     "evidence": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09.json",
     "originalMainNoProgressStopsImmediately": true,
@@ -3092,6 +3092,16 @@
     "scheduledMonitorSource": "schedule",
     "scheduledMonitorCount": 89,
     "actualProductionSubmissionVerified": false,
-    "allRemainingOriginalFunctionsVerified": false
+    "allRemainingOriginalFunctionsVerified": false,
+    "latestNativeServicesUpdated": true,
+    "nativeServicesSourceCommit": "4868a0a3e5075cff4b483c15031703f89190c511",
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsChangedOnlyByOriginal54Candidates": true,
+    "originalMonitorStatus": "paused",
+    "originalMonitorCursor": 54,
+    "originalMonitorCount": 89,
+    "freshCurrentDeviceTasksUnchanged": 778,
+    "privateOriginalSourceFilesUnchanged": 6,
+    "storedTimelineEvents": 470
   }
 }

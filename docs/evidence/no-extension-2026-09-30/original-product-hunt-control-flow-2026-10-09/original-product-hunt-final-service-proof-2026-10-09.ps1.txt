@@ -1,0 +1,16 @@
+$ErrorActionPreference = 'Stop'
+$taskSourceCommit = '4868a0a3e5075cff4b483c15031703f89190c511'
+foreach ($taskPath in @('core/product-hunt-workflow.mjs','executor/src/product-hunt.mjs','executor/src/single-page.mjs','executor/src/browser-assistant.mjs')) {
+    & git diff --exit-code $taskSourceCommit -- $taskPath
+    if ($LASTEXITCODE -ne 0) { throw '服务实现与已验证源码提交不一致' }
+}
+$taskProof = foreach ($taskSpec in @(@{Port=19388;File='server.mjs'},@{Port=19389;File='workbench-server.mjs'})) {
+    $taskListeners = @(Get-NetTCPConnection -LocalPort $taskSpec.Port -State Listen)
+    $taskIds = @($taskListeners.OwningProcess | Select-Object -Unique)
+    if ($taskIds.Count -ne 1) { throw '服务监听身份不唯一' }
+    $taskProcess = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $taskIds[0])
+    $taskExpected = (Join-Path (Get-Location).Path ('executor/src/' + $taskSpec.File)).Replace('\','/')
+    if ($taskProcess.Name -ne 'node.exe' -or $taskProcess.CommandLine.Replace('\','/').IndexOf($taskExpected,[StringComparison]::OrdinalIgnoreCase) -lt 0) { throw '服务不是当前仓库进程' }
+    [PSCustomObject]@{Port=$taskSpec.Port;File=$taskSpec.File;Pid=$taskIds[0];StartedAt=$taskProcess.CreationDate.ToString('o');CurrentWorkspaceVerified=$true}
+}
+[PSCustomObject]@{ok=$true;kind='final_published_native_service_process_identity';sourceCommit=$taskSourceCommit;repositoryHead=(git rev-parse HEAD);services=@($taskProof);servicesOnlyStartup=$true;workerRedeployed=$false} | ConvertTo-Json -Depth 4 -Compress

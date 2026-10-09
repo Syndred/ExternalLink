@@ -57,7 +57,7 @@
   "browserCandidateExcludedFromResponse": true,
   "sixPageUiRegressionAndEditorDraftsPassed": true,
   "firstServicesSourceCommit": "bccd31ded138b4b9f7e6ff5ea0d9254befff6e37",
-  "latestNativeServiceUpdatePending": true,
+  "latestNativeServiceUpdatePending": false,
   "existingScheduledMonitorLiveSnapshot": {
     "ok": true,
     "kind": "existing_scheduled_monitor_wait",
@@ -265,6 +265,139 @@
       "bytes": 1278,
       "capturedSha256": "fd7db082279a70a4c0f3049775de7f69f7f8a7433a4b0e629e569bc13c23709a",
       "gitLfSha256": "fd7db082279a70a4c0f3049775de7f69f7f8a7433a4b0e629e569bc13c23709a"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-scheduled-monitor-wait-2026-10-09.txt",
+      "bytes": 6479,
+      "capturedSha256": "7a7e55a1032ec571631e8939740f6afa66cf174eeb71cf42e77d7dbf71bf45ee",
+      "gitLfSha256": "a99b6c1d3ac1777b20e8a50cc4c4f4662e61da61bc31c9b6269bcaff063e2713"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-monitor-transition-before-2026-10-09.txt",
+      "bytes": 868,
+      "capturedSha256": "57f8562a7ff7148f6f0d03c3eb3b7a9137003e3536481bb66082a9db022d344f",
+      "gitLfSha256": "4e98240b2f8bb3556ba96b2303cbe6e675d8f084892b753fb6b2ee54c6a7c5bc"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-monitor-transition-after-2026-10-09.txt",
+      "bytes": 867,
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitLfSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-final-service-reload-2026-10-09.txt",
+      "bytes": 453,
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitLfSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-final-service-process-2026-10-09.txt",
+      "bytes": 516,
+      "capturedSha256": "5efe189656c3684749ac45520c474096b037b55ef18582098c4363c4c8671884",
+      "gitLfSha256": "925a48dc400a0b0bb084305483d5dda37801d70b9febc4be7ccf44ffa4c47f74"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-task-inventory-readonly-2026-10-09.txt",
+      "bytes": 254,
+      "capturedSha256": "93e07c2f7dbbf0537629fb7db4b8237ec90aeb18fc2d3cb5105ca4f39daf28af",
+      "gitLfSha256": "b379db18834c5e00043a618d76fb209d483be167939066dbcb130ffc9be3c0ad"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-monitor-transition-2026-10-09.mjs.txt",
+      "bytes": 5513,
+      "capturedSha256": "b35b3681736230abb54e2bd37db86002f913e256bbb228cc9eaa9466d8021eb8",
+      "gitLfSha256": "b35b3681736230abb54e2bd37db86002f913e256bbb228cc9eaa9466d8021eb8"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-final-service-proof-2026-10-09.ps1.txt",
+      "bytes": 1553,
+      "capturedSha256": "22843040eb8ac88fdc4e706d40070fa29a3a0f05314af15c6ccaff424b6023af",
+      "gitLfSha256": "22843040eb8ac88fdc4e706d40070fa29a3a0f05314af15c6ccaff424b6023af"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-product-hunt-task-inventory-readonly-2026-10-09.mjs.txt",
+      "bytes": 1426,
+      "capturedSha256": "58489eba3aa5b3393a6863ee32814a969c9dd05a6b506b4e7dc1267cd38037d0",
+      "gitLfSha256": "58489eba3aa5b3393a6863ee32814a969c9dd05a6b506b4e7dc1267cd38037d0"
+    },
+    {
+      "path": "docs/evidence/no-extension-2026-09-30/original-product-hunt-control-flow-2026-10-09/original-agent-service-reload-2026-10-07.ps1.txt",
+      "bytes": 1792,
+      "capturedSha256": "3a8b3878070112ddb1d55793a36d18c63686c045464232e1f5aa9af1105007e3",
+      "gitLfSha256": "3a8b3878070112ddb1d55793a36d18c63686c045464232e1f5aa9af1105007e3"
     }
-  ]
+  ],
+  "latestNativeServicesUpdated": true,
+  "finalNativeServicesSourceCommit": "4868a0a3e5075cff4b483c15031703f89190c511",
+  "finalNativeServiceProcessProof": {
+    "ok": true,
+    "kind": "final_published_native_service_process_identity",
+    "sourceCommit": "4868a0a3e5075cff4b483c15031703f89190c511",
+    "repositoryHead": "6297e940f9c61601523d38f434141dc12f7bef35",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 6540,
+        "StartedAt": "2026-10-09T12:59:11.6157450+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 24012,
+        "StartedAt": "2026-10-09T12:59:12.4499770+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": false
+  },
+  "scheduledMonitorFinalCheckpoint": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "monitorPauseCause": "cloud_snapshot_http_503_non_json",
+  "scheduledMonitorRemaining": 35,
+  "originalMonitorTaskNotRestarted": true,
+  "newMonitorResultsRetained": true,
+  "freshCurrentDeviceInventory": {
+    "ok": true,
+    "kind": "fresh_current_device_task_inventory_readonly",
+    "pages": 4,
+    "tasks": 778,
+    "sha256": "0bc30f7c3f025f1bfe9d127abac8b6a0b5f92e69ab9d1d875d5b3fb9467082ed",
+    "allOriginalTaskFieldsAndIdsMatchFormalRecovery": true,
+    "writes": 0,
+    "newTaskOrSubmission": 0
+  }
 }

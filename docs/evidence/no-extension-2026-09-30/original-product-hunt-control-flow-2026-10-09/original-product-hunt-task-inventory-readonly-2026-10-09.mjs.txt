@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {Store} from '../src/store.mjs';
+import {Cloud} from '../src/cloud.mjs';
+import {batchJson} from '../../core/workbench-batch-recovery.mjs';
+const store=new Store(join(homedir(),'.externallink-executor','outbox.sqlite'),{readOnly:true});
+try{
+ const checkpoint=JSON.parse(await readFile(join(homedir(),'.externallink-backups','original-plugin-storage-dbdc5ab1-de65-43b0-9a24-f63468e18521','formal-recovery-checkpoint-2026-10-08.json'),'utf8')),cloud=new Cloud(store.get('pair')),tasks=[],seen=new Set();let after='',pages=0;
+ do{const page=await cloud.request('runs?view=inventory&after='+encodeURIComponent(after));pages++;for(const task of page.tasks){assert.ok(!seen.has(task.id));seen.add(task.id);tasks.push(task);}const next=page.next||'';assert.notEqual(next&&next===after,true);after=next;}while(after);
+ const sha256=createHash('sha256').update(batchJson(tasks.sort((a,b)=>a.id.localeCompare(b.id)))).digest('hex');assert.deepEqual({count:tasks.length,sha256},checkpoint.inventoryBefore);
+ console.log(JSON.stringify({ok:true,kind:'fresh_current_device_task_inventory_readonly',pages,tasks:tasks.length,sha256,allOriginalTaskFieldsAndIdsMatchFormalRecovery:true,writes:0,newTaskOrSubmission:0}));
+}finally{store.close();}

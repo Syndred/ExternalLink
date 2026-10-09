@@ -1,0 +1,1 @@
+{"ok":true,"kind":"fresh_current_device_task_inventory_readonly","pages":4,"tasks":778,"sha256":"0bc30f7c3f025f1bfe9d127abac8b6a0b5f92e69ab9d1d875d5b3fb9467082ed","allOriginalTaskFieldsAndIdsMatchFormalRecovery":true,"writes":0,"newTaskOrSubmission":0}

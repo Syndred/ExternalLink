@@ -3556,5 +3556,40 @@
     "productSourceChanged": false,
     "realSiteReceipt": false,
     "migrationComplete": false
+  },
+  "originalDestinationMarkDelivery": {
+    "status": "published_all_original_marker_states_and_ui_reload_verified",
+    "sourceCommit": "249d8c0a90ede9b318e37f73e7d6e56836e95184",
+    "workerVersion": "16aba9cb-e9f2-430e-b5c2-6e78ad4c4ab5",
+    "evidence": "migration-mark-all-2026-10-09/summary.json",
+    "toggleComparisons": 540,
+    "actualUiCases": 18,
+    "originalUnnamedMarkerButtons": 8,
+    "fullRegression": {
+      "tests": 1054,
+      "pass": 1054,
+      "fail": 0,
+      "skipped": 0
+    },
+    "newMarkerSubmittedProjectsInitialized": true,
+    "protectedOriginalBusinessUnchanged": true,
+    "migrationComplete": false
+  },
+  "obtainedOriginalLedgerPreservationCheckpoint": {
+    "date": "2026-10-09",
+    "status": "all_obtained_original_records_timeline_and_media_field_associations_retained",
+    "evidence": "migration-mark-all-2026-10-09/original-ledger-recheck-2026-10-09.json",
+    "originalRecords": 105,
+    "unchangedOriginalRecords": 105,
+    "originalTimelineEvents": 458,
+    "unchangedOriginalTimelineEvents": 458,
+    "originalMediaAssociations": 108,
+    "unchangedOriginalMediaAssociations": 108,
+    "originalFavorites": 0,
+    "currentFavorites": 0,
+    "knownMissingFavorites": 0,
+    "extraBackupRequestedFromUser": false,
+    "otherUnlocatedSourcesNotInferredMissing": true,
+    "migrationComplete": false
   }
 }

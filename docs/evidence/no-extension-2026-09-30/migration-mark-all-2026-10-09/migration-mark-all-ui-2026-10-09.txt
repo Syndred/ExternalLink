@@ -1,0 +1,60 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ordinary.example/. Input:
+
+'单站投稿队列\n' +
+  '\n' +
+  '合并原内置网址、用户网址和表格，按网站汇总所选产品并沿用分类与分组。质量或黑名单未通过的组合会显示原因，可浏览核对。上一站／下一站会打开对应网页；新增网站会进入下一次刷新，当前位置按原网站编号保留。\n' +
+  '\n' +
+  '队列产品：原产品\n' +
+  '更新队列产品\n' +
+  '\n' +
+  '第 1 / 187 站 · 186 个组合满足当前提交条件\n' +
+  '\n' +
+  'tipseason.com\n' +
+  'https://tipseason.com/submit\n' +
+  '\n' +
+  '本站产品：原产品\n' +
+  '\n' +
+  '原产品：人工删除的目标。可浏览核对。\n' +
+  '\n' +
+  '上一站\n' +
+  '下一站\n' +
+  '打开当前网站\n' +
+  '从待投稿队列移除\n' +
+  '\n' +
+  '已从待投稿队列移除，网站资料和历史收件保留。'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/library-actions.mjs:21:506 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '单站投稿队列\n' +
+    '\n' +
+    '合并原内置网址、用户网址和表格，按网站汇总所选产品并沿用分类与分组。质量或黑名单未通过的组合会显示原因，可浏览核对。上一站／下一站会打开对应网页；新增网站会进入下一次刷新，当前位置按原网站编号保留。\n' +
+    '\n' +
+    '队列产品：原产品\n' +
+    '更新队列产品\n' +
+    '\n' +
+    '第 1 / 187 站 · 186 个组合满足当前提交条件\n' +
+    '\n' +
+    'tipseason.com\n' +
+    'https://tipseason.com/submit\n' +
+    '\n' +
+    '本站产品：原产品\n' +
+    '\n' +
+    '原产品：人工删除的目标。可浏览核对。\n' +
+    '\n' +
+    '上一站\n' +
+    '下一站\n' +
+    '打开当前网站\n' +
+    '从待投稿队列移除\n' +
+    '\n' +
+    '已从待投稿队列移除，网站资料和历史收件保留。',
+  expected: /ordinary.example/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

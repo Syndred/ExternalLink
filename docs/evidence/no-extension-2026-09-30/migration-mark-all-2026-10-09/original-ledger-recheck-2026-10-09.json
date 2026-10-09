@@ -1,0 +1,43 @@
+{
+  "kind": "fresh_existing_original_ledger_and_current_source_recheck",
+  "sourceCapturedAt": "2026-10-08T01:06:59.736Z",
+  "originalScopedLedger": {
+    "profiles": 8,
+    "records": 105,
+    "annotations": 150,
+    "annotationFavorites": 0,
+    "legacyPreferenceFavorites": 0,
+    "timelineEvents": 458
+  },
+  "originalPrivateStorage": {
+    "profiles": 8,
+    "records": 105,
+    "annotations": 150,
+    "annotationFavorites": 0,
+    "legacyPreferenceFavorites": 0,
+    "timelineEvents": 458
+  },
+  "currentCloudLedger": {
+    "profiles": 9,
+    "records": 112,
+    "annotations": 179,
+    "annotationFavorites": 0,
+    "legacyPreferenceFavorites": 0,
+    "timelineEvents": 470
+  },
+  "originalMediaFieldAssociations": 108,
+  "unchangedOriginalMediaFieldAssociations": 108,
+  "changedMediaFields": [],
+  "sourceReadsOnly": true,
+  "productionWrites": 0,
+  "knownFavoriteRowsMissing": 0,
+  "otherUnlocatedSourcesNotInferredMissing": true,
+  "recordAndTimelineComparison": {
+    "originalRecords": 105,
+    "missingOriginalRecordKeys": 0,
+    "changedOriginalRecords": 0,
+    "originalTimelineEvents": 458,
+    "missingOriginalTimelineIds": 0,
+    "unchangedOriginalTimelineEvents": 458
+  }
+}

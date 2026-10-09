@@ -1,0 +1,204 @@
+{
+  "kind": "all_original_destination_mark_delivery",
+  "date": "2026-10-09",
+  "sourceBaseline": "299fe02",
+  "sourceCommit": "249d8c0a90ede9b318e37f73e7d6e56836e95184",
+  "remotePulled": true,
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "originalUnnamedButtons": 8,
+  "totalConditions": 9,
+  "aliasCases": 10,
+  "seedStates": 3,
+  "toggleComparisons": 540,
+  "actualUiSaveAndReloadCases": 18,
+  "newMarkerSubmittedProjectsInitialized": true,
+  "historicalListsCopiedAndRetained": true,
+  "fullRegression": {
+    "tests": 1054,
+    "pass": 1054,
+    "fail": 0,
+    "skipped": 0
+  },
+  "sourcePublished": true,
+  "workerVersion": "16aba9cb-e9f2-430e-b5c2-6e78ad4c4ab5",
+  "workerDeployedBeforeNativeReload": true,
+  "nativeServicesUpdated": true,
+  "originalChromeStartedOrClosed": false,
+  "protection": {
+    "before": {
+      "ok": true,
+      "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+      "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+      "monitorStatus": "paused",
+      "monitorCount": 89,
+      "monitorCursor": 54,
+      "monitorCounts": {
+        "live": 3,
+        "missing": 48,
+        "unreachable": 3,
+        "uncheckable": 0,
+        "excluded": 0
+      },
+      "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+      "monitorResultsRevisionBefore": 258,
+      "monitorResultsRevisionAfter": 312,
+      "monitorResultsExactlyMatchOriginalJobCandidates": true,
+      "originalReceiptsAndTimelineKept": true,
+      "timelineEvents": 470,
+      "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+      "privateOriginalSourceFilesVerified": 6,
+      "oldFormalRecoveryCheckpointNotOverwritten": true,
+      "newPrivateTransitionSaved": true,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "newSubmissions": 0
+    },
+    "after": {
+      "ok": true,
+      "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+      "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+      "monitorStatus": "paused",
+      "monitorCount": 89,
+      "monitorCursor": 54,
+      "monitorCounts": {
+        "live": 3,
+        "missing": 48,
+        "unreachable": 3,
+        "uncheckable": 0,
+        "excluded": 0
+      },
+      "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+      "monitorResultsRevisionBefore": 258,
+      "monitorResultsRevisionAfter": 312,
+      "monitorResultsExactlyMatchOriginalJobCandidates": true,
+      "originalReceiptsAndTimelineKept": true,
+      "timelineEvents": 470,
+      "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+      "privateOriginalSourceFilesVerified": 6,
+      "oldFormalRecoveryCheckpointNotOverwritten": true,
+      "newPrivateTransitionSaved": true,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0,
+      "pendingEdits": 0,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "newSubmissions": 0
+    }
+  },
+  "deployedLibrary": {
+    "ok": true,
+    "kind": "actual_deployed_original_library_model_readonly",
+    "reports": [
+      {
+        "origin": "http://127.0.0.1:19388",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      },
+      {
+        "origin": "http://127.0.0.1:19389",
+        "rows": 2948,
+        "qualityPreferencesCategoryMetricsAndProfileOrderMatched": true
+      }
+    ],
+    "originalTasksRunsFixedBatchPendingAndCredentialsUnchanged": true,
+    "productionWrites": 0,
+    "realModels": 0,
+    "realSubmissions": 0
+  },
+  "visible": {
+    "ok": true,
+    "kind": "readonly_user_visible_migration_audit",
+    "reports": [
+      {
+        "port": 19388,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      },
+      {
+        "port": 19389,
+        "products": 9,
+        "visibleProducts": 8,
+        "library": 2948,
+        "activity": 786,
+        "untouchedCombinationsExcluded": 111,
+        "placeholderAbsentFromVisibleProductsLibraryAndOverview": true,
+        "archivedPlaceholderProductsRetained": 1
+      }
+    ],
+    "originalTasksRunsBatchesPendingAndCredentialsUnchanged": true,
+    "productionBusinessWrites": 0,
+    "realSubmissions": 0,
+    "realModels": 0
+  },
+  "logs": [
+    "migration-mark-all-before-2026-10-09.txt",
+    "migration-mark-all-family-2026-10-09.txt",
+    "migration-mark-all-ui-2026-10-09.txt",
+    "migration-mark-all-ui-final-2026-10-09.txt",
+    "migration-mark-all-full-2026-10-09.txt",
+    "migration-mark-all-protection-before-2026-10-09.txt",
+    "migration-mark-all-protection-after-2026-10-09.txt",
+    "migration-mark-all-deploy-2026-10-09.txt",
+    "migration-mark-all-reload-2026-10-09.txt",
+    "migration-mark-all-library-after-2026-10-09.txt",
+    "migration-mark-all-visible-after-2026-10-09.txt"
+  ],
+  "realSubmissions": 0,
+  "realModels": 0,
+  "migrationComplete": false,
+  "obtainedOriginalLedgerRecheck": {
+    "kind": "fresh_existing_original_ledger_and_current_source_recheck",
+    "sourceCapturedAt": "2026-10-08T01:06:59.736Z",
+    "originalScopedLedger": {
+      "profiles": 8,
+      "records": 105,
+      "annotations": 150,
+      "annotationFavorites": 0,
+      "legacyPreferenceFavorites": 0,
+      "timelineEvents": 458
+    },
+    "originalPrivateStorage": {
+      "profiles": 8,
+      "records": 105,
+      "annotations": 150,
+      "annotationFavorites": 0,
+      "legacyPreferenceFavorites": 0,
+      "timelineEvents": 458
+    },
+    "currentCloudLedger": {
+      "profiles": 9,
+      "records": 112,
+      "annotations": 179,
+      "annotationFavorites": 0,
+      "legacyPreferenceFavorites": 0,
+      "timelineEvents": 470
+    },
+    "originalMediaFieldAssociations": 108,
+    "unchangedOriginalMediaFieldAssociations": 108,
+    "changedMediaFields": [],
+    "sourceReadsOnly": true,
+    "productionWrites": 0,
+    "knownFavoriteRowsMissing": 0,
+    "otherUnlocatedSourcesNotInferredMissing": true,
+    "recordAndTimelineComparison": {
+      "originalRecords": 105,
+      "missingOriginalRecordKeys": 0,
+      "changedOriginalRecords": 0,
+      "originalTimelineEvents": 458,
+      "missingOriginalTimelineIds": 0,
+      "unchangedOriginalTimelineEvents": 458
+    }
+  }
+}

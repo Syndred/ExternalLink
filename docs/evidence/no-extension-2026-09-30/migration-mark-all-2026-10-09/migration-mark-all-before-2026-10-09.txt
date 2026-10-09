@@ -1,0 +1,40 @@
+✖ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (5.4985ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 276.1098
+
+✖ failing tests:
+
+test at tests\executor-original-library-actions.test.mjs:22:1
+✖ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (5.4985ms)
+  AssertionError [ERR_ASSERTION]: startupstash.com new can_submit on
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      'startupstash.com': {
+        auto: false,
+        domain: 'startupstash.com',
+        note: '',
+  ...
+        ],
+  -     submittedProjects: [],
+        url: 'https://startupstash.com/submit'
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-library-actions.test.mjs:29:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { 'startupstash.com': { url: 'https://startupstash.com/submit', domain: 'startupstash.com', status: 'can_submit', statuses: [Array], note: '', auto: false } },
+    expected: { 'startupstash.com': { url: 'https://startupstash.com/submit', domain: 'startupstash.com', status: 'can_submit', statuses: [Array], note: '', submittedProjects: [], auto: false } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

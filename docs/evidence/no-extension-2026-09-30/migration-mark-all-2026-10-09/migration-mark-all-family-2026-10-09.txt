@@ -1,0 +1,27 @@
+✔ library import deduplicates identities without discarding table metadata or changing the source (2.35ms)
+✔ site marking preserves submission history and remains distinct from receipt evidence (1.0019ms)
+✔ all original destination marks toggle on and off with identical metadata and deletion scope on new and historical aliases (332.318ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (14.6145ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (11.2542ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (6.1076ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (6.0674ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (9.0208ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (11.6386ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (36.0105ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (7.8424ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (88.4898ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (1.7699ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (1.9866ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.3194ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (9.2577ms)
+✔ full original library projection preserves preferences groups metrics original details and per-product timeline facts (12.9363ms)
+✔ imported row category metadata never becomes a backlink type and original per-product status order is retained (1.7339ms)
+✔ legacy date decoding is an explicit original-display difference and must still follow the frozen original progress algorithm (2.1377ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 865.8888

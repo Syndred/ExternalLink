@@ -3,11 +3,12 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 
-// Load only the three relevant committed modules without rewriting live files.
+// Load only the relevant committed modules without rewriting live files.
 // Dependencies, the isolated browser and authenticated storage fixtures remain
 // identical to the current run, so a missing handoff is attributable to source.
 export const originalNativeReceiptRuntime=()=>nativeRuntimeAt('485b8ad',['runtime.mjs','acceptance-cleanup.mjs','original-agent-unavailable.mjs']);
 export const originalNativeSkipScopeRuntime=()=>nativeRuntimeAt('bfa80b9',['runtime.mjs','manual-controls.mjs']);
+export const originalNativeIndependentReceiptRuntime=()=>nativeRuntimeAt('85b6297',['runtime.mjs','acceptance-cleanup.mjs']);
 async function nativeRuntimeAt(ref,modules){
  const names=new Set(modules),cache=new Map();
  function moduleUrl(name){

@@ -13,7 +13,7 @@ import {D1Store} from '../cloud/worker/src/d1-store.mjs';
 import {d1Executor} from '../cloud/worker/src/d1-executor.mjs';
 import {Store} from '../executor/src/store.mjs';
 import {Runtime as CurrentRuntime} from '../executor/src/runtime.mjs';
-import {originalNativeReceiptRuntime,originalNativeSkipScopeRuntime} from './helpers/native-receipt-group-baseline.mjs';
+import {originalNativeReceiptRuntime,originalNativeSkipScopeRuntime,originalNativeIndependentReceiptRuntime} from './helpers/native-receipt-group-baseline.mjs';
 import {Cloud} from '../executor/src/cloud.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask} from '../executor/src/workbench-features.mjs';
 import {recoverCloudBatchRecords} from '../executor/src/workbench-batch-recovery.mjs';
@@ -37,7 +37,32 @@ import {queue} from '../executor/src/shared.mjs';
 import {runWorkbenchBatch} from '../executor/src/workbench-batch-scheduler.mjs';
 import {resumeExecution} from '../executor/src/execution-lifecycle.mjs';
 const digest=value=>createHash('sha256').update(batchJson(value)).digest('hex');
-const Runtime=process.env.MANUAL_SKIP_SCOPES_BEFORE==='1'?await originalNativeSkipScopeRuntime():process.env.RECEIPT_GROUP_BEFORE==='1'?await originalNativeReceiptRuntime():CurrentRuntime;
+const Runtime=process.env.INDEPENDENT_RECEIPT_BEFORE==='1'?await originalNativeIndependentReceiptRuntime():process.env.MANUAL_SKIP_SCOPES_BEFORE==='1'?await originalNativeSkipScopeRuntime():process.env.RECEIPT_GROUP_BEFORE==='1'?await originalNativeReceiptRuntime():CurrentRuntime;
+
+test('independent manual receipts close owned original pages after cloud proof while user single pages stay open',async()=>{
+ for(const mode of ['normal','lost-reply','screenshot-failure','stopped','closed-page','user-page','automatic']){
+  const url='https://bai.tools/submit',f=await fixture({createBatch:false,urls:[url],fillOnly:mode!=='automatic'}),home=await mkdtemp(join(tmpdir(),'el-run-receipt-'));let browser;
+  try{
+   const runtime=f.original;runtime.home=home;browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-extensions']});const context=await browser.newContext();runtime.context=context;runtime.host={startedAt:'isolated-original-run-receipt'};let posts=0;
+   await context.route('**/*',async route=>{assert.equal(new URL(route.request().url()).hostname,'bai.tools');if(route.request().method()==='POST'){posts++;await route.fulfill({contentType:'text/html',body:'<h1>Submission Successful. Thank you for submitting your AI tool to BAI.tools! All submissions are reviewed by our team.</h1>'});return;}await route.fulfill({contentType:'text/html',body:'<h1>Submit your tool</h1><form method="post" action="/finish"><label>Product name<input name="name" required></label><label>Website<input name="url" type="url" required></label><button>Submit tool</button></form>'});});
+   const page=await context.newPage();await page.goto(url);const targetId=(await getTargetInfo(context,page)).targetId,snapshot=await f.cloud.request('snapshot');let task;
+   if(mode==='user-page'){const panel=await runtime.control('sidepanelOpened',{targetId,profileId:'p'}),filled=await runtime.control('sidepanelFill',{panelId:panel.panel.id,targetId,profileId:'p',expectedUrl:url,useAgent:false});assert.equal(filled.filled,true);task=runtime.store.get('task:'+filled.taskId);assert.equal(task.pageOwnership,'manual');assert.equal(await page.locator('input[name=name]').inputValue(),'Original p');}
+   else{const response=await f.cloud.request('runs',{run:{id:'isolated-receipt-run',profileId:'p',profileRevision:snapshot.revisions.siteProfiles,createdAt:new Date().toISOString(),tasks:[{id:'original-receipt-task',url,destinationKey:queue.normalizeDestinationKey(url)}]}});runtime.store.set('run:'+response.run.id,response.run);task={...response.tasks[0],profileSnapshot:snapshot.documents.siteProfiles.p};runtime.store.set('task:'+task.id,task);await runtime.lease(task,{online:true});runtime.update(task,{controller:'executor',status:'needs_manual',targetId,browserInstance:runtime.host.startedAt},'fixture_owned_original_page');}
+   if(mode==='automatic'){runtime.update(task,{status:'pending'},'fixture_original_owned_run_release');runtime.store.set('paused',false);await runtime.work({taskId:task.id});const saved=runtime.store.get('task:'+task.id);assert.equal(saved.status,'finished',saved.reason);assert.equal(saved.cloudVerified,true);assert.ok(saved.tabClosedAt,JSON.stringify(saved.cleanupFailure));assert.equal(page.isClosed(),true);assert.equal(posts,1);assert.equal(f.models(),0);continue;}
+   await runtime.synchronize();const input={taskId:task.id,runId:task.runId,expectedTargetId:targetId},preview=await runtime.control('previewManualConfirmation',input),request=f.cloud.request.bind(f.cloud);let lost=false;
+   if(mode==='lost-reply')f.cloud.request=async(route,data,...rest)=>{const response=await request(route,data,...rest);if(route==='receipt'&&!lost){lost=true;throw Object.assign(Error('Original run receipt persisted but reply lost'),{cloudNetwork:true});}return response;};
+   const screenshot=page.screenshot.bind(page);if(mode==='screenshot-failure')page.screenshot=async()=>{throw Error('Original receipt screenshot unavailable');};if(mode==='stopped')runtime.store.set('executionStopped',{status:'stopped'});if(mode==='closed-page')await page.close();
+   let result=await runtime.control('confirmSubmissionSuccess',{...input,confirmationNonce:preview.confirmationNonce,evidence:'User verified original site account receipt'});
+   if(mode==='lost-reply'){assert.equal(lost,true);assert.equal(result.pending,true);assert.equal(page.isClosed(),false);result=await runtime.control('confirmSubmissionSuccess',{...input,confirmationNonce:preview.confirmationNonce});}
+   assert.equal(result.confirmed,true);let saved=runtime.store.get('task:'+task.id);assert.equal(saved.cloudVerified,true);assert.equal(saved.manualConfirmation.status,'confirmed');
+   if(mode==='screenshot-failure'){assert.equal(page.isClosed(),false);assert.match(saved.cleanupFailure?.reason||'',/screenshot unavailable/);page.screenshot=screenshot;const proof=structuredClone(saved.receipt);result=await runtime.control('confirmSubmissionSuccess',{...input,confirmationNonce:preview.confirmationNonce});saved=runtime.store.get('task:'+task.id);assert.deepEqual(saved.receipt,proof);}
+   if(['user-page','stopped'].includes(mode)){assert.equal(page.isClosed(),false);assert.equal(saved.tabClosedAt,undefined);if(mode==='user-page')assert.deepEqual((await originalSuccessGroup({manual:true,active:false,hasNext:false})).calls,[]);}
+   else if(mode==='closed-page'){assert.equal(context.pages().length,0);assert.equal(saved.tabClosedAt,undefined);assert.match(saved.cleanupFailure?.reason||'',/原目标页已关闭/);}
+   else{assert.equal(page.isClosed(),true);assert.ok(saved.tabClosedAt);assert.ok(saved.screenshot);assert.equal(saved.recoveryCheckpoint.completedFieldCount,0);assert.deepEqual((await originalSuccessGroup({manual:true,hasNext:false})).calls,[{type:'close',tabId:7}]);}
+   await runtime.synchronize();const remote=(await f.cloud.request('runs')).tasks.find(item=>item.id===task.id);assert.deepEqual(remote.receipt,saved.receipt);assert.equal(remote.manualConfirmation.id,preview.confirmationNonce);assert.equal(posts,0);assert.equal(f.models(),0);assert.equal(runtime.store.get('paused'),true);
+  }finally{await browser?.close();f.close();assert.ok(resolve(home).startsWith(resolve(tmpdir())+sep)&&home.includes('el-run-receipt-'));await rm(home,{recursive:true,force:true});}
+ }
+});
 
 test('fixed and independent manual skips preserve original pages through handoff and close final destinations',async()=>{
  for(const scope of process.env.MANUAL_SKIP_SCOPE_ONLY?[process.env.MANUAL_SKIP_SCOPE_ONLY]:['fixed','run'])for(const mode of ['normal','paused','sync-failure','unknown']){

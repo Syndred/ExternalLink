@@ -63,7 +63,7 @@ import { applicationData } from './application-data.mjs';
 import {enqueueLibraryMutation,flushApplicationMutations,pendingApplication,overlayApplicationSettings} from './application-mutations.mjs';
 import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
-import {closeAcceptanceTask} from './acceptance-cleanup.mjs';
+import {closeAcceptanceTask,originalRunReceiptTask} from './acceptance-cleanup.mjs';
 import {skipOriginalUnavailableTask,attachOriginalGroupPage,navigateOriginalGroupPage,originalTaskSync} from './original-agent-unavailable.mjs';
 import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
 import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
@@ -484,7 +484,7 @@ export class Runtime {
       if (!nativeReceiptReadbackMatches(read,record)) throw new Error('云端回执回读不一致；原证据或公开结果字段未完整保存');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
-    if(this.context)for(const task of this.store.values('task:'))if(task.receipt&&task.cloudVerified===true&&task.controller==='executor'&&!task.tabClosedAt&&task.browserInstance===this.host?.startedAt&&!this.activeTaskIds?.has(task.id)&&(task.acceptanceId||task.workbenchBatchId)){
+    if(this.context)for(const task of this.store.values('task:'))if(task.receipt&&task.cloudVerified===true&&task.controller==='executor'&&!task.tabClosedAt&&task.browserInstance===this.host?.startedAt&&!this.activeTaskIds?.has(task.id)&&(task.acceptanceId||task.workbenchBatchId||originalRunReceiptTask(this,task))){
       const cleanupScope=workbenchScope(this.store.get('pair'));
       try{await closeAcceptanceTask(this,task);}catch(error){if(!error.staleTask&&cleanupScope===workbenchScope(this.store.get('pair'))&&isDeepStrictEqual(this.store.get('task:'+task.id),task))this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'synced_receipt_cleanup_deferred');}
     }
@@ -927,7 +927,7 @@ export class Runtime {
           catch(error){this.update(task,{evidenceCaptureFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId,browserInstance:task.browserInstance}},'evidence_capture_deferred');}
         }
         await this.synchronize();
-        if(task.acceptanceId||task.workbenchBatchId||task.originalAgentSkip&&task.status==='skip'||task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)){
+        if(task.acceptanceId||task.workbenchBatchId||originalRunReceiptTask(this,task)||task.originalAgentSkip&&task.status==='skip'||task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)){
           try{await closeAcceptanceTask(this,task);}
           catch(error){if(!error.staleTask)this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'fixed_task_cleanup_deferred');}
         }

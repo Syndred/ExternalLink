@@ -3,10 +3,18 @@ import {retainBatchManualPage} from './workbench-batch-policy.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
 import {isDeepStrictEqual} from 'node:util';
 import {retainOriginalUnavailablePage,retainOriginalReceiptPage} from './original-agent-unavailable.mjs';
+import {capturePageEvidence} from './page-evidence.mjs';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+export function originalRunReceiptTask(runtime,task){
+ if(task.acceptanceId||task.workbenchBatchId||task.status!=='finished'||task.controller!=='executor'||!task.receipt||task.cloudVerified!==true||task.pageOwnership==='manual'||task.pageHistory?.length)return false;
+ const run=runtime.store.get('run:'+task.runId);return !!(run?.id===task.runId&&run.profileId===task.profileId&&run.tasks?.some(item=>(typeof item==='string'?item:item.id)===task.id));
+}
 export async function closeAcceptanceTask(runtime,task){
  const deadEnd=task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end';
  const unavailable=task.status==='skip'&&task.originalAgentSkip&&task.attentionType==='agent_unavailable';
- if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable)||!task.targetId||task.tabClosedAt)return;
+ const runReceipt=originalRunReceiptTask(runtime,task),originalRun=runReceipt?structuredClone(runtime.store.get('run:'+task.runId)):null;
+ if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable||runReceipt)||!task.targetId||task.tabClosedAt)return;
  if(['waiting_navigation','ready','rejudging','readiness_timeout','original_page_missing'].includes(task.aiTakeover?.originalVisual?.pendingRejudge?.status))return;
  if(task.originalGroupAdvance?.status==='transferred'||unavailable&&retainOriginalUnavailablePage(runtime,task))return;
  if(task.receipt&&await retainOriginalReceiptPage(runtime,task))return;
@@ -15,14 +23,15 @@ export async function closeAcceptanceTask(runtime,task){
  const pausedBatch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(pausedBatch?.status==='paused'&&pausedBatch.pauseReasonCode==='user_pause'&&pausedBatch.pausedTaskIds?.includes(task.id))return;
  if(task.attemptBoundary&&!task.receipt)return; // Preserve original verification page.
  if(task.receipt&&task.cloudVerified!==true)return;
- if(!task.screenshot||!['needs_manual','finished','excluded','skip','err'].includes(task.status))return;
+ if(!task.screenshot&&!runReceipt||!['needs_manual','finished','excluded','skip','err'].includes(task.status))return;
  const scope=workbenchScope(runtime.store.get('pair')),paused=runtime.store.get('paused'),original=structuredClone(task);
- const check=()=>{const current=runtime.store.get('task:'+task.id),batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!current||scope!==workbenchScope(runtime.store.get('pair'))||paused!==runtime.store.get('paused')||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold')||current.receipt&&!original.receipt||current.attemptBoundary&&!original.attemptBoundary||['ai','supervisor'].includes(current.controller)||current.browserInstance!==runtime.host.startedAt||['id','runId','profileId','profileRevision','version','controllerId','targetId','browserInstance','status','reason','attemptBoundary','acceptanceId','workbenchBatchId'].some(key=>current[key]!==original[key])||!isDeepStrictEqual(current.originalGroupAdvance,original.originalGroupAdvance)||!isDeepStrictEqual(current.profileSnapshot,original.profileSnapshot)||batch?.status==='paused'&&batch.pauseReasonCode==='user_pause'&&batch.pausedTaskIds?.includes(task.id))throw Object.assign(Error('原任务或控制状态已变化，关页停止'),{staleTask:true});};
+ const check=()=>{const current=runtime.store.get('task:'+task.id),batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);if(!current||scope!==workbenchScope(runtime.store.get('pair'))||paused!==runtime.store.get('paused')||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold')||current.receipt&&!original.receipt||current.attemptBoundary&&!original.attemptBoundary||['ai','supervisor'].includes(current.controller)||current.browserInstance!==runtime.host.startedAt||['id','runId','profileId','profileRevision','version','controllerId','targetId','browserInstance','status','reason','attemptBoundary','acceptanceId','workbenchBatchId','cloudVerified','pageOwnership'].some(key=>current[key]!==original[key])||['originalGroupAdvance','profileSnapshot','receipt','actualSubmission','manualConfirmation','pageHistory'].some(key=>!isDeepStrictEqual(current[key],original[key]))||runReceipt&&!isDeepStrictEqual(runtime.store.get('run:'+task.runId),originalRun)||batch?.status==='paused'&&batch.pauseReasonCode==='user_pause'&&batch.pausedTaskIds?.includes(task.id))throw Object.assign(Error('原任务或控制状态已变化，关页停止'),{staleTask:true});};
  check();
  const frozen=runtime.store.get('acceptance:'+task.acceptanceId),execution=runtime.store.get('acceptanceExecution:'+task.acceptanceId);
  const workbench=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId);
  const run=!task.acceptanceId&&!task.workbenchBatchId&&runtime.store.get('run:'+task.runId);
- if(!frozen?.combinations.some(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id)&&!workbench?.items.some(i=>i.taskId===task.id)&&!((deadEnd||unavailable)&&run?.id===task.runId&&run.profileId===task.profileId&&run.tasks?.some(item=>(typeof item==='string'?item:item.id)===task.id)))throw Error('原任务不属于固定范围或原运行组，禁止关页');
+ if(!frozen?.combinations.some(c=>c.existingTaskId===task.id||execution?.items[c.identity]?.taskId===task.id)&&!workbench?.items.some(i=>i.taskId===task.id)&&!((deadEnd||unavailable||runReceipt)&&run?.id===task.runId&&run.profileId===task.profileId&&run.tasks?.some(item=>(typeof item==='string'?item:item.id)===task.id)))throw Error('原任务不属于固定范围或原运行组，禁止关页');
+ if(!task.screenshot&&runReceipt){const page=await runtime.findPage(task);check();const screenshot=join(runtime.home,'run-receipt-'+randomUUID()+'.png');await capturePageEvidence(runtime.context,page,{path:screenshot,timeoutMs:15000});check();runtime.update(task,{screenshot},'original_run_receipt_screenshot');}
  let bytes;try{bytes=await readFile(task.screenshot);}catch(error){check();throw error;}const sha256=createHash('sha256').update(bytes).digest('hex');
  check();const originalPage=await runtime.findPage(task),closedAt=new Date().toISOString();check();
  const checkpoint={...recoveryCheckpoint(task,originalPage,task.screenshot,closedAt),screenshotSha256:sha256,cloudSyncPending:!task.artifactRef};

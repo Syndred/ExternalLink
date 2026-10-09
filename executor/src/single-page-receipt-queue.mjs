@@ -11,8 +11,9 @@ import {recoveryCheckpoint} from './tab-cleanup.mjs';
 import {cancelVisitWork} from './single-page.mjs';
 
 const key=page=>'submissionQueuePage:'+page.browserInstance+':'+page.targetId;
-const proof=task=>plain({id:task.id,profileId:task.profileId,profileRevision:task.profileRevision,profileSnapshot:task.profileSnapshot,version:task.version,controller:task.controller,controllerId:task.controllerId,targetId:task.targetId,browserInstance:task.browserInstance,attemptBoundary:task.attemptBoundary,actualSubmission:task.actualSubmission,receipt:task.receipt});
+const proof=task=>plain({id:task.id,profileId:task.profileId,profileRevision:task.profileRevision,profileSnapshot:task.profileSnapshot,version:task.version,controller:task.controller,controllerId:task.controllerId,targetId:task.targetId,browserInstance:task.browserInstance,attemptBoundary:task.attemptBoundary,actualSubmission:task.actualSubmission,receipt:task.receipt,originalFormContinuation:task.originalFormContinuation,attemptHistory:task.attemptHistory});
 const equal=(a,b)=>isDeepStrictEqual(a===undefined?a:plain(a),b===undefined?b:plain(b));
+const refillGate=(task,panel)=>{const state=task.originalFormContinuation,gate=state?.gate;return task.status==='needs_manual'&&!task.receipt&&!task.attemptBoundary&&state?.phase==='gate'&&gate?.advance!==false&&(gate?.needs_manual||gate?.captcha||gate?.blocked)&&equal(state.panelContext,{id:panel.id,generation:panel.generation,profileId:panel.profileId,selectedTargetId:panel.selectedTargetId});};
 export function rememberSubmissionQueuePage(runtime,page){
  const owned={...page,id:randomUUID(),scope:workbenchScope(runtime.store.get('pair')),status:'owned'};
  runtime.store.set(key(page),owned);return owned;
@@ -21,7 +22,7 @@ export function singlePageReceiptState(runtime){
  const panel=runtime.store.get('singlePagePanel');
  if(panel?.scope!==workbenchScope(runtime.store.get('pair')))return{ok:true,panel:null};
  const owned=runtime.store.get(key({browserInstance:runtime.host?.startedAt,targetId:panel.selectedTargetId}));
- return{ok:true,panel,completion:owned?.scope===panel.scope?{status:owned.status,error:owned.error||''}:null};
+ return{ok:true,panel,completion:owned?.scope===panel.scope?{status:owned.status,kind:owned.completion?.kind||'receipt',error:owned.error||''}:null};
 }
 
 // Called by the existing serialized manual-receipt scheduler. A receipt never
@@ -31,10 +32,16 @@ export async function completeSinglePageReceiptQueue(runtime){
  const panel=singlePageReceiptState(runtime).panel;if(!panel?.open)return;
  let owned=runtime.store.get(key({browserInstance:runtime.host?.startedAt,targetId:panel.selectedTargetId}));
  if(!owned){const previous=runtime.store.get('submissionQueue');if(previous?.scope===panel.scope&&previous.opening!==true&&!previous.error&&previous.page?.targetId===panel.selectedTargetId&&previous.page.browserInstance===runtime.host?.startedAt)owned=rememberSubmissionQueuePage(runtime,previous.page);}
- if(!owned||owned.scope!==panel.scope||owned.status==='completed')return;
- const candidates=runtime.store.values('task:').filter(task=>task.targetId===owned.targetId&&task.browserInstance===owned.browserInstance&&task.profileId===panel.profileId&&task.pageOwnership==='manual'&&(!task.controller||task.controller==='executor')&&(!task.controllerId||task.controllerId===runtime.controllerId)&&!task.syncConflict&&task.status==='finished'&&task.receipt&&task.cloudVerified===true);
+ if(!owned||owned.scope!==panel.scope||owned.status==='completed'&&owned.completion?.kind!=='gate')return;
+ const candidates=runtime.store.values('task:').filter(task=>task.targetId===owned.targetId&&task.browserInstance===owned.browserInstance&&task.profileId===panel.profileId&&task.pageOwnership==='manual'&&(!task.controller||task.controller==='executor')&&(!task.controllerId||task.controllerId===runtime.controllerId)&&!task.syncConflict&&(task.status==='finished'&&task.receipt&&task.cloudVerified===true||refillGate(task,panel)));
  if(candidates.length!==1)return;
- let task=candidates[0],expectedTask=structuredClone(task),expectedPanel=structuredClone(panel),expectedOwned=structuredClone(owned),expectedQueue=runtime.store.get('submissionQueue');
+ if(owned.status==='completed'){
+  if(!candidates[0].receipt||candidates[0].cloudVerified!==true)return;
+  // Returning to a retained gate page may confirm its eventual receipt. The
+  // earlier gate advanced once, but never surrendered ownership of this tab.
+  owned={...owned,status:'owned',completion:null,error:''};runtime.store.set(key(owned),owned);
+ }
+ let task=candidates[0],expectedTask=structuredClone(task),expectedPanel=structuredClone(panel),expectedOwned=structuredClone(owned),expectedQueue=runtime.store.get('submissionQueue');const kind=refillGate(task,panel)?'gate':'receipt';
  const check=()=>{if(workbenchScope(runtime.store.get('pair'))!==owned.scope||runtime.host?.startedAt!==owned.browserInstance||runtime.job||runtime.singlePageFill||runtime.store.get('paused')!==true||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold')||!equal(runtime.store.get('task:'+task.id),expectedTask)||!equal(runtime.store.get('singlePagePanel'),expectedPanel)||!equal(runtime.store.get(key(owned)),expectedOwned)||!equal(runtime.store.get('submissionQueue'),expectedQueue)||runtime.store.values('task:').some(other=>other.id!==task.id&&other.targetId===owned.targetId&&other.browserInstance===owned.browserInstance&&!other.tabClosedAt))throw Error('原单页、产品、队列或控制状态已变化，停止继续队列');};
  const save=patch=>{check();Object.assign(owned,patch);runtime.store.set(key(owned),owned);expectedOwned=structuredClone(owned);};
  const update=patch=>{check();runtime.update(task,patch,'single_page_receipt_completion');expectedTask=structuredClone(task);};
@@ -49,17 +56,18 @@ export async function completeSinglePageReceiptQueue(runtime){
    // completed group still contains another product, advance past that group.
    const pending=await submissionQueue(runtime,{url:owned.url},false,{assertCurrent:check});expectedQueue=runtime.store.get('submissionQueue');check();
    const stillQueued=queue.findSubmissionIndex(owned.url,pending.tasks)>=0;
-   const nextIndex=pending.tasks.length?(pending.index+(stillQueued?1:0))%pending.tasks.length:0,next=pending.tasks[nextIndex]||null;
-   save({status:'closing',completion:{id:randomUUID(),taskId:task.id,profileId:task.profileId,panelId:panel.id,panelGeneration:panel.generation,receipt:structuredClone(task.receipt),taskProof:proof(task),next:next?{key:next.key,url:next.url,index:nextIndex}:null,at:new Date().toISOString()}});
+   const nextIndex=pending.tasks.length?(pending.index+(kind==='gate'||stillQueued?1:0))%pending.tasks.length:0,next=pending.tasks[nextIndex]||null;
+   save({status:kind==='gate'?'retaining':'closing',completion:{id:randomUUID(),kind,taskId:task.id,profileId:task.profileId,panelId:panel.id,panelGeneration:panel.generation,receipt:structuredClone(task.receipt),taskProof:proof(task),next:next?{key:next.key,url:next.url,index:nextIndex}:null,at:new Date().toISOString()}});
   }
   const completion=owned.completion;
   if(completion.taskId!==task.id||completion.profileId!==panel.profileId||completion.panelId!==panel.id||completion.panelGeneration!==panel.generation||!equal(completion.receipt,task.receipt)||!equal(completion.taskProof,proof(task)))throw Error('原队列收尾记录与当前回执或面板不一致');
-  if(owned.status==='closing'){
+  if(owned.status==='closing'||owned.status==='retaining'){
    const page=await find(owned.targetId);if(!page||queue.normalizeUrlKey(page.url())!==queue.normalizeUrlKey(owned.url))throw Error('原完成页已关闭或跳转，保留队列收尾记录');
    if(!task.screenshot){const screenshot=join(runtime.home,'single-receipt-'+randomUUID()+'.png');await capturePageEvidence(runtime.context,page,{path:screenshot,timeoutMs:15000});check();update({screenshot});}
    const bytes=await readFile(task.screenshot);check();const at=new Date().toISOString(),checkpoint={...recoveryCheckpoint(task,page,task.screenshot,at),screenshotSha256:createHash('sha256').update(bytes).digest('hex'),cloudSyncPending:!task.artifactRef};
-   update({recoveryCheckpoint:checkpoint});await page.close();check();
-   update({tabClosedAt:at,closedTargetIds:[owned.targetId],closeReason:'单页云端收件已确认，继续原投稿队列'});save({status:'closed'});
+   update({recoveryCheckpoint:checkpoint});
+   if(kind==='receipt'){await page.close();check();update({tabClosedAt:at,closedTargetIds:[owned.targetId],closeReason:'单页云端收件已确认，继续原投稿队列'});save({status:'closed'});}
+   else save({status:'retained'});
   }
   await runtime.cloud.flush(runtime.store);check();
   if(completion.next){
@@ -73,11 +81,11 @@ export async function completeSinglePageReceiptQueue(runtime){
    await page.bringToFront();check();
    const nextPage=owned.completion.nextPage;rememberSubmissionQueuePage(runtime,nextPage);
    runtime.store.set('submissionQueue',{...expectedQueue,key:completion.next.key,index:completion.next.index,page:nextPage,opening:false});expectedQueue=runtime.store.get('submissionQueue');
-   cancelVisitWork(runtime,'云端收件已确认，切换到原队列下一站');
-   runtime.store.set('singlePagePanel',{...panel,selectedTargetId:nextPage.targetId,generation:panel.generation+1,receiptCompletion:{id:completion.id,taskId:task.id,nextPage,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
+   cancelVisitWork(runtime,kind==='gate'?'原补填页留待人工，切换到队列下一站':'云端收件已确认，切换到原队列下一站');
+   runtime.store.set('singlePagePanel',{...panel,selectedTargetId:nextPage.targetId,generation:panel.generation+1,receiptCompletion:{id:completion.id,kind,taskId:task.id,nextPage,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
   }else{
    cancelVisitWork(runtime,'单页收件已确认，原待投稿队列已完成');
-   runtime.store.set('singlePagePanel',{...panel,receiptCompletion:{id:completion.id,taskId:task.id,queueComplete:true,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
+   runtime.store.set('singlePagePanel',{...panel,receiptCompletion:{id:completion.id,kind,taskId:task.id,queueComplete:true,at:new Date().toISOString()}});expectedPanel=runtime.store.get('singlePagePanel');
   }
   save({status:'completed',error:'',completedAt:new Date().toISOString()});
  }catch(error){

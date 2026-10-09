@@ -1,4 +1,5 @@
 import {singlePageReceiptState} from './single-page-receipt-queue.mjs';
+import {continueOriginalForm,originalFormPriorStageFields} from './original-form-continuation.mjs';
 import { chromium } from 'playwright';
 import {openManualTaskPage} from './manual-task-page.mjs';
 import {originalCommentRequest} from './comment-cache.mjs';
@@ -752,7 +753,7 @@ export class Runtime {
         try {
           const engine = await attachEngine(this.context, frame, msg => this.bridge(task, msg));
           const detection = await engine.call({ action: 'detectPage', config });
-          engines.push({ engine, frame, detection });
+          engines.push({ engine, frame, detection, url:frame.url() });
         } catch (error) { task.frameError = error.message; }
       }
       let candidate = engines.filter(e => e.detection.operable).sort((a, b) => b.detection.formFieldCount - a.detection.formFieldCount)[0];
@@ -810,6 +811,8 @@ export class Runtime {
           validation = await engine.call({ action: 'collectFormValidation' });
         }
       }
+      const formContinuationId=randomUUID();
+      while(true){
       const actualSubmission = await engine.call({ action: 'getFilledFieldsReport' });
       await engine.call({action:'persistFillLearnings',config});
       if (/^https:\/\/toolscout\.ai\/submit\/?$/i.test(task.url)) {
@@ -825,7 +828,8 @@ export class Runtime {
         }
         return attachments;
       });
-      const qualityIssues = assessSubmissionQuality(actualSubmission, profile);
+      const priorStageFields=originalFormPriorStageFields(task);
+      const qualityIssues = assessSubmissionQuality({...actualSubmission,fields:[...priorStageFields,...actualSubmission.fields]}, profile);
       qualityIssues.push(...await this.knownFormIssues(candidate.frame, task.url,profile));
       if (qualityIssues.length) {
         validation = { ...validation, validationFailed: true, allValid: false,
@@ -864,9 +868,10 @@ export class Runtime {
       if(currentAction.allowed===false||!currentAction.finalFound)throw new Error('原提交授权或最终按钮已变化，请重新检查原任务；未建立投稿边界');
       const baseline = await engine.call({ action: 'classifySubmitEvidence', destinationUrl: task.url });
       if(!active())return;
-      this.update(task, { status: 'submitting', siteStatus: 'sent_unconfirmed', attemptBoundary: new Date().toISOString(), baselineEvidence: baseline.evidence || '' }, 'attempt_boundary');
+      this.update(task, { status: 'submitting', siteStatus: 'sent_unconfirmed', attemptBoundary: new Date().toISOString(), baselineEvidence: baseline.evidence || '',submitResult:null,networkResponses:[] }, 'attempt_boundary');
       if(!offline)await this.cloud.flush(this.store); // Online mode confirms the boundary before click; offline mode records it durably first.
       if (!active()) { this.update(task, { status: 'submitted_unconfirmed', reason: '尝试已保留，暂停后先核验' }, 'paused_boundary'); return; }
+      responseTasks.length=0;submissionResponses.length=0;
       responseListener = response => {
         responseTasks.push((async () => {
           try {
@@ -901,9 +906,13 @@ export class Runtime {
         if (observed.matched) result = { ...result, ...observed, recoveredAfterNavigation: true };
       }
       if(!result.matched&&originalLinkrenaPostSubmitLogin(task.url,page.url()))result={...result,needs_manual:true,reason:'站方在最终提交后跳转邮箱登录，未产生投稿回执；登录页要求同意条款'};
+      const continued=await continueOriginalForm(this,{task,page,candidate,engines,config,result,active,offline,invocationId:formContinuationId});
+      if(continued.handled){if(!continued.ready)return;fill=continued.fill;validation=continued.validation;continue;}
       await classifyOriginalTaskGate(this,{task,page,result,active});
       if (result?.matched && result.evidence && result.evidence !== task.baselineEvidence) await this.accept(task, page, result);
       else this.update(task, { status: 'submitted_unconfirmed', attentionType:'unknown_receipt',reason: result.reason || result.error || '未取得明确新回执，先核验；不会自动重投', submitResult: result }, 'unknown');
+      break;
+      }
     } catch (error) {
       if(error.staleTask){staleWork=true;return;}
       if(error.originalTaskSyncFailure)throw error;

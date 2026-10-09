@@ -1,0 +1,42 @@
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (26.1094ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (20.2477ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (10.7115ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (9.7411ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (13.6007ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (15.8367ms)
+✖ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (9.7358ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (9.9364ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (85.1192ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (2.8869ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (3.0817ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.5058ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (14.6919ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 621.4346
+
+✖ failing tests:
+
+test at tests\executor-original-library-actions.test.mjs:40:1
+✖ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (9.7358ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - false
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-library-actions.test.mjs:42:204)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

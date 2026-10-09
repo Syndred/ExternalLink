@@ -1,0 +1,32 @@
+✔ new and existing browser additions preserve the complete frozen addToUrlList result without pinning or deduplicating existing lines (27.4049ms)
+✔ atomic browser addition survives offline SQLite reopen and a lost reply without replaying any of its three documents (81.6327ms)
+✔ concurrent changes to any browser-add document retain the complete pending operation and never clear newer marks (11.5972ms)
+✔ authenticated D1 browser add matches original documents and fences all three revisions atomically (75.9628ms)
+✔ authenticated PostgreSQL browser add matches original documents and fences all three revisions atomically (3106.4696ms)
+✔ browser-page platform metadata cannot inject additional URL-list entries or rewrite a saved original type (4.64ms)
+✔ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (4865.7056ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (42.057ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (42.4837ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (21.3878ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (22.5345ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (35.1668ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (28.0512ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (124.4982ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (29.1136ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (103.0957ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (4.7583ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (4.5928ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (2.3323ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (22.8277ms)
+✔ authenticated Neon automatic observations preserve manual preferences and atomically fence annotation and deleted-key versions (3275.1998ms)
+✔ native automatic observation matches original writer for manual verdicts, automatic deletion and canonical aliases (1192.4615ms)
+✔ offline automatic observation and deleted-key update confirm a lost reply after independent readback without replay (76.9829ms)
+✔ automatic observation keeps concurrent manual/deletion edits as conflict and never degrades into one-document recovery (3.0116ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4996.1387

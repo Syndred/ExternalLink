@@ -1018,10 +1018,10 @@
       "source": "extension/sidepanel.html",
       "id": "btnAddToUrlList",
       "label": "加入外链列表（置顶）",
-      "mapping": "外链库 / 浏览器当前页加入库并置顶",
+      "mapping": "外链库 / 浏览器当前页加入库",
       "status": "implemented_requires_full_acceptance",
-      "verification": "补回原检测页面类型；七类页面实际隔离Chrome与冻结原版对照、真实界面加入评论页、认证隔离D1独立落库回读通过。已有入口类型、收藏和分组保留；正式外链库没有新增测试页面",
-      "evidence": "original-browser-add-platform-2026-10-09.json"
+      "verification": "完整对照冻结原 addToUrlList：新入口前置，已有位置与原重复行保留；原规范键和域名旧注解及删除键按原规则清除；投稿记录与其他入口保持。七类实际浏览器、真实界面新增和重复加入、双云端原子版本及断线恢复通过；正式外链库未改动",
+      "evidence": "original-browser-add-behavior-2026-10-09.json"
     },
     {
       "source": "extension/sidepanel.html",
@@ -1209,10 +1209,10 @@
     },
     {
       "action": "addToUrlList",
-      "mapping": "addBrowserPage / 原 URL 置顶与偏好保留",
+      "mapping": "addBrowserPage → add_browser_url 三份关联资料原子变更",
       "status": "implemented_requires_full_acceptance",
-      "verification": "七类原页面类型识别及云端保存已补齐；实际界面、独立原版对照、认证D1和原服务更新通过",
-      "evidence": "original-browser-add-platform-2026-10-09.json"
+      "verification": "替换旧的置顶／偏好保留组合；已有网址不置顶、不去重，按原函数重置目标注解。独立原版、实际界面、D1／PostgreSQL并发与丢回复回读通过",
+      "evidence": "original-browser-add-behavior-2026-10-09.json"
     },
     {
       "action": "advanceSubmission",
@@ -3189,5 +3189,19 @@
     "fullSuitePassed": 979,
     "migrationComplete": false,
     "evidence": "original-quick-open-created-target-2026-10-09.json"
+  },
+  "originalBrowserAddBehaviorCheckpoint": {
+    "backendSourceCommit": "3b2c230957a274fba4cc3ca4087005ee14040ab4",
+    "frontendSourceCommit": "56cdcc02dfa5c769dd004d336be422ba53fe2eeb",
+    "frozenOriginalWholeDocumentsMatch": true,
+    "newEntryPrependExistingOrderAndDuplicatesKept": true,
+    "originalAnnotationResetExplainedInChinese": true,
+    "threeDocumentAtomicMutation": true,
+    "D1AndPostgreSQLVerified": true,
+    "offlineAndLostReplyVerified": true,
+    "fullSuitePassed": 984,
+    "productionLibraryMutation": false,
+    "migrationComplete": false,
+    "evidence": "original-browser-add-behavior-2026-10-09.json"
   }
 }

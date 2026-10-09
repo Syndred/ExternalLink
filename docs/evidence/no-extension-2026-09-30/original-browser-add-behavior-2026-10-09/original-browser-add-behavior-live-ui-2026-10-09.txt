@@ -1,0 +1,1 @@
+{"ok":true,"kind":"browser_add_live_ui_and_cloud_access_smoke","frontendSourceCommit":"56cdcc02dfa5c769dd004d336be422ba53fe2eeb","servedUiMatchesFileAndCommit":true,"allResetPreferencesExplained":true,"uiSha256":"5b823eb5a5fb249575dcc6c32eb78edf538e0dc6b5e605627710cbd95ba07fb2","anonymousCloudSnapshotStatus":401,"productionWrites":0}

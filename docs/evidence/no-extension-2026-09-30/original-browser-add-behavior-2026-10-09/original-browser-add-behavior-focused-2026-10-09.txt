@@ -1,0 +1,23 @@
+✔ browser-page platform metadata cannot inject additional URL-list entries or rewrite a saved original type (3.5572ms)
+✔ actual browser additions retain seven frozen-original detected page types and the existing interactive engine (3309.1074ms)
+✔ clear original library marks uses the same display key, keeps canonical knowledge and unrelated route records (27.7353ms)
+✔ archive and restore original aliases preserve the canonical preferences and exact original deletion key (18.484ms)
+✔ remove from queue preserves original alias metadata and projects instead of replacing it with stale route marks (10.9005ms)
+✔ pin original display aliases retains the original URL-list metadata and removes only duplicate display entries (9.1271ms)
+✔ canonical marks and preferences govern every original alias in the displayed queue and batch scope (20.3782ms)
+✔ restoring an alias mark clears its original canonical queue exclusion in the same durable plan (18.5781ms)
+✔ browser re-add matches original add rather than pin: position, duplicate lines, annotations and unrelated records (54.1104ms)
+✔ retaining a concurrent cloud annotation also cancels the dependent original clear or remove queue operation (9.6475ms)
+✔ old clear plans retain original identities through SQLite reopen, lost replies and dependency recovery (79.643ms)
+✔ pinning an already-first alias still performs original duplicate removal before acknowledging the change (2.9037ms)
+✔ old independent clear plan entries do not remove the retained cloud queue exclusion after a conflict (3.5061ms)
+✔ failure to persist a clear-plan child rolls back the entire original plan before any network write (1.4061ms)
+✔ batch preview applies canonical exclusions to a different original alias while retaining its frozen input URL (14.456ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3433.4632

@@ -1,0 +1,255 @@
+{
+  "kind": "original_browser_add_complete_document_behavior",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "backendSourceCommit": "3b2c230957a274fba4cc3ca4087005ee14040ab4",
+  "frontendSourceCommit": "56cdcc02dfa5c769dd004d336be422ba53fe2eeb",
+  "fullSuite": {
+    "sourceCommit": "3b2c230957a274fba4cc3ca4087005ee14040ab4",
+    "passed": 984,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 143989.8411,
+    "fileConcurrency": 4
+  },
+  "focusedTestsPassed": 24,
+  "actualUiAndBrowser": {
+    "ok": true,
+    "kind": "actual_browser_add_original_platforms",
+    "actualUiWordpressAddition": true,
+    "actualUiExistingPositionAndMarks": true,
+    "results": [
+      {
+        "platform": "wp_comment",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "profile",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "forum",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "directory",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "submission",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "article",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      },
+      {
+        "platform": "unknown",
+        "urlListMatchesFrozenOriginal": true,
+        "existingInteractiveEngineKept": true,
+        "fieldsUnchanged": true
+      }
+    ],
+    "posts": 0,
+    "externalRequests": 0,
+    "realModelCalls": 0,
+    "productionWrites": 0,
+    "realSubmissions": 0
+  },
+  "frontendOnlyFollowup": "Clarify that all prior marks include notes; actual UI and all seven page types rechecked after this copy-only change. Full suite belongs to the functional commit.",
+  "originalDifferencesFixed": [
+    "Existing entry position and duplicate original URL-list lines stay unchanged",
+    "Only a new entry is prepended with its original detected platform",
+    "Original canonical and domain annotations are removed, including notes, favorites, groups and form knowledge",
+    "Original deleted key is removed without rewriting other destinations or submission records",
+    "URL-list, annotations and deleted keys are one durable operation with three revision fences"
+  ],
+  "atomicCloudTests": [
+    "Authenticated D1 and PostgreSQL independent readback matches frozen original documents",
+    "Missing or stale related revisions and unauthorized access rejected",
+    "Concurrent annotation change after server read rejects all three writes",
+    "Offline SQLite reopen and lost reply recover same operation without replay",
+    "Concurrent changes to any of the three source documents retain an explicit conflict"
+  ],
+  "services": {
+    "ok": true,
+    "kind": "browser_add_published_service_process_identity",
+    "sourceCommit": "3b2c230957a274fba4cc3ca4087005ee14040ab4",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18968,
+        "StartedAt": "2026-10-09T14:21:27.6891890+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 10892,
+        "StartedAt": "2026-10-09T14:21:28.7449780+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "servicesOnlyStartup": true,
+    "workerRedeployed": true,
+    "workerVersion": "573507ab-63b7-47a0-8914-226675b618fa"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "browser_add_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "56cdcc02dfa5c769dd004d336be422ba53fe2eeb",
+    "servedUiMatchesFileAndCommit": true,
+    "allResetPreferencesExplained": true,
+    "uiSha256": "5b823eb5a5fb249575dcc6c32eb78edf538e0dc6b5e605627710cbd95ba07fb2",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "protectedStateBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedStateAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "deploymentLauncher": "npm.cmd was unavailable; deployment succeeded using node node_modules/wrangler/bin/wrangler.js deploy. The unavailable launcher did not deploy.",
+  "migrationComplete": false,
+  "limits": [
+    "Original addToUrlList is executed from the frozen source in a controlled VM; native browser and UI use isolated fixtures.",
+    "Resetting prior annotations applies only when the user invokes this add action; production library entries were not changed for acceptance.",
+    "Direct live smoke checks UI bytes, cloud authentication and protected documents, not a production browser-add mutation.",
+    "Historical favorites, other-device associations and remaining original feature branches are not all verified."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-before-2026-10-09.txt",
+      "capturedSha256": "239cc98744381d5ccb95912e84169270532c6e258dd55baedac2aedf281645d4",
+      "gitBlobSha256": "239cc98744381d5ccb95912e84169270532c6e258dd55baedac2aedf281645d4"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-focused-2026-10-09.txt",
+      "capturedSha256": "cb476bc96a65e769de1ecaf1bc4ff288bd702835ef050171bfabc2c8b203e5ab",
+      "gitBlobSha256": "696a94091bfeb1f0385911e98fe5a3a7aef5c07008ea5fe37797fa2483a440be"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-browser-2026-10-09.txt",
+      "capturedSha256": "8ebdace1e7ddefd25ed88c3a8ca6aebbc8f0ed11f0e82b82127fac83252a746b",
+      "gitBlobSha256": "43b6ed67720afa49e0fa4fc9a6e3c71c8f186849ca4d9d47dd4bfc98a7b72130"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-browser-final-2026-10-09.txt",
+      "capturedSha256": "8ebdace1e7ddefd25ed88c3a8ca6aebbc8f0ed11f0e82b82127fac83252a746b",
+      "gitBlobSha256": "43b6ed67720afa49e0fa4fc9a6e3c71c8f186849ca4d9d47dd4bfc98a7b72130"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-atomic-2026-10-09.txt",
+      "capturedSha256": "4e0051100cbe60b926ca204ca6fcd4414dbe64700724c3fafb150ec981f3174f",
+      "gitBlobSha256": "bbdc2d222aa5cd9b505e5d80eab6e77c67b904faef56f187afd57806f28115ce"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-repository-2026-10-09.txt",
+      "capturedSha256": "249068a7d5c71119d4efa5365963c2b18e93fa71fb703d95fe56220b56eca274",
+      "gitBlobSha256": "b81a21bbbe66c79fdfd1b64793983a9623f70836266c38cc4d06f7934b4c796f"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-worker-deploy-2026-10-09.txt",
+      "capturedSha256": "46ee132bfc32f10e4d26c39d999290f1f8b31500ba01486d248a528ddb54a5bb",
+      "gitBlobSha256": "3b18c208b1c20a17b44fdb445cac3f741b6829597c103d0c23772ebb62776365"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-reload-2026-10-09.txt",
+      "capturedSha256": "bda552ca47ab8c3cfa63f9c685481b6743b5979e6fcfcfa16439b05fd50c8a5e",
+      "gitBlobSha256": "2c2336fe275b300440fd34bb2627a8c965b40483bc8a17f150715280c098647e"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-service-process-2026-10-09.txt",
+      "capturedSha256": "9af82f64cd6486818fa1d8a4c4fc434bf7290166b4bc4d47d52fcf46404f1db6",
+      "gitBlobSha256": "b9bd452b7a096bc00a1e983d89447fc7abfd67f1b59bc2a5bddb98598681c050"
+    },
+    {
+      "path": "original-browser-add-behavior-2026-10-09/original-browser-add-behavior-live-ui-2026-10-09.txt",
+      "capturedSha256": "68303c49d499edda0843794109d8b2c6cdef13fe6c321c422ea4cf571c3df428",
+      "gitBlobSha256": "b51e35529c05d85f6c10735ea1dff788a46dd6d0f213eeda25acd5d6db2a816c"
+    }
+  ]
+}

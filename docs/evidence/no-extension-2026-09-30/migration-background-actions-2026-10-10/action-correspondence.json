@@ -1036,7 +1036,11 @@
       "candidateTestSources": [
         {
           "path": "tests/executor-original-timeline-editor.test.mjs",
-          "sha256": "2898bf5a28012858093f4e2d29bdecd30c3d6f76ff79c85d971cc0775345c2e5"
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        },
+        {
+          "path": "tests/executor-original-timeline.test.mjs",
+          "sha256": "7eef150217d6ddd45c8e8616aeea7c91b25fa7b61e605789dac8034fef80f6c8"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",
@@ -1063,7 +1067,11 @@
       "candidateTestSources": [
         {
           "path": "tests/executor-original-timeline-editor.test.mjs",
-          "sha256": "2898bf5a28012858093f4e2d29bdecd30c3d6f76ff79c85d971cc0775345c2e5"
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        },
+        {
+          "path": "tests/executor-original-timeline.test.mjs",
+          "sha256": "7eef150217d6ddd45c8e8616aeea7c91b25fa7b61e605789dac8034fef80f6c8"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",
@@ -1090,7 +1098,11 @@
       "candidateTestSources": [
         {
           "path": "tests/executor-original-timeline-editor.test.mjs",
-          "sha256": "2898bf5a28012858093f4e2d29bdecd30c3d6f76ff79c85d971cc0775345c2e5"
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        },
+        {
+          "path": "tests/executor-original-timeline.test.mjs",
+          "sha256": "7eef150217d6ddd45c8e8616aeea7c91b25fa7b61e605789dac8034fef80f6c8"
         }
       ],
       "requiredEvidenceReview": "分别核对三动作、原时间、证据链接、产品归属、取消和失败。",

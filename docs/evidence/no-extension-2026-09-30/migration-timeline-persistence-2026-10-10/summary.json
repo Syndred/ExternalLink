@@ -1,0 +1,20 @@
+{
+  "originalBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "actualUiAddUpdateRemove": true,
+  "completeOriginalRemovalOracle": true,
+  "deletionCancelledAndFailedWithoutWrite": true,
+  "committedDeleteReplyLost": true,
+  "samePendingMutationAfterDiskReopen": true,
+  "deleteWrites": 1,
+  "repeatDeleteWrites": 0,
+  "finalDiskReopenAndUiReload": true,
+  "originalReceiptsKept": true,
+  "allTimelineTypesAndProductMovesUiVerified": false,
+  "focusedPassed": 10,
+  "focusedFailed": 0,
+  "focusedSkipped": 0,
+  "productionCodeChanged": false,
+  "newFullRunClaimed": false,
+  "productionWrites": 0,
+  "overallMigrationComplete": false
+}

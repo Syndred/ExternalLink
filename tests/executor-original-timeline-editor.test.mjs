@@ -4,6 +4,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {originalTimelineEditor,originalTimelineSaveOutcome} from './helpers/original-timeline-editor.mjs';
 
+test('actual timeline deletion preserves original receipts after cancellation failure committed reply loss and disk reopen',{timeout:60000},()=>{
+ const result=spawnSync(process.execPath,['executor/test/original-timeline-editor.mjs','--persistence'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8',timeout:55000,maxBuffer:1024*1024});assert.equal(result.status,0,result.stderr+'\n'+result.stdout);const proof=JSON.parse(result.stdout.trim().split('\n').at(-1));for(const key of ['ok','deleteCancelFailureAndLostReplyVerified','diskReopenAndActualUiReloadVerified','receiptsAndProfilesKept','offlineSavedOnce'])assert.equal(proof[key],true,key);assert.equal(proof.productionWrites,0);assert.equal(proof.realSubmissions,0);
+});
+
 test('frozen original timeline editor defaults and blank date fallback execute independently',()=>{
  const before=Date.now(),original=originalTimelineEditor(null,{occurredAt:''});
  assert.equal(original.values.profile,'__destination__');assert.equal(original.values.type,'submitted');assert.equal(original.values.note,'');assert.equal(original.cancelHidden,true);assert.ok(Date.parse(original.payload.occurredAt)>=before&&Date.parse(original.payload.occurredAt)<=Date.now());

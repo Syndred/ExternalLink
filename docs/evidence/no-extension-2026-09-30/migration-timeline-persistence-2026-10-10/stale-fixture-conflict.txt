@@ -1,0 +1,277 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
+    sheetTableData: {
+      entries: [
+        {
+          link: 'https://target.fixture.invalid/form',
+...
+      ],
++     'target.fixture.invalid/form::p': [
++       {
++         confirmedBy: 'manual',
++         destinationKey: 'target.fixture.invalid/form',
++         destinationUrl: 'https://target.fixture.invalid/form',
++         evidenceUrl: '',
++         id: 'old-event',
++         note: '原动态已修改',
++         occurredAt: '2026-10-09T19:05:23.933Z',
++         profileId: 'p',
++         profileName: '原产品',
++         publicUrl: '',
++         source: 'manual',
++         status: 'note',
++         type: 'note'
++       }
++     ]
+    },
+    timelineSchemaVersion: 1
+  }
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-timeline-editor.mjs:45:302 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    siteProfiles: {
+      p: {
+        id: 'p',
+        name: '原产品',
+        fields: { Name: '原产品', Url: 'https://product.fixture.invalid' }
+      }
+    },
+    sheetTableData: {
+      entries: [ { link: 'https://target.fixture.invalid/form', name: '原目标站' } ]
+    },
+    submissionTimeline: {
+      'target.fixture.invalid/form::p': [
+        {
+          id: 'old-event',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: 'p',
+          occurredAt: '2026-10-09T19:05:23.933Z',
+          type: 'note',
+          status: 'note',
+          note: '原动态已修改',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '原产品',
+          confirmedBy: 'manual'
+        }
+      ],
+      'target.fixture.invalid/form::__destination__': [
+        {
+          id: '78cdd942-2873-41e3-903d-64711ef4ce40',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '第一条新动态',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '054a30c6-3eb9-4ebf-9723-a596a5734040',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '保存期间输入的第二条动态',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: 'e6756af5-b793-449b-b6ab-2f2f8f192335',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '失败后保留草稿',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: 'fcbad2d5-7cf0-489c-99af-2502840f1111',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '旧窗口正在保存',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '0c88a3a4-ce44-4924-90c6-5d5947a64e34',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '离线只保存一次',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '663de2e1-f213-440e-a20e-6c8d02107ac7',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '已保存但刷新失败',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        }
+      ]
+    },
+    submissionRecords: { keep: { status: 'success', evidence: 'Keep receipt' } },
+    timelineSchemaVersion: 1
+  },
+  expected: {
+    siteProfiles: {
+      p: {
+        id: 'p',
+        name: '原产品',
+        fields: { Name: '原产品', Url: 'https://product.fixture.invalid' }
+      }
+    },
+    sheetTableData: {
+      entries: [ { link: 'https://target.fixture.invalid/form', name: '原目标站' } ]
+    },
+    submissionTimeline: {
+      'target.fixture.invalid/form::__destination__': [
+        {
+          id: '78cdd942-2873-41e3-903d-64711ef4ce40',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '第一条新动态',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '054a30c6-3eb9-4ebf-9723-a596a5734040',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '保存期间输入的第二条动态',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: 'e6756af5-b793-449b-b6ab-2f2f8f192335',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '失败后保留草稿',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: 'fcbad2d5-7cf0-489c-99af-2502840f1111',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '旧窗口正在保存',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '0c88a3a4-ce44-4924-90c6-5d5947a64e34',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '离线只保存一次',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        },
+        {
+          id: '663de2e1-f213-440e-a20e-6c8d02107ac7',
+          destinationKey: 'target.fixture.invalid/form',
+          profileId: '__destination__',
+          occurredAt: '2026-10-09T19:05:00.000Z',
+          type: 'note',
+          status: 'note',
+          note: '已保存但刷新失败',
+          evidenceUrl: '',
+          publicUrl: '',
+          source: 'manual',
+          destinationUrl: 'https://target.fixture.invalid/form',
+          profileName: '外链站',
+          confirmedBy: 'manual'
+        }
+      ]
+    },
+    submissionRecords: { keep: { status: 'success', evidence: 'Keep receipt' } },
+    timelineSchemaVersion: 1
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

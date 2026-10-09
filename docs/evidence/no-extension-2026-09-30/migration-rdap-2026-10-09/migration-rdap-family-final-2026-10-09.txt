@@ -1,0 +1,29 @@
+✔ authenticated D1 extraction, generation and article fallback use the original service without changing business documents (33.0872ms)
+✔ device AI reports the original balance and transient provider errors as classified 503 responses (4.3471ms)
+✔ wrong workspace, admin token and revoked devices cannot invoke the model or read article pages (2.4141ms)
+✔ original form planning, visual planning, judging and field validation use authenticated device routes and original handlers (5.4382ms)
+✔ all restored form AI routes reject wrong scopes and revoked devices before models, and preserve provider error classification (7.5834ms)
+✔ successful registry dates survive a lost cache reply and SQLite reopen with original known counts and no extra lookup (117.6732ms)
+✔ seven-day original caches include unknowns and migrated checkedAt records; only stale domains are queried (70.9313ms)
+✔ original raw domain normalization deduplicates and forced refresh bypasses the cache without changing its frozen scope (73.5462ms)
+✔ interleaved cache hits still batch all missing domains by twenty as in the original plugin (90.3246ms)
+✔ a lost cache-write response and SQLite restart finish the original batch and IDs without querying the same domains again (115.4036ms)
+✔ original 5000-record pruning retains newest results and unknown state without reporting an unpruned mutation as confirmed (17.3494ms)
+✔ all-cached queries avoid provider calls and prune an oversized original cache once (236.1473ms)
+✔ the cache limit does not truncate the original query range or its results (253.1917ms)
+✔ keeping a conflicting cloud cache records excluded domains and retains the original receipt and query IDs (93.3313ms)
+✔ a workspace change after querying preserves the original result and forbids writing it under the new workspace (81.8404ms)
+✔ a lost reply confirms the frozen pruning result even when newer original timestamps prune the fetched domain (323.2165ms)
+✔ a working original RDAP service retains original dates and age calculation without bootstrap requests (18.6017ms)
+✔ a failed public redirector uses one IANA bootstrap for distinct registries and preserves the original batch result order (1.0611ms)
+✔ authoritative service discovery uses the longest label suffix and rejects non-HTTPS credential and query endpoints (0.175ms)
+✔ a missing service or registry failure remains unknown and retries the next IANA service without guessing an age (1.0152ms)
+✔ timeouts malformed bootstrap and malformed registry JSON never become successful domain ages (0.898ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1606.2541

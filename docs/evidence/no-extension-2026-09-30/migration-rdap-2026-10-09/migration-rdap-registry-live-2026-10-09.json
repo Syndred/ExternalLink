@@ -1,0 +1,36 @@
+{
+  "kind": "actual_iana_registry_lookup_after_controlled_redirector_failure",
+  "domains": [
+    "producthunt.com",
+    "bai.tools"
+  ],
+  "results": [
+    {
+      "domain": "producthunt.com",
+      "status": "ok",
+      "createdAt": "2003-03-04T23:01:18Z",
+      "expiresAt": "2031-03-04T23:01:18Z",
+      "ageDays": 8619,
+      "ageMonths": 283
+    },
+    {
+      "domain": "bai.tools",
+      "status": "ok",
+      "createdAt": "2023-12-02T04:08:28.49Z",
+      "expiresAt": "2026-12-02T04:08:28.49Z",
+      "ageDays": 1042,
+      "ageMonths": 34
+    }
+  ],
+  "requests": [
+    "https://rdap.org/domain/producthunt.com",
+    "https://rdap.org/domain/bai.tools",
+    "https://data.iana.org/rdap/dns.json",
+    "https://rdap.verisign.com/com/v1/domain/producthunt.com",
+    "https://rdap.identitydigital.services/rdap/domain/bai.tools"
+  ],
+  "redirectorControlled": true,
+  "ianaAndRegistryNetworkReal": true,
+  "realModelCalls": 0,
+  "productionWrites": 0
+}

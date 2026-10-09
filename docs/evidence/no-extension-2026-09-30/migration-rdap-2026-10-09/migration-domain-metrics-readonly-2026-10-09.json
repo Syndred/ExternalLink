@@ -1,0 +1,26 @@
+{
+  "kind": "actual_authenticated_domain_metrics_readonly",
+  "domains": [
+    "producthunt.com",
+    "bai.tools"
+  ],
+  "result": {
+    "ok": true,
+    "results": [
+      {
+        "domain": "producthunt.com",
+        "status": "unknown",
+        "message": "RDAP HTTP 403"
+      },
+      {
+        "domain": "bai.tools",
+        "status": "unknown",
+        "message": "RDAP HTTP 403"
+      }
+    ]
+  },
+  "allCloudDocumentsAndRevisionsUnchanged": true,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0
+}

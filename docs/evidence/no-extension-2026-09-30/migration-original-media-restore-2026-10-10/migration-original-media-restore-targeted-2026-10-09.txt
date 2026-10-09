@@ -1,0 +1,39 @@
+✔ media upload rejects mismatched image signatures and freezes both media models with correct kinds (1.6412ms)
+✔ device media is immutable across unknown retries and cannot be adopted by another product (5.4636ms)
+✔ media bytes persist before upload and lost responses are verified before attaching a version (6.4263ms)
+✔ choosing the cloud version for a media conflict retains the uploaded asset without an endless pending attachment (1.999ms)
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (50.7315ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (11.6026ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1393.1734ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (884.8487ms)
+✔ original media audit reads exact legacy fields and original file order from an independent scoped PostgreSQL index (1313.3999ms)
+✔ original media recovery route rejects ordinary credentials, foreign workspaces and every mutation before reading any source (17.7481ms)
+✔ old database outages and missing configuration remain explicit with no fallback or connection information disclosure (1.3244ms)
+✔ deployed Worker routing keeps v1 media on D1 but routes the protected recovery read to the independent old database (2.1586ms)
+✔ a dedicated original-index audit credential works without enabling any recovery write or other recovery read (0.5294ms)
+✔ dedicated media-audit credentials reach the old source through the complete Worker router without a recovery secret (0.3372ms)
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-media-metadata-restoration.test.mjs:2
+import worker from '../cloud/worker/src/index.mjs';import {putDeviceMedia} from '../cloud/worker/src/device-media.mjs';import {listOriginalMediaR2,resolveOriginalCloudMediaDefaults} from '../core/original-cloud-media.mjs';
+                                                                                                                               ^^^^^^^^^^^^^^^^^^^
+SyntaxError: The requested module '../core/original-cloud-media.mjs' does not provide an export named 'listOriginalMediaR2'
+    at #asyncInstantiate (node:internal/modules/esm/module_job:455:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:553:5)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0
+✖ tests\original-media-metadata-restoration.test.mjs (99.3848ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2788.9125
+
+✖ failing tests:
+
+test at tests\original-media-metadata-restoration.test.mjs:1:1
+✖ tests\original-media-metadata-restoration.test.mjs (99.3848ms)
+  'test failed'

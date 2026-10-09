@@ -1,0 +1,24 @@
+✔ media upload rejects mismatched image signatures and freezes both media models with correct kinds (1.6999ms)
+✔ device media is immutable across unknown retries and cannot be adopted by another product (5.2052ms)
+✔ media bytes persist before upload and lost responses are verified before attaching a version (6.8749ms)
+✔ choosing the cloud version for a media conflict retains the uploaded asset without an endless pending attachment (2.1739ms)
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (50.8308ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (10.5433ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1381.9919ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (851.4121ms)
+✔ original media audit reads exact legacy fields and original file order from an independent scoped PostgreSQL index (1274.0519ms)
+✔ original media recovery route rejects ordinary credentials, foreign workspaces and every mutation before reading any source (17.7024ms)
+✔ old database outages and missing configuration remain explicit with no fallback or connection information disclosure (1.4047ms)
+✔ deployed Worker routing keeps v1 media on D1 but routes the protected recovery read to the independent old database (2.2153ms)
+✔ a dedicated original-index audit credential works without enabling any recovery write or other recovery read (0.5492ms)
+✔ dedicated media-audit credentials reach the old source through the complete Worker router without a recovery secret (0.365ms)
+✔ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (31.4947ms)
+✔ device uploads preserve all four screenshot slot indices in catalogue and frozen original defaults (2.1798ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2729.4866

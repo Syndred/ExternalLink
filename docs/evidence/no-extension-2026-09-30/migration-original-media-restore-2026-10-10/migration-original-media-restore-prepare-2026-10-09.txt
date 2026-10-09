@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '01-home.png'
+- 'GraffitiName-screenshot-0.png'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/restore-original-media-metadata-2026-10-09.mjs:13:727
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '01-home.png',
+  expected: 'GraffitiName-screenshot-0.png',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

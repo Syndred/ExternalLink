@@ -1,0 +1,76 @@
+{
+  "ok": true,
+  "actualNative19389Ui": true,
+  "originalSourceFileOrderAndOwnershipMatched": true,
+  "verifiedOriginalFiles": 50,
+  "results": [
+    {
+      "profileId": "site-mu4wlxu0",
+      "expectedFiles": 16,
+      "available": 16,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 16
+    },
+    {
+      "profileId": "JevPlay",
+      "expectedFiles": 2,
+      "available": 2,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 2
+    },
+    {
+      "profileId": "TextComparison",
+      "expectedFiles": 5,
+      "available": 5,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 5
+    },
+    {
+      "profileId": "GraffitiName",
+      "expectedFiles": 5,
+      "available": 5,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 5
+    },
+    {
+      "profileId": "OldPhotoLive",
+      "expectedFiles": 5,
+      "available": 5,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 5
+    },
+    {
+      "profileId": "RainbowPetAI",
+      "expectedFiles": 7,
+      "available": 7,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 7
+    },
+    {
+      "profileId": "RspAi",
+      "expectedFiles": 5,
+      "available": 5,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 5
+    },
+    {
+      "profileId": "VideoToArticleAI",
+      "expectedFiles": 5,
+      "available": 5,
+      "unavailable": 0,
+      "originalFrozenIdentityAndFileOrderMatched": true,
+      "decodedImages": 5
+    }
+  ],
+  "originalTasksRunsFixedRangeAndCredentialsPreserved": true,
+  "productionWrites": 0,
+  "realSubmissions": 0,
+  "models": 0
+}

@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '云端 HTTP 200 返回非 JSON 响应 (application/json)'
+- ''
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test-output/original-product-hunt-monitor-transition-2026-10-09.mjs:12:286
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '云端 HTTP 200 返回非 JSON 响应 (application/json)',
+  expected: '',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

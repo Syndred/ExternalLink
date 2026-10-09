@@ -1,0 +1,114 @@
+✔ media upload rejects mismatched image signatures and freezes both media models with correct kinds (1.6867ms)
+✔ device media is immutable across unknown retries and cannot be adopted by another product (6.5024ms)
+✔ media bytes persist before upload and lost responses are verified before attaching a version (6.1202ms)
+✔ choosing the cloud version for a media conflict retains the uploaded asset without an endless pending attachment (1.6871ms)
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (51.1272ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (9.1477ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1402.0847ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (830.7542ms)
+✔ original media audit reads exact legacy fields and original file order from an independent scoped PostgreSQL index (1279.0615ms)
+✔ original media recovery route rejects ordinary credentials, foreign workspaces and every mutation before reading any source (19.2601ms)
+✔ old database outages and missing configuration remain explicit with no fallback or connection information disclosure (2.0511ms)
+✔ deployed Worker routing keeps v1 media on D1 but routes the protected recovery read to the independent old database (3.3085ms)
+✔ a dedicated original-index audit credential works without enabling any recovery write or other recovery read (0.7794ms)
+✔ dedicated media-audit credentials reach the old source through the complete Worker router without a recovery secret (0.4186ms)
+✖ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (22.7786ms)
+✔ device uploads preserve all four screenshot slot indices in catalogue and frozen original defaults (3.9216ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2715.8604
+
+✖ failing tests:
+
+test at tests\original-media-metadata-restoration.test.mjs:6:1
+✖ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (22.7786ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + Buffer(0) [Uint8Array] []
+  - Buffer(68) [Uint8Array] [
+  -   137,
+  -   80,
+  -   78,
+  -   71,
+  -   13,
+  -   10,
+  -   26,
+  -   10,
+  -   0,
+  -   0,
+  -   0,
+  -   13,
+  -   73,
+  -   72,
+  -   68,
+  -   82,
+  -   0,
+  -   0,
+  -   0,
+  -   1,
+  -   0,
+  -   0,
+  -   0,
+  -   1,
+  -   8,
+  -   4,
+  -   0,
+  -   0,
+  -   0,
+  -   181,
+  -   28,
+  -   12,
+  -   2,
+  -   0,
+  -   0,
+  -   0,
+  -   11,
+  -   73,
+  -   68,
+  -   65,
+  -   84,
+  -   120,
+  -   218,
+  -   99,
+  -   252,
+  -   255,
+  -   31,
+  -   0,
+  -   3,
+  -   3,
+  -   2,
+  -   0,
+  -   239,
+  -   163,
+  -   127,
+  -   219,
+  -   0,
+  -   0,
+  -   0,
+  -   0,
+  -   73,
+  -   69,
+  -   78,
+  -   68,
+  -   174,
+  -   66,
+  -   96,
+  -   130
+  - ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/original-media-metadata-restoration.test.mjs:10:86)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: <Buffer >,
+    expected: <Buffer 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 00 01 00 00 00 01 08 04 00 00 00 b5 1c 0c 02 00 00 00 0b 49 44 41 54 78 da 63 fc ff 1f 00 03 03 ... 18 more bytes>,
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

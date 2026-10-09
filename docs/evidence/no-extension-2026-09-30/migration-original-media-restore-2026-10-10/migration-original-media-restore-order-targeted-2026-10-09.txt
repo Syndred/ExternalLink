@@ -1,0 +1,21 @@
+✔ authenticated d1 available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (50.3685ms)
+✔ authenticated d1 catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (12.8049ms)
+✔ authenticated neon available registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1494.9498ms)
+✔ authenticated neon catalogue-error registration freezes original cloud media fallback, ignores caller substitutions and restores original fields from an empty native store (1049.408ms)
+✔ original offline image queue follows durable insertion order even when IDs and equal timestamps sort in the opposite direction (4.3833ms)
+✔ original GIF and SVG logo uploads retain their original bytes and reject MIME substitutions and oversized files as client errors (23.5819ms)
+✔ original GIF and SVG R2 versions remain immutable and task materialization preserves MIME, extension and SHA (19.2193ms)
+✔ original format bytes survive SQLite restart and lost upload and profile replies without duplicate assets or lost history (144.69ms)
+✔ product cloud catalogue keeps frozen original profile identity matching, all files, metadata and order (8.39ms)
+✔ original product media refresh reads only the paginated catalogue and cannot depend on unrelated ledger availability (1.0382ms)
+✔ same-byte legacy uploads restore zero-based and null original metadata without changing content or unrelated metadata (34.6688ms)
+✔ device uploads preserve all four screenshot slot indices in catalogue and frozen original defaults (2.6286ms)
+✔ complete paginated native and task catalogues retain the original filename order rather than R2 key order (1.2726ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3172.8911

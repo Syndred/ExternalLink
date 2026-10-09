@@ -1,3 +1,4 @@
+import {assertOriginalCommentLength} from '../../core/original-comment-constraints.mjs';
 import {randomUUID,createHash} from 'node:crypto';
 import {queue,plain,selectScope,priorProductSuccess,profiles,scheduler} from './shared.mjs';
 import {attachEngine} from './engine.mjs';
@@ -157,7 +158,7 @@ export async function fillCommentDraft(runtime,input){
  if(!task||task.attemptBoundary||task.receipt||!['pending','needs_manual'].includes(task.status))throw Error('只能填写尚未投稿的原任务评论');
  if(input.profileId!==undefined&&input.profileId!==task.profileId)throw Error('评论产品与原任务不一致');
  if(runtime.job||runtime.store.get('paused')!==true)throw Error('请先暂停并等待当前动作结束');
- if(typeof input.text!=='string'||!input.text.trim()||input.text.length>2000)throw Error('请输入不超过 2000 字的评论草稿');
+ if(typeof input.text!=='string'||!input.text.trim())throw Error('请输入评论草稿');
  if(!runtime.context)await runtime.connect();const page=await runtime.findPage(task);
  if(site(page.url())!==site(task.url))throw Error('原任务页面与目标网站不一致');
  const articleUrl=new URL(input.pageUrl??page.url()).href,scope=workbenchScope(runtime.store.get('pair')),assertArticle=()=>{if(scope!==workbenchScope(runtime.store.get('pair')))throw Error('工作区已切换，停止旧评论填写');if(new URL(page.url()).href!==articleUrl)throw Error('文章页面已切换，旧评论不能填入其他文章');};assertArticle();
@@ -165,10 +166,9 @@ export async function fillCommentDraft(runtime,input){
  const profile=task.profileSnapshot||snapshot.documents.siteProfiles?.[task.profileId];if(!profile)throw Error('产品资料缺失');
  const preferences=overlayApplicationSettings(runtime,snapshot).documents;
  const config={...plain(profiles.buildAgentConfigFromProfile(profile,{email:preferences.cfgEmail,username:preferences.cfgName})),commentTemplate:input.text,applyCommentTemplate:true,aiComments:false,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
- await runtime.lease(task,{online:true});assertArticle();
  for(const frame of page.frames()){
   let engine;try{engine=await attachEngine(runtime.context,frame,msg=>runtime.bridge(task,msg));const detection=await engine.call({action:'detectPage',config});if(!detection.commentFound)continue;
-   assertArticle();const fill=await engine.call({action:'executeSubmit',config,platformType:detection.platform==='wp_comment'?'wp_comment':'article'});if(fill?.ok===false||fill?.error)throw Error(fill.error||fill.reason||'评论填写未完成');const actual=await engine.call({action:'getFilledFieldsReport'});assertArticle();
+   const pageSnapshot=await engine.call({action:'getPageSnapshot'}),prescan=await engine.call({action:'prescanPage'});assertArticle();assertOriginalCommentLength(input.text,pageSnapshot,prescan);await runtime.lease(task,{online:true});assertArticle();const fill=await engine.call({action:'executeSubmit',config,platformType:detection.platform==='wp_comment'?'wp_comment':'article'});if(fill?.ok===false||fill?.error)throw Error(fill.error||fill.reason||'评论填写未完成');const actual=await engine.call({action:'getFilledFieldsReport'});assertArticle();
    if(!JSON.stringify(actual).includes(JSON.stringify(input.text).slice(1,-1)))throw Error('评论填写未通过回读核验');
    runtime.update(task,{selectedComment:input.text,actualPreparation:actual,commentPreparation:{at:new Date().toISOString(),fill,actual},preparedAt:new Date().toISOString()},'comment_draft_filled');await runtime.synchronize();return{ok:true,filled:true,submitted:false};
   }finally{await engine?.detach();}

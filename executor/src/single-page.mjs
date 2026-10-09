@@ -1,3 +1,4 @@
+import {assertOriginalCommentLength} from '../../core/original-comment-constraints.mjs';
 import {randomUUID,createHash} from 'node:crypto';
 import {queue,profiles,plain,priorProductSuccess} from './shared.mjs';
 import {workbenchScope} from './workbench-sync.mjs';
@@ -72,7 +73,7 @@ export async function sidepanelFill(runtime,input){
   const assertSource=async()=>{if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');const latest=input.mode==='comment'?null:await externalFormDestination(runtime,page);if(JSON.stringify(latest)!==JSON.stringify(externalSource))throw Error('外部表单来源已变化，停止旧网页操作');assertCurrent();};
   if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,destinationUrl))return await previousReceipt(destinationUrl);
   if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))return await previousReceipt(page.url());
-  if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');
+  if(input.mode==='comment'&&(typeof input.commentText!=='string'||!input.commentText.trim()))throw Error('请输入待填写的评论');
   let config=configFor(snapshot,profile,page.url());if(input.mode==='comment')config.commentTemplate=input.commentText;
   if(input.mode!=='comment'&&isProductHuntLaunch(page.url())){
    const panel=assertPanel(runtime,input),generation=panel.generation,task=await preparedTask(runtime,input,snapshot);assertCurrent();
@@ -87,6 +88,7 @@ export async function sidepanelFill(runtime,input){
   }
   for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;const engine=await attachEngine(runtime.context,frame);engines.push({engine,frame,url:frame.url(),detection:await engine.call({action:'detectPage',config})});}
   const candidate=engines.filter(e=>input.mode==='comment'?e.detection.commentFound:e.detection.operable).sort((a,b)=>(b.detection.formFieldCount||0)-(a.detection.formFieldCount||0))[0];if(!candidate)throw Error(input.mode==='comment'?'未发现评论表单':'未发现可填写表单');
+  if(input.mode==='comment'){const pageSnapshot=await candidate.engine.call({action:'getPageSnapshot'}),prescan=await candidate.engine.call({action:'prescanPage'});assertCurrent();assertOriginalCommentLength(input.commentText,pageSnapshot,prescan);}
   const guard=await candidate.engine.call({action:'inspectAutoFillGuard',targetDomain:config.targetDomain});if(guard?.blocked)throw Error(guard.reason||'网页已有其他产品内容，请检查后继续');
   await assertSource();const task=await preparedTask(runtime,{...input,expectedUrl:destinationUrl},snapshot);await assertSource();if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原任务结果或控制权已变化，请先核验');await runtime.lease(task,{online:true});await assertSource();
   const history=task.targetId&&task.targetId!==input.targetId?[...(task.pageHistory||[]),{targetId:task.targetId,browserInstance:task.browserInstance,at:at()}]:task.pageHistory;

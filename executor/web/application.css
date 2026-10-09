@@ -8,3 +8,5 @@
 td button{white-space:nowrap}td:nth-child(4){min-width:110px}td:nth-child(3){min-width:140px}
 .product-order-controls{margin-bottom:12px}.product-order-controls .muted{cursor:grab;margin-right:auto}.card.is-dragging{opacity:.55}
 .record-detail{white-space:pre-wrap;overflow-wrap:anywhere}
+.card button[aria-pressed="true"]{background:#315fca;border-color:#315fca;color:#fff}
+[hidden]{display:none!important}

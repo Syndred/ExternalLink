@@ -1,0 +1,11 @@
+{
+  "kind": "lexical_route_audit_only",
+  "uniqueLiteralUiRoutes": 82,
+  "missing": [],
+  "connectionHandledByWorkbench": true,
+  "dynamicPrefixes": [
+    "/cloud/workspace/media/",
+    "/evidence/"
+  ],
+  "runtimeGuardEvidence": "migration-assistant-retry-routes-2026-10-09.txt"
+}

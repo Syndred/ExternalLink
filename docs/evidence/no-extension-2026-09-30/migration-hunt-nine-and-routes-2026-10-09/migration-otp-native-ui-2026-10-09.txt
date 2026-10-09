@@ -1,0 +1,14 @@
+Browser tab: 2, Title: "ExternalLink · 外链助手", URL: "http://127.0.0.1:64654/".
+0 AXWebArea ExternalLink · 外链助手, URL: 127.0.0.1:64654/
+	1 container detail
+		2 button Description: 关闭详情, ID: close-detail
+		3 container detail-content
+			4 heading 原产品 · https://otp.example/form, Value: 2
+				5 text 原产品 · https://otp.example/form
+			6 text 需要邮箱或手机验证码 未投稿
+			7 text 原邮箱验证码待人工处理
+			8 button 打开待办页面
+			9 button 人工确认成功
+			10 button 跳过本次处理
+
+The focused UI element is 2 button Description: 关闭详情, ID: close-detail

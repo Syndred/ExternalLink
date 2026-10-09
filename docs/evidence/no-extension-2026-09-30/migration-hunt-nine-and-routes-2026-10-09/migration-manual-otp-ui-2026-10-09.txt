@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for getByRole('dialog').getByRole('button', { name: '人工确认成功', exact: true }) to be visible
+
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\application-ui.mjs:80:1243 {
+  log: [
+    "  - waiting for getByRole('dialog').getByRole('button', { name: '人工确认成功', exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0

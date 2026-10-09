@@ -1,0 +1,20 @@
+{"scenario":"hunt-new-draft","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-lost-reply","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-cloud-outage","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-unknown","controlledCreateClicks":1,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-changed-checklist","controlledCreateClicks":0,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+{"scenario":"hunt-pause-boundary","controlledCreateClicks":0,"boundaryIndependentlyRead":true,"receiptCloudVerified":false,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+✔ actual Product Hunt draft creation persists original boundaries evidence and authenticated cloud recovery without repeat creation (24109.0658ms)
+{"scenario":"hunt-nine-stages-authenticated-media","stages":9,"exactFileHashes":3,"boundaryIndependentlyReadBeforeClick":true,"controlledTrustedCreateClicks":1,"lostReplyRecovered":true,"oneCloudReceiptAndTimeline":true,"emptyRestore":true,"noRepeat":true,"realSubmissions":0,"realModels":0}
+✔ nine actual Product Hunt stages and three frozen files retain one authenticated D1 receipt through lost acknowledgement and empty restore (9364.0792ms)
+✔ native Product Hunt launch, same-task resume, panel and auto-visit preserve original no-progress boundaries (4596.5309ms)
+✔ tests\original-product-hunt-fidelity.test.mjs (88.9102ms)
+✔ Product Hunt visual handoff preserves original unavailable or interrupted outcomes without another visual attempt or creation (2.5922ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34148.7298

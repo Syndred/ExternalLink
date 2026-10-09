@@ -1,0 +1,21 @@
+✖ nine actual Product Hunt stages and three frozen files retain one authenticated D1 receipt through lost acknowledgement and empty restore (50192.3347ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50771.5835
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:561:1
+✖ nine actual Product Hunt stages and three frozen files retain one authenticated D1 receipt through lost acknowledgement and empty restore (50192.3347ms)
+  Error: Product Hunt 步骤超过安全上限
+      at runPass (file:///C:/Users/Administrator/Desktop/project/ExternalLink/core/product-hunt-workflow.mjs:40:8)
+      at async runProductHuntLoop (file:///C:/Users/Administrator/Desktop/project/ExternalLink/core/product-hunt-workflow.mjs:42:13)
+      at async runProductHuntWorkflow (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/src/product-hunt.mjs:25:24)
+      at async TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:573:62)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

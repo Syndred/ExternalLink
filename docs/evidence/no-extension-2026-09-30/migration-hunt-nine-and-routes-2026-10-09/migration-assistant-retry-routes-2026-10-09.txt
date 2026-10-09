@@ -1,0 +1,10 @@
+{"kind":"actual_assistant_retry_native_routes","services":2,"unauthorized401":true,"oldConnection409":true,"originalRecordGuard400":true,"originalUnknownAndFixedRangePreserved":true,"productionWrites":0,"models":0,"realSubmissions":0}
+✔ both actual native services route assistant retries through original guards without changing unknown tasks or permitting unauthorized calls (703.0113ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 771.6107

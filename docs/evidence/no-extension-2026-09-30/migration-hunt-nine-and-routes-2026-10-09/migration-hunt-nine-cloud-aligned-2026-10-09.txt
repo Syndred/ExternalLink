@@ -1,0 +1,30 @@
+✖ nine actual Product Hunt stages and three frozen files retain one authenticated D1 receipt through lost acknowledgement and empty restore (9367.4255ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9953.6516
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:561:1
+✖ nine actual Product Hunt stages and three frozen files retain one authenticated D1 receipt through lost acknowledgement and empty restore (9367.4255ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + ''
+  - 'Original factual first comment'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:575:409)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: 'Original factual first comment',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,10 @@
+{
+  "actualNativeServicesAndInAppBrowser": true,
+  "otpTaskVisibleInManualScope": true,
+  "otpOriginalDetailShowsConfirmation": true,
+  "originalUnknownBoundaryAndFixedRangePreserved": true,
+  "fixtureLocalTasksAndCloudRunsUnchangedAfterUi": true,
+  "productionWrites": 0,
+  "models": 0,
+  "realSubmissions": 0
+}

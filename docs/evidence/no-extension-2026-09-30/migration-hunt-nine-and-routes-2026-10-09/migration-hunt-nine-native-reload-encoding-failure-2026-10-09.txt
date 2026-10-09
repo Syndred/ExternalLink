@@ -1,0 +1,19 @@
+At C:\Users\Administrator\Desktop\project\ExternalLink\executor\test-output\original-agent-service-reload-2026-10-07.ps
+1:15 char:35
++ ... Path $taskWorkspace 'executor\test-output\stopped-service-guard.mjs')
++                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token 'executor\test-output\stopped-service-guard.mjs')
+if ($LASTEXITCODE -ne 0) { throw '纾佺洏鏆傚仠涓庝换鍔′繚鎶ゆ鏌ユ湭閫氳繃锛屾湭鏇存柊' }
+foreach ($taskService in $taskVerified) { Stop-Process -Id $taskService.ProcessId -ErrorAction Stop }
+& node (Join-Path $taskWorkspace 'executor\test-output\stopped-service-guard.mjs')
+if ($LASTEXITCODE -ne 0) { throw '鍋滄鍚庣鐩樹繚鎶ゆ湭閫氳繃锛屾湭鍚姩' }
+& node (Join-Path $taskWorkspace 'executor\scripts\open-workbench.mjs') --services-only
+if ($LASTEXITCODE -ne 0) { throw '鏈嶅姟鏈氨缁?' in expression or statement.
+At C:\Users\Administrator\Desktop\project\ExternalLink\executor\test-output\original-agent-service-reload-2026-10-07.ps
+1:5 char:41
++ foreach ($taskService in $taskServices) {
++                                         ~
+Missing closing '}' in statement block or type definition.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnexpectedToken
+ 

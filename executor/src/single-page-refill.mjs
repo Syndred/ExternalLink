@@ -12,6 +12,7 @@ import {captureFillLearning} from './fill-learning.mjs';
 import {classifyOriginalFillGate} from './original-site-classification.mjs';
 import {resolveOriginalCloudMediaDefaults,applyOriginalCloudMediaDefaults} from '../../core/original-cloud-media.mjs';
 import {decodeImageAsset,validateImageBytes} from '../../core/media-assets.mjs';
+import {armRefillReceiptWatch} from './refill-receipt-watch.mjs';
 
 // The original ordinary sidepanel permits filling an already submitted site.
 // Keep this preparation separate from task:/run:, so an old receipt, its task,
@@ -21,7 +22,7 @@ export async function refillExistingPage(runtime,{input,snapshot,profile,page,de
  const state={id,scope:workbenchScope(runtime.store.get('pair')),at:new Date().toISOString(),profileId:profile.id,profileRevision:snapshot.revisions.siteProfiles,profile:structuredClone(profile),url:input.expectedUrl,destinationUrl,targetId:input.targetId,browserInstance,mode:input.mode||'form',status:'preparing',submitted:false,updates:[]};
  const save=patch=>{Object.assign(state,patch);runtime.store.set(key,state);};
  const conflict=task=>!task.tabClosedAt&&task.targetId===input.targetId&&task.browserInstance===browserInstance&&!['finished','excluded','skipped'].includes(task.status)||task.profileId===profile.id&&[input.expectedUrl,destinationUrl].some(url=>queue.extractDomain(task.url)===queue.extractDomain(url))&&(task.attemptBoundary&&!task.receipt||task.syncConflict||['ai','supervisor'].includes(task.controller));
- const check=()=>{assertBase();if(connection!==cloudDigest(runtime.store.get('pair'))||browserInstance!==runtime.host?.startedAt||page.isClosed()||page.url()!==input.expectedUrl||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))throw Error('原网页、连接或执行状态已变化，停止再次填写');if(runtime.store.values('task:').some(conflict))throw Error('同站原任务有未知结果或控制冲突，请先核验');};
+ const check=()=>{assertBase();if(['checking','pending_sync','confirmed'].includes(runtime.store.get('refillWatch:'+id)?.status))throw Error('已观察到原网页手动提交，停止继续填写');if(connection!==cloudDigest(runtime.store.get('pair'))||browserInstance!==runtime.host?.startedAt||page.isClosed()||page.url()!==input.expectedUrl||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))throw Error('原网页、连接或执行状态已变化，停止再次填写');if(runtime.store.values('task:').some(conflict))throw Error('同站原任务有未知结果或控制冲突，请先核验');};
  const assertCurrent=async()=>{check();await assertSource();for(const item of engines)if(item.frame.isDetached()||item.frame.url()!==item.url||!await item.engine.isCurrentDocument())throw Error('原填写文档或表单区域已变化');check();};
  const checkCloud=async()=>{await assertCurrent();const fresh=await runtime.cloud.request('snapshot');await assertCurrent();if(!isDeepStrictEqual(fresh.documents.siteProfiles?.[profile.id],profile))throw Error('产品资料已变化，请重新填写');const inventory=await runtime.cloud.request('runs?view=inventory');await assertCurrent();if(inventory.tasks.some(conflict))throw Error('云端原任务有未知结果或控制冲突，请先核验');};
  const mediaEntries=()=>[['logo',config.logoUrl],['featured',config.featuredImage],...(config.screenshots||[]).map((ref,index)=>['screenshot'+(index+1),ref])].filter(([kind,ref])=>ref&&!config.mediaDisabled?.[kind]);
@@ -55,6 +56,7 @@ export async function refillExistingPage(runtime,{input,snapshot,profile,page,de
   const candidate=engines.filter(item=>input.mode==='comment'?item.detection.commentFound:item.detection.operable).sort((a,b)=>(b.detection.formFieldCount||0)-(a.detection.formFieldCount||0))[0];if(!candidate)throw Error(input.mode==='comment'?'未发现评论表单':'未发现可填写表单');
   const call=async message=>{await assertCurrent();const result=await candidate.engine.call(message);await assertCurrent();return result;};
   if(input.mode!=='comment'){const guard=await call({action:'inspectAutoFillGuard',targetDomain:config.targetDomain});if(guard?.blocked)throw Error(guard.reason||'网页已有其他产品内容');}
+  if(input.mode!=='comment')await armRefillReceiptWatch(runtime,{state,snapshot,page,config,assertCurrent});
   let fill,actual,validation,counts,submitReady=true;
   if(input.mode==='comment'){fill=await call({action:'executeSubmit',config,platformType:'wp_comment'});if(fill?.error||fill?.ok===false)throw Error(fill.error||'评论填写未完成');actual=await call({action:'getFilledFieldsReport'});validation=await call({action:'collectFormValidation'});}
   else{

@@ -1,0 +1,21 @@
+{"scenario":"new","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"same-baseline","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"lost-reply","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"cloud-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"record-race","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"closed-after-evidence","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"restart-pending","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"untrusted","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"wrong-product","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"scope-change","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"expired","confirmed":false,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+{"scenario":"iframe","confirmed":true,"controlledPosts":1,"realSubmissions":0,"models":0,"oldTaskKept":true,"newTasks":0}
+✔ refill manual receipt observer saves trusted new evidence without replacing old tasks or moving the page (8648.2998ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9226.9801

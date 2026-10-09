@@ -1,4 +1,5 @@
 import {completeSinglePageReceiptQueue} from './single-page-receipt-queue.mjs';
+import {checkRefillReceiptWatches} from './refill-receipt-watch.mjs';
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {attachEngine} from './engine.mjs';
@@ -59,6 +60,7 @@ export async function manualWatchMessage(runtime,input){
  await runtime.lease(task,{online:true}).then(()=>runtime.cloud.flush(runtime.store)).catch(error=>{watch.syncError=error.message;runtime.store.set(key(task.id),watch);});return{ok:true};
 }
 export async function checkManualWatches(runtime){
+ await checkRefillReceiptWatches(runtime);
  for(const[id,binding]of runtime.manualWatchFrames||[]){const watch=runtime.store.get(key(id));if(binding.page.isClosed()||watch?.token!==binding.token||watch?.status!=='watching'){for(const engine of binding.engines)await engine.detach();runtime.manualWatchFrames.delete(id);}}
  if(runtime.job||runtime.store.get('paused')!==true)return;
  const scope=workbenchScope(runtime.store.get('pair'));

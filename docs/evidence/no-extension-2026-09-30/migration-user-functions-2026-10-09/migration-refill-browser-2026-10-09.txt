@@ -1,0 +1,32 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-batch-cloud-recovery.test.mjs:85
+   if(pending){assert.equal(runtime.store.get(watchKey).status,'pending_sync');assert.ok(runtime.store.get(watchKey).operation.receipt.matched);const retained=digest(runtime.store.get(watchKey));await assert.rejects(()=>armRefillReceiptWatch(runtime,{state:runtime.store.get('singlePageRefill:'+filled.refillId),snapshot:await request('snapshot'),page,config:{},assertCurrent:async()=>{}}),/原网页手动提交仍待核验/);assert.equal(digest(runtime.store.get(watchKey)),retained);if(mode==='closed-after-evidence')await page.close();if(mode==='restart-pending'){runtime=f.runtime(join(home,'outbox.sqlite'));runtime.home=home;}pending=false;await runtime.control('checkManualWatches',{});}
+                                                                                                                                                                                                                                                                                                                                 ^^^^^
+
+SyntaxError: Unexpected reserved word
+    at compileSourceTextModule (node:internal/modules/esm/utils:319:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+    at #translate (node:internal/modules/esm/loader:438:20)
+    at afterLoad (node:internal/modules/esm/loader:506:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:511:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+    at afterResolve (node:internal/modules/esm/loader:611:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:617:12)
+    at node:internal/modules/esm/loader:636:32
+    at TracingChannel.tracePromise (node:diagnostics_channel:362:14)
+
+Node.js v24.21.0
+✖ tests\executor-batch-cloud-recovery.test.mjs (45.529ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.1936
+
+✖ failing tests:
+
+test at tests\executor-batch-cloud-recovery.test.mjs:1:1
+✖ tests\executor-batch-cloud-recovery.test.mjs (45.529ms)
+  'test failed'

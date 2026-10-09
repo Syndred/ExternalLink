@@ -17,9 +17,9 @@ export async function neonLibraryMutation(sql,workspaceId,operation,input,env){
  const documents=Object.fromEntries(rows.map(row=>[row.document_key,row.data]));
  const revisions=Object.fromEntries(dependencies.map(key=>[key,Number(rows.find(row=>row.document_key===key)?.revision||0)]));
  const change=applicationMutation(documents,operation);
- if(!dependencies.includes(change.key)||change.updates&&(!['automatic_mark','add_browser_url','receipt_timeline_repair'].includes(operation.type)||Object.keys(change.updates).some(key=>!dependencies.includes(key))))fail('资料修改范围无效',403);
+ if(!dependencies.includes(change.key)||change.updates&&(!['automatic_mark','add_browser_url','receipt_timeline_repair','observed_refill_receipt'].includes(operation.type)||Object.keys(change.updates).some(key=>!dependencies.includes(key))))fail('资料修改范围无效',403);
  if(revisions[change.key]!==input.revision)fail('外链库已由其他客户端更新，请先回读');
- if(['automatic_mark','add_browser_url','receipt_timeline_repair'].includes(operation.type)){
+ if(['automatic_mark','add_browser_url','receipt_timeline_repair','observed_refill_receipt'].includes(operation.type)){
   if(!input.revisions||change.revisionKeys.some(key=>!Number.isSafeInteger(input.revisions[key])||input.revisions[key]<0)||input.revisions[change.key]!==input.revision)fail('缺少有效关联资料版本号',400);
   if(change.revisionKeys.some(key=>input.revisions[key]!==revisions[key]))fail('关联资料已由其他客户端更新，请先回读');
  }

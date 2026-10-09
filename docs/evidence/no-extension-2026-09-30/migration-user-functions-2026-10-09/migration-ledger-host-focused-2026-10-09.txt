@@ -1,0 +1,22 @@
+✔ report and ledger retain exact pre-refactor logic with the ledger host binding, packed reports retain original classification (5.8907ms)
+✔ native fixed denominator retains unknown attempts, failures, skips, remaining and receipt-less finished tasks (2.0057ms)
+✔ full persisted event export exceeds viewer pages and original ledger cap without mixing other tasks or scopes (29ms)
+✔ original ledger export follows its first original ID rather than sorting timestamps or rewriting payload (1.3534ms)
+✔ frozen acceptance keeps missing and unregistered combinations and original identifiers without registering replacements (1.1808ms)
+✔ exports reject changed denominators, crossed task identity, foreign workspace and absent records (1.3472ms)
+✔ malformed historical source remains visible with reason and does not prevent valid originals exporting (1.0633ms)
+✔ SQLite reopen and read-only exporting preserve outbox and exact task/event identities (72.5493ms)
+✔ original history file preview and idempotent restoration retain original IDs without activating tasks or storing unrelated credentials (2.4604ms)
+✔ history restoration rejects missing event IDs, credential-bearing ledger, prototype fields, ordinary backups and changed scope (1.1121ms)
+✔ history restoration rolls back failed persistence and keeps changed versions as separate original sources (1.2297ms)
+✔ original restored history survives disk reopen and repeats through the same preview and source IDs (64.5075ms)
+✔ large history upload resumes exact saved chunks after reopen, verifies full file and retains original payload and hash (524.0183ms)
+✔ history chunks reject altered content, unsafe ranges, scope changes and a corrupted final file without restoring partial history (1.174ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 781.9511

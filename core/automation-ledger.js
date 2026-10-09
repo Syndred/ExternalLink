@@ -189,4 +189,4 @@
     finishRun,
     validateSuccessProof,
   };
-})(self);
+})(typeof self !== 'undefined' ? self : globalThis);

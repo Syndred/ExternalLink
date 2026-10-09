@@ -11,6 +11,7 @@ import {recoveryCheckpoint} from './tab-cleanup.mjs';
 import {cancelVisitWork} from './single-page.mjs';
 import {existingSinglePageReceipt,verifyExistingSinglePageReceipt,existingReceiptTaskConflict} from './existing-single-page-receipt.mjs';
 import {cloudDigest} from './cloud-sync-state.mjs';
+import {refillReceiptState} from './refill-receipt-watch.mjs';
 
 const key=page=>'submissionQueuePage:'+page.browserInstance+':'+page.targetId;
 const proof=task=>plain({id:task.id,profileId:task.profileId,profileRevision:task.profileRevision,profileSnapshot:task.profileSnapshot,version:task.version,controller:task.controller,controllerId:task.controllerId,targetId:task.targetId,browserInstance:task.browserInstance,attemptBoundary:task.attemptBoundary,actualSubmission:task.actualSubmission,receipt:task.receipt,originalFormContinuation:task.originalFormContinuation,attemptHistory:task.attemptHistory});
@@ -33,7 +34,7 @@ export function singlePageReceiptState(runtime){
  const panel=runtime.store.get('singlePagePanel');
  if(panel?.scope!==workbenchScope(runtime.store.get('pair')))return{ok:true,panel:null};
  const owned=runtime.store.get(key({browserInstance:runtime.host?.startedAt,targetId:panel.selectedTargetId}));
- return{ok:true,panel,completion:owned?.scope===panel.scope?{status:owned.status,kind:owned.completion?.kind||(owned.existingReceipt?'existing':'receipt'),error:owned.error||''}:null};
+ return{ok:true,panel,refill:refillReceiptState(runtime,panel),completion:owned?.scope===panel.scope?{status:owned.status,kind:owned.completion?.kind||(owned.existingReceipt?'existing':'receipt'),error:owned.error||''}:null};
 }
 
 // Called by the existing serialized manual-receipt scheduler. A receipt never

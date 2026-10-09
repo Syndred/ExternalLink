@@ -21,6 +21,7 @@ export function applicationMutationDependencies(operation){
   :type==='preferences'?['siteAnnotations','siteProfiles']
   :type==='timeline'?timelineDocumentKeys
   :type==='receipt_timeline_repair'?['submissionTimeline','timelineSchemaVersion','submissionRecords']
+  :type==='observed_refill_receipt'?['submissionRecords','submissionSchemaVersion','submissionTimeline','timelineSchemaVersion','siteAnnotations']
   :type==='settings'?[operation.key]
   :type==='profile_selection'?['siteProfiles',operation.key]
   :['profile','profile_create','profile_delete','profile_archive','profile_media','profile_order','form_learning'].includes(type)?['siteProfiles']:[];

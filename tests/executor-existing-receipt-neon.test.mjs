@@ -8,6 +8,7 @@ import {Store} from '../executor/src/store.mjs';
 import {queue} from '../executor/src/shared.mjs';
 import {existingSinglePageReceipt,verifyExistingSinglePageReceipt} from '../executor/src/existing-single-page-receipt.mjs';
 import {existingReceiptTimelineContains} from '../core/existing-receipt.mjs';
+import {observedRefillReceiptKeys,observedRefillReceiptSatisfied} from '../core/observed-refill-receipt.mjs';
 
 test('authenticated PostgreSQL repairs only the old receipt timeline and rejects stale associated revisions',async()=>{
  const db=new PGlite(),store=new Store(':memory:'),fetchBefore=globalThis.fetch;
@@ -23,5 +24,10 @@ test('authenticated PostgreSQL repairs only the old receipt timeline and rejects
   await assert.rejects(()=>cloud.request('library',{operation,revision:revisions.submissionTimeline}),/关联资料版本号/);
   await assert.rejects(()=>cloud.request('library',{operation,revision:revisions.submissionTimeline,revisions:{...revisions,submissionRecords:revisions.submissionRecords-1}}),/关联资料/);
   assert.deepEqual((await cloud.request('snapshot')).documents,after.documents);await verifyExistingSinglePageReceipt(runtime,state,()=>{});assert.deepEqual((await cloud.request('snapshot')).revisions,after.revisions);
+  const observed={type:'observed_refill_receipt',id:'original-manual-observation',at:'2026-10-09T01:00:02Z',destinationUrl:url,profileId:'p',profileName:'Original',previousRecordKey:key,previousRecord:record,expectedRecords:{[key]:record},observation:{token:'original-token',refillId:'original-refill',actionObserved:true,clickedAt:'2026-10-09T01:00:00Z',observedAt:'2026-10-09T01:00:02Z',pageUrl:url,currentPageUrl:url,evidenceUrl:url,baseline:'Old page'},receipt:{matched:true,evidence:'A new original receipt',publicationStatus:'pending_moderation'}},associated=Object.fromEntries(observedRefillReceiptKeys.map(key=>[key,after.revisions[key]||0]));
+  await assert.rejects(()=>cloud.request('library',{operation:observed,revision:associated.submissionRecords}),/关联资料版本号/);
+  await assert.rejects(()=>cloud.request('library',{operation:observed,revision:associated.submissionRecords,revisions:{...associated,submissionTimeline:associated.submissionTimeline-1}}),/关联资料/);
+  await cloud.request('library',{operation:observed,revision:associated.submissionRecords,revisions:associated});const newer=await cloud.request('snapshot');assert.equal(observedRefillReceiptSatisfied(newer.documents,observed),true);assert.deepEqual(newer.documents.submissionTimeline[key][0],after.documents.submissionTimeline[key][0]);assert.equal(newer.documents.submissionTimeline[key].length,2);assert.equal((await cloud.request('runs?view=inventory')).tasks.length,0);
+  await cloud.request('library',{operation:observed,revision:newer.revisions.submissionRecords,revisions:Object.fromEntries(observedRefillReceiptKeys.map(key=>[key,newer.revisions[key]||0]))});assert.deepEqual((await cloud.request('snapshot')).revisions,newer.revisions);
  }finally{globalThis.fetch=fetchBefore;store.close();await db.close();}
 });

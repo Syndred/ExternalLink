@@ -1,0 +1,24 @@
+✔ authenticated PostgreSQL repairs only the old receipt timeline and rejects stale associated revisions (1298.2316ms)
+✔ observed refill mutation matches frozen record replacement and preserves prior timeline; lost replies are idempotent (54.5803ms)
+✔ observed refill mutation rejects stale records missing clicks old evidence and unexpected navigation (1.2455ms)
+✔ observed refill at another entry on the same host retains the previous exact record and records the clicked destination (0.5354ms)
+✔ observed refill restores original verified site markers and preserves manual gates and legacy receipt addresses (1.0541ms)
+✔ frozen manual observer ignores unchanged evidence, accepts a new receipt and keeps the page (2.3198ms)
+✔ assistant is opt-in and binds only an unattempted original task in the original browser target (8.458ms)
+✔ pin keeps platform tags and unrelated URL rows while removing only the selected deletion marker (1.281ms)
+✔ delete removes only the chosen profile, keeps receipt and media evidence and acknowledges lost replies (0.4009ms)
+✔ overview excludes untouched registrations, includes notes and real handling, and accepts new products without adding matrix columns (12.6328ms)
+✔ original favorites, explicit group removals, enabled state and DR updates are preserved by independent mutations (1.8378ms)
+✔ manual timeline edit and removal never erase a receipt ledger; rules and old filter fields roundtrip (1.6152ms)
+✔ batch preview is side effect free, isolates pending tasks, supports multiple products and preserves the original fixed denominator (15.5368ms)
+✔ a lost batch registration response reads back exact IDs and never creates a replacement task (5.5715ms)
+✔ quality, DR, blacklist and age gates affect actual batch eligibility instead of only the UI (2.1325ms)
+✔ legacy Excel and Chinese record times sort as real dates and preserve canonical categories (0.9172ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1443.6499

@@ -83,6 +83,7 @@ async function showSinglePage(preferred={}){
   if(pollingReceipt||activeSinglePagePanel!==opened.panel.id||!detail.open)return;pollingReceipt=true;
   try{const expectedRevision=selectionRevision,state=await request('/sidepanelState',{});if(activeSinglePagePanel!==opened.panel.id||!detail.open||selectionRevision!==expectedRevision)return;
    if(state.panel?.id!==opened.panel.id||!state.panel.open){clearInterval(singlePageReceiptPoll);message.textContent='网页面板已变化，请刷新网页列表。';return;}
+   if(state.refill?.message&&state.refill.status!=='watching')message.textContent=state.refill.message+(state.refill.error?' '+state.refill.error:'');
    if(state.completion?.error)message.textContent=(state.completion.kind==='existing'?'已有收件，队列接续待核验：':state.completion.kind==='gate'?'原页已保留，打开下一站待处理：':'收件已保存，继续下一站待处理：')+state.completion.error;
    const completed=state.panel.receiptCompletion;if(!completed||completed.id===seenReceiptCompletion)return;
    if(completed.nextPage){await showSinglePage({targetId:completed.nextPage.targetId,profileId:state.panel.profileId,panel:state.panel,isCurrent:()=>activeSinglePagePanel===opened.panel.id&&detail.open&&selectionRevision===expectedRevision});return;}

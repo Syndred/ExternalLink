@@ -1,0 +1,317 @@
+{
+  "kind": "original_timeline_editor_save_fidelity",
+  "sourceBaseline": "bd916b2944a577b160a6afcb8a7d73d263044c0c",
+  "sourceCommit": "710ae6bc75a450514c51d449eae71fa1f95204eb",
+  "oldNativeSourceCommit": "305a9bbcc2182847fa57b794dc3552739c77e6f5",
+  "originalSourceEntry": "extension/settings.js timelinePayload, fillTimelineForm, createTimelineForm and clearNonProfileEditorDirty",
+  "oldSourceDifferencesReproduced": [
+    "Blank date rejects rather than using current time",
+    "Saved edit retains prior product and fields rather than resetting the form"
+  ],
+  "originalHandlersExecuted": true,
+  "browserScenarioAssertionsVerifiedByTest": [
+    "blankTimeMatchesOriginal",
+    "successfulSaveResetsOriginalDefaults",
+    "inFlightDraftKept",
+    "failedSaveRetainsDraft",
+    "cancelWithoutWrite",
+    "lateSaveKeepsNewEditor",
+    "offlineSavedOnce",
+    "refreshFailureDoesNotRepeatSavedEvent"
+  ],
+  "authenticatedD1Browser": {
+    "ok": true,
+    "kind": "authenticated_d1_actual_services_and_chrome_original_timeline",
+    "migratedEventEditable": true,
+    "originalProductMove": true,
+    "commonDestinationEvent": true,
+    "publishedUrlOptionalLikeOriginal": true,
+    "actualLostEditReplyRecoveredWithoutReplay": true,
+    "atomicLinkedLedgerReadback": true,
+    "removeRetainsOriginalReceipts": true,
+    "originalUnknownTaskAndFrozenBudgetUnchanged": true,
+    "cloudTimelineEdits": 2,
+    "cloudTimelineAdds": 1,
+    "newRuntimeRuns": 0,
+    "cloudEvents": 0,
+    "externalRequests": 0,
+    "newRealSubmissions": 0
+  },
+  "sixPageUi": {
+    "ok": true,
+    "kind": "synthetic_ui_regression",
+    "pages": 6,
+    "indexNowSettingSaveAndReadback": true,
+    "indexNowUnsavedRefreshPreserved": true,
+    "indexNowChineseTaskStatus": true,
+    "domainCacheControls": true,
+    "domainCacheCounts": true,
+    "domainConflictExclusions": true,
+    "domainOriginalJobResume": true,
+    "activityOnly": true,
+    "archivedVisibility": true,
+    "chineseLibraryLabels": true,
+    "verticalAlignment": true,
+    "libraryFilters": true,
+    "targetCreate": true,
+    "multiProductBatchPreview": true,
+    "originalIndependentCategoryStart": true,
+    "originalIndependentGroupStart": true,
+    "displayFiltersDoNotShrinkOriginalBatch": true,
+    "completeLargeScopePagination": true,
+    "originalBatchFillOnlyAndUnattendedControls": true,
+    "originalBatchPreferenceSave": true,
+    "originalConcurrencySaveAndReadback": true,
+    "profileExtractionDraft": true,
+    "profileSave": true,
+    "aiCommentCandidates": true,
+    "originalBackupImport": true,
+    "linkMonitorUi": true,
+    "monitorAlerts": true,
+    "browserAssistantSettings": true,
+    "originalProductChineseLanguagePreserved": true,
+    "originalFieldNotesEditAndBlankPreserved": true,
+    "originalNumericFieldsEditable": true,
+    "originalManualLinkLimitPreserved": true,
+    "originalIndependentPromoUrlSaved": true,
+    "originalDragOrderAndReadback": true,
+    "originalNewProductAppendAndPromotion": true,
+    "originalGifSvgUploadAndPreview": true,
+    "originalEmbeddedClearStagedAndSaved": true,
+    "originalFourScreenshotLinesAndAliases": true,
+    "originalMissingProfileControlsVisible": true,
+    "originalGenerationCarriesFieldNotes": true,
+    "originalEmptyGeneratedListsPreserveExisting": true,
+    "originalGenerationStagedUntilSave": true,
+    "originalPublicLogoUrlPreservedAndEdited": true,
+    "originalLogoLimitBeforeUpload": true,
+    "originalChineseCommentHistoryPreserved": true,
+    "originalAutoVisitFlagSaveAndReadback": true,
+    "originalAutoVisitUnsavedRefresh": true,
+    "originalPageRetry": true,
+    "batchLogViewer": true,
+    "originalDisplayedLogCopyAndFailurePreserved": true,
+    "clearAnnotationConfirmed": true,
+    "manualContinueConfirmed": true,
+    "originalTaskSkip": true,
+    "explicitStop": true,
+    "originalPausedBatchResume": true,
+    "failedSkipNotReportedAsComplete": true,
+    "originalSkipRetryAfterTaskBecomesSkipped": true,
+    "stoppedBatchRequiresExplicitRestart": true,
+    "groupedSiteQueue": true,
+    "queueNavigation": true,
+    "queueRemoval": true,
+    "singlePageSelection": true,
+    "singlePageFillOnly": true,
+    "panelClose": true,
+    "localRecoverySelection": true,
+    "localRecoveryResume": true,
+    "productHuntManualConsent": true,
+    "productHuntPreparationDefault": true,
+    "productHuntSelectionClearsConsent": true
+  },
+  "focusedTestsPassed": 22,
+  "fullSuite": {
+    "passed": 989,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 110128.7056,
+    "fileConcurrency": 4
+  },
+  "servicesBefore": {
+    "ok": true,
+    "kind": "timeline_editor_unchanged_service_process_identity",
+    "sourceCommit": "305a9bbcc2182847fa57b794dc3552739c77e6f5",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18708,
+        "StartedAt": "2026-10-09T14:35:27.6820290+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 6800,
+        "StartedAt": "2026-10-09T14:35:28.3206950+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "backendSourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "servicesUnchanged": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "servicesAfter": {
+    "ok": true,
+    "kind": "timeline_editor_unchanged_service_process_identity",
+    "sourceCommit": "710ae6bc75a450514c51d449eae71fa1f95204eb",
+    "services": [
+      {
+        "Port": 19388,
+        "File": "server.mjs",
+        "Pid": 18708,
+        "StartedAt": "2026-10-09T14:35:27.6820290+08:00",
+        "CurrentWorkspaceVerified": true
+      },
+      {
+        "Port": 19389,
+        "File": "workbench-server.mjs",
+        "Pid": 6800,
+        "StartedAt": "2026-10-09T14:35:28.3206950+08:00",
+        "CurrentWorkspaceVerified": true
+      }
+    ],
+    "backendSourceCommit": "de34aa03958c032e3a042d472ca1d79d9c13a26d",
+    "servicesUnchanged": true,
+    "workerRedeployed": false,
+    "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7"
+  },
+  "liveUi": {
+    "ok": true,
+    "kind": "timeline_editor_live_ui_and_cloud_access_smoke",
+    "frontendSourceCommit": "710ae6bc75a450514c51d449eae71fa1f95204eb",
+    "servedUiMatchesFileAndCommit": true,
+    "originalTimelineEditorControlsServed": true,
+    "uiSha256": "7a707c043e336fde60cd446c802b45bbee599e5e85cb931a55167daff1a22f1c",
+    "anonymousCloudSnapshotStatus": 401,
+    "productionWrites": 0
+  },
+  "protectedBefore": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "protectedAfter": {
+    "ok": true,
+    "kind": "verified_existing_scheduled_monitor_transition_after_reload",
+    "jobId": "2e7e55c5-4b6d-446f-896a-7491b069f7e3",
+    "monitorStatus": "paused",
+    "monitorCount": 89,
+    "monitorCursor": 54,
+    "monitorCounts": {
+      "live": 3,
+      "missing": 48,
+      "unreachable": 3,
+      "uncheckable": 0,
+      "excluded": 0
+    },
+    "original18OtherCloudDocumentsHashAndRevisionsKept": true,
+    "monitorResultsRevisionBefore": 258,
+    "monitorResultsRevisionAfter": 312,
+    "monitorResultsExactlyMatchOriginalJobCandidates": true,
+    "originalReceiptsAndTimelineKept": true,
+    "timelineEvents": 470,
+    "originalProtectedBusinessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "privateOriginalSourceFilesVerified": 6,
+    "oldFormalRecoveryCheckpointNotOverwritten": true,
+    "newPrivateTransitionSaved": true,
+    "paused": true,
+    "busy": false,
+    "pendingEvents": 0,
+    "pendingEdits": 0,
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "newSubmissions": 0
+  },
+  "migrationComplete": false,
+  "limits": [
+    "Original reference handlers run in a controlled VM; actual UI uses owned isolated Chrome and local fixtures.",
+    "New UI save scenarios exercise actual native SQLite journal and mutation modules with controlled cloud replies; the separate D1 regression runs authenticated endpoints and isolated native services.",
+    "No production timeline was edited or added for acceptance; live checks read served script bytes, service identities and protected state.",
+    "Historical favorites, other-device media and remaining original dynamic/execution branches are not all verified."
+  ],
+  "rawOutputs": [
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-blank-before-2026-10-09.txt",
+      "capturedSha256": "74dacb89b4f677dcc9b2543e49e9367f2da6f1ac55f1ee4f506a75a0474386a1",
+      "gitBlobSha256": "0630a0b93d5e955e0991a5b8b63fae3479971228bc4777d7bf5224f1babbf111"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-reset-before-2026-10-09.txt",
+      "capturedSha256": "07c1b172cd291a5ff40d1b1ec0adf61faf88ea1f620540df894122acd38faafd",
+      "gitBlobSha256": "8ba41bd2ec0828fb62b5ddfdf13fb35a3bf515dfd29c8deeda1f84ccf92e6519"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-focused-2026-10-09.txt",
+      "capturedSha256": "be242d59a8b8c4c38745c61cb2a05613f5dfbff2165738486cf3f5076fe44082",
+      "gitBlobSha256": "ccb31258ed38fc2463f27e1bd03424c3512d2c8fca47d438b27a9fbf9bb40a5f"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-regression-2026-10-09.txt",
+      "capturedSha256": "cdd7d7e70662a2ae58b1027c1405c57cede454d8d09c1d6b066947b770c6d925",
+      "gitBlobSha256": "1b7b31bdc689a78a977cd9975f40960644dd9e5eeae410ccd4a03123a68c157c"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-d1-2026-10-09.txt",
+      "capturedSha256": "4de02e95e94e2f9b8c4e01d491df3976cc61ff9cf142b87bab7463baf27ebf54",
+      "gitBlobSha256": "e622e43a4f9ec2e16e3518226096ed15383def9c23780190b21d1d06cc6b811d"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-six-pages-2026-10-09.txt",
+      "capturedSha256": "c8af2c8b748d6ebeb7f0a3715f262672667d61475f0ae88713cfc174ae4317d2",
+      "gitBlobSha256": "41908d0d1e9e450251041a7e0359ef8248bca4cd760ebb801cc4b290a661d8fd"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-repository-2026-10-09.txt",
+      "capturedSha256": "df114628026156926e4c554632e203de7ac88ec1e9399e1f1a70d7912ed00fc9",
+      "gitBlobSha256": "22cba9736eea0d6c444863bcb2744362cc48c8b9cc1992e1647399fec1758f49"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-release-before-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-release-after-2026-10-09.txt",
+      "capturedSha256": "5dae61d80dccd290600ac593cc3fb5a2b7b5cd0a9e38765026670a0873f896ac",
+      "gitBlobSha256": "502cf0c0b863aacfc326b037975e494ab81573d461d8b0563138b176e6b1b938"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-service-before-2026-10-09.txt",
+      "capturedSha256": "997b6e8f91d7973866db37efc8f133cded5eddf1b412135f41d17a8ea66a4ffc",
+      "gitBlobSha256": "71b68d5db647e5c251fc229eca36281970bfb96e1ce4284be5f9aa609ceed82e"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-service-after-2026-10-09.txt",
+      "capturedSha256": "2de824e7a4222d3a21b398502ce0be55ce0756ffd52280446e001f2411c07e5c",
+      "gitBlobSha256": "da7e7e6b8c3ca3548d60f5c702a9cbdafb721f0805b2d644545a87e18501ad69"
+    },
+    {
+      "path": "original-timeline-editor-2026-10-09/original-timeline-editor-live-ui-2026-10-09.txt",
+      "capturedSha256": "e05a7081cf36eb2ec52ef0511feba2582a904f26604e607ea5b23cbf66ee5c62",
+      "gitBlobSha256": "c1be319f2362254bb8cf51efd8a03588658f47323537666a196456c430734114"
+    }
+  ]
+}

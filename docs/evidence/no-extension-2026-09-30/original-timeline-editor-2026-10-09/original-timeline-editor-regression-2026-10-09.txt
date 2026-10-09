@@ -1,0 +1,30 @@
+✔ library facts isolate unrelated paths on one host, including monitoring and quality (18.4038ms)
+✔ old success flags without a receipt remain original action history rather than received submissions (2.6394ms)
+✔ later ordinary notes fall back to the original record publication state (3.1015ms)
+✔ record display uses the latest matching original row rather than insertion order (2.1416ms)
+✔ all original display aliases read the same original submission and timeline evidence (15.9709ms)
+✔ latest activity uses original submitted/history time instead of a later synchronization timestamp (1.8141ms)
+✔ local task receipts remain visible only on their original destination and do not rewrite the ledger (0.5167ms)
+✔ original display aliases appear once, retain raw source rows, and produce one queued job per product (2.8064ms)
+✔ saved queue cursor and explicit URL retain the exact frozen original alias route (85.7546ms)
+✔ automatic visit queue alignment resolves the original concrete alias within the complete original source range (14.1408ms)
+✔ alias preferences save at the original catalog key and can be read and acknowledged there (4.4006ms)
+✔ unknown alias preference response is confirmed by the original mutation ID without a second write (2.9251ms)
+✔ quick open resolves original display aliases, deduplicates and retains ordinary path scope (1989.7449ms)
+✔ frozen original timeline editor defaults and blank date fallback execute independently (2.0921ms)
+✔ frozen original save and cancel handlers clear only the submitted editor revision (4.0498ms)
+✔ actual timeline editor retains original reset, blank time, cancellation and pending draft behavior (1651.0187ms)
+✔ timeline add and edit match frozen original product moves, common events, evidence gates and publication rank (1207.1755ms)
+✔ frozen original removal preserves all old receipts and a migrated event remains editable (86.586ms)
+✔ frozen original destination changes and a common event moved to a product preserve original receipt identities (43.5794ms)
+✔ a timeline alone cannot confirm a receipt upgrade; a confirmed original new ledger needs no timestamp-only replay (0.8213ms)
+✔ offline product move retains linked documents and frozen task state across restart and lost reply (82.1013ms)
+✔ a concurrent ledger change stops the entire timeline edit and requires reviewing its exact associated versions (4.3801ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2458.6166

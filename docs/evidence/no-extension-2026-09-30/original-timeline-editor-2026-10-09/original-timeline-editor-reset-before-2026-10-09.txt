@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'p'
+- '__destination__'
+
+    at assertDefaults (file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-timeline-editor.mjs:27:87)
+    at async file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-timeline-editor.mjs:29:2 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'p',
+  expected: '__destination__',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

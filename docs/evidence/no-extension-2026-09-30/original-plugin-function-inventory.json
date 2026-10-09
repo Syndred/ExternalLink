@@ -1205,7 +1205,9 @@
       "action": "addSubmissionTimelineEvent",
       "mapping": "时间线 / 新增动态 → journalProgress",
       "status": "implemented_requires_full_acceptance",
-      "verification": "原证据规则、通用动态及联动台账／版本已恢复；认证处理器、SQLite／PostgreSQL隔离事务与实际服务／Chrome回读通过，生产时间线写入0"
+      "verification": "原证据规则、通用动态及联动台账／版本已恢复；认证处理器、SQLite／PostgreSQL隔离事务与实际服务／Chrome回读通过，生产时间线写入0",
+      "editorVerification": "原设置页动态编辑器的空时间、保存重置、取消编辑、保存中输入和失败草稿已对照；实际界面与认证隔离D1通过。",
+      "editorEvidence": "original-timeline-editor-2026-10-09.json"
     },
     {
       "action": "addToUrlList",
@@ -1531,7 +1533,9 @@
       "action": "updateSubmissionTimelineEvent",
       "mapping": "时间线 / 编辑动态 → libraryMutation timeline",
       "status": "implemented_requires_full_acceptance",
-      "verification": "原产品／目标信息与台账／版本联动、离线依据、关联冲突及真实丢失回复已核验；原最新历史与生产编辑仍不冒充完整验收"
+      "verification": "原产品／目标信息与台账／版本联动、离线依据、关联冲突及真实丢失回复已核验；原最新历史与生产编辑仍不冒充完整验收",
+      "editorVerification": "原设置页动态编辑器的空时间、保存重置、取消编辑、保存中输入和失败草稿已对照；实际界面与认证隔离D1通过。",
+      "editorEvidence": "original-timeline-editor-2026-10-09.json"
     }
   ],
   "updatedAt": "2026-10-07",
@@ -3218,6 +3222,22 @@
     "fullSuitePassed": 986,
     "workerVersion": "f8828545-d809-470f-ab63-afb9e341c6e7",
     "evidence": "original-pin-control-2026-10-09.json",
+    "migrationComplete": false
+  },
+  "originalTimelineEditorCheckpoint": {
+    "date": "2026-10-09",
+    "sourceCommit": "710ae6bc75a450514c51d449eae71fa1f95204eb",
+    "originalSettingsDynamicEditorCompared": true,
+    "originalSaveAndCancelHandlersExecuted": true,
+    "blankDateUsesCurrentTime": true,
+    "onlySubmittedDraftReset": true,
+    "newDraftAndFailedSavePreserved": true,
+    "actualIsolatedBrowserAndAuthenticatedD1Passed": true,
+    "sourceTestsPassed": 989,
+    "sixPageUiPassed": true,
+    "originalServicesUnchanged": true,
+    "workerRedeployed": false,
+    "evidence": "original-timeline-editor-2026-10-09.json",
     "migrationComplete": false
   }
 }

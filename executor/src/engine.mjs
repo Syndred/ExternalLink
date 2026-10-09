@@ -49,9 +49,9 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
     if(typeof afterReply==='function')await Promise.resolve(afterReply()).catch(()=>{});
   });
   await evaluate(`globalThis.__extLinkDisableManualIcons?.();globalThis.__executorReplies=new Map(); globalThis.__executorSeq=globalThis.__executorSeq||0;
-    globalThis.__externalLinkServices={authorized:true,persistLearning:true,interactive:${options.interactive===true},
+    globalThis.__externalLinkServices={authorized:true,persistLearning:true,interactive:${options.interactive===true},manualWatch:${options.manualWatch===true},
       register(fn){globalThis.__executorHandler=fn},unregister(){globalThis.__executorHandler=null},
-      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','mediaUploadStatus','generateCommentDrafts','saveFillLearnings','captchaResolved'${options.interactive===true?",'getActiveFillConfig','contentReady','requestAutoFill','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":''}${options.interactive===true||options.parkedControls===true?",'manualContinue','manualSubmit','manualSkip'":''}].includes(message.action))return Promise.resolve({ok:false});
+      request(message){if(!['log','fetchSubmissionMedia','fetchCloudSubmissionMedia','mediaUploadStatus','generateCommentDrafts','saveFillLearnings','captchaResolved'${options.interactive===true?",'getActiveFillConfig','contentReady','requestAutoFill','manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'":options.manualWatch===true?",'manualSubmissionWatchReady','manualSubmissionClicked'":''}${options.interactive===true||options.parkedControls===true?",'manualContinue','manualSubmit','manualSkip'":''}].includes(message.action))return Promise.resolve({ok:false});
         return new Promise(resolve=>{const id=++globalThis.__executorSeq;__executorReplies.set(id,resolve);__executorRpc(JSON.stringify({id,message}));})}
     };`);
   for (const source of sources) await evaluate(source, false);

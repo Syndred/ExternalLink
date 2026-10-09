@@ -76,6 +76,7 @@ import {pullCloudState,previewCloudPull,commitCloudPull} from './cloud-pull.mjs'
 import {browserLibraryPages,addBrowserPage} from './browser-library.mjs';
 import {saveAssistantSettings,fillAssistantTask,requestAutoFill} from './browser-assistant.mjs';
 import {manualWatchMessage,checkManualWatches} from './manual-watch.mjs';
+import {observeExternalFormSources} from './external-form-source.mjs';
 import {armCaptchaResume,armPageCaptchaResume,checkCaptchaResumes} from './captcha-resume.mjs';
 import {assertParkedResumePage} from './parked-task-resume.mjs';
 import {clearSiteAnnotation} from './library-reset.mjs';
@@ -213,6 +214,7 @@ export class Runtime {
     // default focus emulation makes background tabs look active to auto-fill.
     this.browser = await chromium.connectOverCDP(this.host.endpoint, { timeout: 10000, noDefaults: true });
     this.context = this.browser.contexts()[0];
+    await observeExternalFormSources(this);
     const observedHost=this.host;
     await appendFile(path.join(this.home,'host-events.jsonl'),JSON.stringify({at:new Date().toISOString(),type:'executor_attached',browserInstance:observedHost.startedAt,chromePid:observedHost.chromePid,serverPid:process.pid})+'\n');
     this.browser.on('disconnected', () => { appendFile(path.join(this.home,'host-events.jsonl'),JSON.stringify({at:new Date().toISOString(),type:'browser_disconnected',browserInstance:observedHost.startedAt,chromePid:observedHost.chromePid,serverPid:process.pid})+'\n').catch(()=>{});this.browser = null; this.context = null; });

@@ -133,7 +133,7 @@
   }
 
   function observeManualSubmission(event) {
-    if (!services.interactive || !event.isTrusted || !manualSubmissionWatch || pluginSubmitInProgress) return;
+    if ((!services.interactive && !services.manualWatch) || !event.isTrusted || !manualSubmissionWatch || pluginSubmitInProgress) return;
     const control = event.target?.closest?.('button, input[type="submit"], [role="button"]');
     const siteHost = (value) => {
       try {
@@ -195,11 +195,16 @@
     if (!matchingUrl && !typeformFinalControl) return;
     const watch = manualSubmissionWatch;
     manualSubmissionWatch = null;
+    // Capture in the trusted click's document before the site replaces it or
+    // navigates to its receipt. Preparation may precede the user's last edits.
+    let actualSubmission;
+    try { actualSubmission = collectFilledFieldsReport(); } catch (_) { /* retain the observed attempt even if field capture fails */ }
     services.request({
       action: "manualSubmissionClicked",
       token: watch.token,
       frameUrl: String(location.href || ""),
       baselineEvidence: watch.baselineEvidence || "",
+      actualSubmission,
     }).then((response) => {
       if (response?.ok !== true && manualSubmissionWatch === null) {
         manualSubmissionWatch = watch;

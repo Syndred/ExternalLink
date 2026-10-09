@@ -16,3 +16,11 @@ test('manual observation requires the prepared original task, token and frame ba
   runtime.findPage=async()=>{throw Error('original tab closed');};await checkManualWatches(runtime);assert.equal(store.get('task:original').receipt,undefined);assert.equal(store.get('manualWatch:original').error,'original tab closed');
  }finally{store.close();}
 });
+
+test('manual watch refuses a stale ordinary destination and workspace changes during cloud readback',async()=>{
+ const store=new Store(':memory:');let url='https://different.example/form',onSnapshot;
+ const task={id:'original',profileId:'p',url:'https://target.example/form',targetId:'tab',browserInstance:'host',status:'pending',preparedAt:'prepared',profileSnapshot:{fields:{Name:'Product',Url:'https://product.example'}}},page={url:()=>url},runtime={store,findPage:async()=>page,cloud:{request:async()=>{onSnapshot?.();return{documents:{submissionRecords:{}}};}},lease:async()=>{}};
+ try{store.set('paused',true);store.set('pair',{endpoint:'https://cloud.example',workspaceId:'a'});store.set('task:'+task.id,task);const input={taskId:task.id,targetId:task.targetId,action:'manualSubmissionWatchRequest'};assert.equal((await manualWatchMessage(runtime,{...input,pageUrl:url})).ok,false);assert.equal(store.get('manualWatch:'+task.id),null);
+  url=task.url;onSnapshot=()=>store.set('pair',{endpoint:'https://cloud.example',workspaceId:'b'});await assert.rejects(manualWatchMessage(runtime,{...input,pageUrl:url}),/工作区已变化/);assert.equal(store.get('manualWatch:'+task.id),null);assert.deepEqual(store.get('task:'+task.id),task);
+ }finally{store.close();}
+});

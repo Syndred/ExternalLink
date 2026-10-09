@@ -1,0 +1,16 @@
+import http from 'node:http';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
+import {Cloud} from '../../src/cloud.mjs';
+import {D1Store} from '../../../cloud/worker/src/d1-store.mjs';
+import {d1Executor} from '../../../cloud/worker/src/d1-executor.mjs';
+
+export async function externalFormD1(documents){
+ const sqlite=new DatabaseSync(':memory:');for(const file of ['0001_d1_storage.sql','0002_d1_executor.sql'])sqlite.exec(readFileSync(new URL('../../../cloud/worker/migrations/'+file,import.meta.url),'utf8'));
+ const db={prepare(sql){let args=[];return{bind(...values){args=values;return this;},first:async()=>sqlite.prepare(sql).get(...args)||null,all:async()=>({results:sqlite.prepare(sql).all(...args)}),run:async()=>{const statement=sqlite.prepare(sql);return statement.columns().length?{results:statement.all(...args),meta:{changes:0}}:{results:[],meta:{changes:statement.run(...args).changes}};}};},async batch(statements){sqlite.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sqlite.exec('COMMIT');return values;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+ const objects=new Map(),bucket={head:async key=>objects.has(key)?{customMetadata:objects.get(key).meta?.customMetadata}:null,put:async(key,value,meta)=>objects.set(key,{bytes:new Uint8Array(value),meta}),get:async key=>{const value=objects.get(key);return value?{arrayBuffer:async()=>value.bytes.slice().buffer,httpMetadata:value.meta?.httpMetadata,customMetadata:value.meta?.customMetadata}:null;}};
+ const env={LEDGER_DB:db,MEDIA_BUCKET:bucket,APP_ACCESS_TOKEN:'isolated-form-admin'},ledger=new D1Store(db,bucket,'default'),calls=[];
+ let loseReceipt=false;const server=http.createServer(async(req,res)=>{try{const body=[];for await(const part of req)body.push(part);const url=new URL(req.url,'https://fixture.example');if(!url.pathname.startsWith('/v2/executor/')||url.pathname.includes('/ai/'))throw Error('Unexpected fixture request');calls.push({route:url.pathname,method:req.method});const response=await d1Executor(new Request(url,{method:req.method,headers:{Authorization:req.headers.authorization||'','Content-Type':'application/json','X-Executor-Protocol':req.headers['x-executor-protocol']||''},...(req.method==='POST'?{body:Buffer.concat(body)}:{})}),env,'default');if(loseReceipt&&url.pathname.endsWith('/receipt')&&response.status===200){loseReceipt=false;res.destroy();return;}res.writeHead(response.status,{'Content-Type':response.headers.get('Content-Type')||'application/json'});res.end(await response.text());}catch(error){res.writeHead(500,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}});
+ try{for(const[key,data]of Object.entries(documents))await ledger.putDocument(key,data,0);await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const endpoint='http://127.0.0.1:'+server.address().port,admin=new Cloud({endpoint,storageBackend:'d1',workspaceId:'default',deviceToken:env.APP_ACCESS_TOKEN}),device=await admin.request('devices',{}),pair={endpoint,storageBackend:'d1',workspaceId:'default',...device};return{pair,ledger,sqlite,calls,loseNextReceipt(){loseReceipt=true;},async close(){await new Promise(resolve=>server.close(resolve));sqlite.close();}};
+ }catch(error){server.close();sqlite.close();throw error;}
+}

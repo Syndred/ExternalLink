@@ -10,6 +10,8 @@ import {prepareOriginalVisitFields} from './original-visit-fill-adapter.mjs';
 import {originalHumanGateAttention} from './original-site-classification.mjs';
 import {originalTaskMediaConfig} from './original-task-media-config.mjs';
 import {overlayApplicationSettings} from './application-mutations.mjs';
+import {externalFormDestination} from './external-form-source.mjs';
+import {armPreparedManualWatch} from './manual-watch.mjs';
 const at=()=>new Date().toISOString();
 export function singlePagePanel(runtime){const panel=runtime.store.get('singlePagePanel');return panel?.scope===workbenchScope(runtime.store.get('pair'))?panel:null;}
 export function cancelVisitWork(runtime,reason){
@@ -63,6 +65,9 @@ export async function sidepanelFill(runtime,input){
  const assertCurrent=captureSinglePageContext(runtime,input),submitRequested=input.mode!=='comment'&&input.submit===true;if(runtime.singlePageFill)throw Error('请暂停并等待当前网页操作完成');runtime.singlePageFill=true;
  const engines=[];try{
   const page=await selectedPage(runtime,input),snapshot=overlayApplicationSettings(runtime,await runtime.cloud.request('snapshot')),profile=snapshot.documents.siteProfiles?.[input.profileId];assertCurrent();if(!profile||profile.archived||!profiles.profileConfigured(profile))throw Error('请选择已配置资料的在用产品');if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,page.url()))throw Error('该产品同站已有收件，请先核验');
+  const externalSource=input.mode==='comment'?null:await externalFormDestination(runtime,page),destinationUrl=externalSource?.destinationUrl||page.url();assertCurrent();
+  if(priorProductSuccess(snapshot.documents.submissionRecords,input.profileId,destinationUrl))throw Error('该产品同站已有收件，请先核验');
+  const assertSource=async()=>{if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');const latest=input.mode==='comment'?null:await externalFormDestination(runtime,page);if(JSON.stringify(latest)!==JSON.stringify(externalSource))throw Error('外部表单来源已变化，停止旧网页操作');assertCurrent();};
   if(input.mode==='comment'&&(!input.commentText?.trim()||input.commentText.length>20000))throw Error('请输入待填写的评论，最多20000字');
   let config=configFor(snapshot,profile,page.url());if(input.mode==='comment')config.commentTemplate=input.commentText;
   if(input.mode!=='comment'&&isProductHuntLaunch(page.url())){
@@ -79,12 +84,13 @@ export async function sidepanelFill(runtime,input){
   for(const frame of page.frames()){if(!/^https?:\/\//.test(frame.url()))continue;const engine=await attachEngine(runtime.context,frame);engines.push({engine,frame,url:frame.url(),detection:await engine.call({action:'detectPage',config})});}
   const candidate=engines.filter(e=>input.mode==='comment'?e.detection.commentFound:e.detection.operable).sort((a,b)=>(b.detection.formFieldCount||0)-(a.detection.formFieldCount||0))[0];if(!candidate)throw Error(input.mode==='comment'?'未发现评论表单':'未发现可填写表单');
   const guard=await candidate.engine.call({action:'inspectAutoFillGuard',targetDomain:config.targetDomain});if(guard?.blocked)throw Error(guard.reason||'网页已有其他产品内容，请检查后继续');
-  assertCurrent();const task=await preparedTask(runtime,input,snapshot);assertCurrent();if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原任务结果或控制权已变化，请先核验');await runtime.lease(task,{online:true});assertCurrent();
+  await assertSource();const task=await preparedTask(runtime,{...input,expectedUrl:destinationUrl},snapshot);await assertSource();if(task.attemptBoundary||task.receipt||['ai','supervisor'].includes(task.controller))throw Error('原任务结果或控制权已变化，请先核验');await runtime.lease(task,{online:true});await assertSource();
   const history=task.targetId&&task.targetId!==input.targetId?[...(task.pageHistory||[]),{targetId:task.targetId,browserInstance:task.browserInstance,at:at()}]:task.pageHistory;
-  runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',...(history?{pageHistory:history}:{}),profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles},'single_page_selected');
+  runtime.update(task,{targetId:input.targetId,browserInstance:runtime.host.startedAt,pageOwnership:'manual',externalFormSource:externalSource,...(history?{pageHistory:history}:{}),profileSnapshot:task.profileSnapshot||profile,profileRevision:task.profileRevision??snapshot.revisions.siteProfiles},'single_page_selected');
   config=originalTaskMediaConfig(runtime,task,configFor(snapshot,task.profileSnapshot,candidate.frame.url()));if(input.mode==='comment')config.commentTemplate=input.commentText;config.sidepanelContext={profileId:task.profileId,url:page.url()};
   for(const item of engines){if(item.frame.isDetached()||item.frame.url()!==item.url)throw Error('原表单区域已变化');await item.engine.detach();item.engine=await attachEngine(runtime.context,item.frame,message=>runtime.bridge(task,message));assertCurrent();}
-  const assertPage=async()=>{assertCurrent();if(page.isClosed()||page.url()!==input.expectedUrl)throw Error('网页已跳转，请重新检测');};await assertPage();let fill,actual,validation,counts,submitReady=true;
+  const assertPage=async()=>{assertCurrent();await assertSource();};await assertPage();let fill,actual,validation,counts,submitReady=true;
+  if(input.mode!=='comment'){runtime.update(task,{manualPreparationStartedAt:at()},'manual_form_preparation_started');await armPreparedManualWatch(runtime,task,page);await assertPage();}
   if(input.mode==='comment'){fill=await candidate.engine.call({action:'executeSubmit',config,platformType:'wp_comment'});if(fill?.error||fill?.ok===false)throw Error(fill.error||'填写未完成');actual=await candidate.engine.call({action:'getFilledFieldsReport'});validation=await candidate.engine.call({action:'collectFormValidation'});await assertPage();}
   else{const prepared=await prepareOriginalVisitFields(runtime,{task,config,page,candidate,engines,assertBase:assertPage,allowAgent:input.useAgent!==false});({fill,actual}=prepared);await prepared.assertCurrent();validation=fill.formState;counts=fill.lastEmpty;submitReady=fill.validation.submitReady!==false&&!validation.validationFailed&&!counts.emptyCount&&!counts.invalidCount&&!fill.agentResult.needs_manual&&!fill.agentResult.captcha&&!fill.agentResult.blocked;}
   const reason=submitReady?'单页资料已填写，尚未投稿':fill.agentResult?.reason||fill.validation?.issues?.join('；')||validation.issues?.join('；')||'仍有必填字段或素材未完成，请检查原网页';runtime.update(task,{actualPreparation:actual,preparedAt:at(),singlePagePreparation:{at:at(),mode:input.mode||'form',fill,actual,validation,counts,submitReady,panelId:input.panelId},...(!submitReady?{status:'needs_manual',...(originalHumanGateAttention('',fill.classification?.status)?{attentionType:originalHumanGateAttention('',fill.classification.status)}:{})}:{}),reason},submitReady?'single_page_prepared':'single_page_incomplete');

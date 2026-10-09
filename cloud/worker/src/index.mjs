@@ -1,3 +1,4 @@
+import {lookupDomainMetrics} from './rdap-domain-metrics.mjs';
 import { neon } from "@neondatabase/serverless";
 import { d1Api } from "./d1-api.mjs";
 import { d1Executor } from "./d1-executor.mjs";
@@ -573,31 +574,10 @@ async function handleValidateFill(request, env) {
   };
 }
 
-function rdapEventDate(events, names) {
-  const event = (Array.isArray(events) ? events : []).find((entry) =>
-    names.includes(String(entry?.eventAction || "").toLowerCase()),
-  );
-  return event?.eventDate || "";
-}
-
 async function handleDomainMetrics(request) {
   const input = await requestJson(request);
   const domains = [...new Set((Array.isArray(input.domains) ? input.domains : []).map((value) => String(value || "").toLowerCase().trim()).filter((value) => /^[a-z0-9.-]+$/.test(value)))].slice(0, 20);
-  const results = await Promise.all(domains.map(async (domain) => {
-    try {
-      const response = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, { headers: { Accept: "application/rdap+json, application/json" },signal:AbortSignal.timeout(15000) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) return { domain, status: "unknown", message: `RDAP HTTP ${response.status}` };
-      const createdAt = rdapEventDate(data.events, ["registration", "registered"]);
-      const expiresAt = rdapEventDate(data.events, ["expiration", "expiry"]);
-      const created = Date.parse(createdAt);
-      const ageDays = Number.isFinite(created) ? Math.max(0, Math.floor((Date.now() - created) / 86400000)) : null;
-      return { domain, status: "ok", createdAt, expiresAt, ageDays, ageMonths: ageDays === null ? null : Math.floor(ageDays / 30.4375) };
-    } catch (error) {
-      return { domain, status: "unknown", message: error.message };
-    }
-  }));
-  return { ok: true, results };
+  return { ok: true, results: await lookupDomainMetrics(domains) };
 }
 
 export function executorAssistant(request,env){

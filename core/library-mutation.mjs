@@ -38,8 +38,9 @@ export function libraryMutation(documents,operation,options={}){
  if(operation.type==='recover_local')return{key:operation.key,data:recoveryDocument(documents,operation.key,operation.data)};
  if(operation.type==='backup_prepared_key'){try{const data=applyPreparedBackupKey(documents,operation);validateRecoveryValue(operation.key,data);return{key:operation.key,data};}catch(error){fail(error.message);}}
  if(operation.type==='pin'){
+  const platform=operation.platformType??'directory';if(typeof platform!=='string'||!/^\w{1,64}$/.test(platform))fail('网页类型无效');
   const key=catalogKeyOf(operation.url),lines=String(documents.urlList||'').split('\n').map(s=>s.trim()).filter(Boolean),matching=lines.find(s=>{try{return catalogKeyOf(s.split('|')[0])===key;}catch{return false;}}),rest=lines.filter(s=>{try{return catalogKeyOf(s.split('|')[0])!==key;}catch{return true;}});
-  return{key:'urlList',data:[matching||new URL(operation.url).href+'|directory',...rest].join('\n')};
+  return{key:'urlList',data:[matching||new URL(operation.url).href+'|'+platform,...rest].join('\n')};
  }
  if(operation.type==='clear_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:(documents.deletedSubmissionKeys||[]).filter(k=>k!==key)};}
  if(operation.type==='set_deleted'){const key=catalogKeyOf(operation.url);return{key:'deletedSubmissionKeys',data:[...new Set([...(documents.deletedSubmissionKeys||[]),key])]};}

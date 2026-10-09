@@ -32,7 +32,7 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
     if(matches.length===1)target=matches[0];
   }
   if (!target || target.frame.url !== frameUrl) { await session.detach(); throw new Error(`iframe 身份已变化，请重新观察：${frameUrl} / CDP ${tree.frameTree.frame.url}`); }
-  const { executionContextId } = await session.send('Page.createIsolatedWorld', { frameId: target.frame.id, worldName: 'ExternalLinkExecutor', grantUniveralAccess: false });
+  const { executionContextId } = await session.send('Page.createIsolatedWorld', { frameId: target.frame.id, worldName: options.worldName || 'ExternalLinkExecutor', grantUniveralAccess: false });
   const evaluate = async (expression, awaitPromise = true) => {
     const result = await session.send('Runtime.evaluate', { expression, contextId: executionContextId, returnByValue: true, awaitPromise });
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);

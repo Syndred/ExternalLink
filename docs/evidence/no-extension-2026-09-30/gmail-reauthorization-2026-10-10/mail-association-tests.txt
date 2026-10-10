@@ -1,0 +1,11 @@
+✔ mail association needs exact sender site and explicit product identity, never implies publication (0.9675ms)
+✔ mail predating a submission is excluded and unknown times retain candidates without claiming a reply (0.6793ms)
+✔ canonical account association wins over legacy aliases without duplicate reply evidence or stale historical matches (1.7358ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.1089

@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "at": "2026-10-10T08:19:26.393Z",
+  "sourceCommit": "daeee1cfb92a990d509f970be19632e61b12bfff",
+  "userRequest": "Mac deferred; renew existing Gmail read-only connection",
+  "browser": "original Chrome via original workbench UI",
+  "sameAccount": true,
+  "readOnlyScope": true,
+  "googleCallbackSucceeded": true,
+  "realRefreshSucceeded": true,
+  "realGmailIncrementalReadSucceeded": true,
+  "addedEmails": 22,
+  "totalEmails": 780,
+  "original758RowsUnchanged": true,
+  "all1630NonGmailRowsUnchanged": true,
+  "credentialsSavedOnlyInOsVault": true,
+  "serviceFix": {
+    "file": "executor/src/gmail-oauth.mjs",
+    "defect": "listener close cleared server.address before a queued callback/favicon request; uncaught null.port ended executor",
+    "fix": "capture random port once; fence requests after cancel and expiry",
+    "tests": {
+      "oauthAndSync": 17,
+      "mailAssociation": 3,
+      "failed": 0,
+      "skipped": 0,
+      "realHttpReuseScenarios": [
+        "authorized",
+        "cancelled",
+        "expired"
+      ]
+    }
+  },
+  "previousFullRegression": {
+    "sourceCommit": "f1fe958493911c42a130ddca8ff87d257183b595",
+    "pass": 1183,
+    "separateEarlierScope": true
+  },
+  "mac": "not handled per user instruction",
+  "grantExpiresAt": "2026-10-17T08:11:53.365Z",
+  "files": [
+    {
+      "name": "connected-confirmation.png",
+      "rawLocalBytes": 11403,
+      "rawLocalSha256": "0692169c941ff8cde5249b7b21e11134f62c841dc390840f875b9c41d54a5ef9"
+    },
+    {
+      "name": "connected.png",
+      "rawLocalBytes": 16182,
+      "rawLocalSha256": "df78e74f0c4bbd494b8e26924f16ef769e3b7a9c3b69f8b7fd611948055be521"
+    },
+    {
+      "name": "live-readback.json",
+      "rawLocalBytes": 1649,
+      "rawLocalSha256": "b607b775e415e5ae3e3f767b806ddc7646764e2b5b999cb9715c2b871e327886"
+    },
+    {
+      "name": "mail-association-tests-exit.txt",
+      "rawLocalBytes": 3,
+      "rawLocalSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "name": "mail-association-tests.txt",
+      "rawLocalBytes": 483,
+      "rawLocalSha256": "46f4a40969169773d9f1c4493f1365d3b7fe5f2e25701fc2eaaa2f4e1ec97f81"
+    },
+    {
+      "name": "targeted-tests-exit.txt",
+      "rawLocalBytes": 3,
+      "rawLocalSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "name": "targeted-tests.txt",
+      "rawLocalBytes": 1833,
+      "rawLocalSha256": "d7395e843c09295bc20d684414da21f3ec78ca1455151b06c041f26c890d84ce"
+    }
+  ],
+  "containsTokensMailBodyOrAccountIdentity": false
+}

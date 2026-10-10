@@ -1,0 +1,25 @@
+✔ Gmail OAuth closed callback safely rejects real reused HTTP requests: authorized (89.5379ms)
+✔ Gmail OAuth closed callback safely rejects real reused HTTP requests: cancelled (76.2844ms)
+✔ Gmail OAuth closed callback safely rejects real reused HTTP requests: expired (78.427ms)
+✔ desktop authorization requests exactly Gmail read-only with random state, PKCE and loopback callback (2.1255ms)
+✔ OAuth callback refuses forged state and consumes a valid authorization only once without exposing tokens (34.1812ms)
+✔ extra OAuth scopes are refused and revoked refresh grants require reauthorization (1.0387ms)
+✔ client import accepts only installed Google clients (0.9921ms)
+✔ local mail detail renders content as text and rejects arbitrary record identities (0.7892ms)
+✔ unowned legacy mail stays quarantined when no original mailbox was recorded (0.2333ms)
+✔ an interrupted migration keeps the original mailbox owner after account metadata changes (0.2328ms)
+✔ timer sync waits for account refresh verification before using a mailbox cursor (9.2822ms)
+✔ incremental cursor advances only after messages are durably saved, without modifying Gmail (1.5431ms)
+✔ expired access refresh persists rotated grant in vault only (0.4958ms)
+✔ initial import pages resume after restart and hold the incremental cursor until complete (1.6481ms)
+✔ reauthorizing another mailbox resets its cursor and does not mix historical messages (0.7298ms)
+✔ existing authorization restart migrates legacy messages and isolates legacy associations before history (0.3008ms)
+✔ switch and refresh preserve old legacy ownership and fetch colliding message IDs for the new account (0.9048ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 306.863

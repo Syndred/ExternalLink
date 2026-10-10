@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Failed comment field must be durably captured
++ actual - expected
+
++ undefined
+- 'Site rejected this comment'
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:37:202 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: 'Site rejected this comment',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

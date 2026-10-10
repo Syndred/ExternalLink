@@ -1,0 +1,19 @@
+{
+  "fullRunBeforeFailureCheckpoint": "intentionally_interrupted_to_fix_actual_missing_failed_field_checkpoint",
+  "actualTerminalExitCode": 1,
+  "validReleaseEvidence": false,
+  "initialFocused": {
+    "tests": 20,
+    "pass": 20,
+    "fail": 0,
+    "failureCheckpointWasNotCovered": true
+  },
+  "failureCheckpointFocused": {
+    "tests": 20,
+    "pass": 17,
+    "fail": 3,
+    "reason": "fixture selected outer-frame partial report instead of original comment iframe; now explicitly selects the matching frame URL; denominator unchanged"
+  },
+  "sourceChangesWereMadeAfterStoppingOwnedFullRunner": true,
+  "originalChromeUntouched": true
+}

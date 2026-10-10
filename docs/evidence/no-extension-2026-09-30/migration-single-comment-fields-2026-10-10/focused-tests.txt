@@ -1,0 +1,28 @@
+✔ long candidate edits preserve original snapshots metadata selected index and raw text after actual UI and SQLite reopening (1807.4264ms)
+✔ actual main candidate buttons fill long original text and reject page overflow before lease or field mutation (2084.1341ms)
+✔ actual iframe candidate buttons fill long original text and reject page overflow before lease or field mutation (2130.4526ms)
+✔ single-page native control fills 24002-character comments and rejects actual maxlength before original registration (3579.0898ms)
+✔ original field ranking positive maxima absent maxima zero and prescan fallback match the complete frozen field selector and limit guard (22.7659ms)
+✔ actual sparse-wp comment field readback preserves long text and blocks overflow before mutation (1931.6108ms)
+✔ actual sparse-wp-iframe comment field readback preserves long text and blocks overflow before mutation (2001.5627ms)
+✔ actual article comment field readback preserves long text and blocks overflow before mutation (8689.9516ms)
+✔ actual single-page new task standard main comment field limits and exact readback (1633.5395ms)
+✔ actual single-page new task standard iframe comment field limits and exact readback (1678.4151ms)
+✔ actual single-page new task sparse main comment field limits and exact readback (1581.6614ms)
+✔ actual single-page new task sparse iframe comment field limits and exact readback (1656.4931ms)
+✔ actual single-page new task article main comment field limits and exact readback (5627.0601ms)
+✔ actual single-page new task article iframe comment field limits and exact readback (5580.1771ms)
+✔ actual single-page existing receipt standard main comment field limits and exact readback (1479.9715ms)
+✔ actual single-page existing receipt standard iframe comment field limits and exact readback (1547.8119ms)
+✔ actual single-page existing receipt sparse main comment field limits and exact readback (1429.4221ms)
+✔ actual single-page existing receipt sparse iframe comment field limits and exact readback (1510.0698ms)
+✔ actual single-page existing receipt article main comment field limits and exact readback (5382.3208ms)
+✔ actual single-page existing receipt article iframe comment field limits and exact readback (5491.8044ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34678.0759

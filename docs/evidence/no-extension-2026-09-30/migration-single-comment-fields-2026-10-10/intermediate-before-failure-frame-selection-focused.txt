@@ -1,0 +1,156 @@
+✔ long candidate edits preserve original snapshots metadata selected index and raw text after actual UI and SQLite reopening (1735.8954ms)
+✔ actual main candidate buttons fill long original text and reject page overflow before lease or field mutation (2100.945ms)
+✔ actual iframe candidate buttons fill long original text and reject page overflow before lease or field mutation (2188.3941ms)
+✔ single-page native control fills 24002-character comments and rejects actual maxlength before original registration (3623.5517ms)
+✔ original field ranking positive maxima absent maxima zero and prescan fallback match the complete frozen field selector and limit guard (19.6348ms)
+✔ actual sparse-wp comment field readback preserves long text and blocks overflow before mutation (1924.4976ms)
+✔ actual sparse-wp-iframe comment field readback preserves long text and blocks overflow before mutation (1980.4617ms)
+✔ actual article comment field readback preserves long text and blocks overflow before mutation (8706.5619ms)
+✔ actual single-page new task standard main comment field limits and exact readback (1766.811ms)
+✔ actual single-page new task standard iframe comment field limits and exact readback (1821.6203ms)
+✔ actual single-page new task sparse main comment field limits and exact readback (1671.7763ms)
+✔ actual single-page new task sparse iframe comment field limits and exact readback (1809.619ms)
+✔ actual single-page new task article main comment field limits and exact readback (7602.7288ms)
+✔ actual single-page new task article iframe comment field limits and exact readback (7639.0421ms)
+✔ actual single-page existing receipt standard main comment field limits and exact readback (1544.2483ms)
+✖ actual single-page existing receipt standard iframe comment field limits and exact readback (1541.8762ms)
+✔ actual single-page existing receipt sparse main comment field limits and exact readback (1538.578ms)
+✖ actual single-page existing receipt sparse iframe comment field limits and exact readback (1513.0692ms)
+✔ actual single-page existing receipt article main comment field limits and exact readback (7530.5515ms)
+✖ actual single-page existing receipt article iframe comment field limits and exact readback (5459.7261ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 17
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41505.0298
+
+✖ failing tests:
+
+test at tests\executor-original-single-comment-fields.test.mjs:5:118
+✖ actual single-page existing receipt standard iframe comment field limits and exact readback (1541.8762ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Failed comment field must be durably captured
+  + actual - expected
+  
+  + undefined
+  - 'Site rejected this comment'
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:37:288 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'Site rejected this comment',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-single-comment-fields.test.mjs:8:107)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-single-comment-fields.test.mjs:5:118
+✖ actual single-page existing receipt sparse iframe comment field limits and exact readback (1513.0692ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Failed comment field must be durably captured
+  + actual - expected
+  
+  + undefined
+  - 'Site rejected this comment'
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:37:288 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'Site rejected this comment',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-single-comment-fields.test.mjs:8:107)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\executor-original-single-comment-fields.test.mjs:5:118
+✖ actual single-page existing receipt article iframe comment field limits and exact readback (5459.7261ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: Failed comment field must be durably captured
+  + actual - expected
+  
+  + undefined
+  - 'Site rejected this comment'
+  
+      at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:37:288 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'Site rejected this comment',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/project/ExternalLink/tests/executor-original-single-comment-fields.test.mjs:8:107)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

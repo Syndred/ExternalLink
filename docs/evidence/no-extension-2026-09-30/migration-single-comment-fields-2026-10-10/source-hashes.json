@@ -1,0 +1,9 @@
+{
+  "executor/src/single-page.mjs": "e62bc9cab4f64976b163db870339bf32f4a42d1c6b3e513f118e793737818566",
+  "executor/src/single-page-refill.mjs": "7a2a38919188728d5d2d50538c3be281995f7b52d9506b90594ff2984612cdbc",
+  "executor/test/original-single-page-comment-fields.mjs": "75352836d55b771d295852acc1489e22a6d19a9c7e6b3fdb269e91996bd8eda3",
+  "tests/executor-original-single-comment-fields.test.mjs": "df60f995acd75197109ad6d49b97d7c307142213a056aefa6d77c71ad13b72d5",
+  "core/form-engine.js": "4900f1da4895db4cb06c395c0645aa858cfc517a7dbc22356c0a5b280ef77404",
+  "core/original-comment-constraints.mjs": "8222b7017f35552936f19b09b41c13443ad59038a5a14435cdd682c5b0c084ef",
+  "tests/helpers/original-comment-limits.mjs": "db9a9553aabf0113bd3267ef4dddbf503bd7cdd72706e423af6749cbd3fefb13"
+}

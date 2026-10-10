@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"result":{"ok":true,"taskId":"4a7b94c5-2c68-4cf5-b06e-07d2d46041c3","runId":"ef21b148-921b-4a0d-9e98-24589207febe","filled":true,"submitted":false,"fill":{"standardWp":false},"actual":{"fields":[],"issues":[],"invalidCount":0,"allValid":true},"validation":{"emptyCount":0,"invalidCount":0,"totalCount":0,"submitDisabled":false,"allValid":true,"issues":[],"validationFailed":false},"submitReady":true,"reason":"单页资料已填写，尚未投稿","syncError":""},"actualCommentChars":24002,"expectedCommentChars":24002}
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:33:217 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

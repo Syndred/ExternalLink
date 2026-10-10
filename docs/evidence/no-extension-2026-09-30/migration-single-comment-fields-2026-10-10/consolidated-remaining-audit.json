@@ -1,0 +1,1193 @@
+{
+  "date": "2026-10-10",
+  "kind": "consolidated_remaining_scope_not_feature_completion",
+  "currentSourceCommit": "7c2d253c9a8b018930ce37469a5603ae5a0731dc",
+  "countsAreNotCompletedFeatureCounts": true,
+  "originalInventory": {
+    "buttons": 55,
+    "backgroundActions": 62,
+    "inputRows": 84,
+    "anonymousButtons": 12,
+    "dynamicSourcePoints": 32
+  },
+  "knownMissingOriginalFavorites": 0,
+  "originalLatestLedgerAlreadySaved": true,
+  "requiresAnotherBackup": false,
+  "unknownOtherDeviceDataDoesNotCreateKnownLossRequirement": true,
+  "resolvedOlderNotes": [
+    {
+      "item": "single-page exact readback and durable rejected field",
+      "evidence": "migration-single-comment-fields-2026-10-10/summary.json"
+    },
+    {
+      "item": "bai.tools registry 429 is not sole current result",
+      "evidence": "migration-entry-evidence-review-2026-10-10/summary.json"
+    },
+    {
+      "item": "50 original indexed media ownership",
+      "evidence": "migration-original-media-restore-2026-10-10/summary.json"
+    }
+  ],
+  "remaining": [
+    {
+      "item": "Windows OS clipboard",
+      "state": "actual dependency acceptance pending; preserve all existing clipboard formats"
+    },
+    {
+      "item": "Whole original entry branch evidence reconciliation",
+      "state": "Review existing branch operation/persistence proofs; specific absent branches must be identified before adding more tests."
+    },
+    {
+      "item": "Gmail fresh provider readback",
+      "state": "Google human authorization pending; preserve 758 saved messages; do not repeat unanswered request."
+    }
+  ],
+  "singlePageAsyncFillHandler": {
+    "completeSourceReferenced": true,
+    "lines": 64,
+    "completeHandlerDifferentialExecuted": false,
+    "covered": "12 actual comment UI paths, field limit, successful/rejected exact reports and SQLite reopening",
+    "remaining": "Review other original branches against already saved evidence"
+  },
+  "dynamicRows": [
+    {
+      "originalEntry": "extension/content.js::showWaitingBanner",
+      "originalControl": "__extlink_skip_btn",
+      "originalSourceLine": "<button class=\"__extlink_skip\" id=\"__extlink_skip_btn\">跳过</button>",
+      "originalLine": 1549,
+      "declaration": "<button",
+      "kind": "template_button",
+      "originalCompleteFunctionSha256": "c2ba038d197ac308002a22859f7d1fc0d70faada7856c5aba078b79e593230af",
+      "entry": "原任务网页 → 跳过／继续填表",
+      "operation": "原任务无表单时等待导航，原身份继续或跳过",
+      "persistence": "原导航检查点、任务预算及队列",
+      "currentSource": "executor/src/task-page-controls.mjs",
+      "tests": [
+        "tests/executor-task-page-controls.test.mjs"
+      ],
+      "scope": "已有网页控件与控制通道证据，须结合原导航场景核对",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-task-page-controls.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "5a9aac6225d94d9cc35e4de683016f4b93f4172db1b17d414abd58c9e8a35933"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/content.js::showWaitingBanner",
+      "originalControl": "__extlink_go_btn",
+      "originalSourceLine": "<button class=\"__extlink_go\" id=\"__extlink_go_btn\">▶ 继续填表</button>",
+      "originalLine": 1550,
+      "declaration": "<button",
+      "kind": "template_button",
+      "originalCompleteFunctionSha256": "c2ba038d197ac308002a22859f7d1fc0d70faada7856c5aba078b79e593230af",
+      "entry": "原任务网页 → 跳过／继续填表",
+      "operation": "原任务无表单时等待导航，原身份继续或跳过",
+      "persistence": "原导航检查点、任务预算及队列",
+      "currentSource": "executor/src/task-page-controls.mjs",
+      "tests": [
+        "tests/executor-task-page-controls.test.mjs"
+      ],
+      "scope": "已有网页控件与控制通道证据，须结合原导航场景核对",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-task-page-controls.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "5a9aac6225d94d9cc35e4de683016f4b93f4172db1b17d414abd58c9e8a35933"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/content.js::showManualWaitBanner",
+      "originalControl": "__extlink_manual_skip_btn",
+      "originalSourceLine": "<button class=\"__extlink_skip\" id=\"__extlink_manual_skip_btn\">跳过</button>",
+      "originalLine": 1632,
+      "declaration": "<button",
+      "kind": "template_button",
+      "originalCompleteFunctionSha256": "2a50cfc168463debb06bfb95987688d416706a5f1cb6fd66f7add0375373923b",
+      "entry": "原任务网页 → 跳过／继续下一步",
+      "operation": "登录或验证码后继续原任务；停放及跳过保留恢复状态",
+      "persistence": "原人工闸门、恢复检查点及任务事件",
+      "currentSource": "executor/src/task-page-controls.mjs",
+      "tests": [
+        "tests/executor-task-page-controls.test.mjs",
+        "tests/executor-original-manual-task-page.test.mjs"
+      ],
+      "scope": "已有人工控件与恢复证据，须分别审计闸门和超时分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-task-page-controls.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "5a9aac6225d94d9cc35e4de683016f4b93f4172db1b17d414abd58c9e8a35933"
+        },
+        {
+          "path": "tests/executor-original-manual-task-page.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "a9843f50cdb2c8303296f2952b7632017507e2397ff96e84e57f04c6c11bdb72"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/content.js::showManualWaitBanner",
+      "originalControl": "__extlink_manual_go_btn",
+      "originalSourceLine": "<button class=\"__extlink_go\" id=\"__extlink_manual_go_btn\">▶ 继续下一步</button>",
+      "originalLine": 1633,
+      "declaration": "<button",
+      "kind": "template_button",
+      "originalCompleteFunctionSha256": "2a50cfc168463debb06bfb95987688d416706a5f1cb6fd66f7add0375373923b",
+      "entry": "原任务网页 → 跳过／继续下一步",
+      "operation": "登录或验证码后继续原任务；停放及跳过保留恢复状态",
+      "persistence": "原人工闸门、恢复检查点及任务事件",
+      "currentSource": "executor/src/task-page-controls.mjs",
+      "tests": [
+        "tests/executor-task-page-controls.test.mjs",
+        "tests/executor-original-manual-task-page.test.mjs"
+      ],
+      "scope": "已有人工控件与恢复证据，须分别审计闸门和超时分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-task-page-controls.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "5a9aac6225d94d9cc35e4de683016f4b93f4172db1b17d414abd58c9e8a35933"
+        },
+        {
+          "path": "tests/executor-original-manual-task-page.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "a9843f50cdb2c8303296f2952b7632017507e2397ff96e84e57f04c6c11bdb72"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/content.js::syncManualIcons",
+      "originalControl": "icon_factory_call",
+      "originalSourceLine": "icon = document.createElement(\"button\");",
+      "originalLine": 8572,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "31c6d639a73c77ef730aa0f59b943238290bf580b93120df2b60678603f65c09",
+      "entry": "原任务网页 → 字段旁EL按钮",
+      "operation": "按当前产品填入此字段，文档或产品变化时停止旧操作",
+      "persistence": "原填表字段及学习信息，不等同投稿成功",
+      "currentSource": "core/form-engine.js::syncManualIcons; executor/src/browser-assistant.mjs",
+      "tests": [
+        "tests/executor-original-manual-icon-lifecycle.test.mjs",
+        "tests/executor-original-manual-icon-branches.test.mjs",
+        "tests/fill-learning.test.mjs"
+      ],
+      "scope": "已直接验证生命周期、产品学习及选择框／内嵌图片／未匹配字段／评论的四类点击和三类缺失状态；远程媒体、特殊站点及并发分支须结合独立证据审计",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-manual-icon-lifecycle.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "fa54f33a2cd5fe1e1738af14fd11fde7b00233cb38afa308177e923455a1e532"
+        },
+        {
+          "path": "tests/executor-original-manual-icon-branches.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "7d835df9abde2aad5ca944f86e511e06d9c7b21b295cdfb44ef15d2c2a373aa4"
+        },
+        {
+          "path": "tests/fill-learning.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "ec141f5a5f491b508043361b6c899875997eef1b205d214666f52cbc8190a4cd"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderProfileFields",
+      "originalControl": "content",
+      "originalSourceLine": "const content = document.createElement(\"textarea\");",
+      "originalLine": 81,
+      "declaration": "createElement(\"textarea\")",
+      "kind": "textarea",
+      "originalCompleteFunctionSha256": "4592e6c63fc29062173b5e5832116f1ed6383520a35db7c3416dd49fd278cc82",
+      "entry": "我的网站 → 编辑当前网站 → 补充资料／字段备注",
+      "operation": "编辑标准和自定义字段及备注，显式保存，重开回读",
+      "persistence": "siteProfiles.fields／fieldNotes；SQLite资料outbox及云端资料文档",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "tests": [
+        "tests/executor-original-profile-inputs.test.mjs",
+        "tests/executor-original-staged-logo.test.mjs"
+      ],
+      "scope": "本轮直接验证标准字段空白、自定义六类值、备注及图片回退；其余动态分支仍须逐项审计",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-profile-inputs.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9ed859ef3837b83f42d99f2ed945533fc14467f38e112181b7ef92697cdfb994"
+        },
+        {
+          "path": "tests/executor-original-staged-logo.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "33d4a4f4156aaffb6a1205165eb1b231460b12c7b0971b46d3a2aeda7897e0bd"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderProfileFields",
+      "originalControl": "note",
+      "originalSourceLine": "const note = document.createElement(\"input\");",
+      "originalLine": 86,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "4592e6c63fc29062173b5e5832116f1ed6383520a35db7c3416dd49fd278cc82",
+      "entry": "我的网站 → 编辑当前网站 → 补充资料／字段备注",
+      "operation": "编辑标准和自定义字段及备注，显式保存，重开回读",
+      "persistence": "siteProfiles.fields／fieldNotes；SQLite资料outbox及云端资料文档",
+      "currentSource": "executor/web/application.js::showProduct/addProductTools",
+      "tests": [
+        "tests/executor-original-profile-inputs.test.mjs",
+        "tests/executor-original-staged-logo.test.mjs"
+      ],
+      "scope": "本轮直接验证标准字段空白、自定义六类值、备注及图片回退；其余动态分支仍须逐项审计",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-profile-inputs.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9ed859ef3837b83f42d99f2ed945533fc14467f38e112181b7ef92697cdfb994"
+        },
+        {
+          "path": "tests/executor-original-staged-logo.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "33d4a4f4156aaffb6a1205165eb1b231460b12c7b0971b46d3a2aeda7897e0bd"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createIconButton",
+      "originalControl": "button",
+      "originalSourceLine": "const button = document.createElement(\"button\");",
+      "originalLine": 994,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "5a294fea6fa75ed0bf8ea5b8a82ea7aff79f217876d9dba2787cda2250ab0f7b",
+      "entry": "外链库／查看动态 → 置顶、移除、编辑及删除",
+      "operation": "工厂生成图标按钮，分别由调用者绑定操作",
+      "persistence": "由调用者决定：队列或时间线文档",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary/showTimeline",
+      "tests": [
+        "tests/executor-original-pin-control.test.mjs",
+        "tests/executor-original-library-actions.test.mjs",
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "工厂声明不能代替四个调用点的行为证据",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-pin-control.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "e585c89d5a10f787a0e8ae38bd26ad0f89af900629d579e4e34156e32ffa52f9"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        },
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "profile",
+      "originalSourceLine": "const profile = document.createElement(\"select\");",
+      "originalLine": 1084,
+      "declaration": "createElement(\"select\")",
+      "kind": "select",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "type",
+      "originalSourceLine": "const type = document.createElement(\"select\");",
+      "originalLine": 1096,
+      "declaration": "createElement(\"select\")",
+      "kind": "select",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "occurredAt",
+      "originalSourceLine": "const occurredAt = document.createElement(\"input\");",
+      "originalLine": 1104,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "url",
+      "originalSourceLine": "const url = document.createElement(\"input\");",
+      "originalLine": 1107,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "note",
+      "originalSourceLine": "const note = document.createElement(\"textarea\");",
+      "originalLine": 1111,
+      "declaration": "createElement(\"textarea\")",
+      "kind": "textarea",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "submit",
+      "originalSourceLine": "const submit = document.createElement(\"button\");",
+      "originalLine": 1114,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createTimelineForm",
+      "originalControl": "cancel",
+      "originalSourceLine": "const cancel = document.createElement(\"button\");",
+      "originalLine": 1117,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "3a145cd911ad01a004ca85a8a85fd562538674210cad1d96bd29b267ec447ce2",
+      "entry": "查看动态 → 动态所属产品／进度／记录时间／说明／证据网址／保存或取消",
+      "operation": "新增、编辑及取消编辑，保留原时间和证据",
+      "persistence": "submissionTimeline及关联原回执",
+      "currentSource": "executor/web/application.js::showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "已有原完整函数与实际界面／SQLite／认证D1证据；需总矩阵核对每个分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createLibraryMarkPanel",
+      "originalControl": "btn",
+      "originalSourceLine": "const btn = document.createElement(\"button\");",
+      "originalLine": 1189,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "9f4603ac3e7c32c783d7960050e598d0ae7317baba931f045eb05c347bda060d",
+      "entry": "外链库 → 编辑 → 提交条件",
+      "operation": "切换单个或多个站点标记，保存并回读",
+      "persistence": "siteAnnotations及deletedSubmissionKeys",
+      "currentSource": "executor/web/application.js::showLibrary",
+      "tests": [
+        "tests/executor-original-library-mark-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs"
+      ],
+      "scope": "已有原标记与别名保留证据；不以当前入口存在证明所有标记完成",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-mark-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "95221e8aad8b01c5cd1d174608f1842e7e9c529e36713ab675e03f0cb3f90f21"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::createLibraryGroupPanel",
+      "originalControl": "button",
+      "originalSourceLine": "const button = document.createElement(\"button\");",
+      "originalLine": 1232,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "4455a9df5bd2fb0b47fcbba0e32f049eb40c60810d824404630d1d2cdfe10faa",
+      "entry": "外链库 → 编辑 → 收藏与分组",
+      "operation": "加入、移出分组，保留禁用／付费／删除条件",
+      "persistence": "siteAnnotations.library.groups",
+      "currentSource": "executor/web/application.js::showLibrary",
+      "tests": [
+        "tests/executor-original-library-group-panel.test.mjs",
+        "tests/executor-original-library-state.test.mjs"
+      ],
+      "scope": "直接对照原完整面板及三模块：两分组八状态、增删／收藏／启用、保存重开及SQLite原编号离线恢复；不扩展为其他入口完成证明",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-group-panel.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "2079ded902fd6ea3d21967086f80f55db768a5c30dd31767ad1ddb75226eca58"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderTimelinePanel",
+      "originalControl": "edit",
+      "originalSourceLine": "const edit = createIconButton(\"edit\", `编辑 ${activityLabel(event.type || event.status)} 动态`);",
+      "originalLine": 1279,
+      "declaration": "createIconButton(",
+      "kind": "icon_factory_call",
+      "originalCompleteFunctionSha256": "ce1e98a4e019226bad895435506e04d7101fefbd95024259d713be5388e8907a",
+      "entry": "查看动态 → 编辑／删除原动态",
+      "operation": "选择原事件编辑或删除，保留原回执",
+      "persistence": "submissionTimeline",
+      "currentSource": "executor/web/application.js::showTimeline/showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "图标工厂调用者：原事件编号、时间、证据与取消分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderTimelinePanel",
+      "originalControl": "remove",
+      "originalSourceLine": "const remove = createIconButton(\"remove\", `删除 ${activityLabel(event.type || event.status)} 动态`, true);",
+      "originalLine": 1280,
+      "declaration": "createIconButton(",
+      "kind": "icon_factory_call",
+      "originalCompleteFunctionSha256": "ce1e98a4e019226bad895435506e04d7101fefbd95024259d713be5388e8907a",
+      "entry": "查看动态 → 编辑／删除原动态",
+      "operation": "选择原事件编辑或删除，保留原回执",
+      "persistence": "submissionTimeline",
+      "currentSource": "executor/web/application.js::showTimeline/showTimelineEditor",
+      "tests": [
+        "tests/executor-original-timeline-editor.test.mjs"
+      ],
+      "scope": "图标工厂调用者：原事件编号、时间、证据与取消分支",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-timeline-editor.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "9492c54450ee53320217b1a5dd94f91ac94d21e97a210829d5afdf3f9e1be71c"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderLibrary",
+      "originalControl": "pin",
+      "originalSourceLine": "const pin = createIconButton(\"pin\", `置顶 ${item.domain || item.url}`);",
+      "originalLine": 1451,
+      "declaration": "createIconButton(",
+      "kind": "icon_factory_call",
+      "originalCompleteFunctionSha256": "def4aeef772174574205b4c6ada51a4a442ac70b8e0d6a51e8e56f31460d1569",
+      "entry": "外链库 → 队列置顶／移出自定义队列",
+      "operation": "移动或移除原队列入口，保留站点偏好及回执",
+      "persistence": "urlList、deletedSubmissionKeys及关联偏好",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary",
+      "tests": [
+        "tests/executor-original-pin-control.test.mjs",
+        "tests/executor-original-library-actions.test.mjs"
+      ],
+      "scope": "图标工厂调用者：原别名及队列操作，不能混同清除标记",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-pin-control.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "e585c89d5a10f787a0e8ae38bd26ad0f89af900629d579e4e34156e32ffa52f9"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/settings.js::renderLibrary",
+      "originalControl": "remove",
+      "originalSourceLine": "const remove = createIconButton(\"remove\", `删除 ${item.domain || item.url}`, true);",
+      "originalLine": 1458,
+      "declaration": "createIconButton(",
+      "kind": "icon_factory_call",
+      "originalCompleteFunctionSha256": "def4aeef772174574205b4c6ada51a4a442ac70b8e0d6a51e8e56f31460d1569",
+      "entry": "外链库 → 队列置顶／移出自定义队列",
+      "operation": "移动或移除原队列入口，保留站点偏好及回执",
+      "persistence": "urlList、deletedSubmissionKeys及关联偏好",
+      "currentSource": "executor/web/application.js::pinLibraryRow/showLibrary",
+      "tests": [
+        "tests/executor-original-pin-control.test.mjs",
+        "tests/executor-original-library-actions.test.mjs"
+      ],
+      "scope": "图标工厂调用者：原别名及队列操作，不能混同清除标记",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-pin-control.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "e585c89d5a10f787a0e8ae38bd26ad0f89af900629d579e4e34156e32ffa52f9"
+        },
+        {
+          "path": "tests/executor-original-library-actions.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "4e742e929e1ae148d2980c52e9065e64b2d5e47c168d698f0c5831199f0c9214"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderSidepanelLibrary",
+      "originalControl": "select",
+      "originalSourceLine": "const select = document.createElement(\"input\");",
+      "originalLine": 391,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "bd2b72e565b8c4e8f1359d68b6eddb8476dc59faba99007b0889e2236f0e11f1",
+      "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
+      "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
+      "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
+      "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "生成循环含多个控件；需分别核对目标选择、偏好及产品分配，不能按声明数计总功能数",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-assignment-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8e4c8b7271a6ecf328b014ae7455d23264af927b643875a0bb5a1d77c21e5cba"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderSidepanelLibrary",
+      "originalControl": "favoriteButton",
+      "originalSourceLine": "const favoriteButton = document.createElement(\"button\");",
+      "originalLine": 435,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "bd2b72e565b8c4e8f1359d68b6eddb8476dc59faba99007b0889e2236f0e11f1",
+      "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
+      "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
+      "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
+      "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "生成循环含多个控件；需分别核对目标选择、偏好及产品分配，不能按声明数计总功能数",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-assignment-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8e4c8b7271a6ecf328b014ae7455d23264af927b643875a0bb5a1d77c21e5cba"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderSidepanelLibrary",
+      "originalControl": "enabledButton",
+      "originalSourceLine": "const enabledButton = document.createElement(\"button\");",
+      "originalLine": 444,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "bd2b72e565b8c4e8f1359d68b6eddb8476dc59faba99007b0889e2236f0e11f1",
+      "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
+      "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
+      "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
+      "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "生成循环含多个控件；需分别核对目标选择、偏好及产品分配，不能按声明数计总功能数",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-assignment-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8e4c8b7271a6ecf328b014ae7455d23264af927b643875a0bb5a1d77c21e5cba"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderSidepanelLibrary",
+      "originalControl": "groupButton",
+      "originalSourceLine": "const groupButton = document.createElement(\"button\");",
+      "originalLine": 466,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "bd2b72e565b8c4e8f1359d68b6eddb8476dc59faba99007b0889e2236f0e11f1",
+      "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
+      "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
+      "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
+      "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "生成循环含多个控件；需分别核对目标选择、偏好及产品分配，不能按声明数计总功能数",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-assignment-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8e4c8b7271a6ecf328b014ae7455d23264af927b643875a0bb5a1d77c21e5cba"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderSidepanelLibrary",
+      "originalControl": "checkbox",
+      "originalSourceLine": "const checkbox = document.createElement(\"input\");",
+      "originalLine": 500,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "bd2b72e565b8c4e8f1359d68b6eddb8476dc59faba99007b0889e2236f0e11f1",
+      "entry": "外链库 → 勾选目标／编辑 → 收藏、启用、分组及适用产品",
+      "operation": "选择目标，保存偏好和产品分配，参与筛选与固定批次",
+      "persistence": "临时目标选择；siteAnnotations.library偏好及批次冻结范围",
+      "currentSource": "executor/web/application.js::renderLibrary/showLibrary",
+      "tests": [
+        "tests/executor-original-library-assignment-ui.test.mjs",
+        "tests/executor-original-library-state.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "生成循环含多个控件；需分别核对目标选择、偏好及产品分配，不能按声明数计总功能数",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-library-assignment-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8e4c8b7271a6ecf328b014ae7455d23264af927b643875a0bb5a1d77c21e5cba"
+        },
+        {
+          "path": "tests/executor-original-library-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "0551c61f8fe85553ee3b7a73b695590e1acb68a92d5242549d895434aad8d039"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderBatchSiteChoices",
+      "originalControl": "input",
+      "originalSourceLine": "const input = document.createElement(\"input\");",
+      "originalLine": 757,
+      "declaration": "createElement(\"input\")",
+      "kind": "input",
+      "originalCompleteFunctionSha256": "f610c134131911fffc08bc3355132ddcaee7664a70c2fc1db8d24eb655edeba9",
+      "entry": "外链库 → 批量提交 → 产品选择",
+      "operation": "切换本批次原产品集合，重新预览并冻结",
+      "persistence": "selectedSiteIds、原批次配置和组合",
+      "currentSource": "executor/web/application.js::showBatch",
+      "tests": [
+        "tests/executor-original-profile-selection.test.mjs",
+        "tests/executor-original-library-batch-scope.test.mjs"
+      ],
+      "scope": "已有选择持久化及固定分母证据",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-profile-selection.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "400b471b9388702c4cf2087f607e46c30dc55410166535f81d4dcf09d87c4238"
+        },
+        {
+          "path": "tests/executor-original-library-batch-scope.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "c8c27f1d96ac487361932b244a1ef02c6fb2bb439f95a0bf55e90a73d39bee84"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderCommentDrafts",
+      "originalControl": "option",
+      "originalSourceLine": "const option = document.createElement(\"button\");",
+      "originalLine": 1536,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "8ad7096719a00e7384d264ab6fc98c7fef3084a0b1a27c90253b5b0afd37c695",
+      "entry": "AI 评论 → 选择候选／候选文本／复制／填入原任务评论区",
+      "operation": "编辑指定候选，保存、复制或填入对应原任务",
+      "persistence": "originalCommentState当前草稿／八版历史／旧九版留档及原任务selectedComment",
+      "currentSource": "executor/web/comment-studio.js::renderCommentStudio",
+      "tests": [
+        "tests/executor-original-comment-page-preview.test.mjs",
+        "tests/executor-original-comment-target-binding.test.mjs",
+        "tests/executor-original-comment-generation-ui.test.mjs",
+        "tests/executor-original-comment-history-rules.test.mjs",
+        "tests/executor-original-comment-state.test.mjs",
+        "tests/executor-original-long-comment.test.mjs",
+        "tests/executor-original-comment-selection.test.mjs",
+        "tests/executor-original-comment-candidate-actions.test.mjs",
+        "tests/executor-original-comment-restore.test.mjs",
+        "tests/executor-original-comment-drafts.test.mjs"
+      ],
+      "scope": "完整原选择函数对应实际选择编号、两次切换前快照、空候选跳过、失败保存与SQLite重开；有效生成候选三条已对照完整原生成函数并保存重开；原短快照、读取失败和模型拒绝预览已用完整原生成函数对照；选定页签、原任务填写、真实评论字段回读及SQLite重开已验证；复制仅隔离依赖调用，其他分支仍须总审计",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-comment-page-preview.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "ae905095312c6c8663df0e96bb1ced3483d81d4f2e974d3ac8a0e6915dd7f066"
+        },
+        {
+          "path": "tests/executor-original-comment-target-binding.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "65d39303c38108f89a78e409f0e5b0a305cfd7176b0ecb7e9b3eed9391dbae53"
+        },
+        {
+          "path": "tests/executor-original-comment-generation-ui.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "45a9d0ad72faa66c9155e91f09fd4eaafe79bb5e67be2669e1930faf5d1d1283"
+        },
+        {
+          "path": "tests/executor-original-comment-history-rules.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "80f214f4416218a312b07f3b26f422030926ddf79d5edd0d40f024f6c5e380e0"
+        },
+        {
+          "path": "tests/executor-original-comment-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "fadd81e16b608146b61902968ea67bd140a9c0c692586403a1e3e5cc76ecf362"
+        },
+        {
+          "path": "tests/executor-original-long-comment.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "2ddda974b09c708f010b3a799bb69d50f8ed4f3bf3b57051da31e050d4e333e7"
+        },
+        {
+          "path": "tests/executor-original-comment-selection.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "bc2961910f7bd755a492c4d247bad6fa20f0523d9c77fb384089bf22548a9b5e"
+        },
+        {
+          "path": "tests/executor-original-comment-candidate-actions.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "1c9cd933ab4ff5def081eb117d9f0cf916eb8e212a1cd0a41fcc486d444da0ad"
+        },
+        {
+          "path": "tests/executor-original-comment-restore.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "82fe88145eff9971c382d289151e4782eae1bcbbb7890961f58ed9c19564f5fb"
+        },
+        {
+          "path": "tests/executor-original-comment-drafts.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "8ad9e21ab042a031ead0c6c2f90b8f2665a6dc7b473b061627988888726048ab"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderCommentHistory",
+      "originalControl": "button",
+      "originalSourceLine": "const button = document.createElement(\"button\");",
+      "originalLine": 1582,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "c179714a2c7571cc8ded1f6405843c611e5075a5587850bfb6d8c8dca2b9374e",
+      "entry": "AI 评论／当前网页填写 → 恢复历史评论",
+      "operation": "保留当前编辑后再恢复，拒绝产品／文章切换的旧结果",
+      "persistence": "按工作区、原产品和文章保存SQLite commentHistory",
+      "currentSource": "executor/web/comment-studio.js; executor/web/application.js::showSinglePage",
+      "tests": [
+        "tests/executor-original-comment-history-rules.test.mjs",
+        "tests/executor-original-comment-state.test.mjs",
+        "tests/executor-original-comment-history-panel.test.mjs",
+        "tests/executor-original-long-comment.test.mjs",
+        "tests/executor-original-comment-restore.test.mjs"
+      ],
+      "scope": "完整原恢复函数24组对照；实际十次候选切换后八版上限、指定版本移除、同内容不变；两个入口及SQLite重开已验证，其他分支仍须全矩阵审计",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-comment-history-rules.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "80f214f4416218a312b07f3b26f422030926ddf79d5edd0d40f024f6c5e380e0"
+        },
+        {
+          "path": "tests/executor-original-comment-state.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "fadd81e16b608146b61902968ea67bd140a9c0c692586403a1e3e5cc76ecf362"
+        },
+        {
+          "path": "tests/executor-original-comment-history-panel.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "dfdcb50af4e482f5baec55181da94147b7c456cac9c09c848218602ca3b495cd"
+        },
+        {
+          "path": "tests/executor-original-long-comment.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "2ddda974b09c708f010b3a799bb69d50f8ed4f3bf3b57051da31e050d4e333e7"
+        },
+        {
+          "path": "tests/executor-original-comment-restore.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "82fe88145eff9971c382d289151e4782eae1bcbbb7890961f58ed9c19564f5fb"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderManualTasks",
+      "originalControl": "open",
+      "originalSourceLine": "const open = document.createElement(\"button\");",
+      "originalLine": 3612,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "6ca29e580df5cf226f476954a76b4f6645d79f81be96824a7fda72c1713d789e",
+      "entry": "运行任务 → 查看原页面／打开待办／继续／创建草稿／人工确认成功",
+      "operation": "依原页签是否存在、全局停止、Product Hunt就绪及未知尝试显示操作",
+      "persistence": "原任务／租约／提交边界及独立回执",
+      "currentSource": "executor/web/application.js::appendManualControls",
+      "tests": [
+        "tests/executor-original-manual-card.test.mjs",
+        "tests/executor-original-manual-task-page.test.mjs"
+      ],
+      "scope": "已有原完整卡片分支及实际原页面证据；不能冒充真实站点新增回执",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-manual-card.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "ecdf85a1019fb22f67d0bd7e5aafdb06144adf3f8defe7eb0f9625ff081b0e2c"
+        },
+        {
+          "path": "tests/executor-original-manual-task-page.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "a9843f50cdb2c8303296f2952b7632017507e2397ff96e84e57f04c6c11bdb72"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderManualTasks",
+      "originalControl": "resume",
+      "originalSourceLine": "const resume = document.createElement(\"button\");",
+      "originalLine": 3626,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "6ca29e580df5cf226f476954a76b4f6645d79f81be96824a7fda72c1713d789e",
+      "entry": "运行任务 → 查看原页面／打开待办／继续／创建草稿／人工确认成功",
+      "operation": "依原页签是否存在、全局停止、Product Hunt就绪及未知尝试显示操作",
+      "persistence": "原任务／租约／提交边界及独立回执",
+      "currentSource": "executor/web/application.js::appendManualControls",
+      "tests": [
+        "tests/executor-original-manual-card.test.mjs",
+        "tests/executor-original-manual-task-page.test.mjs"
+      ],
+      "scope": "已有原完整卡片分支及实际原页面证据；不能冒充真实站点新增回执",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-manual-card.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "ecdf85a1019fb22f67d0bd7e5aafdb06144adf3f8defe7eb0f9625ff081b0e2c"
+        },
+        {
+          "path": "tests/executor-original-manual-task-page.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "a9843f50cdb2c8303296f2952b7632017507e2397ff96e84e57f04c6c11bdb72"
+        }
+      ]
+    },
+    {
+      "originalEntry": "extension/sidepanel.js::renderManualTasks",
+      "originalControl": "confirm",
+      "originalSourceLine": "const confirm = document.createElement(\"button\");",
+      "originalLine": 3661,
+      "declaration": "createElement(\"button\")",
+      "kind": "button",
+      "originalCompleteFunctionSha256": "6ca29e580df5cf226f476954a76b4f6645d79f81be96824a7fda72c1713d789e",
+      "entry": "运行任务 → 查看原页面／打开待办／继续／创建草稿／人工确认成功",
+      "operation": "依原页签是否存在、全局停止、Product Hunt就绪及未知尝试显示操作",
+      "persistence": "原任务／租约／提交边界及独立回执",
+      "currentSource": "executor/web/application.js::appendManualControls",
+      "tests": [
+        "tests/executor-original-manual-card.test.mjs",
+        "tests/executor-original-manual-task-page.test.mjs"
+      ],
+      "scope": "已有原完整卡片分支及实际原页面证据；不能冒充真实站点新增回执",
+      "completion": "requires_branch_evidence_audit",
+      "auditStatus": "existing_branch_evidence_review_pending",
+      "linkedTests": [
+        {
+          "path": "tests/executor-original-manual-card.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "ecdf85a1019fb22f67d0bd7e5aafdb06144adf3f8defe7eb0f9625ff081b0e2c"
+        },
+        {
+          "path": "tests/executor-original-manual-task-page.test.mjs",
+          "exists": true,
+          "selectedByCurrentFullRunGlob": true,
+          "sha256": "a9843f50cdb2c8303296f2952b7632017507e2397ff96e84e57f04c6c11bdb72"
+        }
+      ]
+    }
+  ],
+  "newRuntimeTestRuns": 0,
+  "overallMigrationComplete": false
+}

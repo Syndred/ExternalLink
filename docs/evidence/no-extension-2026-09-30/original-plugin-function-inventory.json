@@ -1739,7 +1739,7 @@
       "editorEvidence": "original-timeline-editor-2026-10-09.json"
     }
   ],
-  "updatedAt": "2026-10-10",
+  "updatedAt": "2026-10-09T23:59:50.317Z",
   "completion": "not_complete",
   "specialLaunchCheckpoint": {
     "platform": "Product Hunt",
@@ -3281,7 +3281,9 @@
       "currentEvidence": [
         "migration-comment-state-ui-2026-10-10/summary.json",
         "migration-comment-page-preview-2026-10-10/ui-proof.json"
-      ]
+      ],
+      "singlePageFieldReadbackEvidence": "migration-single-comment-fields-2026-10-10/summary.json",
+      "singlePageFieldReadbackScope": "十二实际界面路径；真实标准／简化WP／普通文章主框架及内嵌框架；新任务和原收件；成功与失败字段SQLite重开。"
     },
     {
       "source": "extension/sidepanel.html",
@@ -5792,8 +5794,7 @@
     "requiresAnotherBackup": false,
     "remaining": [
       "OS clipboard acceptance",
-      "Other original entry branches and full function migration matrix",
-      "Single-page comment entry still uses generic snapshot/report: sparse-form length and exact readback require separate operation evidence"
+      "Other original entry branches and full function migration matrix"
     ],
     "overallMigrationComplete": false,
     "sourceCommit": "7c112e571f0f8afc7e2ba003258703000ce6fbe0",
@@ -5867,6 +5868,46 @@
       "library": 2948,
       "combinations": 897,
       "newSubmissions": 0
-    }
+    },
+    "historicalRemainingBeforeSinglePageFollowup": [
+      "OS clipboard acceptance",
+      "Other original entry branches and full function migration matrix",
+      "Single-page comment entry still uses generic snapshot/report: sparse-form length and exact readback require separate operation evidence"
+    ],
+    "singlePageFollowupEvidence": "migration-single-comment-fields-2026-10-10/summary.json"
+  },
+  "originalSinglePageCommentFieldCheckpoint": {
+    "date": "2026-10-10",
+    "sourceCommit": "7c2d253c9a8b018930ce37469a5603ae5a0731dc",
+    "evidence": "migration-single-comment-fields-2026-10-10/summary.json",
+    "originalEntry": "extension/sidepanel.js::fillPage",
+    "currentEntry": "运行任务 → 当前网页填写 → 评论表单",
+    "actualUiCases": 12,
+    "newAndExistingReceiptPaths": true,
+    "standardSparseArticleMainAndIframe": true,
+    "longRawCommentCharacters": 24002,
+    "actualFieldLimitAndExactReadback": true,
+    "failedFieldSqliteCheckpointWithAndWithoutDecoy": true,
+    "fullRegression": {
+      "tests": 1172,
+      "pass": 1172,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 445107.0869,
+      "exitCode": 0
+    },
+    "nativeServicesUpdated": true,
+    "protectedOriginalDataKept": true,
+    "authenticatedProductionNewFailureFieldReadbackProven": false,
+    "allOriginalAsyncFillBranchesProven": false,
+    "overallMigrationComplete": false
+  },
+  "currentConsolidatedRemainingAudit": {
+    "date": "2026-10-10",
+    "evidence": "migration-single-comment-fields-2026-10-10/consolidated-remaining-audit.json",
+    "newRuntimeTestRuns": 0,
+    "requiresAnotherBackup": false,
+    "overallMigrationComplete": false
   }
 }

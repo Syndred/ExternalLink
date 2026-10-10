@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"ok":false,"error":"同站已有提交结果或未知尝试，请先核验原任务"}
++ actual - expected
+
++ undefined
+- true
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:33:124 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

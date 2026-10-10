@@ -1,0 +1,8 @@
+file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:33
+ await commentFrame.locator('#comment').evaluate(node=>node.removeAttribute('maxlength'));const result=await fill();assert.equal(result.filled,true,JSON.stringify(result));assert.equal(result.submitted,false);assert.equal(result.actual.fields[0].value,text);assert.equal(await commentFrame.locator('#comment').inputValue(),text);assert.equal(registrations,receiptMode?0:1);const savedKey=receiptMode?'singlePageRefill:'+result.refillId:'task:'+result.taskId,saved=store.get(savedKey);assert.equal(saved.actualPreparation?.fields[0].value||saved.actual?.fields[0].value,text);
+                                                                                                                                                                                                                                                      ^
+
+TypeError: Cannot read properties of undefined (reading 'value')
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:33:247
+
+Node.js v24.21.0

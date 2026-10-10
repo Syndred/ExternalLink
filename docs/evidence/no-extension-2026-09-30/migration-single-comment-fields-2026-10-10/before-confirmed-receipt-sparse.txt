@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"case":{"receiptMode":true,"articleMode":false,"iframe":false,"standard":false},"result":{"ok":false,"error":"请输入待填写的评论，最多20000字"}}
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:32:37 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '请输入待填写的评论，最多20000字',
+  expected: /评论超过当前页面字数上限/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

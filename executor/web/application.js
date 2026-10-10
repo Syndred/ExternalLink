@@ -64,17 +64,21 @@ async function showSinglePage(preferred={}){
  if(!detail.open)detail.showModal();
  const panel=$('detail-content'),pageSelect=el('select',{'aria-label':'选择填写网页'},listing.pages.map(p=>el('option',{value:p.targetId,text:p.title+' · '+p.url}))),productSelect=el('select',{'aria-label':'单页填写使用的产品'},data.model.products.filter(p=>!p.archived).map(p=>el('option',{value:p.id,text:p.name}))),mode=el('select',{'aria-label':'单页填写模式'},[el('option',{value:'form',text:'产品表单'}),el('option',{value:'comment',text:'评论表单'})]),comment=el('textarea',{'aria-label':'单页待填写评论',placeholder:'填写评论时使用这里的文本'}),message=el('p',{role:'status'}),report=el('div'),submissionControls=el('div');let submit=false,confirmProductHuntCreate=false;
  productSelect.value=preferred.profileId||profileFilter||currentProductId();if(preferred.targetId&&listing.pages.some(p=>p.targetId===preferred.targetId))pageSelect.value=preferred.targetId;const opened=preferred.panel?{panel:preferred.panel}:await request('/sidepanelOpened',{profileId:productSelect.value,targetId:pageSelect.value});clearInterval(singlePageReceiptPoll);activeSinglePagePanel=opened.panel.id;let selectionRevision=0,seenReceiptCompletion=opened.panel.receiptCompletion?.id;
- const parameters=()=>({panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value,expectedUrl:listing.pages.find(p=>p.targetId===pageSelect.value).url,mode:mode.value,commentText:comment.value,confirmProductHuntCreate});
+ const parameters=()=>({panelId:opened.panel.id,profileId:productSelect.value,targetId:pageSelect.value,expectedUrl:listing.pages.find(p=>p.targetId===pageSelect.value).url,mode:mode.value,commentText:comment.value.trim(),confirmProductHuntCreate});
  if(preferred.panel?.receiptCompletion?.kind==='gate')message.textContent='上一站已保留待人工处理，现已打开下一站。';
  if(preferred.panel?.receiptCompletion?.kind==='existing')message.textContent='上一站已有收件已核验，未重复投稿，现已打开下一站。';
+ let fillBusy=false;
  const fill=button('填写所选网页',async()=>{
-  const result=await request('/sidepanelFill',{...parameters(),submit,ordinaryPermissionsAuthorized:submit});
+  if(fillBusy)return;fillBusy=true;const revision=selectionRevision,requested=parameters(),current=()=>activeSinglePagePanel===opened.panel.id&&detail.open&&panel.isConnected&&selectionRevision===revision;
+  try{const result=await request('/sidepanelFill',{...requested,submit,ordinaryPermissionsAuthorized:submit});
+  if(!current()||result.timedOut||result.busy||result.stale)return;
   message.textContent=result.existingSubmission||result.refillId?result.reason:result.running?'资料已填写，原任务正在继续处理。':result.platform==='product_hunt'?result.reason||'Product Hunt 逐步准备已保存，等待创建草稿确认。':result.submitReady===false?'仍有必填资料未完成：'+(result.reason||'请检查原网页'):'已填写 '+(result.actual?.fields?.length||0)+' 个字段，尚未提交。';
   if(result.syncError)message.textContent+=' 本机记录已保存，云端待同步：'+result.syncError;
-  await load();if(result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
+  await load();if(current()&&result.taskId)report.append(button('查看这次原任务',async()=>{await closeSinglePagePanel();await showTask(result.taskId);}));
+  }catch(error){if(current())throw error;}finally{fillBusy=false;}
  },true);
  const configureSubmission=()=>{
-  fill.disabled=false;submit=false;confirmProductHuntCreate=false;fill.textContent='填写所选网页';
+  fill.disabled=fillBusy;submit=false;confirmProductHuntCreate=false;fill.textContent='填写所选网页';
   if(mode.value==='comment'){submissionControls.replaceChildren(el('p',{class:'muted',text:'评论模式只填写评论内容，沿用原插件规则；提交由你在所选网页确认。'}));return;}
   const url=listing.pages.find(p=>p.targetId===pageSelect.value).url,productHunt=mode.value==='form'&&/(^|\.)producthunt\.com$/i.test(new URL(url).hostname);
   submissionControls.replaceChildren(checkControl(productHunt?'确认填写后创建 Product Hunt 草稿':'填写后继续普通免费投稿',false,v=>{submit=v;confirmProductHuntCreate=productHunt&&v;fill.textContent=v?productHunt?'填写并创建原草稿':'填写并继续原任务':'填写所选网页';}));

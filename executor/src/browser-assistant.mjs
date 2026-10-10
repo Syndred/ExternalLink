@@ -8,6 +8,8 @@ import {singlePagePanel,preparedTask,cancelVisitWork} from './single-page.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {enqueueLibraryMutation,overlayApplication,overlayVisitPreferences,visitPreferenceDocuments,pendingApplication} from './application-mutations.mjs';
 import {captureFillLearning} from './fill-learning.mjs';
+import {assistantMedia} from './assistant-media.mjs';
+import {isDeepStrictEqual} from 'node:util';
 import {applyDestinationFormKnowledge} from '../../core/form-knowledge.mjs';
 import {isProductHuntLaunch,runProductHuntWorkflow} from './product-hunt.mjs';
 import {originalNavigationQueue} from '../../core/submission-queue.mjs';
@@ -140,7 +142,13 @@ export async function checkBrowserAssistant(runtime,request){
      if(message.action==='log'){runtime.store.appendLog(formEngineLogEntry(original,message,{profileId,url,domain:original?.domain||queue.extractDomain(url)}));return{ok:true};}
      if(['manualSubmissionWatchRequest','manualSubmissionWatchReady','manualSubmissionClicked'].includes(message.action)){if(message.action!=='manualSubmissionWatchRequest'&&message.frameUrl!==url)return{ok:false};const clicked=message.action==='manualSubmissionClicked'&&runtime.store.values('manualWatch:').find(w=>w.scope===scope&&w.status==='watching'&&w.token===message.token&&w.targetId===info.targetId&&w.browserInstance===runtime.host?.startedAt),watched=clicked&&runtime.store.get('task:'+clicked.taskId),owner=watched?.profileId===profileId?watched:original;if(!owner)return{ok:false};return runtime.dispatchControl('manualWatchMessage',{...message,taskId:owner.id,targetId:info.targetId,pageUrl:page.url(),frameUrl:url,documentId:message.executorDocumentId});}
      if(message.action==='generateCommentDrafts')return originalCommentRequest(runtime,{...message,config},payload=>runtime.cloud.request('ai/comment',payload));
-     if(original&&['fetchSubmissionMedia','fetchCloudSubmissionMedia'].includes(message.action))return runtime.bridge(original,message);return{ok:false,error:'上传素材需要已登记的原任务'};
+     if(['fetchSubmissionMedia','fetchCloudSubmissionMedia'].includes(message.action)){
+      if(original)return runtime.bridge(original,message);
+      const connection=plain(runtime.store.get('pair')),profile=plain(docs.siteProfiles[profileId]),browserInstance=runtime.host?.startedAt,pageUrl=page.url();
+      const assertMediaCurrent=async()=>{const state=assistantState(runtime);if(scope!==workbenchScope(runtime.store.get('pair'))||!isDeepStrictEqual(connection,plain(runtime.store.get('pair')))||!state.settings.enabled||effectiveProfile(runtime,state.settings)!==profileId||runtime.job||runtime.host?.startedAt!==browserInstance||page.isClosed()||page.url()!==pageUrl||frame.url()!==url||!await item.engine.isCurrentDocument()||!isDeepStrictEqual(profile,plain(snapshotFor(runtime).documents.siteProfiles[profileId]))||originalAssistantTask(runtime,profileId,info.targetId,page.url()))throw Error('产品、原网页或控制状态已变化，停止图片填写');};
+      return assistantMedia(runtime,message,config,assertMediaCurrent);
+     }
+     return{ok:false,error:'上传素材请求不受支持'};
     };
     const engine=await attachEngine(runtime.context,frame,bridge,{interactive:true});item={engine,scope,profileId,url,browserInstance:runtime.host?.startedAt};runtime.browserAssistantFrames.set(key,item);
     }

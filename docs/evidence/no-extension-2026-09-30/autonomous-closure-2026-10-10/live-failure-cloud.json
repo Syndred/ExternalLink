@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "actualHostedWorker": true,
+  "storage": "production D1 and R2",
+  "uniqueTestRun": "autoclose-67cc41e6-f6f7-4c5b-b16f-a892370a3fe4",
+  "uniqueTestTask": "autoclose-task-67cc41e6-f6f7-4c5b-b16f-a892370a3fe4",
+  "exactImmutableEventReadback": true,
+  "exactTaskFailureAndPreviousSuccessReadback": true,
+  "separateSqliteReopen": true,
+  "workspaceDocumentsAndRevisionsUnchanged": true,
+  "allOriginalRunsAndTasksUnchanged": true,
+  "beforeDocumentsSha256": "a929dd929e0611a15a5e58a24fd4beeaf0679f41708ac37bb3fe3ab58ab6289f",
+  "testD1RowsRemoved": true,
+  "testR2ObjectsRemoved": 4,
+  "taskSubmissionBoundaryAbsent": true,
+  "posts": 0,
+  "formalReceipts": 0,
+  "originalTasksModified": 0,
+  "originalChromeUntouched": true
+}

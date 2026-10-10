@@ -1,0 +1,13 @@
+✔ actual candidate card buttons copy exact controlled text, fill only the original task and preserve edits after SQLite reopen (1976.0799ms)
+✔ complete original fillPage captures refreshed identity and fences preconditions before any fill request (3.435ms)
+✔ complete original asynchronous fillPage maps form comment submission and Product Hunt while restoring button state (3.2448ms)
+✔ complete original fillPage ignores timed out busy stale replies and restores controls after both awaited failures (3.166ms)
+✔ single-page UI fences delayed old mode replies and preserves the pending fill lock (2177.6029ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2250.2032

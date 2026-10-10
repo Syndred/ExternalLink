@@ -1,0 +1,11 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 6000ms exceeded.
+    at C:\Users\Administrator\Desktop\project\ExternalLink\executor\test\original-manual-image-source.mjs:14:327 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0

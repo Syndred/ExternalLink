@@ -1,0 +1,10 @@
+✔ actual manual image icon uploads cross-origin media without registering a task and rejects a delayed old product (2783.9086ms)
+✔ field-only media refuses unselected disabled foreign changed and invalid media before returning bytes (30.6695ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2915.4045

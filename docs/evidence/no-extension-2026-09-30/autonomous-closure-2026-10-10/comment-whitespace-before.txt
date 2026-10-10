@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"result":{"ok":true,"taskId":"9e04b43f-6468-4e13-8990-bd72ca8631bb","runId":"ba34b743-5b28-481d-baf3-b61ab9cc6acb","filled":true,"submitted":false,"fill":{"standardWp":false},"actual":{"fields":[{"id":"comment","name":"comment","type":"textarea","label":"comment","value":"  \nOriginal comment 中文🙂\n  ","constraints":{"maxLength":null,"minLength":null,"maxWords":null,"minWords":null,"required":true}}]},"validation":{"emptyCount":0,"invalidCount":0,"totalCount":0,"submitDisabled":false,"allValid":true,"issues":[],"validationFailed":false},"submitReady":true,"reason":"单页资料已填写，尚未投稿","syncError":""},"actualCommentChars":27,"expectedCommentChars":21}
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-comment-fields.mjs:33:325 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

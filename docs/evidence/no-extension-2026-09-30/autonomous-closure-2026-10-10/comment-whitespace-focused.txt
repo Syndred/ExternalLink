@@ -1,0 +1,13 @@
+✔ original UI comment trimming precedes true field limit and exact field saving  (1499.4733ms)
+✔ original UI comment trimming precedes true field limit and exact field saving --receipt (1477.1792ms)
+✔ original UI comment trimming precedes true field limit and exact field saving --iframe --article (7536.7903ms)
+✔ original UI comment trimming precedes true field limit and exact field saving --receipt --iframe --article (7499.8222ms)
+✔ candidate UI preserves raw draft and copy while filling original trimmed comment (1716.8631ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19785.1439

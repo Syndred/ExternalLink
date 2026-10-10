@@ -1,0 +1,12 @@
+{
+  "kind": "readonly_exact_native_comment_rows",
+  "rowCount": 2,
+  "rawRowsSha256": "d0c6412960c34157415772feea336d22578d3c0ae12cbe3e7352f7ceab6a1c2f",
+  "fixedBatch": {
+    "status": "paused",
+    "cursor": 13,
+    "count": 30
+  },
+  "paused": true,
+  "pendingEvents": 0
+}

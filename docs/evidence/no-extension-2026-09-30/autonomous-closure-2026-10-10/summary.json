@@ -1,0 +1,220 @@
+{
+  "kind": "autonomous_original_migration_closure",
+  "ok": true,
+  "startedAt": "2026-10-10T00:17:02Z",
+  "validationCompletedAt": "2026-10-10T01:08:50.992Z",
+  "deadline": "2026-10-10T06:16:00Z",
+  "elapsedMinutes": 51.8,
+  "autonomousScopeComplete": true,
+  "remainingAutonomousTasks": 0,
+  "overallMigrationComplete": false,
+  "sourceCommit": "f1fe958493911c42a130ddca8ff87d257183b595",
+  "pushedTo": "origin/main",
+  "publishedNativePorts": [
+    19388,
+    19389
+  ],
+  "nativeDomPages": 6,
+  "servedAssetsMatchCommit": true,
+  "completed": [
+    "A1 actual Windows clipboard",
+    "A2 fixed source entries audit",
+    "A3 dynamic conditions and saved evidence audit",
+    "A4 complete original fillPage wrapper",
+    "A5 actual hosted failure-field readback"
+  ],
+  "fixedDefects": [
+    {
+      "id": "D1",
+      "entry": "fillPage / current webpage fill",
+      "evidence": "late-fill-ui-before.txt",
+      "fix": "pending lock and result context fencing"
+    },
+    {
+      "id": "D2",
+      "entry": "manual field image / standalone media",
+      "evidence": "manual-remote-image-before.txt",
+      "fix": "selected product media read without submission registration"
+    },
+    {
+      "id": "D3",
+      "entry": "fillPage / candidate original UI comment",
+      "evidence": "comment-whitespace-before.txt",
+      "fix": "trim only field-fill payload while preserving draft and clipboard text"
+    }
+  ],
+  "tests": {
+    "command": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "tests": 1183,
+    "pass": 1183,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "exitCode": 0,
+    "durationMs": 1297967.7017,
+    "interruptedEarlierRun": {
+      "exitCode": 255,
+      "reason": "substantive D3 source correction",
+      "countsAsPassing": false
+    }
+  },
+  "protected": {
+    "businessSha256": "2060f1c7d61e65ac23d4ac0423e16dfce249ceddf471d74f9a8d47666670044d",
+    "rawCommentRowsSha256": "d0c6412960c34157415772feea336d22578d3c0ae12cbe3e7352f7ceab6a1c2f",
+    "fixedBatch": "paused 13/30",
+    "monitor": "paused 54/89 revision 312",
+    "products": 9,
+    "library": 2948,
+    "combinations": 897,
+    "timeline": 470,
+    "otherCloudDocuments": 18,
+    "privateSourceFiles": 6,
+    "originalChromeUntouched": true,
+    "userExistingEditsExcludedFromCommit": true
+  },
+  "external": [
+    {
+      "id": "E1",
+      "item": "Gmail",
+      "status": "needs_authorization",
+      "savedMessages": 758,
+      "newProviderReadPerformed": false
+    },
+    {
+      "id": "E2",
+      "item": "Mac physical hardware",
+      "status": "deferred by existing agreement"
+    }
+  ],
+  "liveCloudTestCleaned": true,
+  "originalTasksModified": 0,
+  "newRealSiteSubmissions": 0,
+  "limits": [
+    "Family references preserve their individual saved execution scope. They are not fresh live-provider or submission success claims.",
+    "Every original function condition is listed; semantic branch review does not claim a full-function differential for every renderer.",
+    "Gmail fresh read requires human authorization; Mac physical acceptance deferred by agreement."
+  ],
+  "files": [
+    {
+      "name": "clipboard-actual-ui.json",
+      "bytes": 848,
+      "sha256": "936abb1d9ff07d8598a15397fa5763e6eb83c9f1d351f3c5e2c4d7d8a406133d"
+    },
+    {
+      "name": "clipboard-format-restoration.json",
+      "bytes": 134,
+      "sha256": "04d9b02a3cd0d186e595166b093a47e1224d5aa8c05020e09ccf17e8d7913a3f"
+    },
+    {
+      "name": "comment-candidate-whitespace-after.json",
+      "bytes": 851,
+      "sha256": "e61b480ac7311898379fac69e99e99ddc126e5c369bebbf9f0209c3c8543ec2b"
+    },
+    {
+      "name": "comment-whitespace-after.json",
+      "bytes": 631,
+      "sha256": "e67b791724e8442bd2c7fa3786b8c0618c79f1d36da509d0d5540826e4389a19"
+    },
+    {
+      "name": "comment-whitespace-before.txt",
+      "bytes": 1075,
+      "sha256": "af6d234bcc22823a35f2deeea374e49b5a7c8c57489114ed902ec08a4202e210"
+    },
+    {
+      "name": "comment-whitespace-focused.txt",
+      "bytes": 670,
+      "sha256": "f449bffe4fd60e6085fc728f05fefced36b5322617362be2e672d5484f33601a"
+    },
+    {
+      "name": "comment-whitespace-receipt-iframe-after.json",
+      "bytes": 628,
+      "sha256": "a36cade78fe5e84ed041fef8ce4aecc9801e8638c90b23cca8ebad78308466aa"
+    },
+    {
+      "name": "fill-entry-focused.txt",
+      "bytes": 747,
+      "sha256": "50679d2c4d619d933ec93d266fc4918f5adc3adbc98a40b2a2e2f8086d89fdd1"
+    },
+    {
+      "name": "final-full-exit.txt",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "name": "final-full-tests.txt",
+      "bytes": 152715,
+      "sha256": "19c1e999a8b78e66cde494e17432af49b058c618db39d8b4d33a6ef724b273d0"
+    },
+    {
+      "name": "fixed-entry-matrix.json",
+      "bytes": 830537,
+      "sha256": "88a3aad623a39a516bad3ade4215da2c91b7a332d2e2cb7407aad0d95229a347"
+    },
+    {
+      "name": "interrupted-before-whitespace-full-exit.txt",
+      "bytes": 5,
+      "sha256": "a730e9f4fecef62a7023b1b3b6b11312e9689ef5a5c2109737bc7e12db929948"
+    },
+    {
+      "name": "interrupted-before-whitespace-full-tests.txt",
+      "bytes": 24184,
+      "sha256": "4bfd27b874eeadaec0da96accad190da6ca24c2ce088556016a1ab3351a2813c"
+    },
+    {
+      "name": "late-fill-ui-after.json",
+      "bytes": 358,
+      "sha256": "f1ded7972afe231b621627e1edf279977feaa50c590316ce2867c87e132466ce"
+    },
+    {
+      "name": "late-fill-ui-before.txt",
+      "bytes": 495,
+      "sha256": "12c1c164dbab289f7ca2155ea55d8ee938f738729a31f6a234e4ee71a01eff42"
+    },
+    {
+      "name": "live-failure-cloud.json",
+      "bytes": 743,
+      "sha256": "678d9d0463e3f9e28fefd0366c45cfc4d56f1176dd6490f3c90e9da5e8053345"
+    },
+    {
+      "name": "manual-image-focused.txt",
+      "bytes": 373,
+      "sha256": "ea48094087894332e4394a1dd2543136dafbdd68e4783e723251dc9c4fdd699d"
+    },
+    {
+      "name": "manual-remote-image-after.json",
+      "bytes": 441,
+      "sha256": "30e95193fc46ebb74a095ac415a79e3181df1a7399d94468494ce64921afa599"
+    },
+    {
+      "name": "manual-remote-image-before.txt",
+      "bytes": 299,
+      "sha256": "06795bc9a3cdef133def2b5007dfe10d31fd938452c5c0cd4b4e9f6afff54f64"
+    },
+    {
+      "name": "native-comment-baseline.json",
+      "bytes": 276,
+      "sha256": "00f2e7595b775fa4deeb39652c41064b995e0360721e4f15bdf5c7a5274efedb"
+    },
+    {
+      "name": "native-published-smoke.json",
+      "bytes": 1921,
+      "sha256": "af5e2918f23b6319730f954e45884fa5efe1bfb5acc5fc64bf520095e3e2ce26"
+    },
+    {
+      "name": "protected-after-publish.txt",
+      "bytes": 1137,
+      "sha256": "5a566df1028dcbf84cbd9557913d7505a3cd54ff2864129451c3085dab643f44"
+    },
+    {
+      "name": "protected-before-final.txt",
+      "bytes": 1137,
+      "sha256": "5a566df1028dcbf84cbd9557913d7505a3cd54ff2864129451c3085dab643f44"
+    },
+    {
+      "name": "protected-final.txt",
+      "bytes": 1137,
+      "sha256": "5a566df1028dcbf84cbd9557913d7505a3cd54ff2864129451c3085dab643f44"
+    }
+  ]
+}

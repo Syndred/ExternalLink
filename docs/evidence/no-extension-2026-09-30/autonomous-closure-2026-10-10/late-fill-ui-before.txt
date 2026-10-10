@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Changing selection must not enable a second fill while its old request is pending
+
+false !== true
+
+    at file:///C:/Users/Administrator/Desktop/project/ExternalLink/executor/test/original-single-page-late-ui.mjs:17:135 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

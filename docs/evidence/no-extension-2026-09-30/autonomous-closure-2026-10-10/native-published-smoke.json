@@ -1,0 +1,79 @@
+{
+  "ok": true,
+  "at": "2026-10-10T00:59:19.614Z",
+  "sourceCommit": "f1fe958493911c42a130ddca8ff87d257183b595",
+  "actualReadonlyNativeUi": true,
+  "services": [
+    {
+      "port": 19388,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0
+    },
+    {
+      "port": 19389,
+      "products": 9,
+      "library": 2948,
+      "combinations": 897,
+      "paused": true,
+      "busy": false,
+      "pendingEvents": 0
+    }
+  ],
+  "gmail": {
+    "status": "needs_authorization",
+    "savedMessages": 758,
+    "providerReadPerformed": false
+  },
+  "assets": [
+    {
+      "path": "executor/web/application.js",
+      "sha256": "f0f32256040c9bdee625d5cbb4df784eda0b6cd33a9c006cd9a4f5c1997ae010",
+      "servedEqualsWorkspaceAndCommit": true
+    },
+    {
+      "path": "executor/web/comment-studio.js",
+      "sha256": "820b3797f8e658382ba818fdfaa803a6a91a4120c9996ea037b3c40dc00fd56c",
+      "servedEqualsWorkspaceAndCommit": true
+    },
+    {
+      "path": "executor/web/application.css",
+      "sha256": "03022e8ddfbcefaea409b545cb0da424c34fe4f46beb72efdb5d20f36173a996",
+      "servedEqualsWorkspaceAndCommit": true
+    }
+  ],
+  "pages": [
+    {
+      "label": "我的网站",
+      "nativeDomRendered": true
+    },
+    {
+      "label": "外链库",
+      "nativeDomRendered": true
+    },
+    {
+      "label": "提交总览",
+      "nativeDomRendered": true
+    },
+    {
+      "label": "运行任务",
+      "nativeDomRendered": true
+    },
+    {
+      "label": "AI 评论",
+      "nativeDomRendered": true
+    },
+    {
+      "label": "设置与备份",
+      "nativeDomRendered": true
+    }
+  ],
+  "originalCommentsRawRowsUnchanged": true,
+  "originalCommentRawRowsSha256": "d0c6412960c34157415772feea336d22578d3c0ae12cbe3e7352f7ceab6a1c2f",
+  "productionBusinessWrites": 0,
+  "newSubmissions": 0,
+  "originalChromeUntouched": true
+}

@@ -12,8 +12,8 @@ export async function googleTokenRequest(input,fetcher=fetch){
  const scopes=(data.scope||GMAIL_READONLY).split(/\s+/).filter(Boolean);if(scopes.some(scope=>scope!==GMAIL_READONLY)||!scopes.includes(GMAIL_READONLY))throw Error('Google 返回了非只读 Gmail 权限；未保存令牌');return data;
 }
 export async function beginGmailOAuth({client,vault,onStatus,fetcher=fetch}){
- let flow,busy=false,timer;const server=http.createServer(async(req,res)=>{
-  const port=server.address().port;res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
+ let flow,busy=false,timer,port;const server=http.createServer(async(req,res)=>{
+  res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
   if(req.headers.host!=='127.0.0.1:'+port||req.method!=='GET'){res.writeHead(400);res.end('无效回调');return;}
   const url=new URL(req.url,'http://127.0.0.1:'+port),provided=Buffer.from(url.searchParams.get('state')||''),expected=Buffer.from(flow.state);
   if(url.pathname!=='/'||provided.length!==expected.length||!timingSafeEqual(provided,expected)||busy){res.writeHead(400);res.end('授权状态不匹配或回调已使用');return;}
@@ -27,7 +27,7 @@ export async function beginGmailOAuth({client,vault,onStatus,fetcher=fetch}){
   }catch(error){onStatus({status:'needs_authorization',error:error.message});res.writeHead(400);res.end('<meta charset="utf-8"><h1>连接未完成</h1><p>请返回外链助手查看状态。</p>');}
   finally{clearTimeout(timer);server.close();}
  });await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
- flow=gmailAuthorization(client.client_id,'http://127.0.0.1:'+server.address().port+'/');
- timer=setTimeout(()=>{onStatus({status:'needs_authorization',error:'本次本机授权已过期，需重新开始'});server.close();},600000);timer.unref();
- return{authorizationUrl:flow.url,cancel(){clearTimeout(timer);server.close();}};
+ port=server.address().port;flow=gmailAuthorization(client.client_id,'http://127.0.0.1:'+port+'/');
+ timer=setTimeout(()=>{busy=true;onStatus({status:'needs_authorization',error:'本次本机授权已过期，需重新开始'});server.close();},600000);timer.unref();
+ return{authorizationUrl:flow.url,cancel(){busy=true;clearTimeout(timer);server.close();}};
 }

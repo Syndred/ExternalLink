@@ -73,6 +73,8 @@ export async function closeTaskTab(runtime, task, input, options={}) {
   const terminalTypes=planOwned?['payment','site_form_unavailable','email_only','site_unavailable','missing_fields','missing_real_identity','comments_require_review','site_requires_review']:['payment','site_form_unavailable','email_only'];
   const resolvedBlocker=input.closeBlocked===true&&task.status==='needs_manual'&&task.siteStatus==='not_submitted'&&!task.attemptBoundary&&!task.receipt&&(terminalTypes.includes(task.attentionType)||archiveDeferred);
   if (!accepted&&!resolvedBlocker&&!archiveManual&&!archiveManualPaused) throw new Error('尚需登录、校验、保留表单或核验结果的原页不能关闭');
+  const runId=task.runId;
+  if(!offline&&(typeof runId!=='string'||!runId.trim()))throw new Error('任务缺少原运行 runId，不能独立回读或关页');
   await runtime.synchronize();
   if(offline){
     if(accepted&&!task.cloudVerified&&task.receipt?.syncStatus!=='pending')throw new Error('离线收件状态未标记待同步，不能关页');
@@ -114,11 +116,12 @@ export async function closeTaskTab(runtime, task, input, options={}) {
     }
     return runtime.status();
   }
+  const runRoute='runs?runId='+encodeURIComponent(runId);
   const [runs, snapshot, artifact] = await Promise.all([
-    runtime.cloud.request('runs'), runtime.cloud.request('snapshot'),
+    runtime.cloud.request(runRoute), runtime.cloud.request('snapshot'),
     runtime.cloud.request('artifact-read', { taskId: task.id, ref: task.artifactRef }),
   ]);
-  const remote = runs.tasks.find(t => t.id === task.id);
+  const remote = runs.tasks.find(t => t.id === task.id && t.runId === runId);
   const record = snapshot.documents.submissionRecords?.[task.destinationKey + '::' + task.profileId];
   const sha = createHash('sha256').update(Buffer.from(artifact.dataUrl.split(',')[1], 'base64')).digest('hex');
   const keys = ['status','siteStatus','reason','attentionType','attemptBoundary','receipt','actualSubmission','profileRevision','artifactRef','artifactSha256'];
@@ -140,7 +143,7 @@ export async function closeTaskTab(runtime, task, input, options={}) {
   await runtime.lease(task);
   runtime.update(task, { tabHistory: [...(task.tabHistory || []), registration] }, 'tab_closure_registered');
   await runtime.synchronize();
-  const beforeClose = (await runtime.cloud.request('runs')).tasks.find(t => t.id === task.id);
+  const beforeClose = (await runtime.cloud.request(runRoute)).tasks.find(t => t.id === task.id && t.runId === runId);
   if (!isDeepStrictEqual(beforeClose?.tabHistory, onWire(task.tabHistory))) throw new Error('页签登记未独立回读，停止关页');
   if (page) {
     await page.close();
@@ -149,7 +152,7 @@ export async function closeTaskTab(runtime, task, input, options={}) {
     runtime.update(task, { tabHistory: task.tabHistory, tabClosedAt: registration.closedAt,
       ...(archiveDeferred?{deferredRecovery:{archivedAt:registration.closedAt,requiresFreshCaptcha:task.attentionType==='human_verification',originalTaskOnly:true,profileRevision:task.profileRevision,artifactRef:task.artifactRef,artifactSha256:task.artifactSha256,reason:registration.reason}}:{}) }, 'tab_closed');
     await runtime.synchronize();
-    const after = (await runtime.cloud.request('runs')).tasks.find(t => t.id === task.id);
+    const after = (await runtime.cloud.request(runRoute)).tasks.find(t => t.id === task.id && t.runId === runId);
     if (!isDeepStrictEqual(after?.tabHistory, onWire(task.tabHistory))) throw new Error('页签已关，关闭事件云端回读待恢复');
   }
   return runtime.status();

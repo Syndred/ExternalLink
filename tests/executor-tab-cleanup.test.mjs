@@ -8,14 +8,14 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 function setup() {
   const bytes = Buffer.from('receipt screenshot');
-  const task = { id:'task', targetId:'product-target', browserInstance:'host', destinationKey:'site', profileId:'product',
+  const task = { id:'task', runId:'original-run', targetId:'product-target', browserInstance:'host', destinationKey:'site', profileId:'product',
     status:'finished', siteStatus:'accepted', cloudVerified:true, screenshot:'file', artifactRef:'ref',
     artifactSha256:createHash('sha256').update(bytes).digest('hex'), actualSubmission:{fields:[{value:'JevPlay'}]},
     profileRevision:154, receipt:{evidence:'Submission received',url:'https://site/submit'} };
   const calls = []; let remote = structuredClone(task);
   const runtime = { job:null, store:{get:()=>true,pending:()=>[]}, cloud:{async request(route) {
     calls.push(route);
-    if (route==='runs') return {tasks:[structuredClone(remote)]};
+    if (route==='runs?runId=original-run') return {tasks:[structuredClone(remote)]};
     if (route==='snapshot') return {revisions:{submissionRecords:9},documents:{submissionRecords:{'site::product':{taskId:task.id,evidence:task.receipt.evidence,actualSubmission:task.actualSubmission}}}};
     return {dataUrl:'data:image/png;base64,'+bytes.toString('base64')};
   }}, async synchronize(){calls.push('sync');remote=structuredClone(task);},
@@ -27,7 +27,7 @@ test('close is after registration sync and independent readback; closure is then
   const s=setup(); await closeTaskTab(s.runtime,s.task,s.input);
   const close=s.calls.indexOf('CLOSE'), registered=s.calls.indexOf('tab_closure_registered');
   assert.ok(close>registered);
-  assert.deepEqual(s.calls.slice(registered+1,close),['sync','runs']);
+  assert.deepEqual(s.calls.slice(registered+1,close),['sync','runs?runId=original-run']);
   assert.equal(s.task.tabHistory[0].disposition,'closed');
   assert.ok(s.task.tabClosedAt);
 });
@@ -66,7 +66,7 @@ test('unknown result or wrong target cannot close a page',async()=>{
 });
 test('failure to independently read registration leaves page open',async()=>{
   const s=setup();let reads=0,request=s.runtime.cloud.request;
-  s.runtime.cloud.request=async route=> route==='runs' && ++reads===2 ? {tasks:[]} : request(route);
+  s.runtime.cloud.request=async route=> route==='runs?runId=original-run' && ++reads===2 ? {tasks:[]} : request(route);
   await assert.rejects(closeTaskTab(s.runtime,s.task,s.input),/登记/);
   assert.ok(!s.calls.includes('CLOSE'));
 });

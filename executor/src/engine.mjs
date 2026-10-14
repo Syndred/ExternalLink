@@ -5,6 +5,9 @@ import { repo } from './shared.mjs';
 // The same production field mapper, validation and evidence classifier runs in
 // a separate CDP isolated world. No credential is placed in the site's realm.
 const sources = await Promise.all(['profiles.js', 'playbooks.js', 'form-engine.js'].map(name => readFile(path.join(repo, 'core', name), 'utf8')));
+// CDP Frame.url excludes the fragment (returned separately as urlFragment).
+// A fragment changes same-document state, not the document's frame identity.
+const frameDocumentUrl = url => String(url || '').split('#', 1)[0];
 export async function attachEngine(context, frame, bridge = async () => ({ ok: false }),options={}) {
   if(!/^https?:\/\//.test(frame.url()))throw Error('表单引擎仅允许普通 HTTP/HTTPS 页面');
   let session;
@@ -25,13 +28,13 @@ export async function attachEngine(context, frame, bridge = async () => ({ ok: f
   for (const index of ancestry) target = target?.childFrames?.[index];
   // An OOP iframe has its own CDP target rooted at that frame; a same-process
   // iframe shares the page session and must be resolved through the frame tree.
-  if (!target || target.frame.url !== frameUrl) {
+  if (!target || frameDocumentUrl(target.frame.url) !== frameDocumentUrl(frameUrl)) {
     const matches=[];
-    const visit=node=>{if(node.frame.url===frameUrl && (!frame.name() || node.frame.name===frame.name()))matches.push(node);for(const child of node.childFrames||[])visit(child);};
+    const visit=node=>{if(frameDocumentUrl(node.frame.url)===frameDocumentUrl(frameUrl) && (!frame.name() || node.frame.name===frame.name()))matches.push(node);for(const child of node.childFrames||[])visit(child);};
     visit(tree.frameTree);
     if(matches.length===1)target=matches[0];
   }
-  if (!target || target.frame.url !== frameUrl) { await session.detach(); throw new Error(`iframe 身份已变化，请重新观察：${frameUrl} / CDP ${tree.frameTree.frame.url}`); }
+  if (!target || frameDocumentUrl(target.frame.url) !== frameDocumentUrl(frameUrl)) { await session.detach(); throw new Error(`iframe 身份已变化，请重新观察：${frameUrl} / CDP ${tree.frameTree.frame.url}`); }
   const { executionContextId } = await session.send('Page.createIsolatedWorld', { frameId: target.frame.id, worldName: options.worldName || 'ExternalLinkExecutor', grantUniveralAccess: false });
   const evaluate = async (expression, awaitPromise = true) => {
     const result = await session.send('Runtime.evaluate', { expression, contextId: executionContextId, returnByValue: true, awaitPromise });

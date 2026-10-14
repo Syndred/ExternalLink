@@ -4,6 +4,11 @@ import {originalAgentUnavailableError} from './original-agent-unavailable.mjs';
 import {nativeNavigationSnapshotError} from './original-navigation-rejudge.mjs';
 
 export const originalAgentLimits=Object.freeze({loops:8,settleMs:600});
+export function originalVisualFailure(visual={}){
+ if(!visual.noProgressCount)return'';
+ const last=visual.history?.at(-1),rejected=Object.entries(last?.actionFilter||{}).flatMap(([layer,diagnostics])=>(diagnostics.rejected||[]).map(action=>`${layer}: ${action.type} ${action.selector||''} rejected (${action.reason})`));
+ return['Previous action produced no visible page change. Reassess the screenshot and choose a different action.',...(!last?.actions?.length?['Previous plan contained no executable actions; do not repeat the same empty plan.']:[]),...rejected,...(rejected.some(reason=>reason.includes('selector_not_visible'))?['The target is not visible in the current screenshot. Scroll to reveal it and observe before filling or clicking.']:[])].join(' ').slice(0,1000);
+}
 export function originalExplicitHumanGate(reply,snapshot){
  if(snapshot?.meta?.hasCaptcha===true)return true;
  const reason=`${reply?.reason||''} ${reply?.message||''}`,status=globalThis.ExtLinkQueue.classifyStatusFromReason(reason,'needs_manual');
@@ -56,7 +61,7 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
   while(state.originalVisual.loops-(state.originalVisual.loopBase||0)<originalAgentLimits.loops){
    state.originalVisual.loops++;persist('original_agent_loop_boundary');const step=state.originalVisual.loops-(state.originalVisual.loopBase||0)-1;
    let plan;
-   try{plan=await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:state.originalVisual.noProgressCount?'Previous action produced no visible page change. Reassess the screenshot and choose a different action.':''});plan={...plan,visualAgent:true};}
+   try{plan=await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:originalVisualFailure(state.originalVisual)});plan={...plan,visualAgent:true};}
    catch(error){if(error.staleTask||error.unattendedBudget||error.batchPaused||error.originalTaskSyncFailure||[401,403,409].includes(error.status))throw error;await io.assertCurrent();state.visualFallbackReason=String(error.message||error).slice(0,2000);persist('original_agent_visual_unavailable');plan=await model('plan',{snapshot,step,history:state.originalVisual.history.slice(-8),visualError:state.visualFallbackReason});plan={...plan,visualAgent:false};}
    if(plan.status==='legacy_budget')return result=terminal({interrupted:true,reason:plan.reason});
    const decision=originalPlanDecision(plan,snapshot);if(decision.terminal)return result=terminal(decision.terminal);plan=decision.plan;
@@ -77,9 +82,9 @@ export async function runOriginalAgentPreparation(runtime,{task,io}){
     if(!nativeNavigationSnapshotError(error))throw error;await io.assertCurrent();
     state.originalVisual.pendingRejudge={id:randomUUID(),status:'waiting_navigation',at:new Date().toISOString(),reason:error.message,afterActionLoop:state.originalVisual.loops,...(io.navigationScope?{navigationScope:io.navigationScope()}:{} )};persist('original_navigation_pending_rejudge');return result={ok:false,pendingRejudge:true,reason:'等待原页面导航完成后重新判断'};
    }
-   const expectedMutation=plan.actions?.some(action=>['fill','select','check','click','scroll'].includes(action.type)),changed=!expectedMutation||!snapshot.domHash||snapshot.domHash!==beforeHash;
+   const changed=Boolean(beforeHash&&snapshot.domHash&&snapshot.domHash!==beforeHash);
    state.originalVisual.noProgressCount=changed?0:(state.originalVisual.noProgressCount||0)+1;
-   state.originalVisual.history.push({step:step+1,stage:plan.stage||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),result:actionResults.map(outcome=>({ok:outcome.ok!==false})),changed,url:snapshot.url||''});state.originalVisual.history=state.originalVisual.history.slice(-8);persist('original_agent_snapshot_observed');
+   state.originalVisual.history.push({step:step+1,stage:plan.stage||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),result:actionResults.map(outcome=>({ok:outcome.ok!==false})),changed,...(plan.actionFilter?{actionFilter:structuredClone(plan.actionFilter)}:{}),url:snapshot.url||''});state.originalVisual.history=state.originalVisual.history.slice(-8);persist('original_agent_snapshot_observed');
    if(io.readyBeforeJudge&&await guarded(()=>io.ready(snapshot)))return result={ok:true,reason:'prepared'};
    const judge=await model('judge',{snapshot,phase:'after_action',step,plan});if(judge?.status==='legacy_budget')return result=terminal({interrupted:true,reason:judge.reason});
    const judged=originalJudgeTerminal(judge,snapshot);if(judged)return result=terminal(judged);

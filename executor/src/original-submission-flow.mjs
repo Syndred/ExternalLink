@@ -1,23 +1,14 @@
 import {randomUUID} from 'node:crypto';
-import {originalAgentLimits,originalJudgeTerminal,originalPlanDecision} from './original-agent-flow.mjs';
+import {originalAgentLimits,originalJudgeTerminal,originalPlanDecision,originalVisualFailure} from './original-agent-flow.mjs';
+import {filterVisualActions} from '../../core/visual-action-policy.mjs';
 import {originalJudgeSuccessDecision} from './original-submission-proof.mjs';
 import {originalAgentUnavailableError} from './original-agent-unavailable.mjs';
 import {nativeNavigationSnapshotError} from './original-navigation-rejudge.mjs';
 
 // bd916b2 safeVisualActions / isVisualSubmissionAction. Full submission keeps
 // final selectors and finite coordinates; preparation still removes them.
-export function originalVisualActions(actions,elements=[]){
- const bySelector=new Map(elements.map(element=>[element.selector,element]));
- return(actions||[]).map(action=>{
-  if(action.type!=='click'||action.selector)return action;
-  const x=Number(action.x),y=Number(action.y);if(!Number.isFinite(x)||!Number.isFinite(y))return action;
-  const matches=elements.filter(({rect})=>rect&&x>=rect.x&&y>=rect.y&&x<=rect.x+rect.width&&y<=rect.y+rect.height).sort((a,b)=>a.rect.width*a.rect.height-b.rect.width*b.rect.height);
-  return matches[0]?.selector?{...action,selector:matches[0].selector}:action;
- }).filter(action=>{
-  if(['wait','scroll'].includes(action.type))return true;
-  if(action.type==='click'&&!action.selector)return Number.isFinite(Number(action.x))&&Number.isFinite(Number(action.y));
-  return bySelector.has(action.selector);
- });
+export function originalVisualActions(actions,elements=[],options={}){
+ const result=filterVisualActions(actions,elements,options);if(options.diagnostics)Object.assign(options.diagnostics,result.diagnostics);return result.actions;
 }
 export function originalVisualSubmissionAction(action,elements=[]){
  if(action?.type!=='click')return false;if(!action.selector)return true;
@@ -57,7 +48,7 @@ export async function runOriginalAgentSubmission(runtime,{task,io}){
   let snapshot=await guarded(io.observe);let decision=await judged(await model('judge',{snapshot,phase:'initial'}),snapshot,'initial');if(decision)return result=decision;
   while(state.submissionPhase.loops-(state.submissionPhase.loopBase||0)<originalAgentLimits.loops){
    state.submissionPhase.loops++;state.originalVisual.loops++;persist('original_submission_loop_boundary');const step=state.submissionPhase.loops-(state.submissionPhase.loopBase||0)-1;let plan;
-   try{plan={...await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:state.originalVisual.noProgressCount?'Previous action produced no visible page change. Reassess the screenshot and choose a different action.':''}),visualAgent:true};}
+   try{plan={...await model('vision-plan',{snapshot,step,history:state.originalVisual.history.slice(-8),failure:originalVisualFailure(state.originalVisual)}),visualAgent:true};}
    catch(error){if(error.staleTask||error.originalTaskSyncFailure||error.unattendedBudget||error.batchPaused||[401,403,409].includes(error.status))throw error;await io.assertCurrent();state.visualFallbackReason=String(error.message||error).slice(0,2000);persist('original_agent_visual_unavailable');plan={...await model('plan',{snapshot,step,history:state.originalVisual.history.slice(-8),visualError:state.visualFallbackReason}),visualAgent:false};}
    if(plan.status==='legacy_budget')return result=terminal({interrupted:true,reason:plan.reason});const planned=originalPlanDecision(plan,snapshot);if(planned.terminal)return result=terminal(planned.terminal);plan=planned.plan;await guarded(()=>io.recordPlan?.(plan));
    const beforeHash=snapshot.domHash,results=[];
@@ -67,7 +58,7 @@ export async function runOriginalAgentSubmission(runtime,{task,io}){
    await guarded(()=>io.settle(originalAgentLimits.settleMs));
    if(io.waitForContentReady)await guarded(io.waitForContentReady);
    try{snapshot=await guarded(io.observe);}catch(error){if(!nativeNavigationSnapshotError(error))throw error;await io.assertCurrent();state.originalVisual.pendingRejudge={id:randomUUID(),status:'waiting_navigation',at:new Date().toISOString(),reason:error.message,afterActionLoop:state.originalVisual.loops,submissionPhase:true,...(io.navigationScope?{navigationScope:io.navigationScope()}:{} )};persist('original_navigation_pending_rejudge');return result={ok:false,pendingRejudge:true,reason:'等待原投稿页面导航完成后重新判断'};}
-   const changed=!plan.actions?.some(action=>['fill','select','check','click','scroll'].includes(action.type))||!snapshot.domHash||snapshot.domHash!==beforeHash;state.originalVisual.noProgressCount=changed?0:(state.originalVisual.noProgressCount||0)+1;state.originalVisual.history.push({step:step+1,stage:plan.stage||'',actions:plan.actions||[],result:results,changed,url:snapshot.url||''});state.originalVisual.history=state.originalVisual.history.slice(-8);persist('original_submission_snapshot_observed');
+   const changed=Boolean(beforeHash&&snapshot.domHash&&snapshot.domHash!==beforeHash);state.originalVisual.noProgressCount=changed?0:(state.originalVisual.noProgressCount||0)+1;state.originalVisual.history.push({step:step+1,stage:plan.stage||'',actions:plan.actions||[],result:results,changed,...(plan.actionFilter?{actionFilter:structuredClone(plan.actionFilter)}:{}),url:snapshot.url||''});state.originalVisual.history=state.originalVisual.history.slice(-8);persist('original_submission_snapshot_observed');
    if(!plan.visualAgent&&io.deterministicSubmit){const submitted=await guarded(()=>io.deterministicSubmit(snapshot,state.submissionPhase.entry));if(submitted)return result=submitted;}
    decision=await judged(await model('judge',{snapshot,phase:'after_action',step,plan}),snapshot,'after_action');if(decision)return result=decision;
   }

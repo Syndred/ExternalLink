@@ -90,7 +90,7 @@ assert.equal(
 const selectTokens = new Function(
   "getFieldHint",
   "getProfileFields",
-  `${extractFunction("resolveSelectTokens", "resolveSelectValueForField")}; return resolveSelectTokens;`,
+  `${extractFunction("normalizePricingType", "resolvePricingForSelect")}; ${extractFunction("resolveSelectTokens", "resolveSelectValueForField")}; return resolveSelectTokens;`,
 )((element) => String(element.hint || "").toLowerCase(), (config) => config.projectFields || {});
 const tags = selectTokens(
   { hint: "tags max 5" },

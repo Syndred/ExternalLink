@@ -63,10 +63,32 @@ export function createOriginalSubmissionAdapter(runtime,{task,page,config,active
    if(!box||action.x<box.x||action.y<box.y||action.x>box.x+box.width||action.y>box.y+box.height)return{ok:false,needs_manual:true,reason:'截图坐标不属于原嵌入表单，未点击'};
    executed={...action,x:action.x-box.x,y:action.y-box.y};
   }
-  const final=originalVisualSubmissionAction(action,visual()?.elements||[]);
+  let queryNavigation=false,attachmentIntent;
+  if(action.type==='click'){
+   const intent=await candidate().engine.call({action:'inspectModelClickIntent',clickAction:executed});await assertDocument();
+   queryNavigation=intent?.ok===true&&intent.intent==='navigation'&&intent.queryAction===true;
+   if(intent?.ok===true&&intent.intent==='attachment'&&intent.attachmentAction===true&&intent.attachmentSignature&&Number.isFinite(intent.documentTimeOrigin))attachmentIntent=intent;
+   const attachmentRecheck=intent?.ok!==true||intent?.intent==='unknown'||/\bupload\s+\d+\s+files?\b/i.test(intent?.label||'')&&!/\b(?:submit|publish|launch|send listing|add (?:my )?(?:site|product|startup))\b|提交|发布|添加网站|添加产品/i.test(intent?.label||'');
+   const old=(task.attachmentActionHistory||[]).find(item=>item.taskId===task.id&&['started','clicked'].includes(item.status)&&item.targetId===task.targetId&&item.browserInstance===task.browserInstance&&item.frameUrl===candidate().frame.url()&&item.documentTimeOrigin===intent?.documentTimeOrigin&&(attachmentIntent?item.signature===attachmentIntent.attachmentSignature&&item.dialog===attachmentIntent.attachmentDialog:attachmentRecheck&&item.selector===executed.selector));
+   if(old)return{ok:false,needs_manual:true,attachmentActionGuard:true,reason:'原附件上传已开始或已点击，结果尚未核验，不重复上传'};
+  }
+  const final=!queryNavigation&&!attachmentIntent&&originalVisualSubmissionAction(action,visual()?.elements||[]);
   if(final){const validation=await candidate().engine.call({action:'collectFormValidation'}),report=await candidate().engine.call({action:'getFilledFieldsReport'});await assertDocument();const issues=assessSubmissionQuality(report,task.profileSnapshot||{});if(validation.validationFailed||issues.length)return{ok:false,needs_manual:true,reason:issues.join('；')||'原表单必填项未通过，未点击投稿'};}
-  let prior;if(action.type==='click')prior=await beforeClick({verifyIdentity:final});
+  let prior,attachmentIndex;
+  if(action.type==='click'){
+   if(queryNavigation||attachmentIntent)await assertAuthorized();else prior=await beforeClick({verifyIdentity:final});
+   if(attachmentIntent){
+    const history=structuredClone(task.attachmentActionHistory||[]);if(history.length>=100)return{ok:false,needs_manual:true,reason:'附件动作记录已满，保留记录待核验'};
+    attachmentIndex=history.length;history.push({at:new Date().toISOString(),status:'started',taskId:task.id,targetId:task.targetId,browserInstance:task.browserInstance,frameUrl:candidate().frame.url(),documentTimeOrigin:attachmentIntent.documentTimeOrigin,selector:executed.selector||'',dialog:attachmentIntent.attachmentDialog,signature:attachmentIntent.attachmentSignature,files:attachmentIntent.attachmentFiles});
+    runtime.update(task,{attachmentActionHistory:history},'original_attachment_action_boundary');await originalTaskSync(()=>flushBatchTaskEvents(runtime,task));await assertDocument();
+   }
+  }
   const outcome=await candidate().engine.call({action:'executeActionPlan',actions:[executed]});
+  if(attachmentIndex!==undefined){
+   await assertDocument();const history=structuredClone(task.attachmentActionHistory),results=outcome?.results||[outcome],clicked=results.some(item=>item?.ok&&item.clicked),noClick=results.some(item=>item?.needs_manual||item?.semanticReview)&&!results.some(item=>item?.clicked||item?.submitted);
+   history[attachmentIndex]={...history[attachmentIndex],status:clicked?'clicked':noClick?'not_clicked':'started',observedAt:new Date().toISOString()};
+   runtime.update(task,{attachmentActionHistory:history},'original_attachment_action_observed');await originalTaskSync(()=>flushBatchTaskEvents(runtime,task));await assertDocument();
+  }
   if(prior)await restoreNoClick(prior,outcome);return outcome;
  };
  const complete=async({judge,entry,snapshot})=>{

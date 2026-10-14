@@ -6,6 +6,7 @@ import {retainOriginalUnavailablePage,retainOriginalReceiptPage} from './origina
 import {capturePageEvidence} from './page-evidence.mjs';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
+import {currentPageClosed,previousPageClosurePatch} from './task-page-registration.mjs';
 export function originalRunReceiptTask(runtime,task){
  if(task.acceptanceId||task.workbenchBatchId||task.status!=='finished'||task.controller!=='executor'||!task.receipt||task.cloudVerified!==true||task.pageOwnership==='manual'||task.pageHistory?.length)return false;
  const run=runtime.store.get('run:'+task.runId);return !!(run?.id===task.runId&&run.profileId===task.profileId&&run.tasks?.some(item=>(typeof item==='string'?item:item.id)===task.id));
@@ -14,7 +15,7 @@ export async function closeAcceptanceTask(runtime,task){
  const deadEnd=task.originalDestinationDisposition?.kind==='dead_end'&&['skip','err'].includes(task.status)&&task.attentionType==='destination_dead_end';
  const unavailable=task.status==='skip'&&task.originalAgentSkip&&task.attentionType==='agent_unavailable';
  const runReceipt=originalRunReceiptTask(runtime,task),originalRun=runReceipt?structuredClone(runtime.store.get('run:'+task.runId)):null;
- if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable||runReceipt)||!task.targetId||task.tabClosedAt)return;
+ if(!(task.acceptanceId||task.workbenchBatchId||deadEnd||unavailable||runReceipt)||!task.targetId||currentPageClosed(task))return;
  if(['waiting_navigation','ready','rejudging','readiness_timeout','original_page_missing'].includes(task.aiTakeover?.originalVisual?.pendingRejudge?.status))return;
  if(task.originalGroupAdvance?.status==='transferred'||unavailable&&retainOriginalUnavailablePage(runtime,task))return;
  if(task.receipt&&await retainOriginalReceiptPage(runtime,task))return;
@@ -37,7 +38,7 @@ export async function closeAcceptanceTask(runtime,task){
  const checkpoint={...recoveryCheckpoint(task,originalPage,task.screenshot,closedAt),screenshotSha256:sha256,cloudSyncPending:!task.artifactRef};
  if(deadEnd){checkpoint.stage='destination_dead_end';checkpoint.nextStep='目标网站无法继续，取消原因已保存；修改站点条件后明确重试原任务';checkpoint.formRecoverability='destination_dead_end_requires_explicit_retry';}
  if(unavailable){checkpoint.stage='agent_unavailable';checkpoint.nextStep='当前产品因 AI 服务不可用已跳过，原原因已保存；服务恢复后明确重试原任务';checkpoint.formRecoverability='agent_unavailable_requires_explicit_retry';}
- runtime.update(task,{recoveryCheckpoint:checkpoint},'fixed_task_recovery_checkpoint');
+ runtime.update(task,{...previousPageClosurePatch(task,closedAt),recoveryCheckpoint:checkpoint},'fixed_task_recovery_checkpoint');
  const owned=new Set([task.targetId,...(task.authBrowserInstance===runtime.host.startedAt?[task.authTargetId]:[]),...(task.authPages||[]).filter(p=>p.browserInstance===runtime.host.startedAt).map(p=>p.targetId)]);
  const closed=[];
  for(const page of runtime.context.pages()){

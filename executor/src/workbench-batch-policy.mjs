@@ -96,7 +96,10 @@ export function finalizeBatchDeadline(runtime,task){
 }
 export function retainBatchManualPage(runtime,task){
  const batch=task.workbenchBatchId&&runtime.store.get('workbenchBatch:'+task.workbenchBatchId),config=batch&&batchConfig(batch);
- return !!(config&&(config.fillOnly||config.unattended)&&!task.receipt&&!task.tabClosedAt&&['needs_manual','submitted_unconfirmed'].includes(task.status));
+ // Fill-only runs preserve the prepared form. A full unattended run archives
+ // pre-submit blockers through closeAcceptanceTask's durable recovery point,
+ // while uncertain clicks keep their original verification page.
+ return !!(config&&(config.fillOnly||config.unattended&&(task.attemptBoundary||task.status==='submitted_unconfirmed'||task.siteStatus==='sent_unconfirmed'))&&!task.receipt&&!task.tabClosedAt&&['needs_manual','submitted_unconfirmed'].includes(task.status));
 }
 export function noteBatchTaskResult(runtime,batch,task,{persistPause=true}={}){
  if(!batchConfig(batch).unattended)return batch;

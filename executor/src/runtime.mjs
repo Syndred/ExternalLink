@@ -23,6 +23,7 @@ import { assessSubmissionQuality } from './quality.mjs';
 import {applySubmissionPreferences,hasManualSubmissionConsent} from './submission-preferences.mjs';
 import { canRetryNoAction } from './recovery.mjs';
 import { closeTaskTab,archiveDeferredTabs,recoveryCheckpoint } from './tab-cleanup.mjs';
+import {currentPageClosed,assertTaskPageCreationAllowed,taskPageRegistrationPatch} from './task-page-registration.mjs';
 import { observeTask, closeObservation } from './observation.mjs';
 import { findGooglePopup } from './google-auth.mjs';
 import { registerAccount, verifyRegistration } from './registration.mjs';
@@ -51,7 +52,7 @@ import {createOriginalSubmissionAdapter} from './original-submission-adapter.mjs
 import {navigationScope,assertNavigationScope,hasPendingNavigation,pendingNavigationMarker,nativeNavigationSnapshotError,waitForOriginalNavigation,waitForOriginalSubmissionContent} from './original-navigation-rejudge.mjs';
 import {captureOriginalTaskVisual} from './task-visual-context.mjs';
 import {originalSubmitSuccessDecision,originalJudgeSuccessDecision,nativeSuccessRecord,nativeReceiptReadbackMatches} from './original-submission-proof.mjs';
-import {originalVisualFillActions} from './original-visit-fill.mjs';
+import {visualPlanningSnapshot} from '../../core/visual-action-policy.mjs';
 import {restrictPreparationActions} from '../../core/takeover-policy.mjs';
 import { AgentBrowserAdapter } from './agent-browser-adapter.mjs';
 import { materializeTaskMedia,materializeTaskUpload } from './task-media.mjs';
@@ -68,7 +69,7 @@ import {pendingMediaUploads,flushMediaUploads} from './media-uploads.mjs';
 import {startAcceptanceBatch,nextAcceptanceTask,finishAcceptanceTask} from './acceptance-batch.mjs';
 import {closeAcceptanceTask,originalRunReceiptTask} from './acceptance-cleanup.mjs';
 import {skipOriginalUnavailableTask,attachOriginalGroupPage,navigateOriginalGroupPage,originalTaskSync} from './original-agent-unavailable.mjs';
-import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask} from './workbench-features.mjs';
+import {previewWorkbenchBatch,startWorkbenchBatch,nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,applicationAi,fillCommentDraft,detectOriginalTask,workbenchWorkerIdentity} from './workbench-features.mjs';
 import {runWorkbenchBatch} from './workbench-batch-scheduler.mjs';
 import {checkpointTaskUpdate,recoverCloudBatchRecords,parkRestoredBatchTask,flushBatchTaskEvents} from './workbench-batch-recovery.mjs';
 import {requestExecutionPause,finalizeUserPause,resumeExecution,persistBatchLifecycle} from './execution-lifecycle.mjs';
@@ -175,11 +176,15 @@ export function chooseObservedEntry(current,links){
  const original=new URL(current),host=original.hostname.replace(/^www\./,'');
  const choices=[];
  for(const link of links){
-   if(!/^(?:submit(?:\s+(?:a|an|your|new))?\s*(?:ai\s*)?(?:tool|startup|website|site|app|application|listing|product|resource|link|url|company|business)?|(?:add|list)\s+(?:a|an|your|new)?\s*(?:ai\s*)?(?:tool|startup|website|site|app|listing|product|company|business|url)|suggest\s+(?:a|an|your)?\s*(?:ai\s*)?(?:tool|resource|website|site|url)|(?:提交|添加|推荐)(?:网站|网址|工具|应用|产品|链接))\s*[→+!🌟]*$/i.test(link.text.trim()))continue;
+   const text=link.text.trim(),pitch=/^pitch\s+your\s+(?:startup|product)(?:\s+or\s+(?:startup|product))?\s*[→+!🌟]*$/i.test(text);
+   if(!pitch&&!/^(?:submit(?:\s+(?:a|an|your|new))?\s*(?:ai\s*)?(?:tool|startup|website|site|app|application|listing|product|resource|link|url|company|business)?|(?:add|list)\s+(?:a|an|your|new)?\s*(?:ai\s*)?(?:tool|startup|website|site|app|listing|product|company|business|url)|suggest\s+(?:a|an|your)?\s*(?:ai\s*)?(?:tool|resource|website|site|url)|(?:提交|添加|推荐)(?:网站|网址|工具|应用|产品|链接))\s*[→+!🌟]*$/i.test(text))continue;
    let url;try{url=new URL(link.href,current);}catch{continue;}
    if(!/^https?:$/.test(url.protocol)||url.href===original.href||url.username||url.password)continue;
    const same=url.hostname.replace(/^www\./,'')===host,hosted=url.protocol==='https:'&&/(?:^|\.)(?:airtable\.com|tally\.so|formaloo\.net|typeform\.com|forms\.gle)$/.test(url.hostname);
    if(!same&&!hosted)continue;
+   // Pitch labels also appear on blog categories. Only follow an observed form
+   // host or an explicit same-site submission path, never editorial navigation.
+   if(pitch&&!hosted&&!/^\/(?:submit|submissions?|pitch)(?:[-/]|$)/i.test(url.pathname))continue;
    if(!choices.some(c=>c.href===url.href))choices.push({...link,href:url.href});
  }
  return choices.length===1?choices[0]:null;
@@ -488,7 +493,7 @@ export class Runtime {
       if (!nativeReceiptReadbackMatches(read,record)) throw new Error('云端回执回读不一致；原证据或公开结果字段未完整保存');
       this.update(task, { cloudVerified: true, cloudRevision: after.revisions.submissionRecords }, 'cloud_readback');
     }
-    if(this.context)for(const task of this.store.values('task:'))if(task.receipt&&task.cloudVerified===true&&task.controller==='executor'&&!task.tabClosedAt&&task.browserInstance===this.host?.startedAt&&!this.activeTaskIds?.has(task.id)&&(task.acceptanceId||task.workbenchBatchId||originalRunReceiptTask(this,task))){
+    if(this.context)for(const task of this.store.values('task:'))if(task.receipt&&task.cloudVerified===true&&task.controller==='executor'&&!currentPageClosed(task)&&task.browserInstance===this.host?.startedAt&&!this.activeTaskIds?.has(task.id)&&(task.acceptanceId||task.workbenchBatchId||originalRunReceiptTask(this,task))){
       const cleanupScope=workbenchScope(this.store.get('pair'));
       try{await closeAcceptanceTask(this,task);}catch(error){if(!error.staleTask&&cleanupScope===workbenchScope(this.store.get('pair'))&&isDeepStrictEqual(this.store.get('task:'+task.id),task))this.update(task,{cleanupFailure:{at:new Date().toISOString(),reason:error.message,targetId:task.targetId}},'synced_receipt_cleanup_deferred');}
     }
@@ -624,13 +629,13 @@ export class Runtime {
         if(error.cloudQuota&&plan)this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,attentionType:'cloud_quota',resumeEligible:false}});
       }).finally(() => { this.job = null; }); return;
     }
-    const batchId=this.store.get('activeWorkbenchBatch'),parallelBatch=batchId&&!this.store.get('singleTaskId')&&this.store.get('workbenchBatch:'+batchId)?.config;
+    const batchId=this.store.get('activeWorkbenchBatch'),parallelBatch=batchId&&!this.store.get('singleTaskId')&&this.store.get('workbenchBatch:'+batchId)?.config,workerIdentity=workbenchWorkerIdentity(this,this.store.get('task:'+this.store.get('singleTaskId')));
     this.job = (parallelBatch?runWorkbenchBatch(this):this.work()).catch(error => { this.cloudError = error.message;this.store.set('paused',true);
       pauseWorkbenchBatch(this,error.message);const batch=this.store.get('acceptanceBatch');if(batch?.status==='running')this.store.set('acceptanceBatch',{...batch,status:'paused',reason:error.message});
       const plan=this.store.get('libraryPlan'),classification=classifyPauseFailure(error);if(!batch&&plan?.status==='active')this.store.set('libraryPlan',{...plan,globalPause:{at:new Date().toISOString(),reason:error.message,
         ...classification,nextProbeAt:classification.resumeEligible?Date.now()+60000:null}});
     }).finally(() => {
-      if (this.store.get('singleTaskId')) { if(!finishWorkbenchTask(this,this.store.get('singleTaskId'))&&!finishAcceptanceTask(this,this.store.get('singleTaskId')))this.store.set('paused', true);this.store.set('singleTaskId', null); }
+      if (this.store.get('singleTaskId')) { if(!finishWorkbenchTask(this,this.store.get('singleTaskId'),{workerCompleted:true,workerIdentity})&&!finishAcceptanceTask(this,this.store.get('singleTaskId')))this.store.set('paused', true);this.store.set('singleTaskId', null); }
       this.job = null;
     });
   }
@@ -705,6 +710,7 @@ export class Runtime {
         }
       }
       if (!page) {
+        assertTaskPageCreationAllowed(task);
         if(continuous){
           const ownedTargets=await liveOwnedTaskTargetIds(this,continuousPlan.id,this.host.startedAt);
           const cap=Math.min(6,Math.max(1,Number(continuousPlan.maxTaskTabCount)||6));
@@ -722,7 +728,7 @@ export class Runtime {
       if(!targetInfo)throw new Error('browser page target disappeared before its task identity could be verified');
       const target = targetInfo.targetId;
       if(hasPendingNavigation(task)){assertNavigationScope(this,task,pendingNavigationMarker(task));if(target!==task.targetId||this.host.startedAt!==task.browserInstance)throw Object.assign(Error('原待重判页签身份已变化，保持原任务'),{staleTask:true});}
-      this.update(task, { targetId: target, browserInstance: this.host.startedAt }, 'target');
+      this.update(task,taskPageRegistrationPatch(task,{targetId:target,browserInstance:this.host.startedAt},{created:!reused}),'target');
       if(!active())return;
       Object.assign(config,applySubmissionPreferences(this,task,defaults,config));
       if (!reused) await page.goto(task.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -957,6 +963,7 @@ export class Runtime {
     const ownership={attemptBoundary:undefined,receipt:undefined};
     let candidate;
     let normalDone=normalFillDone;
+    let normalPreparationDocument=null;
     const scope=workbenchScope(this.store.get('pair')),identity=Object.fromEntries(['id','runId','profileId','profileRevision','targetId','browserInstance'].map(key=>[key,task[key]])),profile=plain(task.profileSnapshot||{}),preparationConfig=submission?{...config,fillOnly:false}:{...config,fillOnly:true,autoSubmitDirectory:false,autoSubmitStandardWpComments:false};
     const canRelease=current=>scope===workbenchScope(this.store.get('pair'))&&Object.entries(identity).every(([key,value])=>current[key]===value)&&current.version===task.version&&current.controllerId===task.controllerId&&(submission?current.attemptBoundary===ownership.attemptBoundary&&isDeepStrictEqual(current.receipt,ownership.receipt):!current.attemptBoundary&&!current.receipt)&&isDeepStrictEqual(plain(current.profileSnapshot||{}),profile);
     const assertCurrent=async()=>{const check=()=>{const current=this.store.get('task:'+task.id);if(!current||!canRelease(current)||current.controller!==task.controller||this.store.get('executionStopped')||this.store.get('connectionExecutionHold')||page.isClosed()||!/^https?:\/\//.test(page.url()))throw Object.assign(Error('原AI接管任务、产品、控制权或网页已变化'),{staleTask:true});if(!active())throw Object.assign(Error('原AI接管已暂停，原任务与预算保留'),this.store.get('paused')===true?{batchPaused:true}:{staleTask:true});};check();const target=await getTargetInfo(this.context,page);check();if(target?.targetId!==identity.targetId)throw Object.assign(Error('原AI接管页签身份已变化'),{staleTask:true});};
@@ -977,14 +984,27 @@ export class Runtime {
       for(const item of options)if(item!==candidate)await item.engine.detach();
       if(!candidate)throw navigationError||Error('原任务页面没有可观察上下文');
       await assertDocument();
-      if(!normalDone&&candidate.detection.operable){
+      const initialDetection={operable:candidate.detection.operable===true,formFieldCount:Number(candidate.detection.formFieldCount)||0,snapshotFieldCount:candidate.observed.fields?.length||0};
+      let redetected=false;
+      if(!candidate.detection.operable&&initialDetection.snapshotFieldCount){candidate.detection=await candidate.engine.call({action:'detectPage',config:preparationConfig});await assertDocument();redetected=true;}
+      const currentDocument={frame:candidate.frame,url:candidate.url,documentId:candidate.engine.documentId},alreadyPrepared=normalPreparationDocument?.frame===currentDocument.frame&&normalPreparationDocument.url===currentDocument.url&&normalPreparationDocument.documentId===currentDocument.documentId,finalAttempt=!!task.receipt||task.aiTakeover?.submissionPhase?.entry?.submissionAttempted===true;
+      let verifiedPriorPreparation=false;
+      if(!alreadyPrepared&&!finalAttempt&&normalDone&&candidate.detection.operable){
+        const actual=await candidate.engine.call({action:'getFilledFieldsReport'}),validation=await candidate.engine.call({action:'collectFormValidation'});await assertDocument();
+        verifiedPriorPreparation=!!actual.fields?.length&&validation.validationFailed===false&&!assessSubmissionQuality(actual,task.profileSnapshot||{}).length;
+      }
+      const normalPreparationRequested=!alreadyPrepared&&!finalAttempt&&!verifiedPriorPreparation&&candidate.detection.operable===true;
+      this.update(task,{originalAgentObservation:{at:new Date().toISOString(),url:candidate.url,documentId:currentDocument.documentId,embedded:candidate.frame!==page.mainFrame(),initialDetection,redetected,operable:candidate.detection.operable===true,formFieldCount:Number(candidate.detection.formFieldCount)||0,normalPreparationRequested,verifiedPriorPreparation,alreadyPrepared,finalAttempt}},'original_agent_observation');
+      if(normalPreparationRequested){
         normalDone=true;
         const fill=await candidate.engine.call({action:'smartFill',config:{...config,fillOnly:true,autoSubmitDirectory:false}});
         await assertDocument();
         await this.reconcileTextInputs(candidate.frame,await candidate.engine.call({action:'getFilledFieldsReport'}),fill.mappings);
         await assertDocument();
         this.update(task,{normalPreparation:{at:new Date().toISOString(),fill}},'normal_preparation_completed');
+        normalPreparationDocument=currentDocument;
       }
+      else if(verifiedPriorPreparation)normalPreparationDocument=currentDocument;
       const snapshot=await candidate.engine.call({action:'getPageSnapshot'});
       snapshot.preparation={validation:await candidate.engine.call({action:'collectFormValidation'}),
         submitAction:await candidate.engine.call({action:'inspectSubmitAction',config,platform:candidate.detection.platform||'directory'}),
@@ -1010,8 +1030,9 @@ export class Runtime {
       await assertDocument();await originalTaskSync(()=>flushBatchTaskEvents(this,task));await assertDocument();
       if(kind==='vision-plan'){
         const visual=await captureOriginalTaskVisual(this,{task,page,candidate,assertCurrent:assertDocument});await assertDocument();
-        lastVisual=visual;const plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,fillOnly:!submission});await assertDocument();
-        return{...plan,actions:(submission?originalVisualActions:originalVisualFillActions)(plan.actions,visual.elements)};
+        lastVisual=visual;const snapshot=visualPlanningSnapshot(input.snapshot,visual.elements),plan=await this.batchModelRequest(task,'ai/vision-plan',{task:taskPayload(),config:preparationConfig,...input,...visual,snapshot,fillOnly:!submission});await assertDocument();
+        const diagnostics={},actions=originalVisualActions(plan.actions,visual.elements,{diagnostics,snapshot,fillOnly:!submission});
+        return{...plan,actions,actionFilter:{...plan.actionFilter,executor:diagnostics}};
       }
       if(kind==='judge'){const judge=await this.batchModelRequest(task,'ai/judge',{task:taskPayload(),config:preparationConfig,...input});await assertDocument();return submission?{...judge,networkEvidence:submissionAdapter.networkEvidence()}:judge;}
       const plan=await this.batchModelRequest(task,'plan',{...(!submission?{mode:'prepare_takeover'}:{}),taskId:task.id,version:task.version,controllerId:task.controllerId,task:{url:task.url,profileId:task.profileId},config:preparationConfig,...input,fillOnly:!submission});await assertDocument();return{...plan,actions:submission?(plan.actions||[]).filter(action=>['fill','select','check','wait'].includes(action.type)):restrictPreparationActions(plan.actions,input.snapshot)};
@@ -1033,7 +1054,7 @@ export class Runtime {
     };
     const io={assertCurrent,canRelease,observe,ready,...(submission?{authorized:true,complete:submissionAdapter.complete,deterministicSubmit:submissionAdapter.deterministicSubmit,ownedAttemptBoundary:submissionAdapter.ownedAttemptBoundary}:{}),navigationScope:()=>navigationScope(this,task),readyBeforeJudge:config.productHuntPrepared===true,model,act,
       settle:ms=>page.waitForTimeout(ms),
-      recordPlan:async plan=>{await assertDocument();this.update(task,{agentVisualHistory:[...(task.agentVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),...(lastVisual?{localScreenshot:lastVisual.localScreenshot,artifactRef:lastVisual.artifactRef,artifactError:lastVisual.artifactError}:{}),...(!plan.visualAgent?{visualFallbackReason:task.aiTakeover?.visualFallbackReason||''}:{}),visualAgent:plan.visualAgent===true}].slice(-8)},'original_agent_plan');},
+      recordPlan:async plan=>{await assertDocument();this.update(task,{agentVisualHistory:[...(task.agentVisualHistory||[]),{at:new Date().toISOString(),status:plan.status,stage:plan.stage||'',reason:plan.reason||'',actions:(plan.actions||[]).map(action=>({type:action.type,selector:action.selector})),...(plan.actionFilter?{actionFilter:structuredClone(plan.actionFilter)}:{}),...(lastVisual?{localScreenshot:lastVisual.localScreenshot,artifactRef:lastVisual.artifactRef,artifactError:lastVisual.artifactError}:{}),...(!plan.visualAgent?{visualFallbackReason:task.aiTakeover?.visualFallbackReason||''}:{}),visualAgent:plan.visualAgent===true}].slice(-8)},'original_agent_plan');},
       visualFallback:async(snapshot,failure,request,execute)=>{const decision=originalPlanDecision(await request('vision-plan',{snapshot,failure}),snapshot);if(decision.terminal)return decision.terminal;const results=[];for(const action of decision.plan.actions||[]){const outcome=await execute(action);results.push(...(outcome?.results||[{...outcome,type:action.type}]));if(action.type==='click'||outcome?.ok===false)break;}return{ok:results.every(item=>item.ok!==false),results};}
     };
     const probeNavigation=async()=>{
@@ -1545,10 +1566,10 @@ export class Runtime {
       try{page=await this.findPage(task);}catch{
         const recovery=task.recoveryCheckpoint?.recoveryUrl||task.url;
         const url=new URL(recovery);if(!/^https?:$/.test(url.protocol)||url.username||url.password)throw Error('原任务恢复地址无效');
+        assertTaskPageCreationAllowed(task);
         page=await this.context.newPage();
         const {targetId}=await getTargetInfo(this.context,page);
-        this.update(task,{targetId,browserInstance:this.host.startedAt,tabClosedAt:null,
-          recoveryHistory:[...(task.recoveryHistory||[]),{at:new Date().toISOString(),action:'prepare_original_task',url:recovery,targetId}],controller:'executor'},'preparation_page_registered');
+        this.update(task,{...taskPageRegistrationPatch(task,{targetId,browserInstance:this.host.startedAt},{created:true,source:'prepare_original_task',recoveryUrl:recovery}),controller:'executor'},'preparation_page_registered');
         await page.goto(recovery,{waitUntil:'domcontentloaded',timeout:45000});
       }
       this.update(task,{profileSnapshot:profile,profileRevision,

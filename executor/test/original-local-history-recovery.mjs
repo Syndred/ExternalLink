@@ -39,8 +39,25 @@ const cloud=http.createServer(async(req,res)=>{try{const url=new URL(req.url,'ht
  }catch(error){errors.push(error.message);res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:false,error:error.message}));}});await new Promise(resolve=>cloud.listen(0,'127.0.0.1',resolve));
 const cloudEndpoint='http://127.0.0.1:'+cloud.address().port,scope=cloudEndpoint+'|original-local-history',snapshotFile=join(folder,'snapshot.json'),historyFile=join(folder,'original-run-history.json');
 await writeFile(snapshotFile,JSON.stringify({scope,documents:originalDocuments}));await writeFile(historyFile,JSON.stringify({scope,...history}));const sourceHashes=[fileHash(await readFile(snapshotFile)),fileHash(await readFile(historyFile))];
-let backend,web,browser,store;const serviceLogs=[];
-async function start(file){const child=spawn(process.execPath,[resolve(import.meta.dirname,'../src/'+file)],{windowsHide:true,env:{...process.env,EXTERNALLINK_HOME:home,EXTERNALLINK_BACKUP_ROOT:backupRoot,EXTERNALLINK_PORT:'0',EXTERNALLINK_WEB_PORT:'0'},stdio:['ignore','pipe','pipe']});child.stdout.on('data',data=>serviceLogs.push(String(data)));child.stderr.on('data',data=>serviceLogs.push(String(data)));for(let n=0;n<200;n++){if(child.exitCode!==null)throw Error('Owned service exited '+child.exitCode);try{const saved=JSON.parse(await readFile(join(home,file==='server.mjs'?'server.json':'workbench.json'),'utf8'));if(saved.pid===child.pid)return{child,endpoint:saved.endpoint};}catch{}await new Promise(resolve=>setTimeout(resolve,50));}throw Error('Owned service startup timed out');}
+let backend,web,browser,store;
+async function start(file){
+ const child=spawn(process.execPath,[resolve(import.meta.dirname,'../src/'+file)],{windowsHide:true,env:{...process.env,EXTERNALLINK_HOME:home,EXTERNALLINK_BACKUP_ROOT:backupRoot,EXTERNALLINK_PORT:'0',EXTERNALLINK_WEB_PORT:'0'},stdio:['ignore','pipe','pipe']});
+ let stderr='',spawnError;
+ const closed=new Promise(resolve=>child.once('close',resolve));
+ child.stdout.on('data',()=>{});
+ child.stderr.on('data',data=>{stderr=(stderr+String(data)).slice(-8000);});
+ child.on('error',error=>{spawnError=error;});
+ const failure=reason=>{
+  const diagnostic=stderr.replace(/\bBearer\s+\S+/gi,'Bearer [redacted]').replace(/((?:password|deviceToken|localToken|apiKey|authorization)["']?\s*[:=]\s*["']?)[^\s"',}]+/gi,'$1[redacted]').replace(/isolated-(?:history-local|device-secret)/g,'[redacted]');
+  return Error(`Owned service ${reason} (${file}, PID ${child.pid??'unavailable'}, exit ${child.exitCode??'none'}, signal ${child.signalCode??'none'})\nstderr:\n${diagnostic.trim()||'(empty)'}`);
+ };
+ for(let n=0;n<200;n++){
+  if(spawnError||child.exitCode!==null||child.signalCode){await closed;throw failure(spawnError?'spawn failed: '+spawnError.message:'exited '+child.exitCode);}
+  try{const saved=JSON.parse(await readFile(join(home,file==='server.mjs'?'server.json':'workbench.json'),'utf8'));if(saved.pid===child.pid)return{child,endpoint:saved.endpoint};}catch{}
+  await new Promise(resolve=>setTimeout(resolve,50));
+ }
+ child.kill();await closed;throw failure('startup timed out');
+}
 async function stop(service){if(!service||service.child.exitCode!==null)return;const exited=once(service.child,'exit');service.child.kill();await exited;}
 async function local(endpoint,route,input={}){const response=await fetch(endpoint+route,{method:'POST',headers:{Authorization:'Bearer isolated-history-local','Content-Type':'application/json'},body:JSON.stringify(input)}),result=await response.json();assert.equal(result.ok,true,route+' '+result.error);return result;}
 try{

@@ -1,4 +1,4 @@
-import {nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch} from './workbench-features.mjs';
+import {nextWorkbenchTask,finishWorkbenchTask,pauseWorkbenchBatch,workbenchWorkerIdentity} from './workbench-features.mjs';
 import {assertBatchPolicy,batchConfig} from './workbench-batch-policy.mjs';
 import {queuedParkedTasks} from './parked-task-resume.mjs';
 
@@ -15,11 +15,11 @@ export async function runWorkbenchBatch(runtime){
    const observedWake=wakeGeneration,batch=current();assertBatchPolicy(runtime,batch);const limit=workbenchConcurrency(batch);
    while(runtime.store.get('paused')===false&&jobs.size<limit&&current()?.status==='running'){
     const inFlightAtSelection=jobs.size,task=await nextWorkbenchTask(runtime,{single:false});if(!task){if(inFlightAtSelection&&!jobs.size)continue;break;}
-    runtime.activeTaskIds.add(task.id);runtime.activeTaskId=[...runtime.activeTaskIds][0];
+    runtime.activeTaskIds.add(task.id);runtime.activeTaskId=[...runtime.activeTaskIds][0];const workerIdentity=workbenchWorkerIdentity(runtime,task);
     const job=Promise.resolve().then(()=>runtime.work({taskId:task.id})).catch(error=>{
      runtime.cloudError=error.message;runtime.store.set('paused',true);pauseWorkbenchBatch(runtime,error.message);
     }).finally(()=>{
-     finishWorkbenchTask(runtime,task.id);jobs.delete(task.id);runtime.activeTaskIds.delete(task.id);runtime.activeTaskId=[...runtime.activeTaskIds][0]||null;
+     finishWorkbenchTask(runtime,task.id,{workerCompleted:true,workerIdentity});jobs.delete(task.id);runtime.activeTaskIds.delete(task.id);runtime.activeTaskId=[...runtime.activeTaskIds][0]||null;
     });jobs.set(task.id,job);
    }
    const queued=queuedParkedTasks(runtime,current()||batch);if(!jobs.size&&!queued.some(task=>task.originalResume.status==='preparing'))break;if(wakeGeneration!==observedWake)continue;

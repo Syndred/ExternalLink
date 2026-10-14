@@ -105,7 +105,7 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
  const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id);if(batch?.status!=='running')return null;assertBatchPolicy(runtime,batch);
  for(const item of batch.items){const task=runtime.store.get('task:'+item.taskId);if(item.result==='received_pending_sync'&&task?.receipt&&task.cloudVerified===true)finishWorkbenchTask(runtime,item.taskId);}
  batch=runtime.store.get('workbenchBatch:'+id);
- const liveIds=runtime.activeTaskIds||new Set(),busyDestinations=new Set(batch.items.filter(i=>liveIds.has(i.taskId)).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
+ const liveIds=new Set([...(runtime.activeTaskIds||[]),runtime.activeTaskId,...(runtime.workbenchTaskJobs?.keys()||[])].filter(Boolean)),busyDestinations=new Set(batch.items.filter(i=>liveIds.has(i.taskId)).map(i=>i.destinationKey||queue.normalizeDestinationKey(i.url)));
  for(const item of batch.items){const task=runtime.store.get('task:'+item.taskId);if(task?.receipt&&task.cloudVerified!==true)busyDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));}
  for(const pending of runtime.store.values('manualSkipPending:').filter(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id)){const item=batch.items.find(item=>item.taskId===pending.taskId);if(item)busyDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));}
  const resumed=await selectParkedResume(runtime,batch,{busyDestinations,destinationFor:task=>queue.normalizeDestinationKey(task.url)});
@@ -133,9 +133,24 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
  if(batch.items.some(item=>{const task=runtime.store.get('task:'+item.taskId);return task?.receipt&&task.cloudVerified!==true;}))return null;
  batch.status='complete';batch.completedAt=new Date().toISOString();runtime.store.set('workbenchBatch:'+id,batch);runtime.store.set('activeWorkbenchBatch',null);runtime.store.set('paused',true);return null;
 }
-export function finishWorkbenchTask(runtime,taskId){
- const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id);const item=batch?.items.find(i=>i.taskId===taskId);if(!item)return false;
- const task=runtime.store.get('task:'+taskId);if(!task||['pending','opening','filling','submitting'].includes(task.status))return false;
+export function workbenchWorkerIdentity(runtime,task){
+ if(!task?.workbenchBatchId)return null;
+ const batch=runtime.store.get('workbenchBatch:'+task.workbenchBatchId);
+ return{...Object.fromEntries(['id','runId','workbenchBatchId','profileId','profileRevision'].map(key=>[key,task[key]])),profileSnapshot:structuredClone(task.profileSnapshot),scope:workbenchScope(runtime.store.get('pair')),controllerId:runtime.controllerId,configSha256:batch?.configSha256,scopeSha256:batch?.scopeSha256};
+}
+export function finishWorkbenchTask(runtime,taskId,{workerCompleted=false,workerIdentity}={}){
+ const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id),item=batch?.items.find(i=>i.taskId===taskId);if(!item)return false;
+ const task=runtime.store.get('task:'+taskId);if(!task)return false;
+ if(workerCompleted){
+  // Only a settled local worker can park its unfinished boundary. An active
+  // dispatch, foreign controller or changed execution scope cannot do so.
+  if(!workerIdentity||['id','runId','workbenchBatchId','profileId','profileRevision'].some(key=>task[key]!==workerIdentity[key])||id!==workerIdentity.workbenchBatchId||workerIdentity.scope!==workbenchScope(runtime.store.get('pair'))||batch.scope&&batch.scope!==workerIdentity.scope||runtime.controllerId!==workerIdentity.controllerId||task.controllerId&&task.controllerId!==workerIdentity.controllerId||task.controller==='supervisor'||batch.configSha256!==workerIdentity.configSha256||batch.scopeSha256!==workerIdentity.scopeSha256||!jsonValueEqual(task.profileSnapshot,workerIdentity.profileSnapshot))return false;
+  if(task.attemptBoundary&&!task.receipt&&['opening','filling','submitting'].includes(task.status)){
+   if(batch.status!=='running'||runtime.store.get('paused')!==false||runtime.store.get('executionStopped')||runtime.store.get('connectionExecutionHold'))return false;
+   runtime.update(task,{status:'submitted_unconfirmed',siteStatus:'sent_unconfirmed',attentionType:'unknown_receipt',controller:'executor',reason:task.aiTakeover?.reason||task.reason||'原任务控制器已结束，收件结果待核验；保留原边界，禁止自动重投'},'workbench_worker_ended_unknown');batch=runtime.store.get('workbenchBatch:'+id);item=batch.items.find(i=>i.taskId===taskId);
+  }
+ }
+ if(['pending','opening','filling','submitting'].includes(task.status))return false;
  const previousResult=item.result;item.result=task.receipt?(task.cloudVerified===true?'received':'received_pending_sync'):task.attemptBoundary?'sent_unconfirmed':task.status;item.reason=task.reason||'';
  const changed=item.status!=='complete'||previousResult!==item.result;
  if(changed){item.status='complete';item.completedAt=new Date().toISOString();batch=noteBatchTaskResult(runtime,batch,task);}advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);if(changed&&batch.cloudRecoveryVersion===batchRecoveryVersion)runtime.update(task,{},'workbench_batch_result_checkpoint');return batch.status==='running'&&runtime.store.get('paused')===false;

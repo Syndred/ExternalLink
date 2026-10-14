@@ -423,6 +423,15 @@
       }
       return true;
     }
+    if (msg.action === "inspectModelClickIntent") {
+      const element = resolveActionElement(msg.clickAction || {});
+      const label = element ? compactText(getElementLabel(element), 240) : "";
+      const queryAction = !!element && isActionElementAllowed(element, "click") && isQueryNavigationControl(element, label);
+      const attachment = element ? attachmentUploadIntent(element, label) : null;
+      sendResponse({ ok: !!element, queryAction, attachmentAction: !!attachment, ...(attachment || {}), documentTimeOrigin: performance.timeOrigin,
+        intent: attachment ? "attachment" : queryAction ? "navigation" : element && isModelSubmissionControl(element, label) ? "submission" : "unknown", label });
+      return true;
+    }
     if (msg.type === "executeActionPlan" || msg.action === "executeActionPlan") {
       executeActionPlan(msg.actions)
         .then(sendResponse)
@@ -5071,7 +5080,7 @@
           selector: action.selector,
           clicked: true,
           submitted,
-          navigationExpected: submitted || Boolean(href) || isLikelyNavigationControl(label),
+          navigationExpected: submitted || Boolean(href) || isQueryNavigationControl(element, label) || isLikelyNavigationControl(label),
           beforeUrl,
           evidenceBaseline: beforeEvidence?.matched ? beforeEvidence.evidence || "" : "",
           target: label,
@@ -5132,9 +5141,11 @@
             humanGate: "legal",
           };
         }
-        setCheckedValue(element, action.value !== false && action.checked !== false);
-        element.dispatchEvent(new Event("input", { bubbles: true }));
-        element.dispatchEvent(new Event("change", { bubbles: true }));
+        const gate = choiceActivationGate(element);
+        if (gate) return { ...actionFailure(action, gate.reason), needs_manual: true, humanGate: gate.type };
+        if (!await commitChoiceCheckedValue(element, action.value !== false && action.checked !== false)) {
+          return actionFailure(action, "checked state did not commit");
+        }
         return { ok: true, selector: action.selector };
       }
       case "submit": {
@@ -5281,6 +5292,25 @@
   function getNativeCheckedSetter(element) {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "checked");
     return descriptor && descriptor.set;
+  }
+
+  async function commitChoiceCheckedValue(element, checked) {
+    if (element.disabled || element.isConnected === false) return false;
+    if (element.checked === checked) return true;
+    // React observes checkbox/radio changes through click. Setting checked
+    // then clicking would toggle a checkbox back, so let native activation
+    // perform the change and confirm it after the controlled render.
+    if (typeof element.click !== "function" || (!checked && element.type === "radio")) return false;
+    if (choiceActivationGate(element)) return false;
+    element.click();
+    await sleep(0);
+    return element.isConnected !== false && element.checked === checked;
+  }
+
+  function choiceActivationGate(element) {
+    const payment = classifyPaymentContext(getPaymentElementContext(element, "click"));
+    if (!["confirmed_payment", "uncertain_payment"].includes(payment.classification)) return null;
+    return { type: payment.classification === "confirmed_payment" ? "payment" : "payment_uncertain", reason: payment.reason };
   }
 
   function setSelectValue(element, value) {
@@ -5671,7 +5701,44 @@
     return null;
   }
 
+  function isQueryNavigationControl(element, label = "") {
+    const text = String(label || getElementLabel(element)).toLowerCase();
+    // A query must have both a search action and one query field in a search
+    // container or GET query form. Button wording alone never lifts a boundary.
+    if (!/\b(?:search|find|lookup|look up)\b|搜索|查询|检索|查找/.test(text) ||
+        /\b(?:submit|publish|launch|send listing|add (?:my )?(?:site|product|startup))\b|提交|发布|添加网站|添加产品/.test(text)) return false;
+    const navigation = element.closest?.("[role='search'], nav, .navbar, .search-form");
+    const form = element.form || element.closest?.("form");
+    for (const root of new Set([navigation, form].filter(Boolean))) {
+      const fields = Array.from(root.querySelectorAll?.("input, textarea, select") || [])
+        .filter((field) => !["hidden", "submit", "button", "reset", "image"].includes(String(field.type || "").toLowerCase()) && isVisible(field));
+      if (fields.length !== 1 || !["text", "search", "url", ""].includes(String(fields[0].type || "").toLowerCase())) continue;
+      if (root === navigation || root.getAttribute?.("role") === "search") return true;
+      const queryField = fields[0].type === "search" || /^(?:q|s|query|search|searchterm|keyword)$/i.test(fields[0].name || "") || /\b(?:search|query|lookup)\b|搜索|查询|检索/.test(getFieldHint(fields[0]));
+      if (root === form && String(form.getAttribute?.("method") || "get").toLowerCase() === "get" && queryField) return true;
+    }
+    return false;
+  }
+
+  function attachmentUploadIntent(element, label = "") {
+    const text = String(label || getElementLabel(element)).toLowerCase();
+    if (/\b(?:submit|publish|launch|send listing|add (?:my )?(?:site|product|startup))\b|提交|发布|添加网站|添加产品/.test(text)) return null;
+    const count = text.match(/\bupload\s+(\d+)\s+files?\b/);
+    const dialog = element.closest?.("dialog[open], [role='dialog'], [aria-modal='true']");
+    if (!count || !dialog || !isVisible(element) || !isVisible(dialog)) return null;
+    const fields = Array.from(dialog.querySelectorAll("input, textarea, select"));
+    if (fields.some((field) => !["file", "hidden", "submit", "button", "reset", "image"].includes(String(field.type || "").toLowerCase()) && isVisible(field))) return null;
+    const files = fields.filter((field) => field.type === "file").flatMap((field) => Array.from(field.files || []))
+      .map((file) => ({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified }));
+    if (!files.length || files.length !== Number(count[1])) return null;
+    const signature = files.map(({ name, size, type }) => ({ name, size, type })).sort((a, b) => a.name.localeCompare(b.name) || a.size - b.size || a.type.localeCompare(b.type));
+    return { attachmentFiles: files, attachmentSignature: JSON.stringify(signature),
+      attachmentDialog: dialog.id || dialog.getAttribute("aria-label") || dialog.getAttribute("role") || dialog.tagName.toLowerCase() };
+  }
+
   function isModelSubmissionControl(element, label = "") {
+    if (isQueryNavigationControl(element, label)) return false;
+    if (attachmentUploadIntent(element, label)) return false;
     if (isSubmitControl(element)) return true;
     const normalized = String(label || "").toLowerCase();
     return /\b(submit|publish|launch|create draft|send listing|add (my )?(site|product|startup)|post comment)\b|提交|发布|创建草稿|发布评论|添加网站|添加产品/.test(normalized);
@@ -6010,14 +6077,24 @@
     );
   }
 
+  function normalizePricingType(value) {
+    const text = String(value || "").toLowerCase().replace(/[_-]+/g, " ");
+    if (/freemium/.test(text)) return "freemium";
+    if (/subscription|paid|credit|purchase/.test(text)) return "paid";
+    if (/open source/.test(text)) return "open source";
+    if (/free/.test(text)) return "free";
+    return "";
+  }
+
   function resolvePricingForSelect(select, pf) {
-    const pricingText = String(pf["PRICING TYPE"] || pf.Pricing || "freemium").toLowerCase();
+    const pricingType = normalizePricingType(pf["PRICING TYPE"] || pf.Pricing || "freemium");
     const options = Array.from(select.options).filter((o) => o.value && o.value !== "");
     const priorities = [];
-    if (/freemium/.test(pricingText)) priorities.push("freemium", "free");
-    else if (/subscription|paid|credit|purchase/.test(pricingText))
+    if (pricingType === "freemium") priorities.push("freemium", "free");
+    else if (pricingType === "paid")
       priorities.push("paid", "subscription", "one-time", "usage-based");
-    else if (/free/.test(pricingText)) priorities.push("free", "freemium");
+    else if (pricingType === "open source") priorities.push("open source");
+    else if (pricingType === "free") priorities.push("free", "freemium");
     else priorities.push("freemium", "free", "paid");
 
     for (const token of priorities) {
@@ -6074,10 +6151,11 @@
       .filter(Boolean);
 
     if (/pric|plan|model|tier|billing/.test(hint)) {
-      const pricingText = String(pf["PRICING TYPE"] || pf.Pricing || "freemium").toLowerCase();
-      if (/freemium/.test(pricingText)) tokens.push("freemium", "free");
-      else if (/subscription|paid|credit|purchase/.test(pricingText)) tokens.push("paid", "subscription", "one-time", "usage-based");
-      else if (/free/.test(pricingText)) tokens.push("free", "freemium");
+      const pricingType = normalizePricingType(pf["PRICING TYPE"] || pf.Pricing || config.pricing || "freemium");
+      if (pricingType === "freemium") tokens.push("freemium", "free");
+      else if (pricingType === "paid") tokens.push("paid", "subscription", "one-time", "usage-based");
+      else if (pricingType === "open source") tokens.push("open source");
+      else if (pricingType === "free") tokens.push("free", "freemium");
       else tokens.push("freemium", "free", "paid");
     }
 
@@ -6971,7 +7049,28 @@
       /\/forms\/(?:u\/\d+\/)?d\/e\/1FAIpQLSf_NRrGlkrWusy8Anci9eMrOC_aAAiT7LBmm60IFZzZ6TizdQ\/(?:viewform|formResponse)/i.test(location.pathname || "");
   }
 
-  function fillChoiceGroups(elements, config) {
+  function isProductPricingChoiceGroup(key, options) {
+    const hints = options.map((element) => {
+      const group = element.closest?.("fieldset, [role='radiogroup'], [role='group']");
+      return `${group?.querySelector?.("legend")?.textContent || ""} ${group?.getAttribute?.("aria-label") || ""}`;
+    }).join(" ");
+    return /\b(?:pric(?:e|ing)|cost|billing)(?:\b|[_-])|定价|价格|费用/.test(`${key} ${hints}`.toLowerCase());
+  }
+
+  function resolveProductPricingChoice(options, config) {
+    const pf = getProfileFields(config);
+    const profileKey = pf["PRICING TYPE"] ? "PRICING TYPE" : pf.Pricing ? "Pricing" : "";
+    const pricingType = normalizePricingType(profileKey ? pf[profileKey] : config.pricing);
+    if (!pricingType) return null;
+    const exact = (value) => normalizeOptionText(value).replace(/[_-]+/g, " ") === pricingType;
+    const element = options.find((option) => !option.disabled && (
+      exact(option.value) || exact(getSnapshotLabel(option)) ||
+      Array.from(option.labels || []).some((label) => exact(label.textContent))
+    ));
+    return element ? { element, profileKey, label: getSnapshotLabel(element) || element.value } : null;
+  }
+
+  async function fillChoiceGroups(elements, config) {
     const groups = collectChoiceGroups(elements);
     const corpus = profileChoiceCorpus(config);
     const tags = String(config.tags || "").toLowerCase();
@@ -6981,8 +7080,20 @@
 
     for (const [key, options] of groups) {
       options.forEach((element) => handled.add(element));
-      if (options.some((element) => element.checked)) continue;
       if (options.some(isHumanDeclarationField)) continue;
+      if (key.startsWith("radio:") && isProductPricingChoiceGroup(key, options)) {
+        const selected = resolveProductPricingChoice(options, config);
+        if (!selected || selected.element.checked) continue;
+        if (!await commitChoiceCheckedValue(selected.element, true)) continue;
+        filledCount++;
+        mappings[fieldMappingKey(selected.element)] = {
+          profileKey: selected.profileKey,
+          value: selected.element.value || selected.label,
+          label: selected.label,
+        };
+        continue;
+      }
+      if (options.some((element) => element.checked)) continue;
       const promptHive = typeof location !== "undefined" &&
         location.hostname === "prompthive.pages.dev" && /^\/submit\/?$/.test(location.pathname || "");
       if (promptHive && key.startsWith("checkbox:")) {
@@ -6990,10 +7101,7 @@
         for (const element of options) {
           const label = String(getSnapshotLabel(element) || "").toLowerCase();
           if (!/^web app/.test(label) && !(oldPhoto && /^free plan/.test(label))) continue;
-          setCheckedValue(element, true);
-          element.dispatchEvent(new Event("input", { bubbles: true }));
-          element.dispatchEvent(new Event("change", { bubbles: true }));
-          filledCount++;
+          if (await commitChoiceCheckedValue(element, true)) filledCount++;
         }
         continue;
       }
@@ -7023,9 +7131,7 @@
       }
       if (!selected) continue;
 
-      setCheckedValue(selected.element, true);
-      selected.element.dispatchEvent(new Event("input", { bubbles: true }));
-      selected.element.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!await commitChoiceCheckedValue(selected.element, true)) continue;
       filledCount++;
       mappings[fieldMappingKey(selected.element)] = {
         profileKey: "category",
@@ -7982,14 +8088,12 @@
           element.parentElement?.textContent || "",
         ].join(" "), 180).toLowerCase();
         if (!/^web app/.test(label) && !(oldPhoto && /^free plan/.test(label))) continue;
-        setCheckedValue(element, true);
-        element.dispatchEvent(new Event("input", { bubbles: true }));
-        element.dispatchEvent(new Event("change", { bubbles: true }));
+        await commitChoiceCheckedValue(element, true);
       }
     }
     const elements = queryFillableElements();
     clearStaleProfileListingForm(elements, config);
-    const choiceResult = fillChoiceGroups(elements, config);
+    const choiceResult = await fillChoiceGroups(elements, config);
     let filledCount = choiceResult.filledCount;
     const mappings = { ...choiceResult.mappings };
     const skippedFiles = [];

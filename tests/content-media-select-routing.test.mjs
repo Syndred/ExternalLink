@@ -173,18 +173,16 @@ assert.equal(selectValue({ tagName: "SELECT", hint: "Where the company is based"
 "unknown company location must not be fabricated as United States");
 
 const reconcileCustomPricing = new Function(
-  "location", "getFieldHint", "compactText", "resolveSelectTokens",
-  `${extractFunction("shouldReconcileDefaultCustomPricing", "tryFillCustomDropdown")}; return shouldReconcileDefaultCustomPricing;`,
+  "getFieldHint", "getProfileFields", "isHumanDeclarationField", "choiceActivationGate",
+  `${extractFunction("normalizePricingType", "resolvePricingForSelect")}; ${extractFunction("explicitProductPricingTarget", "shouldReconcileDefaultCustomPricing")}; ${extractFunction("shouldReconcileDefaultCustomPricing", "tryFillCustomDropdown")}; return shouldReconcileDefaultCustomPricing;`,
 )(
-  { hostname: "alieradox.com" },
   (element) => element.hint,
-  (value) => String(value || "").trim(),
-  (_element, config) => [config.projectFields?.["PRICING TYPE"]?.toLowerCase().startsWith("freemium") ? "freemium" : "free"],
+  (config) => config.projectFields || {}, () => false, () => null,
 );
-assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Free" }, {
+assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Free", getAttribute: () => null }, {
   projectFields: { "PRICING TYPE": "Freemium with credits" },
 }), true, "a controlled Free default must be corrected for a freemium Profile");
-assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Freemium" }, {
+assert.equal(reconcileCustomPricing({ hint: "Pricing Model", textContent: "Freemium", getAttribute: () => null }, {
   projectFields: { "PRICING TYPE": "Freemium with credits" },
 }), false, "the matching choice should be left alone");
 
@@ -200,6 +198,7 @@ const listbox = { querySelectorAll: () => [pricingOption] };
 const fillCustomDropdown = new Function(
   "document", "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing",
   "sleep", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "MouseEvent", "KeyboardEvent", "findBestSelectOption",
+  "explicitProductPricingTarget", "isHumanDeclarationField", "choiceActivationGate",
   `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
 )(
   { querySelectorAll: (selector) => selector === '[role="listbox"]' ? [listbox] : [],
@@ -214,6 +213,7 @@ const fillCustomDropdown = new Function(
   class MouseEvent {},
   class KeyboardEvent {},
   matchOption,
+  () => null, () => false, () => null,
 );
 assert.equal(await fillCustomDropdown(pricingTrigger, {
   projectFields: { "PRICING TYPE": "Freemium with credits" },
@@ -247,7 +247,7 @@ const clipped = new Function("document", "window",
 );
 assert.equal(clipped(formInCollapsedPanel), true, "zero-height clipped paid panels must be excluded from form selection");
 assert.match(content, /select2-hidden-accessible/, "hidden Select2 native control must be eligible when its form is open");
-assert.ok(content.includes("const wrongPricingDefault = (selectedDefault || controlledFreeDefault)"),
+assert.ok(content.includes('element.setAttribute("data-extlink-expected-pricing", pricingTarget.type)'),
   "native and controlled Free defaults must be eligible for Profile pricing reconciliation");
 
 const isCustomDropdownEmpty = new Function(
@@ -438,11 +438,12 @@ const freeOption = {
 const fillRadixPricing = new Function(
   "resolveSelectTokens", "compactText", "shouldReconcileDefaultCustomPricing", "sleep",
   "document", "isVisible", "normalizeOptionText", "isCustomDropdownEmpty", "PointerEvent", "findBestSelectOption",
+  "explicitProductPricingTarget", "isHumanDeclarationField", "choiceActivationGate",
   `${extractFunction("tryFillCustomDropdown", "getActiveFillScope")}; return tryFillCustomDropdown;`,
 )(
   (_trigger, config) => [config.desired || "freemium"],
   (value) => String(value || "").trim(),
-  (trigger) => trigger.textContent === "Free",
+  (trigger) => /^(free|select pricing)$/i.test(trigger.textContent),
   async () => {},
   { querySelectorAll: (selector) => selector === '[role="option"]' ? [radixOption, freeOption] : [], body: { click() {} } },
   () => true,
@@ -450,6 +451,7 @@ const fillRadixPricing = new Function(
   (trigger) => trigger.textContent === "Free",
   class { constructor(type) { this.type = type; } },
   matchOption,
+  () => null, () => false, () => null,
 );
 assert.equal(await fillRadixPricing(radixTrigger, {}), true);
 assert.equal(radixTrigger.textContent, "Freemium");

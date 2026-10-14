@@ -6127,25 +6127,80 @@
     ).filter((el) => isVisible(el) && isFillableField(el));
   }
 
+  function explicitProductPricingTarget(element, config) {
+    const hint = getFieldHint(element);
+    if (!/\bpric(?:e|ing)?\b|\bbilling\b|定价|价格|收费模式/i.test(hint) ||
+        /categ|industry|sector|topic|\b(?:listing|featured|upgrade|promotion|submission\s+fee)\b|分类|类别/i.test(hint) ||
+        isHumanDeclarationField(element)) return null;
+    const gate = choiceActivationGate(element);
+    if (gate) {
+      if (gate.type !== "payment_uncertain") return null;
+      const context = getPaymentElementContext(element, "click");
+      const local = [context.label, context.local, context.fieldset, context.options].join(" ");
+      // A closed product combobox has not rendered its enum options yet.
+      // Require an explicit product label and no charge signal before opening.
+      const productLabel = /\b(?:product|tool|app|service)\s+pric(?:e|ing)\b/i.test(hint);
+      const charge = /\b(?:pay|purchase|buy|checkout|listing|submission|upgrade|promotion|payment|billing\s+address|credit\s+card|amount\s+due)\b/i.test(local);
+      const form = element.closest?.("form, [role='form']");
+      const controls = form ? Array.from(form.querySelectorAll("input, textarea")) : [];
+      const productName = controls.some((field) => /\b(?:tool|product|app)\s*name\b|(?:tool|product|app)[_-]name/i.test(getFieldHint(field)));
+      const productUrl = controls.some((field) => !/social|twitter|linkedin|facebook|image|logo/i.test(getFieldHint(field)) &&
+        /website|homepage|\b(?:tool|product|app)\s*(?:url|link)\b|(?:tool|product|app)[_-](?:url|link)/i.test(getFieldHint(field)));
+      const submissionControls = form ? Array.from(form.querySelectorAll('button, input[type="submit"], h1, h2, h3')) : [];
+      const productForm = productName && productUrl && submissionControls.some((field) =>
+        /\b(?:submit|add|send|publish)\b/i.test(field.textContent || field.value || ""));
+      if ((!productLabel && !productForm) || charge) return null;
+    }
+    const fields = getProfileFields(config);
+    const profileKey = fields["PRICING TYPE"] ? "PRICING TYPE" : fields.Pricing ? "Pricing" : "";
+    const type = normalizePricingType(profileKey ? fields[profileKey] : config.pricing);
+    return { type: type || "unknown", profileKey };
+  }
+
+  function pricingSelectionText(element) {
+    if (element.tagName?.toLowerCase() === "select") return element.selectedOptions?.[0]?.textContent || element.value;
+    const accessibleValue = element.getAttribute("aria-valuetext");
+    if (accessibleValue) return accessibleValue;
+    if (element.tagName?.toLowerCase() !== "input") return element.textContent;
+    // A combobox input contains search text, not the committed selection.
+    const selected = element.closest?.('[class*="css-"][class*="-container"]')
+      ?.querySelector?.('[class*="singleValue"]');
+    if (selected) return selected.textContent;
+    const listbox = document.getElementById(element.getAttribute("aria-controls") || "");
+    return listbox?.querySelector?.('[role="option"][aria-selected="true"]')?.textContent || "";
+  }
+
+  function pricingOptionType(value) {
+    const text = String(value || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+    // Only an enum at the start identifies the option; descriptions such as
+    // "Free, no subscription" must not select Paid because of their wording.
+    if (/^freemium\b/.test(text)) return "freemium";
+    if (/^free\b/.test(text)) return "free";
+    if (/^paid\b|^subscription$/.test(text)) return "paid";
+    if (/^open source\b/.test(text)) return "open source";
+    return "";
+  }
+
+  function pricingSelectionMismatch(element) {
+    const expected = element.getAttribute("data-extlink-expected-pricing");
+    return expected && pricingOptionType(pricingSelectionText(element)) !== expected
+      ? `产品定价未匹配资料（期望 ${expected}，实际 ${compactText(pricingSelectionText(element), 80) || "未选择"}）`
+      : "";
+  }
+
   function shouldReconcileDefaultCustomPricing(trigger, config) {
-    if (typeof location === "undefined" || !/(?:^|\.)alieradox\.com$/i.test(location.hostname)) return false;
-    if (!/\bpric(?:e|ing)?\b/i.test(getFieldHint(trigger))) return false;
-    const current = compactText(trigger.textContent || trigger.getAttribute("aria-valuetext"), 120).toLowerCase();
-    const desired = resolveSelectTokens(trigger, config)[0]?.toLowerCase();
-    return current === "free" && (desired === "freemium" || desired === "paid");
+    const target = explicitProductPricingTarget(trigger, config);
+    return !!target && pricingOptionType(pricingSelectionText(trigger)) !== target.type;
   }
 
   async function tryFillCustomDropdown(trigger, config) {
-    const desiredTokens = resolveSelectTokens(trigger, config);
+    const pricingTarget = explicitProductPricingTarget(trigger, config);
+    if (isHumanDeclarationField(trigger) || (!pricingTarget && choiceActivationGate(trigger))) return false;
+    if (pricingTarget) trigger.setAttribute("data-extlink-expected-pricing", pricingTarget.type);
+    const desiredTokens = pricingTarget ? [pricingTarget.type] : resolveSelectTokens(trigger, config);
     if (!desiredTokens.length) return false;
 
-    const current = compactText(
-      trigger.tagName?.toLowerCase() === "input"
-        ? trigger.value
-        : trigger.textContent || trigger.getAttribute("aria-valuetext"),
-      120,
-    );
-    if (current && !/select|choose|pick|please/i.test(current) &&
+    if (!isCustomDropdownEmpty(trigger) &&
         !shouldReconcileDefaultCustomPricing(trigger, config)) return false;
 
     trigger.focus();
@@ -6203,13 +6258,18 @@
       const n = normalizeOptionText(token);
       // Share native-select ranking: an exact label must beat an earlier
       // partial match (for example Free must not select Freemium).
-      let match = findBestSelectOption(options, token);
+      const findOption = (items) => pricingTarget
+        ? items.find((option) => pricingOptionType(option.label) === pricingTarget.type)
+        : findBestSelectOption(items, token);
+      const committed = () => pricingTarget ? !pricingSelectionMismatch(trigger)
+        : !isCustomDropdownEmpty(trigger) && !shouldReconcileDefaultCustomPricing(trigger, config);
+      let match = findOption(options);
       if (!match && trigger.tagName?.toLowerCase() === "input") {
         setFieldValue(trigger, token);
         trigger.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: token }));
         await sleep(180);
         options = visibleOptions();
-        match = findBestSelectOption(options, token);
+        match = findOption(options);
       }
       if (!match) {
         const search = Array.from(document.querySelectorAll('input[placeholder], input[aria-label]'))
@@ -6220,10 +6280,11 @@
           search.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: token }));
           await sleep(180);
           options = visibleListboxLeaves();
-          match = options.find((o) => normalizeOptionText(o.label) === n);
+          match = pricingTarget ? findOption(options) : options.find((o) => normalizeOptionText(o.label) === n);
         }
       }
       if (match) {
+        if (choiceActivationGate(match.el) || isHumanDeclarationField(match.el)) continue;
         const radixOption = match.el.closest?.('[role="option"][data-radix-collection-item]');
         if (radixOption && typeof PointerEvent === "function") {
           // Radix Select commits mouse selections on pointerup. A synthetic
@@ -6234,13 +6295,13 @@
           radixOption.dispatchEvent(pointer("pointerdown"));
           radixOption.dispatchEvent(pointer("pointerup"));
           await sleep(250);
-          if (normalizeOptionText(trigger.textContent) === n) return true;
+          if (pricingTarget ? committed() : normalizeOptionText(trigger.textContent) === n) return true;
         }
         match.el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
         await sleep(80);
         if (isCustomDropdownEmpty(trigger) || shouldReconcileDefaultCustomPricing(trigger, config)) match.el.click();
         await sleep(150);
-        if (!isCustomDropdownEmpty(trigger) && !shouldReconcileDefaultCustomPricing(trigger, config)) return true;
+        if (committed()) return true;
       }
       if (trigger.tagName?.toLowerCase() === "input") {
         setFieldValue(trigger, "");
@@ -6636,14 +6697,18 @@
     const issues = [];
     let invalidCount = 0;
 
-    for (const element of queryFillableElements()) {
-      const type = (element.type || "").toLowerCase();
-      const value = getElementFillValue(element);
-      if (!value || !String(value).trim()) continue;
+    for (const element of [...new Set([...queryFillableElements(),...queryCustomDropdowns()])]) {
+      const custom=element.matches('[role="combobox"], [aria-haspopup="listbox"]')&&element.tagName.toLowerCase()!=='select';
+      const type = custom?'combobox':(element.type || "").toLowerCase();
+      const value = custom?(isCustomDropdownEmpty(element)?'':compactText(
+        element.getAttribute("data-extlink-expected-pricing") ? pricingSelectionText(element) : element.value||element.textContent,240)):getElementFillValue(element);
+      const pricingIssue = pricingSelectionMismatch(element);
+      if ((!value || !String(value).trim()) && !pricingIssue) continue;
 
       const constraints = getFieldConstraints(element);
       const length = String(value).length;
       const fieldIssues = [];
+      if (pricingIssue) fieldIssues.push(pricingIssue);
 
       if (constraints.maxLength && length > constraints.maxLength) {
         fieldIssues.push(
@@ -7956,17 +8021,23 @@
       if (choiceResult.handled.has(element)) continue;
 
       if (tag === "select") {
-        const selectHint = getFieldHint(element);
-        const selectedDefault = !!element.selectedOptions?.[0]?.defaultSelected;
-        // Alieradox renders its default Free choice as controlled React state,
-        // without defaultSelected on the underlying option. Reconcile that
-        // initial value with the Profile before treating it as user input.
-        const controlledFreeDefault = typeof location !== "undefined" &&
-          /(?:^|\.)alieradox\.com$/i.test(location.hostname) &&
-          /^free$/i.test(String(element.value || "").trim());
-        const wrongPricingDefault = (selectedDefault || controlledFreeDefault) && /\bpric(?:e|ing)?\b|\bbilling\b/.test(selectHint) &&
-          !/\b(?:listing|featured|upgrade|promotion)\b/.test(selectHint);
-        if (!config.forceRefreshExisting && !isSelectEmpty(element) && !fieldNeedsRefill(element) && !wrongPricingDefault) continue;
+        const pricingTarget = explicitProductPricingTarget(element, config);
+        if (pricingTarget) {
+          element.setAttribute("data-extlink-expected-pricing", pricingTarget.type);
+          if (!pricingSelectionMismatch(element)) continue;
+          const option = Array.from(element.options).find((candidate) => !candidate.disabled &&
+            pricingOptionType(candidate.textContent) === pricingTarget.type);
+          if (!option || choiceActivationGate(option)) continue;
+          const changed = setSelectValue(element, option.value);
+          await sleep(0);
+          if (changed && !pricingSelectionMismatch(element)) {
+            filledCount++;
+            mappings[fieldMappingKey(element)] = { profileKey: pricingTarget.profileKey,
+              value: element.value, label: getSnapshotLabel(element) };
+          }
+          continue;
+        }
+        if (!config.forceRefreshExisting && !isSelectEmpty(element) && !fieldNeedsRefill(element)) continue;
         const selectValue = resolveSelectValueForField(element, config);
         if (selectValue && selectValue !== element.value && setSelectValue(element, selectValue)) {
           filledCount++;
@@ -8105,6 +8176,8 @@
           inferredFields: [...inferredFields],
         });
       }
+      const pricingTarget = explicitProductPricingTarget(trigger, config);
+      if (pricingTarget) trigger.setAttribute("data-extlink-expected-pricing", pricingTarget.type);
       if (!isCustomDropdownEmpty(trigger) && !shouldReconcileDefaultCustomPricing(trigger, config)) continue;
       const ok = await tryFillCustomDropdown(trigger, config);
       if (!isCurrentPageContext(pageContext)) {
@@ -8119,8 +8192,8 @@
       if (ok) {
         filledCount++;
         mappings[fieldMappingKey(trigger)] = {
-          profileKey: "select",
-          value: compactText(trigger.textContent, 120),
+          profileKey: pricingTarget?.profileKey ?? "select",
+          value: compactText(pricingTarget ? pricingSelectionText(trigger) : trigger.textContent, 120),
           label: getSnapshotLabel(trigger),
         };
       }
@@ -8172,6 +8245,10 @@
         continue;
       }
       const tag = element.tagName.toLowerCase();
+      if (pricingSelectionMismatch(element)) {
+        invalidCount++;
+        continue;
+      }
       if (tag === "select" && isSelectEmpty(element)) {
         if (fieldIsRequired(element)) emptyCount++;
         continue;
@@ -8191,6 +8268,7 @@
     }
 
     for (const trigger of customDropdowns) {
+      if (pricingSelectionMismatch(trigger)) invalidCount++;
       if (isCustomDropdownEmpty(trigger) && fieldIsRequired(trigger)) emptyCount++;
     }
 

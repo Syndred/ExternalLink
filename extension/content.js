@@ -394,8 +394,9 @@
       const label = element ? compactText(getElementLabel(element), 240) : "";
       const queryAction = !!element && isActionElementAllowed(element, "click") && isQueryNavigationControl(element, label);
       const attachment = element ? attachmentUploadIntent(element, label) : null;
-      sendResponse({ ok: !!element, queryAction, attachmentAction: !!attachment, ...(attachment || {}), documentTimeOrigin: performance.timeOrigin,
-        intent: attachment ? "attachment" : queryAction ? "navigation" : element && isModelSubmissionControl(element, label) ? "submission" : "unknown", label });
+      const preparation = element && isActionElementAllowed(element, "click") ? preparationClickIntent(element, label) : null;
+      sendResponse({ ok: !!element, targetSelector: element ? extSelector(element) : "", queryAction, attachmentAction: !!attachment, ...(attachment || {}), preparationAction: !!preparation, ...(preparation || {}), documentTimeOrigin: performance.timeOrigin,
+        intent: attachment ? "attachment" : queryAction ? "navigation" : preparation ? "preparation" : element && isModelSubmissionControl(element, label) ? "submission" : "unknown", label });
       return true;
     }
     if (msg.type === "executeActionPlan" || msg.action === "executeActionPlan") {
@@ -1573,6 +1574,7 @@
   }
 
   function isNonSubmissionUtilityField(element) {
+    if (isNavigationSelectField(element)) return true;
     const type=String(element?.type||'').toLowerCase();
     const label=String(getSnapshotLabel(element)||'').trim().toLowerCase();
     const hint=String(getFieldHint(element)||'').toLowerCase();
@@ -1586,6 +1588,24 @@
     // navigation, filter, survey, or account form. Never treat those controls
     // as an ExternalLink submission target merely because they are fillable.
     return !pageHasSubmission;
+  }
+
+  function isNavigationSelectField(element) {
+    if (String(element?.tagName || '').toLowerCase() !== 'select') return false;
+    // WordPress category widgets browse published archives. They can sit
+    // beside a real product form and expose the same category label, but
+    // changing their value navigates away from that submission document.
+    const taxonomyWidget = element.closest?.(
+      '.widget_categories, .wp-block-categories-dropdown, .wp-block-categories',
+    );
+    if (taxonomyWidget && (String(element.name || '') === 'cat' ||
+        /^(?:wp-block-categories-\d+|cat(?:-\d+)?)$/i.test(String(element.id || '')))) return true;
+    // Other navigation dropdowns sometimes declare the redirect directly in
+    // markup. An ordinary dependent product category onchange remains valid.
+    const handler = String(element.getAttribute?.('onchange') || '')
+      .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`/g, "''")
+      .replace(/\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/g, '');
+    return /(?:^|[^\w$.])(?:(?:window|document|top|self)\s*\.\s*)?location\s*(?:\.\s*(?:href|assign|replace))?\s*(?:=|\()/i.test(handler);
   }
 
   // ─── Waiting banner overlay (injected into page DOM) ───
@@ -4961,24 +4981,44 @@
         const label = compactText(getElementLabel(element), 240);
         const beforeEvidence = classifyVisibleEvidence();
         const beforeUrl = redactSnapshotUrl(location.href);
-        const submitted = isModelSubmissionControl(element, label);
+        const preparation = preparationClickIntent(element, label);
+        let submitted = isModelSubmissionControl(element, label);
         element.scrollIntoView({ block: "center", inline: "center" });
         await sleep(80);
+        const currentPreparation = preparationClickIntent(element, compactText(getElementLabel(element), 240));
+        const expected = action.preparationProof;
+        if ((expected || preparation) && (!currentPreparation || expected && (expected.signature !== currentPreparation.preparationSignature || expected.kind !== currentPreparation.preparationKind || expected.documentTimeOrigin !== performance.timeOrigin) || preparation && preparation.preparationSignature !== currentPreparation.preparationSignature)) {
+          return { ...actionFailure(action, "preparation control identity changed"), needs_manual: true };
+        }
+        const currentGate = currentPreparation ? classifyModelClickGate(element) : null;
+        if (currentGate) return { ...actionFailure(action, currentGate.reason), needs_manual: true, humanGate: currentGate.type,
+          uncertain: currentGate.uncertain === true, semanticReview: currentGate.uncertain === true,
+          paymentClassification: currentGate.paymentClassification || "", paymentEvidence: currentGate.paymentEvidence || null };
+        let unexpectedSubmission = false;
+        const observeSubmission = () => { unexpectedSubmission = true; };
+        if (currentPreparation) document.addEventListener("submit", observeSubmission, true);
 
         const tag = element.tagName.toLowerCase();
         const href = tag === "a" ? element.href || element.getAttribute("href") || "" : "";
-        if (href && /^https?:/i.test(href)) {
-          location.assign(href);
-        } else {
-          element.focus();
-          element.click();
+        try {
+          if (href && /^https?:/i.test(href)) {
+            location.assign(href);
+          } else {
+            element.focus();
+            element.click();
+          }
+          if (currentPreparation) await sleep(0);
+        } finally {
+          if (currentPreparation) document.removeEventListener("submit", observeSubmission, true);
         }
+        submitted = currentPreparation ? unexpectedSubmission : submitted;
         return {
           ok: true,
           selector: action.selector,
           clicked: true,
           submitted,
-          navigationExpected: submitted || Boolean(href) || isQueryNavigationControl(element, label) || isLikelyNavigationControl(label),
+          navigationExpected: submitted || !currentPreparation && (Boolean(href) || isQueryNavigationControl(element, label) || isLikelyNavigationControl(label)),
+          ...(currentPreparation ? { preparationKind: currentPreparation.preparationKind, preparationUnexpectedSubmission: unexpectedSubmission } : {}),
           beforeUrl,
           evidenceBaseline: beforeEvidence?.matched ? beforeEvidence.evidence || "" : "",
           target: label,
@@ -5634,9 +5674,54 @@
       attachmentDialog: dialog.id || dialog.getAttribute("aria-label") || dialog.getAttribute("role") || dialog.tagName.toLowerCase() };
   }
 
+  function preparationClickIntent(element, label = "") {
+    if (!element?.tagName) return null;
+    const tag = element.tagName.toLowerCase(), type = String(element.getAttribute("type") || "").toLowerCase();
+    const formOwner = !!(element.form || element.closest?.("form") || element.getAttribute("form"));
+    if (["submit", "image", "reset"].includes(type) || tag === "a" || tag === "button" && !type && formOwner) return null;
+    if (element.isConnected === false || element.disabled || element.getAttribute("aria-disabled") === "true" || !isVisible(element)) return null;
+    const text = String(label || getElementLabel(element)).toLowerCase();
+    if (/\b(?:submit|publish|launch|send|post|finish|done|continue|pay|purchase|checkout|login|sign in|accept|agree|consent)\b|提交|发布|付款|登录|同意/.test(text)) return null;
+    const controlId = (control) => String(control.getAttribute("aria-controls") || "").trim();
+    const comboProof = (control) => {
+      if (!control || control.getAttribute("role") !== "combobox" || control.getAttribute("aria-haspopup") !== "listbox" || !["true", "false"].includes(control.getAttribute("aria-expanded"))) return false;
+      const id = controlId(control), controlType = String(control.getAttribute("type") || "").toLowerCase();
+      if (!id || /\s/.test(id) || control.disabled || control.getAttribute("aria-disabled") === "true" || !isVisible(control)) return false;
+      if (["submit", "image", "reset"].includes(controlType) || control.tagName.toLowerCase() === "button" && !controlType) return false;
+      const controllers = Array.from(document.querySelectorAll('[role="combobox"][aria-controls]')).filter((item) => controlId(item) === id && isVisible(item) && !item.disabled && item.getAttribute("aria-disabled") !== "true");
+      if (controllers.length !== 1 || controllers[0] !== control) return false;
+      const list = document.getElementById(id);
+      return (!list || list.getAttribute("role") === "listbox") && (control.getAttribute("aria-expanded") !== "true" || !!list && isVisible(list));
+    };
+    let kind = "", context = "", controller;
+    if (comboProof(element)) {
+      kind = "combobox_toggle"; controller = element; context = controlId(element);
+    } else if (element.getAttribute("role") === "option") {
+      const list = element.closest('[role="listbox"]');
+      if (!list?.id || !isVisible(list)) return null;
+      const controllers = Array.from(document.querySelectorAll('[role="combobox"][aria-controls]')).filter((item) => controlId(item) === list.id && comboProof(item) && item.getAttribute("aria-expanded") === "true");
+      if (controllers.length !== 1) return null;
+      kind = "combobox_option"; controller = controllers[0]; context = list.id;
+    } else if (tag === "button" && !formOwner) {
+      const dialog = element.closest("dialog[open], [role='dialog'], [aria-modal='true']");
+      const name = String(element.getAttribute("aria-label") || element.getAttribute("title") || element.innerText || element.textContent || "").trim().toLowerCase();
+      if (!dialog || !isVisible(dialog) || !/^(?:(?:close|dismiss)(?: (?:the )?cookie (?:notice|banner|dialog))?|关闭(?:cookie|cookies|饼干|提示)?|×|x)$/.test(name)) return null;
+      const contextText = compactText((dialog.getAttribute("aria-label") || "") + " " + dialog.innerText, 2000).toLowerCase();
+      if (!/\bcookies?\b/.test(contextText) || /\b(?:closing|close|dismiss)\b[^.!?]{0,180}\b(?:agree|accept|consent)\b|\b(?:agree|accept|consent)\b[^.!?]{0,180}\b(?:closing|close|dismiss)\b|关闭[^。！？]{0,80}(?:同意|接受)|(?:同意|接受)[^。！？]{0,80}关闭/.test(contextText)) return null;
+      if (dialog.querySelector('form') || Array.from(dialog.querySelectorAll('input, textarea, select')).some((field) => isVisible(field) && !["hidden", "button", "submit", "reset"].includes(String(field.type || "").toLowerCase()))) return null;
+      kind = "cookie_dismiss"; context = dialog.id || extSelector(dialog);
+    }
+    if (!kind) return null;
+    const selector = extSelector(element), evidence = { kind, selector, tag, type, formOwner, context,
+      role: element.getAttribute("role") || "", controller: controller ? extSelector(controller) : "",
+      expanded: controller?.getAttribute("aria-expanded") || "", name: compactText(element.getAttribute("aria-label") || element.getAttribute("title") || element.innerText || element.textContent, 100) };
+    return { preparationKind: kind, preparationSelector: selector, preparationEvidence: evidence, preparationSignature: JSON.stringify(evidence) };
+  }
+
   function isModelSubmissionControl(element, label = "") {
     if (isQueryNavigationControl(element, label)) return false;
     if (attachmentUploadIntent(element, label)) return false;
+    if (preparationClickIntent(element, label)) return false;
     if (isSubmitControl(element)) return true;
     const normalized = String(label || "").toLowerCase();
     return /\b(submit|publish|launch|create draft|send listing|add (my )?(site|product|startup)|post comment)\b|提交|发布|创建草稿|发布评论|添加网站|添加产品/.test(normalized);
@@ -6431,6 +6516,7 @@
       const supplemental = Array.from(document.querySelectorAll("select"))
         .filter((element) => !root.contains(element))
         .filter((element) => isVisible(element) && isFillableField(element))
+        .filter((element) => !isMarketingOptInField(element) && !isNonSubmissionUtilityField(element))
         .filter((element) => /categor|industry|sector|niche|vertical|topic|project\s*kind|product\s*type/.test(getFieldHint(element)));
       for (const element of supplemental) {
         if (!primary.includes(element)) primary.push(element);

@@ -5,7 +5,7 @@ import {createOriginalSubmissionAdapter} from '../executor/src/original-submissi
 const source=readFileSync(new URL('../core/form-engine.js',import.meta.url),'utf8').replace(/\r\n/g,'\n');
 function extract(name){return source.match(new RegExp(`  function ${name}\\([\\s\\S]*?(?=\\n  (?:async )?function |\\n  //)`))?.[0]||'';}
 const isSubmission=new Function('getElementLabel','getFieldHint','isVisible','compactText',
- `${extract('isQueryNavigationControl')} ${extract('attachmentUploadIntent')} ${extract('isModelSubmissionControl')} ${extract('isSubmitControl')};return isModelSubmissionControl;`
+ `${extract('isQueryNavigationControl')} ${extract('attachmentUploadIntent')} ${extract('preparationClickIntent')} ${extract('isModelSubmissionControl')} ${extract('isSubmitControl')};return isModelSubmissionControl;`
 )(element=>element.label,element=>element.name,()=>true,value=>String(value||''));
 function control({label='Search',query=true,method='get',role='search',mixed=false}={}){
  const fields=mixed?[{type:'text',name:'query'},{type:'text',name:'product_name'}]:[{type:'text',name:query?'query':'product_name'}];

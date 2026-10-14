@@ -101,6 +101,24 @@ export function nextWorkbenchTask(runtime,options={}){
  runtime.workbenchDispatchOperation=operation;return operation.finally(()=>{if(runtime.workbenchDispatchOperation===operation)runtime.workbenchDispatchOperation=null;});
 }
 export function advanceWorkbenchCursor(batch){while(batch.cursor<batch.items.length&&['excluded','complete'].includes(batch.items[batch.cursor].status))batch.cursor++;return batch;}
+function workbenchProfilePatch(runtime,task,item,batch){
+ const fail=reason=>{throw Object.assign(Error(reason),{workbenchProfileReuse:true});};
+ if(task.receipt||task.attemptBoundary||['submitting','submitted_unconfirmed','finished'].includes(task.status)||['sent_unconfirmed','accepted'].includes(task.siteStatus)||task.submitResult?.clickedSubmit===true||task.submitResult?.submitted===true)fail('原任务已有提交结果或未知边界，冻结资料保留');
+ const desired=item.profile||batch.profileSnapshots?.[item.profileId];
+ if(!desired)return{profileSnapshot:task.profileSnapshot,profileRevision:task.profileRevision??item.profileRevision};
+ const run=runtime.store.get('run:'+task.runId),previous=task.profileSnapshot||run?.profile,revision=task.profileSnapshot?task.profileRevision??run?.profileRevision:run?.profileRevision;
+ if(task.id!==item.taskId||task.runId!==item.runId||task.profileId!==item.profileId||task.url!==item.url)fail('旧任务与本批次冻结资料身份不一致，原任务保留');
+ if(!Number.isInteger(item.profileRevision)||Number.isInteger(revision)&&revision>item.profileRevision)fail('旧任务资料修订晚于本批次，原快照保留，请重新预览');
+ const changed=previous&&!jsonValueEqual(previous,desired);
+ if(changed){
+  if(batch.scopeSha256&&batch.scopeSha256!==frozenDigest(batch,batchScopeRows(batch)))fail('本批次冻结资料校验不一致，原任务保留');
+  if(!Number.isInteger(revision)||revision>=item.profileRevision)fail('旧任务资料与同修订快照不一致，原任务保留，请核验');
+  if(task.targetId||task.fillOnlyPrepared||task.submitPreparedRun||task.actualSubmission?.fields?.length||task.stageHistory?.length||!['pending','needs_manual'].includes(task.status))fail('旧任务已保留页面或填写资料，原快照保留，请核验后再安排');
+  if(profiles.fillIdentityMismatch({projectKey:item.profileId,brandName:desired.fields?.Name||desired.name,targetDomain:desired.fields?.Url||desired.url},previous))fail('旧任务产品身份与本批次资料不一致，原任务保留');
+ }
+ const history=previous&&(changed||revision!==item.profileRevision)?{profileRefreshHistory:[...(task.profileRefreshHistory||[]),{at:new Date().toISOString(),source:'approved_workbench_batch',batchId:batch.id,profileRevision:revision,profileSnapshot:plain(previous),nextProfileRevision:item.profileRevision}]}:{};
+ return{profileSnapshot:plain(desired),profileRevision:item.profileRevision,...history};
+}
 async function selectWorkbenchTask(runtime,{single=true}={}){
  const id=runtime.store.get('activeWorkbenchBatch');let batch=id&&runtime.store.get('workbenchBatch:'+id);if(batch?.status!=='running')return null;assertBatchPolicy(runtime,batch);
  for(const item of batch.items){const task=runtime.store.get('task:'+item.taskId);if(item.result==='received_pending_sync'&&task?.receipt&&task.cloudVerified===true)finishWorkbenchTask(runtime,item.taskId);}
@@ -123,7 +141,11 @@ async function selectWorkbenchTask(runtime,{single=true}={}){
   const task=runtime.store.get('task:'+item.taskId);if(!task)throw Error('批次原任务缺失');
   if(task.receipt||task.attemptBoundary){item.status='complete';item.result=task.receipt?(task.cloudVerified===true?'received':'received_pending_sync'):'sent_unconfirmed';item.reason=task.reason;if(!task.receipt)parkedDestinations.add(item.destinationKey||queue.normalizeDestinationKey(item.url));advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);continue;}
   if(['ai','supervisor'].includes(task.controller))throw Error('原任务尚未交回');
-  runtime.store.set('workbenchBatch:'+id,batch);await runtime.lease(task,{online:true});batch=runtime.store.get('workbenchBatch:'+id);if(batch.items[index]?.taskId!==task.id||['excluded','complete'].includes(batch.items[index].status))return null;if(!releaseBatchTask(runtime,batch,task,{status:'pending',controller:'executor',profileSnapshot:task.profileSnapshot||item.profile,profileRevision:task.profileRevision||item.profileRevision,workbenchBatchId:id,consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'user_reply',text:'用户确认本批次普通免费投稿'}]},index))return null;
+  let profilePatch;
+  try{profilePatch=workbenchProfilePatch(runtime,task,item,batch);}catch(error){if(!error.workbenchProfileReuse)throw error;item.status='excluded';item.reason=error.message;advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);continue;}
+  runtime.store.set('workbenchBatch:'+id,batch);await runtime.lease(task,{online:true});batch=runtime.store.get('workbenchBatch:'+id);if(batch.items[index]?.taskId!==task.id||['excluded','complete'].includes(batch.items[index].status))return null;
+  try{profilePatch=workbenchProfilePatch(runtime,task,batch.items[index],batch);}catch(error){if(!error.workbenchProfileReuse)throw error;batch.items[index].status='excluded';batch.items[index].reason=error.message;advanceWorkbenchCursor(batch);runtime.store.set('workbenchBatch:'+id,batch);continue;}
+  if(!releaseBatchTask(runtime,batch,task,{status:'pending',controller:'executor',...profilePatch,workbenchBatchId:id,consentHistory:[...(task.consentHistory||[]),{at:new Date().toISOString(),scope:'ordinary_submission_permissions',source:'user_reply',text:'用户确认本批次普通免费投稿'}]},index))return null;
   if(single)runtime.store.set('singleTaskId',task.id);return task;
  }
  if(liveIds.size||runtime.store.values('manualSkipPending:').some(item=>item?.scope===workbenchScope(runtime.store.get('pair'))&&item.batchId===batch.id))return null;

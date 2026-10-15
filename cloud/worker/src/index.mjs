@@ -7,6 +7,7 @@ import { executorApi } from "./executor-api.mjs";
 import { planPreparation } from "../../../core/preparation-planner.mjs";
 import {filterVisualActions,visualPlanningSnapshot} from "../../../core/visual-action-policy.mjs";
 import {visionPlanningJson} from "../../../core/vision-planning-input.mjs";
+import {reviewPlanningJson} from "../../../core/review-planning-input.mjs";
 import { readJournal, automationSummary } from "./submission-journal.mjs";
 import {
   applyPatchOperations,
@@ -535,7 +536,7 @@ async function handleJudge(request, env) {
   const result = await callDeepSeek(
     env,
     "Judge a backlink/directory submission browser snapshot. Return JSON only: {status:'success'|'incomplete'|'blocked'|'needs_manual',reason:string,message?:string,evidence?:string,publicationStatus?:'submitted'|'pending_moderation'|'published',publicUrl?:string}. Choose needs_manual for login, CAPTCHA, OTP, payment, or uncertainty. Never claim success without explicit page evidence.",
-    compactJson(input),
+    reviewPlanningJson(input),
     {shortReview:'judge'},
   );
   const status = ["success", "incomplete", "blocked", "needs_manual"].includes(result.status) ? result.status : "needs_manual";
@@ -547,7 +548,7 @@ async function handleValidateFill(request, env) {
   const result = await callDeepSeek(
     env,
     "Review form fields before user submission. Return JSON only: {status:'ok'|'revise',submitReady:boolean,fields:[{selector:string,value:string,reason:string}],issues:string[]}. Correct only fields present in input, respect every maxLength/maxWords, never submit or bypass human verification.",
-    compactJson(input),
+    reviewPlanningJson(input),
     {shortReview:'fields'},
   );
   return {

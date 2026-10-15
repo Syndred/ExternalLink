@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Worker from '../cloud/worker/src/index.mjs';
 import {aiCloudFixture} from '../executor/test/fixtures/ai-cloud.mjs';
+import {reviewPlanningJson} from '../core/review-planning-input.mjs';
 
 test('review routes keep configured model and complete evidence with bounded nonthinking JSON output',async()=>{
  const fixture=aiCloudFixture(),previousFetch=globalThis.fetch,requests=[];
@@ -18,7 +19,7 @@ test('review routes keep configured model and complete evidence with bounded non
   const token=(await(await call('devices','fixture-admin',{})).json()).deviceToken;
   const snapshot={url:'https://directory.fixture.invalid/submit',evidenceSignals:[{type:'submission_rejection',text:'Unable to accept submissions',matched:true,visible:true,scope:'current_submission_response'}],preparation:{filled:{fields:[{name:'pricing',value:'Paid'},{name:'toolUrl',value:'https://oldphotoliveai.com'}]}}};
   for(const [route,limit] of [['judge',1800],['validate-fill',4096]]){
-   const result=await(await call('ai/'+route,token,{snapshot,config:{projectFields:{Name:'OldPhotoLive AI',Pricing:'$1.99 per photo; no subscription'}}})).json();
+   const result=await(await call('ai/'+route,token,{snapshot,config:{logoDataUrl:'data:image/png;base64,'+'A'.repeat(100000),password:'FIXTURE_SECRET',projectFields:{Name:'OldPhotoLive AI',Pricing:'$1.99 per photo; no subscription',LOGO:'data:image/png;base64,'+'A'.repeat(100000)}}})).json();
    const request=requests.at(-1);
    assert.equal(request.body.model,'deepseek-v4-pro');
    assert.deepEqual(request.body.thinking,{type:'disabled'});
@@ -27,8 +28,21 @@ test('review routes keep configured model and complete evidence with bounded non
    const input=JSON.parse(request.body.messages[1].content);
    assert.deepEqual(input.snapshot,snapshot);
    assert.equal(input.config.projectFields.Pricing,'$1.99 per photo; no subscription');
+   assert.ok(!request.body.messages[1].content.includes('data:image'));
+   assert.ok(!request.body.messages[1].content.includes('FIXTURE_SECRET'));
    if(route==='judge')assert.equal(result.status,'needs_manual');
    else assert.equal(result.submitReady,false);
   }
  }finally{globalThis.fetch=previousFetch;fixture.sqlite.close();}
+});
+
+test('review values and negative evidence remain whole; oversized evidence is refused instead of cut',()=>{
+ const fields=[{name:'product_name',value:'OldPhotoLive AI'},{name:'pricing',value:'Paid'},{name:'csrf_token',value:'FIXTURE_CSRF'}];
+ const input={snapshot:{fields,evidenceSignals:[{type:'submission_rejection',text:'Unable to accept submissions',matched:true}]}};
+ const result=JSON.parse(reviewPlanningJson(input));
+ assert.deepEqual(result.snapshot.fields.slice(0,2),fields.slice(0,2));
+ assert.equal(result.snapshot.fields[2].value,'[credential omitted]');
+ assert.deepEqual(result.snapshot.evidenceSignals,input.snapshot.evidenceSignals);
+ assert.equal(input.snapshot.fields[2].value,'FIXTURE_CSRF');
+ assert.throws(()=>reviewPlanningJson({snapshot:{text:'x'.repeat(70000)}}),/超过文字预算/);
 });

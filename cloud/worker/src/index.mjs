@@ -211,13 +211,13 @@ async function callDeepSeek(env, system, user, options = {}) {
   const base = String(env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
-    ...(options.preparation?{signal:AbortSignal.timeout(55000)}:{}),
+    ...(options.preparation||options.shortReview?{signal:AbortSignal.timeout(55000)}:{}),
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: String(env.DEEPSEEK_MODEL || "deepseek-chat"),
       temperature: 0.35,
       response_format: { type: "json_object" },
-      ...(options.preparation?{thinking:{type:'disabled'},max_tokens:1800}:{}),
+      ...(options.preparation||options.shortReview?{thinking:{type:'disabled'},max_tokens:options.shortReview==='fields'?4096:1800}:{}),
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -536,6 +536,7 @@ async function handleJudge(request, env) {
     env,
     "Judge a backlink/directory submission browser snapshot. Return JSON only: {status:'success'|'incomplete'|'blocked'|'needs_manual',reason:string,message?:string,evidence?:string,publicationStatus?:'submitted'|'pending_moderation'|'published',publicUrl?:string}. Choose needs_manual for login, CAPTCHA, OTP, payment, or uncertainty. Never claim success without explicit page evidence.",
     compactJson(input),
+    {shortReview:'judge'},
   );
   const status = ["success", "incomplete", "blocked", "needs_manual"].includes(result.status) ? result.status : "needs_manual";
   return { ...result, status, reason: String(result.reason || result.message || ""), message: String(result.message || result.reason || "") };
@@ -547,6 +548,7 @@ async function handleValidateFill(request, env) {
     env,
     "Review form fields before user submission. Return JSON only: {status:'ok'|'revise',submitReady:boolean,fields:[{selector:string,value:string,reason:string}],issues:string[]}. Correct only fields present in input, respect every maxLength/maxWords, never submit or bypass human verification.",
     compactJson(input),
+    {shortReview:'fields'},
   );
   return {
     status: result.status === "revise" ? "revise" : "ok",

@@ -1023,6 +1023,18 @@
     const rejection = currentSubmissionResponseRejection();
     if (rejection) return rejection;
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    if(location.hostname==='qwenai.site'&&location.pathname==='/en/submit'){
+      let source;try{source=new URL(destinationUrl);}catch{}
+      const form=document.querySelector('main form#en-submit-form');
+      const heading=form?.querySelector('h2');
+      const receipt="Thanks — your tool is in the review queue. We usually decide within 1–3 working days.";
+      if(source?.hostname==='qwenai.site'&&source.pathname==='/en/submit'&&form&&isVisibleHumanGate(form)&&
+          heading&&isVisibleHumanGate(heading)&&heading.textContent.trim()==='Submitted'&&
+          !form.querySelector('input,textarea,select')&&
+          Array.from(form.querySelectorAll('p')).some(p=>isVisibleHumanGate(p)&&String(p.innerText||p.textContent).trim()===receipt))
+        return{matched:true,publicationStatus:'pending_moderation',evidence:receipt,
+          evidenceSignals:[{type:'visible_confirmation',text:receipt,url:String(location.href),matched:true}]};
+    }
     // This server-rendered receipt replaces the submission form after its POST.
     // Bind the exact visible confirmation to the directory host and route.
     let receiptSource;

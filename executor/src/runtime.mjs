@@ -1,6 +1,7 @@
 import {singlePageReceiptState} from './single-page-receipt-queue.mjs';
 import {formEngineLogEntry} from './form-engine-log.mjs';
 import {prepareExplicitFreeRoute} from './free-submission-route.mjs';
+import {stageReceiptBoundary} from './stage-receipt-recovery.mjs';
 import {continueOriginalForm,originalFormPriorStageFields} from './original-form-continuation.mjs';
 import { chromium } from 'playwright';
 import {openManualTaskPage} from './manual-task-page.mjs';
@@ -1970,14 +1971,24 @@ export class Runtime {
     if (action === 'verify') {
       if (this.job) throw new Error('请先暂停并等待当前操作结束');
       if (task.receipt && task.cloudVerified) return this.synchronize();
-      if (!task.attemptBoundary) throw new Error('尚无提交尝试；请接管处理表单');
+      if (!task.attemptBoundary && !task.attemptHistory?.some(h=>h.kind==='original_stage_advanced'&&h.attemptBoundary)) throw new Error('尚无提交尝试；请接管处理表单');
       const page = await this.findPage(task);
       for (const frame of page.frames()) {
         let engine;
         try {
           engine = await attachEngine(this.context, frame);
           const evidence = await engine.call({ action: 'classifySubmitEvidence', destinationUrl: task.url });
-          if (evidence.matched && evidence.evidence && evidence.evidence !== task.baselineEvidence) { await this.accept(task, page, evidence); break; }
+          if (evidence.matched && evidence.evidence && evidence.evidence !== task.baselineEvidence) {
+            if(!task.attemptBoundary){
+              const recovered=stageReceiptBoundary(task,evidence);
+              if(!recovered)throw Error('历史步骤尚不能证明最终投稿，原页面保留，未重投');
+              const current=this.store.get('task:'+task.id);
+              if(!isDeepStrictEqual(plain(current),plain(task)))throw Error('原步骤任务已变化，保留原页面');
+              this.update(task,{attemptBoundary:recovered.attemptBoundary,baselineEvidence:recovered.baselineEvidence,
+                verificationBoundaryRecovery:{at:new Date().toISOString(),source:'original_stage_advanced',attemptBoundary:recovered.attemptBoundary,explicitEndpointAcknowledgment:true}},'original_receipt_boundary_recovered');
+            }
+            await this.accept(task, page, evidence); break;
+          }
         } finally { await engine?.detach(); }
       }
       await this.synchronize(); return this.status();

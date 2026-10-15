@@ -1090,7 +1090,7 @@
       const pane = main && Array.from(main.querySelectorAll('h2')).find(node =>
         isVisibleHumanGate(node) && /^\s*✓?\s*Submitted!\s*$/.test(node.textContent || ''))?.parentElement;
       const confirmation = "Thanks for submitting your tool. We'll review it and get back to you within a few days.";
-      if (pane && isVisibleHumanGate(pane) && !main.querySelector('form') &&
+      if (pane && isVisibleHumanGate(pane) && !Array.from(main.querySelectorAll('form')).some(isVisibleHumanGate) &&
           String(pane.innerText || pane.textContent || '').replace(/\s+/g, ' ').includes(confirmation)) {
         return {matched:true, publicationStatus:'pending_moderation', evidence:confirmation,
           evidenceSignals:[{type:'visible_confirmation',text:confirmation,url:String(location.href),matched:true}]};

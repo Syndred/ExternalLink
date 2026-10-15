@@ -1,13 +1,11 @@
-// ExternalLink standalone form core. Host capabilities are explicitly injected.
+// ExternalLink Extension - Content Script (Form Filling Engine)
 "use strict";
 
 (function () {
-  const services = globalThis.__externalLinkServices;
-  if (!services) throw new Error("Form host services required");
   // Re-bind listener after extension reload (old listener becomes dead)
   if (window.__extLinkMessageHandler) {
     try {
-      services.unregister(window.__extLinkMessageHandler);
+      chrome.runtime.onMessage.removeListener(window.__extLinkMessageHandler);
     } catch (_) {
       /* previous extension context gone */
     }
@@ -133,7 +131,7 @@
   }
 
   function observeManualSubmission(event) {
-    if ((!services.interactive && !services.manualWatch) || !event.isTrusted || !manualSubmissionWatch || pluginSubmitInProgress) return;
+    if (!chrome.runtime?.id || !event.isTrusted || !manualSubmissionWatch || pluginSubmitInProgress) return;
     const control = event.target?.closest?.('button, input[type="submit"], [role="button"]');
     const siteHost = (value) => {
       try {
@@ -195,16 +193,11 @@
     if (!matchingUrl && !typeformFinalControl) return;
     const watch = manualSubmissionWatch;
     manualSubmissionWatch = null;
-    // Capture in the trusted click's document before the site replaces it or
-    // navigates to its receipt. Preparation may precede the user's last edits.
-    let actualSubmission;
-    try { actualSubmission = collectFilledFieldsReport(); } catch (_) { /* retain the observed attempt even if field capture fails */ }
-    services.request({
+    chrome.runtime.sendMessage({
       action: "manualSubmissionClicked",
       token: watch.token,
       frameUrl: String(location.href || ""),
       baselineEvidence: watch.baselineEvidence || "",
-      actualSubmission,
     }).then((response) => {
       if (response?.ok !== true && manualSubmissionWatch === null) {
         manualSubmissionWatch = watch;
@@ -222,7 +215,7 @@
   document.addEventListener("submit", observeManualSubmission, true);
 
   function onExtensionMessage(msg, sender, sendResponse) {
-    if (!services.authorized && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','prepareExplicitFreeSubmissionRoute','normalizeNativeMediaUpload','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
+    if (!globalThis.__extLinkExecutor && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','prepareExplicitFreeSubmissionRoute','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
       sendResponse({ ok: false, migrated: true, error: '自动填写与提交已迁入 Windows 执行器' });
       return true;
     }
@@ -234,7 +227,7 @@
       };
       const baseline = classifyVisibleEvidence({ destinationUrl: manualSubmissionWatch.destinationUrl });
       manualSubmissionWatch.baselineEvidence = baseline.evidence || "";
-      services.request({
+      chrome.runtime.sendMessage({
         action: "manualSubmissionWatchReady",
         token: msg.token,
         baseline,
@@ -257,12 +250,8 @@
     }
     if (msg.action === "smartFill") {
       smartFillFromConfig(msg.config || {})
-        .then(async (result) => { await persistCurrentFillLearnings(msg.config || {}); sendResponse({ ok: true, ...result }); })
+        .then((result) => sendResponse({ ok: true, ...result }))
         .catch((err) => sendResponse({ ok: false, error: err.message }));
-      return true;
-    }
-    if (msg.action === "persistFillLearnings") {
-      persistCurrentFillLearnings(msg.config || {}).then(sendResponse).catch(error => sendResponse({ok:false,error:error.message}));
       return true;
     }
     if (msg.action === "showFillBanner") {
@@ -292,27 +281,8 @@
       }));
       return true;
     }
-    if (msg.action === "observeProductHuntResult") {
-      if (!isProductHuntPage()) { sendResponse({ matched: false, error: "当前页不是 Product Hunt" }); return true; }
-      waitForProductHuntResult(msg.config || {}, msg.baseline || {}, Math.min(20000, Math.max(0, Number(msg.timeoutMs ?? 15000))))
-        .then(sendResponse).catch((err) => sendResponse({ matched: false, error: err.message }));
-      return true;
-    }
-    if (msg.action === "inspectProductHuntCreation") {
-      sendResponse(inspectProductHuntCreation(msg.config || {}));
-      return true;
-    }
-    if (msg.action === "inspectProductHuntAdvance") {
-      if (!isProductHuntPage()) { sendResponse({ allowed: false }); return true; }
-      const scope = productHuntActiveScope(), stage = detectProductHuntStage(scope), gate = detectProductHuntGate(scope);
-      if (gate || stage === "checklist" || stage !== msg.expectedStage) { sendResponse({ allowed: false, stage }); return true; }
-      const button = (PRODUCT_HUNT_OPTIONAL_STAGES.has(stage) && productHuntFindOptionalSkipButton(scope)) || productHuntFindAdvanceButton(scope);
-      if (!button) { sendResponse({ allowed: false, stage }); return true; }
-      const rect = button.getBoundingClientRect();sendResponse({ allowed: true, stage, label: productHuntControlLabel(button), point: { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) }, viewport: { width: innerWidth, height: innerHeight } });
-      return true;
-    }
     if (msg.action === "inspectSubmitAction") {
-      const button = findFinalSubmitButton(msg.platform || 'directory');
+      const button = findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
       sendResponse({ finalFound: !!button, label: button ? getElementLabel(button) : '', advanceFound: !!findSafeAdvanceButton(), allowed: shouldAutoSubmitListing(msg.config || {},msg.platform || 'directory') });
       return true;
     }
@@ -338,10 +308,6 @@
     }
     if (msg.action === "collectFormValidation") {
       sendResponse(collectFormValidationState());
-      return true;
-    }
-    if (msg.action === "getCommentFieldReport") {
-      sendResponse(collectCommentFieldReport(msg.platformType));
       return true;
     }
     if (msg.action === "getFilledFieldsReport") {
@@ -447,12 +413,6 @@
         });
       return true;
     }
-    if (msg.action === "normalizeNativeMediaUpload") {
-      normalizeNativeMediaUpload(msg.selector, msg.dataUrl)
-        .then(sendResponse)
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
-      return true;
-    }
     if (msg.action === "prepareVisualSnapshot") {
       sendResponse(prepareVisualSnapshot());
       return true;
@@ -511,19 +471,6 @@
       sendResponse({ ok: true });
       return true;
     }
-    if (msg.action === "showWaitingBanner") {
-      removeManualWaitBanner();
-      removeWaitingBanner();
-      showWaitingBanner(msg.config, msg.platformType, msg.taskIndex);
-      sendResponse({ ok: true });
-      return true;
-    }
-    if (msg.action === "removeTaskWaitBanners") {
-      removeWaitingBanner();
-      removeManualWaitBanner();
-      sendResponse({ ok: true });
-      return true;
-    }
     if (msg.action === "removeManualWaitBanner") {
       removeManualWaitBanner();
       sendResponse({ ok: true });
@@ -538,24 +485,24 @@
   // and make the panel report a stale or empty form.
   if (typeof window.__extLinkMessageHandler === "function") {
     try {
-      services.unregister(window.__extLinkMessageHandler);
+      chrome.runtime.onMessage.removeListener(window.__extLinkMessageHandler);
     } catch {
       /* Older Chromium builds may not expose removeListener in test shims. */
     }
   }
   window.__extLinkMessageHandler = onExtensionMessage;
-  services.register(onExtensionMessage);
+  chrome.runtime.onMessage.addListener(onExtensionMessage);
 
   // all_frames injects this script into a cross-origin Typeform iframe too.
   // Ask the background for the active tab watch so the frame can report its
   // own frameId and baseline without relying on a cross-origin broadcast.
-  services.request({ action: "manualSubmissionWatchRequest" }).then((response) => {
+  chrome.runtime.sendMessage({ action: "manualSubmissionWatchRequest" }).then((response) => {
     if (!response?.ok || !response.watch) return;
     onExtensionMessage({ action: "watchManualSubmission", ...response.watch }, null, () => {});
   }).catch(() => {});
 
   function maybeRequestAutoFill() {
-    if (!services.interactive) return null;
+    if (!chrome.runtime?.id) return null;
     const mode = identifyPlatform();
     const hasForm =
       !!mode ||
@@ -563,7 +510,7 @@
       document.querySelectorAll("form input, form textarea, form select").length > 2;
     if (hasForm && window.__extLinkAutoFillUrl !== location.href) {
       window.__extLinkAutoFillUrl = location.href;
-      services.request({ action: "requestAutoFill", url: location.href }).catch(() => {});
+      chrome.runtime.sendMessage({ action: "requestAutoFill", url: location.href }).catch(() => {});
     }
     return mode;
   }
@@ -571,11 +518,12 @@
   function onPageNavigation() {
     pageContextVersion += 1;
     setTimeout(() => {
-      if (!services.interactive) return;
+      if (!chrome.runtime?.id) return;
       if (manualIconsEnabled) scheduleManualIconSync();
       else initManualIcons().catch(() => {});
       const mode = identifyPlatform();
-      services.request({
+      chrome.runtime
+        .sendMessage({
           action: "contentReady",
           mode: mode || "unknown",
         })
@@ -641,7 +589,8 @@
       if (result && result.captcha) {
         // Mark captcha area and notify user
         highlightCaptchaArea();
-        services.request({ action: "log", msg: "🤖 请手动完成验证码", cls: "warn" })
+        chrome.runtime
+          .sendMessage({ action: "log", msg: "🤖 请手动完成验证码", cls: "warn" })
           .catch(() => {});
         return { captcha: true };
       }
@@ -755,15 +704,9 @@
 
   function shouldAutoSubmitListing(config, platform) {
     if (config && config.fillOnly === true) return false;
-    if (platform === "wp_comment") return shouldAutoSubmitStandardWp(config,inspectStandardWpCommentForm());
-    if (platform === "article") return false;
+    if (platform === "wp_comment" || platform === "article") return false;
     if (platform === "forum" || platform === "profile") return false;
     return config?.autoSubmitDirectory !== false;
-  }
-
-  function findFinalSubmitButton(platform) {
-    if(platform==='wp_comment') {const button=inspectStandardWpCommentForm().submit;return button&&!button.disabled&&isVisibleHumanGate(button)?button:null;}
-    return findSubmitButton('button[type="submit"], input[type="submit"]', ['submit','add','list','publish','send']);
   }
 
   function detectPaidSubmit() {
@@ -1711,26 +1654,11 @@
   }
 
   // ─── Waiting banner overlay (injected into page DOM) ───
-  async function requestBannerAction(banner,config,message,callbackSource) {
-    if(banner.dataset.pending==='true')return;
-    banner.dataset.pending='true';
-    for(const button of banner.querySelectorAll('button'))button.disabled=true;
-    let status=banner.querySelector('[data-extlink-control-status]');
-    if(!status){status=document.createElement('span');status.dataset.extlinkControlStatus='true';banner.querySelector('.__extlink_msg')?.appendChild(status);}
-    status.textContent=' 正在确认原任务…';
-    try{
-      const control=config?.nativeTaskControl;
-      const response=await services.request({...message,callbackSource,...(control?{taskId:control.taskId,runId:control.runId,taskControlId:control.id}:{})});
-      if(control&&(!response?.ok||response.syncError))throw new Error(response?.error||response?.syncError||'原任务操作未确认，请重试');
-      removeWaitingBanner();removeManualWaitBanner();
-    }catch(error){status.textContent=` 操作未完成：${error.message}`;banner.dataset.pending='false';for(const button of banner.querySelectorAll('button'))button.disabled=button.dataset.extlinkLocked==='true';}
-  }
   function showWaitingBanner(config, platformType, taskIndex) {
     if (document.getElementById("__extlink_wait_banner")) return;
 
     const banner = document.createElement("div");
     banner.id = "__extlink_wait_banner";
-    banner.dataset.extlinkRoot = 'true';
     banner.innerHTML = `
       <style>
         #__extlink_wait_banner {
@@ -1770,18 +1698,19 @@
     document.body.appendChild(banner);
 
     document.getElementById("__extlink_go_btn")?.addEventListener("click", () => {
-      requestBannerAction(banner,config,{
+      chrome.runtime.sendMessage({
         action: "manualSubmit",
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      },'manual_button').catch(() => {});
+      }).catch(() => {});
     });
     document.getElementById("__extlink_skip_btn")?.addEventListener("click", () => {
-      requestBannerAction(banner,config,{
+      chrome.runtime.sendMessage({
         action: "manualSkip",
         taskIndex: taskIndex,
-      },'manual_button').catch(() => {});
+      }).catch(() => {});
+      removeWaitingBanner();
     });
 
     // Auto-detect: poll every 2s — if a form appears on current page, auto-trigger
@@ -1789,13 +1718,14 @@
       const p = identifyPlatform();
       if (p) {
         clearInterval(window.__extlink_waitPoll);
+        removeWaitingBanner();
         // Re-scan and submit
-        requestBannerAction(banner,config,{
+        chrome.runtime.sendMessage({
           action: "manualSubmit",
           taskIndex: taskIndex,
           config: config,
           platformType: platformType,
-        },'form_detected').catch(() => {});
+        }).catch(() => {});
       }
     }, 2000);
   }
@@ -1818,7 +1748,6 @@
 
     const banner = document.createElement("div");
     banner.id = "__extlink_manual_banner";
-    banner.dataset.extlinkRoot = 'true';
     banner.innerHTML = `
       <style>
         #__extlink_manual_banner {
@@ -1843,7 +1772,7 @@
       </style>
       <div class="__extlink_msg">
         ⏸ <strong>需要人工处理</strong>：<span id="__extlink_manual_reason"></span><br>
-        完成页面上的人工步骤后点击 <strong>继续下一步</strong>，继续原任务的填写与普通免费投稿。
+        完成登录/验证码后点击 <strong>继续下一步</strong>，AI 会自动继续填表并提交。
       </div>
       <div class="__extlink_countdown" id="__extlink_manual_countdown"></div>
       <button class="__extlink_skip" id="__extlink_manual_skip_btn">跳过</button>
@@ -1851,7 +1780,6 @@
     `;
     document.body.appendChild(banner);
     const brand = config && config.brandName ? `【${config.brandName}】` : "";
-    if(config?.nativeTaskControl?.skipPending){const go=document.getElementById('__extlink_manual_go_btn');go.disabled=true;go.dataset.extlinkLocked='true';}
     document.getElementById("__extlink_manual_reason").textContent =
       `${brand}${reason || "登录或验证码"}`;
 
@@ -1875,15 +1803,17 @@
     }
 
     document.getElementById("__extlink_manual_go_btn")?.addEventListener("click", () => {
-      requestBannerAction(banner,config,{
+      chrome.runtime.sendMessage({
         action: "manualContinue",
         taskIndex: taskIndex,
         config: config,
         platformType: platformType,
-      },'manual_button').catch(() => {});
+      }).catch(() => {});
+      removeManualWaitBanner();
     });
     document.getElementById("__extlink_manual_skip_btn")?.addEventListener("click", () => {
-      requestBannerAction(banner,config,{ action: "manualSkip", taskIndex: taskIndex },'manual_button').catch(() => {});
+      chrome.runtime.sendMessage({ action: "manualSkip", taskIndex: taskIndex }).catch(() => {});
+      removeManualWaitBanner();
     });
   }
 
@@ -2160,10 +2090,10 @@
       if (/^data:/i.test(raw) || /^cloud-media:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) return [raw];
       return raw.split(/[\n;|]+/).map((item) => item.trim()).filter(Boolean);
     };
-    const logoValue = config.mediaDisabled?.logo ? '' : nested.logo && typeof nested.logo === "object"
+    const logoValue = nested.logo && typeof nested.logo === "object"
       ? nested.logo
       : first(nested.logo, nested.logoUrl, nested.logoDataUrl, config.logoUrl, config.logoDataUrl, pf.LOGO, pf["Featured image"]);
-    const galleryValue = [1,2,3,4].some(index => config.mediaDisabled?.['screenshot'+index]) ? getScreenshotValues(config) : first(
+    const galleryValue = first(
       nested.gallery,
       nested.images,
       nested.screenshots,
@@ -3052,9 +2982,6 @@
   async function attachProductHuntMediaFiles(input, sources, config, namePrefix, mediaKind = "") {
     const usableSources = (sources || []).map(productHuntMediaSource).filter(Boolean);
     if (!usableSources.length) return { ok: false, reason: "media_source_missing", files: 0, previewVerified: false };
-    const sourceKinds = [...new Set(usableSources.map(source => /^data:/i.test(source) ? "embedded" : isCloudMediaRef(source) ? "cloud" : "remote"))];
-    const source = sourceKinds.length === 1 ? sourceKinds[0] : "mixed";
-    const fieldLabel = getSnapshotLabel(input) || namePrefix || "文件字段";
     try {
       const files = [];
       for (let index = 0; index < usableSources.length; index += 1) {
@@ -3079,9 +3006,7 @@
       );
       reportMediaUpload(preview.verified ? "success" : "failed", {
         name: namePrefix || "producthunt",
-        source,
-        fieldLabel,
-        ...(preview.verified ? {} : { reason: "未检测到本站图片上传预览" }),
+        source: usableSources.some((source) => isCloudMediaRef(source)) ? "cloud" : "remote",
         files: files.length,
         previewVerified: preview.verified,
       });
@@ -3092,7 +3017,7 @@
         previewCount: preview.count,
       };
     } catch (error) {
-      reportMediaUpload("failed", { name: namePrefix || "producthunt", source, fieldLabel, reason: error.message });
+      reportMediaUpload("failed", { name: namePrefix || "producthunt", reason: error.message });
       return { ok: false, reason: error.message, files: 0, previewVerified: false };
     }
   }
@@ -3605,21 +3530,6 @@
     };
   }
 
-  function inspectProductHuntCreation(config = {}) {
-    if (!isProductHuntPage()) return { allowed: false, reason: "当前页不是 Product Hunt" };
-    const scope = productHuntActiveScope(), gate = detectProductHuntGate(scope);
-    if (gate) return { allowed: false, ...gate };
-    const stage = detectProductHuntStage(scope);
-    if (stage !== "checklist") return { allowed: false, stage, reason: "Product Hunt 当前不是最终清单" };
-    const checklist = productHuntChecklistStatus(scope, productHuntConfigValues(config));
-    const button = checklist.createButton || productHuntFindCreateDraftButton(scope), label = productHuntControlLabel(button);
-    if (!checklist.ready || !productHuntShouldClickCreateDraft(true, checklist.ready, label)) return { allowed: false, stage, ready_to_create: false, missing: checklist.missing, reason: "Product Hunt 清单或创建按钮尚未就绪" };
-    const rect = button.getBoundingClientRect();
-    return { allowed: true, stage, ready_to_create: true, createDeferred: true, submittedAttempt: false, finalAction: "create draft", label,
-      baseline: productHuntResultBaseline(config), createPoint: { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) },
-      viewport: { width: innerWidth, height: innerHeight } };
-  }
-
   async function runProductHuntStep(request = {}) {
     const config = request.config && typeof request.config === "object" ? request.config : {};
     if (!isProductHuntPage()) {
@@ -3689,11 +3599,6 @@
 
       const baseline = productHuntResultBaseline(config);
       const createRect = createButton.getBoundingClientRect();
-      if (request.deferCreateClick === true) {
-        return { ok: true, stage, ready_to_create: true, submittedAttempt: false, createDeferred: true,
-          finalAction: "create draft", label, baseline,
-          createPoint: { x: Math.round(createRect.left + createRect.width / 2), y: Math.round(createRect.top + createRect.height / 2) } };
-      }
       createButton.click();
       const result = await waitForProductHuntResult(
         config,
@@ -3759,16 +3664,6 @@
       };
     }
 
-    const actualPreparation = collectFilledFieldsReport();
-    actualPreparation.attachments = [];
-    for (const input of scope.querySelectorAll('input[type="file"]')) {
-      for (const file of Array.from(input.files || [])) {
-        const sha256 = globalThis.crypto?.subtle
-          ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map(value => value.toString(16).padStart(2, "0")).join("") : "";
-        actualPreparation.attachments.push({ field: input.name || input.id, name: file.name, type: file.type, bytes: file.size, sha256 });
-      }
-    }
-    await persistCurrentFillLearnings(config);
     const transition = await advanceProductHuntStage(scope, stage, {
       optional: PRODUCT_HUNT_OPTIONAL_STAGES.has(stage),
     });
@@ -3777,7 +3672,6 @@
       stage,
       ...stageResult,
       ...transition,
-      actualPreparation,
     };
   }
 
@@ -4239,7 +4133,7 @@
   // ==============================
 
   function logStep(msg) {
-    services.request({ action: "log", msg, cls: "" }).catch(() => {});
+    chrome.runtime.sendMessage({ action: "log", msg, cls: "" }).catch(() => {});
   }
 
   // ─── Profile Link Submission ───
@@ -4866,8 +4760,7 @@
       label,
       placeholder: element.getAttribute("placeholder") || "",
       aria: element.getAttribute("aria-label") || "",
-      popup: element.getAttribute("aria-haspopup") || "",
-      required: fieldIsRequired(element),
+      required: !!element.required || element.getAttribute("aria-required") === "true",
       disabled: !!element.disabled || element.getAttribute("aria-disabled") === "true",
       visible: isVisible(element),
       constraints: getFieldConstraints(element),
@@ -4898,7 +4791,6 @@
         160,
       ),
       aria: element.getAttribute("aria-label") || "",
-      popup: element.getAttribute("aria-haspopup") || "",
       title: element.getAttribute("title") || "",
       disabled: !!element.disabled || element.getAttribute("aria-disabled") === "true",
       visible: isVisible(element),
@@ -4914,7 +4806,6 @@
       role: element.getAttribute("role") || "",
       label: getSnapshotLabel(element),
       expanded: element.getAttribute("aria-expanded") || "",
-      popup: element.getAttribute("aria-haspopup") || "",
       selected: element.getAttribute("aria-selected") || "",
       checked: element.getAttribute("aria-checked") || "",
       disabled: element.getAttribute("aria-disabled") === "true" || Boolean(element.disabled),
@@ -4925,7 +4816,6 @@
   function isRelevantSnapshotElement(element) {
     if (!element || !element.matches) return false;
     if (element.closest('[aria-hidden="true"], [hidden]')) return false;
-    if(element.matches('input[type="file"]'))return isAutomatableFileInput(element);
     if (!isVisible(element)) return false;
 
     const tag = element.tagName.toLowerCase();
@@ -6018,17 +5908,6 @@
     }
     const wrappingLabel = element.closest("label");
     if (wrappingLabel) labels.push(wrappingLabel.textContent);
-    // A custom picker or hidden upload often has an unbound label around its
-    // visible wrapper. Stop at the first single-control container, so a
-    // required neighbour never makes an optional field required.
-    for(let wrapper=element.parentElement,depth=0;wrapper&&depth<4;wrapper=wrapper.parentElement,depth++){
-      if(wrapper.matches('form, fieldset, body'))break;
-      const directLabel=wrapper.querySelector(':scope > label');
-      if(!directLabel)continue;
-      const controls=wrapper.querySelectorAll('input:not([type="hidden"]), textarea, select, [role="combobox"]:not(input), [contenteditable="true"]');
-      if(controls.length===1&&controls[0]===element)labels.push(directLabel.textContent);
-      break;
-    }
     // React forms often place an unbound label next to a single control.
     // Read that visible label before relying on example placeholders.
     const parent = element.parentElement;
@@ -6052,10 +5931,6 @@
   }
 
   function getSnapshotValueInfo(element, type) {
-    if(element.matches('[role="combobox"], [aria-haspopup="listbox"]')&&element.tagName.toLowerCase()!=='select'){
-      const empty=isCustomDropdownEmpty(element);
-      return{present:!empty,kind:'select',selectedLabel:empty?'':compactText(element.value||element.textContent,120)};
-    }
     if (type === "password") {
       return { present: !!element.value, kind: "secret" };
     }
@@ -6976,7 +6851,7 @@
       }
     }
 
-    return { maxLength, minLength, maxWords, minWords, required: fieldIsRequired(element) };
+    return { maxLength, minLength, maxWords, minWords, required: !!element.required };
   }
 
   function fitValueToConstraints(value, constraints) {
@@ -7025,16 +6900,6 @@
     if (element.tagName.toLowerCase() === "select") return element.value || "";
     if (isContentEditableField(element)) return element.innerText || element.textContent || "";
     return element.value || "";
-  }
-
-  function collectCommentFieldReport(platform) {
-    const wp = platform === "wp_comment";
-    const form = wp ? findVisibleWpCommentForm() : findVisibleArticleCommentForm();
-    const field = form?.querySelector?.(wp
-      ? '#comment, textarea[name="comment"], textarea.comment, textarea[aria-label*="Comment"], textarea[placeholder*="comment" i]'
-      : 'textarea[name="comment"], textarea.comment, textarea[name="body"], textarea[placeholder*="comment" i]');
-    if (!field || !isVisibleHumanGate(field)) return { fields: [] };
-    return { fields: [{ id: field.id || "", name: field.name || "", type: "textarea", label: "comment", value: getElementFillValue(field), constraints: getFieldConstraints(field) }] };
   }
 
   function collectFilledFieldsReport() {
@@ -7433,11 +7298,9 @@
 
   function publicMediaUrlForField(config, hint) {
     const pf = getProfileFields(config);
-    const normalizedHint = String(hint || "").toLowerCase().replace(/[_-]+/g, " ");
+    const normalizedHint = String(hint || "").replace(/[_-]+/g, " ");
     if (/\b(?:screenshot|screen shot)\b/.test(normalizedHint)) {
-      const explicit = normalizedHint.match(/\b(?:screenshot|screen shot)[^\d]{0,8}([1-4])\b/),index=explicit?Number(explicit[1])-1:0;
-      if(config.mediaDisabled?.['screenshot'+(index+1)])return '';
-      const screenshot = String(config.screenshots?.[index] || pf['Screenshot '+(index+1)] || pf['Screenshot-'+(index+1)] || "").trim();
+      const screenshot = String(pf["Screenshot 1"] || config.screenshots?.[0] || "").trim();
       const featured = String(pf["Featured image"] || config.featuredImage || "").trim();
       if (!screenshot || screenshot === featured || screenshot === String(pf.LOGO || config.logoUrl || "").trim()) return "";
       try {
@@ -7453,7 +7316,6 @@
       }
     }
     const iconField = /\b(icon|logo|avatar|favicon)\b/.test(normalizedHint);
-    if(config.mediaDisabled?.[iconField?'logo':'featured'])return '';
     const candidates = iconField
       ? [pf.LOGO, config.logoUrl, pf["Featured image"], config.featuredImage]
       : [pf["Featured image"], config.featuredImage, pf.LOGO, config.logoUrl];
@@ -8020,7 +7882,7 @@
   }
 
   async function fetchCloudMediaBlob(ref, name = "") {
-    const response = await services.request({
+    const response = await chrome.runtime.sendMessage({
       action: "fetchCloudSubmissionMedia",
       ref,
       name,
@@ -8031,33 +7893,7 @@
     return {
       blob: await (await fetch(response.dataUrl)).blob(),
       name: response.name || "image",
-      source: response.source || "cloud",
-      sourceSha256: response.sha256 || "",
     };
-  }
-
-  async function normalizeNativeMediaUpload(selector, dataUrl) {
-    const pageContext = capturePageContext();
-    const inputs = document.querySelectorAll(selector);
-    if (inputs.length !== 1 || inputs[0].type !== "file" || inputs[0].disabled) {
-      throw new Error("原图片上传控件已变化");
-    }
-    if (typeof dataUrl !== "string" || dataUrl.length > 9 * 1024 * 1024 ||
-        !/^data:image\/(?:png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl)) {
-      throw new Error("原图片数据无效");
-    }
-    const blob = await (await fetch(dataUrl)).blob();
-    const normalized = await normalizeImageForFileInput(blob, inputs[0]);
-    const output = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error("转换后的图片无法读取"));
-      reader.readAsDataURL(normalized);
-    });
-    if (!isCurrentPageContext(pageContext) || !inputs[0].isConnected || inputs[0].disabled) {
-      throw new Error("图片上传页面或控件已变化");
-    }
-    return { ok: true, dataUrl: output, mime: normalized.type, bytes: normalized.size };
   }
 
   async function attachBlobToFileInput(input, blob, sourceName) {
@@ -8077,7 +7913,7 @@
   }
 
   function reportMediaUpload(status, details = {}) {
-    services.request({
+    chrome.runtime.sendMessage({
       action: "mediaUploadStatus",
       status,
       pageUrl: location.href,
@@ -8110,7 +7946,7 @@
           if (await attachBlobToFileInput(input, cloud.blob, cloud.name)) {
             if (!isCurrentPageContext(pageContext)) return false;
             logStep(`☁️ 已用云端媒体上传 ${cloud.name}`);
-            reportMediaUpload("success", { name: cloud.name, source: cloud.source, sourceSha256: cloud.sourceSha256, bytes: input.files?.[0]?.size || cloud.blob.size, mime: input.files?.[0]?.type || cloud.blob.type });
+            reportMediaUpload("success", { name: cloud.name, source: "cloud", bytes: cloud.blob.size, mime: cloud.blob.type });
             return true;
           }
         }
@@ -8141,7 +7977,7 @@
       /* Cross-origin images are fetched by the extension service worker below. */
     }
 
-    const proxied = await services.request({
+    const proxied = await chrome.runtime.sendMessage({
       action: "fetchSubmissionMedia",
       url: absoluteUrl,
     });
@@ -8174,8 +8010,6 @@
       acceptedTypes.add("image/jpeg");
       acceptedTypes.add("image/png");
       acceptedTypes.add("image/webp");
-      acceptedTypes.add("image/gif");
-      acceptedTypes.add("image/svg+xml");
     }
     if (/image\/jpeg|\.jpe?g|\bjpeg?\b/.test(accept + " " + context)) {
       acceptedTypes.add("image/jpeg");
@@ -8186,8 +8020,6 @@
     if (/image\/webp|\.webp|\bwebp\b/.test(accept + " " + context)) {
       acceptedTypes.add("image/webp");
     }
-    if (/image\/gif|\.gif|\bgif\b/.test(accept + " " + context)) acceptedTypes.add("image/gif");
-    if (/image\/svg\+xml|\.svg|\bsvg\b/.test(accept + " " + context)) acceptedTypes.add("image/svg+xml");
     return {
       maxWidth: maxMatch ? Number(maxMatch[1]) : null,
       maxHeight: maxMatch ? Number(maxMatch[2]) : null,
@@ -8201,15 +8033,7 @@
 
   async function normalizeImageForFileInput(blob, input) {
     const constraints = parseImageUploadConstraints(input);
-    const formatAccepted = constraints.acceptedTypes.size === 0 || constraints.acceptedTypes.has(blob.type);
-    let bitmap;
-    try { bitmap = await createImageBitmap(blob); }
-    catch (error) {
-      if (blob.type !== "image/svg+xml") throw error;
-      const image = document.createElement("img"), url = URL.createObjectURL(blob);
-      try { image.src = url; await image.decode(); if (!image.naturalWidth || !image.naturalHeight) throw error; image.close = () => URL.revokeObjectURL(url); bitmap = image; }
-      catch (decodeError) { URL.revokeObjectURL(url); throw decodeError; }
-    }
+    const bitmap = await createImageBitmap(blob);
     let sourceX = 0;
     let sourceY = 0;
     let sourceWidth = bitmap.width;
@@ -8235,6 +8059,8 @@
     );
     const targetWidth = Math.max(1, Math.floor(sourceWidth * scale));
     const targetHeight = Math.max(1, Math.floor(sourceHeight * scale));
+    const formatAccepted =
+      constraints.acceptedTypes.size === 0 || constraints.acceptedTypes.has(blob.type);
     const needsTransform =
       !formatAccepted ||
       sourceX !== 0 ||
@@ -8595,7 +8421,6 @@
   }
 
   function isCustomDropdownEmpty(trigger) {
-    if(trigger.hasAttribute('data-placeholder')||trigger.querySelector('[data-placeholder]'))return true;
     const externalTags = getExternalSelectedTags(trigger);
     if (externalTags) return externalTags.length === 0;
     const reactSelect = trigger.closest?.('[class*="css-"][class*="-container"]');
@@ -8829,23 +8654,6 @@
       } catch { return false; }
     }
     return false;
-  }
-
-  async function persistCurrentFillLearnings(config) {
-    if (!services.persistLearning) return {ok:true,disabled:true};
-    const pageContext = capturePageContext(), snapshot = getPageSnapshot();
-    const parsed = new URL(snapshot.url);
-    const schema = {
-      url: parsed.origin + parsed.pathname,
-      forms: (snapshot.forms || []).map(({method}) => ({method})),
-      fields: (snapshot.fields || []).map(({selector,name,id,type,label,options,required}) => ({selector,name,id,type,label,required,
-        options: (options || []).map(option => typeof option === "string" ? option :
-          Object.fromEntries(["value","label","text","disabled"].filter(key => option[key] !== undefined).map(key => [key,option[key]])))})),
-    };
-    if (!isCurrentPageContext(pageContext)) return {ok:false,stale:true};
-    try { return await services.request({action:"saveFillLearnings",pageUrl:location.href,profileId:config.projectKey,
-      identity:{name:config.brandName,url:config.targetDomain},mappings:collectFillLearnings(config).mappings,schema}); }
-    catch (error) { logStep("字段学习尚未保存：" + error.message); return {ok:false,error:error.message}; }
   }
   function hasCompletedAiOfDayCaptcha() {
     return location.hostname === 'aioftheday.com' && location.pathname === '/submit-a-tool' &&
@@ -9214,15 +9022,9 @@
   let manualIconsEnabled = false;
   let manualIconTimer = null;
   let manualIconObserver = null;
-  let manualIconsClosed = false;
-  window.__extLinkDisableManualIcons=()=>{
-    manualIconsClosed=true;manualIconsEnabled=false;manualIconObserver?.disconnect();clearTimeout(manualIconTimer);
-    document.querySelectorAll('['+MANUAL_ICON_ATTR+']').forEach(node=>node.remove());
-    document.getElementById(MANUAL_ICON_STYLE_ID)?.remove();
-  };
 
-  if (services.onSettingsChanged) {
-    services.onSettingsChanged((changes, area) => {
+  if (chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "local" && (changes.activeSiteId || changes.siteProfiles)) {
         manualIconConfig = null;
       }
@@ -9298,7 +9100,7 @@
 
   async function loadManualIconConfig() {
     try {
-      const response = await services.request({ action: "getActiveFillConfig" });
+      const response = await chrome.runtime.sendMessage({ action: "getActiveFillConfig" });
       if (response?.ok && response.config) {
         manualIconConfig = response.config;
         return manualIconConfig;
@@ -9329,7 +9131,6 @@
         field.dispatchEvent(new Event("change", { bubbles: true }));
         icon.dataset.state = "done";
         icon.title = `已填：${selectValue}`;
-        await persistCurrentFillLearnings(config);
         return;
       }
     } else if (type === "file") {
@@ -9337,7 +9138,6 @@
       const ok = await tryFillFileFromUrl(field, media?.value, config.targetDomain, config, media);
       icon.dataset.state = ok ? "done" : "empty";
       icon.title = ok ? "已从图库上传" : "图库中没有匹配的图片";
-      if (ok) await persistCurrentFillLearnings(config);
       return;
     } else if (isCommentLikeField(field)) {
       value = await generateComment(config, {
@@ -9361,7 +9161,6 @@
 
     const fitted = fitValueToConstraints(String(value), getFieldConstraints(field));
     await simulateTyping(field, fitted);
-    await persistCurrentFillLearnings(config);
     icon.dataset.state = "done";
     icon.title = `已填：${fitted.slice(0, 60)}`;
   }
@@ -9421,20 +9220,19 @@
   }
 
   async function initManualIcons() {
-    if(manualIconsClosed)return;
     if (manualIconsEnabled || !document.body) return;
     // Only decorate pages that look like a comment or directory submission form.
     if (!pageLooksLikeManualFillTarget()) return;
 
     let filters = null;
     try {
-      const response = await services.request({ action: "getActiveFillConfig" });
+      const response = await chrome.runtime.sendMessage({ action: "getActiveFillConfig" });
       filters = response?.filters || null;
       if (response?.ok && response.config) manualIconConfig = response.config;
     } catch {
       return;
     }
-    if (manualIconsClosed || !filters || filters.showManualFillIcons === false) return;
+    if (!filters || filters.showManualFillIcons === false) return;
 
     manualIconsEnabled = true;
     syncManualIcons();
@@ -9524,7 +9322,7 @@
 
     let response;
     try {
-      response = await services.request({
+      response = await chrome.runtime.sendMessage({
         action: "generateCommentDrafts",
         pageUrl: location.href,
         pageTitle: [document.title, getPageMetaDescription()].filter(Boolean).join(" — "),
@@ -9616,14 +9414,15 @@
   // Check periodically if captcha is gone (user solved it)
   if (detectCaptcha()) {
     const checkInterval = setInterval(() => {
-      if (!services.interactive) {
+      if (!chrome.runtime?.id) {
         clearInterval(checkInterval);
         return;
       }
       if (!detectCaptcha()) {
         clearInterval(checkInterval);
         // Notify background that captcha is resolved
-        services.request({
+        chrome.runtime
+          .sendMessage({
             action: "captchaResolved",
           })
           .catch(() => {});

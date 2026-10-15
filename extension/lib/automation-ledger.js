@@ -150,6 +150,12 @@
         : { ok: false, reason: "人工确认缺少说明" };
     }
 
+    const rejection = (Array.isArray(input.evidenceSignals) ? input.evidenceSignals : []).find(signal =>
+      signal?.type === "submission_rejection" && signal.scope === "current_submission_response" &&
+      signal.visible === true && signal.matched === true && signal.rejected === true && compactText(signal.text));
+    if (rejection) return { ok: false, submissionRejected: true,
+      reason: "当前投稿响应明确拒收，不能用标题、点击或 HTTP 状态记作成功", rejection: compactText(rejection.text) };
+
     const signals = (Array.isArray(input.evidenceSignals) ? input.evidenceSignals : [])
       .filter((signal) => signal?.matched === true && compactText(signal.text));
     const signal = signals.find((item) => compactText(item.text) === evidence) || signals[0];
@@ -189,4 +195,4 @@
     finishRun,
     validateSuccessProof,
   };
-})(self);
+})(typeof self !== 'undefined' ? self : globalThis);

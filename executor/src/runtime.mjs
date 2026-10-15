@@ -1,5 +1,6 @@
 import {singlePageReceiptState} from './single-page-receipt-queue.mjs';
 import {formEngineLogEntry} from './form-engine-log.mjs';
+import {prepareExplicitFreeRoute} from './free-submission-route.mjs';
 import {continueOriginalForm,originalFormPriorStageFields} from './original-form-continuation.mjs';
 import { chromium } from 'playwright';
 import {openManualTaskPage} from './manual-task-page.mjs';
@@ -781,6 +782,10 @@ export class Runtime {
       }
       if (!candidate) throw new Error('没有可识别表单，后台 AI 已尝试原页并记录结果');
       let { engine, detection } = candidate;
+      if(!detection.hasCaptcha&&detection.submitBlocker?.payment_uncertain&&detection.freeSubmissionRoute&&!task.submitPreparedRun){
+        await prepareExplicitFreeRoute(this,{task,page,candidate,active,config,offline});
+        detection=candidate.detection;
+      }
       const preparingOnly = task.fillOnlyRun && /^(?:poweredbyai\.app|navtools\.ai|aioftheday\.com)$/.test(new URL(task.url).hostname);
       const observeSiteGate=result=>classifyOriginalTaskGate(this,{task,page,result,active,assertPageDocument:async()=>{if(!await candidate.engine.isCurrentDocument())throw Error('原表单文档已变化，自动观察停止');}});
       if (!detection.hasCaptcha && !preparingOnly && (detection.submitBlocker?.blocked || detection.submitBlocker?.needs_manual || detection.submitBlocker?.payment_uncertain)) {await observeSiteGate(detection.submitBlocker);throw new Error(detection.submitBlocker?.reason || '需要人工处理');}

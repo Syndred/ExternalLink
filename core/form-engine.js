@@ -222,7 +222,7 @@
   document.addEventListener("submit", observeManualSubmission, true);
 
   function onExtensionMessage(msg, sender, sendResponse) {
-    if (!services.authorized && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','normalizeNativeMediaUpload','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
+    if (!services.authorized && ['smartFill','submitFilledForm','runProductHuntStep','applyFieldCorrections','executeActionPlan','prepareExplicitFreeSubmissionRoute','normalizeNativeMediaUpload','executeSubmit','finalizeSubmit','trySubmit'].includes(msg.action || msg.type)) {
       sendResponse({ ok: false, migrated: true, error: '自动填写与提交已迁入 Windows 执行器' });
       return true;
     }
@@ -316,6 +316,11 @@
       sendResponse({ finalFound: !!button, label: button ? getElementLabel(button) : '', advanceFound: !!findSafeAdvanceButton(), allowed: shouldAutoSubmitListing(msg.config || {},msg.platform || 'directory') });
       return true;
     }
+    if (msg.action === "prepareExplicitFreeSubmissionRoute") {
+      prepareExplicitFreeSubmissionRoute(msg.proof)
+        .then(sendResponse).catch(err => sendResponse({ ok: false, error: err.message }));
+      return true;
+    }
     if (msg.action === "inspectAutoFillGuard") {
       sendResponse(inspectAutoFillGuard(msg.targetDomain || ""));
       return true;
@@ -393,6 +398,7 @@
           formFieldCount: scopedFields.length,
           formCount: snapshot.meta.formCount,
           hasCaptcha: snapshot.meta.hasCaptcha,
+          freeSubmissionRoute: inspectExplicitFreeSubmissionRoute(),
           submitBlocker: submitBlocker ? {
             blocked: submitBlocker.blocked === true,
             needs_manual: submitBlocker.needs_manual === true,
@@ -1048,8 +1054,31 @@
       evidenceSignals: [{ type: 'visible_confirmation', text: evidence, url: String(location.href), matched: true }] };
   }
 
+  function currentSubmissionResponseRejection() {
+    if (typeof self.ExtLinkPlaybooks?.classifySubmissionRejection !== "function") return null;
+    const nodes = Array.from(document.querySelectorAll(
+      '[role="alert"], [role="status"], [aria-live], [class*="-error"], [class*="_error"], .error, .form-status, .submission-response, .form-response, main h1, main h2',
+    ));
+    for (const node of nodes) {
+      if (!isVisibleHumanGate(node) || node.closest('aside, nav, footer, pre, code, .history, .example, .faq, .testimonials, [data-historical], [data-history], [class*="newsletter"], [id*="newsletter"]')) continue;
+      const form = node.closest("form"), main = node.closest('main, [role="main"], dialog[open], [role="dialog"]');
+      if (form ? !hasLikelySubmissionFields(form) : !main) continue;
+      if (!form) {
+        const heading = compactText(main.querySelector("h1, h2")?.textContent || "", 200);
+        if (!/submit|submission|received|review|thank|got it|didn[’']t go through/i.test(heading)) continue;
+      }
+      const text = compactText(node.innerText || node.textContent || "", 800);
+      const rejection = self.ExtLinkPlaybooks.classifySubmissionRejection({ text,
+        scope: "current_submission_response", visible: true, url: redactSnapshotUrl(location.href) });
+      if (rejection) return rejection;
+    }
+    return null;
+  }
+
   function classifyVisibleEvidence(options = {}) {
     const text = `${document.title || ""} ${document.body?.innerText || ""}`.replace(/\s+/g, " ").trim();
+    const rejection = currentSubmissionResponseRejection();
+    if (rejection) return rejection;
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
     const productFinderReceipt = classify10015Receipt(text, destinationUrl);
     if (productFinderReceipt) return productFinderReceipt;
@@ -3949,6 +3978,12 @@
       };
     }
     const matched = classified.matched === true && Boolean(classified.evidence);
+    if (classified.submissionRejected) {
+      return { ok: false, needs_manual: true, semanticReview: true, keepTab: true,
+        clickedSubmit: true, submitted: false, matched: false, submissionRejected: true,
+        reason: `站方当前投稿响应拒收：${classified.reason}`, evidence: "",
+        evidenceSignals: classified.evidenceSignals || [], publicationStatus: "unknown", platform, ...fillResult };
+    }
     if (matched) {
       return {
         ok: true,
@@ -4040,6 +4075,7 @@
     const baselineEvidence = String(baseline?.evidence || "").replace(/\s+/g, " ").trim();
     while (Date.now() < deadline) {
       last = classifyVisibleEvidence({ destinationUrl });
+      if (last?.submissionRejected) return last;
       if (submitStartedAt !== null && detectSubmissionTransportFailure(submitStartedAt)) break;
       const currentEvidence = String(last?.evidence || "").replace(/\s+/g, " ").trim();
       if (last?.matched && currentEvidence && currentEvidence !== baselineEvidence) return last;
@@ -4707,7 +4743,7 @@
 
     const evidence = classifyVisibleEvidence();
     const pageText = compactText(document.body ? document.body.innerText : "", SNAPSHOT_TEXT_LIMIT);
-    const evidenceSignals = evidence.matched && evidence.evidence
+    const evidenceSignals = evidence.submissionRejected ? evidence.evidenceSignals || [] : evidence.matched && evidence.evidence
       ? [{
           type: evidence.publicationStatus === "published" ? "public_listing" : "visible_confirmation",
           text: evidence.evidence,
@@ -5473,6 +5509,77 @@
       .replace(/[\u2013\u2014]/g, "-");
   }
 
+  function findExplicitFreeSubmissionRoute() {
+    const candidates = [];
+    for (const form of Array.from(document.querySelectorAll("form"))) {
+      if (!hasLikelySubmissionFields(form) || isMarketingOptInForm(form)) continue;
+      const formText = compactText(form.innerText || form.textContent || "", 7000).toLowerCase();
+      // An advertisement saying "free" is insufficient. The same product
+      // submission form must explicitly say its free route has no fee/invoice.
+      if (!/\bfree(?:\s+editorial)?\s+(?:consideration|review|listing|submission)\b.{0,90}\b(?:no\s+(?:fee|charge|payment)|(?:is\s+)?not\s+invoiced|never\s+invoiced)\b/.test(formText)) continue;
+      const controls = Array.from(form.querySelectorAll("input, textarea, select"));
+      const visible = controls.filter(element => isVisible(element));
+      const name = visible.some(element => /(?:product|tool|app)[\s_-]*name/i.test(getFieldHint(element)));
+      const url = visible.some(element => /(?:product|tool|app)[\s_-]*(?:url|website)|website\s+url|homepage/i.test(getFieldHint(element)));
+      if (!name || !url) continue;
+      if (visible.some(element => !element.disabled && /card[\s_-]*number|\bcvv\b|\bcvc\b|billing[\s_-]*address|payment[\s_-]*method/i.test(getFieldHint(element)))) continue;
+      for (const element of Array.from(form.querySelectorAll("select"))) {
+        if (element.disabled || !isVisible(element) || isHumanDeclarationField(element)) continue;
+        const hint = getFieldHint(element);
+        if (!/request|intent|what\s+do\s+you\s+need|submission\s+(?:type|route)|listing\s+(?:type|route)/i.test(hint) || /(?:product|tool)\s*pric|pricing\s+(?:type|model)/i.test(hint)) continue;
+        const options = Array.from(element.options || []).filter(option => !option.disabled && option.value &&
+          /^free\s+(?:editorial\s+)?(?:consideration|review|listing|submission)\b/i.test(String(option.textContent || "").trim()) &&
+          /\bno\s+(?:fee|charge|cost|payment)\b|[$€£]\s*0(?:\.00)?\b/i.test(option.textContent || "") &&
+          !/trial|after|recurring|subscription|credit\s*card|checkout/i.test(option.textContent || ""));
+        if (options.length !== 1 || element.value && element.value !== options[0].value) continue;
+        // Preserve a previously selected paid package even when disabled: it
+        // requires review, not silent conversion into a free application.
+        if (visible.some(other => other !== element &&
+            /package|sponsor|listing\s+(?:plan|tier)|upgrade|promotion/i.test(getFieldHint(other)) &&
+            (other.type === "radio" || other.type === "checkbox" ? other.checked : !!other.value))) continue;
+        candidates.push({ element, form, option: options[0], formText });
+      }
+    }
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  function inspectExplicitFreeSubmissionRoute() {
+    const route = findExplicitFreeSubmissionRoute();
+    if (!route) return null;
+    const selector = extSelector(route.element), formSelector = extSelector(route.form);
+    const label = compactText(route.option.textContent, 240);
+    return { selector, formSelector, value: route.option.value, label,
+      selected: route.element.value === route.option.value,
+      documentTimeOrigin: performance.timeOrigin,
+      signature: hashSnapshot(JSON.stringify({ selector, formSelector, label,
+        value: route.option.value, options: Array.from(route.element.options).map(option => [option.value, option.textContent, option.disabled]),
+        assurance: route.formText })) };
+  }
+
+  async function prepareExplicitFreeSubmissionRoute(proof) {
+    const current = inspectExplicitFreeSubmissionRoute();
+    const paid = detectPaidSubmit();
+    if (!current || !proof || current.selected || current.selector !== proof.selector ||
+        current.value !== proof.value || current.signature !== proof.signature ||
+        current.documentTimeOrigin !== proof.documentTimeOrigin || paid.classification !== "uncertain_payment") {
+      return { ok: false, reason: "明确免费投稿选项或原文档证据已变化；未选择" };
+    }
+    const route = findExplicitFreeSubmissionRoute(), pageContext = capturePageContext();
+    let unexpectedSubmission = false;
+    const observe = event => { if (event.target === route.form) unexpectedSubmission = true; };
+    document.addEventListener("submit", observe, true);
+    try {
+      setSelectValue(route.element, current.value);
+      await sleep(0);
+    } finally { document.removeEventListener("submit", observe, true); }
+    const after = isCurrentPageContext(pageContext) ? inspectExplicitFreeSubmissionRoute() : null;
+    return { ok: !unexpectedSubmission && after?.selected === true,
+      selected: after?.selected === true, unexpectedSubmission,
+      reason: unexpectedSubmission ? "选择免费投稿类别时网页意外提交，保留原尝试等待核验" :
+        after?.selected ? "已选择明确不收费的投稿类别；仍需重新检查付款及条款闸门" : "站方未确认免费投稿类别选择",
+      proof: after };
+  }
+
   function paymentChoiceControl(element) {
     if (!element) return false;
     const tag = String(element.tagName || "").toLowerCase();
@@ -5574,6 +5681,8 @@
       ].join(" "),
       900,
     );
+    const freeRoute = element?.matches?.('button[type="submit"], input[type="submit"]')
+      ? inspectExplicitFreeSubmissionRoute() : null;
     return {
       label,
       fieldset: fieldsetText,
@@ -5581,6 +5690,7 @@
       local,
       actionType,
       choiceControl: paymentChoiceControl(element),
+      verifiedFreeSubmissionRoute: freeRoute?.selected && element.closest("form") === document.querySelector(freeRoute.formSelector) ? freeRoute : null,
     };
   }
 
@@ -5670,6 +5780,12 @@
         reason: "当前动作明确进入付款、结算或付费提交流程",
         evidence: { label, fieldset, options, local, matched },
       };
+    }
+
+    if (input.verifiedFreeSubmissionRoute?.selected === true && ["submit", "click"].includes(actionType)) {
+      return { classification: "safe", type: "free_submission_route", reason: "",
+        evidence: { label, fieldset, options, local, matched: [...matched, "selected_explicit_no_fee_route"],
+          freeRoute: input.verifiedFreeSubmissionRoute } };
     }
 
     const ambiguousPayment =
@@ -8273,6 +8389,14 @@
       if (choiceResult.handled.has(element)) continue;
 
       if (tag === "select") {
+        const freeRoute = inspectExplicitFreeSubmissionRoute();
+        if (freeRoute?.selector === extSelector(element)) {
+          // This operational request type is not the product's pricing type.
+          // Only the dedicated preparation operation may change it.
+          if (freeRoute.selected) mappings[fieldMappingKey(element)] = {
+            profileKey: "submission_route", value: element.value, label: getSnapshotLabel(element) };
+          continue;
+        }
         const pricingTarget = explicitProductPricingTarget(element, config);
         if (pricingTarget) {
           element.setAttribute("data-extlink-expected-pricing", pricingTarget.type);

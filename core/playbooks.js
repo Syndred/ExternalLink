@@ -181,8 +181,22 @@
     return blob.slice(start, start + 180).trim();
   }
 
-  function classifyEvidence(text, playbook) {
+  function classifySubmissionRejection(response) {
+    // Only the caller's current visible submission response pane may veto a
+    // receipt. A historical FAQ/error elsewhere on the page is not evidence.
+    if (!response || response.scope !== "current_submission_response" || response.visible !== true) return null;
+    const text = String(response.text || "").replace(/\s+/g, " ").trim();
+    if (!/\b(?:unable to (?:accept|receive|process) (?:your |this |new )?submissions?|(?:your |this )?submission (?:failed|was not (?:received|accepted)|could not be (?:received|accepted|processed))|(?:could not|cannot|can[’']t) submit|(?:that|it|submission) didn[’']t go through)\b/i.test(text)) return null;
+    const signal = { type: "submission_rejection", scope: response.scope, visible: true,
+      text: text.slice(0, 500), url: String(response.url || ""), matched: true, rejected: true };
+    return { matched: false, publicationStatus: "unknown", evidence: "", submissionRejected: true,
+      reason: signal.text, submissionResponse: signal, evidenceSignals: [signal] };
+  }
+
+  function classifyEvidence(text, playbook, context = {}) {
     const blob = String(text || "").replace(/\s+/g, " ").trim();
+    const rejected = classifySubmissionRejection(context.submissionResponse);
+    if (rejected) return { ...rejected, playbookId: playbook?.id || "" };
     // Some sites show "Submission Received" before a required badge or email
     // verification. The initial receipt is not a completed application.
     if (/verify (?:the )?badge to complete (?:your )?submission|(?:submission|listing) (?:is )?(?:not complete|incomplete) until (?:you )?(?:verify|add) (?:the |our |a )?badge|check your email to confirm (?:your )?(?:free )?submission|confirm your email (?:to|before) (?:complete|finish|activate|enter) (?:your |the )?(?:submission|listing)/i.test(blob)) {
@@ -256,6 +270,7 @@
     PLAYBOOKS,
     lookup: lookupPlaybook,
     classifyEvidence,
+    classifySubmissionRejection,
     list: listPlaybooks,
   };
 })(typeof self !== "undefined" ? self : window);

@@ -1080,6 +1080,22 @@
     const rejection = currentSubmissionResponseRejection();
     if (rejection) return rejection;
     const destinationUrl = options.destinationUrl || manualSubmissionWatch?.destinationUrl || "";
+    // This server-rendered receipt replaces the submission form after its POST.
+    // Bind the exact visible confirmation to the directory host and route.
+    let receiptSource;
+    try { receiptSource = new URL(destinationUrl); } catch {}
+    if (location.hostname === 'businessagents.io' && location.pathname === '/submit' &&
+        receiptSource?.hostname === 'businessagents.io' && receiptSource.pathname === '/submit') {
+      const main = document.querySelector('main');
+      const pane = main && Array.from(main.querySelectorAll('h2')).find(node =>
+        isVisibleHumanGate(node) && /^\s*✓?\s*Submitted!\s*$/.test(node.textContent || ''))?.parentElement;
+      const confirmation = "Thanks for submitting your tool. We'll review it and get back to you within a few days.";
+      if (pane && isVisibleHumanGate(pane) && !main.querySelector('form') &&
+          String(pane.innerText || pane.textContent || '').replace(/\s+/g, ' ').includes(confirmation)) {
+        return {matched:true, publicationStatus:'pending_moderation', evidence:confirmation,
+          evidenceSignals:[{type:'visible_confirmation',text:confirmation,url:String(location.href),matched:true}]};
+      }
+    }
     const productFinderReceipt = classify10015Receipt(text, destinationUrl);
     if (productFinderReceipt) return productFinderReceipt;
     if (/^(?:www\.)?bai\.tools$/i.test(String(location.hostname || "")) &&

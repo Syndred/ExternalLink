@@ -5,7 +5,9 @@ const mediaKey=/^(?:logoDataUrl|screenshots?|media|inlineMedia)$/i;
 // credentials cannot help a textual submission verdict and must not displace it.
 export function reviewPlanningJson(input={},maxChars=60000){
  const clean=(value,key='',depth=0)=>{
-  if(secretKey.test(key)||mediaKey.test(key))return undefined;
+  // Cross-site historical mappings can contain obsolete product copy. Current
+  // project fields and the observed filled report are the review authority.
+  if(secretKey.test(key)||mediaKey.test(key)||key==='learnedFieldMappings')return undefined;
   if(depth>12)throw Error('表单审查结构过深，请重新观察原表单');
   if(typeof value==='string')return /^\s*data:/i.test(value)?undefined:value.replace(/data:[^\s<>"']+/gi,'[inline media omitted]');
   if(value===null||typeof value==='boolean'||typeof value==='number')return value;

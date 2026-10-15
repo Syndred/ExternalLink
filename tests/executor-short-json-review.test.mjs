@@ -38,10 +38,11 @@ test('review routes keep configured model and complete evidence with bounded non
 
 test('review values and negative evidence remain whole; oversized evidence is refused instead of cut',()=>{
  const fields=[{name:'product_name',value:'OldPhotoLive AI'},{name:'pricing',value:'Paid'},{name:'csrf_token',value:'FIXTURE_CSRF'}];
- const input={snapshot:{fields,evidenceSignals:[{type:'submission_rejection',text:'Unable to accept submissions',matched:true}]}};
+ const input={config:{learnedFieldMappings:{'old.invalid':{pricing:{value:'obsolete free plan'}}}},snapshot:{fields,evidenceSignals:[{type:'submission_rejection',text:'Unable to accept submissions',matched:true}]}};
  const result=JSON.parse(reviewPlanningJson(input));
  assert.deepEqual(result.snapshot.fields.slice(0,2),fields.slice(0,2));
  assert.equal(result.snapshot.fields[2].value,'[credential omitted]');
+ assert.equal(result.config.learnedFieldMappings,undefined);
  assert.deepEqual(result.snapshot.evidenceSignals,input.snapshot.evidenceSignals);
  assert.equal(input.snapshot.fields[2].value,'FIXTURE_CSRF');
  assert.throws(()=>reviewPlanningJson({snapshot:{text:'x'.repeat(70000)}}),/超过文字预算/);
